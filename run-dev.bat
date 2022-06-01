@@ -1,0 +1,1 @@
+start cmd /K "cd ./common/api && node ./server" & start cmd /K "cd ./utilities/dbm && node ./server" & start cmd /K  "npm --prefix ./utilities/dbm start"
