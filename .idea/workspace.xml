@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="0b25a19b-24b4-44e8-9b48-ab55b8526297" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/finicity/index.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/finicity/interfaces.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/common/finicity/tsconfig.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/.ebextensions/https-lbsecuritygroup.config" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/.ebextensions/https-reencrypt-alb.config" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/Procfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/app.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/custom.d.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/package.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/tsconfig.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/views/brokerage.handlebars" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/views/error.handlebars" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/views/home.handlebars" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/views/layouts/main.handlebars" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/brokerage/views/login.handlebars" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/search/.env" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/search/index.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/search/query.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/search/schema.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/search/settings.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/services/search/test-data.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2A0S1Rwt4hZ82ERLzY4eyz1TVOX" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "javascript.nodejs.core.library.configured.version": "16.4.2",
+    "javascript.nodejs.core.library.typings.version": "16.4.2",
+    "last_opened_file_path": "/Users/davidbozentka/development/tradingpost",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "ts.external.directory.path": "/Users/davidbozentka/development/tradingpost/common/finicity/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/services/finicity-api" />
+      <recent name="$PROJECT_DIR$/common" />
+      <recent name="$PROJECT_DIR$/lib/finicity" />
+      <recent name="$PROJECT_DIR$/lib" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0b25a19b-24b4-44e8-9b48-ab55b8526297" name="Changes" comment="" />
+      <created>1654144793635</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1654144793635</updated>
+      <workItem from="1654144794959" duration="598000" />
+      <workItem from="1654623963617" duration="1378000" />
+      <workItem from="1654652241814" duration="1242000" />
+      <workItem from="1654655293319" duration="1343000" />
+      <workItem from="1654657816509" duration="7628000" />
+      <workItem from="1654704865303" duration="49000" />
+      <workItem from="1654704925569" duration="1608000" />
+      <workItem from="1654744274896" duration="1866000" />
+      <workItem from="1654866388781" duration="1101000" />
+      <workItem from="1654867503444" duration="9709000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+    <option name="exactExcludedFiles">
+      <list>
+        <option value="$PROJECT_DIR$/common/api/entities/interfaces/index.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/extensions/UserApiExt.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/templates/EntityApi.native.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/templates/EntityApiBase.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/templates/AuthApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/templates/EntityApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/static/pool.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/EntityApi.native.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/UserApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/SubscriberApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/EntityApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/UpvoteApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/EntityApiBase.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/AlertApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/AuthApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/BookmarkApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/PlatformClaimApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/CommentApi.js" />
+        <option value="$PROJECT_DIR$/common/api/entities/apis/PostApi.js" />
+        <option value="$PROJECT_DIR$/common/api/server/index.js" />
+        <option value="$PROJECT_DIR$/common/api/server/routes-api-v1.js" />
+        <option value="$PROJECT_DIR$/common/api/errors.js" />
+        <option value="$PROJECT_DIR$/common/api/auth.js" />
+        <option value="$PROJECT_DIR$/services/finicity-api/app.js" />
+        <option value="$PROJECT_DIR$/services/finicity-api/app.js" />
+        <option value="$PROJECT_DIR$/services/search/index.js" />
+        <option value="$PROJECT_DIR$/common/finicity/index.js" />
+        <option value="$PROJECT_DIR$/common/finicity/interfaces.js" />
+        <option value="$PROJECT_DIR$/services/brokerage/x..js" />
+      </list>
+    </option>
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.config" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

@@ -1,0 +1,57 @@
+{
+  "mappings": {
+    "properties": {
+      "userType": {
+        "type": "keyword"
+      },
+      "userId": {
+        "type": "keyword"
+      },
+      "tradingPostUserName": {
+        "type": "keyword"
+      },
+      "postType": {
+        "type": "keyword"
+      },
+      "platformUserName": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "displayPlatformName": {
+        "type": "text"
+      },
+      "postUrl": {
+        "type": "text",
+        "index": false
+      },
+      "title": {
+        "type": "text"
+      },
+      "htmlTitle": {
+        "type": "text",
+        "index": false
+      },
+      "body": {
+        "type": "text"
+      },
+      "htmlBody": {
+        "type": "text",
+        "index": false
+      },
+      "description": {
+        "type": "text"
+      },
+      "createdAt": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+      },
+      "meta": {
+        "type": "object"
+      }
+    }
+  }
+}
