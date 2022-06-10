@@ -1,0 +1,11 @@
+{
+  "name": "@tradingpost/common",
+  "version": "1.0.0",
+  "description": "Code common to other repos",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Levert James Jr.",
+  "license": "MIT"
+}
