@@ -12,11 +12,13 @@ const key = process.env.sign_key as string;
 //return token
 export const loginPass = async (email: string, pass: string, csrf: string) => {
 
+    const saltResult = await execProc<LoginResult>("tp.api_local_login_get", { data: { email, hash: pass } })
+    if (!saltResult.length)
+        throw new Error(`User '${email}' does not exists or invalid password`);
 
-    const saltResult = await execProc<LoginResult>("tp.api_local_login_get", { data: { email, hash: pass } }),
-        hash = hashPass(pass, saltResult[0].hash);
+    const hash = hashPass(pass, saltResult[0].hash),
+        passResult = await execProc<LoginResult>("tp.api_local_login_get", { data: { email, hash } });
 
-    const passResult = await execProc<LoginResult>("tp.api_local_login_get", { data: { email, hash } });
     if (!passResult.length)
         throw new Error(`User '${email}' does not exists or invalid password`);
 
@@ -48,5 +50,3 @@ export const createLogin = async (email: string, password: string) => {
         hash
     });
 }
-
-

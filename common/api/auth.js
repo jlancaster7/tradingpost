@@ -56,7 +56,10 @@ exports.loginPass = function (email, pass, csrf) { return __awaiter(void 0, void
         switch (_a.label) {
             case 0: return [4 /*yield*/, pool_1.execProc("tp.api_local_login_get", { data: { email: email, hash: pass } })];
             case 1:
-                saltResult = _a.sent(), hash = exports.hashPass(pass, saltResult[0].hash);
+                saltResult = _a.sent();
+                if (!saltResult.length)
+                    throw new Error("User '" + email + "' does not exists or invalid password");
+                hash = exports.hashPass(pass, saltResult[0].hash);
                 return [4 /*yield*/, pool_1.execProc("tp.api_local_login_get", { data: { email: email, hash: hash } })];
             case 2:
                 passResult = _a.sent();

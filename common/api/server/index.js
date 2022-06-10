@@ -16,7 +16,6 @@ var ssm = new client_ssm_1.SSM({
 ssm.getParameters({
     Names: ["TokenKey", "PG_PW"]
 }).then(function (params) {
-    console.log(JSON.stringify(params.Parameters));
     var _a = params.Parameters || [], token = _a[0].Value, pgPW = _a[1].Value;
     process.env.tokenKey = token;
     process.env.postgressPW = pgPW;
@@ -30,7 +29,7 @@ ssm.getParameters({
     // start the express server
     app.listen(port, function () {
         // tslint:disable-next-line:no-console
-        console.log("server started at http://localhost:" + port);
+        console.log("API Server has been started at http://localhost:" + port);
     });
 }).catch(function (ex) {
     console.log(ex);

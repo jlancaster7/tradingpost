@@ -9,9 +9,9 @@ import { flex, shadow, sizes } from "../style";
 import { ToastMessageFunction, useToast } from "../utils/hooks";
 
 import { SideMenu } from "../components/SideMenu";
-import { LoginScreen } from "../screens/LoginScreen";
+//import { LoginScreen } from "../screens/LoginScreen";
 //import { MenuButton } from "./layouts/DashboardLayout";
-import { CreateAccountScreen } from "../screens/CreateAccountScreen";
+//import { CreateAccountScreen } from "../screens/CreateAccountScreen";
 import { SvgProps } from "react-native-svg";
 import { topBarIcons } from "../images";
 // import { BookmarkScreen, FeedScreen } from "./screens/FeedScreen";
@@ -25,6 +25,7 @@ import { topBarIcons } from "../images";
 // import { CompetitionsScreen } from "./screens/CompetitionsScreen";
 // import { FeedbackScreen } from "./screens/FeedbackScreen";
 import { ImagePickerScreen } from "../screens/ImagePickerScreen";
+import WelcomeScreen from "../screens/WelcomeScreen";
 // import { NewPostScreen } from "./screens/NewPostScreen";
 // import { UpsertWatchlistScreen } from "./screens/UpsertWatchListScreen";
 // import { WatchlistScreen } from "./screens/WatchlistScreen";
@@ -39,11 +40,7 @@ export function SetPublicLayout(isLoggedIn?: boolean) {
     Navigation.setRoot({
         root: {
             stack: {
-                children: [
-                    {
-                        component: screens.getComponent(isLoggedIn ? "CreateAccount" : "LoginScreen")
-                    }
-                ]
+                children: [WelcomeScreen.getLayout()]
             }
         }
     });
@@ -79,7 +76,9 @@ export type IDialog = {
     hideDialogView: () => void
 } & Component<DialogProps>
 
-export function BaseScreen(props: PropsWithChildren<{ viewStyle?: StyleProp<ViewStyle>, dashboardRef?: MutableRefObject<IDashboard | undefined>, title?: string, scrollContentFlex?: boolean }>) {
+export type BaseScreenProps = { viewStyle?: StyleProp<ViewStyle>, dashboardRef?: MutableRefObject<IDashboard | undefined>, title?: string, scrollContentFlex?: boolean };
+
+export function BaseScreen(props: PropsWithChildren<BaseScreenProps>) {
     const { children, viewStyle, title, scrollContentFlex } = props,
         { toastMessage, toastProps } = useToast(),
         prompRef = useRef<IDialog>(null),
@@ -118,7 +117,7 @@ export function BaseScreen(props: PropsWithChildren<{ viewStyle?: StyleProp<View
         <SafeAreaView style={[flex]}>
             {/* <KeyboardAvoidingView behavior='position' style={flex}> */}
             <ScrollView style={[flex]} contentContainerStyle={{ flex: scrollContentFlex ? 1 : undefined }} >
-                {props.title ? <LogoTitleImage title={title} /> : <LogoImage size="mega" style={{ alignSelf: "center" }} noBg />}
+                {/* {props.title ? <LogoTitleImage title={title} /> : <LogoImage size="mega" style={{ alignSelf: "center" }} noBg />} */}
                 <View style={[flex, viewStyle]}>{children}</View>
             </ScrollView>
             {/* </KeyboardAvoidingView> */}
@@ -144,15 +143,15 @@ export function BaseScreen(props: PropsWithChildren<{ viewStyle?: StyleProp<View
 export const prefixGaurd = new Set<string>();
 
 export let screens = navigationFactory("screens", {
-    LoginScreen: () => LoginScreen,
+    //LoginScreen: () => LoginScreen,
     // Feed: () => FeedScreen,
     // Notification: () => NotificationScreen,
     // Bookmark: () => BookmarkScreen,
     // App: () => App,
-    CreateAccount: () => CreateAccountScreen,
+ //   CreateAccount: () => CreateAccountScreen,
     // FeedFilter: () => FeedFilterScreen,
     // Post: () => PostScreen,
-    ImagePicker: () => ImagePickerScreen,
+    //ImagePicker: () => ImagePickerScreen,
     // ManageSubscriptions: () => ManageSubscriptionsScreen,
     // Profile: () => ProfileScreen,
     // Portfolio: () => PortfolioScreen,
