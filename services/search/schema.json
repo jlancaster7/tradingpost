@@ -1,11 +1,24 @@
 {
   "mappings": {
     "properties": {
-      "userType": {
+      "hasRatings": {
+        "type": "integer"
+      },
+      "userType": { 
         "type": "keyword"
       },
-      "userId": {
-        "type": "keyword"
+      "user": {
+        "type": "object",
+        "imageUrl": {
+          "type":"text",
+          "index": false
+        },
+        "id": {
+          "type": "keyword"
+        },
+        "name": {
+          "type": "keyword"
+        }
       },
       "tradingPostUserName": {
         "type": "keyword"
@@ -23,6 +36,14 @@
       },
       "displayPlatformName": {
         "type": "text"
+      },
+      "imageUrl": {
+        "type": "text",
+        "index": false
+      },
+      "platformProfileUrl": {
+        "type": "text",
+        "index": false
       },
       "postUrl": {
         "type": "text",
@@ -45,12 +66,21 @@
       "description": {
         "type": "text"
       },
-      "createdAt": {
+      "updatedAt": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+      },
+      "platformedCreatedAt": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+      },
+      "addedToTradingPost": {
         "type": "date",
         "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
       },
       "meta": {
-        "type": "object"
+        "type": "object",
+        "index": false
       }
     }
   }
