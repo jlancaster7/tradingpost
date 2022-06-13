@@ -1,3 +1,5 @@
+
+
 export interface PartnerAuthenticationResponse {
     token: string
 }
@@ -20,6 +22,14 @@ export interface GetCustomersCustomerResponse {
     lastName: string
     type: string
     createdDate: number
+}
+
+export interface CustomerAccount {
+
+}
+
+export interface GenerateLinkResponse {
+    link: string
 }
 
 export interface GetCustomersResponse {

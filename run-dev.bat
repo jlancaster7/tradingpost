@@ -1,1 +1,1 @@
-start cmd /K "cd ./common/api && node ./server" & start cmd /K "cd ./utilities/dbm && node ./server" & start cmd /K  "npm --prefix ./utilities/dbm start"
+start cmd /K "cd ./common/api && tsc -b && node ./server" & start cmd /K "cd ./utilities/dbm && npm run build-server && node ./server" & start cmd /K  "npm --prefix ./utilities/dbm start"

@@ -5,17 +5,14 @@ import api from './routes-api-v1'
 import 'dotenv/config'
 //fromWebToken()
 
-
 const ssm = new SSM({
     apiVersion: '2014-11-06',
     region: "us-east-1"
-
 });
 
 ssm.getParameters({
     Names: ["TokenKey", "PG_PW"]
 }).then((params) => {
-    console.log(JSON.stringify(params.Parameters));
     const [{ Value: token }, { Value: pgPW }] = params.Parameters || [];
     process.env.tokenKey = token;
     process.env.postgressPW = pgPW;
@@ -31,7 +28,7 @@ ssm.getParameters({
     // start the express server
     app.listen(port, () => {
         // tslint:disable-next-line:no-console
-        console.log(`server started at http://localhost:${port}`);
+        console.log(`API Server has been started at http://localhost:${port}`);
     });
 
 }).catch((ex) => {

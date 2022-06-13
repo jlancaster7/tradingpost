@@ -15,6 +15,7 @@ import { IDashboard, IDialog, PromptButton, PromptFunc, BaseScreen } from '../la
 import { useData } from '../lds';
 import { IUserGet } from '../api/entities/interfaces';
 import { LoginResult } from '../api/entities/apis/AuthApi';
+import { Screen } from './BaseScreen';
 
 export type CreateAccountProps = {
     saveOnly?: boolean,
@@ -58,104 +59,104 @@ function SubScreen(props: { screenIndex: number, caProps: CreateAccountProps }) 
 //     return authedUser?.firstName && authedUser?.lastName && authedUser?.status_confirmed;
 // }
 
-export function CreateAccountScreen(props: { componentId: string, asProfile?: boolean }) {
-    const { isKeyboardVisible } = useIsKeyboardVisible(),
-        { componentId } = props,
-        { value: currentUser } = useData("currentUser"),
-        { value: loginResult } = useData("loginResult"),
-        { verified } = loginResult || {},
-        [wizardIndex, setWizardIndex] = useState(verified ? 1 : 0),
+class CreateAccountScreen extends Screen<{}> {
+    Content: React.FC<{} & { componentId: string; }> = (props) => {
+        const { isKeyboardVisible } = useIsKeyboardVisible(),
+            { componentId } = props,
+            { value: currentUser } = useData("currentUser"),
+            { value: loginResult } = useData("loginResult"),
+            { verified } = loginResult || {},
+            [wizardIndex, setWizardIndex] = useState(verified ? 1 : 0),
 
-        user = useReadonlyEntity<IUserGet>(currentUser || {
-            profile_url: "",
-            first_name: "",
-            last_name: "",
-            handle: "",
-            email: "",
-            bio: "",
-            claims: [],
-            display_name: "",
-            id: "",
-            tags: []
-        }),
-        dashRef = useRef<IDashboard>()
+            user = useReadonlyEntity<IUserGet>(currentUser || {
+                profile_url: "",
+                first_name: "",
+                last_name: "",
+                handle: "",
+                email: "",
+                bio: "",
+                claims: [],
+                display_name: "",
+                id: "",
+                tags: []
+            }),
+            dashRef = useRef<IDashboard>()
 
-    const { resetData } = user;
-    useEffect(() => {
-        if (currentUser) {
-            resetData(currentUser);
-            if (wizardIndex === 0) {
-                setWizardIndex(verified ? 1 : 0)
+        const { resetData } = user;
+        useEffect(() => {
+            if (currentUser) {
+                resetData(currentUser);
+                if (wizardIndex === 0) {
+                    setWizardIndex(verified ? 1 : 0)
+                }
             }
+        }, [currentUser, resetData, verified])
+
+        function getWizardState(idx: number) {
+            return idx <= wizardIndex ? Wizard.States.ENABLED : Wizard.States.DISABLED
         }
-    }, [currentUser, resetData, verified])
 
-    function getWizardState(idx: number) {
-        return idx <= wizardIndex ? Wizard.States.ENABLED : Wizard.States.DISABLED
-    }
-
-    const caProps = {
-        user,
-        toastMessage: ((msg: string, delay: number | undefined) => {
-            dashRef.current?.toastMessage(msg, delay)
-        }),
-        login: loginResult,
-        prompt: (title: string, message: string, buttons: PromptButton[]) => {
-            return dashRef.current?.prompt(title, message, buttons) as Ref<IDialog>;
-        },
-        setWizardIndex,
-        saveOnly: props.asProfile,
-        next: () => {
-            setWizardIndex(wizardIndex + 1);
-        },
-        componentId
-    }
+        const caProps = {
+            user,
+            toastMessage: ((msg: string, delay: number | undefined) => {
+                dashRef.current?.toastMessage(msg, delay)
+            }),
+            login: loginResult,
+            prompt: (title: string, message: string, buttons: PromptButton[]) => {
+                return dashRef.current?.prompt(title, message, buttons) as Ref<IDialog>;
+            },
+            setWizardIndex,
+            saveOnly: props.asProfile,
+            next: () => {
+                setWizardIndex(wizardIndex + 1);
+            },
+            componentId
+        }
 
 
 
-    return !props.asProfile ?
-        <BaseScreen dashboardRef={dashRef} title={
-            caProps.login ? (!caProps.login.verified ? 'Verify Account' : 'Setup Account') : 'Create Account'
-        } scrollContentFlex >
-            <Wizard activeIndex={wizardIndex} onActiveIndexChanged={(idx) => setWizardIndex(idx)}>
-                {screenKeys.map((v, i) => <Wizard.Step state={getWizardState(i)} label={v} />)}
-            </Wizard>
-            <View style={flex}>
-                <ScrollView nestedScrollEnabled
-                    contentContainerStyle={!isKeyboardVisible ? flex : { flex: 0 }}>
-                    {<SubScreen caProps={caProps} screenIndex={wizardIndex} />}
-                </ScrollView>
-            </View>
-        </BaseScreen > :
-        /** No idea why, but this is not scrollable unless there is a background color... a fun react-native bug. **/
-        <View style={[flex, { backgroundColor: "transparent" }]}>
-            <TabController
-                items={screenKeys.map((v, i) => ({
-                    label: v.split(" ").join("\r\n"),
-                    labelStyle: {
-                        //width: 96,
-                        fontSize: fonts.xSmall,
-                        lineHeight: fonts.xSmall * 1.1,
-                        textAlign: "center"
-                    }
-                }))}>
-                <TabController.TabBar spreadItems />
+        return !props.asProfile ?
+            <BaseScreen dashboardRef={dashRef} title={
+                caProps.login ? (!caProps.login.verified ? 'Verify Account' : 'Setup Account') : 'Create Account'
+            } scrollContentFlex >
+                <Wizard activeIndex={wizardIndex} onActiveIndexChanged={(idx) => setWizardIndex(idx)}>
+                    {screenKeys.map((v, i) => <Wizard.Step state={getWizardState(i)} label={v} />)}
+                </Wizard>
                 <View style={flex}>
-                    {screenKeys.map((v, i) =>
-                        <TabController.TabPage index={i} key={v} lazy>
-                            <View style={flex}>
-                                <SubScreen caProps={caProps} screenIndex={i} />
-                            </View>
-                        </TabController.TabPage>
-                    )}
+                    <ScrollView nestedScrollEnabled
+                        contentContainerStyle={!isKeyboardVisible ? flex : { flex: 0 }}>
+                        {<SubScreen caProps={caProps} screenIndex={wizardIndex} />}
+                    </ScrollView>
                 </View>
-            </TabController>
-        </View>
+            </BaseScreen > :
+            /** No idea why, but this is not scrollable unless there is a background color... a fun react-native bug. **/
+            <View style={[flex, { backgroundColor: "transparent" }]}>
+                <TabController
+                    items={screenKeys.map((v, i) => ({
+                        label: v.split(" ").join("\r\n"),
+                        labelStyle: {
+                            //width: 96,
+                            fontSize: fonts.xSmall,
+                            lineHeight: fonts.xSmall * 1.1,
+                            textAlign: "center"
+                        }
+                    }))}>
+                    <TabController.TabBar spreadItems />
+                    <View style={flex}>
+                        {screenKeys.map((v, i) =>
+                            <TabController.TabPage index={i} key={v} lazy>
+                                <View style={flex}>
+                                    <SubScreen caProps={caProps} screenIndex={i} />
+                                </View>
+                            </TabController.TabPage>
+                        )}
+                    </View>
+                </TabController>
+            </View>
 
 
-
+    }
 }
-
 
 export function useChangeLock(caProps: CreateAccountProps, otherEntities?: IEntity<any>[]) {
     const output = useState(caProps.saveOnly || false)
@@ -169,3 +170,5 @@ export function useChangeLock(caProps: CreateAccountProps, otherEntities?: IEnti
 
     return output
 }
+
+export default new CreateAccountScreen();

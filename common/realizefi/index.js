@@ -1,81 +1,187 @@
-import express from 'express';
-import expressWinston from 'express-winston';
-import winston from 'winston';
-import cookieParser from 'cookie-parser';
-import mustacheExpress from 'mustache-express';
-import bodyParser from 'body-parser';
-import { fileURLToPath, URLSearchParams } from 'url';
-import path from 'path';
-import dotenv from 'dotenv';
-import RealizeFi from './realizefi.js';
-import cors from 'cors';
+import fetch from 'node-fetch';
 
-dotenv.config();
+export default class Index {
+    constructor(apiKey, baseUrl, redirectUrl) {
+        this.apiKey = apiKey;
+        this.baseUrl = baseUrl;
+        this.redirectUrl = redirectUrl;
+    }
 
-const port = process.env.APP_PORT;
-const realizefiBaseUrl = process.env.REALIZEFI_BASE_URL;
-const realizefiToken = process.env.REALIZEFI_TOKEN;
-const realizefiRedirectUrl = process.env.REALIZEFI_REDIRECT;
-const frontendBaseUrl = process.env.FRONTEND_BASE_URL;
+    createUser = async({}) => {
+        const requestUrl = `${this.baseUrl}/users`
+        const response = await fetch(requestUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        return await response.json();
+    }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+    getUsers = async({cursor, take}) => {
+        const requestUrl = `${this.baseUrl}/users`;
+        const response = await fetch(requestUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        })
+        return await response.json();
+    }
 
-const app = express();
-app.set('views', `${__dirname}/views`);
-app.set('view engine', 'mustache');
-app.engine('mustache', mustacheExpress());
+    getUser = async({userId}) => {
+        const response = await fetch(`${this.baseUrl}/users/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
+    }
 
-app.use(cors());
-app.options("*", cors());
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
-app.use(express.json());
-app.use(expressWinston.logger({
-    transports: [
-      new winston.transports.Console()
-    ],
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.json()
-    ),
-    meta: false,
-    msg: "HTTP  ",
-    expressFormat: true,
-    colorize: true,
-    ignoreRoute: function (req, res) { return false; }
-  }));
+    authPortal = async({userId}) => {
+        const requestUrl = `${this.baseUrl}/users/${userId}/auth_portals`
+        const response = await fetch(requestUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                redirects: {
+                    success: this.redirectUrl,
+                    failure: this.redirectUrl
+                }
+            })
+        });
+        return await response.json();
+    }
 
-const realizefiApi = new RealizeFi(realizefiToken, realizefiBaseUrl, realizefiRedirectUrl);
+    listOrders = async({institutionLinkId, cursor, take, status}) => {
+        const params = new URLSearchParams();
+        status === null ? '' : params.append('status', status);
+        // cursor === null ? '' : params.append('cursor', parseInt(cursor));
+        // take === null ? '' : params.append('take', parseInt(take));
+        const requestUrl = `${this.baseUrl}/institution_links/${institutionLinkId}/orders?${params.toString()}`;
+        const response = await fetch(requestUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
+    }
 
-app.get('/', async (req, res) => {
-    const users = await realizefiApi.getUsers({});
-    res.render('index', {
-        data: JSON.stringify(users.data),
-        frontendBaseUrl: frontendBaseUrl
-    });
-});
+    listPositions = async({institutionLinkId}) => {
+        const requestUrl = `${this.baseUrl}/institution_links/${institutionLinkId}/positions`;
+        const response = await fetch(requestUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
+    }
 
-app.post("/api/realize", async(req, res) => {
-    const {action, ...rest} = req.body;
-    const response = await realizefiApi[action]({...rest});
-    res.json(response)
-});
+    getOrder = async({institutionLinkId, orderId}) => {
+        const requestUrl = `${this.baseUrl}/institution_links/${institutionLinkId}/orders/${orderId}`;
+        const response = await fetch(requestUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
+    }
 
-app.post("/api/realize/auth-portal", async(req, res) => {
-    const {userId} = req.body;
-    const response = await realizefiApi.authPortal({userId});
-    const {url} = response;
-    res.json({url});
-});
+    getTransactions = async({institutionLinkId, cursor, take, includeRaw}) => {
+        const params = new URLSearchParams();
+        includeRaw === null ? '' : params.append('includeRaw', includeRaw);
+        // cursor === null ? '' : params.append('cursor', parseInt(cursor));
+        // take === null ? '' : params.append('take', parseInt(take));
+        const requestUrl = `${this.baseUrl}/institution_links/${institutionLinkId}/transactions?${params.toString()}`;
+        const response = await fetch(requestUrl, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
 
-app.get("/api/realize/redirect", async(req, res) => {
-    console.log(req.body);
-    console.log(req.path);
-    res.redirect('/')
-});
+    }
+
+    getBalances = async({institutionLinkId}) => {
+        const requestUrl = `${this.baseUrl}/institution_links/${institutionLinkId}/balances`
+        const response = await fetch(requestUrl, {
+            method:'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
+    }
+
+    listUserOrders = async({userId, cursor, take, status }) => {
+        const params = new URLSearchParams();
+        status === null ? '' : params.append('status', status);
+        // cursor === null ? '' : params.append('cursor', parseInt(cursor));
+        // take === null ? '' : params.append('take', parseInt(take));
+        const requestUrl = `${this.baseUrl}/users/${userId}/orders?${params.toString()}`
+        const response = await fetch(requestUrl, {
+            method:'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
+    }
+
+    getHistoricalPerformance = async({institutionLinkId}) => {
+        const requestUrl = `${this.baseUrl}/institution_links/${institutionLinkId}/historical_performance`
+        const response = await fetch(requestUrl, {
+            method:'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
+    }
+
+    getInstitutionalAsset = async({institutionLinkId, symbol}) => {
+        const requestUrl = `${this.baseUrl}/institution_links/${institutionLinkId}/assets/${symbol}`
+        const response = await fetch(requestUrl, {
+            method:'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
+    }
+
+    listInstitutionalAssets = async({institutionLinkId, symbols}) => {
+        const params = new URLSearchParams();
+        symbols === null ? '' : params.append('symbols', symbols);
+        const requestUrl = `${this.baseUrl}/institution_links/${institutionLinkId}/assets?${params.toString()}`
+        const response = await fetch(requestUrl, {
+            method:'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`
+            }
+        });
+        return await response.json();
+    }
 
 
-app.listen(port, () => {
-    console.log(`Example app listening on port http://localhost:${port}`);
-});
+}

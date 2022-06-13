@@ -1,5 +1,8 @@
 import IconNoBg from './assets/store-front-logo2-alt.svg'
-import IconBg from './assets/store-front-app-icon.svg'
+import IconBg from './assets/store-front.svg'
+import AppTitle from './assets/app-title.svg'
+import SplashWelcome from './assets/splash-welcome.svg'
+
 import MenuIcon from './assets/side-menu/menu-icon.svg';
 import PlusIcon from './assets/misc/plus.svg';
 import UpvoteIcon from './assets/post-feed/upvote.svg'
@@ -35,13 +38,15 @@ export const sideMenu = {
 
 
 export {
+    AppTitle,
     IconBg,
     IconNoBg,
     MenuIcon,
     PlusIcon,
     UpvoteIcon,
     CommentIcon,
-    BookmarkActive
+    BookmarkActive,
+    SplashWelcome
 }
 
 

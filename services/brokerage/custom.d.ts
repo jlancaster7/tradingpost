@@ -1,10 +1,23 @@
+import {DateTime} from "luxon";
+
 declare namespace Express {
     export interface Request {
-        user?: {
-            authToken: string
-            username: string
-            password: string
-        }
-        name: string
+        user?: UserInterface
     }
+}
+
+interface Config {
+    finicityAppKey: string
+    finicityPartnerId: string
+    finicityPartnerSecret: string
+    finicityWebhook: string
+}
+
+interface UserInterface {
+    authToken: string
+    username: string
+    password: string
+    finicityCustomerId: string
+    finicityCustomerUsername: string
+    finicityCustomerCreated: DateTime | undefined
 }
