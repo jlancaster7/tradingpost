@@ -1,0 +1,87 @@
+{
+  "mappings": {
+    "properties": {
+      "hasRatings": {
+        "type": "integer"
+      },
+      "userType": { 
+        "type": "keyword"
+      },
+      "user": {
+        "type": "object",
+        "imageUrl": {
+          "type":"text",
+          "index": false
+        },
+        "id": {
+          "type": "keyword"
+        },
+        "name": {
+          "type": "keyword"
+        }
+      },
+      "tradingPostUserName": {
+        "type": "keyword"
+      },
+      "postType": {
+        "type": "keyword"
+      },
+      "platformUserName": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "displayPlatformName": {
+        "type": "text"
+      },
+      "imageUrl": {
+        "type": "text",
+        "index": false
+      },
+      "platformProfileUrl": {
+        "type": "text",
+        "index": false
+      },
+      "postUrl": {
+        "type": "text",
+        "index": false
+      },
+      "title": {
+        "type": "text"
+      },
+      "htmlTitle": {
+        "type": "text",
+        "index": false
+      },
+      "body": {
+        "type": "text"
+      },
+      "htmlBody": {
+        "type": "text",
+        "index": false
+      },
+      "description": {
+        "type": "text"
+      },
+      "updatedAt": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+      },
+      "platformedCreatedAt": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+      },
+      "addedToTradingPost": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+      },
+      "meta": {
+        "type": "object",
+        "index": false
+      }
+    }
+  }
+}
