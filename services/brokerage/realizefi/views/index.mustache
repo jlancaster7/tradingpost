@@ -1,0 +1,220 @@
+<html>
+<head>
+</head>
+<body>
+    <p> 
+        You'll need to create a user for yourself within the Index system. Click "Create User" and fill out the info below
+        to do such. Once thats finished, copy the user ID from the "Current Users" textarea and toss it into the Authenticate Account 
+        input and you can start authenticating brokerages that you'd like. 
+        When finished, copy and paste the institutionId from the users list and start making requests with it below
+    </p>
+    
+    <h1> Create Index User</h1>
+    <div>
+        <button id="createUser">
+            Create User
+        </button>
+        <div id="newUser"></div>
+    </div>
+    
+    <div>
+        <h1> Authenticate Account </h1>
+        <div>
+            <input type="text" id="userId"/>
+            <button id="authAccount">
+                Auth Account
+            </button>
+        </div>  
+    </div>
+
+    <div>
+        <h1> Current Users</h1>
+        <div id="currentUsers">{{{data}}}</div>
+    </div>
+
+    <div>
+        <h1> HTTP Calls...</h1> 
+        <div>
+            <div>
+                <button id="getTransactions" class="apiRequest">
+                    Get Transactions
+                </button>
+                <input type="text" data-name="institutionLinkId" placeholder="Institution Link Id..."/>
+                <input type="text" data-name="cursor" placeholder="cursor"/>
+                <input type="text" data-name="take" placeholder="take"/>
+                <label> Get Raw Data </label>           
+                <input type="checkbox" data-name="includeRaw" placeholder="Should include raw...."/>
+            </div>
+
+            <div>
+                <button id="getBalances" class="apiRequest">
+                    Get Balances
+                </button>
+                <input type="text" data-name="institutionLinkId" placeholder="Institution Link Id...">
+            </div>
+
+            <div>
+                <button id="getUser" class="apiRequest">
+                    Get User
+                </button>
+                <input type="text" data-name="userId" placeholder="User id....">
+            </div>
+
+            <div>
+                <button id="listOrders" class="apiRequest">
+                    List Orders
+                </button>
+                <input type="text" data-name="institutionLinkId" placeholder="Institution Link ID...">
+                <input type="text" data-name="cursor" placeholder="cursor"/>
+                <input type="text" data-name="take" placeholder="take"/>
+                <select name="status" data-name="status">
+                    <option value="ALL" default> ALL </option>
+                    <option value="OPEN"> OPEN </option>
+                </select>
+            </div>
+
+            <div>
+                <button id="getOrder" class="apiRequest">
+                    Get Order
+                </button>
+                <input type="text" data-name="institutionLinkId" placeholder="Institution Link ID...">
+                <input type="text" data-name="orderId" placeholder="Order ID...">
+            </div>
+
+            <div>
+                <button id="listPositions" class="apiRequest">
+                    List Positions
+                </button>
+                <input type="text" data-name="institutionLinkId" placeholder="Institution Link ID...">
+            </div>
+
+            <div>
+                <button id="listUserOrders" class="apiRequest">
+                    List User Orders
+                </button>
+                <input type="text" data-name="userId" placeholder="User ID...">
+                <input type="text" data-name="cursor" placeholder="Cursor...">
+                <input type="text" data-name="take" placeholder="Take...">
+                <select name="status" data-name="status">
+                    <option value="ALL" default> ALL </option>
+                    <option value="OPEN"> OPEN </option>
+                </select>
+            </div>
+
+            <div>
+                <button id="listPositions" class="apiRequest">
+                    Get Historical Performance
+                </button>
+                <input type="text" data-name="institutionLinkId" placeholder="Institution Link ID...">
+            </div>
+
+            <div>
+                <button id="getInstitutionalAsset" class="apiRequest">
+                    Get Institutional Asset
+                </button>
+                <input type="text" data-name="institutionLinkId" placeholder="Institution Link ID...">
+                <input type="text" data-name="symbol" placeholder="Symbol....">
+            </div>
+
+            <div>
+                <button id="listInstitutionalAssets" class="apiRequest">
+                    List Institutional Assests
+                </button>
+                <input type="text" data-name="institutionLinkId" placeholder="Institution Link ID...">
+                <label> Comma delimited list of symbols...</label>
+                <input type="text" data-name="symbols" placeholder="Symbols....">
+            </div>
+
+        </div>
+
+        <textarea id="response" style="width: 1000; height: 100;"></textarea>
+    </div>
+
+    <script>
+        const baseUrl = "{{{frontendBaseUrl}}}"
+
+        const createUserEl = document.getElementById('createUser');
+        createUserEl.addEventListener('click', async () => {
+            const requestUrl = `${baseUrl}/realize`
+            const response = await fetch(requestUrl, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                method: 'post',
+                mode:'cors',
+                body: JSON.stringify({
+                    action: "createUser"
+                })
+            });
+
+            const body = await response.json()
+            const newUserEl = document.getElementById('newUser');
+            newUserEl.innerHTML = JSON.stringify(body, null, '\t');
+        });
+
+        const authClickEl = document.getElementById('authAccount');
+        authClickEl.addEventListener("click", async() => {
+            const userId = document.getElementById('userId').value; 
+            const requestUrl = `${baseUrl}/realize/auth-portal`
+            const response = await fetch(requestUrl, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                method: 'post',
+                mode: 'cors',
+                body: JSON.stringify({
+                    userId: userId
+                })
+            });
+            const {url} = await response.json()
+            window.location.replace(url);
+        });    
+
+        const responseEl = document.getElementById('response');
+        const requestEls = document.getElementsByClassName('apiRequest');
+        [...requestEls].forEach(function(el, idx) {
+            el.addEventListener("click", async function() {
+                let requestObj = {action: this.id};
+                let sib = this.parentNode.firstChild;
+                while(sib) {
+                    tmp = sib
+                    sib = sib.nextSibling;
+                    console.log(tmp.tagName);
+                    if(tmp.nodeType === 1 && tmp !== this && (tmp.tagName === 'INPUT'||tmp.tagName === 'SELECT')) {
+                        const type = tmp.type;
+                        let value = "";
+                        if (type === 'checkbox') 
+                            value = tmp.checked;
+                        if (type === 'text') {
+                            value = tmp.value.trim();
+                            if (value === '') continue
+                        }
+                        if (type === 'select-one') {
+                            value = tmp.value.trim()
+                        }
+                        
+                        const attr = tmp.getAttribute('data-name');
+                        requestObj = {
+                            ...requestObj,
+                            [attr]: value
+                        }
+                    }
+                }
+
+                const requestUrl = `${baseUrl}/realize`
+                const response = await fetch(requestUrl, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    method: 'post',
+                    mode: 'cors',
+                    body: JSON.stringify(requestObj)
+                });
+                const body = await response.json();
+                responseEl.innerHTML = JSON.stringify(body, null, "\t");
+            });
+        });
+    
+    </script>
+</body>
+</html>
