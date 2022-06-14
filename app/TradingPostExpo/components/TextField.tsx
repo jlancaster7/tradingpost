@@ -15,15 +15,18 @@ export interface ITextField {
     errorMessage?: string
 }
 export function TextField(props: {
-    label: string,
+    label?: string,
     textInputRef?: MutableRefObject<ITextField | null>
     disabled?: boolean
+    validate?: (value: string | undefined) => boolean,
+    validateOnChange?:boolean
+    errorMessage?: string,
     //defaulted this to false... which is the right way to to a positive assetion...  
     spellCheck?: boolean,
     //defaulted this to false... which is the right way to to a positive assetion...  
     autoCorrect?: boolean,
     caption?: InputProps["caption"]
-} &   TextInputProps ) {
+} & TextInputProps) {
     const rnuRef = useRef<Input>(null);
     // if (props.textInputRef) {
     //     props.textInputRef.current = {
@@ -31,7 +34,7 @@ export function TextField(props: {
     //         field: rnuRef
     //     }
     // }
-    
+
     //const tt = { spellCheck: true, autoCorrect:false } as TextInputProps
 
     return <Input
@@ -42,7 +45,7 @@ export function TextField(props: {
         //disabledColor={props.disabledColor || Colors.grey20}
         //placeholder="Enter Email..."
         //validateOnChange={props.validateOnChange}
-        caption={"Test"}
+        //caption={"Test"}
         //validate={props.validate}
         //errorMessage={props.errorMessage}
         value={props.value}
@@ -56,7 +59,7 @@ export function TextField(props: {
         placeholder={props.placeholder}
         //error={props.error}
         style={props.style}
-        //hideUnderline={props.disabled}
-        //containerStyle={props.containerStyle}
+    //hideUnderline={props.disabled}
+    //containerStyle={props.containerStyle}
     />
 }

@@ -20,8 +20,6 @@ import { AppTitle, IconBg, IconNoBg } from '../images'
 
 
 export default () => {
-
-
     const
         userRef = useRef<ITextField>(null),
         passRef = useRef<ITextField>(null),
@@ -87,8 +85,7 @@ export default () => {
                         setLoggingIn(false);
                         setResetMode(false);
                     }
-                }}
-            >Reset Password</PrimaryButton>
+                }}>Reset Password</PrimaryButton>
 
 
         }

@@ -4,10 +4,10 @@ import _AppTitle from './assets/app-title.svg'
 import _SplashWelcome from './assets/splash-welcome.svg'
 
 // import MenuIcon from './assets/side-menu/menu-icon.svg';
-// import PlusIcon from './assets/misc/plus.svg';
-// import UpvoteIcon from './assets/post-feed/upvote.svg'
-// import CommentIcon from './assets/post-feed/comment.svg'
-// import BookmarkActive from './assets/post-feed/bookmark-active.svg'
+import _PlusIcon from './assets/misc/plus.svg';
+import _UpvoteIcon from './assets/post-feed/upvote.svg'
+import _CommentIcon from './assets/post-feed/comment.svg'
+import _BookmarkActive from './assets/post-feed/bookmark-active.svg'
 
 // /** Side Menu Icons */
 // import Account from './assets/side-menu/Account.svg'
@@ -39,7 +39,7 @@ import { SvgProps } from 'react-native-svg'
 // }
 
 function makeExpoSvg(Svg: React.FC<SvgProps>) {
-    return (props: SvgProps) => <SvgExpo {...props}><Svg /></SvgExpo>
+    return (props: SvgProps & { onReady?: (parent: any) => void }) => <SvgExpo {...props}><Svg /></SvgExpo>
 }
 
 export const AppTitle = makeExpoSvg(_AppTitle)
@@ -47,14 +47,15 @@ export const SplashWelcome = makeExpoSvg(_SplashWelcome)
 
 export const IconBg = makeExpoSvg(_IconBg)
 export const IconNoBg = makeExpoSvg(_IconNoBg)
+export const PlusIcon = makeExpoSvg(_PlusIcon)
 
 // IconBg,
 // IconNoBg,
 // MenuIcon,
 // PlusIcon,
-// UpvoteIcon,
-// CommentIcon,
-// BookmarkActive,
+export const UpvoteIcon = makeExpoSvg(_UpvoteIcon);
+export const CommentIcon = makeExpoSvg(_CommentIcon);
+export const BookmarkActive = makeExpoSvg(_BookmarkActive);
 
 
 

@@ -1,5 +1,5 @@
 
-import React, { Children, FC, PropsWithChildren, ReactElement } from "react";
+import React, { Children, FC, PropsWithChildren, ReactElement, useEffect, useRef } from "react";
 //import { Text, View } from "react-native-ui-lib";
 //import { LoginButtons } from "../components/LoginButtons";
 import { AppTitle, SplashWelcome } from "../images";
@@ -7,16 +7,30 @@ import { AppTitle, SplashWelcome } from "../images";
 //import CreateAccountScreen from "./CreateAccountScreen";
 import { fonts, paddView, sizes } from '../style'
 import { G, GProps, Path, SvgProps } from "react-native-svg";
-import { cloneElement } from "react";
 import { Link } from "../components/Link";
-import { Text, View } from "react-native";
+import { Animated, Platform, View, StyleSheet } from "react-native";
 import { SvgExpo } from "../components/SvgExpo";
 import { LoginButtons } from "../components/LoginButtons";
+import { setGlobalUser } from "../hooks/useCachedResources";
+import { NavigationProp } from "@react-navigation/native";
+import { Text, Layout, ViewPager, TabView, Tab } from "@ui-kitten/components";
+import { useState } from "react";
+import { ITextField, TextField } from "../components/TextField";
+import { Header } from "../components/Headers";
+import { Section } from "../components/Section";
 //import { BaseScreenProps } from "../layouts/BaseLayout";
 //import LoginScreen from "./LoginScreen";
 //import { LoginButtons } from "../components/LoginButtons";
 
 
+const styles = StyleSheet.create({
+    tab: {
+        height: 192,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+});
 export type WelcomeScreenProps = { title: string }
 
 const ensureG = (child: ReactElement): child is ReactElement<GProps> => {
@@ -68,23 +82,143 @@ const SvgMagic: React.FC<{ children: ReactElement<SvgProps> }> = (props) => {
 //     };
 // }
 //console.log("MY app type is " + typeof AppTitle)
-export default () => {
-    return <><View style={[...paddView, { justifyContent: "center" }]}>
+
+
+
+export default ({ navigation }: { navigation: NavigationProp<any> }) => {
+    const cleanUp = useRef<number>(),
+        [selectedIndex, setSelectedIndex] = useState(0);
+    useEffect(() => {
+        return () => clearInterval(cleanUp.current);
+    }, [])
+
+    const
+        userRef = useRef<ITextField>(null),
+        passRef = useRef<ITextField>(null),
+        [username, setUsername] = useState<string>(''),
+        [password, setPassword] = useState<string>(''),
+        [loggingIn, setLoggingIn] = useState(false),
+        //{ isKeyboardVisible } = useIsKeyboardVisible(),
+        //  { toastMessage, toastProps } = useToast(),
+        [resetMode, setResetMode] = useState(false),
+        intervalRef = useRef<any>(),
+        opacityAnim = useRef(new Animated.Value(0)).current;
+
+
+
+    return <><View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>
         <AppTitle style={{ marginVertical: sizes.rem1, alignSelf: "center", width: "100%", aspectRatio: 5 }} />
-        <SplashWelcome style={{ backgroundColor: "orange", width: "100%", aspectRatio: 1.5 }} />
-        <Text style={{ textAlign: "center", margin: sizes.rem2, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>Welcome to the team!</Text>
+        <TabView
+            selectedIndex={selectedIndex}
+            onSelect={index => setSelectedIndex(index)}
+            style={{ width: "100%" }}
+            indicatorStyle={{
+                height: 0
+            }}
+            tabBarStyle={{
+                height: 0,
+
+            }}
+        >
+            <Tab>
+                <SplashWelcome
+                    onReady={(item) => {
+                        if (Platform.OS === "web" && item instanceof HTMLDivElement) {
+                            const stonks = ["fb", "tsla", "nvda", "btc", "ether", "doge"].map((n) => item.querySelector<SVGGElement>(`[id=${n}]`));
+                            stonks.forEach((s) => {
+                                if (s)
+                                    s.style.opacity = "0";
+                            });
+
+                            let lastItem: SVGGElement | null = null;
+                            let lastItem2: SVGGElement | null = null;
+                            console.log("DOING INTERVAL STUFF");
+                            if (intervalRef.current)
+                                clearInterval(intervalRef.current);
+
+                            intervalRef.current = setInterval(() => {
+                                const index = Math.floor(Math.random() * (9));
+                                const index2 = Math.floor(Math.random() * (9));
+
+                                if (lastItem)
+                                    lastItem.style.opacity = "0";
+
+                                if (lastItem2)
+                                    lastItem2.style.opacity = "0";
+
+
+                                lastItem = stonks[index];
+                                lastItem2 = stonks[index2];
+                                if (lastItem)
+                                    lastItem.style.opacity = "1";
+                                if (lastItem2)
+                                    lastItem2.style.opacity = "1";
+                            }, 1000)
+                        }
+                    }}
+                />
+            </Tab>
+            <Tab>
+                <Section title="Login">
+                    <TextField placeholder='Username' returnKeyType="next"
+                        onChangeText={(name) => setUsername(name)}
+                        //validateOnChange
+                        textInputRef={userRef}
+                        style={{ marginVertical: sizes.rem1 }}
+                    //validate={isValidEmail}
+                    //errorMessage={"Invalid Email Address"}
+                    //validateOnChange
+                    //onSubmitEditing={() => passRef.current?.focus()}
+                    //error={userError}
+                    />
+
+                    <TextField
+                        //containerStyle={{ height: 64 }}
+                        //label='Password'
+                        //validate={isRequired}
+                        onChangeText={(pass) => setPassword(pass)}
+                        placeholder='Password'
+                        style={{ marginVertical: sizes.rem1 }}
+                        //errorMessage="Invalid Password"
+                        //validateOnChange
+                        secureTextEntry textInputRef={passRef} />
+                    <Link style={{ paddingTop: 4, paddingBottom: 16, alignSelf: "flex-end" }} onPress={() => setResetMode(true)}>Forgot Password?</Link>
+                </Section>
+            </Tab>
+        </TabView>
+        <Animated.Text style={{
+            textAlign: "center", margin: sizes.rem2, fontSize: fonts.large, lineHeight: fonts.large * 1.5,
+            opacity: !selectedIndex ? 1 : opacityAnim
+        }}> {!selectedIndex ? "Welcome to the team!" : "Hey... Welcome Back!"}</Animated.Text>
         <LoginButtons
             createAccountProps={{
                 onPress: () => {
-                    //    CreateAccountScreen.open(p.componentId, {});
+                    navigation.navigate("Create");
+                    //CreateAccountScreen.open(p.componentId, {});
                 }
             }}
             loginProps={{
-                //    onPress: () => LoginScreen.open(p.componentId, {})
+                onPress: () => {
+                    if (!selectedIndex) {
+                        setSelectedIndex(1);
+                        Animated.timing(
+                            opacityAnim,
+                            {
+                                delay: 0.75,
+                                toValue: 1,
+                                duration: 2000,
+                                useNativeDriver: true
+                            }).start();
+                    }
+                    else {
+                        setGlobalUser(true);
+                    }
+                }
+                //setGlobalUser(true)
             }}
         />
     </View>
-        <Link style={{ textAlign: "right", position: "absolute", bottom: sizes.rem1, right: sizes.rem1, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>What is TradingPost{">>"}</Link>
+        {!selectedIndex && <Link style={{ textAlign: "right", position: "absolute", bottom: sizes.rem1, right: sizes.rem1, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>What is TradingPost{">>"}</Link>}
     </>
     //    
     //</View >

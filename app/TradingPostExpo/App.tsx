@@ -31,20 +31,11 @@ export default function App() {
   if (!isLoadingComplete) {
     return null;
   }
-  else if (user) {
-    //return <Text>HELLO</Text>
-    return <ApplicationProvider {...eva} theme={{ ...eva.light, ...theme }}>
-      <SafeAreaProvider>
-        <WelcomeScreen />
-      </SafeAreaProvider>
-    </ApplicationProvider>
-  }
-  else {
-    return (
-      <SafeAreaProvider>
-        <Navigation colorScheme={colorScheme} />
-        <StatusBar />
-      </SafeAreaProvider>
-    );
-  }
+
+  return <ApplicationProvider {...eva} theme={{ ...eva.light, ...theme }}>
+    <SafeAreaProvider>
+      <Navigation colorScheme={colorScheme} isLoggedIn={Boolean(user)} />
+      <StatusBar />
+    </SafeAreaProvider>
+  </ApplicationProvider>
 }
