@@ -1,9 +1,10 @@
 import {Context} from 'aws-lambda';
-import {IEX, GetUSHolidayAndTradingDays} from '../lib/iex';
+import IEX, {GetExchanges, GetUsExchanges, GetUSHolidayAndTradingDays} from '@tradingpost/common/iex/index';
 import {DateTime} from 'luxon';
-import {Repository, addUSHoliday, addExchange} from "../lib/repository";
+import {Repository} from "../../services/market-data/repository";
+import {addUSHoliday, addExchange} from '../../services/market-data/interfaces';
 import {Client} from 'pg';
-import {Configuration} from "../lib/configuration";
+import {Configuration} from "@tradingpost/common/configuration";
 
 const AWS = require('aws-sdk')
 AWS.config.update({region: 'us-east-1'});
@@ -28,7 +29,7 @@ module.exports.run = async (event: any, context: Context) => {
     const internationalExchanges = await iex.getInternationalExchanges();
 
     let exchanges: addExchange[] = [];
-    usExchanges.forEach(exchange => {
+    usExchanges.forEach((exchange: GetUsExchanges) => {
         exchanges.push({
             longName: exchange.longName,
             mic: exchange.mic,
@@ -40,7 +41,7 @@ module.exports.run = async (event: any, context: Context) => {
         });
     });
 
-    internationalExchanges.forEach(exchange => {
+    internationalExchanges.forEach((exchange: GetExchanges) => {
         exchanges.push({
             description: exchange.description,
             exchangeSuffix: exchange.exchangeSuffix,

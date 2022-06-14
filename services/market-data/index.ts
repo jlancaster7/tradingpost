@@ -1,5 +1,6 @@
-import {Repository} from "./lib/repository";
+import {Repository} from "./repository";
 import {DateTime} from "luxon";
+import {getUSExchangeHoliday} from "./interfaces";
 
 export default class Index {
     private repository: Repository;
@@ -48,7 +49,7 @@ export default class Index {
     setMarketHolidays = async () => {
         if (Object.keys(this.holidayMap).length === 0) {
             let holidays = await this.repository.getCurrentAndFutureExchangeHolidays();
-            holidays.forEach((h) => this.holidayMap[h.date.toUnixInteger()] = {});
+            holidays.forEach((h: getUSExchangeHoliday) => this.holidayMap[h.date.toUnixInteger()] = {});
         }
     }
 }

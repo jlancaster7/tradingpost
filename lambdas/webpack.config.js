@@ -6,6 +6,7 @@ module.exports = {
     entry: slsw.lib.entries,
     devtool: 'source-map',
     resolve: {
+        symlinks: true,
         extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
     },
     output: {

@@ -9,6 +9,7 @@
   "author": "Levert James Jr.",
   "license": "MIT",
   "dependencies": {
+    "aws-sdk": "^2.1153.0",
     "luxon": "^2.4.0",
     "node-fetch": "^2.6.7"
   },

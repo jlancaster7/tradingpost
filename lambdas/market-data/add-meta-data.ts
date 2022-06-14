@@ -1,14 +1,15 @@
-import {GetCompany, GetLogo, GetPreviousDayPrice, GetQuote, GetStatsBasic, IEX} from "../../services/market-data/lib/iex";
+import IEX, {GetCompany, GetLogo, GetPreviousDayPrice, GetQuote, GetStatsBasic} from "@tradingpost/common/iex/index";
 import {Client} from "pg";
+import {Repository} from "../../services/market-data/repository";
 import {
     addSecurity,
     addSecurityPrice,
     getSecurityBySymbol,
-    Repository,
     upsertSecuritiesInformation
-} from "../../services/market-data/lib/repository";
+} from '../../services/market-data/interfaces';
+import {GetIexSymbols, GetOtcSymbols} from '@tradingpost/common/iex/index';
 import {DateTime} from "luxon";
-import {Configuration} from "../../services/market-data/lib/configuration";
+import {Configuration} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
 
 const AWS = require('aws-sdk')
@@ -175,11 +176,11 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
     const possiblyNewOTCSymbols = await iex.getOtcSymbols();
 
     let newSymbols: string[] = [];
-    possiblyNewSecurities.forEach(n => {
+    possiblyNewSecurities.forEach((n: GetIexSymbols) => {
         const cs = currentSecuritiesMap[n.symbol]
         if (cs === undefined || cs === null) newSymbols.push(n.symbol)
     })
-    possiblyNewOTCSymbols.forEach(n => {
+    possiblyNewOTCSymbols.forEach((n: GetOtcSymbols) => {
         const cs = currentSecuritiesMap[n.symbol]
         if (cs === undefined || cs === null) newSymbols.push(n.symbol)
     });

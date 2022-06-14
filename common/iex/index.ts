@@ -2,7 +2,7 @@ import fetch, {Response} from 'node-fetch';
 import {sleep} from "../utils/sleep";
 import {URL} from 'url';
 
-class IEXError extends Error {
+export class IEXError extends Error {
     public iexMessage: string;
     public statusCode: number;
 
@@ -13,7 +13,7 @@ class IEXError extends Error {
     }
 }
 
-class RetryError extends Error {
+export class RetryError extends Error {
     constructor(message?: string) {
         super(message);
     }
@@ -22,7 +22,7 @@ class RetryError extends Error {
 export const ProductionBaseURL = "https://cloud.iexapis.com/v1";
 export const SandboxBaseURL = "https://sandbox.iexapis.com";
 
-interface HTTPConfiguration {
+export interface HTTPConfiguration {
     method: string
     headers?: Record<string, string>
     body?: any
@@ -407,7 +407,7 @@ export interface GetUSHolidayAndTradingDays {
     settlementDate?: string
 }
 
-export class IEX {
+export default class IEX {
     private readonly baseURL: string;
     private readonly token: string;
     private readonly retryMax: number;

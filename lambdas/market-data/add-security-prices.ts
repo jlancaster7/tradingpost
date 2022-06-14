@@ -1,8 +1,9 @@
 import {Context} from 'aws-lambda';
-import {Configuration} from "../../services/market-data/lib/configuration";
+import {Configuration} from "@tradingpost/common/configuration";
 import {Client} from "pg";
-import {addSecurityPrice, getSecurityBySymbol, Repository} from "../../services/market-data/lib/repository";
-import {GetQuote, IEX} from "../../services/market-data/lib/iex";
+import {Repository} from "../../services/market-data/repository";
+import {addSecurityPrice, getSecurityBySymbol} from '../../services/market-data/interfaces';
+import IEX, {GetQuote} from "@tradingpost/common/iex/index";
 import {DateTime} from "luxon";
 import Index from "../../services/market-data";
 

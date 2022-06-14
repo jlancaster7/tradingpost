@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IEX = exports.SandboxBaseURL = exports.ProductionBaseURL = void 0;
+exports.IEX = exports.SandboxBaseURL = exports.ProductionBaseURL = exports.RetryError = exports.IEXError = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
 const sleep_1 = require("../utils/sleep");
 const url_1 = require("url");
@@ -23,11 +23,13 @@ class IEXError extends Error {
         this.statusCode = statusCode;
     }
 }
+exports.IEXError = IEXError;
 class RetryError extends Error {
     constructor(message) {
         super(message);
     }
 }
+exports.RetryError = RetryError;
 exports.ProductionBaseURL = "https://cloud.iexapis.com/v1";
 exports.SandboxBaseURL = "https://sandbox.iexapis.com";
 const HTTPConfigurationDefaults = {

@@ -1,5 +1,5 @@
-service: market-data-service
-app: market-data-service
+service: tradingpost-job
+app: tradingpost-app
 
 frameworkVersion: '3'
 
@@ -10,8 +10,8 @@ provider:
   stage: production
   name: aws
   tags:
-    service: market-data-service
-  runtime: nodejs14.x
+    service: tradingpost-background-job
+  runtime: nodejs16.x
   iam:
     role: arn:aws:iam::670171407375:role/Basic-Lambda-Role
   vpc:
@@ -24,7 +24,7 @@ provider:
 
 functions:
   add-meta-data:
-    handler: lambda/add-meta-data.run
+    handler: market-data/add-meta-data.run
     description: Ingests securities, exchanges, in the morning, in the evening it ingests stats, quotes, and closing pricing
     logRetentionInDays: 14
     timeout: 600
@@ -35,7 +35,7 @@ functions:
       - schedule: cron(0 12 ? * MON-FRI *) # 8:00 AM EDT
       - schedule: cron(0 11 ? * MON-FRI *) # 8:00 AM EST
   add-holidays:
-    handler: lambda/add-holidays.run
+    handler: market-data/add-holidays.run
     description: Ingests market holidays once a year
     logRetentionInDays: 14
     timeout: 300
@@ -43,7 +43,7 @@ functions:
     events:
       - schedule: cron(0 0 1 1 ? *)
   add-security-pricing:
-    handler: lambda/add-security-prices.run
+    handler: market-data/add-security-prices.run
     description: Ingests security prices
     logRetentionInDays: 14
     timeout: 120 # TODO: Change to 1 min once I update function body
