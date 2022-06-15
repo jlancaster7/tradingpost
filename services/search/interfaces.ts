@@ -1,5 +1,12 @@
 import {DateTime} from 'luxon';
 
+export type LastID = string | number | null
+
+export interface Provider {
+    getItems: (lastId: LastID) => Promise<{ items: ElasticSearchBody[], lastId: LastID }>
+}
+
+
 export interface ElasticSearchBody {
     id?: null
     user: {
