@@ -42,13 +42,13 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     });
     console.log("Index Created....");
     console.log("Indexing Data....");
-    for (let i = 0; i < esData.length; i++) {
-        yield client.index({
-            index: indexName,
-            document: esData[i]
-        });
-    }
-    yield client.indices.refresh({ index: indexName });
+    // for (let i = 0; i < esData.length; i++) {
+    //     await client.index({
+    //         index: indexName,
+    //         document: esData[i]
+    //     });
+    // }
+    // await client.indices.refresh({index: indexName});
     console.log(`ElasticSearch Index(${indexName}) Built With New Data`);
 });
 run().catch(err => {

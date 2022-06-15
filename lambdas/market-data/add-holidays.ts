@@ -1,5 +1,5 @@
 import {Context} from 'aws-lambda';
-import IEX, {GetExchanges, GetUsExchanges, GetUSHolidayAndTradingDays} from '@tradingpost/common/iex/index';
+import IEX, {GetExchanges, GetUsExchanges, GetUSHolidayAndTradingDays} from '@tradingpost/common/iex';
 import {DateTime} from 'luxon';
 import {Repository} from "../../services/market-data/repository";
 import {addUSHoliday, addExchange} from '../../services/market-data/interfaces';

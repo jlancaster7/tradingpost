@@ -1,4 +1,4 @@
-import IEX, {GetCompany, GetLogo, GetPreviousDayPrice, GetQuote, GetStatsBasic} from "@tradingpost/common/iex/index";
+import IEX, {GetCompany, GetLogo, GetPreviousDayPrice, GetQuote, GetStatsBasic} from "@tradingpost/common/iex";
 import {Client} from "pg";
 import {Repository} from "../../services/market-data/repository";
 import {
@@ -7,7 +7,7 @@ import {
     getSecurityBySymbol,
     upsertSecuritiesInformation
 } from '../../services/market-data/interfaces';
-import {GetIexSymbols, GetOtcSymbols} from '@tradingpost/common/iex/index';
+import {GetIexSymbols, GetOtcSymbols} from '@tradingpost/common/iex';
 import {DateTime} from "luxon";
 import {Configuration} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";

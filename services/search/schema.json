@@ -1,47 +1,56 @@
 {
   "mappings": {
     "properties": {
-      "hasRatings": {
-        "type": "integer"
-      },
-      "userType": { 
-        "type": "keyword"
-      },
       "user": {
-        "type": "object",
-        "imageUrl": {
-          "type":"text",
-          "index": false
-        },
-        "id": {
-          "type": "keyword"
-        },
-        "name": {
-          "type": "keyword"
-        }
-      },
-      "tradingPostUserName": {
-        "type": "keyword"
-      },
-      "postType": {
-        "type": "keyword"
-      },
-      "platformUserName": {
-        "type": "text",
-        "fields": {
-          "keyword": {
+        "properties": {
+          "imageUrl": {
+            "type": "text",
+            "index": false
+          },
+          "id": {
+            "type": "keyword"
+          },
+          "name": {
+            "type": "keyword"
+          },
+          "username": {
+            "type": "keyword"
+          },
+          "type": {
             "type": "keyword"
           }
         }
       },
-      "displayPlatformName": {
-        "type": "text"
+      "ratingsCount": {
+        "type": "integer"
+      },
+      "postType": {
+        "type": "keyword"
+      },
+      "platform": {
+        "properties": {
+          "username": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword"
+              }
+            }
+          },
+          "displayName": {
+            "type": "text"
+          },
+          "profileUrl": {
+            "type": "text",
+            "index": false
+          },
+          "imageUrl": {
+            "type": "text",
+            "index": false
+          }
+        }
       },
       "imageUrl": {
-        "type": "text",
-        "index": false
-      },
-      "platformProfileUrl": {
         "type": "text",
         "index": false
       },
@@ -49,38 +58,45 @@
         "type": "text",
         "index": false
       },
-      "title": {
-        "type": "text"
+      "content": {
+        "properties": {
+          "title": {
+            "type": "text"
+          },
+          "htmlTitle": {
+            "type": "text",
+            "index": false
+          },
+          "body": {
+            "type": "text"
+          },
+          "htmlBody": {
+            "type": "text",
+            "index": false
+          },
+          "description": {
+            "type": "text"
+          }
+        }
       },
-      "htmlTitle": {
-        "type": "text",
-        "index": false
-      },
-      "body": {
-        "type": "text"
-      },
-      "htmlBody": {
-        "type": "text",
-        "index": false
-      },
-      "description": {
-        "type": "text"
-      },
-      "updatedAt": {
+      "platformUpdatedAt": {
         "type": "date",
         "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
       },
-      "platformedCreatedAt": {
+      "tradingpostUpdatedAt": {
         "type": "date",
         "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
       },
-      "addedToTradingPost": {
+      "platformCreatedAt": {
+        "type": "date",
+        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+      },
+      "tradingpostCreatedAt": {
         "type": "date",
         "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
       },
       "meta": {
-        "type": "object",
-        "index": false
+        "type": "object"
       }
     }
   }

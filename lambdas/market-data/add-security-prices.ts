@@ -3,7 +3,7 @@ import {Configuration} from "@tradingpost/common/configuration";
 import {Client} from "pg";
 import {Repository} from "../../services/market-data/repository";
 import {addSecurityPrice, getSecurityBySymbol} from '../../services/market-data/interfaces';
-import IEX, {GetQuote} from "@tradingpost/common/iex/index";
+import IEX, {GetQuote} from "@tradingpost/common/iex";
 import {DateTime} from "luxon";
 import Index from "../../services/market-data";
 
