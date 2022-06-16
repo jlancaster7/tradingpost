@@ -127,7 +127,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1655171981420-2022-06-14T01:59:41.420Z/tradingpost-job.zip"
+                "S3Key": "serverless/tradingpost-job/production/1655346315178-2022-06-16T02:25:15.178Z/tradingpost-job.zip"
               },
               "Handler": "market-data/add-meta-data.run",
               "Runtime": "nodejs16.x",
@@ -162,7 +162,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1655171981420-2022-06-14T01:59:41.420Z/tradingpost-job.zip"
+                "S3Key": "serverless/tradingpost-job/production/1655346315178-2022-06-16T02:25:15.178Z/tradingpost-job.zip"
               },
               "Handler": "market-data/add-holidays.run",
               "Runtime": "nodejs16.x",
@@ -197,7 +197,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1655171981420-2022-06-14T01:59:41.420Z/tradingpost-job.zip"
+                "S3Key": "serverless/tradingpost-job/production/1655346315178-2022-06-16T02:25:15.178Z/tradingpost-job.zip"
               },
               "Handler": "market-data/add-security-prices.run",
               "Runtime": "nodejs16.x",
@@ -225,36 +225,36 @@
               "AddDashsecurityDashpricingLogGroup"
             ]
           },
-          "AddDashmetaDashdataLambdaVersion9VWDevBnfrYw8guytxsWwdEOnpiUKSTZx7I25Uwcieg": {
+          "AddDashmetaDashdataLambdaVersion9MLlWhfur7sb9qokQz5AhAluilE0Sn1PyC8CVIupsU": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AddDashmetaDashdataLambdaFunction"
               },
-              "CodeSha256": "6bJF4C7Y6tlfi1ktSiKMy53d9DQgg8HspHIHq3ZkIUE=",
+              "CodeSha256": "jZe9Ar3l/N2yZFN6UZgO0GWDuNOnWM6ft+V6BUzbwNk=",
               "Description": "Ingests securities, exchanges, in the morning, in the evening it ingests stats, quotes, and closing pricing"
             }
           },
-          "AddDashholidaysLambdaVersion0P3be6sCCdLep4BvUYYCk4u3p5tjxdCF3Wlhl66NLM": {
+          "AddDashholidaysLambdaVersion3A8pKCroJZeqQU9V7KQbHyJYXVwMe6CpTej31MKY": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AddDashholidaysLambdaFunction"
               },
-              "CodeSha256": "6bJF4C7Y6tlfi1ktSiKMy53d9DQgg8HspHIHq3ZkIUE=",
+              "CodeSha256": "jZe9Ar3l/N2yZFN6UZgO0GWDuNOnWM6ft+V6BUzbwNk=",
               "Description": "Ingests market holidays once a year"
             }
           },
-          "AddDashsecurityDashpricingLambdaVersion7UtB7C9VUk2V3gTp3PO5exftwnxXXxHziWRsZJ9M": {
+          "AddDashsecurityDashpricingLambdaVersionOKridCG1g2lP5EykGYOGasR3zWq8yMK7zxSw8J9Y": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AddDashsecurityDashpricingLambdaFunction"
               },
-              "CodeSha256": "6bJF4C7Y6tlfi1ktSiKMy53d9DQgg8HspHIHq3ZkIUE=",
+              "CodeSha256": "jZe9Ar3l/N2yZFN6UZgO0GWDuNOnWM6ft+V6BUzbwNk=",
               "Description": "Ingests security prices"
             }
           },
@@ -262,7 +262,7 @@
             "Type": "AWS::Events::Rule",
             "Properties": {
               "ScheduleExpression": "cron(20 20 ? * MON-FRI *)",
-              "State": "ENABLED",
+              "State": "DISABLED",
               "Targets": [
                 {
                   "Arn": {
@@ -299,7 +299,7 @@
             "Type": "AWS::Events::Rule",
             "Properties": {
               "ScheduleExpression": "cron(20 19 ? * MON-FRI *)",
-              "State": "ENABLED",
+              "State": "DISABLED",
               "Targets": [
                 {
                   "Arn": {
@@ -336,7 +336,7 @@
             "Type": "AWS::Events::Rule",
             "Properties": {
               "ScheduleExpression": "cron(0 12 ? * MON-FRI *)",
-              "State": "ENABLED",
+              "State": "DISABLED",
               "Targets": [
                 {
                   "Arn": {
@@ -373,7 +373,7 @@
             "Type": "AWS::Events::Rule",
             "Properties": {
               "ScheduleExpression": "cron(0 11 ? * MON-FRI *)",
-              "State": "ENABLED",
+              "State": "DISABLED",
               "Targets": [
                 {
                   "Arn": {
@@ -410,7 +410,7 @@
             "Type": "AWS::Events::Rule",
             "Properties": {
               "ScheduleExpression": "cron(0 0 1 1 ? *)",
-              "State": "ENABLED",
+              "State": "DISABLED",
               "Targets": [
                 {
                   "Arn": {
@@ -447,7 +447,7 @@
             "Type": "AWS::Events::Rule",
             "Properties": {
               "ScheduleExpression": "cron(* 12-20 ? * MON-FRI *)",
-              "State": "ENABLED",
+              "State": "DISABLED",
               "Targets": [
                 {
                   "Arn": {
@@ -493,7 +493,7 @@
           "AddDashmetaDashdataLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AddDashmetaDashdataLambdaVersion9VWDevBnfrYw8guytxsWwdEOnpiUKSTZx7I25Uwcieg"
+              "Ref": "AddDashmetaDashdataLambdaVersion9MLlWhfur7sb9qokQz5AhAluilE0Sn1PyC8CVIupsU"
             },
             "Export": {
               "Name": "sls-tradingpost-job-production-AddDashmetaDashdataLambdaFunctionQualifiedArn"
@@ -502,7 +502,7 @@
           "AddDashholidaysLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AddDashholidaysLambdaVersion0P3be6sCCdLep4BvUYYCk4u3p5tjxdCF3Wlhl66NLM"
+              "Ref": "AddDashholidaysLambdaVersion3A8pKCroJZeqQU9V7KQbHyJYXVwMe6CpTej31MKY"
             },
             "Export": {
               "Name": "sls-tradingpost-job-production-AddDashholidaysLambdaFunctionQualifiedArn"
@@ -511,7 +511,7 @@
           "AddDashsecurityDashpricingLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AddDashsecurityDashpricingLambdaVersion7UtB7C9VUk2V3gTp3PO5exftwnxXXxHziWRsZJ9M"
+              "Ref": "AddDashsecurityDashpricingLambdaVersionOKridCG1g2lP5EykGYOGasR3zWq8yMK7zxSw8J9Y"
             },
             "Export": {
               "Name": "sls-tradingpost-job-production-AddDashsecurityDashpricingLambdaFunctionQualifiedArn"
@@ -615,16 +615,36 @@
         "memorySize": 1024,
         "events": [
           {
-            "schedule": "cron(20 20 ? * MON-FRI *)"
+            "schedule": {
+              "rate": [
+                "cron(20 20 ? * MON-FRI *)"
+              ],
+              "enabled": false
+            }
           },
           {
-            "schedule": "cron(20 19 ? * MON-FRI *)"
+            "schedule": {
+              "rate": [
+                "cron(20 19 ? * MON-FRI *)"
+              ],
+              "enabled": false
+            }
           },
           {
-            "schedule": "cron(0 12 ? * MON-FRI *)"
+            "schedule": {
+              "rate": [
+                "cron(0 12 ? * MON-FRI *)"
+              ],
+              "enabled": false
+            }
           },
           {
-            "schedule": "cron(0 11 ? * MON-FRI *)"
+            "schedule": {
+              "rate": [
+                "cron(0 11 ? * MON-FRI *)"
+              ],
+              "enabled": false
+            }
           }
         ],
         "name": "tradingpost-job-production-add-meta-data",
@@ -634,7 +654,7 @@
         "memory": 1024,
         "runtime": "nodejs16.x",
         "vpc": {},
-        "versionLogicalId": "AddDashmetaDashdataLambdaVersion9VWDevBnfrYw8guytxsWwdEOnpiUKSTZx7I25Uwcieg"
+        "versionLogicalId": "AddDashmetaDashdataLambdaVersion9MLlWhfur7sb9qokQz5AhAluilE0Sn1PyC8CVIupsU"
       },
       "add-holidays": {
         "handler": "market-data/add-holidays.run",
@@ -644,7 +664,12 @@
         "memorySize": 1024,
         "events": [
           {
-            "schedule": "cron(0 0 1 1 ? *)"
+            "schedule": {
+              "rate": [
+                "cron(0 0 1 1 ? *)"
+              ],
+              "enabled": false
+            }
           }
         ],
         "name": "tradingpost-job-production-add-holidays",
@@ -654,7 +679,7 @@
         "memory": 1024,
         "runtime": "nodejs16.x",
         "vpc": {},
-        "versionLogicalId": "AddDashholidaysLambdaVersion0P3be6sCCdLep4BvUYYCk4u3p5tjxdCF3Wlhl66NLM"
+        "versionLogicalId": "AddDashholidaysLambdaVersion3A8pKCroJZeqQU9V7KQbHyJYXVwMe6CpTej31MKY"
       },
       "add-security-pricing": {
         "handler": "market-data/add-security-prices.run",
@@ -664,7 +689,12 @@
         "memorySize": 1024,
         "events": [
           {
-            "schedule": "cron(* 12-20 ? * MON-FRI *)"
+            "schedule": {
+              "rate": [
+                "cron(* 12-20 ? * MON-FRI *)"
+              ],
+              "enabled": false
+            }
           }
         ],
         "name": "tradingpost-job-production-add-security-pricing",
@@ -674,7 +704,7 @@
         "memory": 1024,
         "runtime": "nodejs16.x",
         "vpc": {},
-        "versionLogicalId": "AddDashsecurityDashpricingLambdaVersion7UtB7C9VUk2V3gTp3PO5exftwnxXXxHziWRsZJ9M"
+        "versionLogicalId": "AddDashsecurityDashpricingLambdaVersionOKridCG1g2lP5EykGYOGasR3zWq8yMK7zxSw8J9Y"
       }
     },
     "configValidationMode": "warn",
@@ -698,7 +728,7 @@
     "isDashboardMonitoringPreconfigured": false
   },
   "package": {
-    "artifactDirectoryName": "serverless/tradingpost-job/production/1655171981420-2022-06-14T01:59:41.420Z",
+    "artifactDirectoryName": "serverless/tradingpost-job/production/1655346315178-2022-06-16T02:25:15.178Z",
     "artifact": ""
   }
 }

@@ -33,14 +33,9 @@ const configuration = new Configuration(ssmClient);
 // 1 Per Request = 268
 // Per Day = (26748 * 8) + 268 = 214,244 / Day * 21
 // Per Month = 4,501,308
-module.exports.run = async (event: any, context: Context) => {
-    await start();
-};
-
-const start = async () => {
+const run = async () => {
     const postgresConfiguration = await configuration.fromSSM("/production/postgres");
     const iexConfiguration = await configuration.fromSSM("/production/iex");
-
     const iex = new IEX(iexConfiguration['key'] as string);
     const pgClient = new Client({
         host: postgresConfiguration['host'] as string,
@@ -49,9 +44,13 @@ const start = async () => {
         database: postgresConfiguration['database'] as string,
         port: 5432,
     });
-
     await pgClient.connect();
     const repository = new Repository(pgClient);
+    await start(pgClient, repository, iex)
+    await pgClient.end();
+}
+
+const start = async (pgClient: Client, repository: Repository, iex: IEX) => {
     const now = DateTime.now().setZone("America/New_York");
     if (now.hour == 16) {
         console.log("ran evening ingestion")
@@ -62,9 +61,7 @@ const start = async () => {
         console.log("ran morning ingestion")
         await ingestMorningSecuritiesInformation(repository, iex);
     }
-
     console.log("finished running function")
-    await pgClient.end();
 }
 
 const ingestEveningSecuritiesInformation = async (repository: Repository, iex: IEX) => {
@@ -248,3 +245,7 @@ const buildGroups = (securities: any[], max: number = 100): any[][] => {
 
     return groups;
 }
+
+module.exports.run = async (event: any, context: Context) => {
+    await run();
+};

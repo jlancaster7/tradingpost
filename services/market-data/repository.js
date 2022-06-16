@@ -302,6 +302,12 @@ class Repository {
                 return obj;
             });
         });
+        this.removeSecurityPricesAfter7Days = () => __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.query(`DELETE
+                                    FROM security_prices
+                                    WHERE time < now() - INTERVAL '8 days'
+                                      AND (time AT TIME ZONE 'America/New_York')::TIME != '16:00:00';`);
+        });
         this.db = db;
     }
 }

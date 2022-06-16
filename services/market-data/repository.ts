@@ -319,4 +319,11 @@ export class Repository {
             return obj;
         })
     }
+
+    removeSecurityPricesAfter7Days = async (): Promise<any> => {
+        return await this.db.query(`DELETE
+                                    FROM security_prices
+                                    WHERE time < now() - INTERVAL '8 days'
+                                      AND (time AT TIME ZONE 'America/New_York')::TIME != '16:00:00';`)
+    }
 }

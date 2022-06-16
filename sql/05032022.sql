@@ -716,3 +716,5 @@ BEGIN
         where s.exchange not like '%OTC%';
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE INDEX security_prices_time_brin_idx ON security_prices USING brin (time);

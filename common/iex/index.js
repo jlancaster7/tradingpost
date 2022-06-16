@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IEX = exports.SandboxBaseURL = exports.ProductionBaseURL = exports.RetryError = exports.IEXError = void 0;
+exports.SandboxBaseURL = exports.ProductionBaseURL = exports.RetryError = exports.IEXError = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
 const sleep_1 = require("../utils/sleep");
 const url_1 = require("url");
@@ -413,4 +413,4 @@ class IEX {
         this.retryMax = retryMax;
     }
 }
-exports.IEX = IEX;
+exports.default = IEX;
