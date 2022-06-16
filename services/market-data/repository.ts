@@ -20,7 +20,7 @@ export class Repository {
     }
 
     upsertSecuritiesPrices = async (securityPrices: addSecurityPrice[]) => {
-        await this.db.query('SELECT upsert_security_prices($1)', [JSON.stringify(securityPrices)]);
+        await this.db.query('SELECT upsert_securities_prices($1)', [JSON.stringify(securityPrices)]);
     }
 
     getUSExchangeListedSecurities = async (): Promise<getSecurityBySymbol[]> => {

@@ -28,7 +28,7 @@ class Finicity {
                 const { token, expires } = JSON.parse(fs_1.default.readFileSync(this.tokenFile, 'utf8'));
                 const dt = luxon_1.DateTime.fromSeconds(expires);
                 if (now.toMillis() >= dt.toMillis())
-                    yield this._updateAndWriteFile;
+                    yield this._updateAndWriteFile();
                 else {
                     this.accessToken = token;
                     this.expiresAt = dt;
@@ -165,7 +165,7 @@ class Finicity {
                     customerId: customerId,
                     webhook: webhook,
                     webhookContentType: webhookContentType,
-                    experience: experience
+                    // experience: experience
                 }),
                 headers: {
                     'Content-Type': 'application/json',

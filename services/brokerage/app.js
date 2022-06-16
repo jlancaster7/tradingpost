@@ -40,11 +40,12 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         return crypto_1.default.randomBytes(30).toString('hex');
     };
     const requireAuth = (req, res, next) => {
+        console.log("requiring auth...");
         if (req.user) {
             next();
         }
         else {
-            res.redirect('login', 404, {
+            res.redirect('/login', 404, {
                 message: 'Please login to continue',
                 messageClass: 'alert-danger'
             });
@@ -70,6 +71,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     const authTokens = {};
     app.use((req, res, next) => {
         const authToken = req.cookies['AuthToken'];
+        console.log(authToken);
         // @ts-ignore
         req.user = authTokens[authToken];
         next();
@@ -98,15 +100,21 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         res.cookie('AuthToken', authToken);
         res.redirect('/finicity/brokerage');
     });
-    app.post('/finicity/webhook');
     app.get('/finicity/brokerage', requireAuth, (req, res) => {
+        console.log("Broekrage...");
         res.render('brokerage');
     });
-    app.post('/finicity/brokerage/auth', requireAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    app.get('/finicity/brokerage/auth', requireAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log("HERE!!!");
         // @ts-ignore
         const { user } = req;
         const r = yield finicity.generateConnectUrl(user.finicityCustomerId, cfg.finicityWebhook);
+        console.log("LINK: ", r);
         res.redirect(r.link);
+    }));
+    app.post("/finicity/customer/add", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const r = yield finicity.addCustomer("test-app", "testuser");
+        console.log(r);
     }));
     // catch 404 and forward to error handler
     app.use(function (req, res, next) {

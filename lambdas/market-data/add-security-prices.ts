@@ -23,6 +23,7 @@ const run = async () => {
         database: postgresConfiguration['database'] as string,
         port: 5432,
     });
+
     const iexConfiguration = await configuration.fromSSM("/production/iex");
     const iex = new IEX(iexConfiguration.key as string);
     await pgClient.connect();
@@ -33,15 +34,20 @@ const run = async () => {
 }
 
 const start = async (pgClient: Client, marketService: Index, repository: Repository, iex: IEX) => {
-    const isMarketOpen = await marketService.isMarketOpen();
-    if (!isMarketOpen) return;
+    const open = DateTime.now().setZone("America/New_York").set({hour: 9, minute: 29, second: 0, millisecond: 0});
+    const close = DateTime.now().setZone("America/New_York").set({hour: 16, minute: 1, second: 0, millisecond: 0})
+
+    let d = DateTime.now().setZone("America/New_York").set({second: 0, millisecond: 0});
+
+    if (d.toSeconds() >= close.toSeconds() || d.toSeconds() <= open.toSeconds()) return
+
+    const isTradingDay = await marketService.isTradingDay(d);
+    if (!isTradingDay) return;
 
     const securities = await repository.getUSExchangeListedSecurities();
     const securityGroups: getSecurityBySymbol[][] = buildGroups(securities);
 
-    // TODO: Get securities with latest price available, if iex latest price is null, then default to last price avail
-    // TODO: Update so that we can run multiple at the same time....
-    const currentTime = DateTime.now().set({second: 0, millisecond: 0}).toJSDate();
+    const currentTime = d.toJSDate();
     for (let i = 0; i < securityGroups.length; i++) {
         let securityGroup = securityGroups[i];
         const symbols = securityGroup.map(sec => sec.symbol);

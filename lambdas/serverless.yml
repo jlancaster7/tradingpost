@@ -27,7 +27,7 @@ functions:
     handler: market-data/add-meta-data.run
     description: Ingests securities, exchanges, in the morning, in the evening it ingests stats, quotes, and closing pricing
     logRetentionInDays: 14
-    timeout: 600
+    timeout: 900
     memorySize: 1024
     events:
       - schedule:
@@ -63,10 +63,10 @@ functions:
       # We run 8:00 -> 4 because of daylight savings -- shift would be 8->3
       # then we just validate within the function that it should ingest
       - schedule:
-          rate: cron(* 12-20 ? * MON-FRI *)
+          rate: cron(* 11-21 ? * MON-FRI *)
           enabled: true
-  security-pruining:
-    handler: market-data/security-pruining.run
+  security-pruning:
+    handler: market-data/security-pruning.run
     description: Prunes security data
     logRetentionInDays: 14
     timeout: 600

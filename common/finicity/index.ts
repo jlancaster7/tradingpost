@@ -30,7 +30,7 @@ export default class Finicity {
             const now = DateTime.now();
             const {token, expires} = JSON.parse(fs.readFileSync(this.tokenFile, 'utf8'));
             const dt = DateTime.fromSeconds(expires);
-            if (now.toMillis() >= dt.toMillis()) await this._updateAndWriteFile
+            if (now.toMillis() >= dt.toMillis()) await this._updateAndWriteFile()
             else {
                 this.accessToken = token;
                 this.expiresAt = dt;
@@ -174,7 +174,7 @@ export default class Finicity {
                 customerId: customerId,
                 webhook: webhook,
                 webhookContentType: webhookContentType,
-                experience: experience
+                // experience: experience
             }),
             headers: {
                 'Content-Type': 'application/json',

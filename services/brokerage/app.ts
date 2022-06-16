@@ -34,11 +34,11 @@ const run = async () => {
     }
 
     const requireAuth = (req: any, res: any, next: any) => {
+        console.log("requiring auth...")
         if (req.user) {
             next();
         } else {
-
-            res.redirect('login', 404, {
+            res.redirect('/login', 404, {
                 message: 'Please login to continue',
                 messageClass: 'alert-danger'
             })
@@ -67,6 +67,7 @@ const run = async () => {
     const authTokens: Record<string, any> = {};
     app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
         const authToken = req.cookies['AuthToken'];
+        console.log(authToken)
         // @ts-ignore
         req.user = authTokens[authToken];
         next();
@@ -102,18 +103,24 @@ const run = async () => {
         res.redirect('/finicity/brokerage');
     });
 
-    app.post('/finicity/webhook')
-
     app.get('/finicity/brokerage', requireAuth, (req, res) => {
+        console.log("Broekrage...")
         res.render('brokerage')
     })
 
-    app.post('/finicity/brokerage/auth', requireAuth, async (req, res) => {
+    app.get('/finicity/brokerage/auth', requireAuth, async (req, res) => {
+        console.log("HERE!!!")
         // @ts-ignore
         const {user} = req;
         const r = await finicity.generateConnectUrl(user.finicityCustomerId, cfg.finicityWebhook);
+        console.log("LINK: ", r)
         res.redirect(r.link);
     });
+
+    app.post("/finicity/customer/add", async(req,res) => {
+        const r = await finicity.addCustomer("test-app", "testuser")
+        console.log(r)
+    })
 
 
 // catch 404 and forward to error handler
