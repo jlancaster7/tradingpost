@@ -116,7 +116,7 @@ class Finicity {
         this.addCustomer = (applicationId, username) => __awaiter(this, void 0, void 0, function* () {
             const response = yield (0, node_fetch_1.default)("https://api.finicity.com/aggregation/v2/customers/active", {
                 method: "POST",
-                body: JSON.stringify({ username, applicationId }),
+                body: JSON.stringify({ username }),
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -129,8 +129,7 @@ class Finicity {
                 return JSON.parse(body);
             }
             catch (e) {
-                console.log(body);
-                return null;
+                throw body.toString();
             }
         });
         this.getCustomers = () => __awaiter(this, void 0, void 0, function* () {

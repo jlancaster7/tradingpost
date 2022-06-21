@@ -14,7 +14,7 @@ const luxon_1 = require("luxon");
 class Repository {
     constructor(db) {
         this.upsertSecuritiesPrices = (securityPrices) => __awaiter(this, void 0, void 0, function* () {
-            yield this.db.query('SELECT upsert_security_prices($1)', [JSON.stringify(securityPrices)]);
+            yield this.db.query('SELECT upsert_securities_prices($1)', [JSON.stringify(securityPrices)]);
         });
         this.getUSExchangeListedSecurities = () => __awaiter(this, void 0, void 0, function* () {
             return (yield this.db.query(`

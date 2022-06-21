@@ -84,14 +84,15 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
 
             let quote = (iexResponse[symbol].quote as GetQuote);
             let stats = (iexResponse[symbol].stats as GetStatsBasic);
-            let previous = (iexResponse[symbol].previous as GetPreviousDayPrice);
+            let previous = (iexResponse[symbol].previous as GetPreviousDayPrice) || {};
 
-            // Ingest end of day price & all stats stuff....
-            securityPrices.push({
-                price: quote.latestPrice,
-                securityId: existingSecurity.id,
-                time: DateTime.now().setZone('America/New_York').set({minute: 0, second: 0, hour: 16}).toJSDate()
-            });
+            if (quote.latestPrice !== null)
+                // Ingest end of day price & all stats stuff....
+                securityPrices.push({
+                    price: quote.latestPrice,
+                    securityId: existingSecurity.id,
+                    time: DateTime.now().setZone('America/New_York').set({hour: 16, minute: 0, second: 0}).toJSDate()
+                });
 
             securitiesInformation.push({
                 avg10Volume: stats.avg10Volume,
@@ -117,16 +118,16 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
                 extendedPrice: quote.extendedPrice,
                 extendedPriceTime: quote.extendedPriceTime,
                 float: stats.float,
-                fullyAdjustedClose: previous.fClose,
-                fullyAdjustedLow: previous.fLow,
-                fullyAdjustedOpen: previous.fOpen,
-                fullyAdjustedVolume: previous.fVolume,
+                fullyAdjustedClose: previous.fClose || null,
+                fullyAdjustedLow: previous.fLow || null,
+                fullyAdjustedOpen: previous.fOpen || null,
+                fullyAdjustedVolume: previous.fVolume || null,
                 high: quote.high,
-                label: previous.label,
+                label: previous.label || null,
                 lastTradeTime: quote.lastTradeTime,
                 low: quote.low,
                 marketCap: quote.marketCap,
-                marketChangeOverTime: previous.marketChangeOverTime,
+                marketChangeOverTime: previous.marketChangeOverTime || null,
                 maxChangePercent: stats.maxChangePercent,
                 month1ChangePercent: stats.month1ChangePercent,
                 month3ChangePercent: stats.month3ChangePercent,
@@ -143,11 +144,11 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
                 sharesOutstanding: stats.sharesOutstanding,
                 ttmDividendRate: stats.ttmDividendRate,
                 ttmEps: stats.ttmEPS,
-                unadjustedClose: previous.uClose,
-                unadjustedLow: previous.uLow,
-                unadjustedOpen: previous.uOpen,
-                unadjustedVolume: previous.uVolume,
-                volume: previous.volume,
+                unadjustedClose: previous.uClose || null,
+                unadjustedLow: previous.uLow || null,
+                unadjustedOpen: previous.uOpen || null,
+                unadjustedVolume: previous.uVolume || null,
+                volume: previous.volume || null,
                 week52Change: stats.week52change,
                 week52High: stats.week52high,
                 week52HighSplitAdjustOnly: stats.week52highSplitAdjustOnly,
@@ -249,3 +250,6 @@ const buildGroups = (securities: any[], max: number = 100): any[][] => {
 module.exports.run = async (event: any, context: Context) => {
     await run();
 };
+(async () => {
+    await run();
+})()
