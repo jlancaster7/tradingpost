@@ -30,7 +30,7 @@ export default class Finicity {
             const now = DateTime.now();
             const {token, expires} = JSON.parse(fs.readFileSync(this.tokenFile, 'utf8'));
             const dt = DateTime.fromSeconds(expires);
-            if (now.toMillis() >= dt.toMillis()) await this._updateAndWriteFile
+            if (now.toMillis() >= dt.toMillis()) await this._updateAndWriteFile()
             else {
                 this.accessToken = token;
                 this.expiresAt = dt;
@@ -122,7 +122,7 @@ export default class Finicity {
     addCustomer = async (applicationId: string, username: string): Promise<Promise<AddCustomerResponse> | null> => {
         const response = await fetch("https://api.finicity.com/aggregation/v2/customers/active", {
             method: "POST",
-            body: JSON.stringify({username, applicationId}),
+            body: JSON.stringify({username}),
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
@@ -135,8 +135,7 @@ export default class Finicity {
         try {
             return JSON.parse(body) as AddCustomerResponse
         } catch (e) {
-            console.log(body)
-            return null
+            throw body.toString()
         }
     }
 
@@ -174,7 +173,7 @@ export default class Finicity {
                 customerId: customerId,
                 webhook: webhook,
                 webhookContentType: webhookContentType,
-                experience: experience
+                // experience: experience
             }),
             headers: {
                 'Content-Type': 'application/json',

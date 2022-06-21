@@ -11,9 +11,18 @@
   "license": "ISC",
   "dependencies": {
     "@elastic/elasticsearch": "^8.2.1",
-    "dotenv": "^16.0.1"
+    "aws-sdk": "^2.1153.0",
+    "dotenv": "^16.0.1",
+    "luxon": "^2.4.0",
+    "pg": "^8.7.3",
+    "pg-native": "^3.0.0",
+    "yargs": "^17.5.1"
   },
   "devDependencies": {
-    "@types/node": "^17.0.41"
+    "@types/aws-sdk": "^2.7.0",
+    "@types/luxon": "^2.3.2",
+    "@types/node": "^17.0.41",
+    "@types/pg": "^8.6.5",
+    "@types/yargs": "^17.0.10"
   }
 }

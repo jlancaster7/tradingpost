@@ -20,7 +20,7 @@ export class Repository {
     }
 
     upsertSecuritiesPrices = async (securityPrices: addSecurityPrice[]) => {
-        await this.db.query('SELECT upsert_security_prices($1)', [JSON.stringify(securityPrices)]);
+        await this.db.query('SELECT upsert_securities_prices($1)', [JSON.stringify(securityPrices)]);
     }
 
     getUSExchangeListedSecurities = async (): Promise<getSecurityBySymbol[]> => {
@@ -318,5 +318,12 @@ export class Repository {
             }
             return obj;
         })
+    }
+
+    removeSecurityPricesAfter7Days = async (): Promise<any> => {
+        return await this.db.query(`DELETE
+                                    FROM security_prices
+                                    WHERE time < now() - INTERVAL '8 days'
+                                      AND (time AT TIME ZONE 'America/New_York')::TIME != '16:00:00';`)
     }
 }

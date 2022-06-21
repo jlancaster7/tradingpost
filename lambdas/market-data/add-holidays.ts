@@ -1,5 +1,5 @@
 import {Context} from 'aws-lambda';
-import IEX, {GetExchanges, GetUsExchanges, GetUSHolidayAndTradingDays} from '@tradingpost/common/iex/index';
+import IEX, {GetExchanges, GetUsExchanges, GetUSHolidayAndTradingDays} from '@tradingpost/common/iex';
 import {DateTime} from 'luxon';
 import {Repository} from "../../services/market-data/repository";
 import {addUSHoliday, addExchange} from '../../services/market-data/interfaces';
@@ -11,8 +11,8 @@ AWS.config.update({region: 'us-east-1'});
 const ssmClient = new AWS.SSM();
 const configuration = new Configuration(ssmClient);
 
-// Pricing Cost 1 / year = 1 credit
-module.exports.run = async (event: any, context: Context) => {
+
+const run = async () => {
     const postgresConfiguration = await configuration.fromSSM("/production/postgres");
     const iexConfiguration = await configuration.fromSSM("/production/iex");
     const iex = new IEX(iexConfiguration['key'] as string);
@@ -24,7 +24,11 @@ module.exports.run = async (event: any, context: Context) => {
     });
 
     const repository = new Repository(pgClient);
+    await start(pgClient, repository, iex);
+    await pgClient.end();
+}
 
+const start = async (pgClient: Client, repository: Repository, iex: IEX) => {
     const usExchanges = await iex.getUsExchanges();
     const internationalExchanges = await iex.getInternationalExchanges();
 
@@ -67,4 +71,9 @@ module.exports.run = async (event: any, context: Context) => {
     nextIexHolidays.forEach(holidayFunc);
     lastIexHolidays.forEach(holidayFunc);
     await repository.addUsExchangeHolidays(holidays);
-};
+}
+
+// Pricing Cost 1 / year = 1 credit
+module.exports.run = async (event: any, context: Context) => {
+    await run();
+}

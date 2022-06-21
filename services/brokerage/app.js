@@ -25,13 +25,14 @@ require("dotenv/config");
 const cfg = {
     finicityAppKey: process.env.FINICITY_APP_KEY || '',
     finicityPartnerId: process.env.FINICITY_PARTNER_ID || '',
-    finicityPartnerSecret: process.env.FINICTY_PARTNER_SECRET || '',
+    finicityPartnerSecret: process.env.FINICITY_PARTNER_SECRET || '',
     finicityWebhook: process.env.FINICITY_WEBHOOK || ''
 };
 const app = (0, express_1.default)();
 const run = () => __awaiter(void 0, void 0, void 0, function* () {
     const finicity = new finicity_1.default(cfg.finicityPartnerId, cfg.finicityPartnerSecret, cfg.finicityAppKey);
     yield finicity.init();
+    console.log("Ready");
     const getHashedPassword = (password) => {
         const sha256 = crypto_1.default.createHash('sha256');
         return sha256.update(password).digest('base64');
@@ -44,7 +45,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
             next();
         }
         else {
-            res.redirect('login', 404, {
+            res.redirect('/login', 404, {
                 message: 'Please login to continue',
                 messageClass: 'alert-danger'
             });
@@ -70,6 +71,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     const authTokens = {};
     app.use((req, res, next) => {
         const authToken = req.cookies['AuthToken'];
+        console.log("AUTH TOKEN: ", authToken);
         // @ts-ignore
         req.user = authTokens[authToken];
         next();
@@ -98,15 +100,36 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         res.cookie('AuthToken', authToken);
         res.redirect('/finicity/brokerage');
     });
-    app.post('/finicity/webhook');
     app.get('/finicity/brokerage', requireAuth, (req, res) => {
+        console.log("Broekrage...");
         res.render('brokerage');
     });
-    app.post('/finicity/brokerage/auth', requireAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        // @ts-ignore
-        const { user } = req;
-        const r = yield finicity.generateConnectUrl(user.finicityCustomerId, cfg.finicityWebhook);
-        res.redirect(r.link);
+    app.get('/finicity/brokerage/auth', requireAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            // @ts-ignore
+            const { user } = req;
+            const r = yield finicity.generateConnectUrl(user.finicityCustomerId, cfg.finicityWebhook);
+            console.log("LINK: ", r);
+            res.redirect(r.link);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }));
+    app.post("/finicity/customer/add", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const { username, applicationId } = req.body;
+            const r = yield finicity.addCustomer(applicationId, username);
+            res.json(r);
+        }
+        catch (e) {
+            res.json({
+                msg: "could not create a customer",
+                err: e
+            });
+        }
+    }));
+    app.post("/finicity/webhook", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }));
     // catch 404 and forward to error handler
     app.use(function (req, res, next) {

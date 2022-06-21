@@ -27,13 +27,21 @@ functions:
     handler: market-data/add-meta-data.run
     description: Ingests securities, exchanges, in the morning, in the evening it ingests stats, quotes, and closing pricing
     logRetentionInDays: 14
-    timeout: 600
+    timeout: 900
     memorySize: 1024
     events:
-      - schedule: cron(20 20 ? * MON-FRI *) # 4:20 PM EDT
-      - schedule: cron(20 19 ? * MON-FRI *) # 4:20 PM EST
-      - schedule: cron(0 12 ? * MON-FRI *) # 8:00 AM EDT
-      - schedule: cron(0 11 ? * MON-FRI *) # 8:00 AM EST
+      - schedule:
+          rate: cron(20 20 ? * MON-FRI *) # 4:20 PM EDT
+          enabled: true
+      - schedule:
+          rate: cron(20 19 ? * MON-FRI *) # 4:20 PM EST
+          enabled: true
+      - schedule:
+          rate: cron(0 12 ? * MON-FRI *) # 8:00 AM EDT
+          enabled: true
+      - schedule:
+          rate: cron(0 11 ? * MON-FRI *) # 8:00 AM EST
+          enabled: true
   add-holidays:
     handler: market-data/add-holidays.run
     description: Ingests market holidays once a year
@@ -41,7 +49,9 @@ functions:
     timeout: 300
     memorySize: 1024
     events:
-      - schedule: cron(0 0 1 1 ? *)
+      - schedule:
+          rate: cron(0 0 1 1 ? *)
+          enabled: true
   add-security-pricing:
     handler: market-data/add-security-prices.run
     description: Ingests security prices
@@ -52,5 +62,60 @@ functions:
       # Run M-F every-day from 9:00AM ET -> 4:00 ET
       # We run 8:00 -> 4 because of daylight savings -- shift would be 8->3
       # then we just validate within the function that it should ingest
-      - schedule: cron(* 12-20 ? * MON-FRI *)
+      - schedule:
+          rate: cron(* 11-21 ? * MON-FRI *)
+          enabled: true
+  security-pruning:
+    handler: market-data/security-pruning.run
+    description: Prunes security data
+    logRetentionInDays: 14
+    timeout: 600
+    memorySize: 1024
+    events:
+      - schedule:
+          rate: cron(0 7 ? * MON-FRI *)
+          enabled: true
 
+  # Social Media Lambdas
+  spotify:
+    handler: social-media/spotify.run
+    description: Ingests Spotify User Data
+    logRetentionInDays: 14
+    timeout: 600
+    memorySize: 1024
+    events:
+      - schedule:
+          rate: cron(0 7 ? * MON-FRI *)
+          enabled: false
+  substack:
+    handler: social-media/substack.run
+    description: Ingests Substack Data
+    logRetentionInDays: 14
+    timeout: 600
+    memorySize: 1024
+    events:
+      - schedule:
+          rate: cron(0 7 ? * MON-FRI *)
+          enabled: false
+
+  twitter:
+    handler: social-media/twitter.run
+    description: Ingests Twitter Data
+    logRetentionInDays: 14
+    timeout: 600
+    memorySize: 1024
+    events:
+      - schedule:
+          rate: cron(0 7 ? * MON-FRI *)
+          enabled: false
+
+  youtube:
+    handler: social-media/youtube.run
+    description: Ingests YouTube User Data
+    logRetentionInDays: 14
+    timeout: 600
+    memorySize: 1024
+    events:
+      - schedule:
+          rate: cron(0 7 ? * MON-FRI *)
+          enabled: false

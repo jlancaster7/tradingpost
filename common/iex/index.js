@@ -47,7 +47,7 @@ class IEX {
                 }
             }
             const config = Object.assign(Object.assign({}, HTTPConfigurationDefaults), httpConfiguration);
-            return yield node_fetch_1.default(url.toString(), config);
+            return yield (0, node_fetch_1.default)(url.toString(), config);
         });
         this.retry = (fn, retryNum) => __awaiter(this, void 0, void 0, function* () {
             let err = null;
@@ -58,7 +58,7 @@ class IEX {
                 catch (e) {
                     if (e instanceof RetryError) {
                         const sleepMilli = 60 * i;
-                        yield sleep_1.sleep(sleepMilli);
+                        yield (0, sleep_1.sleep)(sleepMilli);
                         continue;
                     }
                     throw e;

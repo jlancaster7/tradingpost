@@ -1,4 +1,4 @@
-import IEX, {GetCompany, GetLogo, GetPreviousDayPrice, GetQuote, GetStatsBasic} from "@tradingpost/common/iex/index";
+import IEX, {GetCompany, GetLogo, GetPreviousDayPrice, GetQuote, GetStatsBasic} from "@tradingpost/common/iex";
 import {Client} from "pg";
 import {Repository} from "../../services/market-data/repository";
 import {
@@ -7,7 +7,7 @@ import {
     getSecurityBySymbol,
     upsertSecuritiesInformation
 } from '../../services/market-data/interfaces';
-import {GetIexSymbols, GetOtcSymbols} from '@tradingpost/common/iex/index';
+import {GetIexSymbols, GetOtcSymbols} from '@tradingpost/common/iex';
 import {DateTime} from "luxon";
 import {Configuration} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
@@ -33,14 +33,9 @@ const configuration = new Configuration(ssmClient);
 // 1 Per Request = 268
 // Per Day = (26748 * 8) + 268 = 214,244 / Day * 21
 // Per Month = 4,501,308
-module.exports.run = async (event: any, context: Context) => {
-    await start();
-};
-
-const start = async () => {
+const run = async () => {
     const postgresConfiguration = await configuration.fromSSM("/production/postgres");
     const iexConfiguration = await configuration.fromSSM("/production/iex");
-
     const iex = new IEX(iexConfiguration['key'] as string);
     const pgClient = new Client({
         host: postgresConfiguration['host'] as string,
@@ -49,9 +44,13 @@ const start = async () => {
         database: postgresConfiguration['database'] as string,
         port: 5432,
     });
-
     await pgClient.connect();
     const repository = new Repository(pgClient);
+    await start(pgClient, repository, iex)
+    await pgClient.end();
+}
+
+const start = async (pgClient: Client, repository: Repository, iex: IEX) => {
     const now = DateTime.now().setZone("America/New_York");
     if (now.hour == 16) {
         console.log("ran evening ingestion")
@@ -62,9 +61,7 @@ const start = async () => {
         console.log("ran morning ingestion")
         await ingestMorningSecuritiesInformation(repository, iex);
     }
-
     console.log("finished running function")
-    await pgClient.end();
 }
 
 const ingestEveningSecuritiesInformation = async (repository: Repository, iex: IEX) => {
@@ -87,14 +84,15 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
 
             let quote = (iexResponse[symbol].quote as GetQuote);
             let stats = (iexResponse[symbol].stats as GetStatsBasic);
-            let previous = (iexResponse[symbol].previous as GetPreviousDayPrice);
+            let previous = (iexResponse[symbol].previous as GetPreviousDayPrice) || {};
 
-            // Ingest end of day price & all stats stuff....
-            securityPrices.push({
-                price: quote.latestPrice,
-                securityId: existingSecurity.id,
-                time: DateTime.now().setZone('America/New_York').set({minute: 0, second: 0, hour: 16}).toJSDate()
-            });
+            if (quote.latestPrice !== null)
+                // Ingest end of day price & all stats stuff....
+                securityPrices.push({
+                    price: quote.latestPrice,
+                    securityId: existingSecurity.id,
+                    time: DateTime.now().setZone('America/New_York').set({hour: 16, minute: 0, second: 0}).toJSDate()
+                });
 
             securitiesInformation.push({
                 avg10Volume: stats.avg10Volume,
@@ -120,16 +118,16 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
                 extendedPrice: quote.extendedPrice,
                 extendedPriceTime: quote.extendedPriceTime,
                 float: stats.float,
-                fullyAdjustedClose: previous.fClose,
-                fullyAdjustedLow: previous.fLow,
-                fullyAdjustedOpen: previous.fOpen,
-                fullyAdjustedVolume: previous.fVolume,
+                fullyAdjustedClose: previous.fClose || null,
+                fullyAdjustedLow: previous.fLow || null,
+                fullyAdjustedOpen: previous.fOpen || null,
+                fullyAdjustedVolume: previous.fVolume || null,
                 high: quote.high,
-                label: previous.label,
+                label: previous.label || null,
                 lastTradeTime: quote.lastTradeTime,
                 low: quote.low,
                 marketCap: quote.marketCap,
-                marketChangeOverTime: previous.marketChangeOverTime,
+                marketChangeOverTime: previous.marketChangeOverTime || null,
                 maxChangePercent: stats.maxChangePercent,
                 month1ChangePercent: stats.month1ChangePercent,
                 month3ChangePercent: stats.month3ChangePercent,
@@ -146,11 +144,11 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
                 sharesOutstanding: stats.sharesOutstanding,
                 ttmDividendRate: stats.ttmDividendRate,
                 ttmEps: stats.ttmEPS,
-                unadjustedClose: previous.uClose,
-                unadjustedLow: previous.uLow,
-                unadjustedOpen: previous.uOpen,
-                unadjustedVolume: previous.uVolume,
-                volume: previous.volume,
+                unadjustedClose: previous.uClose || null,
+                unadjustedLow: previous.uLow || null,
+                unadjustedOpen: previous.uOpen || null,
+                unadjustedVolume: previous.uVolume || null,
+                volume: previous.volume || null,
                 week52Change: stats.week52change,
                 week52High: stats.week52high,
                 week52HighSplitAdjustOnly: stats.week52highSplitAdjustOnly,
@@ -248,3 +246,10 @@ const buildGroups = (securities: any[], max: number = 100): any[][] => {
 
     return groups;
 }
+
+module.exports.run = async (event: any, context: Context) => {
+    await run();
+};
+(async () => {
+    await run();
+})()

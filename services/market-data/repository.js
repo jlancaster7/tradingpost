@@ -14,7 +14,7 @@ const luxon_1 = require("luxon");
 class Repository {
     constructor(db) {
         this.upsertSecuritiesPrices = (securityPrices) => __awaiter(this, void 0, void 0, function* () {
-            yield this.db.query('SELECT upsert_security_prices($1)', [JSON.stringify(securityPrices)]);
+            yield this.db.query('SELECT upsert_securities_prices($1)', [JSON.stringify(securityPrices)]);
         });
         this.getUSExchangeListedSecurities = () => __awaiter(this, void 0, void 0, function* () {
             return (yield this.db.query(`
@@ -301,6 +301,12 @@ class Repository {
                 };
                 return obj;
             });
+        });
+        this.removeSecurityPricesAfter7Days = () => __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.query(`DELETE
+                                    FROM security_prices
+                                    WHERE time < now() - INTERVAL '8 days'
+                                      AND (time AT TIME ZONE 'America/New_York')::TIME != '16:00:00';`);
         });
         this.db = db;
     }

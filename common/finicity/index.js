@@ -28,7 +28,7 @@ class Finicity {
                 const { token, expires } = JSON.parse(fs_1.default.readFileSync(this.tokenFile, 'utf8'));
                 const dt = luxon_1.DateTime.fromSeconds(expires);
                 if (now.toMillis() >= dt.toMillis())
-                    yield this._updateAndWriteFile;
+                    yield this._updateAndWriteFile();
                 else {
                     this.accessToken = token;
                     this.expiresAt = dt;
@@ -66,7 +66,7 @@ class Finicity {
          * works for 2hrs, if exceeds 90 mins then re-authenticate
          */
         this.partnerAuthentication = () => __awaiter(this, void 0, void 0, function* () {
-            const response = yield node_fetch_1.default("https://api.finicity.com/aggregation/v2/partners/authentication", {
+            const response = yield (0, node_fetch_1.default)("https://api.finicity.com/aggregation/v2/partners/authentication", {
                 method: "POST",
                 body: JSON.stringify({
                     "partnerId": this.partnerId,
@@ -92,7 +92,7 @@ class Finicity {
          * @param username
          */
         this.addTestCustomer = (username) => __awaiter(this, void 0, void 0, function* () {
-            const response = yield node_fetch_1.default("https://api.finicity.com/aggregation/v2/customers/testing", {
+            const response = yield (0, node_fetch_1.default)("https://api.finicity.com/aggregation/v2/customers/testing", {
                 method: "POST",
                 body: JSON.stringify({ username }),
                 headers: {
@@ -114,9 +114,9 @@ class Finicity {
         this.addConsumer = (customerId, consumer, appKey, appToken) => __awaiter(this, void 0, void 0, function* () {
         });
         this.addCustomer = (applicationId, username) => __awaiter(this, void 0, void 0, function* () {
-            const response = yield node_fetch_1.default("https://api.finicity.com/aggregation/v2/customers/active", {
+            const response = yield (0, node_fetch_1.default)("https://api.finicity.com/aggregation/v2/customers/active", {
                 method: "POST",
-                body: JSON.stringify({ username, applicationId }),
+                body: JSON.stringify({ username }),
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -129,12 +129,11 @@ class Finicity {
                 return JSON.parse(body);
             }
             catch (e) {
-                console.log(body);
-                return null;
+                throw body.toString();
             }
         });
         this.getCustomers = () => __awaiter(this, void 0, void 0, function* () {
-            const response = yield node_fetch_1.default("https://api.finicity.com/aggregation/v1/customers", {
+            const response = yield (0, node_fetch_1.default)("https://api.finicity.com/aggregation/v1/customers", {
                 method: "POST",
                 // body: JSON.stringify({username, applicationId}),
                 headers: {
@@ -158,14 +157,14 @@ class Finicity {
         this.getCustomer = () => __awaiter(this, void 0, void 0, function* () {
         });
         this.generateConnectUrl = (customerId, webhook, webhookContentType = "application/json", experience = "default") => __awaiter(this, void 0, void 0, function* () {
-            const response = yield node_fetch_1.default("https://api.finicity.com/connect/v2/generate", {
+            const response = yield (0, node_fetch_1.default)("https://api.finicity.com/connect/v2/generate", {
                 method: "POST",
                 body: JSON.stringify({
                     partnerId: this.partnerId,
                     customerId: customerId,
                     webhook: webhook,
                     webhookContentType: webhookContentType,
-                    experience: experience
+                    // experience: experience
                 }),
                 headers: {
                     'Content-Type': 'application/json',
@@ -187,7 +186,7 @@ class Finicity {
         this.generateConnectEmail = (customerId) => __awaiter(this, void 0, void 0, function* () {
         });
         this.refreshCustomerAccounts = (customerId) => __awaiter(this, void 0, void 0, function* () {
-            const response = yield node_fetch_1.default(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts`, {
+            const response = yield (0, node_fetch_1.default)(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts`, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json',
