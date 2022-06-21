@@ -8,7 +8,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "eject": "expo eject",
-    "test": "jest --watchAll"
+    "test": "jest --watchAll",
+    "install-common": "tsc -b ../../common && npm pack ../../common &&  npm install tradingpost-common-1.0.0.tgz"
   },
   "jest": {
     "preset": "jest-expo"
@@ -26,6 +27,7 @@
     "@react-navigation/bottom-tabs": "^6.0.5",
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
+    "@tradingpost/common": "file:tradingpost-common-1.0.0.tgz",
     "@ui-kitten/components": "^5.1.2",
     "@ui-kitten/eva-icons": "^5.1.2",
     "expo": "~45.0.0",
@@ -47,6 +49,7 @@
     "react-native-screens": "~3.11.1",
     "react-native-svg": "12.3.0",
     "react-native-svg-transformer": "^1.0.0",
+    "react-native-toast-notifications": "^3.3.0",
     "react-native-web": "0.17.7",
     "react-native-webview": "11.18.1"
   },

@@ -5,13 +5,13 @@ import React, { Children, FC, PropsWithChildren, ReactElement, useEffect, useRef
 import { AppTitle, SplashWelcome } from "../images";
 //import { Screen } from "./BaseScreen";
 //import CreateAccountScreen from "./CreateAccountScreen";
-import { fonts, paddView, sizes } from '../style'
+import { bannerText, fonts, paddView, sizes } from '../style'
 import { G, GProps, Path, SvgProps } from "react-native-svg";
 import { Link } from "../components/Link";
-import { Animated, Platform, View, StyleSheet } from "react-native";
+import { Animated, Platform, View, StyleSheet, Alert } from "react-native";
 import { SvgExpo } from "../components/SvgExpo";
 import { LoginButtons } from "../components/LoginButtons";
-import { setGlobalUser } from "../hooks/useCachedResources";
+import useCachedResources from "../hooks/useCachedResources";
 import { NavigationProp } from "@react-navigation/native";
 import { Text, Layout, ViewPager, TabView, Tab } from "@ui-kitten/components";
 import { useState } from "react";
@@ -21,6 +21,14 @@ import { Section } from "../components/Section";
 //import { BaseScreenProps } from "../layouts/BaseLayout";
 //import LoginScreen from "./LoginScreen";
 //import { LoginButtons } from "../components/LoginButtons";
+import Auth from '@tradingpost/common/api/entities/static/AuthApi'
+import UserApi from '@tradingpost/common/api/entities/apis/UserApi'
+
+
+import { useToast } from "react-native-toast-notifications";
+import { PublicPages } from "../navigation";
+import { EntityApiBase } from "@tradingpost/common/api/entities/static/EntityApiBase";
+import { useAppUser } from "../App";
 
 
 const styles = StyleSheet.create({
@@ -99,18 +107,24 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         [password, setPassword] = useState<string>(''),
         [loggingIn, setLoggingIn] = useState(false),
         //{ isKeyboardVisible } = useIsKeyboardVisible(),
-        //  { toastMessage, toastProps } = useToast(),
+        //{ toastMessage, toastProps } = useToast(),
         [resetMode, setResetMode] = useState(false),
         intervalRef = useRef<any>(),
-        opacityAnim = useRef(new Animated.Value(0)).current;
+        opacityAnim = useRef(new Animated.Value(0)).current,
+        toast = useToast(),
+        { appUser, signIn } = useAppUser()
 
 
 
+    console.log("WTF SELECTED INDEX IS :" + selectedIndex);
     return <><View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>
         <AppTitle style={{ marginVertical: sizes.rem1, alignSelf: "center", width: "100%", aspectRatio: 5 }} />
         <TabView
-            selectedIndex={selectedIndex}
-            onSelect={index => setSelectedIndex(index)}
+            selectedIndex={selectedIndex === NaN ? 0 : selectedIndex}
+            onSelect={index => {
+                //TODO: investigate whats happenign here. This is not normal....            
+                setSelectedIndex(index === NaN ? 0 : index)
+            }}
             style={{ width: "100%" }}
             indicatorStyle={{
                 height: 0
@@ -186,10 +200,9 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                 </Section>
             </Tab>
         </TabView>
-        <Animated.Text style={{
-            textAlign: "center", margin: sizes.rem2, fontSize: fonts.large, lineHeight: fonts.large * 1.5,
+        <Animated.Text style={[bannerText, {
             opacity: !selectedIndex ? 1 : opacityAnim
-        }}> {!selectedIndex ? "Welcome to the team!" : "Hey... Welcome Back!"}</Animated.Text>
+        }]}> {!selectedIndex ? "Welcome to the team!" : "Hey... Welcome Back!"}</Animated.Text>
         <LoginButtons
             createAccountProps={{
                 onPress: () => {
@@ -198,7 +211,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                 }
             }}
             loginProps={{
-                onPress: () => {
+                onPress: async () => {
                     if (!selectedIndex) {
                         setSelectedIndex(1);
                         Animated.timing(
@@ -211,7 +224,12 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                             }).start();
                     }
                     else {
-                        setGlobalUser(true);
+                        try {
+                            await signIn(navigation, username, password);
+                        }
+                        catch (ex: any) {
+                            toast.show(ex.message);
+                        }
                     }
                 }
                 //setGlobalUser(true)

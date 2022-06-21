@@ -1,4 +1,4 @@
-import React, { Dispatch, ReactElement, ReactNode, Ref, SetStateAction, useEffect, useRef, useState } from 'react';
+import React, { Dispatch, ReactElement, ReactNode, Ref, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView } from 'react-native-gesture-handler';
 import { Tab, TabBar, TabView, Text } from '@ui-kitten/components';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -10,12 +10,15 @@ import { AccountInfoSection } from './create_account/AccountInfoSection';
 import { InvestmentInterestSection } from './create_account/InvestmentInterestSection';
 import { AccountSettings } from './create_account/AccountSettingsSection';
 import { YourContent } from './create_account/YourContentSection';
-import { Alert, ViewStyle } from 'react-native';
+import { Alert, View, ViewStyle } from 'react-native';
 //import { IDashboard, IDialog, PromptButton, PromptFunc, BaseScreen } from '../layouts/BaseLayout';
 import { useData } from '../lds';
-import { IUserGet } from '../api/entities/interfaces';
-import { LoginResult } from '../api/entities/apis/AuthApi';
+import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
+import { LoginResult } from '@tradingpost/common/api/entities/static/AuthApi';
 import { NavigationProp } from '@react-navigation/native';
+import { useToast, } from 'react-native-toast-notifications'
+import { BasicInfoSection } from './create_account/BasicInfoSection';
+import { EntityApiBase } from '@tradingpost/common/api/entities/static/EntityApiBase';
 //import { Screen } from './BaseScreen';
 
 export type CreateAccountProps = {
@@ -39,7 +42,9 @@ export const sideMargin = sizes.rem1_5;
 // }
 
 const screens = {
-    'Personal Information': AccountInfoSection,
+    'Login Info': AccountInfoSection,
+    'Verify': () => <View><Text>Verify Your Account</Text></View>,
+    'Baisc Info': BasicInfoSection,
     'Investment Interests': InvestmentInterestSection,
     'Content Accounts': YourContent,
     'Account Settings': AccountSettings
@@ -63,13 +68,15 @@ function SubScreen(props: { screenIndex: number, caProps: CreateAccountProps }) 
 
 
 export default (props: any) => {
+
+    console.log("TOKEN IS::::" + EntityApiBase.token);
     const
         //  { isKeyboardVisible } = useIsKeyboardVisible(),
         { value: currentUser } = useData("currentUser"),
         { value: loginResult } = useData("loginResult"),
+        resolveIdx = useCallback(() => EntityApiBase.token ? 2 : 0, []),
         { verified } = loginResult || {},
-        [wizardIndex, setWizardIndex] = useState(verified ? 1 : 0),
-
+        [wizardIndex, setWizardIndex] = useState(resolveIdx),
         user = useReadonlyEntity<IUserGet>(currentUser || {
             profile_url: "",
             first_name: "",
@@ -81,18 +88,25 @@ export default (props: any) => {
             display_name: "",
             id: "",
             tags: []
-        });
+        }),
+        toast = useToast()
+        ;
+
+
     //dashRef = useRef<IDashboard>()
 
     const { resetData } = user;
     useEffect(() => {
-        if (currentUser) {
-            resetData(currentUser);
-            if (wizardIndex === 0) {
-                setWizardIndex(verified ? 1 : 0)
+        if (loginResult) {
+            console.log("YEST Login Result");
+            if (wizardIndex === 0 || wizardIndex === 1) {
+                setWizardIndex(resolveIdx())
             }
         }
-    }, [currentUser, resetData, verified])
+        else {
+            console.log("No Login Result");
+        }
+    }, [loginResult, wizardIndex, EntityApiBase.token])
 
     // function getWizardState(idx: number) {
     //     return idx <= wizardIndex ? Wizard.States.ENABLED : Wizard.States.DISABLED
@@ -102,8 +116,13 @@ export default (props: any) => {
         user,
         navigation: props.navigation,
         toastMessage: ((msg: string, delay: number | undefined) => {
-            Alert.alert("Toast...", msg);
-            //    dashRef.current?.toastMessage(msg, delay)
+
+            toast.show(msg, {
+                duration: delay,
+                placement: "top"
+            });
+            //Alert.alert("Toast...", msg);
+            //dashRef.current?.toastMessage(msg, delay)
         }),
         login: loginResult,
         // prompt: (title: string, message: string, buttons: PromptButton[]) => {
@@ -118,12 +137,23 @@ export default (props: any) => {
     }
 
     return <TabView
+        style={{
+            backgroundColor: "white"
+        }}
+        swipeEnabled={false}
         selectedIndex={wizardIndex}
+        indicatorStyle={{
+            height: 0
+        }}
+        tabBarStyle={{
+            height: 0,
+            padding: 0
+        }}
         onSelect={index => setWizardIndex(index)}>
 
         {screenKeys.map((v, i) => {
             const Screen = screens[screenKeys[i] as keyof typeof screens];
-            return <Tab title={v.split(" ").join("\r\n")} >
+            return <Tab >
                 <Screen {...caProps} />
             </Tab>
         })}

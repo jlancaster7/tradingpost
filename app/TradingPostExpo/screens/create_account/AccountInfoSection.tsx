@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, RefObject, useMemo } from "react";
-import { Alert, TouchableOpacity, Image, ImageStyle, ViewStyle, View } from "react-native";
+import { Alert, TouchableOpacity, Image, ImageStyle, ViewStyle, View, Animated } from "react-native";
 //import { Navigation } from "react-native-navigation";
 //import { Nav } from '@react-navigation/native'
 import { Input, Text, } from "@ui-kitten/components";
@@ -8,7 +8,7 @@ import { ButtonField } from "../../components/ButtonField";
 import { IconifyIcon } from "../../components/IconfiyIcon";
 import { Section } from "../../components/Section";
 import { TextField, ITextField } from "../../components/TextField";
-import { flex, sizes } from "../../style";
+import { bannerText, flex, sizes, textInputWiz } from "../../style";
 import { bindTextInput, IEntity, useReadonlyEntity } from "../../utils/hooks";
 import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators";
 import { CreateAccountProps, sideMargin, useChangeLock } from "../CreateAccountScreen";
@@ -18,7 +18,10 @@ import { ProfileBanner } from "../../components/ProfileBanner";
 import { Label } from "../../components/Label";
 import { TBI } from "../../utils/misc";
 import { AppColors } from "../../constants/Colors";
-
+import Auth from '@tradingpost/common/api/entities/static/AuthApi'
+import { useAppUser } from "../../App";
+import { useData } from "../../lds";
+import { EntityApiBase } from "@tradingpost/common/api/entities/static/EntityApiBase";
 
 type FieldRefs = {
     first: RefObject<ITextField>,
@@ -29,11 +32,13 @@ type FieldRefs = {
     confirm: RefObject<ITextField>
 }
 type LoginInfo = { email?: string, password?: string };
+
 export function AccountInfoSection(props: CreateAccountProps) {
     const
         [lockButtons, setLockButtons] = useChangeLock(props),
         isAuthed = Boolean(props.login), //ensureAuthProps(props),
         isBroken = !useMemo(() => Boolean(props.user.data.first_name), []) || !useMemo(() => Boolean(props.user.data.last_name), []),
+        { setValue: setLoginResult } = useData("loginResult"),
         isUnconfirmed = isAuthed && !isBroken,
         loginEntity = useReadonlyEntity<LoginInfo>({}),
         refs: FieldRefs = {
@@ -47,10 +52,11 @@ export function AccountInfoSection(props: CreateAccountProps) {
         buttonConfig = {
             locked: lockButtons,
             left: isUnconfirmed || isBroken ? {
-                text: "Sign Out",
+                text: "Cancel",
                 onPress: async () => {
+                    props.navigation.goBack();
                     //await signOut();
-                    TBI();
+                    //TBI();
                     //Navigation.pop(props.componentId)
                 }
             }
@@ -69,20 +75,20 @@ export function AccountInfoSection(props: CreateAccountProps) {
                         //     props.toastMessage("Verification has not been completed.")
                     }
                     catch (ex) {
-                        console.error(ex);
-                        //props.toastMessage("Error trying to sign in");
+                        //console.error(ex);
+                        props.toastMessage("Error trying to sign in");
                     }
                     setLockButtons(false);
                 }
             } : {
-                text: props.saveOnly ? "Apply" : "Next",
+                text: props.saveOnly ? "Apply" : "Create",
                 onPress: async () => {
                     setLockButtons(true);
                     const errors: string[] = [];
                     try {
                         for (const k in refs) {
                             const val = refs[k as keyof typeof refs];
-                            if (val.current && !val.current.field.current?.validate()) {
+                            if (val.current && !val.current.validate()) {
                                 errors.push(val.current.errorMessage || "");
                             }
                         }
@@ -92,9 +98,18 @@ export function AccountInfoSection(props: CreateAccountProps) {
                             setLockButtons(false);
                         }
                         else if (!isAuthed) {  //create new user
-                            Alert.alert("CREATING", "USER DATA")
+                            //Alert.alert("CREATING", "USER DATA")
                             //await CreateAuth0User(props.user.data);
-                            TBI();
+                            //TBI();
+                            if (loginEntity.data.email && loginEntity.data.password) {
+                                const login = await Auth.createLogin(loginEntity.data.email, loginEntity.data.password);
+                                console.log("WTF IS UP WITH THE TOKEN:" + EntityApiBase.token);
+                                setLoginResult(login);
+                                //props.next();
+                            }
+                            else {
+                                throw new Error("Something is very wrong." + JSON.stringify(loginEntity.data))
+                            }
                             setLockButtons(false);
                         }
                         else { //patch authed user
@@ -136,35 +151,27 @@ export function AccountInfoSection(props: CreateAccountProps) {
 }
 
 function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthed: boolean, loginEntity: IEntity<LoginInfo> }) {
-    const { refs, isAuthed } = props;
+    const { refs, isAuthed } = props,
+        opacityAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.timing(
+            opacityAnim,
+            {
+                delay: 0.75,
+                toValue: 1,
+                duration: 2000,
+                useNativeDriver: true
+            }).start();
+    }, [])
+
     return <View>
-        <ProfileBanner navigator={props.navigation} profilePic={props.user.data.profile_url} bannerPic={props.user.data.banner_url} editMode //componentId={props.componentId}
-            onBannerPicked={(img, err) => {
-                if (err)
-                    props.toastMessage(err.message)
-                else if (img) {
-                    props.toastMessage("BANNER PICKED");
-                    props.user.update({
-                        banner_url: `data:${img.mime};base64,${img.data}`
-                    })
-                }
-            }}
-
-            onProfilePicked={(img, err) => {
-                console.warn("PROFILE WAS PICKED");
-                if (err)
-                    props.toastMessage(err.message)
-                else if (img) {
-                    props.toastMessage("PROFILE PICKED");
-                    props.user.update({
-                        profile_url: img.data
-                    })
-                }
-            }}
-
-        />
         <View style={[flex, { margin: sideMargin }]}>
-            <Section title={'Personal Information'}>
+            <Animated.Text
+                style={[bannerText, { opacity: opacityAnim }]}>
+                Let's start with some login information
+            </Animated.Text>
+            {/* <Section title={'Personal Information'}>
                 <TextField label='Name'
                     validate={isRequired}
                     errorMessage={"`Name` is required"}
@@ -176,58 +183,58 @@ function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthe
                     textInputRef={refs.last}
                     validate={isRequired}
                     validateOnChange placeholder='Last Name' returnKeyType="none"  {...bindTextInput(props.user, "last_name", null)} />
-                <TextField label='Email'
-                    textInputRef={refs.email}
-                    errorMessage={"`Email Address` is invalid"}
-                    disabled={isAuthed}
-                    validate={isValidEmail}
-                    validateOnChange placeholder='Email Address' returnKeyType="none" {...bindTextInput(props.user, "email", null)} />
-                {/* <TextField
-                    label="Website"
-                    placeholder="Personal Website Url"
-                    {...bindTextInput(props.user, "personalSiteUrl", null)}
-                /> */}
-                <Label>Your Bio</Label>
-                <Input
-                    numberOfLines={4}
-                    placeholder='A breif bio' returnKeyType="none" {...bindTextInput(props.user, "bio", null)} />
-            </Section>
-            <Section title={'Login Information'} >
-                <TextField label='Username'
+            </Section> */}
+            {/* <Section title={'Login Information'} > */}
+            <TextField
+                //label='Email'
+                style={textInputWiz}
+                textInputRef={refs.email}
+                errorMessage={"`Email Address` is invalid"}
+                disabled={isAuthed}
+                validate={isValidEmail}
+                validateOnChange placeholder='Email Address' returnKeyType="none" {...bindTextInput(props.loginEntity, "email", null)}
+            />
+            {/* <TextField 
+                    //label='Username'
+                    style={textInputWiz}
                     textInputRef={refs.username}
                     validate={isAlphaNumeric}
                     validateOnChange
                     disabled={isAuthed}
                     errorMessage={"`Username` must be alphanumeric"}
-                    placeholder='Account Username' returnKeyType="none" {...bindTextInput(props.user, "handle", null)} />
-                {
-                    isAuthed ?
-                        <ButtonField
-                            compact
-                            isActive
-                            label='Password'
-                            activeText='Change'
+                    placeholder='Account Username' returnKeyType="none" {...bindTextInput(props.user, "handle", null)} /> */}
+            {
+                isAuthed ?
+                    <ButtonField
+                        compact
+                        isActive
+                        label='Password'
+                        activeText='Change'
+                    />
+                    : <>
+                        <TextField
+                            //label='Password'
+                            style={textInputWiz}
+                            textInputRef={refs.pass}
+                            validate={isRequired}
+                            validateOnChange
+                            errorMessage={"`Password` is required."}
+                            placeholder='Account Password' returnKeyType="none" secureTextEntry
+                            {...bindTextInput(props.loginEntity, "password", null)} />
+                        <TextField
+                            //label='Confirm'
+                            style={textInputWiz}
+                            textInputRef={refs.confirm}
+                            placeholder='Confirm Password'
+                            returnKeyType="none"
+                            errorMessage={"'Confirm' does not match."}
+                            validateOnChange
+                            validate={(c) => Boolean(c) && c === props.loginEntity.data.password}
+                            secureTextEntry
                         />
-                        : <>
-                            <TextField
-                                label='Password'
-                                textInputRef={refs.pass}
-                                validate={isRequired}
-                                validateOnChange
-                                errorMessage={"`Password` is required."}
-                                placeholder='Account Password' returnKeyType="none" secureTextEntry {...bindTextInput(props.loginEntity, "password", null)} />
-                            <TextField label='Confirm'
-                                textInputRef={refs.confirm}
-                                placeholder='Confirm Password'
-                                returnKeyType="none"
-                                errorMessage={"'Confirm' does not match."}
-                                validateOnChange
-                                validate={(c) => Boolean(c) && c === props.loginEntity.data.password}
-                                secureTextEntry
-                            />
-                        </>
-                }
-            </Section>
+                    </>
+            }
+            {/* </Section> */}
         </View>
     </View >
 }

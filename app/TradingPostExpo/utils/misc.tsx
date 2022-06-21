@@ -3,7 +3,7 @@ import { Alert } from "react-native";
 //import { AmiraError } from '../AmiraError';
 
 export function TBI() {
-    return Alert.alert("To Be Implemented", "Method has not been implemented");
+    return console.warn("Method has not been implemented");
 }
 
 export function randomPrice() {

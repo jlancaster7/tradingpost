@@ -39,11 +39,13 @@ type UndefinedProxy<T extends keyof any> = {
   [P in T]: undefined
 }
 
+export type PublicPages = UndefinedProxy<"Launch" | "Create" | "Login">
+
 /**
  * A root stack navigator is often used for displaying modals on top of all other content.
  * https://reactnavigation.org/docs/modal
  */
-const Stack = createNativeStackNavigator<RootStackParamList & UndefinedProxy<"Launch" | "Create" | "Login">>();
+const Stack = createNativeStackNavigator<RootStackParamList & PublicPages>();
 function RootNavigator(props: { isLoggedIn: boolean }) {
   return (
     <Stack.Navigator>

@@ -38,6 +38,7 @@ export function font(size: keyof typeof fonts, color: string = "black", isBold: 
 
 
 export const sizes = {
+    rem0_5: 8,
     rem1: 16,
     rem1_5: 24,
     rem2: 32,
@@ -54,7 +55,7 @@ export const sizes = {
 
 
 
-export const paddView = [flex, { padding: sizes.rem1 }] 
+export const paddView = [flex, { padding: sizes.rem1 }]
 
 
 export const chartColors = [
@@ -72,3 +73,10 @@ export const social = {
     substackColor: '#ff7731'
 }
 
+export const bannerText = {
+    textAlign: "center", margin: sizes.rem2, fontSize: fonts.large, lineHeight: fonts.large * 1.5,
+} as TextStyle
+
+export const textInputWiz = {
+    marginVertical: sizes.rem0_5
+} as ViewStyle

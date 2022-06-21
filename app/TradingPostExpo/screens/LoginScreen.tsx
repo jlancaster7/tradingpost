@@ -18,7 +18,6 @@ import { AppTitle, IconBg, IconNoBg } from '../images'
 //import { resetPassword, signInWithPassword } from '../apis/Authentication';
 //import { ToastProps } from 'react-native-ui-lib/typings';
 
-
 export default () => {
     const
         userRef = useRef<ITextField>(null),

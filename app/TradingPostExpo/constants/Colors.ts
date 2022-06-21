@@ -22,3 +22,5 @@ export const AppColors  = {
   primary : "",
   secondary:""
 }
+
+

@@ -1,25 +1,24 @@
 import React, { MutableRefObject, RefObject, useEffect, useRef, useState } from 'react';
 import { ViewStyle, TextInputProps } from 'react-native';
 //import { Colors } from 'react-native-ui-lib';
-import { Input, InputProps } from '@ui-kitten/components'
+import { Text, Input, InputProps } from '@ui-kitten/components'
 
 
-interface IRnField {
-    focus(): void,
-    validate: () => boolean
-    clear(): void
-
-}
+// interface IRnField {
+//     focus(): void,
+//     clear(): void
+// }
 export interface ITextField {
-    field: RefObject<IRnField>,
+    field: RefObject<Input>,
     errorMessage?: string
+    validate: () => boolean
 }
 export function TextField(props: {
     label?: string,
     textInputRef?: MutableRefObject<ITextField | null>
     disabled?: boolean
     validate?: (value: string | undefined) => boolean,
-    validateOnChange?:boolean
+    validateOnChange?: boolean
     errorMessage?: string,
     //defaulted this to false... which is the right way to to a positive assetion...  
     spellCheck?: boolean,
@@ -28,12 +27,23 @@ export function TextField(props: {
     caption?: InputProps["caption"]
 } & TextInputProps) {
     const rnuRef = useRef<Input>(null);
-    // if (props.textInputRef) {
-    //     props.textInputRef.current = {
-    //         errorMessage: props.errorMessage instanceof Array ? props.errorMessage.join(",") : props.errorMessage,
-    //         field: rnuRef
-    //     }
-    // }
+    const [caption, setCaption] = useState<InputProps["caption"]>();
+    const [valueTracker, setValueTracker] = useState<string>();
+
+    useEffect(() => {
+        setCaption(props.caption);
+    }, [props.caption])
+    useEffect(() => {
+        setValueTracker(props.value);
+    }, [props.value])
+    const { validate } = props;
+    if (props.textInputRef) {
+        props.textInputRef.current = {
+            errorMessage: /* props.errorMessage instanceof Array ? props.errorMessage.join(",") :*/ props.errorMessage,
+            validate: () => validate ? validate(valueTracker) : true,
+            field: rnuRef
+        }
+    }
 
     //const tt = { spellCheck: true, autoCorrect:false } as TextInputProps
 
@@ -45,7 +55,7 @@ export function TextField(props: {
         //disabledColor={props.disabledColor || Colors.grey20}
         //placeholder="Enter Email..."
         //validateOnChange={props.validateOnChange}
-        //caption={"Test"}
+        caption={caption}
         //validate={props.validate}
         //errorMessage={props.errorMessage}
         value={props.value}
@@ -53,7 +63,26 @@ export function TextField(props: {
         //ref={props.textInputRef?.current?.field}
         onSubmitEditing={props.onSubmitEditing}
         label={props.label}
-        onChangeText={props.onChangeText}
+        onChangeText={(t) => {
+            setValueTracker(t);
+            if (validate && props.validateOnChange) {
+                let errorMessage: string | undefined = undefined;
+                let newCaption: InputProps["caption"] = undefined;
+                if (!validate(t)) {
+                    errorMessage = props.errorMessage;
+                    newCaption = () => <Text category={"c1"} style={{ color: "red" }}>{errorMessage}</Text>;
+                }
+
+                if (props.textInputRef?.current) {
+                    props.textInputRef.current.errorMessage = errorMessage;
+                    //props.textInputRef.current.validate = () => validate(t);
+                }
+                setCaption(() => newCaption);
+            }
+
+            if (props.onChangeText)
+                props.onChangeText(t);
+        }}
         secureTextEntry={props.secureTextEntry}
         returnKeyType={props.returnKeyType}
         placeholder={props.placeholder}
