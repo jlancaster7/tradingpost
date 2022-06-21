@@ -1,6 +1,7 @@
 
 import { execProc, execProcOne } from '../static/pool';
 import { EntityApiBase } from './EntityApiBase';
+import { makeError } from '../../errors'
 
 export abstract class EntityApi<TGet, TList, TInsert, TUpdate> extends EntityApiBase<TGet, TList, TInsert, TUpdate> {
     internal = new class {

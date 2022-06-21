@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IEX = exports.SandboxBaseURL = exports.ProductionBaseURL = exports.RetryError = exports.IEXError = void 0;
+exports.SandboxBaseURL = exports.ProductionBaseURL = exports.RetryError = exports.IEXError = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
 const sleep_1 = require("../utils/sleep");
 const url_1 = require("url");
@@ -47,7 +47,7 @@ class IEX {
                 }
             }
             const config = Object.assign(Object.assign({}, HTTPConfigurationDefaults), httpConfiguration);
-            return yield (0, node_fetch_1.default)(url.toString(), config);
+            return yield node_fetch_1.default(url.toString(), config);
         });
         this.retry = (fn, retryNum) => __awaiter(this, void 0, void 0, function* () {
             let err = null;
@@ -58,7 +58,7 @@ class IEX {
                 catch (e) {
                     if (e instanceof RetryError) {
                         const sleepMilli = 60 * i;
-                        yield (0, sleep_1.sleep)(sleepMilli);
+                        yield sleep_1.sleep(sleepMilli);
                         continue;
                     }
                     throw e;
@@ -413,4 +413,4 @@ class IEX {
         this.retryMax = retryMax;
     }
 }
-exports.IEX = IEX;
+exports.default = IEX;

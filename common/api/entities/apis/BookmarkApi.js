@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const EntityApi_1 = require("./EntityApi");
+const EntityApi_1 = require("../static/EntityApi");
 class BookmarkApi extends EntityApi_1.EntityApi {
     constructor() {
         super(...arguments);

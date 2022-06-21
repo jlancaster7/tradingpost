@@ -1,4 +1,4 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { IPostGet,IPostList } from '../interfaces'
 class PostApi extends EntityApi<IPostGet,IPostList,any,any> {
     getFunction = "public.api_post_get";

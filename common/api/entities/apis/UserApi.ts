@@ -1,4 +1,4 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { IUserGet,IUserList } from '../interfaces'
 class UserApi extends EntityApi<IUserGet,IUserList,any,any> {
     getFunction = "public.api_user_get";

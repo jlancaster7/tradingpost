@@ -1,4 +1,6 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.makeError = void 0;
 const ErrorCodes = {
     VALIDATION_ERROR: "VALIDATION_ERROR"
 };
@@ -12,3 +14,4 @@ const makeError = (type, data) => {
         data
     };
 };
+exports.makeError = makeError;

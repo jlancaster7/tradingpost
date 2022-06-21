@@ -1,4 +1,4 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { ISubscriberGet,ISubscriberList } from '../interfaces'
 class SubscriberApi extends EntityApi<ISubscriberGet,ISubscriberList,any,any> {
     getFunction = "public.api_subscriber_get";

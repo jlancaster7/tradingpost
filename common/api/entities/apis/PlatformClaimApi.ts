@@ -1,4 +1,4 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { IPlatformClaimGet,IPlatformClaimList } from '../interfaces'
 class PlatformClaimApi extends EntityApi<IPlatformClaimGet,IPlatformClaimList,any,any> {
     getFunction = "public.api_platform_claim_get";

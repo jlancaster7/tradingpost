@@ -2,14 +2,14 @@
 import pg from 'pg'
 const hive = new pg.Pool({
     host: "localhost",
-    user: "postgres",
+    user: "postgres", 
     password: "V5tbh@vyPG3",
     database: "HIVE"
 });
 const debug = true;
 
 export const execProc = async <Result = any, Count extends number = 0, T extends Record<string, any> = any>(proc: string, prms?: T, ensureCount?: Count, ensureCountMessage?: string): Promise<Count extends 1 ? Result : Result[]> => {
-
+ 
     const result = prms ? await hive.query(`SELECT * FROM ${proc}($1)`, [JSON.stringify(prms)]) :
         await hive.query(`SELECT * FROM ${proc}()`)
     if (ensureCount && result.rowCount !== ensureCount) {

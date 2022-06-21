@@ -1,4 +1,4 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { ICommentGet,ICommentList } from '../interfaces'
 class CommentApi extends EntityApi<ICommentGet,ICommentList,any,any> {
     getFunction = "public.api_comment_get";

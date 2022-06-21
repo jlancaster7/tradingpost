@@ -108,7 +108,7 @@ export interface IUserList {
     handle: string,
     tags: string[],
     display_name: string,
-    profile_url: string
+    profile_url?: string
     };
 
 export interface IUserGet {
@@ -121,6 +121,6 @@ export interface IUserGet {
     display_name: string,
     first_name: string,
     last_name: string,
-    profile_url: string,
+    profile_url?: string,
     banner_url?: string
     };

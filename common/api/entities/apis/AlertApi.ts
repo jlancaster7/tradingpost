@@ -1,4 +1,4 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { IAlertGet,IAlertList } from '../interfaces'
 class AlertApi extends EntityApi<IAlertGet,IAlertList,any,any> {
     getFunction = "public.api_alert_get";

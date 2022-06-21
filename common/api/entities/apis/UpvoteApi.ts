@@ -1,4 +1,4 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { IUpvoteGet,IUpvoteList } from '../interfaces'
 class UpvoteApi extends EntityApi<IUpvoteGet,IUpvoteList,any,any> {
     getFunction = "public.api_upvote_get";

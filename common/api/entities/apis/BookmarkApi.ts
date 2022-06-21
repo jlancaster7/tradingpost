@@ -1,4 +1,4 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { IBookmarkGet,IBookmarkList } from '../interfaces'
 class BookmarkApi extends EntityApi<IBookmarkGet,IBookmarkList,any,any> {
     getFunction = "public.api_bookmark_get";
