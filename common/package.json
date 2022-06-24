@@ -9,7 +9,8 @@
   "author": "Levert James Jr.",
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-ssm": "^3.109.0",
+    "@aws-sdk/client-ssm": "^3.112.0",
+    "aws-sdk": "^2.1159.0",
     "jsonwebtoken": "^8.5.1",
     "luxon": "^2.4.0",
     "node-fetch": "^2.6.7",

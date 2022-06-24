@@ -26,7 +26,7 @@ export declare class Configuration {
     private isCacheEnabled;
     private cache;
     constructor(ssmClient: SSM, environment?: ConfigurationEnv, enableCache?: any);
-    fromSSM: <T extends keyof ConfigPaths>(path: T, options?: ConfigOptions) => Promise<ConfigPaths[T]>;
+    fromSSM: <T extends keyof ConfigPaths>(path: T, options?: ConfigOptions | undefined) => Promise<ConfigPaths[T]>;
     fromCacheOrSSM: <T extends keyof ConfigPaths>(path: T) => Promise<ConfigPaths[T]>;
 }
 export declare const DefaultConfig: Configuration;

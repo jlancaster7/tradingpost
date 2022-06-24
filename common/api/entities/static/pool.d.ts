@@ -1,2 +1,2 @@
-export declare const execProc: <Result = any, Count extends number = 0, T extends Record<string, any> = any>(proc: string, prms?: T | undefined, ensureCount?: Count | undefined, ensureCountMessage?: string) => Promise<Count extends 1 ? Result : Result[]>;
-export declare const execProcOne: <Result = any, T extends Record<string, any> = any>(proc: string, prms?: T | undefined, ensureCountMessage?: string) => Promise<Result>;
+export declare const execProc: <Result = any, Count extends number = 0, T extends Record<string, any> = any>(proc: string, prms?: T | undefined, ensureCount?: Count | undefined, ensureCountMessage?: string | undefined) => Promise<Count extends 1 ? Result : Result[]>;
+export declare const execProcOne: <Result = any, T extends Record<string, any> = any>(proc: string, prms?: T | undefined, ensureCountMessage?: string | undefined) => Promise<Result>;

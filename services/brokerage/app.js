@@ -32,7 +32,6 @@ const app = (0, express_1.default)();
 const run = () => __awaiter(void 0, void 0, void 0, function* () {
     const finicity = new finicity_1.default(cfg.finicityPartnerId, cfg.finicityPartnerSecret, cfg.finicityAppKey);
     yield finicity.init();
-    console.log("Ready");
     const getHashedPassword = (password) => {
         const sha256 = crypto_1.default.createHash('sha256');
         return sha256.update(password).digest('base64');
@@ -53,12 +52,11 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     };
     const users = [
         {
-            authToken: "",
             username: 'dj',
             password: getHashedPassword('myPass1234!'),
-            finicityCustomerId: "",
-            finicityCustomerUsername: "",
-            finicityCustomerCreated: undefined,
+            finicityCustomerId: "6004456313",
+            finicityCustomerUsername: "djbozentka",
+            finicityCustomerCreated: "1655908987",
         }
     ];
     app.engine('handlebars', (0, express_handlebars_1.engine)());
@@ -101,8 +99,9 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         res.redirect('/finicity/brokerage');
     });
     app.get('/finicity/brokerage', requireAuth, (req, res) => {
-        console.log("Broekrage...");
-        res.render('brokerage');
+        res.render('brokerage', {
+            apiToken: finicity.accessToken
+        });
     });
     app.get('/finicity/brokerage/auth', requireAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
@@ -118,6 +117,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     }));
     app.post("/finicity/customer/add", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            console.log("Adding finciity partner");
             const { username, applicationId } = req.body;
             const r = yield finicity.addCustomer(applicationId, username);
             res.json(r);
@@ -130,6 +130,8 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         }
     }));
     app.post("/finicity/webhook", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log(req.body);
+        res.sendStatus(200);
     }));
     // catch 404 and forward to error handler
     app.use(function (req, res, next) {

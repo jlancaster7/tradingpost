@@ -23,7 +23,6 @@ const app = express();
 const run = async () => {
     const finicity = new Finicity(cfg.finicityPartnerId, cfg.finicityPartnerSecret, cfg.finicityAppKey);
     await finicity.init();
-    console.log("Ready")
     const getHashedPassword = (password: string): string => {
         const sha256 = crypto.createHash('sha256');
         return sha256.update(password).digest('base64');
@@ -46,12 +45,11 @@ const run = async () => {
 
     const users: UserInterface[] = [
         {
-            authToken: "",
             username: 'dj',
             password: getHashedPassword('myPass1234!'),
-            finicityCustomerId: "",
-            finicityCustomerUsername: "",
-            finicityCustomerCreated: undefined,
+            finicityCustomerId: "6004456313",
+            finicityCustomerUsername: "djbozentka",
+            finicityCustomerCreated: "1655908987",
         }
     ]
 
@@ -103,8 +101,9 @@ const run = async () => {
     });
 
     app.get('/finicity/brokerage', requireAuth, (req, res) => {
-        console.log("Broekrage...")
-        res.render('brokerage')
+        res.render('brokerage', {
+            apiToken: finicity.accessToken
+        })
     })
 
     app.get('/finicity/brokerage/auth', requireAuth, async (req, res) => {
@@ -121,6 +120,7 @@ const run = async () => {
 
     app.post("/finicity/customer/add", async (req, res) => {
         try {
+            console.log("Adding finciity partner")
             const {username, applicationId} = req.body
             const r = await finicity.addCustomer(applicationId, username)
             res.json(r);
@@ -133,6 +133,8 @@ const run = async () => {
     })
 
     app.post("/finicity/webhook", async (req, res) => {
+        console.log(req.body);
+        res.sendStatus(200);
     })
 
 

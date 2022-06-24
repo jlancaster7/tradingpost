@@ -114,15 +114,17 @@ class Finicity {
         this.addConsumer = (customerId, consumer, appKey, appToken) => __awaiter(this, void 0, void 0, function* () {
         });
         this.addCustomer = (applicationId, username) => __awaiter(this, void 0, void 0, function* () {
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            };
+            console.log(headers);
             const response = yield (0, node_fetch_1.default)("https://api.finicity.com/aggregation/v2/customers/active", {
                 method: "POST",
-                body: JSON.stringify({ username }),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Finicity-App-Key': this.appKey,
-                    'Finicity-App-Token': this.accessToken
-                }
+                body: JSON.stringify({ username: username }),
+                headers,
             });
             const body = yield response.text();
             try {
@@ -157,6 +159,15 @@ class Finicity {
         this.getCustomer = () => __awaiter(this, void 0, void 0, function* () {
         });
         this.generateConnectUrl = (customerId, webhook, webhookContentType = "application/json", experience = "default") => __awaiter(this, void 0, void 0, function* () {
+            console.log("Generating connect token...");
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            };
+            console.log("CustomerID: ", customerId);
+            console.log("Partner ID : ", this.partnerId);
             const response = yield (0, node_fetch_1.default)("https://api.finicity.com/connect/v2/generate", {
                 method: "POST",
                 body: JSON.stringify({
@@ -166,18 +177,14 @@ class Finicity {
                     webhookContentType: webhookContentType,
                     // experience: experience
                 }),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'Finicity-App-Key': this.appKey,
-                    'Finicity-App-Token': this.accessToken
-                }
+                headers,
             });
             const body = yield response.text();
             try {
                 return JSON.parse(body);
             }
             catch (e) {
+                console.log(body.toString());
                 throw e;
             }
         });

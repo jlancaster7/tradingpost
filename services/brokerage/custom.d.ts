@@ -14,10 +14,9 @@ interface Config {
 }
 
 interface UserInterface {
-    authToken: string
     username: string
     password: string
     finicityCustomerId: string
     finicityCustomerUsername: string
-    finicityCustomerCreated: DateTime | undefined
+    finicityCustomerCreated: string | undefined
 }
