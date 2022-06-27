@@ -11,7 +11,7 @@ import {
     ListWebhooksResponse, ListTransactionsResponse, GetBalancesResponse
 } from "./interfaces";
 
-export const PRODUCTION_BASE_URL = "https://www.realizefi.com/api/users";
+export const PRODUCTION_BASE_URL = "https://www.realizefi.com/api";
 export const DEVELOPMENT_BASE_URL = "";
 
 class RealizeFiError extends Error {
@@ -29,7 +29,7 @@ class RealizeFiError extends Error {
  *      should make into realizefi error
  */
 
-export default class Finicity {
+export default class Realizefi {
     private readonly baseUrl: string;
     private readonly redirectUrl: string;
     private apiKey: string;
@@ -138,7 +138,8 @@ export default class Finicity {
     //  with
     // TODO: Add in ability to limit scopes of trades(read only, vs. execute)
     createAuthPortal = async (
-        userId: string, successRedirect: string,
+        userId: string,
+        successRedirect: string,
         failureRedirect: string, scopes?: AuthPortalScopes[], brokerages?: SupportedBrokerages[]
     ): Promise<AuthPortalResponse> => {
         let body: any = {
@@ -380,7 +381,24 @@ export default class Finicity {
                 }
             })
 
-            return await response.json() as ListTransactionsResponse;
+            const {data} = await response.json()
+            let d = [];
+            for(const c of data) {
+                d.push({
+                    id: c.id,
+                    transactionDate: c.transactionDate,
+                    settlementDate: c.settlementDate,
+                    type: c.type,
+                    netAmount: c.netAmount,
+                    details: {
+                        transactionType: c.details && c.details.transactionType,
+                        amount: c.details && c.details.amount,
+                        direction: c.details && c.details.direction,
+                        fees: c.details && c.details.fee
+                    }
+                })
+            }
+            return {data: d}
         } catch (e) {
             throw e;
         }

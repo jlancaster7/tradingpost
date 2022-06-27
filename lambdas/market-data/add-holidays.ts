@@ -1,20 +1,15 @@
+import 'dotenv/config';
 import {Context} from 'aws-lambda';
 import IEX, {GetExchanges, GetUsExchanges, GetUSHolidayAndTradingDays} from '@tradingpost/common/iex';
 import {DateTime} from 'luxon';
 import {Repository} from "../../services/market-data/repository";
 import {addUSHoliday, addExchange} from '../../services/market-data/interfaces';
 import {Client} from 'pg';
-import {Configuration} from "@tradingpost/common/configuration";
-
-const AWS = require('aws-sdk')
-AWS.config.update({region: 'us-east-1'});
-const ssmClient = new AWS.SSM();
-const configuration = new Configuration(ssmClient);
-
+import {DefaultConfig} from "@tradingpost/common/configuration";
 
 const run = async () => {
-    const postgresConfiguration = await configuration.fromSSM("/production/postgres");
-    const iexConfiguration = await configuration.fromSSM("/production/iex");
+    const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+    const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
     const iex = new IEX(iexConfiguration['key'] as string);
     const pgClient = new Client({
         host: postgresConfiguration['host'] as string,

@@ -1,5 +1,6 @@
+import 'dotenv/config'
 import {Context} from 'aws-lambda';
-import {Configuration} from "@tradingpost/common/configuration";
+import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Client} from "pg";
 import {Repository} from "../../services/market-data/repository";
 import {addSecurityPrice, getSecurityBySymbol} from '../../services/market-data/interfaces';
@@ -8,14 +9,8 @@ import {GetQuote} from "@tradingpost/common/iex";
 import {DateTime} from "luxon";
 import Index from "../../services/market-data";
 
-const AWS = require('aws-sdk')
-AWS.config.update({region: 'us-east-1'});
-const ssmClient = new AWS.SSM();
-const configuration = new Configuration(ssmClient);
-
-
 const run = async () => {
-    const postgresConfiguration = await configuration.fromSSM("/production/postgres");
+    const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgClient = new Client({
         host: postgresConfiguration['host'] as string,
         user: postgresConfiguration['user'] as string,
@@ -24,7 +19,7 @@ const run = async () => {
         port: 5432,
     });
 
-    const iexConfiguration = await configuration.fromSSM("/production/iex");
+    const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
     const iex = new IEX(iexConfiguration.key as string);
     await pgClient.connect();
     const repository = new Repository(pgClient);

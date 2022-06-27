@@ -9,6 +9,9 @@ interface ConfigPaths extends Record<ConfigKeys, unknown> {
         database: string;
         port: number;
     };
+    iex: {
+        key: string;
+    };
     authkey: string;
     spotify: {};
     twitter: {};

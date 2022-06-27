@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import IEX, {GetCompany, GetLogo, GetPreviousDayPrice, GetQuote, GetStatsBasic} from "@tradingpost/common/iex";
 import {Client} from "pg";
 import {Repository} from "../../services/market-data/repository";
@@ -9,13 +10,8 @@ import {
 } from '../../services/market-data/interfaces';
 import {GetIexSymbols, GetOtcSymbols} from '@tradingpost/common/iex';
 import {DateTime} from "luxon";
-import {Configuration} from "@tradingpost/common/configuration";
+import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
-
-const AWS = require('aws-sdk')
-AWS.config.update({region: 'us-east-1'});
-const ssmClient = new AWS.SSM();
-const configuration = new Configuration(ssmClient);
 
 // Pricing Charge
 // AM
@@ -34,8 +30,8 @@ const configuration = new Configuration(ssmClient);
 // Per Day = (26748 * 8) + 268 = 214,244 / Day * 21
 // Per Month = 4,501,308
 const run = async () => {
-    const postgresConfiguration = await configuration.fromSSM("/production/postgres");
-    const iexConfiguration = await configuration.fromSSM("/production/iex");
+    const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+    const iexConfiguration = await DefaultConfig.fromSSM("iex");
     const iex = new IEX(iexConfiguration['key'] as string);
     const pgClient = new Client({
         host: postgresConfiguration['host'] as string,

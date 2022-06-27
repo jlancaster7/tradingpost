@@ -9,6 +9,8 @@ plugins:
 provider:
   stage: production
   name: aws
+  environment:
+    CONFIGURATION_ENV: production
   tags:
     service: tradingpost-background-job
   runtime: nodejs16.x

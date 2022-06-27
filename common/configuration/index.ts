@@ -1,5 +1,4 @@
-import { SSM } from '@aws-sdk/client-ssm';
-
+import {SSM} from '@aws-sdk/client-ssm';
 
 type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot"
 
@@ -12,6 +11,7 @@ interface ConfigPaths extends Record<ConfigKeys, unknown> {
         database: string,
         port: number
     }
+    iex: { key: string }
     authkey: string,
     spotify: {}
     twitter: {}
@@ -43,13 +43,14 @@ export class Configuration {
     private environment: string
     private isCacheEnabled: boolean
     private cache: Expirable<ConfigPaths> = {}
+
     constructor(
         ssmClient: SSM,
         environment: ConfigurationEnv = (process.env.CONFIGURATION_ENV as ConfigurationEnv || "development"),
         enableCache = process.env.CONFIGURATION_ENABLE_CACHE ? JSON.parse(process.env.CONFIGURATION_ENABLE_CACHE) : true
     ) {
 
-        console.log(process.env.CONFIGURATION_ENV);
+        console.log("Configuration ENV: ", process.env.CONFIGURATION_ENV);
         this.isCacheEnabled = enableCache;
         this.environment = environment;
         this.ssmClient = ssmClient;
@@ -58,7 +59,7 @@ export class Configuration {
     fromSSM = async <T extends keyof ConfigPaths>(path: T, options?: ConfigOptions): Promise<ConfigPaths[T]> => {
         const fullPath = `/${this.environment}/${path}`
         const res = (await this.ssmClient
-            .getParameter({ Name: fullPath, WithDecryption: true }));
+            .getParameter({Name: fullPath, WithDecryption: true}));
         if (res.Parameter?.Value === undefined)
             throw new Error(`Could not find value for parameter path '${fullPath}' please make sure the path exists and the value is populated`);
 

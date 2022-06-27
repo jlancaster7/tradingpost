@@ -39,7 +39,7 @@ class Configuration {
             //Needed to explicitly cast. I think typescript is confused...
             return (((_d = this.cache[path]) === null || _d === void 0 ? void 0 : _d.value) || (yield this.fromSSM(path)));
         });
-        console.log(process.env.CONFIGURATION_ENV);
+        console.log("Configuration ENV: ", process.env.CONFIGURATION_ENV);
         this.isCacheEnabled = enableCache;
         this.environment = environment;
         this.ssmClient = ssmClient;
