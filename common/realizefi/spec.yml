@@ -1,0 +1,1764 @@
+openapi: 3.0.2
+
+info:
+  title: Realize
+  version: 1.0.0
+
+servers:
+  - url: https://www.realizefi.com/api
+
+paths:
+  '/users':
+    post:
+      operationId: createUser
+      summary: Create user
+      description: Requires a secret key
+      tags:
+        - Users
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/User'
+    get:
+      operationId: listUsers
+      summary: List users
+      description: Requires a secret key
+      tags:
+        - Users
+      parameters:
+        - in: query
+          name: cursor
+          schema:
+            type: string
+            description: The cursor at which to start pagination
+        - in: query
+          name: take
+          schema:
+            type: string
+            format: int32
+          description: The number of records to return in the result set
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      '$ref': '#/components/schemas/User'
+  '/users/{userId}/institution_links/{institutionLinkId}':
+    delete:
+      operationId: deleteInstitutionLinkFromUser
+      summary: Disconnect user's institution link
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for a user
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link on this user
+      responses:
+        '204':
+          description: No Content
+
+  '/users/{userId}':
+    get:
+      operationId: getUserById
+      summary: Get user
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for a user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      operationId: deleteUser
+      summary: Delete user
+      description: Requires a secret key
+      tags:
+        - Users
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for a user
+      responses:
+        '204':
+          description: No Content
+  '/users/{userId}/auth_portals':
+    post:
+      operationId: createAuthPortals
+      summary: Create auth portal
+      tags:
+        - AuthPortals
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for a user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - redirects
+              properties:
+                select:
+                  type: array
+                  description:
+                    Only allow users to register using the following selected brokerages.
+                    If unset, users can register at any brokerage.
+                  items:
+                    enum:
+                      - 'ALPACA'
+                      - 'TD'
+                      - 'COINBASE'
+                      - 'ROBINHOOD'
+                      - 'WEBULL'
+                      - 'SCHWAB'
+                      - 'ETRADE'
+                      # - 'FIDELITY'
+                scopes:
+                  type: array
+                  items:
+                    enum:
+                      - institution_link:read_and_trade
+                      - institution_link:read
+                    description:
+                      Space delimited string containing scopes.
+                      By default, if no scopes are specified you will be granted
+                      institution_link:read_and_trade access.
+                      
+                      Available scopes are institution_link:read, and institution_link:read_and_trade.
+                redirects:
+                  type: object
+                  required:
+                    - success
+                    - failure
+                  properties:
+                    success:
+                      type: string
+                      description:
+                        URL or deep link to redirect to after a user successfully links their account.
+                        The query params 'link_ids' and 'user_id' are passed via the URL as arrays of comma-delimited IDs.
+                        These IDs reference the newly created/linked resources.
+                    failure:
+                      type: string
+                      description:
+                        URL or deep link to redirect to after a user fails to link their account.
+                        URL will include the query param 'realize_error_code' which indicates the reason for link failure.
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                '$ref': '#/components/schemas/AuthPortal'
+
+  '/institution_links/{institutionLinkId}/orders':
+    post:
+      operationId: placeOrder
+      summary: Place order
+      tags:
+        - Orders
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+        - in: header
+          name: idempotency-key
+          schema:
+            type: string
+          description: Idempotency key with a lifespan of 1 day. This is used to prevent placing duplicate orders.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+                - securityType
+                - side
+              properties:
+                price:
+                  type: string
+                symbol:
+                  description: Required for EQUITY or CRYPTO securityType
+                  type: string
+                type:
+                  type: string
+                  enum:
+                    - MARKET
+                    - LIMIT
+                securityType:
+                  type: string
+                  description: OPTION is only supported on Robinhood as of now.
+                  enum:
+                    - EQUITY
+                    - CRYPTO
+                    - OPTION
+                quantity:
+                  description: Cannot be specified with notional.
+                  type: string
+                notional:
+                  description: Only for market orders. If specified, quantity cannot be specified.
+                  type: string
+                side:
+                  type: string
+                  enum:
+                    - BUY
+                    - SELL
+                strategy:
+                  description: Required for OPTION securityType
+                  enum:
+                    - CALL
+                    - PUT
+                expiration:
+                  description: Required for OPTION securityType
+                  type: string
+                strike:
+                  description: Required for OPTION securityType
+                  type: string
+                underlyingSymbol:
+                  description: Required for OPTION securityType
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - orderId
+                  - message
+                properties:
+                  orderId:
+                    type: string
+                    nullable: false
+                  message:
+                    type: string
+        '203':
+          description: Sent to institution
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - orderId
+                  - message
+                properties:
+                  orderId:
+                    type: string
+                    nullable: true
+                  message:
+                    type: string
+
+    get:
+      operationId: listOrders
+      summary: List orders
+      tags:
+        - Orders
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: The cursor at which to start pagination
+        - in: query
+          name: take
+          schema:
+            type: string
+            format: int32
+          description: The number of records to return in the result set
+        - in: query
+          name: status
+          schema:
+            enum:
+              - ALL
+              - OPEN
+            default: ALL
+          description:
+            By default we return all orders. If status='OPEN', then we
+            will return all orders whose status is subject to change.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      '$ref': '#/components/schemas/Order'
+  '/institution_links/{institutionLinkId}/orders/{orderId}':
+    delete:
+      operationId: cancelOrder
+      summary: Cancel order
+      tags:
+        - Orders
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+        - in: path
+          name: orderId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an order
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - status
+                properties:
+                  id:
+                    type: string
+                  status:
+                    $ref: '#/components/schemas/OrderStatus'
+    get:
+      operationId: getOrderById
+      summary: Get order
+      tags:
+        - Orders
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+        - in: path
+          name: orderId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an order
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  '/institution_links/{institutionLinkId}/positions':
+    get:
+      operationId: listPositions
+      summary: List positions
+      tags:
+        - Positions
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - institution
+                properties:
+                  institution:
+                    $ref: '#/components/schemas/InstitutionEnum'
+                  data:
+                    type: array
+                    items:
+                      '$ref': '#/components/schemas/Position'
+
+  '/users/{userId}/sessions':
+    post:
+      operationId: createUserSession
+      summary: Create client session
+      description: Requires a secret key
+      tags:
+        - ClientSession
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for a user
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - userId
+                properties:
+                  id:
+                    type: string
+                  userId:
+                    type: string
+  '/users/{userId}/orders':
+    get:
+      operationId: listUserOrders
+      summary: List user's orders
+      tags:
+        - Orders
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for a user
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: The cursor at which to start pagination
+        - in: query
+          name: take
+          schema:
+            type: string
+            format: int32
+          description: The number of records to return in the result set
+        - in: query
+          name: status
+          schema:
+            enum:
+              - ALL
+              - OPEN
+            default: ALL
+          description:
+            By default we return all orders. If status='OPEN', then we
+            will return all orders whose status is subject to change.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      '$ref': '#/components/schemas/Order'
+  '/institution_links/{institutionLinkId}/holdings':
+    get:
+      operationId: getHistoricalHoldings
+      summary: Get approximate historical holdings
+      description: This endpoint is in BETA
+      tags:
+        - HistoricalHoldings
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+        - in: query
+          name: span
+          schema:
+            enum:
+              - all
+              - 3month
+              - month
+              - week
+              - day
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      '$ref': '#/components/schemas/HoldingsEntry'
+
+  '/institution_links/{institutionLinkId}/historical_performance':
+    get:
+      operationId: getHistoricalPerformance
+      summary: Get approximate historical performance
+      tags:
+        - HistoricalPerformance
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+        - in: query
+          name: from
+          schema:
+            type: string
+          description:
+            Starting timestamp. Must be of format 'yyyy-MM-dd'. Cannot be specified
+            with span.
+        - in: query
+          name: to
+          schema:
+            type: string
+          description:
+            Last timestamp. Must be of format 'yyyy-MM-dd'. Cannot be specified
+            with span. By default, this will be current time.
+        - in: query
+          name: interval
+          schema:
+            enum:
+              - 1Min
+              - 5Min
+              - 1H
+              - 1D
+              - 10Min
+        - in: query
+          name: span
+          description:
+            Specifies interval. If span is set we will automatically
+            choose the appropriate timeframe and interval.
+          deprecated: true
+          schema:
+            enum:
+              - all
+              - 3month
+              - month
+              - week
+              - day
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    '$ref': '#/components/schemas/HistoricalPerformance'
+
+  '/institution_links/{institutionLinkId}/assets/{symbol}':
+    get:
+      operationId: getAsset
+      summary: Get institution asset
+      tags:
+        - Assets
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+        - in: path
+          name: symbol
+          schema:
+            type: string
+          required: true
+          description: Ticker symbol
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - tradable
+                  - fractionable
+                  - symbol
+                properties:
+                  tradable:
+                    type: boolean
+                  fractionable:
+                    type: boolean
+                  symbol:
+                    type: string
+  '/app/webhooks':
+    get:
+      operationId: listWebhooks
+      summary: List webhooks
+      description:
+        We use svix to manage sending all of our webhook payloads.
+        We return a secret key which can be used to validate signed payloads.
+        We also return a url which a developer can use to debug webhooks.
+        Visit https://docs.svix.com/receiving/verifying-payloads/how on information
+        about how to properly validate payloads.
+
+      tags:
+        - Webhooks
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - secret
+                        - dashboard
+                      properties:
+                        secret:
+                          type: string
+                        dashboard:
+                          type: object
+                          required:
+                            - url
+                          properties:
+                            url:
+                              type: string
+
+  '/institution_links/{institutionLinkId}/assets':
+    get:
+      operationId: listAssets
+      summary: List institution assets
+      tags:
+        - Assets
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+        - in: query
+          name: symbols
+          schema:
+            type: string
+          required: true
+          description: "Ticker symbols using ',' delimeter. For example, AAPL,MCFT,..."
+      responses:
+        '207':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - status
+                        - tradable
+                        - fractionable
+                        - symbol
+                      properties:
+                        tradable:
+                          type: boolean
+                        fractionable:
+                          type: boolean
+                        symbol:
+                          type: string
+                        status:
+                          type: number
+  '/institution_links/{institutionLinkId}/transactions':
+    get:
+      operationId: listTransactions
+      summary: List transactions
+      tags:
+        - Transactions
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+        - in: query
+          name: cursor
+          schema:
+            type: string
+          description: The cursor at which to start pagination
+        - in: query
+          name: take
+          schema:
+            type: string
+            format: int32
+          description: The number of records to return in the result set
+        - in: query
+          name: includeRaw
+          schema:
+            type: boolean
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - transactionDate
+                        - settlementDate
+                        - netAmount
+                        - type
+                        - details
+                      properties:
+                        details:
+                          '$ref': '#components/schemas/TransactionDetails'
+                          nullable: true
+                        id:
+                          type: string
+                        type:
+                          enum:
+                            - TRADE
+                            - OPTION_TRADE
+                            - CRYPTO_TRADE
+                            - SMA_ADJUSTMENT
+                            - ACH_RECEIPT
+                            - ACH_DISBURSEMENT
+                            - CASH_RECEIPT
+                            - CASH_DISBURSEMENT
+                            - ELECTRONIC_FUND
+                            - WIRE_OUT
+                            - WIRE_IN
+                            - JOURNAL
+                            - MEMORANDUM
+                            - MARGIN_CALL
+                            - MONEY_MARKET
+                            - DIVIDEND_OR_INTEREST
+                            - RECEIVE_AND_DELIVER
+                        settlementDate:
+                          type: string
+                        transactionDate:
+                          type: string
+                        netAmount:
+                          type: string
+                        raw:
+                          type: string
+  '/institution_links/{institutionLinkId}/balances':
+    get:
+      operationId: getBalances
+      summary: Get balances
+      tags:
+        - Balances
+      parameters:
+        - in: path
+          name: institutionLinkId
+          schema:
+            type: string
+          required: true
+          description: Unique ID for an institution link
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                required:
+                  - buyingPower
+                  - cash
+                  - accountValue
+                properties:
+                  buyingPower:
+                    type: string
+                  cash:
+                    type: string
+                  accountValue:
+                    type: string
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - institutionLinks
+        - permissions
+      properties:
+        id:
+          type: string
+        institutionLinks:
+          type: array
+          items:
+            '$ref': '#/components/schemas/InstitutionLink'
+
+    InstitutionEnum:
+      type: string
+      enum:
+        - ALPACA
+        - TD
+        - COINBASE
+        - ROBINHOOD
+        - WEBULL
+        - SCHWAB
+        - ETRADE
+        # - FIDELITY
+        - VANGUARD
+    EnvironmentEnum:
+      type: string
+      enum:
+        - PRODUCTION
+        - SANDBOX
+    HealthStatus:
+      type: string
+      enum:
+        - HEALTHY
+        - RECENT_FAILURES
+        - BROKEN_LINK
+    InstitutionLink:
+      type: object
+      required:
+        - id
+        - institution
+        - accountNumber
+        - healthStatus
+        - permissionScopes
+      properties:
+        id:
+          type: string
+        institution:
+          $ref: '#/components/schemas/InstitutionEnum'
+        accountNumber:
+          type: string
+        healthStatus:
+          $ref: '#/components/schemas/HealthStatus'
+        permissionScopes:
+          type: array
+          items:
+            enum:
+              - INSTITUTION_LINK__TRADE
+              - INSTITUTION_LINK__READ
+
+    AuthPortal:
+      type: object
+      required:
+        - id
+        - url
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        env:
+          $ref: '#/components/schemas/EnvironmentEnum'
+        url:
+          type: string
+        authUrls:
+          type: object
+          required:
+            - ALPACA
+            - TD
+            - ROBINHOOD
+          properties:
+            ALPACA:
+              type: string
+            TD:
+              type: string
+            ROBINHOOD:
+              type: string
+    OrderStatus:
+      enum:
+        - NEW
+        - PARTIALLY_FILLED
+        - FILLED
+        - DONE_FOR_DAY
+        - CANCELED
+        - EXPIRED
+        - REPLACED
+        - PENDING_CANCEL
+        - PENDING_REPLACE
+        - ACCEPTED
+        - PENDING_NEW
+        - ACCEPTED_FOR_BIDDING
+        - STOPPED
+        - REJECTED
+        - SUSPENDED
+        - CALCULATED
+        - AWAITING_PARENT_ORDER
+        - AWAITING_CONDITION
+        - AWAITING_MANUAL_REVIEW
+        - AWAITING_UR_OUT
+        - PENDING_ACTIVATION
+        - QUEUED
+        - WORKING
+        - FAILED
+        - UNKNOWN
+
+    Order:
+      type: object
+      required:
+        - id
+        - institutionLink
+        - institutionReceivedAt
+        - filledQuantity
+        - quantity
+        - status
+        - type
+        - class
+        - side
+        - timeInForce
+        - securityId
+      properties:
+        id:
+          type: string
+        institutionLink:
+          type: object
+          required:
+            - 'id'
+            - 'institution'
+          properties:
+            id:
+              type: string
+            institution:
+              $ref: '#/components/schemas/InstitutionEnum'
+        institutionReceivedAt:
+          type: string
+          format: date-time
+        filledQuantity:
+          type: string
+        quantity:
+          type: string
+        filledAveragePrice:
+          type: string
+        closedAt:
+          type: string
+        limitPrice:
+          type: string
+        stopPrice:
+          type: string
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        type:
+          type: string
+          enum:
+            - MARKET
+            - LIMIT
+            - STOP
+            - STOP_LIMIT
+            - TRAILING_STOP
+            - MARKET_ON_CLOSE
+            - EXERCISE
+            - TRAILING_STOP_LIMIT
+            - NET_DEBIT
+            - NET_CREDIT
+            - NET_ZERO
+        class:
+          type: string
+          enum:
+            - SIMPLE
+            - BRACKET
+            - OCO
+            - OTO
+        side:
+          type: string
+          enum:
+            - BUY
+            - SELL
+        timeInForce:
+          type: string
+          enum:
+            - DAY
+            - GTC
+            - OPG
+            - CLS
+            - IOC
+            - FOK
+        security:
+          type: object
+          required:
+            - 'id'
+            - 'type'
+            - 'symbol'
+          properties:
+            id:
+              type: string
+            type:
+              $ref: '#/components/schemas/SecurityTypeEnum'
+            symbol:
+              type: string
+    SecurityTypeEnum:
+      type: string
+      enum:
+        - CRYPTO
+        - EQUITY
+        - DERIVATIVE
+        - DEBT
+        - HYBRID
+    Security:
+      type: object
+      required:
+        - id
+        - type
+        - symbol
+      properties:
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/SecurityTypeEnum'
+        symbol:
+          type: string
+    Position:
+      type: object
+      required:
+        - symbol
+        - averagePrice
+        - marketValue
+        - longQuantity
+        - shortQuantity
+        - costBasis
+        - currentDayProfitLoss
+        - currentDayProfitLossPercentage
+      properties:
+        costBasis:
+          type: string
+        currentDayProfitLoss:
+          type: string
+        currentDayProfitLossPercentage:
+          type: string
+        symbol:
+          type: string
+        averagePrice:
+          type: string
+        marketValue:
+          type: string
+        longQuantity:
+          type: string
+        shortQuantity:
+          type: string
+    HistoricalPerformance:
+      type: object
+      required:
+        - equity
+        - timestamp
+      properties:
+        equity:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: array
+          items:
+            type: string
+        interval:
+          enum:
+            - '1Min'
+            - '5Min'
+            - '10Min'
+            - '1H'
+            - '1D'
+    HoldingsEntry:
+      type: object
+      required:
+        - accountValue
+        - cash
+        - timestamp
+        - interval
+        - positions
+      properties:
+        accountValue:
+          type: string
+        cash:
+          type: string
+        timestamp:
+          type: string
+        interval:
+          enum:
+            - '1Min'
+            - '5Min'
+            - '10Min'
+            - '15Min'
+            - '1H'
+            - '1D'
+        positions:
+          type: array
+          items:
+            type: object
+            required:
+              - qty
+              - marketValue
+              - symbol
+              - security
+            properties:
+              qty:
+                type: string
+              marketValue:
+                type: string
+              security:
+                type: object
+                required:
+                  - id
+                  - type
+                properties:
+                  id:
+                    type: string
+                  symbol:
+                    type: string
+                  type:
+                    $ref: '#/components/schemas/SecurityTypeEnum'
+    TransactionDetails:
+      {
+        'oneOf':
+          [
+            {
+              'type': 'object',
+              'properties':
+                {
+                  'transactionType':
+                    { 'type': 'string', 'enum': [ 'TRADE' ] },
+                  'transactionSubType':
+                    {
+                      'type': 'string',
+                      'enum': [ 'BUY_TO_COVER' ],
+                    },
+                  'side':
+                    { 'type': 'string', 'enum': [ 'BUY' ] },
+                  'effect':
+                    { 'type': 'string', 'enum': [ 'CLOSE' ] },
+                  'quantity': { 'type': 'string' },
+                  'price': { 'type': 'string' },
+                  'adjustmentRatio': { 'type': 'number' },
+                  'instrument':
+                    {
+                      'type': 'object',
+                      'properties':
+                        {
+                          'symbol':
+                            { 'type': 'string' },
+                        },
+                      'required': [ 'symbol' ],
+                    },
+                  'fees': { 'type': 'string' },
+                },
+              'required':
+                [
+                  'transactionType',
+                  'transactionSubType',
+                  'side',
+                  'effect',
+                  'quantity',
+                  'price',
+                  'adjustmentRatio',
+                  'instrument',
+                  'fees',
+                ],
+            },
+            {
+              'type': 'object',
+              'properties':
+                {
+                  'transactionType':
+                    { 'type': 'string', 'enum': [ 'TRADE' ] },
+                  'transactionSubType':
+                    {
+                      'type': 'string',
+                      'enum': [ 'SHORT_SALE' ],
+                    },
+                  'side':
+                    { 'type': 'string', 'enum': [ 'SELL' ] },
+                  'effect':
+                    { 'type': 'string', 'enum': [ 'OPEN' ] },
+                  'quantity': { 'type': 'string' },
+                  'price': { 'type': 'string' },
+                  'adjustmentRatio': { 'type': 'number' },
+                  'instrument':
+                    {
+                      'type': 'object',
+                      'properties':
+                        {
+                          'symbol':
+                            { 'type': 'string' },
+                        },
+                      'required': [ 'symbol' ],
+                    },
+                  'fees': { 'type': 'string' },
+                },
+              'required':
+                [
+                  'transactionType',
+                  'transactionSubType',
+                  'side',
+                  'effect',
+                  'quantity',
+                  'price',
+                  'adjustmentRatio',
+                  'instrument',
+                  'fees',
+                ],
+            },
+            {
+              'type': 'object',
+              'properties':
+                {
+                  'transactionType':
+                    {
+                      'type': 'string',
+                      'enum': [ 'DIVIDEND_OR_INTEREST' ],
+                    },
+                  'transactionSubType':
+                    {
+                      'default': 'UNKNOWN',
+                      'type': 'string',
+                    },
+                  'instrument':
+                    {
+                      'type': 'object',
+                      'properties':
+                        {
+                          'symbol':
+                            { 'type': 'string' },
+                        },
+                      'required': [ 'symbol' ],
+                      'nullable': true,
+                    },
+                  'amount': { 'type': 'string' },
+                },
+              'required':
+                [ 'transactionType', 'instrument', 'amount' ],
+            },
+            {
+              'type': 'object',
+              'properties':
+                {
+                  'transactionType':
+                    {
+                      'type': 'string',
+                      'enum': [ 'ELECTRONIC_FUND' ],
+                    },
+                  'amount': { 'type': 'string' },
+                  'direction':
+                    {
+                      'oneOf':
+                        [
+                          {
+                            'type': 'string',
+                            'enum': [ 'DEPOSIT' ],
+                          },
+                          {
+                            'type': 'string',
+                            'enum': [ 'WITHDRAWAL' ],
+                          },
+                        ],
+                    },
+                  'fees': { 'type': 'string' },
+                },
+              'required':
+                [
+                  'transactionType',
+                  'amount',
+                  'direction',
+                  'fees',
+                ],
+            },
+            {
+              'type': 'object',
+              'properties':
+                {
+                  'transactionType':
+                    {
+                      'oneOf':
+                        [
+                          {
+                            'type': 'string',
+                            'enum': [ 'ASSIGNMENT' ],
+                          },
+                          {
+                            'type': 'string',
+                            'enum': [ 'EXERCISE' ],
+                          },
+                          {
+                            'type': 'string',
+                            'enum': [ 'UNKNOWN' ],
+                          },
+                        ],
+                    },
+                  'direction':
+                    {
+                      'oneOf':
+                        [
+                          {
+                            'type': 'string',
+                            'enum': [ 'CREDIT' ],
+                          },
+                          {
+                            'type': 'string',
+                            'enum': [ 'DEBIT' ],
+                          },
+                          {
+                            'type': 'string',
+                            'enum': [ 'UNKNOWN' ],
+                          },
+                        ],
+                    },
+                  'amount': { 'type': 'string' },
+                  'quantity': { 'type': 'string' },
+                  'instrument':
+                    {
+                      'type': 'object',
+                      'properties':
+                        {
+                          'symbol':
+                            { 'type': 'string' },
+                          'underlying':
+                            {
+                              'type': 'object',
+                              'properties':
+                                {
+                                  'instrument':
+                                    {
+                                      'type': 'object',
+                                      'properties':
+                                        {
+                                          'symbol':
+                                            {
+                                              'type': 'string',
+                                            },
+                                        },
+                                      'required':
+                                        [
+                                          'symbol',
+                                        ],
+                                    },
+                                },
+                              'required':
+                                [ 'instrument' ],
+                            },
+                          'strike':
+                            { 'type': 'string' },
+                          'expiration':
+                            { 'type': 'string' },
+                          'type':
+                            {
+                              'oneOf':
+                                [
+                                  {
+                                    'type': 'string',
+                                    'enum':
+                                      [
+                                        'CALL',
+                                      ],
+                                  },
+                                  {
+                                    'type': 'string',
+                                    'enum':
+                                      [
+                                        'PUT',
+                                      ],
+                                  },
+                                ],
+                            },
+                        },
+                      'required':
+                        [
+                          'symbol',
+                          'underlying',
+                          'strike',
+                          'expiration',
+                          'type',
+                        ],
+                    },
+                },
+              'required':
+                [
+                  'transactionType',
+                  'direction',
+                  'amount',
+                  'quantity',
+                  'instrument',
+                ],
+            },
+            {
+              'type': 'object',
+              'properties':
+                {
+                  'transactionType':
+                    {
+                      'type': 'string',
+                      'enum': [ 'EXPIRATION' ],
+                    },
+                  'amount': { 'type': 'string' },
+                  'quantity': { 'type': 'string' },
+                  'instrument':
+                    {
+                      'type': 'object',
+                      'properties':
+                        {
+                          'symbol':
+                            { 'type': 'string' },
+                          'underlying':
+                            {
+                              'type': 'object',
+                              'properties':
+                                {
+                                  'instrument':
+                                    {
+                                      'type': 'object',
+                                      'properties':
+                                        {
+                                          'symbol':
+                                            {
+                                              'type': 'string',
+                                            },
+                                        },
+                                      'required':
+                                        [
+                                          'symbol',
+                                        ],
+                                    },
+                                },
+                              'required':
+                                [ 'instrument' ],
+                            },
+                          'strike':
+                            { 'type': 'string' },
+                          'expiration':
+                            { 'type': 'string' },
+                          'type':
+                            {
+                              'oneOf':
+                                [
+                                  {
+                                    'type': 'string',
+                                    'enum':
+                                      [
+                                        'CALL',
+                                      ],
+                                  },
+                                  {
+                                    'type': 'string',
+                                    'enum':
+                                      [
+                                        'PUT',
+                                      ],
+                                  },
+                                ],
+                            },
+                        },
+                      'required':
+                        [
+                          'symbol',
+                          'underlying',
+                          'strike',
+                          'expiration',
+                          'type',
+                        ],
+                    },
+                },
+              'required':
+                [
+                  'transactionType',
+                  'amount',
+                  'quantity',
+                  'instrument',
+                ],
+            },
+            {
+              'type': 'object',
+              'properties':
+                {
+                  'transactionType':
+                    { 'type': 'string', 'enum': [ 'TRADE' ] },
+                  'transactionSubType':
+                    {
+                      'type': 'string',
+                      'enum': [ 'DIVIDEND_REINVEST' ],
+                    },
+                  'quantity': { 'type': 'string' },
+                  'price': { 'type': 'string' },
+                  'adjustmentRatio': { 'type': 'number' },
+                  'instrument':
+                    {
+                      'type': 'object',
+                      'properties':
+                        {
+                          'symbol':
+                            { 'type': 'string' },
+                        },
+                      'required': [ 'symbol' ],
+                    },
+                  'fees': { 'type': 'string' },
+                },
+              'required':
+                [
+                  'transactionType',
+                  'transactionSubType',
+                  'quantity',
+                  'price',
+                  'adjustmentRatio',
+                  'instrument',
+                  'fees',
+                ],
+            },
+            {
+              'type': 'object',
+              'properties':
+                {
+                  'transactionType':
+                    { 'type': 'string', 'enum': [ 'TRADE' ] },
+                  'transactionSubType':
+                    {
+                      'default': 'UNKNOWN',
+                      'type': 'string',
+                    },
+                  'side':
+                    {
+                      'oneOf':
+                        [
+                          {
+                            'type': 'string',
+                            'enum': [ 'BUY' ],
+                          },
+                          {
+                            'type': 'string',
+                            'enum': [ 'SELL' ],
+                          },
+                        ],
+                    },
+                  'quantity': { 'type': 'string' },
+                  'price': { 'type': 'string' },
+                  'adjustmentRatio': { 'type': 'number' },
+                  'instrument':
+                    {
+                      'type': 'object',
+                      'properties':
+                        {
+                          'symbol':
+                            { 'type': 'string' },
+                        },
+                      'required': [ 'symbol' ],
+                    },
+                  'fees': { 'type': 'string' },
+                },
+              'required':
+                [
+                  'transactionType',
+                  'side',
+                  'quantity',
+                  'price',
+                  'adjustmentRatio',
+                  'instrument',
+                  'fees',
+                ],
+            },
+            {
+              'type': 'object',
+              'properties':
+                {
+                  'transactionType':
+                    {
+                      'type': 'string',
+                      'enum': [ 'OPTION_TRADE' ],
+                    },
+                  'transactionSubType':
+                    {
+                      'type': 'string',
+                      'enum': [ 'TRADE_CORRECTION' ],
+                    },
+                  'type':
+                    {
+                      'oneOf':
+                        [
+                          {
+                            'type': 'string',
+                            'enum': [ 'CALL' ],
+                          },
+                          {
+                            'type': 'string',
+                            'enum': [ 'PUT' ],
+                          },
+                        ],
+                    },
+                  'side':
+                    {
+                      'oneOf':
+                        [
+                          {
+                            'type': 'string',
+                            'enum': [ 'BUY' ],
+                          },
+                          {
+                            'type': 'string',
+                            'enum': [ 'SELL' ],
+                          },
+                        ],
+                    },
+                  'effect':
+                    {
+                      'oneOf':
+                        [
+                          {
+                            'type': 'string',
+                            'enum': [ 'OPEN' ],
+                          },
+                          {
+                            'type': 'string',
+                            'enum': [ 'CLOSE' ],
+                          },
+                        ],
+                    },
+                  'price': { 'type': 'string' },
+                  'quantity': { 'type': 'string' },
+                  'instrument':
+                    {
+                      'type': 'object',
+                      'properties':
+                        {
+                          'symbol':
+                            { 'type': 'string' },
+                          'underlying':
+                            {
+                              'type': 'object',
+                              'properties':
+                                {
+                                  'instrument':
+                                    {
+                                      'type': 'object',
+                                      'properties':
+                                        {
+                                          'symbol':
+                                            {
+                                              'type': 'string',
+                                            },
+                                        },
+                                      'required':
+                                        [
+                                          'symbol',
+                                        ],
+                                    },
+                                },
+                              'required':
+                                [ 'instrument' ],
+                            },
+                          'strike':
+                            { 'type': 'string' },
+                          'expiration':
+                            { 'type': 'string' },
+                          'type':
+                            {
+                              'oneOf':
+                                [
+                                  {
+                                    'type': 'string',
+                                    'enum':
+                                      [
+                                        'CALL',
+                                      ],
+                                  },
+                                  {
+                                    'type': 'string',
+                                    'enum':
+                                      [
+                                        'PUT',
+                                      ],
+                                  },
+                                ],
+                            },
+                        },
+                      'required':
+                        [
+                          'symbol',
+                          'underlying',
+                          'strike',
+                          'expiration',
+                          'type',
+                        ],
+                    },
+                  'fees': { 'type': 'string' },
+                },
+              'required':
+                [
+                  'transactionType',
+                  'type',
+                  'side',
+                  'effect',
+                  'price',
+                  'quantity',
+                  'instrument',
+                  'fees',
+                ],
+            },
+          ],
+      }
+
+security:
+  - ApiKeyAuth: [ ]

@@ -38,7 +38,15 @@ export interface WebhookMessage {
 }
 
 export type AuthPortalScopes = "institution_link:read_and_trade" | "institution_link:read"
-export type SupportedBrokerages = "ALPACA" | "TD" | "COINBASE" | "ROBINHOOD" | "WEBULL" | "SCHWAB" | "ETRADE" | "VANGUARD"
+export type SupportedBrokerages =
+    "ALPACA"
+    | "TD"
+    | "COINBASE"
+    | "ROBINHOOD"
+    | "WEBULL"
+    | "SCHWAB"
+    | "ETRADE"
+    | "VANGUARD"
 
 export interface AuthPortalResponse {
     id: string
@@ -178,18 +186,27 @@ export interface ListTransactionsResponse {
         settlementDate: string
         type: string
         netAmount: string
-        details?: {
+        details: {
             transactionType: string
             transactionSubType: string
             side: string
+            amount: string
             quantity: string
             price: string
             adjustmentRatio: number
             instrument: {
                 symbol: string
+                underlying: {
+                    instrument: {
+                        symbol: string
+                    }
+                },
+                strike: string
+                expiration: string
+                type: string // CALL | PUT
             }
             fees: string
-        }
+        } | null
     }[]
 }
 
@@ -197,4 +214,5 @@ export interface GetBalancesResponse {
     buyingPower: string
     cash: string
     accountValue: string
+    margin: string
 }

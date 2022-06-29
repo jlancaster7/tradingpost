@@ -227,13 +227,13 @@ BEGIN
     SELECT CAST(d ->> 'securityId' as BIGINT)                 as security_id,
            d ->> 'calculationPrice'                           as calculation_price,
            CAST(d ->> 'delayedPrice' AS DECIMAL)              as delayed_price,
-           CAST(d ->> 'delayedPriceTime' AS BIGINT)          as delayed_price_time,
+           CAST(d ->> 'delayedPriceTime' AS BIGINT)           as delayed_price_time,
            CAST(d ->> 'oddLotDelayedPrice' AS DECIMAL)        as odd_lot_delayed_price,
-           CAST(d ->> 'oddLotDelayedPriceTime' AS BIGINT)    as odd_lot_delayed_price_time,
+           CAST(d ->> 'oddLotDelayedPriceTime' AS BIGINT)     as odd_lot_delayed_price_time,
            CAST(d ->> 'extendedPrice' AS DECIMAL)             as extended_price,
            CAST(d ->> 'extendedChange' AS DECIMAL)            as extended_change,
            CAST(d ->> 'extendedChangePercent' AS DECIMAL)     as extended_change_percent,
-           CAST(d ->> 'extendedPriceTime' AS BIGINT)         as extended_price_time,
+           CAST(d ->> 'extendedPriceTime' AS BIGINT)          as extended_price_time,
            CAST(d ->> 'previousClose' AS DECIMAL)             as previous_close,
            CAST(d ->> 'previousVolume' AS DECIMAL)            as previous_volume,
            CAST(d ->> 'avgTotalVolume' AS DECIMAL)            as avg_total_volume,
@@ -242,7 +242,7 @@ BEGIN
            CAST(d ->> 'week52High' AS DECIMAL)                as week_52_high,
            CAST(d ->> 'week52Low' AS DECIMAL)                 as week_52_low,
            CAST(d ->> 'ytdChange' AS DECIMAL)                 as ytd_change,
-           CAST(d ->> 'lastTradeTime' AS BIGINT)             as last_trade_time,
+           CAST(d ->> 'lastTradeTime' AS BIGINT)              as last_trade_time,
            CAST(d ->> 'currency' AS TEXT)                     as currency,
            CAST(d ->> 'close' AS DECIMAL)                     as close,
            CAST(d ->> 'high' AS DECIMAL)                      as high,
@@ -721,3 +721,79 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE INDEX security_prices_time_brin_idx ON security_prices USING brin (time);
+
+CREATE TABLE realizefi_users
+(
+    id           BIGSERIAL NOT NULL PRIMARY KEY,
+--    user_id uuid foreign key users(id) not null,
+    realizefi_id TEXT      NOT NULL UNIQUE
+);
+
+-- Should have an enum type for health_status
+CREATE TABLE realizefi_accounts
+(
+    id                       BIGSERIAL                              NOT NULL PRIMARY KEY,
+    account_id               BIGINT REFERENCES realizefi_users (id) NOT NULL,
+    realizefi_institution_id TEXT UNIQUE                            NOT NULL,
+    institution              TEXT                                   NOT NULL,
+    account_number           TEXT                                   NOT NULL,
+    health_status            TEXT                                   NOT NULL,
+    permission_scopes        JSON,
+    buying_power             DECIMAL(24, 4)                         NOT NULL,
+    cash                     DECIMAL(24, 4)                         NOT NULL,
+    account_value            DECIMAL(24, 4)                         NOT NULL,
+    margin                   DECIMAL(24, 4)                         NOT NULL
+);
+
+CREATE UNIQUE INDEX realizefi_accounts_idx ON realizefi_accounts (account_id, institution, account_number);
+
+CREATE TABLE realizefi_account_transactions
+(
+    id                       BIGSERIAL                                 NOT NULL PRIMARY KEY,
+    account_id               BIGINT REFERENCES realizefi_accounts (id) NOT NULL,
+    realizefi_transaction_id TEXT UNIQUE                               NOT NULL,
+    transaction_date         timestamptz                               NOT NULL,
+    settlement_date          timestamptz                               NOT NULL,
+    -- top level transaction type(dont know if any different than detail transaction type within response)
+    transaction_type         TEXT                                      NOT NULL,
+    net_amount               DECIMAL(24, 4),
+    transaction_type_detail  TEXT,
+    transaction_sub_type     TEXT,
+    side                     TEXT,
+    -- TODO: How granular should we support(e.g., fractional shares)
+    quantity                 DECIMAL(24, 4),
+    price                    DECIMAL(24, 4),
+    adjustment_ratio         DECIMAL(24, 4),
+    instrument               JSON,
+    symbol                   TEXT,
+    fees                     DECIMAL(24, 4)
+);
+
+-- Do we need this, and maybe we should report conflicts if doing bulk operations....
+CREATE UNIQUE INDEX realizefi_account_transactions_idx ON realizefi_account_transactions (account_id, transaction_date, transaction_type, symbol);
+
+CREATE TABLE realizefi_account_positions
+(
+    id                                 BIGSERIAL                                 NOT NULL PRIMARY KEY,
+    account_id                         BIGINT REFERENCES realizefi_accounts (id) NOT NULL,
+    symbol                             TEXT                                      NOT NULL,
+    average_price                      DECIMAL(24, 4)                            NOT NULL,
+    cost_basis                         DECIMAL(24, 4)                            NOT NULL,
+    long_quantity                      DECIMAL(24, 4)                            NOT NULL,
+    short_quantity                     DECIMAL(24, 4)                            NOT NULL,
+    market_value                       DECIMAL(24, 4)                            NOT NULL,
+    current_day_profit_loss            DECIMAL(24, 4)                            NOT NULL,
+    current_day_profit_loss_percentage DECIMAL(24, 4)                            NOT NULL,
+    security_type                      TEXT                                      NOT NULL,
+    security_id                        TEXT                                      NOT NULL,
+    security_symbol                    TEXT                                      NOT NULL,
+    security_share_class_figi          TEXT                                      NOT NULL,
+    security_composite_figi            TEXT                                      NOT NULL,
+    security_strike_price              DECIMAL(24, 4),
+    security_expiration                TIMESTAMPTZ,
+    security_contract_type             TEXT,
+    security_primary_exchange          TEXT                                      NOT NULL
+);
+
+-- Does this hold true? Or, should it be over the symbol type? Want to investigate more...
+CREATE UNIQUE INDEX realizefi_account_positions_idx ON realizefi_account_positions (account_id, symbol);

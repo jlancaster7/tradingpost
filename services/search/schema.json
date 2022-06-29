@@ -81,19 +81,19 @@
       },
       "platformUpdatedAt": {
         "type": "date",
-        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+        "format": "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
       },
       "tradingpostUpdatedAt": {
         "type": "date",
-        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+        "format": "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
       },
       "platformCreatedAt": {
         "type": "date",
-        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+        "format": "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
       },
       "tradingpostCreatedAt": {
         "type": "date",
-        "format": "yyyy-MM-dd HH:mm:ssZZZZZ"
+        "format": "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
       },
       "meta": {
         "type": "object"

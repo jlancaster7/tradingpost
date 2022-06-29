@@ -3,7 +3,10 @@ import {SSM} from '@aws-sdk/client-ssm';
 type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot"
 
 interface ConfigPaths extends Record<ConfigKeys, unknown> {
-    elastic: {}
+    elastic: {
+        cloudId: string
+        apiKey: string
+    }
     postgres: {
         host: string,
         user: string,

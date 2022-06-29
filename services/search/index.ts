@@ -1,6 +1,7 @@
+import 'dotenv/config';
 import {Client as PostgresClient} from 'pg';
 import {Client as ElasticClient} from '@elastic/elasticsearch';
-import {Configuration} from '@tradingpost/common/configuration';
+import {DefaultConfig} from '@tradingpost/common/configuration';
 import {
     TweetsAndUser,
     ElasticSearchBody,
@@ -13,11 +14,6 @@ import {LastID, Provider} from "./interfaces";
 import yargs from "yargs";
 import fs from "fs";
 
-const AWS = require('aws-sdk')
-AWS.config.update({region: 'us-east-1'});
-const ssmClient = new AWS.SSM();
-const configuration = new Configuration(ssmClient);
-
 class Twitter {
     private dbClient: PostgresClient;
 
@@ -26,6 +22,7 @@ class Twitter {
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
+        if (lastId === null) lastId = 0
         let query = `SELECT t.tweet_id            AS tweet_id,
                             t.user_id             AS trading_post_user_id,
                             t.twitter_user_id,
@@ -64,6 +61,7 @@ class Twitter {
                      ORDER BY t.tweet_id ASC
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
+
         if (response.rows.length <= 0) return {items: [], lastId: null};
 
         const tweetsAndUsers = response.rows.map((row: any) => {
@@ -90,15 +88,15 @@ class Twitter {
                 replyCount: row.reply_count,
                 retweetCount: row.retweet_count,
                 text: row.text,
-                tradingPostTweetCreatedAt: DateTime.fromISO(row.trading_post_tweet_created_at),
-                tradingPostTwitterCreatedAt: DateTime.fromISO(row.trading_post_twitter_created_at),
+                tradingPostTweetCreatedAt: DateTime.fromJSDate(row.trading_post_tweet_created_at),
+                tradingPostTwitterCreatedAt: DateTime.fromJSDate(row.trading_post_twitter_created_at),
                 tweetID: row.tweet_id,
-                tweetTwitterCreatedAt: DateTime.fromISO(row.tweet_twitter_created_at),
+                tweetTwitterCreatedAt: DateTime.fromJSDate(row.tweet_twitter_created_at),
                 tweetURL: row.tweet_url,
                 twitterUserID: row.twitter_user_id,
                 URLs: row.urls,
                 userID: row.trading_post_user_id,
-                userTwitterCreatedAt: DateTime.fromISO(row.user_twitter_created_at)
+                userTwitterCreatedAt: DateTime.fromJSDate(row.user_twitter_created_at)
             }
             return obj;
         });
@@ -123,12 +121,12 @@ class Twitter {
                     profileUrl: tw.profileURL,
                     username: tw.twitterUsername
                 },
-                platformCreatedAt: tw.tweetTwitterCreatedAt,
+                platformCreatedAt: tw.tweetTwitterCreatedAt.toISO(),
                 platformUpdatedAt: null,
                 postType: "tweet",
                 postUrl: tw.tweetURL,
                 ratingsCount: 0,
-                tradingpostCreatedAt: tw.tradingPostTweetCreatedAt,
+                tradingpostCreatedAt: tw.tradingPostTweetCreatedAt.toISO(),
                 tradingpostUpdatedAt: null,
                 user: {
                     id: tw.userID.toString(),
@@ -194,7 +192,7 @@ class SubStack {
                 dc_creator: row.dc_creator,
                 enclosure: row.enclosure,
                 itunes: row.itunes,
-                last_newsletter_build_date: DateTime.fromISO(row.last_newsletter_build_date),
+                last_newsletter_build_date: DateTime.fromJSDate(row.last_newsletter_build_date),
                 link: row.link,
                 newsletter_description: row.newsletter_description,
                 newsletter_email: row.newsletter_email,
@@ -203,11 +201,11 @@ class SubStack {
                 newsletter_language: row.newsletter_language,
                 newsletter_link: row.newsletter_link,
                 newsletter_title: row.newsletter_title,
-                substack_added_to_tradingpost_date: DateTime.fromISO(row.substack_added_to_tradingpost_date),
-                substack_article_created_at: DateTime.fromISO(row.substack_article_created_at),
+                substack_added_to_tradingpost_date: DateTime.fromJSDate(row.substack_added_to_tradingpost_date),
+                substack_article_created_at: DateTime.fromJSDate(row.substack_article_created_at),
                 substack_user_id: row.substack_user_id,
                 title: row.title,
-                tradingpost_substack_article_created_at: DateTime.fromISO(row.tradingpost_substack_article_created_at),
+                tradingpost_substack_article_created_at: DateTime.fromJSDate(row.tradingpost_substack_article_created_at),
                 tradingpost_user_id: row.tradingpost_user_id
             }
             return obj;
@@ -234,13 +232,13 @@ class SubStack {
                     profileUrl: n.newsletter_link,
                     username: null
                 },
-                platformCreatedAt: n.substack_article_created_at,
-                platformUpdatedAt: n.substack_article_created_at,
+                platformCreatedAt: n.substack_article_created_at.toISO(),
+                platformUpdatedAt: n.substack_article_created_at.toISO(),
                 postType: "substack",
                 postUrl: n.link,
                 ratingsCount: 0,
-                tradingpostCreatedAt: n.tradingpost_substack_article_created_at,
-                tradingpostUpdatedAt: n.tradingpost_substack_article_created_at,
+                tradingpostCreatedAt: n.tradingpost_substack_article_created_at.toISO(),
+                tradingpostUpdatedAt: n.tradingpost_substack_article_created_at.toISO(),
                 user: {
                     id: n.tradingpost_user_id.toString(),
                     imageUrl: "",
@@ -313,7 +311,7 @@ class Spotify {
                 episode_language: row.episode_language,
                 episode_languages: row.episode_languages,
                 episode_name: row.episode_name,
-                episode_release_date: DateTime.fromISO(row.episode_release_date),
+                episode_release_date: DateTime.fromJSDate(row.episode_release_date),
                 is_episode_explicit: row.is_episode_explicit,
                 is_episode_externally_hosted: row.is_episode_externally_hosted,
                 is_episode_playable: row.is_episode_playable,
@@ -331,8 +329,8 @@ class Spotify {
                 podcast_total_episodes: row.podcast_total_episodes,
                 spotify_episode_id: row.spotify_episode_id,
                 spotify_show_id: row.spotify_show_id,
-                tradingpost_episode_created_at: DateTime.fromISO(row.tradingpost_episode_created_at),
-                tradingpost_podcast_created_at: DateTime.fromISO(row.tradingpost_podcast_created_at),
+                tradingpost_episode_created_at: DateTime.fromJSDate(row.tradingpost_episode_created_at),
+                tradingpost_podcast_created_at: DateTime.fromJSDate(row.tradingpost_podcast_created_at),
                 tradingpost_user_id: row.tradingpost_user_id
             };
             return obj;
@@ -358,13 +356,13 @@ class Spotify {
                     profileUrl: null,
                     username: si.podcast_publisher
                 },
-                platformCreatedAt: si.episode_release_date,
-                platformUpdatedAt: si.episode_release_date,
+                platformCreatedAt: si.episode_release_date.toISO(),
+                platformUpdatedAt: si.episode_release_date.toISO(),
                 postType: "spotify",
                 postUrl: si.episode_embed.provider_url,
                 ratingsCount: 0,
-                tradingpostCreatedAt: si.tradingpost_episode_created_at,
-                tradingpostUpdatedAt: si.tradingpost_episode_created_at,
+                tradingpostCreatedAt: si.tradingpost_episode_created_at.toISO(),
+                tradingpostUpdatedAt: si.tradingpost_episode_created_at.toISO(),
                 user: {
                     id: si.tradingpost_user_id.toString(),
                     imageUrl: null,
@@ -428,14 +426,14 @@ class YouTube {
                 description: row.description,
                 thumbnails: row.thumbnails,
                 title: row.title,
-                trading_post_channel_created_at: DateTime.fromISO(row.trading_post_channel_created_at),
-                trading_post_youtube_video_created_at: DateTime.fromISO(row.trading_post_youtube_video_created_at),
+                trading_post_channel_created_at: DateTime.fromJSDate(row.trading_post_channel_created_at),
+                trading_post_youtube_video_created_at: DateTime.fromJSDate(row.trading_post_youtube_video_created_at),
                 user_id: row.user_id,
                 video_embed: row.video_embed,
                 video_id: row.video_id,
                 video_url: row.video_url,
                 youtube_channel_id: row.youtube_channel_id,
-                youtube_created_at: DateTime.fromISO(row.youtube_created_at)
+                youtube_created_at: DateTime.fromJSDate(row.youtube_created_at)
             }
             return obj;
         });
@@ -460,13 +458,13 @@ class YouTube {
                     profileUrl: yv.custom_channel_url,
                     username: null
                 },
-                platformCreatedAt: yv.youtube_created_at,
-                platformUpdatedAt: yv.youtube_created_at,
+                platformCreatedAt: yv.youtube_created_at.toISO(),
+                platformUpdatedAt: yv.youtube_created_at.toISO(),
                 postType: "youtube",
                 postUrl: yv.video_url,
                 ratingsCount: 0,
-                tradingpostCreatedAt: yv.trading_post_youtube_video_created_at,
-                tradingpostUpdatedAt: yv.trading_post_youtube_video_created_at,
+                tradingpostCreatedAt: yv.trading_post_youtube_video_created_at.toISO(),
+                tradingpostUpdatedAt: yv.trading_post_youtube_video_created_at.toISO(),
                 user: {
                     id: yv.user_id.toString(),
                     imageUrl: null,
@@ -483,7 +481,7 @@ class YouTube {
 
 const run = async () => {
     const indexName = "tradingpost-search";
-    const postgresConfiguration = await configuration.fromSSM("/production/postgres");
+    const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgClient = new PostgresClient({
         host: postgresConfiguration['host'] as string,
         user: postgresConfiguration['user'] as string,
@@ -492,7 +490,7 @@ const run = async () => {
     });
     await pgClient.connect()
 
-    const elasticConfiguration = await configuration.fromSSM("/production/elastic");
+    const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
     const elasticClient = new ElasticClient({
         cloud: {
             id: elasticConfiguration['cloudId'] as string

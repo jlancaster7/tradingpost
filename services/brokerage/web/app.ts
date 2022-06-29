@@ -6,7 +6,7 @@ import {engine} from 'express-handlebars';
 import crypto from 'crypto';
 import bodyParser from "body-parser";
 import logger from 'morgan';
-import Finicity from '@tradingpost/common/finicity';
+import Finicity from '@tradingpost/common/finicity/index';
 import 'dotenv/config';
 import {UserInterface, Config} from "./custom";
 

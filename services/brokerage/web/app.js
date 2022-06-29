@@ -20,7 +20,7 @@ const express_handlebars_1 = require("express-handlebars");
 const crypto_1 = __importDefault(require("crypto"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const morgan_1 = __importDefault(require("morgan"));
-const finicity_1 = __importDefault(require("@tradingpost/common/finicity"));
+const index_1 = __importDefault(require("@tradingpost/common/finicity/index"));
 require("dotenv/config");
 const cfg = {
     finicityAppKey: process.env.FINICITY_APP_KEY || '',
@@ -30,7 +30,7 @@ const cfg = {
 };
 const app = (0, express_1.default)();
 const run = () => __awaiter(void 0, void 0, void 0, function* () {
-    const finicity = new finicity_1.default(cfg.finicityPartnerId, cfg.finicityPartnerSecret, cfg.finicityAppKey);
+    const finicity = new index_1.default(cfg.finicityPartnerId, cfg.finicityPartnerSecret, cfg.finicityAppKey);
     yield finicity.init();
     const getHashedPassword = (password) => {
         const sha256 = crypto_1.default.createHash('sha256');
