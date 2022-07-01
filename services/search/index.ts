@@ -23,7 +23,8 @@ class Twitter {
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
         if (lastId === null) lastId = 0
-        let query = `SELECT t.tweet_id            AS tweet_id,
+        let query = `SELECT t.id AS id, 
+                            t.tweet_id            AS tweet_id,
                             t.user_id             AS trading_post_user_id,
                             t.twitter_user_id,
                             t.embed,
@@ -57,8 +58,8 @@ class Twitter {
                      FROM tweets t
                               INNER JOIN twitter_users tu ON
                          tu.twitter_user_id = t.twitter_user_id
-                     WHERE t.tweet_id > ${lastId}
-                     ORDER BY t.tweet_id ASC
+                     WHERE t.id > ${lastId}
+                     ORDER BY t.id ASC
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
 
@@ -100,7 +101,7 @@ class Twitter {
             }
             return obj;
         });
-        return {items: this.map(tweetsAndUsers), lastId: response.rows[response.rows.length - 1].tweet_id}
+        return {items: this.map(tweetsAndUsers), lastId: response.rows[response.rows.length - 1].id}
     }
     map = (items: TweetsAndUser[]): ElasticSearchBody[] => {
         return items.map(tw => {
@@ -150,7 +151,8 @@ class SubStack {
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
-        let query = `SELECT sa.substack_user_id,
+        let query = `SELECT sa.id AS id,
+                            sa.substack_user_id,
                             sa.article_id,
                             sa.creator,
                             sa.title,
@@ -177,8 +179,8 @@ class SubStack {
                      FROM substack_articles sa
                               INNER JOIN substack_users su
                                          ON su.substack_user_id = sa.substack_user_id
-                     WHERE article_id > '${lastId}'
-                     ORDER BY article_id ASC;`
+                     WHERE sa.id > ${lastId}
+                     ORDER BY sa.id ASC;`
         const response = await this.dbClient.query(query);
         if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const substackAndNewsletters = response.rows.map((row: any) => {
@@ -211,7 +213,7 @@ class SubStack {
             return obj;
         });
 
-        return {items: this.map(substackAndNewsletters), lastId: response.rows[response.rows.length - 1].article_id}
+        return {items: this.map(substackAndNewsletters), lastId: response.rows[response.rows.length - 1].id}
     }
     map = (items: SubstackAndNewsletter[]): ElasticSearchBody[] => {
         return items.map((n: SubstackAndNewsletter) => {
@@ -260,7 +262,8 @@ class Spotify {
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
-        let query = `SELECT se.spotify_episode_id,
+        let query = `SELECT se.id AS id,
+                            se.spotify_episode_id,
                             se.spotify_show_id,
                             se.audio_preview_url,
                             se.name                 as episode_name,
@@ -294,8 +297,8 @@ class Spotify {
                      FROM spotify_episodes se
                               INNER JOIN spotify_users su
                                          ON su.spotify_show_id = se.spotify_show_id
-                     WHERE spotify_episode_id > '${lastId}'
-                     ORDER BY spotify_episode_id ASC
+                     WHERE se.id > ${lastId}
+                     ORDER BY se.id ASC
                      LIMIT 5000;`;
         const response = await this.dbClient.query(query);
         if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
@@ -335,7 +338,7 @@ class Spotify {
             };
             return obj;
         });
-        return {items: this.map(spotifyItems), lastId: response.rows[response.rows.length - 1].video_id}
+        return {items: this.map(spotifyItems), lastId: response.rows[response.rows.length - 1].id}
     }
     map = (items: SpotifyEpisodeAndUser[]): ElasticSearchBody[] => {
         return items.map((si: SpotifyEpisodeAndUser) => {
@@ -384,7 +387,8 @@ class YouTube {
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
-        let query = `select yv.video_id,
+        let query = `select yv.id AS id,
+                            yv.video_id,
                             yv.youtube_channel_id,
                             yv.user_id,
                             yv.title,
@@ -408,8 +412,8 @@ class YouTube {
                           youtube_users yu
                           ON
                               yu.youtube_channel_id = yv.youtube_channel_id
-                     WHERE video_id > '${lastId}'
-                     ORDER BY video_id ASC
+                     WHERE yv.id > ${lastId}
+                     ORDER BY yv.id ASC
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
         if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
@@ -437,7 +441,7 @@ class YouTube {
             }
             return obj;
         });
-        return {items: this.map(youtubeVideosAndChannel), lastId: response.rows[response.rows.length - 1].video_id}
+        return {items: this.map(youtubeVideosAndChannel), lastId: response.rows[response.rows.length - 1].id}
     }
     map = (items: YouTubeVideoAndChannel[]): ElasticSearchBody[] => {
         return items.map((yv: YouTubeVideoAndChannel) => {
