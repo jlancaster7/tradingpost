@@ -28,7 +28,7 @@ async function lambdaImportTweets () {
     let query = `SELECT twitter_user_id FROM twitter_users`;
 
     const twitterIds = (await pg_client.query(query)).rows;
-    console.log(twitterIds.length);
+    
     const Tweet = new Tweets((await awsConfigs).twitter, pg_client);
 
     let result: [formatedTweet[], number];

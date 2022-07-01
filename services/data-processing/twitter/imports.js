@@ -32,7 +32,6 @@ function lambdaImportTweets() {
         const pg_client = yield (0, utils_1.getPgClient)((yield awsConfigs).postgres);
         let query = `SELECT twitter_user_id FROM twitter_users`;
         const twitterIds = (yield pg_client.query(query)).rows;
-        console.log(twitterIds.length);
         const Tweet = new tweets_1.Tweets((yield awsConfigs).twitter, pg_client);
         let result;
         let tweetsImported = 0;

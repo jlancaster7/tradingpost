@@ -105,8 +105,8 @@ class SpotifyShows {
                     }
                 }
                 for (let i = 0; i < showResponse.items.length; i++) {
-                    let test = yield (yield (0, node_fetch_1.default)(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
-                    showResponse.items[i].embed = test;
+                    embedResponse = yield (yield (0, node_fetch_1.default)(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
+                    showResponse.items[i].embed = embedResponse;
                 }
                 showResponse.items.forEach((element) => {
                     formatedResponse = {

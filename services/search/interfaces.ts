@@ -18,6 +18,7 @@ export interface ElasticSearchBody {
     },
     ratingsCount: number | null
     postType: string | null
+    postTypeValue: number
     imageUrl: string | null
     postUrl: string | null
     platform: {

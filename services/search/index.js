@@ -63,7 +63,6 @@ class Twitter {
                      ORDER BY t.id ASC
                      LIMIT 5000;`;
             const response = yield this.dbClient.query(query);
-            console.log(response.rows.length);
             if (response.rows.length <= 0)
                 return { items: [], lastId: null };
             const tweetsAndUsers = response.rows.map((row) => {
@@ -126,6 +125,7 @@ class Twitter {
                     platformCreatedAt: tw.tweetTwitterCreatedAt.toISO(),
                     platformUpdatedAt: null,
                     postType: "tweet",
+                    postTypeValue: 1,
                     postUrl: tw.tweetURL,
                     ratingsCount: 0,
                     tradingpostCreatedAt: tw.tradingPostTweetCreatedAt.toISO(),
@@ -180,7 +180,6 @@ class SubStack {
                      WHERE sa.id > ${lastId}
                      ORDER BY sa.id ASC;`;
             const response = yield this.dbClient.query(query);
-            console.log(response.rows.length);
             if (!response.rows || response.rows.length <= 0)
                 return { items: [], lastId: null };
             const substackAndNewsletters = response.rows.map((row) => {
@@ -236,6 +235,7 @@ class SubStack {
                     platformCreatedAt: n.substack_article_created_at.toISO(),
                     platformUpdatedAt: n.substack_article_created_at.toISO(),
                     postType: "substack",
+                    postTypeValue: 3,
                     postUrl: n.link,
                     ratingsCount: 0,
                     tradingpostCreatedAt: n.tradingpost_substack_article_created_at.toISO(),
@@ -298,7 +298,6 @@ class Spotify {
                      ORDER BY se.id ASC
                      LIMIT 5000;`;
             const response = yield this.dbClient.query(query);
-            console.log(response.rows.length);
             if (!response.rows || response.rows.length <= 0)
                 return { items: [], lastId: null };
             const spotifyItems = response.rows.map((row) => {
@@ -361,6 +360,7 @@ class Spotify {
                     platformCreatedAt: si.episode_release_date.toISO(),
                     platformUpdatedAt: si.episode_release_date.toISO(),
                     postType: "spotify",
+                    postTypeValue: 2,
                     postUrl: si.episode_embed.provider_url,
                     ratingsCount: 0,
                     tradingpostCreatedAt: si.tradingpost_episode_created_at.toISO(),
@@ -413,7 +413,6 @@ class YouTube {
                      ORDER BY yv.id ASC
                      LIMIT 5000;`;
             const response = yield this.dbClient.query(query);
-            console.log(response.rows.length);
             if (!response.rows || response.rows.length <= 0)
                 return { items: [], lastId: null };
             const youtubeVideosAndChannel = response.rows.map((row) => {
@@ -464,6 +463,7 @@ class YouTube {
                     platformCreatedAt: yv.youtube_created_at.toISO(),
                     platformUpdatedAt: yv.youtube_created_at.toISO(),
                     postType: "youtube",
+                    postTypeValue: 3,
                     postUrl: yv.video_url,
                     ratingsCount: 0,
                     tradingpostCreatedAt: yv.trading_post_youtube_video_created_at.toISO(),
@@ -509,7 +509,6 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     let providers = [new Twitter(pgClient), new SubStack(pgClient), new Spotify(pgClient), new YouTube(pgClient)];
     for (let i = 0; i < providers.length; i++) {
         const provider = providers[i];
-        console.log(provider);
         let id = null;
         while (true) {
             let items, lastId;

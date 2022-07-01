@@ -133,8 +133,8 @@ export class SpotifyShows {
                 }
             }
             for (let i = 0; i < showResponse.items.length; i++) {
-                let test = await (await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
-                showResponse.items[i].embed = test;
+                embedResponse = await (await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
+                showResponse.items[i].embed = embedResponse;
 
             }
             showResponse.items.forEach((element: any) => {
