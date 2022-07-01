@@ -28,28 +28,28 @@ const configuration_1 = require("@tradingpost/common/configuration");
     // Get Users Following IDs
     const response = yield elasticClient.search({
         index: indexName,
+        size: 50,
+        from: 0,
         query: {
-            bool: {
-                must: [
-                    {
-                        match: { "platform.displayName": "joshua" }
-                    }
-                ],
-                filter: [
-                    {
-                        terms: {
-                            "user.id": [4973, 4972] // User IDs who our requesting user is subscribed too
+            function_score: {
+                query: {
+                    function_score: {
+                        query: { match_all: {} },
+                        gauss: {
+                            platformCreatedAt: {
+                                origin: "now-1h",
+                                scale: "1d"
+                            }
                         }
                     }
-                ]
+                },
+                field_value_factor: {
+                    field: "postTypeValue",
+                    factor: 1,
+                    modifier: "none"
+                }
             }
-        },
-        sort: [
-            // @ts-ignore
-            {
-                platformCreatedAt: { order: "desc" }
-            }
-        ]
+        }
     });
     const { hits } = response.hits;
     console.log(hits);
