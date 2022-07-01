@@ -167,7 +167,7 @@ export type TradingPostAccountTable = {
 }
 
 export type TradingPostPortfolioSummaryTable = {
-    portfolio_id: number 
+    portfolio_id: number
     beta: number
     sharpe: number
     industry_allocation: {[key: string]: number}
@@ -177,6 +177,7 @@ export type TradingPostPortfolioSummaryTable = {
         net: number
         gross: number
     }
+    timestamp: DateTime
     default_benchmark_id: number // References securities table
 }
 
