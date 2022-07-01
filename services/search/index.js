@@ -24,7 +24,8 @@ class Twitter {
         this.getItems = (lastId) => __awaiter(this, void 0, void 0, function* () {
             if (lastId === null)
                 lastId = 0;
-            let query = `SELECT t.tweet_id            AS tweet_id,
+            let query = `SELECT t.id AS id, 
+                            t.tweet_id            AS tweet_id,
                             t.user_id             AS trading_post_user_id,
                             t.twitter_user_id,
                             t.embed,
@@ -58,10 +59,11 @@ class Twitter {
                      FROM tweets t
                               INNER JOIN twitter_users tu ON
                          tu.twitter_user_id = t.twitter_user_id
-                     WHERE t.tweet_id > ${lastId}
-                     ORDER BY t.tweet_id ASC
+                     WHERE t.id > ${lastId}
+                     ORDER BY t.id ASC
                      LIMIT 5000;`;
             const response = yield this.dbClient.query(query);
+            console.log(response.rows.length);
             if (response.rows.length <= 0)
                 return { items: [], lastId: null };
             const tweetsAndUsers = response.rows.map((row) => {
@@ -100,7 +102,7 @@ class Twitter {
                 };
                 return obj;
             });
-            return { items: this.map(tweetsAndUsers), lastId: response.rows[response.rows.length - 1].tweet_id };
+            return { items: this.map(tweetsAndUsers), lastId: response.rows[response.rows.length - 1].id };
         });
         this.map = (items) => {
             return items.map(tw => {
@@ -145,7 +147,10 @@ class Twitter {
 class SubStack {
     constructor(dbClient) {
         this.getItems = (lastId) => __awaiter(this, void 0, void 0, function* () {
-            let query = `SELECT sa.substack_user_id,
+            if (lastId === null)
+                lastId = 0;
+            let query = `SELECT sa.id AS id,
+                            sa.substack_user_id,
                             sa.article_id,
                             sa.creator,
                             sa.title,
@@ -172,9 +177,10 @@ class SubStack {
                      FROM substack_articles sa
                               INNER JOIN substack_users su
                                          ON su.substack_user_id = sa.substack_user_id
-                     WHERE article_id > '${lastId}'
-                     ORDER BY article_id ASC;`;
+                     WHERE sa.id > ${lastId}
+                     ORDER BY sa.id ASC;`;
             const response = yield this.dbClient.query(query);
+            console.log(response.rows.length);
             if (!response.rows || response.rows.length <= 0)
                 return { items: [], lastId: null };
             const substackAndNewsletters = response.rows.map((row) => {
@@ -206,7 +212,7 @@ class SubStack {
                 };
                 return obj;
             });
-            return { items: this.map(substackAndNewsletters), lastId: response.rows[response.rows.length - 1].article_id };
+            return { items: this.map(substackAndNewsletters), lastId: response.rows[response.rows.length - 1].id };
         });
         this.map = (items) => {
             return items.map((n) => {
@@ -251,7 +257,10 @@ class SubStack {
 class Spotify {
     constructor(dbClient) {
         this.getItems = (lastId) => __awaiter(this, void 0, void 0, function* () {
-            let query = `SELECT se.spotify_episode_id,
+            if (lastId === null)
+                lastId = 0;
+            let query = `SELECT se.id AS id,
+                            se.spotify_episode_id,
                             se.spotify_show_id,
                             se.audio_preview_url,
                             se.name                 as episode_name,
@@ -285,10 +294,11 @@ class Spotify {
                      FROM spotify_episodes se
                               INNER JOIN spotify_users su
                                          ON su.spotify_show_id = se.spotify_show_id
-                     WHERE spotify_episode_id > '${lastId}'
-                     ORDER BY spotify_episode_id ASC
+                     WHERE se.id > ${lastId}
+                     ORDER BY se.id ASC
                      LIMIT 5000;`;
             const response = yield this.dbClient.query(query);
+            console.log(response.rows.length);
             if (!response.rows || response.rows.length <= 0)
                 return { items: [], lastId: null };
             const spotifyItems = response.rows.map((row) => {
@@ -327,7 +337,7 @@ class Spotify {
                 };
                 return obj;
             });
-            return { items: this.map(spotifyItems), lastId: response.rows[response.rows.length - 1].video_id };
+            return { items: this.map(spotifyItems), lastId: response.rows[response.rows.length - 1].id };
         });
         this.map = (items) => {
             return items.map((si) => {
@@ -372,7 +382,10 @@ class Spotify {
 class YouTube {
     constructor(dbClient) {
         this.getItems = (lastId) => __awaiter(this, void 0, void 0, function* () {
-            let query = `select yv.video_id,
+            if (lastId === null)
+                lastId = 0;
+            let query = `select yv.id AS id,
+                            yv.video_id,
                             yv.youtube_channel_id,
                             yv.user_id,
                             yv.title,
@@ -396,10 +409,11 @@ class YouTube {
                           youtube_users yu
                           ON
                               yu.youtube_channel_id = yv.youtube_channel_id
-                     WHERE video_id > '${lastId}'
-                     ORDER BY video_id ASC
+                     WHERE yv.id > ${lastId}
+                     ORDER BY yv.id ASC
                      LIMIT 5000;`;
             const response = yield this.dbClient.query(query);
+            console.log(response.rows.length);
             if (!response.rows || response.rows.length <= 0)
                 return { items: [], lastId: null };
             const youtubeVideosAndChannel = response.rows.map((row) => {
@@ -426,7 +440,7 @@ class YouTube {
                 };
                 return obj;
             });
-            return { items: this.map(youtubeVideosAndChannel), lastId: response.rows[response.rows.length - 1].video_id };
+            return { items: this.map(youtubeVideosAndChannel), lastId: response.rows[response.rows.length - 1].id };
         });
         this.map = (items) => {
             return items.map((yv) => {
@@ -495,6 +509,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     let providers = [new Twitter(pgClient), new SubStack(pgClient), new Spotify(pgClient), new YouTube(pgClient)];
     for (let i = 0; i < providers.length; i++) {
         const provider = providers[i];
+        console.log(provider);
         let id = null;
         while (true) {
             let items, lastId;

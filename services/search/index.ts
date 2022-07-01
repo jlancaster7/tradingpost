@@ -62,7 +62,7 @@ class Twitter {
                      ORDER BY t.id ASC
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
-
+        console.log(response.rows.length);
         if (response.rows.length <= 0) return {items: [], lastId: null};
 
         const tweetsAndUsers = response.rows.map((row: any) => {
@@ -151,6 +151,7 @@ class SubStack {
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
+        if (lastId === null) lastId = 0
         let query = `SELECT sa.id AS id,
                             sa.substack_user_id,
                             sa.article_id,
@@ -182,6 +183,7 @@ class SubStack {
                      WHERE sa.id > ${lastId}
                      ORDER BY sa.id ASC;`
         const response = await this.dbClient.query(query);
+        console.log(response.rows.length);
         if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const substackAndNewsletters = response.rows.map((row: any) => {
             let obj: SubstackAndNewsletter = {
@@ -262,6 +264,7 @@ class Spotify {
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
+        if (lastId === null) lastId = 0
         let query = `SELECT se.id AS id,
                             se.spotify_episode_id,
                             se.spotify_show_id,
@@ -301,6 +304,7 @@ class Spotify {
                      ORDER BY se.id ASC
                      LIMIT 5000;`;
         const response = await this.dbClient.query(query);
+        console.log(response.rows.length);
         if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const spotifyItems = response.rows.map((row: any) => {
             let obj: SpotifyEpisodeAndUser = {
@@ -387,6 +391,7 @@ class YouTube {
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
+        if (lastId === null) lastId = 0
         let query = `select yv.id AS id,
                             yv.video_id,
                             yv.youtube_channel_id,
@@ -416,6 +421,7 @@ class YouTube {
                      ORDER BY yv.id ASC
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
+        console.log(response.rows.length);
         if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const youtubeVideosAndChannel: YouTubeVideoAndChannel[] = response.rows.map((row: any) => {
             let obj: YouTubeVideoAndChannel = {
@@ -512,10 +518,12 @@ const run = async () => {
     let providers: Provider[] = [new Twitter(pgClient), new SubStack(pgClient), new Spotify(pgClient), new YouTube(pgClient)];
     for (let i = 0; i < providers.length; i++) {
         const provider = providers[i];
+        console.log(provider);
         let id: LastID = null;
         while (true) {
             let items: ElasticSearchBody[], lastId: string | number | null;
             ({items, lastId: lastId} = await provider.getItems(id));
+        
             if (items.length <= 0) break;
             await ingestToElastic(elasticClient, items, indexName)
             id = lastId
