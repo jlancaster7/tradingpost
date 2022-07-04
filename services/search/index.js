@@ -529,9 +529,29 @@ const rebuildElasticIndex = (elasticClient, indexName) => __awaiter(void 0, void
         console.error();
     }
     const esIndexSchema = JSON.parse(fs_1.default.readFileSync('./schema.json', 'utf8'));
+    const synonymList = fs_1.default.readFileSync('stock_ticker_synonyms.txt').toString().split("\n");
     yield elasticClient.indices.create({
         index: indexName,
         mappings: esIndexSchema.mappings,
+        settings: {
+            "index": {
+                "analysis": {
+                    "filter": {
+                        "synonym_filter": {
+                            "type": "synonym",
+                            "synonyms": synonymList,
+                            "updateable": true
+                        }
+                    },
+                    "analyzer": {
+                        "synonym_analyzer": {
+                            "tokenizer": "keyword",
+                            "filter": ["lowercase", "synonym_filter"]
+                        }
+                    }
+                }
+            }
+        }
     });
 });
 /**

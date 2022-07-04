@@ -184,7 +184,7 @@ export type TradingPostPortfolioSummaryTable = {
 export type TradingPostPortfolioTable = {
     id: string // portfolio_id else where
     user_id: string
-    account_ids: string[]
+    account_ids: string
 }
 
 export type BenchmarkHoldingPeriodReturnTable = {
