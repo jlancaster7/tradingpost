@@ -549,7 +549,7 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
     const synonymList = fs.readFileSync('stock_ticker_synonyms.txt').toString().split("\n");
     await elasticClient.indices.create({
         index: indexName,
-        mappings: esIndexSchema.mappings,
+        mappings: esIndexSchema.mappings,  
         settings: {
             "index" : {
                 "analysis" : {
@@ -561,6 +561,7 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
                         }
                     },
                     "analyzer" : {
+                        // @ts-ignore
                         "synonym_analyzer" : {
                             "tokenizer" : "keyword",
                             "filter" : ["lowercase", "synonym_filter"] 
