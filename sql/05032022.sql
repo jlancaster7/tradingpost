@@ -725,7 +725,7 @@ CREATE INDEX security_prices_time_brin_idx ON security_prices USING brin (time);
 CREATE TABLE realizefi_users
 (
     id           BIGSERIAL NOT NULL PRIMARY KEY,
---    user_id uuid foreign key users(id) not null,
+--    user_id uuid REFERENCES users(id) not null,
     realizefi_id TEXT      NOT NULL UNIQUE
 );
 
@@ -797,3 +797,16 @@ CREATE TABLE realizefi_account_positions
 
 -- Does this hold true? Or, should it be over the symbol type? Want to investigate more...
 CREATE UNIQUE INDEX realizefi_account_positions_idx ON realizefi_account_positions (account_id, symbol);
+
+-- We could utilize user devices for web & mobile
+CREATE TABLE user_device
+(
+    id         BIGSERIAL                             NOT NULL PRIMARY KEY,
+    user_id    UUID REFERENCES data_user (id)       NOT NULL,
+    provider   TEXT                                  NOT NULL, -- Apple / Android / etc....
+    device_id  TEXT                                  NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE UNIQUE INDEX user_devices_user_id_device_id_idx ON user_device (user_id, device_id);
