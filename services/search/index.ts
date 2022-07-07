@@ -495,15 +495,17 @@ class YouTube {
 
 const run = async () => {
     const indexName = "tradingpost-search";
+    
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+    
     const pgClient = new PostgresClient({
         host: postgresConfiguration['host'] as string,
         user: postgresConfiguration['user'] as string,
         password: postgresConfiguration['password'] as string,
         database: postgresConfiguration['database'] as string
     });
+    
     await pgClient.connect()
-
     const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
     const elasticClient = new ElasticClient({
         cloud: {
@@ -544,9 +546,30 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
         console.error()
     }
     const esIndexSchema = JSON.parse(fs.readFileSync('./schema.json', 'utf8'));
+    const synonymList = fs.readFileSync('stock_ticker_synonyms.txt').toString().split("\n");
     await elasticClient.indices.create({
         index: indexName,
-        mappings: esIndexSchema.mappings,
+        mappings: esIndexSchema.mappings,  
+        settings: {
+            "index" : {
+                "analysis" : {
+                    "filter" : {
+                        "synonym_filter" : {
+                            "type" : "synonym",
+                            "synonyms" : synonymList,
+                            "updateable": true
+                        }
+                    },
+                    "analyzer" : {
+                        // @ts-ignore
+                        "synonym_analyzer" : {
+                            "tokenizer" : "keyword",
+                            "filter" : ["lowercase", "synonym_filter"] 
+                        }
+                    }
+                }
+            }
+        }
     });
 }
 

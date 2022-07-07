@@ -97,20 +97,37 @@ export type RealizefiAccountPosition = {
     securityPrimaryExchange: string
 }
 
-export type TradingPostHoldingTable = {
+export type TradingPostCurrentHoldingsTable = {
     id: string
     account_id: string
     security_id: string
     security_type: SecurityType
-    institution_price: number
-    institution_as_of: DateTime | null
-    institution_value: number
+    price: number
+    price_as_of: DateTime | null
+    price_source: string
+    value: number
     costBasis: number | null
     quantity: number
     currency: string
-    // Should we put things like 'industry' on this table? I know we could join it on the securities table, but could then allow people to assign a custom industy 
-    // to a security if we don't have one for it.. or they want to change it.
-    // But then I guess maybe we should have a custom industry table so that if they trade in and out of it, it persists 
+    created_at: DateTime
+    updated_at: DateTime 
+}
+
+export type TradingPostHistoricalHoldingsTable = {
+    id: string
+    account_id: string
+    security_id: string
+    security_type: SecurityType
+    price: number
+    price_as_of: DateTime | null
+    price_source: string
+    value: number
+    cost_basis: number | null
+    quantity: number
+    currency: string
+    date: DateTime
+    created_at: DateTime
+    updated_at: DateTime 
 }
 
 export type TradingPostCustomIndustryTable = {
@@ -118,6 +135,8 @@ export type TradingPostCustomIndustryTable = {
     user_id: string
     security_id: string
     industry: string
+    created_at: DateTime
+    updated_at: DateTime
 }
 
 export type TradingPostTransactionTable = {
@@ -132,6 +151,8 @@ export type TradingPostTransactionTable = {
     fees: number | null
     type: InvestmentTransactionType
     currency: string
+    created_at: DateTime
+    updated_at: DateTime
 }
 
 export enum SecurityType {
@@ -158,16 +179,31 @@ export enum InvestmentTransactionType {
 
 export type TradingPostAccountTable = {
     id: string // account_id else where
+    user_id: string
     broker_name: string
     mask: string | null
     name: string
     official_name: string | null
     type: string // Margin or Cash Account
     subtype: string | null
+    created_at: DateTime
+    updated_at: DateTime
+}
+
+export type TradingPostAccountGroupTable = {
+    id: string
+    name: string // all accounts under 'default'
+    account_group_id: string
+    user_id: string
+    account_id: string
+    default_benchmark_id: string // References securities table
+    created_at: DateTime
+    updated_at: DateTime
 }
 
 export type TradingPostPortfolioSummaryTable = {
-    portfolio_id: number
+    id: string
+    account_group_id: string
     beta: number
     sharpe: number
     industry_allocation: {[key: string]: number}
@@ -177,28 +213,30 @@ export type TradingPostPortfolioSummaryTable = {
         net: number
         gross: number
     }
-    timestamp: DateTime
-    default_benchmark_id: number // References securities table
+    date: DateTime
+    benchmark_id: number // References securities table
+    created_at: DateTime
+    updated_at: DateTime
 }
 
-export type TradingPostPortfolioTable = {
-    id: string // portfolio_id else where
-    user_id: string
-    account_ids: string[]
-}
+
 
 export type BenchmarkHoldingPeriodReturnTable = {
     id: number
     security_id: number
-    timestamp: DateTime
+    date: DateTime
     return: number
+    created_at: DateTime
+    updated_at: DateTime
 }
 
-export type PortfolioHoldingPeriodReturnTable = {
+export type AccountGroupHoldingPeriodReturnTable = {
     id: number
-    portfolio_id: number | null
-    timestamp: DateTime
+    account_group_id: string
+    date: DateTime
     return: number
+    created_at: DateTime
+    updated_at: DateTime
 }
 
 
