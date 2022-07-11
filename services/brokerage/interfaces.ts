@@ -97,52 +97,66 @@ export type RealizefiAccountPosition = {
     securityPrimaryExchange: string
 }
 
-export type TradingPostCurrentHoldingsTable = {
-    id: string
-    account_id: string
-    security_id: string
-    security_type: SecurityType
-    price: number
-    price_as_of: DateTime | null
-    price_source: string
-    value: number
-    costBasis: number | null
-    quantity: number
-    currency: string
-    created_at: DateTime
-    updated_at: DateTime 
-}
-
-export type TradingPostHistoricalHoldingsTable = {
-    id: string
-    account_id: string
-    security_id: string
-    security_type: SecurityType
-    price: number
-    price_as_of: DateTime | null
-    price_source: string
-    value: number
-    cost_basis: number | null
-    quantity: number
-    currency: string
-    date: DateTime
-    created_at: DateTime
-    updated_at: DateTime 
-}
-
-export type TradingPostCustomIndustryTable = {
-    id: string
-    user_id: string
-    security_id: string
-    industry: string
+export type TableInfo = {
+    id: number
     created_at: DateTime
     updated_at: DateTime
 }
 
-export type TradingPostTransactionTable = {
-    id: string
-    account_id: string
-    security_id: string
+export type TradingPostCurrentHoldings = {
+    account_id: number
+    security_id: number
+    security_type: SecurityType | null
+    price: number
+    price_as_of: DateTime
+    price_source: string
+    value: number
+    cost_basis: number | null
+    quantity: number
+    currency: string | null
+}
+
+export type TradingPostCurrentHoldingsTable = TradingPostCurrentHoldings & TableInfo;
+
+
+export type TradingPostHistoricalHoldings = {
+    account_id: number
+    security_id: number
+    security_type: SecurityType | null
+    price: number
+    price_as_of: DateTime
+    price_source: string
+    value: number
+    cost_basis: number | null
+    quantity: number
+    currency: string | null
+    date: DateTime
+}
+
+export type TradingPostHistoricalHoldingsTable = TradingPostHistoricalHoldings & TableInfo;
+
+export type HistoricalHoldings = {
+    account_id: number | null,
+    account_group_id: string,
+    security_id: number
+    price: number
+    value: number
+    costBasis: number
+    quantity: number
+    date: DateTime
+}
+
+export type TradingPostCustomIndustry = {
+    user_id: string
+    security_id: number
+    industry: string
+}
+
+export type TradingPostCustomIndustryTable = TradingPostCustomIndustry & TableInfo;
+
+export type TradingPostTransactions = {
+    account_id: number
+    security_id: number
     security_type: SecurityType
     date: DateTime
     quantity: number
@@ -151,9 +165,9 @@ export type TradingPostTransactionTable = {
     fees: number | null
     type: InvestmentTransactionType
     currency: string
-    created_at: DateTime
-    updated_at: DateTime
 }
+
+export type TradingPostTransactionsTable = TradingPostTransactions & TableInfo;
 
 export enum SecurityType {
     equity = "equity",
@@ -162,7 +176,8 @@ export enum SecurityType {
     mutualFund = "mutualFund",
     cashEquivalent = "cashEquivalent", // A money market fund would be an example of a cash equivalent
     fixedIncome = "fixedIncome",
-    currency = "currency"
+    currency = "currency",
+    unknown = "unknown"
 }
 
 export enum InvestmentTransactionType {
@@ -177,8 +192,7 @@ export enum InvestmentTransactionType {
     dividendOrInerest = "dividendOrInterest"
 }
 
-export type TradingPostAccountTable = {
-    id: string // account_id else where
+export type TradingPostAccounts = {
     user_id: string
     broker_name: string
     mask: string | null
@@ -186,23 +200,21 @@ export type TradingPostAccountTable = {
     official_name: string | null
     type: string // Margin or Cash Account
     subtype: string | null
-    created_at: DateTime
-    updated_at: DateTime
 }
 
-export type TradingPostAccountGroupTable = {
-    id: string
+export type TradingPostAccountsTable = TradingPostAccounts & TableInfo;
+
+export type TradingPostAccountGroups = {
     name: string // all accounts under 'default'
     account_group_id: string
     user_id: string
-    account_id: string
-    default_benchmark_id: string // References securities table
-    created_at: DateTime
-    updated_at: DateTime
+    account_id: number
+    default_benchmark_id: number // References securities table
 }
 
-export type TradingPostPortfolioSummaryTable = {
-    id: string
+export type TradingPostAccountGroupsTable = TradingPostAccountGroups & TableInfo;
+
+export type TradingPostAccountGroupStats = {
     account_group_id: string
     beta: number
     sharpe: number
@@ -215,30 +227,34 @@ export type TradingPostPortfolioSummaryTable = {
     }
     date: DateTime
     benchmark_id: number // References securities table
-    created_at: DateTime
-    updated_at: DateTime
 }
 
+export type TradingPostAccountGroupStatsTable = TradingPostAccountGroupStats & TableInfo;
 
+export type SecurityPrices = {
+    security_id: number
+    date: DateTime
+    price: number
+}
 
-export type BenchmarkHoldingPeriodReturnTable = {
-    id: number
+export type SecurityPricesTable = SecurityPrices & {id: number, created_at: DateTime}; 
+
+export type SecurityHPRs = {
+
     security_id: number
     date: DateTime
     return: number
-    created_at: DateTime
-    updated_at: DateTime
 }
 
-export type AccountGroupHoldingPeriodReturnTable = {
-    id: number
+export type SecurityHPRsTable = SecurityHPRs & TableInfo;
+
+export type AccountGroupHPRs = {
     account_group_id: string
     date: DateTime
     return: number
-    created_at: DateTime
-    updated_at: DateTime
 }
 
+export type AccountGroupHPRsTable = AccountGroupHPRs & TableInfo;
 
 interface SomeInterface<U> {
     id: number
