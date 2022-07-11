@@ -1,7 +1,6 @@
 import {IRepository} from "./interfaces";
 import {RealizefiAccount, RealizefiUser, RealizefiAccountTransaction, RealizefiAccountPosition} from "./interfaces";
-import {DateTime} from "luxon";
-import {Column, ColumnSet, IDatabase, IMain} from "pg-promise";
+import {ColumnSet, IDatabase, IMain} from "pg-promise";
 
 export default class Repository implements IRepository {
     private db: IDatabase<any>;
@@ -149,6 +148,7 @@ export default class Repository implements IRepository {
         let transactions: RealizefiAccountTransaction[] = [];
         for (const d of data) {
             transactions.push({
+                symbol: d.symbol,
                 id: d.id,
                 accountId: d.account_id,
                 realizefiTransactionId: d.realizefi_transaction_id,
@@ -163,7 +163,7 @@ export default class Repository implements IRepository {
                 price: d.price,
                 adjustmentRatio: d.adjustment_ratio,
                 instrument: d.instrument,
-                fees: d.fees,
+                fees: d.fees
             })
         }
         return transactions
