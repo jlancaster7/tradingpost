@@ -143,6 +143,7 @@ class Repository {
             let transactions = [];
             for (const d of data) {
                 transactions.push({
+                    symbol: d.symbol,
                     id: d.id,
                     accountId: d.account_id,
                     realizefiTransactionId: d.realizefi_transaction_id,
@@ -157,7 +158,7 @@ class Repository {
                     price: d.price,
                     adjustmentRatio: d.adjustment_ratio,
                     instrument: d.instrument,
-                    fees: d.fees,
+                    fees: d.fees
                 });
             }
             return transactions;

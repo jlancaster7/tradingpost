@@ -136,14 +136,26 @@ export type TradingPostHistoricalHoldings = {
 export type TradingPostHistoricalHoldingsTable = TradingPostHistoricalHoldings & TableInfo;
 
 export type HistoricalHoldings = {
-    account_id: number | null,
-    account_group_id: string,
+    account_id?: number,
+    account_group_id?: number,
     security_id: number
     price: number
     value: number
     costBasis: number
     quantity: number
     date: DateTime
+}
+
+export type TradingPostExposure = {
+    long: number
+    short: number
+    gross: number
+    net: number
+}
+
+export type TradingPostSectorAllocations = {
+    sector: string
+    value: number
 }
 
 export type TradingPostCustomIndustry = {
@@ -206,7 +218,7 @@ export type TradingPostAccountsTable = TradingPostAccounts & TableInfo;
 
 export type TradingPostAccountGroups = {
     name: string // all accounts under 'default'
-    account_group_id: string
+    account_group_id: number
     user_id: string
     account_id: number
     default_benchmark_id: number // References securities table
@@ -215,16 +227,11 @@ export type TradingPostAccountGroups = {
 export type TradingPostAccountGroupsTable = TradingPostAccountGroups & TableInfo;
 
 export type TradingPostAccountGroupStats = {
-    account_group_id: string
+    account_group_id: number
     beta: number
     sharpe: number
-    industry_allocation: {[key: string]: number}
-    exposure: {
-        long: number
-        short: number
-        net: number
-        gross: number
-    }
+    industry_allocation: TradingPostSectorAllocations[]
+    exposure: TradingPostExposure
     date: DateTime
     benchmark_id: number // References securities table
 }
@@ -249,7 +256,7 @@ export type SecurityHPRs = {
 export type SecurityHPRsTable = SecurityHPRs & TableInfo;
 
 export type AccountGroupHPRs = {
-    account_group_id: string
+    account_group_id: number
     date: DateTime
     return: number
 }

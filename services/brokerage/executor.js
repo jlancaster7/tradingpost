@@ -18,9 +18,7 @@ const realizefi_1 = __importDefault(require("@tradingpost/common/realizefi"));
 const repository_1 = __importDefault(require("./repository"));
 const configuration_1 = require("@tradingpost/common/configuration");
 const pg_promise_1 = __importDefault(require("pg-promise"));
-const getEvent = () => __awaiter(void 0, void 0, void 0, function* () {
-    return null;
-});
+const service_1 = __importDefault(require("./service"));
 (() => __awaiter(void 0, void 0, void 0, function* () {
     const postgresConfiguration = yield configuration_1.DefaultConfig.fromSSM("postgres");
     const pgp = (0, pg_promise_1.default)({});
@@ -33,18 +31,9 @@ const getEvent = () => __awaiter(void 0, void 0, void 0, function* () {
     const realizefi = new realizefi_1.default(process.env.REALIZEFI_SECRET_KEY || "", process.env.REALIZEFI_AUTH_URLS || "");
     const repository = new repository_1.default(conn, pgp);
     const realizefiProvider = new realizefi_provider_1.default(realizefi, repository);
-    const userId = 'usr_DCEwWdTVMg3exFlUVMic4Rhgr851kz8p';
-    const institutionId = 'il_UlaMrIsnVBGLCuME9todgFh1rweYkblX';
-    yield realizefiProvider.importPositions(userId);
-    // const brokerageService = new BrokerageService();
-    // while (true) {
-    //     const event = await getEvent();
-    //     if (!event) {
-    //         await sleep(1000)
-    //         continue
-    //     }
-    // }
+    // const userId = 'usr_DCEwWdTVMg3exFlUVMic4Rhgr851kz8p';
+    // const institutionId = 'il_UlaMrIsnVBGLCuME9todgFh1rweYkblX';
+    // await realizefiProvider.importPositions(userId)
+    const brokerageService = new service_1.default(realizefiProvider, repository);
+    yield brokerageService.newRealizefiAccounts('');
 }))();
-const events = {
-    "IMPORT_REALIZEFI_ACCOUNTS": ''
-};
