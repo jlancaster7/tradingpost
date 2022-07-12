@@ -79,11 +79,18 @@ CREATE TABLE IF NOT EXISTS public.tradingpost_account_groups
 	id serial UNIQUE NOT null,
 	user_id text NOT null,
 	name text NOT null,
-	account_group_id text NOT null,
-	account_id text NOT null,
 	default_benchmark_id bigint NOT null,
 	created_at timestamp with time zone NOT NULL DEFAULT now(),
-	updated_at timestamp with time zone NOT NULL DEFAULT now()
+	updated_at timestamp with time zone NOT NULL DEFAULT now(),
+	UNIQUE(user_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS public._tradingpost_account_to_group
+(
+	id serial UNIQUE NOT null,
+	account_id integer NOT null,
+	account_group_id integer NOT null,
+	UNIQUE(account_id, account_group_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.tradingpost_account_group_stats
