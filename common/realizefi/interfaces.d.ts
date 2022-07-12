@@ -148,34 +148,6 @@ export interface ListInstitutionAssetsResponse {
 export interface ListWebhooksResponse {
 }
 export interface ListTransactionsResponse {
-    data: {
-        id: string;
-        transactionDate: string;
-        settlementDate: string;
-        type: string;
-        netAmount: string;
-        details: {
-            transactionType: string;
-            transactionSubType: string;
-            side: string;
-            amount: string;
-            quantity: string;
-            price: string;
-            adjustmentRatio: number;
-            instrument: {
-                symbol: string;
-                underlying: {
-                    instrument: {
-                        symbol: string;
-                    };
-                };
-                strike: string;
-                expiration: string;
-                type: string;
-            };
-            fees: string;
-        } | null;
-    }[];
 }
 export interface GetBalancesResponse {
     buyingPower: string;

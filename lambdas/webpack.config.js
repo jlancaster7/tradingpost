@@ -1,5 +1,6 @@
 const path = require('path');
 const slsw = require('serverless-webpack');
+const {IgnorePlugin} = require('webpack')
 
 module.exports = {
     mode: slsw.lib.webpack.isLocal ? 'development' : 'production',
@@ -9,6 +10,11 @@ module.exports = {
         symlinks: true,
         extensions: ['.js', '.jsx', '.json', '.ts', '.tsx'],
     },
+    plugins: [
+        new IgnorePlugin({
+            resourceRegExp: /^pg-native$/,
+        }),
+    ],
     output: {
         libraryTarget: 'commonjs',
         path: path.join(__dirname, '.webpack'),
@@ -18,7 +24,7 @@ module.exports = {
     module: {
         rules: [
             // all files with a `.ts` or `.tsx` extension will be handled by `ts-loader`
-            { test: /\.tsx?$/, loader: 'ts-loader' },
+            {test: /\.tsx?$/, loader: 'ts-loader'},
         ],
     },
 };

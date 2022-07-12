@@ -12,6 +12,7 @@
   "dependencies": {
     "@fast-csv/parse": "^4.3.6",
     "aws-sdk": "^2.1155.0",
+    "dotenv": "^16.0.1",
     "fast-csv": "^4.3.6",
     "fast-xml-parser": "^4.0.8",
     "fs": "^0.0.1-security",
@@ -21,7 +22,6 @@
     "node-html-parser": "^5.3.3",
     "pg": "^8.7.3",
     "pg-format": "^1.0.4",
-    "pg-native": "^3.0.0",
     "rss-parser": "^3.12.0"
   },
   "devDependencies": {

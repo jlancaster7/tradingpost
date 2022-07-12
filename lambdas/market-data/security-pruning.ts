@@ -7,10 +7,10 @@ import {Repository} from '../../services/market-data/repository';
 const run = async () => {
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgClient = new Client({
-        host: postgresConfiguration['host'] as string,
-        user: postgresConfiguration['user'] as string,
-        password: postgresConfiguration['password'] as string,
-        database: postgresConfiguration['database'] as string,
+        host: postgresConfiguration.host,
+        user: postgresConfiguration.user,
+        password: postgresConfiguration.password,
+        database: postgresConfiguration.database,
         port: 5432,
     });
 

@@ -11,6 +11,7 @@ provider:
   name: aws
   environment:
     CONFIGURATION_ENV: production
+    NODE_ENV: production
   tags:
     service: tradingpost-background-job
   runtime: nodejs16.x
@@ -78,7 +79,7 @@ functions:
           rate: cron(0 7 ? * MON-FRI *)
           enabled: true
 
-  # Social Media Lambdas
+  # ============== Social Media Lambdas ==============
   spotify:
     handler: social-media/spotify.run
     description: Ingests Spotify User Data
@@ -87,8 +88,12 @@ functions:
     memorySize: 1024
     events:
       - schedule:
-          rate: cron(0 7 ? * MON-FRI *)
+          rate: cron(0 11 ? * MON-SUN *) # Run once a day at 7AM ET
           enabled: false
+      - schedule:
+          rate: cron(0 23 ? * MON-SUN *) # Run once a day at 7PM ET
+          enabled: false
+
   substack:
     handler: social-media/substack.run
     description: Ingests Substack Data
@@ -97,7 +102,10 @@ functions:
     memorySize: 1024
     events:
       - schedule:
-          rate: cron(0 7 ? * MON-FRI *)
+          rate: cron(0 11 ? * MON-SUN *) # Run once a day at 7AM ET
+          enabled: false
+      - schedule:
+          rate: cron(0 23 ? * MON-SUN *) # Run once a day at 7PM ET
           enabled: false
 
   twitter:
@@ -108,7 +116,7 @@ functions:
     memorySize: 1024
     events:
       - schedule:
-          rate: cron(0 7 ? * MON-FRI *)
+          rate: cron(*/10 * ? * MON-SUN *) # Run every 10 minutes every day
           enabled: false
 
   youtube:
@@ -119,5 +127,5 @@ functions:
     memorySize: 1024
     events:
       - schedule:
-          rate: cron(0 7 ? * MON-FRI *)
+          rate: cron(0 11 ? * MON-SUN *) # Run once a day at 7AM ET
           enabled: false

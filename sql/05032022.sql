@@ -136,8 +136,8 @@ CREATE TABLE exchanges
 CREATE TABLE us_exchange_holidays
 (
     id              BIGSERIAL   NOT NULL,
-    date            DATE        NOT NULL UNIQUE,
-    settlement_date DATE        NOT NULL,
+    date            TIMESTAMPTZ        NOT NULL UNIQUE,
+    settlement_date TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (id)
 );
@@ -146,11 +146,11 @@ CREATE FUNCTION add_us_exchange_holidays(data json) returns void
 AS
 $$
 BEGIN
-    INSERT INTO us_exchange_holidays(date, settlement_date)
-    SELECT cast(d ->> 'date' as DATE)            as date,
-           cast(d ->> 'settlement_date' as DATE) as settlement_date
+    INSERT INTO us_exchange_holiday(date, settlement_date)
+    SELECT cast(d ->> 'date' as DATE)           as date,
+           cast(d ->> 'settlementDate' as DATE) as settlement_date
     from json_array_elements(data) as d
-    ON CONFLICT DO NOTHING;
+    ON CONFLICT(date) DO NOTHING;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -813,10 +813,10 @@ CREATE UNIQUE INDEX user_devices_user_id_device_id_idx ON user_device (user_id, 
 
 CREATE TABLE security_override
 (
-    id               BIGSERIAL                         NOT NULL,
+    id               BIGSERIAL   NOT NULL,
     security_id      BIGINT REFERENCES securities (id),
-    symbol           TEXT                              ,
-    company_name     TEXT                              ,
+    symbol           TEXT,
+    company_name     TEXT,
     exchange         TEXT,
     industry         TEXT,
     website          TEXT,
@@ -836,11 +836,11 @@ CREATE TABLE security_override
     phone            TEXT,
     logo_url         TEXT,
     last_updated     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    created_at       TIMESTAMPTZ                       NOT NULL DEFAULT NOW(),
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (id)
 );
 
 ALTER TABLE securities
     ADD COLUMN validated BOOLEAN DEFAULT FALSE;
 
-CREATE UNIQUE INDEX security_override_security_id ON security_override(security_id);
+CREATE UNIQUE INDEX security_override_security_id ON security_override (security_id);

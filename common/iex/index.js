@@ -376,9 +376,7 @@ class IEX {
         this.getUSHolidayAndTradingDays = (type, direction = "next", last = 1, startDate) => __awaiter(this, void 0, void 0, function* () {
             const response = yield this.retry(() => __awaiter(this, void 0, void 0, function* () {
                 let u = `/ref-data/us/dates/${type}/${direction}/${last}`;
-                if (startDate !== null)
-                    u += `/${startDate}`;
-                const response = yield this.fetch(`/ref-data/exchanges`, {
+                const response = yield this.fetch(u, {
                     method: "GET",
                 }, { "token": this.token });
                 if (response.status == 429)

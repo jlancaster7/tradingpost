@@ -32,12 +32,12 @@ import {Context} from "aws-lambda";
 const run = async () => {
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
     const iexConfiguration = await DefaultConfig.fromSSM("iex");
-    const iex = new IEX(iexConfiguration['key'] as string);
+    const iex = new IEX(iexConfiguration.key);
     const pgClient = new Client({
-        host: postgresConfiguration['host'] as string,
-        user: postgresConfiguration['user'] as string,
-        password: postgresConfiguration['password'] as string,
-        database: postgresConfiguration['database'] as string,
+        host: postgresConfiguration.host,
+        user: postgresConfiguration.user,
+        password: postgresConfiguration.password,
+        database: postgresConfiguration.database,
         port: 5432,
     });
     await pgClient.connect();
@@ -246,6 +246,3 @@ const buildGroups = (securities: any[], max: number = 100): any[][] => {
 module.exports.run = async (event: any, context: Context) => {
     await run();
 };
-(async () => {
-    await run();
-})()

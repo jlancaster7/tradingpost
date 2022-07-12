@@ -11,6 +11,7 @@ type ConfigKeys =
     | "discord_bot"
     | "ios"
     | "fcm"
+    | "substack"
 
 interface ConfigPaths extends Record<ConfigKeys, unknown> {
     elastic: {
@@ -43,10 +44,24 @@ interface ConfigPaths extends Record<ConfigKeys, unknown> {
     }
     iex: { key: string }
     authkey: string
-    spotify: {}
-    twitter: {}
-    youtube: {}
-    discord_bot: {}
+    spotify: {
+        client_id: string
+        client_secret: string
+    }
+    twitter: {
+        API_key: string
+        API_secret_key: string
+        bearer_token: string
+    }
+    youtube: {
+        api_key: string
+    }
+    discord_bot: {
+        token: string
+        guildId: string
+        clientId: string
+    }
+    substack: {}
 }
 
 export type ConfigurationEnv = "production" | "development"

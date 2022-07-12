@@ -4,8 +4,33 @@ import cors from 'cors'
 import {Client, Client as PGClient} from 'pg';
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import {DateTime} from "luxon";
+import {S3Client} from '@aws-sdk/client-s3'
+import bodyParser from 'body-parser';
+import multer from 'multer';
+import multerS3 from 'multer-s3';
+import path from 'path';
+
 
 const run = async () => {
+    const s3 = new S3Client({})
+
+    const upload = multer({
+        storage: multerS3({
+            s3: s3,
+            acl: 'public-read',
+            bucket: 'tradingpost-images',
+            metadata: function (req, file, cb) {
+                cb(null, {fieldName: file.fieldname});
+            },
+            key: function (req, file, cb) {
+                // @ts-ignore
+                const {filename} = req.query;
+                const ext = path.extname(file.originalname);
+                cb(null, `${filename}-${Date.now().toString()}${ext}`);
+            }
+        })
+    })
+
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgClient = new Client({
         host: postgresConfiguration.host,
@@ -20,9 +45,11 @@ const run = async () => {
     const port = 8080;
     app.use(express.json())
     app.use(cors());
+    app.use(bodyParser.json());
+    app.use(bodyParser.urlencoded({extended: false}));
 
     const repository = new Repository(pgClient);
-    await setupRoutes(app, repository);
+    await setupRoutes(app, repository, upload);
 
     const runningMessage = `Server running at http://localhost:${port}`;
     app.listen(port, () => {
@@ -30,12 +57,19 @@ const run = async () => {
     })
 }
 
-const setupRoutes = async (app: express.Application, repository: IRepository) => {
+const setupRoutes = async (app: express.Application, repository: IRepository, upload: multer.Multer) => {
     app.get('/', async (req: express.Request, res: express.Response) => {
         const security = await repository.getUncheckedSecurities();
         if (!security) return res.json({});
         return res.json(security);
     })
+
+    app.get('/:securityId', async (req: express.Request, res: express.Response) => {
+        const securityId = req.params.securityId as unknown as bigint;
+        const security = await repository.getSecurity(securityId);
+        if (!security) return res.json({});
+        return res.json(security);
+    });
 
     app.post('/', async (req: express.Request, res: express.Response) => {
         if (req.body.security) {
@@ -66,9 +100,28 @@ const setupRoutes = async (app: express.Application, repository: IRepository) =>
             })
         }
         await repository.checkSecurity(req.body.securityId)
-        console.log("Finsihed")
         return res.sendStatus(200);
     });
+
+    app.post('/search', async (req: express.Request, res: express.Response) => {
+        const {query} = req.body;
+        const response = await repository.search(query);
+        return res.json(response);
+    });
+
+    app.post('/upload', upload.single('new-security-image'), (req, res, next) => {
+
+        res.send({
+            message: "Uploaded",
+            imageMeta: {
+                fil: req.file?.filename,
+                encoding: req.file?.encoding,
+                mimeType: req.file?.mimetype,
+                // @ts-ignore
+                url: req.file?.location
+            }
+        })
+    })
 }
 
 (async () => {
@@ -126,12 +179,20 @@ type OverrideSecurity = {
     logoUrl: string | null
 }
 
+type QueryOpts = {
+    onlyValidated: boolean
+}
+
 interface IRepository {
     getUncheckedSecurities(): Promise<Security | null>
+
+    getSecurity(securityId: bigint): Promise<Security>
 
     checkSecurity(id: bigint): Promise<void>
 
     insertOverrideSecurity(securityId: bigint, security: OverrideSecurity): Promise<void>
+
+    search(query: string, opts?: QueryOpts): Promise<Security[]>
 }
 
 class Repository implements IRepository {
@@ -143,6 +204,66 @@ class Repository implements IRepository {
 
     checkSecurity = async (id: bigint): Promise<void> => {
         await this.db.query("UPDATE securities SET validated = TRUE WHERE id = $1", [id]);
+    }
+
+    search = async (query: string, opts?: QueryOpts): Promise<Security[]> => {
+        let queryStr = `
+            SELECT id,
+                   symbol,
+                   company_name,
+                   exchange,
+                   industry,
+                   website,
+                   description,
+                   ceo,
+                   security_name,
+                   issue_type,
+                   sector,
+                   primary_sic_code,
+                   employees,
+                   tags,
+                   address,
+                   address2,
+                   state,
+                   zip,
+                   country,
+                   phone,
+                   logo_url,
+                   last_updated,
+                   created_at,
+                   validated
+            FROM securities
+            WHERE lower(symbol) like lower($1)
+            LIMIT 10`
+        const insert = `%${query}%`;
+        const response = await this.db.query(queryStr, [insert]);
+        if (response.rows.length <= 0) return [];
+        return response.rows.map(row => ({
+            id: row.id,
+            symbol: row.symbol,
+            companyName: row.company_name,
+            exchange: row.exchange,
+            industry: row.industry,
+            website: row.website,
+            description: row.description,
+            ceo: row.ceo,
+            securityName: row.security_name,
+            issueType: row.issue_type,
+            sector: row.sector,
+            primarySicCode: row.primary_sic_code,
+            employees: row.employees,
+            tags: row.tags,
+            address: row.address,
+            address2: row.address2,
+            state: row.state,
+            zip: row.zip,
+            country: row.country,
+            phone: row.phone,
+            logoUrl: row.logo_url,
+            lastUpdated: DateTime.fromJSDate(row.last_updated),
+            createdAt: DateTime.fromJSDate(row.created_at),
+            validated: row.validated
+        }));
     }
 
     getUncheckedSecurities = async (): Promise<Security | null> => {
@@ -240,6 +361,65 @@ class Repository implements IRepository {
                 security.website, security.description, security.ceo, security.securityName, security.issueType,
                 security.sector, security.primarySicCode, security.employees, security.tags, security.address,
                 security.address2, security.state, security.zip, security.country, security.phone, security.logoUrl])
+    }
+
+    getSecurity = async (securityId: bigint): Promise<Security> => {
+        let queryStr = `
+            SELECT id,
+                   symbol,
+                   company_name,
+                   exchange,
+                   industry,
+                   website,
+                   description,
+                   ceo,
+                   security_name,
+                   issue_type,
+                   sector,
+                   primary_sic_code,
+                   employees,
+                   tags,
+                   address,
+                   address2,
+                   state,
+                   zip,
+                   country,
+                   phone,
+                   logo_url,
+                   last_updated,
+                   created_at,
+                   validated
+            FROM securities
+            WHERE id = $1`
+        const response = await this.db.query(queryStr, [securityId]);
+        if (response.rows.length <= 0) throw new Error("no security exists for that id");
+        const row = response.rows[0];
+        return {
+            id: row.id,
+            symbol: row.symbol,
+            companyName: row.company_name,
+            exchange: row.exchange,
+            industry: row.industry,
+            website: row.website,
+            description: row.description,
+            ceo: row.ceo,
+            securityName: row.security_name,
+            issueType: row.issue_type,
+            sector: row.sector,
+            primarySicCode: row.primary_sic_code,
+            employees: row.employees,
+            tags: row.tags,
+            address: row.address,
+            address2: row.address2,
+            state: row.state,
+            zip: row.zip,
+            country: row.country,
+            phone: row.phone,
+            logoUrl: row.logo_url,
+            lastUpdated: DateTime.fromJSDate(row.last_updated),
+            createdAt: DateTime.fromJSDate(row.created_at),
+            validated: row.validated
+        }
     }
 }
 

@@ -12,15 +12,15 @@ import Index from "../../services/market-data";
 const run = async () => {
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgClient = new Client({
-        host: postgresConfiguration['host'] as string,
-        user: postgresConfiguration['user'] as string,
-        password: postgresConfiguration['password'] as string,
-        database: postgresConfiguration['database'] as string,
+        host: postgresConfiguration.host,
+        user: postgresConfiguration.user,
+        password: postgresConfiguration.password,
+        database: postgresConfiguration.database,
         port: 5432,
     });
 
     const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
-    const iex = new IEX(iexConfiguration.key as string);
+    const iex = new IEX(iexConfiguration.key);
     await pgClient.connect();
     const repository = new Repository(pgClient);
     const marketService = new Index(repository);
