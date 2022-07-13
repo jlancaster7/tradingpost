@@ -1,4 +1,3 @@
-import {Client} from "pg";
 import {DateTime} from "luxon";
 import {
     addSecurityResponse,
@@ -12,10 +11,13 @@ import {
     addSecurityPrice
 } from "./interfaces";
 
-export class Repository {
-    private db: Client;
+import {IDatabaseClient} from './interfaces'
 
-    constructor(db: Client) {
+
+export class Repository {
+    private db: IDatabaseClient;
+
+    constructor(db: IDatabaseClient) {
         this.db = db;
     }
 

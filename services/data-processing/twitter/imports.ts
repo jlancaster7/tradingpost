@@ -1,7 +1,7 @@
-import {Client} from 'pg';
 import {formatedTweet, formatedTwitterUser} from '../interfaces/twitter';
 import {TwitterUsers} from './users';
 import {Tweets} from './tweets';
+import {IDatabaseClient} from "../interfaces";
 
 type TwitterConfiguration = {
     API_key: string
@@ -9,7 +9,7 @@ type TwitterConfiguration = {
     bearer_token: string
 }
 
-async function lambdaImportTweets(pgClient: Client, twitterConfiguration: TwitterConfiguration) {
+async function lambdaImportTweets(pgClient: IDatabaseClient, twitterConfiguration: TwitterConfiguration) {
     let query = `SELECT twitter_user_id
                  FROM twitter_users`;
 
@@ -30,7 +30,7 @@ async function lambdaImportTweets(pgClient: Client, twitterConfiguration: Twitte
 }
 
 
-async function importTwitterUsers(handles: string | string[], pgClient: Client, twitterConfiguration: TwitterConfiguration): Promise<[formatedTwitterUser[], number]> {
+async function importTwitterUsers(handles: string | string[], pgClient: IDatabaseClient, twitterConfiguration: TwitterConfiguration): Promise<[formatedTwitterUser[], number]> {
     const TwitterUser = new TwitterUsers(twitterConfiguration, pgClient);
 
     const result = await TwitterUser.importUser(handles);
@@ -44,7 +44,7 @@ async function importTwitterUsers(handles: string | string[], pgClient: Client, 
     return result
 }
 
-async function importTweets(twitterUserId: string, pgClient: Client, twitterConfiguration: TwitterConfiguration, startDate?: Date): Promise<[formatedTweet[], number]> {
+async function importTweets(twitterUserId: string, pgClient: IDatabaseClient, twitterConfiguration: TwitterConfiguration, startDate?: Date): Promise<[formatedTweet[], number]> {
     const Tweet = new Tweets(twitterConfiguration, pgClient);
     if (startDate !== undefined) {
         await Tweet.setStartDate(startDate);

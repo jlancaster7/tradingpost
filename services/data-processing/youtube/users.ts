@@ -1,18 +1,18 @@
 import fetch from 'node-fetch';
 import format from "pg-format";
-import { Client, PoolClient } from 'pg';
 import { channelInfo, youtubeParams, formatedChannelInfo } from '../interfaces/youtube';
 import { youtubeConfig } from '../interfaces/utils';
+import {IDatabaseClient} from "../interfaces";
 
 
 export class YoutubeUsers {
     private youtubeConfig: youtubeConfig;
-    private pg_client: Client;
+    private pg_client: IDatabaseClient;
     private youtubeUrl: string;
     private standardYtUrl: string;
     private customYtUrl: string;
     private params: youtubeParams;
-    constructor(youtubeConfig: youtubeConfig, pg_client: Client) {
+    constructor(youtubeConfig: youtubeConfig, pg_client: IDatabaseClient) {
         this.youtubeConfig = youtubeConfig;
         this.pg_client = pg_client;
         this.youtubeUrl = "https://www.googleapis.com/youtube/v3";

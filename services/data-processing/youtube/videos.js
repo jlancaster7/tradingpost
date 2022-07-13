@@ -22,7 +22,6 @@ class YoutubeVideos {
         });
         this.getStartDate = (youtubeChannelId) => __awaiter(this, void 0, void 0, function* () {
             let query = 'SELECT youtube_channel_id, MAX(created_at) FROM youtube_videos WHERE youtube_channel_id = $1 GROUP BY youtube_channel_id';
-            //console.log(youtubeChannelId);
             let result = (yield this.pg_client.query(query, [youtubeChannelId]));
             if (result.rowCount === 0) {
                 let defaultDate = new Date();

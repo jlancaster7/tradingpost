@@ -1,23 +1,34 @@
 import 'dotenv/config'
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
-import {Client} from "pg";
 import {Repository} from '../../services/market-data/repository';
+import ServerlessClient from "serverless-postgres";
+
+const pgClient = new ServerlessClient({port: 5432});
 
 const run = async () => {
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-    const pgClient = new Client({
+
+    pgClient.setConfig({
         host: postgresConfiguration.host,
         user: postgresConfiguration.user,
         password: postgresConfiguration.password,
-        database: postgresConfiguration.database,
-        port: 5432,
+        database: postgresConfiguration.database
     });
 
     await pgClient.connect();
+
     const repository = new Repository(pgClient);
-    await start(repository)
-    await pgClient.end();
+
+    try {
+        console.log("Running")
+        await start(repository)
+    } catch (e) {
+        console.error(e)
+        throw e
+    } finally {
+        await pgClient.clean()
+    }
 }
 
 const start = async (repository: Repository) => {
@@ -27,3 +38,7 @@ const start = async (repository: Repository) => {
 module.exports.run = async (event: any, context: Context) => {
     await run();
 };
+
+(async() => {
+   await run()
+})()

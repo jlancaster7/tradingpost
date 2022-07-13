@@ -4,26 +4,38 @@ import IEX, {GetUSHolidayAndTradingDays} from '@tradingpost/common/iex';
 import {DateTime} from 'luxon';
 import {Repository} from "../../services/market-data/repository";
 import {addUSHoliday} from '../../services/market-data/interfaces';
-import {Client} from 'pg';
 import {DefaultConfig} from "@tradingpost/common/configuration";
+import ServerlessClient from "serverless-postgres";
+import {IDatabaseClient} from "../interfaces";
+
+const pgClient = new ServerlessClient({port: 5432});
 
 const run = async () => {
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-    const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
-    const iex = new IEX(iexConfiguration.key);
-    const pgClient = new Client({
+    pgClient.setConfig({
         host: postgresConfiguration.host,
         user: postgresConfiguration.user,
         password: postgresConfiguration.password,
         database: postgresConfiguration.database
     });
+
+    const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
+    const iex = new IEX(iexConfiguration.key);
+
     await pgClient.connect()
+
     const repository = new Repository(pgClient);
-    await start(pgClient, repository, iex);
-    await pgClient.end();
+    try {
+        await start(pgClient, repository, iex);
+    } catch (e) {
+        console.error(e)
+        throw e
+    } finally {
+        await pgClient.clean()
+    }
 }
 
-const start = async (pgClient: Client, repository: Repository, iex: IEX) => {
+const start = async (pgClient: IDatabaseClient, repository: Repository, iex: IEX) => {
     const nextIexHolidays = await iex.getUSHolidayAndTradingDays("holiday", "next", 100000);
     const lastIexHolidays = await iex.getUSHolidayAndTradingDays("holiday", "last", 100000);
 

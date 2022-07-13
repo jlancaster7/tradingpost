@@ -1,6 +1,13 @@
 import 'dotenv/config';
-import IEX, {GetCompany, GetLogo, GetPreviousDayPrice, GetQuote, GetStatsBasic} from "@tradingpost/common/iex";
-import {Client} from "pg";
+import IEX, {
+    GetCompany,
+    GetLogo,
+    GetPreviousDayPrice,
+    GetQuote,
+    GetStatsBasic,
+    GetIexSymbols,
+    GetOtcSymbols
+} from "@tradingpost/common/iex";
 import {Repository} from "../../services/market-data/repository";
 import {
     addSecurity,
@@ -8,10 +15,12 @@ import {
     getSecurityBySymbol,
     upsertSecuritiesInformation
 } from '../../services/market-data/interfaces';
-import {GetIexSymbols, GetOtcSymbols} from '@tradingpost/common/iex';
 import {DateTime} from "luxon";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
+import ServerlessClient from "serverless-postgres";
+import {IDatabaseClient} from "../interfaces";
+
 
 // Pricing Charge
 // AM
@@ -29,24 +38,35 @@ import {Context} from "aws-lambda";
 // 1 Per Request = 268
 // Per Day = (26748 * 8) + 268 = 214,244 / Day * 21
 // Per Month = 4,501,308
+
+const pgClient = new ServerlessClient({port: 5432});
+
 const run = async () => {
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-    const iexConfiguration = await DefaultConfig.fromSSM("iex");
-    const iex = new IEX(iexConfiguration.key);
-    const pgClient = new Client({
+    pgClient.setConfig({
         host: postgresConfiguration.host,
         user: postgresConfiguration.user,
         password: postgresConfiguration.password,
-        database: postgresConfiguration.database,
-        port: 5432,
+        database: postgresConfiguration.database
     });
+
+    const iexConfiguration = await DefaultConfig.fromSSM("iex");
+    const iex = new IEX(iexConfiguration.key);
+
     await pgClient.connect();
     const repository = new Repository(pgClient);
-    await start(pgClient, repository, iex)
-    await pgClient.end();
+
+    try {
+        await start(pgClient, repository, iex)
+    } catch (e) {
+        console.error(e)
+        throw e
+    } finally {
+        await pgClient.clean()
+    }
 }
 
-const start = async (pgClient: Client, repository: Repository, iex: IEX) => {
+const start = async (pgClient: IDatabaseClient, repository: Repository, iex: IEX) => {
     const now = DateTime.now().setZone("America/New_York");
     if (now.hour == 16) {
         console.log("ran evening ingestion")

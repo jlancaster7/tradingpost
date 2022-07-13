@@ -32,6 +32,7 @@ functions:
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1024
+    reservedConcurrency: 2
     events:
       - schedule:
           rate: cron(20 20 ? * MON-FRI *) # 4:20 PM EDT
@@ -50,6 +51,7 @@ functions:
     description: Ingests market holidays once a year
     logRetentionInDays: 14
     timeout: 300
+    reservedConcurrency: 2
     memorySize: 1024
     events:
       - schedule:
@@ -60,6 +62,7 @@ functions:
     description: Ingests security prices
     logRetentionInDays: 14
     timeout: 120 # TODO: Change to 1 min once I update function body
+    reservedConcurrency: 2
     memorySize: 1024
     events:
       # Run M-F every-day from 9:00AM ET -> 4:00 ET
@@ -71,6 +74,7 @@ functions:
   security-pruning:
     handler: market-data/security-pruning.run
     description: Prunes security data
+    reservedConcurrency: 2
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
@@ -86,13 +90,14 @@ functions:
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
+    reservedConcurrency: 2
     events:
       - schedule:
           rate: cron(0 11 ? * MON-SUN *) # Run once a day at 7AM ET
-          enabled: false
+          enabled: true
       - schedule:
           rate: cron(0 23 ? * MON-SUN *) # Run once a day at 7PM ET
-          enabled: false
+          enabled: true
 
   substack:
     handler: social-media/substack.run
@@ -100,13 +105,14 @@ functions:
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
+    reservedConcurrency: 2
     events:
       - schedule:
           rate: cron(0 11 ? * MON-SUN *) # Run once a day at 7AM ET
-          enabled: false
+          enabled: true
       - schedule:
           rate: cron(0 23 ? * MON-SUN *) # Run once a day at 7PM ET
-          enabled: false
+          enabled: true
 
   twitter:
     handler: social-media/twitter.run
@@ -114,10 +120,11 @@ functions:
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
+    reservedConcurrency: 2
     events:
       - schedule:
           rate: cron(*/10 * ? * MON-SUN *) # Run every 10 minutes every day
-          enabled: false
+          enabled: true
 
   youtube:
     handler: social-media/youtube.run
@@ -125,7 +132,8 @@ functions:
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
+    reservedConcurrency: 2
     events:
       - schedule:
           rate: cron(0 11 ? * MON-SUN *) # Run once a day at 7AM ET
-          enabled: false
+          enabled: true

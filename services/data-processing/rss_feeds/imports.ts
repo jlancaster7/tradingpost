@@ -1,10 +1,10 @@
-import {Client} from 'pg';
-import {SubstackUser, SubstackFeed, SubstackArticles} from '../interfaces/rss_feeds';
+import {SubstackUser, SubstackArticles} from '../interfaces/rss_feeds';
 import {Substack} from './substack';
+import {IDatabaseClient} from "../interfaces";
 
 type SubstackConfiguration = {}
 
-async function lambdaImportRSSFeeds(pgClient: Client, substackConfiguration: SubstackConfiguration) {
+async function lambdaImportRSSFeeds(pgClient: IDatabaseClient, substackConfiguration: SubstackConfiguration) {
     let query = `SELECT substack_user_id
                  FROM substack_users`;
     //TODO: I could do this a lot better.. making getting the substack Ids apart of the class
@@ -26,7 +26,7 @@ async function lambdaImportRSSFeeds(pgClient: Client, substackConfiguration: Sub
     console.log(`Imported ${articlesImported} substack articles.`);
 }
 
-async function importSubstackUsers(username: string | string[], pgClient: Client, substackConfiguration: SubstackConfiguration) {
+async function importSubstackUsers(username: string | string[], pgClient: IDatabaseClient, substackConfiguration: SubstackConfiguration) {
     const ssUsers = new Substack(pgClient);
 
     const result: [SubstackUser[], number] = await ssUsers.importUsers(username);

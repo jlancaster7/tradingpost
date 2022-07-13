@@ -1,13 +1,13 @@
-import {Client, PoolClient} from 'pg';
 import format from "pg-format";
 import Parser from 'rss-parser';
 import {SubstackUser, SubstackFeed, SubstackArticles} from '../interfaces/rss_feeds';
+import {IDatabaseClient} from "../interfaces";
 
 
 export class Substack {
-    private pg_client: Client;
+    private pg_client: IDatabaseClient;
 
-    constructor(pg_client: Client) {
+    constructor(pg_client: IDatabaseClient) {
         this.pg_client = pg_client;
     }
 

@@ -1,19 +1,17 @@
 import fetch from 'node-fetch';
 import format from "pg-format";
-import { Pool, Client, PoolClient } from 'pg';
 import { twitterParams } from '../interfaces/twitter';
 import { twitterConfig } from '../interfaces/utils';
 import { rawTwitterUser, formatedTwitterUser } from '../interfaces/twitter';
-
-
+import {IDatabaseClient} from "../interfaces";
 
 export class TwitterUsers {
     private twitterConfig: twitterConfig;
-    private pg_client: Client;
+    private pg_client: IDatabaseClient;
     private twitterUrl: string;
     private params: twitterParams;
 
-    constructor(twitterConfig: twitterConfig, pg_client: Client) {
+    constructor(twitterConfig: twitterConfig, pg_client: IDatabaseClient) {
         this.twitterConfig = twitterConfig;
         this.pg_client = pg_client;
         this.twitterUrl = "https://api.twitter.com/2";

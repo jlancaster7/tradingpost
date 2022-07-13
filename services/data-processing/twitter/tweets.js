@@ -155,7 +155,9 @@ class Tweets {
                         value_index += `$${index + 1}, `;
                     });
                     value_index = value_index.substring(0, value_index.length - 2);
-                    query = `INSERT INTO tweets(${keys}) VALUES (${value_index}) ON CONFLICT (tweet_id) DO NOTHING`;
+                    query = `INSERT INTO tweets(${keys})
+                         VALUES (${value_index})
+                         ON CONFLICT (tweet_id) DO NOTHING`;
                     result = yield this.pg_client.query(query, values);
                     success += result.rowCount;
                 }

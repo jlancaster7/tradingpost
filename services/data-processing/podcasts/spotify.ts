@@ -1,19 +1,19 @@
 import fetch from 'node-fetch';
-import {Pool, Client, PoolClient} from 'pg';
 import format from "pg-format";
 import {spotifyConfig} from '../interfaces/utils';
 import {rawSpotifyShow, spotifyParams, spotifyShow, spotifyEpisode} from '../interfaces/podcasts';
+import {IDatabaseClient} from "../interfaces";
 
 
 export class SpotifyShows {
     private spotifyConfig: spotifyConfig;
-    private pg_client: Client;
+    private pg_client: IDatabaseClient;
     private tokenUrl: string;
     private showUrl: string;
     private access_token: string;
     private params: spotifyParams;
 
-    constructor(spotifyConfig: spotifyConfig, pg_client: Client) {
+    constructor(spotifyConfig: spotifyConfig, pg_client: IDatabaseClient) {
         this.spotifyConfig = spotifyConfig;
         this.pg_client = pg_client;
         this.tokenUrl = 'https://accounts.spotify.com/api/token';

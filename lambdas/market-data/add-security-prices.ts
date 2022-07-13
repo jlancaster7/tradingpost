@@ -1,34 +1,42 @@
 import 'dotenv/config'
 import {Context} from 'aws-lambda';
 import {DefaultConfig} from "@tradingpost/common/configuration";
-import {Client} from "pg";
 import {Repository} from "../../services/market-data/repository";
 import {addSecurityPrice, getSecurityBySymbol} from '../../services/market-data/interfaces';
-import IEX from "@tradingpost/common/iex";
-import {GetQuote} from "@tradingpost/common/iex";
+import IEX, {GetQuote} from "@tradingpost/common/iex";
 import {DateTime} from "luxon";
 import Index from "../../services/market-data";
+import ServerlessClient from "serverless-postgres";
+import {IDatabaseClient} from "../interfaces";
+
+const pgClient = new ServerlessClient({port: 5432});
 
 const run = async () => {
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-    const pgClient = new Client({
+    pgClient.setConfig({
         host: postgresConfiguration.host,
         user: postgresConfiguration.user,
         password: postgresConfiguration.password,
-        database: postgresConfiguration.database,
-        port: 5432,
+        database: postgresConfiguration.database
     });
 
     const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
     const iex = new IEX(iexConfiguration.key);
+
     await pgClient.connect();
     const repository = new Repository(pgClient);
     const marketService = new Index(repository);
-    await start(pgClient, marketService, repository, iex)
-    await pgClient.end();
+    try {
+        await start(pgClient, marketService, repository, iex)
+    } catch (e) {
+        console.error(e)
+        throw e
+    } finally {
+        await pgClient.clean()
+    }
 }
 
-const start = async (pgClient: Client, marketService: Index, repository: Repository, iex: IEX) => {
+const start = async (pgClient: IDatabaseClient, marketService: Index, repository: Repository, iex: IEX) => {
     const open = DateTime.now().setZone("America/New_York").set({hour: 9, minute: 29, second: 0, millisecond: 0});
     const close = DateTime.now().setZone("America/New_York").set({hour: 16, minute: 1, second: 0, millisecond: 0})
 

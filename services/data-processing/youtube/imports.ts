@@ -1,13 +1,13 @@
-import {Client} from 'pg';
 import {formatedYoutubeVideo, formatedChannelInfo} from '../interfaces/youtube';
 import {YoutubeUsers} from './users';
 import {YoutubeVideos} from './videos';
+import {IDatabaseClient} from "../interfaces";
 
 type YoutubeConfiguration = {
     api_key: string
 }
 
-async function lambdaImportYoutube(pgClient: Client, youtubeConfiguration: YoutubeConfiguration) {
+async function lambdaImportYoutube(pgClient: IDatabaseClient, youtubeConfiguration: YoutubeConfiguration) {
     let query = 'SELECT youtube_channel_id FROM youtube_users';
 
     const channelIds = (await pgClient.query(query)).rows;
@@ -25,7 +25,7 @@ async function lambdaImportYoutube(pgClient: Client, youtubeConfiguration: Youtu
     console.log(`${videosImported} youtube videos were imported`);
 }
 
-async function importYoutubeUsers(pgClient: Client, youtubeConfiguration: YoutubeConfiguration, userChannelUrl: string | string[]): Promise<[formatedChannelInfo[], number]> {
+async function importYoutubeUsers(pgClient: IDatabaseClient, youtubeConfiguration: YoutubeConfiguration, userChannelUrl: string | string[]): Promise<[formatedChannelInfo[], number]> {
     const Users = new YoutubeUsers(youtubeConfiguration, pgClient);
 
     const result = await Users.importYoutubeUsers(userChannelUrl);
@@ -39,7 +39,7 @@ async function importYoutubeUsers(pgClient: Client, youtubeConfiguration: Youtub
     return result;
 }
 
-async function importVideos(pgClient: Client, youtubeConfiguration: YoutubeConfiguration, youtubeChannelId: string, startDate?: Date): Promise<[formatedYoutubeVideo[], number]> {
+async function importVideos(pgClient: IDatabaseClient, youtubeConfiguration: YoutubeConfiguration, youtubeChannelId: string, startDate?: Date): Promise<[formatedYoutubeVideo[], number]> {
     const Vidoes = new YoutubeVideos(youtubeConfiguration, pgClient);
 
     if (startDate !== undefined) {

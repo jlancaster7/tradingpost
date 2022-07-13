@@ -1,18 +1,18 @@
 import fetch from 'node-fetch';
 import format from "pg-format";
-import { Client, PoolClient } from 'pg';
 import { rawYoutubeVideo, youtubeParams, formatedYoutubeVideo } from '../interfaces/youtube';
 import { youtubeConfig } from '../interfaces/utils';
+import {IDatabaseClient} from "../interfaces";
 
 
 export class YoutubeVideos {
     private youtubeConfig: youtubeConfig;
-    private pg_client: Client;
+    private pg_client: IDatabaseClient;
     private youtubeUrl: string;
     public startDate: string;
     public defaultStartDateDays: number;
     private params: youtubeParams;
-    constructor(youtubeConfig: youtubeConfig, pg_client: Client) {
+    constructor(youtubeConfig: youtubeConfig, pg_client: IDatabaseClient) {
         this.youtubeConfig = youtubeConfig;
         this.pg_client = pg_client;
         this.youtubeUrl = "https://www.googleapis.com/youtube/v3";
@@ -32,7 +32,6 @@ export class YoutubeVideos {
 
     getStartDate = async (youtubeChannelId: string) => {
         let query = 'SELECT youtube_channel_id, MAX(created_at) FROM youtube_videos WHERE youtube_channel_id = $1 GROUP BY youtube_channel_id';
-        //console.log(youtubeChannelId);
         let result = (await this.pg_client.query(query, [youtubeChannelId]));
 
         if (result.rowCount === 0) {
