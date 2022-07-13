@@ -12,6 +12,7 @@ type ConfigKeys =
     | "ios"
     | "fcm"
     | "substack"
+    | "sendgrid"
 
 interface ConfigPaths extends Record<ConfigKeys, unknown> {
     elastic: {
@@ -62,6 +63,9 @@ interface ConfigPaths extends Record<ConfigKeys, unknown> {
         clientId: string
     }
     substack: {}
+    sendgrid: {
+        key: string
+    }
 }
 
 export type ConfigurationEnv = "production" | "development"
