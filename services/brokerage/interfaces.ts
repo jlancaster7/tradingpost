@@ -104,14 +104,14 @@ export type TableInfo = {
 }
 
 export type TradingPostCurrentHoldings = {
-    account_id: number
-    security_id: number
-    security_type: SecurityType | null
+    accountId: number
+    securityId: number
+    securityType: SecurityType | null
     price: number
-    price_as_of: DateTime
-    price_source: string
+    priceAsOf: DateTime
+    priceSource: string
     value: number
-    cost_basis: number | null
+    costBasis: number | null
     quantity: number
     currency: string | null
 }
@@ -120,14 +120,14 @@ export type TradingPostCurrentHoldingsTable = TradingPostCurrentHoldings & Table
 
 
 export type TradingPostHistoricalHoldings = {
-    account_id: number
-    security_id: number
-    security_type: SecurityType | null
+    accountId: number
+    securityId: number
+    securityType: SecurityType | null
     price: number
-    price_as_of: DateTime
-    price_source: string
+    priceAsOf: DateTime
+    priceSource: string
     value: number
-    cost_basis: number | null
+    costBasis: number | null
     quantity: number
     currency: string | null
     date: DateTime
@@ -136,9 +136,9 @@ export type TradingPostHistoricalHoldings = {
 export type TradingPostHistoricalHoldingsTable = TradingPostHistoricalHoldings & TableInfo;
 
 export type HistoricalHoldings = {
-    account_id?: number,
-    account_group_id?: number,
-    security_id: number
+    accountId?: number,
+    accountGroupId?: number,
+    securityId: number
     price: number
     value: number
     costBasis: number
@@ -159,17 +159,17 @@ export type TradingPostSectorAllocations = {
 }
 
 export type TradingPostCustomIndustry = {
-    user_id: string
-    security_id: number
+    userId: string
+    securityId: number
     industry: string
 }
 
 export type TradingPostCustomIndustryTable = TradingPostCustomIndustry & TableInfo;
 
 export type TradingPostTransactions = {
-    account_id: number
-    security_id: number
-    security_type: SecurityType
+    accountId: number
+    securityId: number
+    securityType: SecurityType
     date: DateTime
     quantity: number
     price: number
@@ -205,11 +205,11 @@ export enum InvestmentTransactionType {
 }
 
 export type TradingPostAccounts = {
-    user_id: string
-    broker_name: string
+    userId: string
+    brokerName: string
     mask: string | null
     name: string
-    official_name: string | null
+    officialName: string | null
     type: string // Margin or Cash Account
     subtype: string | null
 }
@@ -218,28 +218,28 @@ export type TradingPostAccountsTable = TradingPostAccounts & TableInfo;
 
 export type TradingPostAccountGroups = {
     name: string // all accounts under 'default'
-    account_group_id: number
-    user_id: string
-    account_id: number
-    default_benchmark_id: number // References securities table
+    accountGroupId: number
+    userId: string
+    accountId: number
+    defaultBenchmarkId: number // References securities table
 }
 
 export type TradingPostAccountGroupsTable = TradingPostAccountGroups & TableInfo;
 
 export type TradingPostAccountGroupStats = {
-    account_group_id: number
+    accountGroupId: number
     beta: number
     sharpe: number
-    industry_allocation: TradingPostSectorAllocations[]
+    industryAllocations: TradingPostSectorAllocations[]
     exposure: TradingPostExposure
     date: DateTime
-    benchmark_id: number // References securities table
+    benchmarkId: number // References securities table
 }
 
 export type TradingPostAccountGroupStatsTable = TradingPostAccountGroupStats & TableInfo;
 
 export type SecurityPrices = {
-    security_id: number
+    securityId: number
     date: DateTime
     price: number
 }
@@ -248,7 +248,7 @@ export type SecurityPricesTable = SecurityPrices & {id: number, created_at: Date
 
 export type SecurityHPRs = {
 
-    security_id: number
+    securityId: number
     date: DateTime
     return: number
 }
@@ -256,7 +256,7 @@ export type SecurityHPRs = {
 export type SecurityHPRsTable = SecurityHPRs & TableInfo;
 
 export type AccountGroupHPRs = {
-    account_group_id: number
+    accountGroupId: number
     date: DateTime
     return: number
 }
