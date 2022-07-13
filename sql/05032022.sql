@@ -136,7 +136,7 @@ CREATE TABLE exchanges
 CREATE TABLE us_exchange_holidays
 (
     id              BIGSERIAL   NOT NULL,
-    date            TIMESTAMPTZ        NOT NULL UNIQUE,
+    date            TIMESTAMPTZ NOT NULL UNIQUE,
     settlement_date TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (id)
@@ -147,8 +147,8 @@ AS
 $$
 BEGIN
     INSERT INTO us_exchange_holiday(date, settlement_date)
-    SELECT cast(d ->> 'date' as DATE)           as date,
-           cast(d ->> 'settlementDate' as DATE) as settlement_date
+    SELECT cast(d ->> 'date' as TIMESTAMPTZ)           as date,
+           cast(d ->> 'settlementDate' as TIMESTAMPTZ) as settlement_date
     from json_array_elements(data) as d
     ON CONFLICT(date) DO NOTHING;
 END;
@@ -409,8 +409,8 @@ CREATE FUNCTION get_us_exchange_holidays()
     RETURNS TABLE
             (
                 id              BIGINT,
-                date            DATE,
-                settlement_date DATE,
+                date            TIMESTAMPTZ,
+                settlement_date TIMESTAMPTZ,
                 created_at      TIMESTAMPTZ
             )
 AS
@@ -429,8 +429,8 @@ CREATE FUNCTION get_current_and_future_us_exchange_holidays()
     RETURNS TABLE
             (
                 id              BIGINT,
-                date            DATE,
-                settlement_date DATE,
+                date            TIMESTAMPTZ,
+                settlement_date TIMESTAMPTZ,
                 created_at      TIMESTAMPTZ
             )
 AS

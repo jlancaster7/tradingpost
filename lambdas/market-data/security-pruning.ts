@@ -21,7 +21,6 @@ const run = async () => {
     const repository = new Repository(pgClient);
 
     try {
-        console.log("Running")
         await start(repository)
     } catch (e) {
         console.error(e)
@@ -38,7 +37,3 @@ const start = async (repository: Repository) => {
 module.exports.run = async (event: any, context: Context) => {
     await run();
 };
-
-(async() => {
-   await run()
-})()

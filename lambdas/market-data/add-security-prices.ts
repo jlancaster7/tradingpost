@@ -83,7 +83,6 @@ const buildGroups = (securities: any[], max: number = 100): any[][] => {
     return groups;
 }
 
-
 // Pricing Charge
 // Total Securities W/Out OTC : 11,847
 // Total Securities W/ OTC: 26,746

@@ -4,20 +4,16 @@ const FileUpload = ({symbol, updateLogoUrl}) => {
     let inputElement;
 
     const changeHandler = async (event) => {
-        console.log("FIRING!!!")
         if (event.target.files[0] === undefined) return
         const formData = new FormData();
         formData.append('new-security-image', event.target.files[0]);
         const response = await uploadImage(formData, symbol);
-        console.log(response.imageMeta.url)
         updateLogoUrl(response.imageMeta.url)
-        console.log("FIRING")
     };
 
     const handleClick = (e) => {
         e.preventDefault();
         inputElement.click();
-        console.log("clicked!")
     }
 
     return (

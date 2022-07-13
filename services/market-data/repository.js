@@ -295,9 +295,9 @@ class Repository {
             return (yield this.db.query('SELECT id, date, settlement_date, created_at FROM get_current_and_future_us_exchange_holidays();')).rows.map(row => {
                 let obj = {
                     id: row.id,
-                    date: luxon_1.DateTime.fromISO(row.date).setZone("America/New_York"),
-                    settlementDate: luxon_1.DateTime.fromISO(row.settlement_date).setZone("America/New_York"),
-                    CreatedAt: luxon_1.DateTime.fromISO(row.created_at)
+                    date: luxon_1.DateTime.fromJSDate(row.date).setZone("America/New_York"),
+                    settlementDate: luxon_1.DateTime.fromJSDate(row.settlement_date).setZone("America/New_York"),
+                    CreatedAt: luxon_1.DateTime.fromJSDate(row.created_at)
                 };
                 return obj;
             });

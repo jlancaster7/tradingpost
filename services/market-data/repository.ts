@@ -314,9 +314,9 @@ export class Repository {
         return (await this.db.query('SELECT id, date, settlement_date, created_at FROM get_current_and_future_us_exchange_holidays();')).rows.map(row => {
             let obj: getUSExchangeHoliday = {
                 id: row.id,
-                date: DateTime.fromISO(row.date).setZone("America/New_York"),
-                settlementDate: DateTime.fromISO(row.settlement_date).setZone("America/New_York"),
-                CreatedAt: DateTime.fromISO(row.created_at)
+                date: DateTime.fromJSDate(row.date).setZone("America/New_York"),
+                settlementDate: DateTime.fromJSDate(row.settlement_date).setZone("America/New_York"),
+                CreatedAt: DateTime.fromJSDate(row.created_at)
             }
             return obj;
         })

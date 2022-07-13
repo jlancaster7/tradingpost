@@ -2,7 +2,6 @@ import {useEffect, useState} from "react";
 import * as api from "./api";
 import FileUpload from "./FileUpload";
 
-
 const App = () => {
     const [security, setSecurity] = useState({});
     const [viewingSecurity, setViewingSecurity] = useState({});
