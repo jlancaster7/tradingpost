@@ -1,5 +1,5 @@
 import { IDatabase, IMain } from 'pg-promise';
-import math, { variance, mean} from 'mathjs';
+import { variance, mean, std, abs } from 'mathjs';
 import { DateTime } from "luxon";
 import format from 'pg-format';
 import { TradingPostExposure, TradingPostSectorAllocations, SecurityPrices, TradingPostAccountGroupStats, TradingPostAccountGroups, TradingPostAccountGroupsTable, TradingPostAccounts, TradingPostAccountsTable, AccountGroupHPRs,AccountGroupHPRsTable, SecurityHPRs, HistoricalHoldings } from './interfaces';
@@ -34,11 +34,11 @@ export class SummaryRepository implements IRepository {
         for (let d of response) {
             accounts.push({
                 id: parseInt(d.id),
-                user_id: d.user_id,
-                broker_name: d.broker_name,
+                userId: d.user_id,
+                brokerName: d.broker_name,
                 mask: d.mask,
                 name: d.name,
-                official_name: d.official_name,
+                officialName: d.official_name,
                 type: d.type,
                 subtype: d.subtype,
                 created_at: d.created_at,
@@ -69,18 +69,18 @@ export class SummaryRepository implements IRepository {
 
         for (let d of response) {
             accountGroups.push({
-                account_group_id: parseInt(d.account_group_id),
-                account_id: parseInt(d.account_id),
-                user_id: d.user_id,
+                accountGroupId: parseInt(d.account_group_id),
+                accountId: parseInt(d.account_id),
+                userId: d.user_id,
                 name: d.name,
-                default_benchmark_id: parseInt(d.default_benchmark_id),
+                defaultBenchmarkId: parseInt(d.default_benchmark_id),
 
             })
         }
         return accountGroups;
     }
 
-    getTradingPostHoldingsByAccount = async (userId: string, account_id: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]> => {
+    getTradingPostHoldingsByAccount = async (userId: string, accountId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]> => {
         let query = `SELECT account_id,
                             security_id,
                             price,
@@ -92,14 +92,14 @@ export class SummaryRepository implements IRepository {
                      WHERE account_id = $1 AND date BETWEEN $2 AND $3
                      `;
 
-        const response = await this.db.any(query, [account_id, startDate, endDate]);
+        const response = await this.db.any(query, [accountId, startDate, endDate]);
         if (!response || response.length <=0) return [];
         let holdings: HistoricalHoldings[] = [];
         
         for (let d of response) {
             holdings.push({
-                account_id: d.account_id,
-                security_id: parseInt(d.security_id),
+                accountId: d.account_id,
+                securityId: parseInt(d.security_id),
                 price: parseFloat(d.price),
                 value: parseFloat(d.value),
                 costBasis: parseFloat(d.cost_basis),
@@ -111,7 +111,7 @@ export class SummaryRepository implements IRepository {
         return holdings;
     }
 
-    getTradingPostHoldingsByAccountGroup = async (userId: string, account_group_id: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
+    getTradingPostHoldingsByAccountGroup = async (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
         let query = `SELECT atg.account_group_id AS account_group_id,
                             ht.security_id AS security_id,
                             AVG(ht.price) AS price,
@@ -125,15 +125,15 @@ export class SummaryRepository implements IRepository {
                      WHERE atg.account_group_id = $1 AND ht.date BETWEEN $2 AND $3
                      GROUP BY atg.account_group_id, ht.security_id, ht.date
                      `;
-        const response = await this.db.any(query, [account_group_id, startDate, endDate]);
+        const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
         
         if (!response || response.length <=0 ) return [];
         let holdings: HistoricalHoldings[] = [];
         
         for (let d of response) {
             holdings.push({
-                account_group_id: parseInt(d.account_group_id),
-                security_id: parseInt(d.security_id),
+                accountGroupId: parseInt(d.account_group_id),
+                securityId: parseInt(d.security_id),
                 price: parseFloat(d.price),
                 value: parseFloat(d.value),
                 costBasis: parseFloat(d.cost_basis),
@@ -145,7 +145,7 @@ export class SummaryRepository implements IRepository {
         return holdings;
     }
 
-    getTradingPostCurrnetHoldingsByAccountGroup = async (account_group_id: number): Promise<HistoricalHoldings[]> => {
+    getTradingPostCurrnetHoldingsByAccountGroup = async (accountGroupId: number): Promise<HistoricalHoldings[]> => {
         let query = `SELECT atg.account_group_id AS account_group_id,
                             ch.security_id AS security_id,
                             AVG(ch.price) AS price,
@@ -159,7 +159,7 @@ export class SummaryRepository implements IRepository {
                      WHERE atg.account_group_id = $1
                      GROUP BY atg.account_group_id, ch.security_id, ch.updated_at
                      `;
-        const response = await this.db.any(query, [account_group_id]);
+        const response = await this.db.any(query, [accountGroupId]);
 
         if(!response || response.length <= 0) return [];
 
@@ -167,8 +167,8 @@ export class SummaryRepository implements IRepository {
 
         for (let d of response) {
             holdings.push({
-                account_group_id: parseInt(d.account_group_id),
-                security_id: parseInt(d.security_id),
+                accountGroupId: parseInt(d.account_group_id),
+                securityId: parseInt(d.security_id),
                 price: parseFloat(d.price),
                 value: parseFloat(d.value),
                 costBasis: parseFloat(d.cost_basis),
@@ -181,9 +181,9 @@ export class SummaryRepository implements IRepository {
         
     }
 
-    getTradingPostAcountGroupReturns = async (userId: string, account_group_id: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]> => {
+    getTradingPostAccountGroupReturns = async (accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]> => {
         let query = `SELECT id,
-                            acccount_group_id,
+                            account_group_id,
                             date,
                             return,
                             created_at,
@@ -191,15 +191,16 @@ export class SummaryRepository implements IRepository {
                      FROM account_group_hprs 
                      WHERE account_group_id = $1 
                      AND date BETWEEN $2 AND $3
+                     ORDER BY date ASC
                      `;
-        const response = await this.db.any(query, [account_group_id, startDate, endDate]);
+        const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
 
         if (!response || response.length <= 0) return [];
         let holdingPeriodReturns: AccountGroupHPRsTable[] = []
         for (let d of response) {
             holdingPeriodReturns.push({
                 id: parseInt(d.id),
-                account_group_id: parseInt(d.account_group_id),
+                accountGroupId: parseInt(d.account_group_id),
                 date: d.date,
                 return: parseFloat(d.return),
                 created_at: d.created_at,
@@ -208,7 +209,7 @@ export class SummaryRepository implements IRepository {
         }
         return holdingPeriodReturns;
     }
-    getDailySecurityPrices = async (security_id: number, startDate: DateTime, endDate: DateTime): Promise<SecurityPrices[]> => {
+    getDailySecurityPrices = async (securityId: number, startDate: DateTime, endDate: DateTime): Promise<SecurityPrices[]> => {
 
         let query = `SELECT id,
                             security_id,
@@ -219,14 +220,14 @@ export class SummaryRepository implements IRepository {
                      WHERE security_id = $1
                      AND time BETWEEN $2 AND $3 AND (time at time zone 'America/New_York')::time = '16:00:00'
                      `;
-        const response = await this.db.any(query, [security_id, startDate, endDate]);
+        const response = await this.db.any(query, [securityId, startDate, endDate]);
 
         if (!response || response.length <= 0) { return [];}
         let prices: SecurityPrices[] = [];
         
         for (let d of response) {
             prices.push({
-                security_id: parseInt(d.security_id),
+                securityId: parseInt(d.security_id),
                 price: parseFloat(d.price),
                 date: d.time
             });
@@ -234,7 +235,8 @@ export class SummaryRepository implements IRepository {
         return prices;
     }
 
-    getSecurities = async (security_ids: number[]): Promise<getSecurityBySymbol[]> => {
+    getSecurities = async (securityIds: number[]): Promise<getSecurityBySymbol[]> => {
+        
         let query = `SELECT id,
                             symbol,
                             company_name,
@@ -262,7 +264,7 @@ export class SummaryRepository implements IRepository {
                      FROM securities
                      WHERE id IN (%L)
                      `;
-        const response = await this.db.any(format(query, security_ids))
+        const response = await this.db.any(format(query, securityIds))
             .catch((error) => {
                 console.log(error);
                 return '';
@@ -299,27 +301,36 @@ export class SummaryRepository implements IRepository {
         return sec;
     }
 
-    addNewAccountGroup = async (userId: string, name: string, account_ids: number[], default_benchmark_id: number): Promise<number> => {
+    getAccountGroupHPRsLatestDate = async (accountGroupId: number): Promise<any> => {
+        let query = `SELECT max(date) 
+                     FROM account_group_hprs
+                     WHERE account_group_id = $1`;
+        const latestDate = await this.db.one(query, [accountGroupId]);
+
+        return latestDate.max;
+    } 
+
+    addNewAccountGroup = async (userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number> => {
         
         let query = `INSERT INTO tradingpost_account_groups(user_id, name, default_benchmark_id)
                      VALUES ($1, $2, $3)
                      RETURNING id;
                      `;
-        let account_group_id = await this.db.any(query, [userId, name, default_benchmark_id])
+        let accountGroupId = await this.db.any(query, [userId, name, defaultBenchmarkId])
             .catch(error =>{
                 console.log(error);
                 return null;
             });
 
-        if (!account_group_id) { return 0; } else { account_group_id = account_group_id[0].id };
+        if (!accountGroupId) { return 0; } else { accountGroupId = accountGroupId[0].id };
         
         
         query = `INSERT INTO _tradingpost_account_to_group(account_id, account_group_id)
-                 VALUES %L
+                 VALUES (%L)
                  `;
         let values = [];
-        for (let d of account_ids) {
-            values.push([d, account_group_id]);
+        for (let d of accountIds) {
+            values.push([d, accountGroupId]);
         }
         
         let result = await this.db.any(format(query,values))
@@ -332,19 +343,21 @@ export class SummaryRepository implements IRepository {
         return 1;
     }
 
-    addTradingPostReturns = async (accountGroupReturns: AccountGroupHPRs[]): Promise<number> => {
+    addAccountGroupReturns = async (accountGroupReturns: AccountGroupHPRs[]): Promise<number> => {
             
         let values = [];
-        for (let i = 0; i < accountGroupReturns.length; i++) {
-            let x: any = accountGroupReturns[i]
-            x.date = x.date.toString();
-            values.push(Object.values(x));
+        for (let d of accountGroupReturns) {
+            values.push(Object.values(d));
         }
         
         let query = `INSERT INTO account_group_hprs (account_group_id, date, return)
                      VALUES %L
-                     `; // need to add an 'on conflict statement when account_group_id and date, update return
+                     ON CONFLICT ON CONSTRAINT account_group_hprs_account_group_id_date_key 
+                     DO UPDATE SET
+                     return = EXCLUDED.return
+                     `; 
         let result = 2;
+        //console.log(format(query, values));
         await this.db.any(format(query, values))
             .then(() => {
                 result = 1;
@@ -357,12 +370,16 @@ export class SummaryRepository implements IRepository {
     }
 
     addBenchmarkReturns = async (benchmarkReturns: SecurityHPRs[]): Promise<number> => {
+        
         let values = [];
         for (let d of benchmarkReturns) {
             values.push(Object.values(d));
         }
-        let query = `INSERT INTO  benchmark_hprs(security_id, date, return)
-                     VALUES %L
+        let query = `INSERT INTO benchmark_hprs(security_id, date, return)
+                     VALUES (%L)
+                     ON CONFLICT ON CONSTRAINT benchmark_hprs_security_id_date_key
+                     DO UPDATE SET
+                     return = EXCLUDED.return
                      `;
         let result = 2;
         await this.db.any(format(query, values))
@@ -374,14 +391,26 @@ export class SummaryRepository implements IRepository {
                 result = 0;
             })
         return result;
-}
+    }
 
-    addTradingPostPortfolioSummary = async (userId: string, account_group_id: number, accountGroupSummary: TradingPostAccountGroupStats): Promise<number> => {
-        let query = `INSERT INTO tradingpost_account_group_stats 
-                     VALUES $1
+    addAccountGroupSummary = async (accountGroupSummary: TradingPostAccountGroupStats): Promise<number> => {
+        
+        let values: any = Object.values(accountGroupSummary);
+
+        values[3] = JSON.stringify(values[3]);
+        values[4] = JSON.stringify(values[4]);
+        // @ts-ignore
+        values[5] = new Date(values[5].toString());
+        
+
+        let query = `INSERT INTO tradingpost_account_group_stats(account_group_id, beta, sharpe, industry_allocations, exposure, date, benchmark_id)
+                     VALUES (%L)
+                     ON CONFLICT ON CONSTRAINT tradingpost_account_group_stats_account_group_id_date_key
+                     DO UPDATE SET
+                     beta = EXCLUDED.beta, sharpe = EXCLUDED.sharpe, industry_allocations = EXCLUDED.industry_allocations, exposure = EXCLUDED.exposure, date = EXCLUDED.date, benchmark_id = EXCLUDED.benchmark_id
                      `;
         let result = 2;
-        const response = await this.db.any(query, [accountGroupSummary])
+        await this.db.any(format(query, values))
             .then(() => {
                 result = 1;
             })
@@ -400,16 +429,14 @@ export class PortfolioSummaryService implements ISummaryService {
         this.repository = repository;
     }
 
-    computeAccountGroupHPRs = async (account_group_id: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<AccountGroupHPRs[]> => {
+    computeAccountGroupHPRs = async (holdings: HistoricalHoldings[]): Promise<AccountGroupHPRs[]> => {
 
-        let holdings: HistoricalHoldings[] = await this.repository.getTradingPostHoldingsByAccountGroup('', account_group_id, startDate, endDate);
-
-        let dailyAmounts: {account_group_id?: number, date: DateTime, amount: number}[] = [];
+        let dailyAmounts: {accountGroupId?: number, date: DateTime, amount: number}[] = [];
         
         dailyAmounts = holdings.reduce((res, value) => {
             
             if (!res.some(el => el.date.valueOf() === value.date.valueOf())) {
-                res.push({account_group_id: value.account_group_id, date: value.date, amount: value.value});
+                res.push({accountGroupId: value.accountGroupId, date: value.date, amount: value.value});
                 
             } else {
                 let i = res.findIndex(el => el.date.valueOf() === value.date.valueOf());
@@ -426,10 +453,10 @@ export class PortfolioSummaryService implements ISummaryService {
         
         
         for (let i = 1; i < dailyAmounts.length; i++) {
-            if (!dailyAmounts[i].account_group_id) { dailyAmounts[i].account_group_id = 0} 
+            if (!dailyAmounts[i].accountGroupId) { dailyAmounts[i].accountGroupId = 0} 
             returns.push({
                 // @ts-ignore
-                account_group_id: dailyAmounts[i].account_group_id,
+                accountGroupId: dailyAmounts[i].accountGroupId,
                 date: dailyAmounts[i].date,  
                 return: (dailyAmounts[i].amount - dailyAmounts[i - 1].amount) / dailyAmounts[i - 1].amount})
         }
@@ -438,18 +465,18 @@ export class PortfolioSummaryService implements ISummaryService {
     }
 
     addAccountGroupHPRs = async (accountGroupHPRs: AccountGroupHPRs[]): Promise<number> => {
-        const response = await this.repository.addTradingPostReturns(accountGroupHPRs);
+        const response = await this.repository.addAccountGroupReturns(accountGroupHPRs);
         return response;
     }
 
-    computeSecurityHPRs = async (security_id: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<SecurityHPRs[]> => {
-        let securityPrices = await this.repository.getDailySecurityPrices(security_id, startDate, endDate);
+    computeSecurityHPRs = async (securityId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<SecurityHPRs[]> => {
+        let securityPrices = await this.repository.getDailySecurityPrices(securityId, startDate, endDate);
         if (!securityPrices || securityPrices.length <= 0) return [];
 
         let returns: SecurityHPRs[] = []
         for (let i = 1; i < securityPrices.length; i++) {
             returns.push({
-                security_id: securityPrices[i].security_id,
+                securityId: securityPrices[i].securityId,
                 date: securityPrices[i].date,
                 return: (securityPrices[i].price - securityPrices[i - 1].price) / securityPrices[i - 1].price
             });
@@ -464,10 +491,22 @@ export class PortfolioSummaryService implements ISummaryService {
         return response; 
     }
 
-    computeSecurityBeta = async (security_id: number, benchmark_id: number, daysPrior: number = 365 * 5): Promise<number> => {
-        let securityReturns = (await this.computeSecurityHPRs(security_id, DateTime.now().minus(daysPrior * 8.64e+7)));
-        let benchmarkReturns = (await this.computeSecurityHPRs(benchmark_id, DateTime.now().minus(daysPrior * 8.64e+7)));
+    computeSecurityBeta = async (securityId: number, benchmarkId: number, daysPrior: number = 365 * 5): Promise<number> => {
+        let securityReturns = (await this.computeSecurityHPRs(securityId, DateTime.now().minus(daysPrior * 8.64e+7)));
+        let benchmarkReturns = (await this.computeSecurityHPRs(benchmarkId, DateTime.now().minus(daysPrior * 8.64e+7)));
         
+        function computeCovariance (arr1: number[], arr2: number[], n: number): number {
+            let sum = 0;
+            let mean_arr1 = mean(arr1);
+            let mean_arr2 = mean(arr2);
+    
+            for (let i = 0; i < n; i++) {
+                sum += (arr1[i] - mean_arr1) * (arr2[i] - mean_arr2);
+                
+            }
+            return sum / (n - 1);
+        }
+
         function checkDates(arr1: SecurityHPRs[], arr2: SecurityHPRs[]) {
             for (let i = 0; i < arr1.length; i++) {
                 if(arr1[i].date.valueOf() !== arr2[i].date.valueOf()) {
@@ -490,7 +529,7 @@ export class PortfolioSummaryService implements ISummaryService {
             let benchmarkHPRs = benchmarkReturns.map(a => a.return);
 
             // @ts-ignore
-            return this.computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / variance(benchmarkHPRs);
+            return computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / variance(benchmarkHPRs);
         } else if (securityReturns.length < benchmarkReturns.length) {
 
             benchmarkReturns = benchmarkReturns.slice(benchmarkReturns.length - securityReturns.length, benchmarkReturns.length);
@@ -502,7 +541,7 @@ export class PortfolioSummaryService implements ISummaryService {
             let benchmarkHPRs = benchmarkReturns.map(a => a.return);
 
             // @ts-ignore
-            return this.computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / variance(benchmarkHPRs);
+            return computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / variance(benchmarkHPRs);
 
         } else {
             for (let i = 0; i < benchmarkReturns.length; i++) {
@@ -514,18 +553,16 @@ export class PortfolioSummaryService implements ISummaryService {
             let securityHPRs = securityReturns.map(a =>a.return);
             let benchmarkHPRs = benchmarkReturns.map(a => a.return);
             // @ts-ignore
-            return this.computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / variance(benchmarkHPRs);
+            return computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / variance(benchmarkHPRs);
         }
     
 
-    computeAccountGroupBeta = async (account_group_id: number, benchmark_id: number, daysPrior: number = 365 * 5): Promise<number> => {
-        
-        const holdings: HistoricalHoldings[] = await this.repository.getTradingPostCurrnetHoldingsByAccountGroup(account_group_id);
+    computeAccountGroupBeta = async (holdings: HistoricalHoldings[], benchmarkId: number, daysPrior: number = 365 * 5): Promise<number> => {
         
         let beta = [];
         let sum = 0;
         for (let d of holdings) {
-            beta.push([await this.computeSecurityBeta(d.security_id, benchmark_id, daysPrior), d.value]);
+            beta.push([await this.computeSecurityBeta(d.securityId, benchmarkId, daysPrior), d.value]);
             sum += d.value;
         }
         let weighted_beta = 0;
@@ -536,27 +573,19 @@ export class PortfolioSummaryService implements ISummaryService {
         return weighted_beta;
     }
     
-    computeCovariance = (arr1: number[], arr2: number[], n: number): number => {
-        let sum = 0;
-        let mean_arr1 = mean(arr1);
-        let mean_arr2 = mean(arr2);
+    computeSharpe = (holdingsReturns: AccountGroupHPRs[]): number => {
+        const returns = holdingsReturns.map(a => a.return);
+        const meanReturn = mean(returns);
+        const stdReturn = std(returns);
 
-        for (let i = 0; i < n; i++) {
-            sum += (arr1[i] - mean_arr1) * (arr2[i] - mean_arr2);
-            
-        }
-        return sum / (n - 1);
-    }
-
-    computeSharpe = (stockHPRs: SecurityHPRs): number => {
-        
-        return 0;
+        // @ts-ignore
+        return meanReturn / stdReturn;
     }
     
     computeSectorAllocations = async (holdings: HistoricalHoldings[]): Promise<TradingPostSectorAllocations[]> => {
         
-        let security_ids: number[] = holdings.map(a => a.security_id); 
-        let securities = await this.repository.getSecurities(security_ids);
+        let securityIds: number[] = holdings.map(a => a.securityId); 
+        let securities = await this.repository.getSecurities(securityIds);
         let sectorAllocations: TradingPostSectorAllocations[] = [];
 
         const portfolioSum = holdings.reduce((res, value) => {
@@ -565,7 +594,7 @@ export class PortfolioSummaryService implements ISummaryService {
 
         let sector: string; let i: number;
         for (let d of holdings) {
-            let secInfo = securities.find(a => a.id === d.security_id);
+            let secInfo = securities.find(a => a.id === d.securityId);
             if (!secInfo) {
                 sector = 'n/a';
             } else {
@@ -576,7 +605,7 @@ export class PortfolioSummaryService implements ISummaryService {
                 sectorAllocations.push({
                     sector: sector,
                     value: d.value / portfolioSum
-                })
+                });
             } else {
                 sectorAllocations[i].value += d.value / portfolioSum;
             }
@@ -586,15 +615,16 @@ export class PortfolioSummaryService implements ISummaryService {
     }
 
     computeExposure = (holdings: HistoricalHoldings[]): TradingPostExposure => {
+        
         let long = 0; let short = 0;
         let gross = 0; let net = 0;
         let total = 0;
         for (let d of holdings) {
             total += d.value;
-            if (d.security_id === 26830) { // cash 
+            if (d.securityId === 26830) { // cash 
                 continue;
             }
-            gross += math.abs(d.value);
+            gross += abs(d.value);
             net += d.value;
             if (d.value > 0) { long += d.value; }
             if (d.value < 0) { short += d.value; }   
@@ -607,24 +637,27 @@ export class PortfolioSummaryService implements ISummaryService {
         const account_group = (await this.repository.getAccountGroups(userId)).find(a => a.name === 'default');
         if (!account_group) {return null;}
     
-        const holdings = await this.repository.getTradingPostCurrnetHoldingsByAccountGroup(account_group.account_group_id);
+        const currentHoldings = await this.repository.getTradingPostCurrnetHoldingsByAccountGroup(account_group.accountGroupId);
         
-        const beta = await this.computeAccountGroupBeta(account_group.account_group_id, account_group.default_benchmark_id);
+        const returns = await this.repository.getTradingPostAccountGroupReturns(account_group.accountGroupId,startDate,endDate)
+        
+        const beta = await this.computeAccountGroupBeta(currentHoldings, account_group.defaultBenchmarkId);
 
-        const allocations = await this.computeSectorAllocations(holdings);
+        const sharpe = this.computeSharpe(returns);
 
-        const exposure = this.computeExposure(holdings);
+        const allocations = await this.computeSectorAllocations(currentHoldings);
+
+        const exposure = this.computeExposure(currentHoldings);
 
         let stats: TradingPostAccountGroupStats = {
-            account_group_id: account_group.account_group_id,
+            accountGroupId: account_group.accountGroupId,
             beta: beta,
-            sharpe: 0,
-            industry_allocation: allocations,
+            sharpe: sharpe,
+            industryAllocations: allocations,
             exposure: exposure,
-            date: DateTime.now(),
-            benchmark_id: account_group.default_benchmark_id
+            date: returns[returns.length - 1].date,
+            benchmarkId: account_group.defaultBenchmarkId
         }
-
         return stats;
     }
 }
@@ -634,49 +667,48 @@ export interface IRepository {
 
     getAccountGroups(userId: string): Promise<TradingPostAccountGroups[]>
 
-    getTradingPostHoldingsByAccount (userId: string, account_id: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]>
+    getTradingPostHoldingsByAccount (userId: string, accountId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]>
     
-    getTradingPostHoldingsByAccountGroup (userId: string, account_group_id: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]>
+    getTradingPostHoldingsByAccountGroup (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]>
 
-    getTradingPostCurrnetHoldingsByAccountGroup (account_group_id: number): Promise<HistoricalHoldings[]>
+    getTradingPostCurrnetHoldingsByAccountGroup (accountGroupId: number): Promise<HistoricalHoldings[]>
 
-    getTradingPostAcountGroupReturns (userId: string, account_group_id: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
+    getTradingPostAccountGroupReturns (accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
 
-    getDailySecurityPrices (security_id: number, startDate: DateTime, endDate: DateTime): Promise<SecurityPrices[]>
+    getDailySecurityPrices (securityId: number, startDate: DateTime, endDate: DateTime): Promise<SecurityPrices[]>
 
-    getSecurities (security_ids: number[]): Promise<getSecurityBySymbol[]>
+    getSecurities (securityIds: number[]): Promise<getSecurityBySymbol[]>
 
-    addNewAccountGroup (userId: string, name: string, account_ids: number[], default_benchmark_id: number): Promise<number>
+    getAccountGroupHPRsLatestDate (accountGroupId: number): Promise<any>
 
-    addTradingPostReturns (accountGroupReturns: AccountGroupHPRs[]): Promise<number>
+    addNewAccountGroup (userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
+
+    addAccountGroupReturns (accountGroupReturns: AccountGroupHPRs[]): Promise<number>
 
     addBenchmarkReturns (benchmarkReturns: SecurityHPRs[]): Promise<number>
 
-    addTradingPostPortfolioSummary (userId: string, account_group_id: number, accountGroupSummary: TradingPostAccountGroupStats): Promise<number>
+    addAccountGroupSummary (accountGroupSummary: TradingPostAccountGroupStats): Promise<number>
 }
 
 export interface ISummaryService {
-    computeAccountGroupHPRs (account_group_id: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRs[]>
-
-    updateAccountGroupHPRs (account_group_id: number): Promise<number>
+    computeAccountGroupHPRs (holdings: HistoricalHoldings[]): Promise<AccountGroupHPRs[]>
 
     addAccountGroupHPRs  (accountGroupHPRs: AccountGroupHPRs[]): Promise<number>
 
-    computeSecurityHPRs (security_id: number, startDate: DateTime, endDate: DateTime): Promise<SecurityHPRs[]>
+    computeSecurityHPRs (securityId: number, startDate: DateTime, endDate: DateTime): Promise<SecurityHPRs[]>
 
     addBenchmarkHPRs (benchmarkHPRs: SecurityHPRs[]): Promise <number>
 
-    computeSecurityBeta (security_id: number, benchmark_id: number, daysPrior: number): Promise<number>
+    computeSecurityBeta (securityId: number, benchmarkId: number, daysPrior: number): Promise<number>
 
-    computeAccountGroupBeta (account_group_id: number, daysPrior: number): Promise<number>
+    computeAccountGroupBeta (holdings: HistoricalHoldings[], daysPrior: number): Promise<number>
 
-    computeCovariance (arr1: number[], arr2: number[], n: number): number
-
-    computeSharpe (stockHPRs: SecurityHPRs): number
+    computeSharpe (holdingsReturns: AccountGroupHPRs[]): number
 
     computeSectorAllocations (holdings: HistoricalHoldings[]): Promise<TradingPostSectorAllocations[]>
 
-    computeAccountGroupSummary (account_group_id: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats | null>
+    computeExposure (holdings: HistoricalHoldings[]): TradingPostExposure
 
-    addUsersAccountGroupSummaries (userId: string): Promise<number>
+    computeAccountGroupSummary (accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats | null>
+
 }

@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS public.tradingpost_account_group_stats
 	id serial UNIQUE NOT null,
 	account_group_id text NOT null,
 	beta numeric(24,4),
-	sharpe numeric(24,4),
+	sharpe numeric(20,8),
 	industry_allocations JSONB,
 	exposure JSONB,
 	date timestamp with time zone NOT NULL,

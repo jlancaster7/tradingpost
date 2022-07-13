@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -36,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PortfolioSummaryService = exports.SummaryRepository = void 0;
-const mathjs_1 = __importStar(require("mathjs"));
+const mathjs_1 = require("mathjs");
 const luxon_1 = require("luxon");
 const pg_format_1 = __importDefault(require("pg-format"));
 class SummaryRepository {
@@ -62,11 +39,11 @@ class SummaryRepository {
             for (let d of response) {
                 accounts.push({
                     id: parseInt(d.id),
-                    user_id: d.user_id,
-                    broker_name: d.broker_name,
+                    userId: d.user_id,
+                    brokerName: d.broker_name,
                     mask: d.mask,
                     name: d.name,
-                    official_name: d.official_name,
+                    officialName: d.official_name,
                     type: d.type,
                     subtype: d.subtype,
                     created_at: d.created_at,
@@ -95,16 +72,16 @@ class SummaryRepository {
             let accountGroups = [];
             for (let d of response) {
                 accountGroups.push({
-                    account_group_id: parseInt(d.account_group_id),
-                    account_id: parseInt(d.account_id),
-                    user_id: d.user_id,
+                    accountGroupId: parseInt(d.account_group_id),
+                    accountId: parseInt(d.account_id),
+                    userId: d.user_id,
                     name: d.name,
-                    default_benchmark_id: parseInt(d.default_benchmark_id),
+                    defaultBenchmarkId: parseInt(d.default_benchmark_id),
                 });
             }
             return accountGroups;
         });
-        this.getTradingPostHoldingsByAccount = (userId, account_id, startDate, endDate) => __awaiter(this, void 0, void 0, function* () {
+        this.getTradingPostHoldingsByAccount = (userId, accountId, startDate, endDate) => __awaiter(this, void 0, void 0, function* () {
             let query = `SELECT account_id,
                             security_id,
                             price,
@@ -115,14 +92,14 @@ class SummaryRepository {
                      FROM tradingpost_historical_holdings
                      WHERE account_id = $1 AND date BETWEEN $2 AND $3
                      `;
-            const response = yield this.db.any(query, [account_id, startDate, endDate]);
+            const response = yield this.db.any(query, [accountId, startDate, endDate]);
             if (!response || response.length <= 0)
                 return [];
             let holdings = [];
             for (let d of response) {
                 holdings.push({
-                    account_id: d.account_id,
-                    security_id: parseInt(d.security_id),
+                    accountId: d.account_id,
+                    securityId: parseInt(d.security_id),
                     price: parseFloat(d.price),
                     value: parseFloat(d.value),
                     costBasis: parseFloat(d.cost_basis),
@@ -132,7 +109,7 @@ class SummaryRepository {
             }
             return holdings;
         });
-        this.getTradingPostHoldingsByAccountGroup = (userId, account_group_id, startDate, endDate = luxon_1.DateTime.now()) => __awaiter(this, void 0, void 0, function* () {
+        this.getTradingPostHoldingsByAccountGroup = (userId, accountGroupId, startDate, endDate = luxon_1.DateTime.now()) => __awaiter(this, void 0, void 0, function* () {
             let query = `SELECT atg.account_group_id AS account_group_id,
                             ht.security_id AS security_id,
                             AVG(ht.price) AS price,
@@ -146,14 +123,14 @@ class SummaryRepository {
                      WHERE atg.account_group_id = $1 AND ht.date BETWEEN $2 AND $3
                      GROUP BY atg.account_group_id, ht.security_id, ht.date
                      `;
-            const response = yield this.db.any(query, [account_group_id, startDate, endDate]);
+            const response = yield this.db.any(query, [accountGroupId, startDate, endDate]);
             if (!response || response.length <= 0)
                 return [];
             let holdings = [];
             for (let d of response) {
                 holdings.push({
-                    account_group_id: parseInt(d.account_group_id),
-                    security_id: parseInt(d.security_id),
+                    accountGroupId: parseInt(d.account_group_id),
+                    securityId: parseInt(d.security_id),
                     price: parseFloat(d.price),
                     value: parseFloat(d.value),
                     costBasis: parseFloat(d.cost_basis),
@@ -163,7 +140,7 @@ class SummaryRepository {
             }
             return holdings;
         });
-        this.getTradingPostCurrnetHoldingsByAccountGroup = (account_group_id) => __awaiter(this, void 0, void 0, function* () {
+        this.getTradingPostCurrnetHoldingsByAccountGroup = (accountGroupId) => __awaiter(this, void 0, void 0, function* () {
             let query = `SELECT atg.account_group_id AS account_group_id,
                             ch.security_id AS security_id,
                             AVG(ch.price) AS price,
@@ -177,14 +154,14 @@ class SummaryRepository {
                      WHERE atg.account_group_id = $1
                      GROUP BY atg.account_group_id, ch.security_id, ch.updated_at
                      `;
-            const response = yield this.db.any(query, [account_group_id]);
+            const response = yield this.db.any(query, [accountGroupId]);
             if (!response || response.length <= 0)
                 return [];
             let holdings = [];
             for (let d of response) {
                 holdings.push({
-                    account_group_id: parseInt(d.account_group_id),
-                    security_id: parseInt(d.security_id),
+                    accountGroupId: parseInt(d.account_group_id),
+                    securityId: parseInt(d.security_id),
                     price: parseFloat(d.price),
                     value: parseFloat(d.value),
                     costBasis: parseFloat(d.cost_basis),
@@ -194,9 +171,9 @@ class SummaryRepository {
             }
             return holdings;
         });
-        this.getTradingPostAcountGroupReturns = (userId, account_group_id, startDate, endDate) => __awaiter(this, void 0, void 0, function* () {
+        this.getTradingPostAccountGroupReturns = (accountGroupId, startDate, endDate) => __awaiter(this, void 0, void 0, function* () {
             let query = `SELECT id,
-                            acccount_group_id,
+                            account_group_id,
                             date,
                             return,
                             created_at,
@@ -204,15 +181,16 @@ class SummaryRepository {
                      FROM account_group_hprs 
                      WHERE account_group_id = $1 
                      AND date BETWEEN $2 AND $3
+                     ORDER BY date ASC
                      `;
-            const response = yield this.db.any(query, [account_group_id, startDate, endDate]);
+            const response = yield this.db.any(query, [accountGroupId, startDate, endDate]);
             if (!response || response.length <= 0)
                 return [];
             let holdingPeriodReturns = [];
             for (let d of response) {
                 holdingPeriodReturns.push({
                     id: parseInt(d.id),
-                    account_group_id: parseInt(d.account_group_id),
+                    accountGroupId: parseInt(d.account_group_id),
                     date: d.date,
                     return: parseFloat(d.return),
                     created_at: d.created_at,
@@ -221,7 +199,7 @@ class SummaryRepository {
             }
             return holdingPeriodReturns;
         });
-        this.getDailySecurityPrices = (security_id, startDate, endDate) => __awaiter(this, void 0, void 0, function* () {
+        this.getDailySecurityPrices = (securityId, startDate, endDate) => __awaiter(this, void 0, void 0, function* () {
             let query = `SELECT id,
                             security_id,
                             price,
@@ -231,21 +209,21 @@ class SummaryRepository {
                      WHERE security_id = $1
                      AND time BETWEEN $2 AND $3 AND (time at time zone 'America/New_York')::time = '16:00:00'
                      `;
-            const response = yield this.db.any(query, [security_id, startDate, endDate]);
+            const response = yield this.db.any(query, [securityId, startDate, endDate]);
             if (!response || response.length <= 0) {
                 return [];
             }
             let prices = [];
             for (let d of response) {
                 prices.push({
-                    security_id: parseInt(d.security_id),
+                    securityId: parseInt(d.security_id),
                     price: parseFloat(d.price),
                     date: d.time
                 });
             }
             return prices;
         });
-        this.getSecurities = (security_ids) => __awaiter(this, void 0, void 0, function* () {
+        this.getSecurities = (securityIds) => __awaiter(this, void 0, void 0, function* () {
             let query = `SELECT id,
                             symbol,
                             company_name,
@@ -273,7 +251,7 @@ class SummaryRepository {
                      FROM securities
                      WHERE id IN (%L)
                      `;
-            const response = yield this.db.any((0, pg_format_1.default)(query, security_ids))
+            const response = yield this.db.any((0, pg_format_1.default)(query, securityIds))
                 .catch((error) => {
                 console.log(error);
                 return '';
@@ -311,29 +289,36 @@ class SummaryRepository {
             }
             return sec;
         });
-        this.addNewAccountGroup = (userId, name, account_ids, default_benchmark_id) => __awaiter(this, void 0, void 0, function* () {
+        this.getAccountGroupHPRsLatestDate = (accountGroupId) => __awaiter(this, void 0, void 0, function* () {
+            let query = `SELECT max(date) 
+                     FROM account_group_hprs
+                     WHERE account_group_id = $1`;
+            const latestDate = yield this.db.one(query, [accountGroupId]);
+            return latestDate.max;
+        });
+        this.addNewAccountGroup = (userId, name, accountIds, defaultBenchmarkId) => __awaiter(this, void 0, void 0, function* () {
             let query = `INSERT INTO tradingpost_account_groups(user_id, name, default_benchmark_id)
                      VALUES ($1, $2, $3)
                      RETURNING id;
                      `;
-            let account_group_id = yield this.db.any(query, [userId, name, default_benchmark_id])
+            let accountGroupId = yield this.db.any(query, [userId, name, defaultBenchmarkId])
                 .catch(error => {
                 console.log(error);
                 return null;
             });
-            if (!account_group_id) {
+            if (!accountGroupId) {
                 return 0;
             }
             else {
-                account_group_id = account_group_id[0].id;
+                accountGroupId = accountGroupId[0].id;
             }
             ;
             query = `INSERT INTO _tradingpost_account_to_group(account_id, account_group_id)
-                 VALUES %L
+                 VALUES (%L)
                  `;
             let values = [];
-            for (let d of account_ids) {
-                values.push([d, account_group_id]);
+            for (let d of accountIds) {
+                values.push([d, accountGroupId]);
             }
             let result = yield this.db.any((0, pg_format_1.default)(query, values))
                 .catch(error => {
@@ -344,17 +329,19 @@ class SummaryRepository {
                 return 0;
             return 1;
         });
-        this.addTradingPostReturns = (accountGroupReturns) => __awaiter(this, void 0, void 0, function* () {
+        this.addAccountGroupReturns = (accountGroupReturns) => __awaiter(this, void 0, void 0, function* () {
             let values = [];
-            for (let i = 0; i < accountGroupReturns.length; i++) {
-                let x = accountGroupReturns[i];
-                x.date = x.date.toString();
-                values.push(Object.values(x));
+            for (let d of accountGroupReturns) {
+                values.push(Object.values(d));
             }
             let query = `INSERT INTO account_group_hprs (account_group_id, date, return)
                      VALUES %L
-                     `; // need to add an 'on conflict statement when account_group_id and date, update return
+                     ON CONFLICT ON CONSTRAINT account_group_hprs_account_group_id_date_key 
+                     DO UPDATE SET
+                     return = EXCLUDED.return
+                     `;
             let result = 2;
+            //console.log(format(query, values));
             yield this.db.any((0, pg_format_1.default)(query, values))
                 .then(() => {
                 result = 1;
@@ -370,8 +357,11 @@ class SummaryRepository {
             for (let d of benchmarkReturns) {
                 values.push(Object.values(d));
             }
-            let query = `INSERT INTO  benchmark_hprs(security_id, date, return)
-                     VALUES %L
+            let query = `INSERT INTO benchmark_hprs(security_id, date, return)
+                     VALUES (%L)
+                     ON CONFLICT ON CONSTRAINT benchmark_hprs_security_id_date_key
+                     DO UPDATE SET
+                     return = EXCLUDED.return
                      `;
             let result = 2;
             yield this.db.any((0, pg_format_1.default)(query, values))
@@ -384,12 +374,20 @@ class SummaryRepository {
             });
             return result;
         });
-        this.addTradingPostPortfolioSummary = (userId, account_group_id, accountGroupSummary) => __awaiter(this, void 0, void 0, function* () {
-            let query = `INSERT INTO tradingpost_account_group_stats 
-                     VALUES $1
+        this.addAccountGroupSummary = (accountGroupSummary) => __awaiter(this, void 0, void 0, function* () {
+            let values = Object.values(accountGroupSummary);
+            values[3] = JSON.stringify(values[3]);
+            values[4] = JSON.stringify(values[4]);
+            // @ts-ignore
+            values[5] = new Date(values[5].toString());
+            let query = `INSERT INTO tradingpost_account_group_stats(account_group_id, beta, sharpe, industry_allocations, exposure, date, benchmark_id)
+                     VALUES (%L)
+                     ON CONFLICT ON CONSTRAINT tradingpost_account_group_stats_account_group_id_date_key
+                     DO UPDATE SET
+                     beta = EXCLUDED.beta, sharpe = EXCLUDED.sharpe, industry_allocations = EXCLUDED.industry_allocations, exposure = EXCLUDED.exposure, date = EXCLUDED.date, benchmark_id = EXCLUDED.benchmark_id
                      `;
             let result = 2;
-            const response = yield this.db.any(query, [accountGroupSummary])
+            yield this.db.any((0, pg_format_1.default)(query, values))
                 .then(() => {
                 result = 1;
             })
@@ -406,12 +404,11 @@ class SummaryRepository {
 exports.SummaryRepository = SummaryRepository;
 class PortfolioSummaryService {
     constructor(repository) {
-        this.computeAccountGroupHPRs = (account_group_id, startDate, endDate = luxon_1.DateTime.now()) => __awaiter(this, void 0, void 0, function* () {
-            let holdings = yield this.repository.getTradingPostHoldingsByAccountGroup('', account_group_id, startDate, endDate);
+        this.computeAccountGroupHPRs = (holdings) => __awaiter(this, void 0, void 0, function* () {
             let dailyAmounts = [];
             dailyAmounts = holdings.reduce((res, value) => {
                 if (!res.some(el => el.date.valueOf() === value.date.valueOf())) {
-                    res.push({ account_group_id: value.account_group_id, date: value.date, amount: value.value });
+                    res.push({ accountGroupId: value.accountGroupId, date: value.date, amount: value.value });
                 }
                 else {
                     let i = res.findIndex(el => el.date.valueOf() === value.date.valueOf());
@@ -423,12 +420,12 @@ class PortfolioSummaryService {
             dailyAmounts.sort((a, b) => { return a.date.valueOf() - b.date.valueOf(); });
             let returns = [];
             for (let i = 1; i < dailyAmounts.length; i++) {
-                if (!dailyAmounts[i].account_group_id) {
-                    dailyAmounts[i].account_group_id = 0;
+                if (!dailyAmounts[i].accountGroupId) {
+                    dailyAmounts[i].accountGroupId = 0;
                 }
                 returns.push({
                     // @ts-ignore
-                    account_group_id: dailyAmounts[i].account_group_id,
+                    accountGroupId: dailyAmounts[i].accountGroupId,
                     date: dailyAmounts[i].date,
                     return: (dailyAmounts[i].amount - dailyAmounts[i - 1].amount) / dailyAmounts[i - 1].amount
                 });
@@ -436,17 +433,17 @@ class PortfolioSummaryService {
             return returns;
         });
         this.addAccountGroupHPRs = (accountGroupHPRs) => __awaiter(this, void 0, void 0, function* () {
-            const response = yield this.repository.addTradingPostReturns(accountGroupHPRs);
+            const response = yield this.repository.addAccountGroupReturns(accountGroupHPRs);
             return response;
         });
-        this.computeSecurityHPRs = (security_id, startDate, endDate = luxon_1.DateTime.now()) => __awaiter(this, void 0, void 0, function* () {
-            let securityPrices = yield this.repository.getDailySecurityPrices(security_id, startDate, endDate);
+        this.computeSecurityHPRs = (securityId, startDate, endDate = luxon_1.DateTime.now()) => __awaiter(this, void 0, void 0, function* () {
+            let securityPrices = yield this.repository.getDailySecurityPrices(securityId, startDate, endDate);
             if (!securityPrices || securityPrices.length <= 0)
                 return [];
             let returns = [];
             for (let i = 1; i < securityPrices.length; i++) {
                 returns.push({
-                    security_id: securityPrices[i].security_id,
+                    securityId: securityPrices[i].securityId,
                     date: securityPrices[i].date,
                     return: (securityPrices[i].price - securityPrices[i - 1].price) / securityPrices[i - 1].price
                 });
@@ -458,9 +455,18 @@ class PortfolioSummaryService {
             const response = yield this.repository.addBenchmarkReturns(benchmarkHPRs);
             return response;
         });
-        this.computeSecurityBeta = (security_id, benchmark_id, daysPrior = 365 * 5) => __awaiter(this, void 0, void 0, function* () {
-            let securityReturns = (yield this.computeSecurityHPRs(security_id, luxon_1.DateTime.now().minus(daysPrior * 8.64e+7)));
-            let benchmarkReturns = (yield this.computeSecurityHPRs(benchmark_id, luxon_1.DateTime.now().minus(daysPrior * 8.64e+7)));
+        this.computeSecurityBeta = (securityId, benchmarkId, daysPrior = 365 * 5) => __awaiter(this, void 0, void 0, function* () {
+            let securityReturns = (yield this.computeSecurityHPRs(securityId, luxon_1.DateTime.now().minus(daysPrior * 8.64e+7)));
+            let benchmarkReturns = (yield this.computeSecurityHPRs(benchmarkId, luxon_1.DateTime.now().minus(daysPrior * 8.64e+7)));
+            function computeCovariance(arr1, arr2, n) {
+                let sum = 0;
+                let mean_arr1 = (0, mathjs_1.mean)(arr1);
+                let mean_arr2 = (0, mathjs_1.mean)(arr2);
+                for (let i = 0; i < n; i++) {
+                    sum += (arr1[i] - mean_arr1) * (arr2[i] - mean_arr2);
+                }
+                return sum / (n - 1);
+            }
             function checkDates(arr1, arr2) {
                 for (let i = 0; i < arr1.length; i++) {
                     if (arr1[i].date.valueOf() !== arr2[i].date.valueOf()) {
@@ -481,7 +487,7 @@ class PortfolioSummaryService {
                 let securityHPRs = securityReturns.map(a => a.return);
                 let benchmarkHPRs = benchmarkReturns.map(a => a.return);
                 // @ts-ignore
-                return this.computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / (0, mathjs_1.variance)(benchmarkHPRs);
+                return computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / (0, mathjs_1.variance)(benchmarkHPRs);
             }
             else if (securityReturns.length < benchmarkReturns.length) {
                 benchmarkReturns = benchmarkReturns.slice(benchmarkReturns.length - securityReturns.length, benchmarkReturns.length);
@@ -492,7 +498,7 @@ class PortfolioSummaryService {
                 let securityHPRs = securityReturns.map(a => a.return);
                 let benchmarkHPRs = benchmarkReturns.map(a => a.return);
                 // @ts-ignore
-                return this.computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / (0, mathjs_1.variance)(benchmarkHPRs);
+                return computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / (0, mathjs_1.variance)(benchmarkHPRs);
             }
             else {
                 for (let i = 0; i < benchmarkReturns.length; i++) {
@@ -505,14 +511,13 @@ class PortfolioSummaryService {
             let securityHPRs = securityReturns.map(a => a.return);
             let benchmarkHPRs = benchmarkReturns.map(a => a.return);
             // @ts-ignore
-            return this.computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / (0, mathjs_1.variance)(benchmarkHPRs);
+            return computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / (0, mathjs_1.variance)(benchmarkHPRs);
         });
-        this.computeAccountGroupBeta = (account_group_id, benchmark_id, daysPrior = 365 * 5) => __awaiter(this, void 0, void 0, function* () {
-            const holdings = yield this.repository.getTradingPostCurrnetHoldingsByAccountGroup(account_group_id);
+        this.computeAccountGroupBeta = (holdings, benchmarkId, daysPrior = 365 * 5) => __awaiter(this, void 0, void 0, function* () {
             let beta = [];
             let sum = 0;
             for (let d of holdings) {
-                beta.push([yield this.computeSecurityBeta(d.security_id, benchmark_id, daysPrior), d.value]);
+                beta.push([yield this.computeSecurityBeta(d.securityId, benchmarkId, daysPrior), d.value]);
                 sum += d.value;
             }
             let weighted_beta = 0;
@@ -521,21 +526,16 @@ class PortfolioSummaryService {
             }
             return weighted_beta;
         });
-        this.computeCovariance = (arr1, arr2, n) => {
-            let sum = 0;
-            let mean_arr1 = (0, mathjs_1.mean)(arr1);
-            let mean_arr2 = (0, mathjs_1.mean)(arr2);
-            for (let i = 0; i < n; i++) {
-                sum += (arr1[i] - mean_arr1) * (arr2[i] - mean_arr2);
-            }
-            return sum / (n - 1);
-        };
-        this.computeSharpe = (stockHPRs) => {
-            return 0;
+        this.computeSharpe = (holdingsReturns) => {
+            const returns = holdingsReturns.map(a => a.return);
+            const meanReturn = (0, mathjs_1.mean)(returns);
+            const stdReturn = (0, mathjs_1.std)(returns);
+            // @ts-ignore
+            return meanReturn / stdReturn;
         };
         this.computeSectorAllocations = (holdings) => __awaiter(this, void 0, void 0, function* () {
-            let security_ids = holdings.map(a => a.security_id);
-            let securities = yield this.repository.getSecurities(security_ids);
+            let securityIds = holdings.map(a => a.securityId);
+            let securities = yield this.repository.getSecurities(securityIds);
             let sectorAllocations = [];
             const portfolioSum = holdings.reduce((res, value) => {
                 return res + value.value;
@@ -543,7 +543,7 @@ class PortfolioSummaryService {
             let sector;
             let i;
             for (let d of holdings) {
-                let secInfo = securities.find(a => a.id === d.security_id);
+                let secInfo = securities.find(a => a.id === d.securityId);
                 if (!secInfo) {
                     sector = 'n/a';
                 }
@@ -571,10 +571,10 @@ class PortfolioSummaryService {
             let total = 0;
             for (let d of holdings) {
                 total += d.value;
-                if (d.security_id === 26830) { // cash 
+                if (d.securityId === 26830) { // cash 
                     continue;
                 }
-                gross += mathjs_1.default.abs(d.value);
+                gross += (0, mathjs_1.abs)(d.value);
                 net += d.value;
                 if (d.value > 0) {
                     long += d.value;
@@ -590,18 +590,20 @@ class PortfolioSummaryService {
             if (!account_group) {
                 return null;
             }
-            const holdings = yield this.repository.getTradingPostCurrnetHoldingsByAccountGroup(account_group.account_group_id);
-            const beta = yield this.computeAccountGroupBeta(account_group.account_group_id, account_group.default_benchmark_id);
-            const allocations = yield this.computeSectorAllocations(holdings);
-            const exposure = this.computeExposure(holdings);
+            const currentHoldings = yield this.repository.getTradingPostCurrnetHoldingsByAccountGroup(account_group.accountGroupId);
+            const returns = yield this.repository.getTradingPostAccountGroupReturns(account_group.accountGroupId, startDate, endDate);
+            const beta = yield this.computeAccountGroupBeta(currentHoldings, account_group.defaultBenchmarkId);
+            const sharpe = this.computeSharpe(returns);
+            const allocations = yield this.computeSectorAllocations(currentHoldings);
+            const exposure = this.computeExposure(currentHoldings);
             let stats = {
-                account_group_id: account_group.account_group_id,
+                accountGroupId: account_group.accountGroupId,
                 beta: beta,
-                sharpe: 0,
-                industry_allocation: allocations,
+                sharpe: sharpe,
+                industryAllocations: allocations,
                 exposure: exposure,
-                date: luxon_1.DateTime.now(),
-                benchmark_id: account_group.default_benchmark_id
+                date: returns[returns.length - 1].date,
+                benchmarkId: account_group.defaultBenchmarkId
             };
             return stats;
         });
