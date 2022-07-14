@@ -10,10 +10,13 @@ export const hashPass = (pass: string, salt: string) => {
     return salt + pbkdf2Sync(pass, Buffer.from(salt), 100000, 128, 'sha512').toString("base64");
 }
 
-
+const makeUserToken = async (user_id: string) => {
+    const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
+    return jwt.sign({}, authKey, { subject: user_id });
+}
 //return token
 export const loginPass = async (email: string, pass: string, csrf: string) => {
-
+    console.log(`${email}::::${pass}`);
     const saltResult = await execProc<LoginResult>("tp.api_local_login_get", { data: { email } })
 
     if (!saltResult.length)
@@ -41,12 +44,11 @@ export const loginPass = async (email: string, pass: string, csrf: string) => {
     else {
         token = jwt.sign({ claims: { email } }, authKey)
     }
-    console.log("AUTH KEY IS " + authKey);
-    console.log("TOKEN IS :::" + token);
+
     return {
         ...login,
-        token,
-    };
+        token
+    } as LoginResult;
 }
 
 export const loginToken = async (token: string) => {
@@ -56,8 +58,9 @@ export const loginToken = async (token: string) => {
     //TODO check CSRF token
     return {
         verified: Boolean(info.sub),
-        token
-    }
+        token,
+        user_id: info.sub
+    } as LoginResult
 
     //await execProcOne("public.api_api_user_get", { user_id: info.sub, data: { id: info.sub } });
 }
@@ -78,7 +81,7 @@ export const createLogin = async (email: string, password: string) => {
 
     const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
     const token = jwt.sign({ claims: { email } }, authKey)
-    console.log("CREATE WITH TOKEN" + token)
+
     return {
         token
     }
@@ -91,7 +94,13 @@ export const createUser = async (data: {
     handle: string
 }) => {
 
-    return await execProc("tp.api_local_login_create_user", {
+    const [newUser] = await execProc<{ user_id: string }>("tp.api_local_login_create_user", {
         data
     });
+
+    return {
+        verified: true,
+        token: await makeUserToken(newUser.user_id),
+        user_id: newUser.user_id
+    } as LoginResult
 }

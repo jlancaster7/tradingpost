@@ -6,8 +6,8 @@ class PlatformClaimApi extends EntityApi_1.EntityApi {
         super(...arguments);
         this.getFunction = "public.api_platform_claim_get";
         this.listFunction = "public.api_platform_claim_list";
-        this.insertFunction = "public.api_platform_claim_insert";
-        this.updateFunction = "public.api_platform_claim_update";
+        this.insertFunction = '';
+        this.updateFunction = '';
         /*extensions*/
     }
 }

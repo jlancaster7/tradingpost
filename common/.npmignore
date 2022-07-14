@@ -3,3 +3,5 @@
 
 # include the .d.ts files
 !*.d.ts
+#ignore "private" files and folders for pack
+_*

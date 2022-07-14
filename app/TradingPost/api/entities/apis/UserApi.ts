@@ -1,10 +1,10 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { IUserGet,IUserList } from '../interfaces'
-class UserApi extends EntityApi<IUserGet,IUserList,any,any> {
-    getFunction = "public.api_user_get";
-    listFunction = "public.api_user_list";
-    insertFunction = "public.api_user_insert";
-    updateFunction = "public.api_user_update";
+class UserApi extends EntityApi<IUserGet,IUserList,never,never> {
+    protected getFunction = "public.api_user_get";
+    protected listFunction = "public.api_user_list";
+    protected insertFunction = '';
+    protected updateFunction = '';
     /*extensions*/
 }
 export default new UserApi();

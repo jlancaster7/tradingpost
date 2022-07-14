@@ -6,8 +6,8 @@ class UserApi extends EntityApi_1.EntityApi {
         super(...arguments);
         this.getFunction = "public.api_user_get";
         this.listFunction = "public.api_user_list";
-        this.insertFunction = "public.api_user_insert";
-        this.updateFunction = "public.api_user_update";
+        this.insertFunction = '';
+        this.updateFunction = '';
         /*extensions*/
     }
 }

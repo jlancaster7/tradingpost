@@ -22,8 +22,13 @@ const hashPass = (pass, salt) => {
     return salt + (0, crypto_1.pbkdf2Sync)(pass, Buffer.from(salt), 100000, 128, 'sha512').toString("base64");
 };
 exports.hashPass = hashPass;
+const makeUserToken = (user_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const authKey = yield configuration_1.DefaultConfig.fromCacheOrSSM("authkey");
+    return jsonwebtoken_1.default.sign({}, authKey, { subject: user_id });
+});
 //return token
 const loginPass = (email, pass, csrf) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(`${email}::::${pass}`);
     const saltResult = yield (0, pool_1.execProc)("tp.api_local_login_get", { data: { email } });
     if (!saltResult.length)
         throw new EntityApiBase_1.PublicError(`User '${email}' does not exists or invalid password`, 401);
@@ -44,8 +49,6 @@ const loginPass = (email, pass, csrf) => __awaiter(void 0, void 0, void 0, funct
     else {
         token = jsonwebtoken_1.default.sign({ claims: { email } }, authKey);
     }
-    console.log("AUTH KEY IS " + authKey);
-    console.log("TOKEN IS :::" + token);
     return Object.assign(Object.assign({}, login), { token });
 });
 exports.loginPass = loginPass;
@@ -56,7 +59,8 @@ const loginToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
     //TODO check CSRF token
     return {
         verified: Boolean(info.sub),
-        token
+        token,
+        user_id: info.sub
     };
     //await execProcOne("public.api_api_user_get", { user_id: info.sub, data: { id: info.sub } });
 });
@@ -71,15 +75,19 @@ const createLogin = (email, password) => __awaiter(void 0, void 0, void 0, funct
     });
     const authKey = yield configuration_1.DefaultConfig.fromCacheOrSSM("authkey");
     const token = jsonwebtoken_1.default.sign({ claims: { email } }, authKey);
-    console.log("CREATE WITH TOKEN" + token);
     return {
         token
     };
 });
 exports.createLogin = createLogin;
 const createUser = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield (0, pool_1.execProc)("tp.api_local_login_create_user", {
+    const [newUser] = yield (0, pool_1.execProc)("tp.api_local_login_create_user", {
         data
     });
+    return {
+        verified: true,
+        token: yield makeUserToken(newUser.user_id),
+        user_id: newUser.user_id
+    };
 });
 exports.createUser = createUser;

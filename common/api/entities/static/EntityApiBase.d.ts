@@ -1,3 +1,9 @@
+declare let apiBaseUrl: string;
+declare let versionCode: string;
+export declare const configApi: (settings: {
+    versionCode?: string;
+    apiBaseUrl?: string;
+}) => void;
 declare type ValidationErrorData<T> = Record<Partial<keyof T>, string>;
 export declare class PublicError extends Error {
     statusCode: number;
@@ -15,7 +21,7 @@ export declare abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
         Authorization: string;
     };
     static handleFetchResponse<T>(resp: Response): Promise<T>;
-    makeUrl: (id?: string | number | undefined) => string;
+    makeUrl: (id?: string | number) => string;
     get(id: string | number): Promise<TGet>;
     list(): Promise<TList[]>;
     insert(item: TInsert): Promise<TGet>;

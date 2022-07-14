@@ -108,7 +108,7 @@ export interface IUserList {
     handle: string,
     tags: string[],
     display_name: string,
-    profile_url: string
+    profile_url?: string
     };
 
 export interface IUserGet {
@@ -121,6 +121,55 @@ export interface IUserGet {
     display_name: string,
     first_name: string,
     last_name: string,
-    profile_url: string,
+    profile_url?: string,
     banner_url?: string
     };
+
+export interface IWatchlistList {
+        id: number,
+    name: string,
+    note?: string,
+    item_count: string,
+    user: IUserList[],
+    type: string
+    };
+
+export interface IWatchlistGet {
+        user: IUserList[],
+    items: IWatchlistItemList[],
+    note?: string,
+    name: string,
+    id: number,
+    type: string
+    };
+
+export interface IWatchlistInsert {
+        name: string,
+    note?: string,
+    items: Omit<IWatchlistItemList,'watchlist_id'|'id'>[],
+    type: string
+    };
+
+export interface IWatchlistUpdate {
+        id: number,
+    name: string,
+    note?: string,
+    items: Omit<IWatchlistItemList,'watchlist_id'|'id'>[],
+    type: string
+    };
+
+export interface IWatchlistItemList {
+        id: number,
+    symbol: string,
+    watchlist_id: number,
+    note?: string
+    };
+
+export interface IWatchlistItemGet {
+        id: number,
+    symbol: string,
+    watchlist_id: number,
+    note?: string
+    };
+
+export * from '../static/interfaces'

@@ -1,5 +1,5 @@
 import { SSM } from '@aws-sdk/client-ssm';
-declare type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack";
+declare type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid";
 interface ConfigPaths extends Record<ConfigKeys, unknown> {
     elastic: {
         cloudId: string;
@@ -51,20 +51,27 @@ interface ConfigPaths extends Record<ConfigKeys, unknown> {
         clientId: string;
     };
     substack: {};
+    sendgrid: {
+        key: string;
+    };
 }
-export declare type ConfigurationEnv = "production" | "development";
+export declare type ConfigurationEnv = "production" | "development" | "automation";
 declare type ConfigOptions = {
     raw: boolean;
     maxCacheDuration?: number;
 };
-export declare class Configuration {
+export declare class Configuration<K extends Record<string, any>> {
     private ssmClient;
     private environment;
     private isCacheEnabled;
     private cache;
-    constructor(ssmClient: SSM, environment?: ConfigurationEnv, enableCache?: any);
-    fromSSM: <T extends keyof ConfigPaths>(path: T, options?: ConfigOptions | undefined) => Promise<ConfigPaths[T]>;
-    fromCacheOrSSM: <T extends keyof ConfigPaths>(path: T) => Promise<ConfigPaths[T]>;
+    private defaultOptions;
+    constructor(ssmClient: SSM, defaultOptions?: Configuration<K>["defaultOptions"], environment?: ConfigurationEnv, enableCache?: any);
+    fromSSM: <T extends keyof K>(path: T, options?: ConfigOptions) => Promise<K[T]>;
+    fromCacheOrSSM: <T extends keyof K>(path: T) => Promise<K[T]>;
 }
-export declare const DefaultConfig: Configuration;
+export declare const DefaultConfig: Configuration<ConfigPaths>;
+export declare const AutomationConfig: Configuration<{
+    npm_key: string;
+}>;
 export {};

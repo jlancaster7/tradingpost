@@ -1,10 +1,10 @@
 import { EntityApi } from '../static/EntityApi'
 import { IBookmarkGet,IBookmarkList } from '../interfaces'
-class BookmarkApi extends EntityApi<IBookmarkGet,IBookmarkList,any,any> {
-    getFunction = "public.api_bookmark_get";
-    listFunction = "public.api_bookmark_list";
-    insertFunction = "public.api_bookmark_insert";
-    updateFunction = "public.api_bookmark_update";
+class BookmarkApi extends EntityApi<IBookmarkGet,IBookmarkList,never,never> {
+    protected getFunction = "public.api_bookmark_get";
+    protected listFunction = "public.api_bookmark_list";
+    protected insertFunction = '';
+    protected updateFunction = '';
     /*extensions*/
 }
 export default new BookmarkApi();

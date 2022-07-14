@@ -1,10 +1,10 @@
-import { EntityApi } from './EntityApi'
+import { EntityApi } from '../static/EntityApi'
 import { IPlatformClaimGet,IPlatformClaimList } from '../interfaces'
-class PlatformClaimApi extends EntityApi<IPlatformClaimGet,IPlatformClaimList,any,any> {
-    getFunction = "public.api_platform_claim_get";
-    listFunction = "public.api_platform_claim_list";
-    insertFunction = "public.api_platform_claim_insert";
-    updateFunction = "public.api_platform_claim_update";
+class PlatformClaimApi extends EntityApi<IPlatformClaimGet,IPlatformClaimList,never,never> {
+    protected getFunction = "public.api_platform_claim_get";
+    protected listFunction = "public.api_platform_claim_list";
+    protected insertFunction = '';
+    protected updateFunction = '';
     /*extensions*/
 }
 export default new PlatformClaimApi();

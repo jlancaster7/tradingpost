@@ -106,3 +106,45 @@ export interface IUserGet {
     profile_url?: string;
     banner_url?: string;
 }
+export interface IWatchlistList {
+    id: number;
+    name: string;
+    note?: string;
+    item_count: string;
+    user: string;
+    type: string;
+}
+export interface IWatchlistGet {
+    user: string;
+    items: IWatchlistItemList[];
+    note?: string;
+    name: string;
+    id: number;
+    type: string;
+}
+export interface IWatchlistInsert {
+    name: string;
+    note?: string;
+    items: Omit<IWatchlistItemList, 'watchlist_id' | 'id'>[];
+    type: string;
+}
+export interface IWatchlistUpdate {
+    id: number;
+    name: string;
+    note?: string;
+    items: Omit<IWatchlistItemList, 'watchlist_id' | 'id'>[];
+    type: string;
+}
+export interface IWatchlistItemList {
+    id: number;
+    symbol: string;
+    watchlist_id: number;
+    note?: string;
+}
+export interface IWatchlistItemGet {
+    id: number;
+    symbol: string;
+    watchlist_id: number;
+    note?: string;
+}
+export * from '../static/interfaces';
