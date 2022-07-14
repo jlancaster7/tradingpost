@@ -260,3 +260,7 @@ CREATE TABLE user_device
 );
 
 CREATE UNIQUE INDEX user_devices_user_id_device_id_idx ON user_device (user_id, device_id);
+
+CREATE INDEX securities_exchange_idx ON securities(exchange);
+
+CREATE INDEX security_exchange_idx ON security(exchange);

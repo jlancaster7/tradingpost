@@ -7,7 +7,7 @@ import {
     getExchange,
     addExchange,
     upsertSecuritiesInformation,
-    addSecurityPrice, addIexSecurity, getIexSecurityBySymbol
+    addSecurityPrice, addIexSecurity, getIexSecurityBySymbol, getSecurityWithLatestPrice
 } from "./interfaces";
 
 import {ColumnSet, IDatabase, IMain} from 'pg-promise';
@@ -29,6 +29,83 @@ export class Repository {
         ], {table: 'security_price'})
         const query = this.pgp.helpers.insert(securityPrices, cs);
         await this.db.none(query);
+    }
+
+    getUsExchangedListSecuritiesWithPricing = async (): Promise<getSecurityWithLatestPrice[]> => {
+        const data = await this.db.query(`
+            WITH latest_pricing AS (SELECT sp.security_id,
+                                           sp.time,
+                                           sp.price
+                                    FROM security_prices sp
+                                             INNER JOIN (SELECT security_id,
+                                                                max(time) time
+                                                         FROM security_prices
+                                                         GROUP BY security_id) AS max_prices
+                                                        ON
+                                                                    max_prices.security_id =
+                                                                    sp.security_id
+                                                                AND max_prices.time =
+                                                                    sp.time)
+            SELECT id,
+                   symbol,
+                   company_name,
+                   exchange,
+                   industry,
+                   website,
+                   description,
+                   ceo,
+                   security_name,
+                   issue_type,
+                   sector,
+                   primary_sic_code,
+                   employees,
+                   tags,
+                   address,
+                   address2,
+                   state,
+                   zip,
+                   country,
+                   phone,
+                   logo_url,
+                   last_updated,
+                   created_at,
+                   lp.time  latest_time,
+                   lp.price latest_price
+            FROM securities s
+                     LEFT JOIN
+                 latest_pricing lp ON
+                     lp.security_id = s.id
+            WHERE exchange NOT LIKE '%OTC%';`)
+        return data.map((row: any) => {
+            let obj: getSecurityWithLatestPrice = {
+                id: row.id,
+                symbol: row.symbol,
+                companyName: row.company_name,
+                exchange: row.exchange,
+                industry: row.industry,
+                website: row.website,
+                description: row.description,
+                ceo: row.ceo,
+                securityName: row.security_name,
+                issueType: row.issue_type,
+                sector: row.sector,
+                primarySicCode: row.primary_sic_code,
+                employees: row.employees,
+                tags: row.tags,
+                address: row.address,
+                address2: row.address2,
+                state: row.state,
+                zip: row.zip,
+                country: row.country,
+                phone: row.phone,
+                logoUrl: row.logoUrl,
+                lastUpdated: DateTime.fromJSDate(row.last_updated),
+                createdAt: DateTime.fromJSDate(row.created_at),
+                latestTime: DateTime.fromJSDate(row.latest_time),
+                latestPrice: row.latest_price
+            }
+            return obj
+        })
     }
 
     getUSExchangeListedSecurities = async (): Promise<getSecurityBySymbol[]> => {

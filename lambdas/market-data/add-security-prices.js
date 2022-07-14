@@ -57,8 +57,10 @@ const start = (marketService, repository, iex) => __awaiter(void 0, void 0, void
     const isTradingDay = yield marketService.isTradingDay(d);
     if (!isTradingDay)
         return;
-    const securities = yield repository.getUSExchangeListedSecurities();
+    const securities = yield repository.getUsExchangedListSecuritiesWithPricing();
     const securityGroups = buildGroups(securities);
+    const securitiesMap = {};
+    securities.forEach((sec) => securitiesMap[sec.symbol] = sec);
     const currentTime = d.toJSDate();
     for (let i = 0; i < securityGroups.length; i++) {
         let securityGroup = securityGroups[i];
@@ -67,11 +69,21 @@ const start = (marketService, repository, iex) => __awaiter(void 0, void 0, void
         let securityPrices = [];
         securityGroup.forEach(sec => {
             const { symbol, id } = sec;
-            if (response[symbol] === undefined || response[symbol] === null)
+            if (response[symbol] === undefined || response[symbol] === null) {
+                const s = securitiesMap[symbol];
+                if (s.latestPrice === undefined || s.latestPrice === null)
+                    return;
+                securityPrices.push({ price: s.latestPrice, securityId: id, time: currentTime });
                 return;
+            }
             const quote = response[symbol].quote;
-            if (quote.latestPrice === undefined || quote.latestPrice === null)
+            if (quote.latestPrice === undefined || quote.latestPrice === null) {
+                const s = securitiesMap[symbol];
+                if (s.latestPrice === undefined || s.latestPrice === null)
+                    return;
+                securityPrices.push({ price: s.latestPrice, securityId: id, time: currentTime });
                 return;
+            }
             securityPrices.push({ price: quote.latestPrice, securityId: id, time: currentTime });
         });
         yield repository.addSecuritiesPrices(securityPrices);

@@ -51,6 +51,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     const iex = new iex_1.default(iexConfiguration.key);
     yield pgClient.connect();
     const repository = new repository_1.Repository(pgClient, pgp);
+    // TODO: If Friday pull in prices....
     try {
         yield start(repository, iex);
     }

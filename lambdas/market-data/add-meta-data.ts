@@ -59,6 +59,8 @@ const run = async () => {
     await pgClient.connect();
     const repository = new Repository(pgClient, pgp);
 
+    // TODO: If Friday pull in prices....
+
     try {
         await start(repository, iex)
     } catch (e) {

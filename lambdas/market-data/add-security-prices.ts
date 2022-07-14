@@ -2,7 +2,7 @@ import 'dotenv/config'
 import {Context} from 'aws-lambda';
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Repository} from "../../services/market-data/repository";
-import {addSecurityPrice, getSecurityBySymbol} from '../../services/market-data/interfaces';
+import {addSecurityPrice, getSecurityBySymbol, getSecurityWithLatestPrice} from '../../services/market-data/interfaces';
 import IEX, {GetQuote} from "@tradingpost/common/iex";
 import {DateTime} from "luxon";
 import Index from "../../services/market-data";
@@ -51,22 +51,39 @@ const start = async (marketService: Index, repository: Repository, iex: IEX) => 
     const isTradingDay = await marketService.isTradingDay(d);
     if (!isTradingDay) return;
 
-    const securities = await repository.getUSExchangeListedSecurities();
+    const securities = await repository.getUsExchangedListSecuritiesWithPricing();
     const securityGroups: getSecurityBySymbol[][] = buildGroups(securities);
+
+    const securitiesMap: Record<string, getSecurityWithLatestPrice> = {};
+    securities.forEach((sec: getSecurityWithLatestPrice) => securitiesMap[sec.symbol] = sec)
 
     const currentTime = d.toJSDate();
     for (let i = 0; i < securityGroups.length; i++) {
         let securityGroup = securityGroups[i];
         const symbols = securityGroup.map(sec => sec.symbol);
         const response = await iex.bulk(symbols, ["quote"]);
+
         let securityPrices: addSecurityPrice[] = [];
         securityGroup.forEach(sec => {
             const {symbol, id} = sec;
-            if (response[symbol] === undefined || response[symbol] === null) return;
+            if (response[symbol] === undefined || response[symbol] === null) {
+                const s = securitiesMap[symbol]
+                if (s.latestPrice === undefined || s.latestPrice === null) return
+                securityPrices.push({price: s.latestPrice, securityId: id, time: currentTime});
+                return;
+            }
+
             const quote = (response[symbol].quote as GetQuote)
-            if (quote.latestPrice === undefined || quote.latestPrice === null) return;
+            if (quote.latestPrice === undefined || quote.latestPrice === null) {
+                const s = securitiesMap[symbol]
+                if (s.latestPrice === undefined || s.latestPrice === null) return
+                securityPrices.push({price: s.latestPrice, securityId: id, time: currentTime});
+                return;
+            }
+
             securityPrices.push({price: quote.latestPrice, securityId: id, time: currentTime})
         });
+
         await repository.addSecuritiesPrices(securityPrices);
     }
 }

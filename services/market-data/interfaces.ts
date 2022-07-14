@@ -121,6 +121,34 @@ export interface getUSExchangeHoliday {
     CreatedAt: DateTime
 }
 
+export interface getSecurityWithLatestPrice {
+    id: number
+    symbol: string
+    companyName: string
+    exchange: string
+    industry: string
+    website: string
+    description: string
+    ceo: string
+    securityName: string
+    issueType: string
+    sector: string
+    primarySicCode: string
+    employees: string
+    tags: string[]
+    address: string
+    address2: string
+    state: string
+    zip: string
+    country: string
+    phone: string
+    logoUrl: string
+    lastUpdated: DateTime
+    createdAt: DateTime
+    latestTime: DateTime
+    latestPrice: number
+}
+
 export interface getSecurityBySymbol {
     id: number
     symbol: string
