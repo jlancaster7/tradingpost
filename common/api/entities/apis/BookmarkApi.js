@@ -6,8 +6,8 @@ class BookmarkApi extends EntityApi_1.EntityApi {
         super(...arguments);
         this.getFunction = "public.api_bookmark_get";
         this.listFunction = "public.api_bookmark_list";
-        this.insertFunction = "public.api_bookmark_insert";
-        this.updateFunction = "public.api_bookmark_update";
+        this.insertFunction = '';
+        this.updateFunction = '';
         /*extensions*/
     }
 }

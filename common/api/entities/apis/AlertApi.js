@@ -6,8 +6,8 @@ class AlertApi extends EntityApi_1.EntityApi {
         super(...arguments);
         this.getFunction = "public.api_alert_get";
         this.listFunction = "public.api_alert_list";
-        this.insertFunction = "public.api_alert_insert";
-        this.updateFunction = "public.api_alert_update";
+        this.insertFunction = '';
+        this.updateFunction = '';
         /*extensions*/
     }
 }

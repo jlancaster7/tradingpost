@@ -1,6 +1,6 @@
 import { EntityApi } from '../static/EntityApi';
 import { ICommentGet, ICommentList } from '../interfaces';
-declare class CommentApi extends EntityApi<ICommentGet, ICommentList, any, any> {
+declare class CommentApi extends EntityApi<ICommentGet, ICommentList, never, never> {
     protected getFunction: string;
     protected listFunction: string;
     protected insertFunction: string;

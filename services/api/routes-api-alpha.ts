@@ -54,9 +54,29 @@ const makeRoute = (path: string, action: (req: Express.Request, res: Express.Res
         }
     })
 
+function resolver(...path: string[]) {
+    const output = path.find(p => {
+        try {
+            require.resolve(p)
+            return true;
+        }
+        catch (ex) {
+            return false
+        }
+    });
+    if (!output)
+        throw new Error("Not path could be resolved ");
+    return output;
+}
+
 const sharedHandler = async (req: Express.Request, routeDetails: (entity: EntityApi<any, any, any, any>) => Promise<void>) => {
-    const reqPath = join(`@tradingpost/common/api/entities/apis/${req.params.entity}`),
-        entity = require(reqPath).default;
+    //For efficiency I will generate everything in "/api". For now doing a lookup to both
+    const entity =
+        require(
+            resolver(
+                join(`@tradingpost/common/api/entities/apis/${req.params.entity}`),
+                join(`@tradingpost/common/api/entities/static/${req.params.entity}`)))
+            .default;
     return await routeDetails(entity);
 }
 

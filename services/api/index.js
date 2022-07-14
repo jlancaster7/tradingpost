@@ -9,9 +9,11 @@ var express_1 = __importDefault(require("express"));
 var body_parser_1 = __importDefault(require("body-parser"));
 var routes_api_alpha_1 = __importDefault(require("./routes-api-alpha"));
 var cors_1 = __importDefault(require("cors"));
+var healthcheck_1 = require("./healthcheck");
 //fromWebToken()
 var app = (0, express_1.default)();
 var port = process.env.PORT || 8082; // default port to listen
+app.get("/", healthcheck_1.healthCheck);
 app.use((0, cors_1.default)());
 app.use(body_parser_1.default.json());
 app.use(function (req, res, next) {
@@ -25,6 +27,5 @@ app.use("/alpha", routes_api_alpha_1.default);
 app.listen(port, function () {
     // tslint:disable-next-line:no-console
     console.log("API Server has been started at http://localhost:".concat(port));
-    console.log("WTF");
     console.log(process.env.CONFIGURATION_ENV);
 });

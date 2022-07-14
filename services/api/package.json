@@ -17,6 +17,7 @@
   },
   "scripts": {
     "start": "node ./",
-    "build-start":"tsc -b ../../common && tsc && node ./"
+    "dev":"tsc -b ../../common && tsc && node ./",
+    "deploy":"tsc && eb deploy"
   }
 }

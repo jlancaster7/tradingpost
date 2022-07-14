@@ -9,23 +9,45 @@ class EntityApi extends EntityApiBase_1.EntityApiBase {
         super(...arguments);
         this.internal = new class {
             constructor(parent) {
-                this.list = () => (0, pool_1.execProc)(this.parent.listFunction);
-                this.get = (id) => {
-                    return (0, pool_1.execProcOne)(this.parent.getFunction, {
-                        data: { id }
-                    });
+                this.list = () => {
+                    if (!this.list) {
+                        throw {
+                            message: "List is not implemented on this api"
+                        };
+                    }
+                    return pool_1.execProc(this.parent.listFunction);
                 };
-                this.update = (id, update) => {
+                this.get = (id, settings) => {
+                    if (!this.get) {
+                        throw {
+                            message: "Get is not implemented on this api"
+                        };
+                    }
+                    return pool_1.execProcOne(this.parent.getFunction, Object.assign(Object.assign({}, settings), { data: { id } }));
+                };
+                this.update = (id, update, settings) => {
+                    if (!this.update) {
+                        throw {
+                            message: "Update is not implemented on this api"
+                        };
+                    }
                     const errs = this.parent.validate(false);
+                    //Need to change this
                     if (errs)
-                        throw (0, errors_1.makeError)("VALIDATION_ERROR", errs);
-                    return (0, pool_1.execProcOne)(this.parent.updateFunction, { data: Object.assign({ id }, update) });
+                        throw errors_1.makeError("VALIDATION_ERROR", errs);
+                    return pool_1.execProcOne(this.parent.updateFunction, Object.assign(Object.assign({}, settings), { data: Object.assign({ id }, update) }));
                 };
-                this.insert = (insert) => {
+                this.insert = (insert, settings) => {
+                    if (!this.insert) {
+                        throw {
+                            message: "Insert is not implemented on this api"
+                        };
+                    }
                     const errs = this.parent.validate(true);
+                    //Need to change this
                     if (errs)
-                        throw (0, errors_1.makeError)("VALIDATION_ERROR", errs);
-                    return (0, pool_1.execProcOne)(this.parent.insertFunction, { data: insert });
+                        throw errors_1.makeError("VALIDATION_ERROR", errs);
+                    return pool_1.execProcOne(this.parent.insertFunction, Object.assign(Object.assign({}, settings), { data: insert }));
                 };
                 this.parent = parent;
             }

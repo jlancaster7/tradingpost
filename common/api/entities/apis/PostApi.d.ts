@@ -1,6 +1,6 @@
 import { EntityApi } from '../static/EntityApi';
 import { IPostGet, IPostList } from '../interfaces';
-declare class PostApi extends EntityApi<IPostGet, IPostList, any, any> {
+declare class PostApi extends EntityApi<IPostGet, IPostList, never, never> {
     protected getFunction: string;
     protected listFunction: string;
     protected insertFunction: string;

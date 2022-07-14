@@ -4,10 +4,13 @@ import express from 'express'
 import bodyParser from 'body-parser';
 import api from './routes-api-alpha'
 import cors from 'cors'
+import { healthCheck } from './healthcheck'
 //fromWebToken()
 
 const app = express();
 const port = process.env.PORT || 8082; // default port to listen
+
+app.get("/", healthCheck);
 
 app.use(cors())
 app.use(bodyParser.json())
@@ -23,6 +26,5 @@ app.use("/alpha", api);
 app.listen(port, () => {
     // tslint:disable-next-line:no-console
     console.log(`API Server has been started at http://localhost:${port}`);
-    console.log(`WTF`);
     console.log(process.env.CONFIGURATION_ENV)
 });

@@ -1,5 +1,11 @@
-const apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8082";
-const versionCode = process.env.API_VERSION_CODE || "alpha"
+let apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8082";
+let versionCode = process.env.API_VERSION_CODE || "alpha"
+
+
+export const configApi = (settings: { versionCode?: string, apiBaseUrl?: string }) => {
+    apiBaseUrl = settings.apiBaseUrl || apiBaseUrl;
+    versionCode = settings.versionCode || versionCode;
+}
 
 type ValidationErrorData<T> = Record<Partial<keyof T>, string>;
 
@@ -21,7 +27,9 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
     //abstract deleteFunction: string;
     protected abstract getFunction: string;
     protected abstract listFunction: string;
+
     static token: string
+
     static makeHeaders<T>() {
         return {
             'Content-Type': 'application/json',

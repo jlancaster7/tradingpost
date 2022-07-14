@@ -16,7 +16,7 @@ const makeUserToken = async (user_id: string) => {
 }
 //return token
 export const loginPass = async (email: string, pass: string, csrf: string) => {
-
+    console.log(`${email}::::${pass}`);
     const saltResult = await execProc<LoginResult>("tp.api_local_login_get", { data: { email } })
 
     if (!saltResult.length)
@@ -81,7 +81,7 @@ export const createLogin = async (email: string, password: string) => {
 
     const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
     const token = jwt.sign({ claims: { email } }, authKey)
-    
+
     return {
         token
     }
@@ -103,5 +103,4 @@ export const createUser = async (data: {
         token: await makeUserToken(newUser.user_id),
         user_id: newUser.user_id
     } as LoginResult
-
 }

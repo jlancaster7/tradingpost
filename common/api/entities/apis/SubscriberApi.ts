@@ -1,10 +1,10 @@
 import { EntityApi } from '../static/EntityApi'
 import { ISubscriberGet,ISubscriberList } from '../interfaces'
-class SubscriberApi extends EntityApi<ISubscriberGet,ISubscriberList,any,any> {
+class SubscriberApi extends EntityApi<ISubscriberGet,ISubscriberList,never,never> {
     protected getFunction = "public.api_subscriber_get";
     protected listFunction = "public.api_subscriber_list";
-    protected insertFunction = "public.api_subscriber_insert";
-    protected updateFunction = "public.api_subscriber_update";
+    protected insertFunction = '';
+    protected updateFunction = '';
     /*extensions*/
 }
 export default new SubscriberApi();

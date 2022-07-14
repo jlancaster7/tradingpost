@@ -1,6 +1,6 @@
 import { EntityApi } from '../static/EntityApi';
 import { IPlatformClaimGet, IPlatformClaimList } from '../interfaces';
-declare class PlatformClaimApi extends EntityApi<IPlatformClaimGet, IPlatformClaimList, any, any> {
+declare class PlatformClaimApi extends EntityApi<IPlatformClaimGet, IPlatformClaimList, never, never> {
     protected getFunction: string;
     protected listFunction: string;
     protected insertFunction: string;

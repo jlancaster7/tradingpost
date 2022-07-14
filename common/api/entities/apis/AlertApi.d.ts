@@ -1,6 +1,6 @@
 import { EntityApi } from '../static/EntityApi';
 import { IAlertGet, IAlertList } from '../interfaces';
-declare class AlertApi extends EntityApi<IAlertGet, IAlertList, any, any> {
+declare class AlertApi extends EntityApi<IAlertGet, IAlertList, never, never> {
     protected getFunction: string;
     protected listFunction: string;
     protected insertFunction: string;

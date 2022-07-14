@@ -1,6 +1,6 @@
 import { EntityApi } from '../static/EntityApi';
 import { IBookmarkGet, IBookmarkList } from '../interfaces';
-declare class BookmarkApi extends EntityApi<IBookmarkGet, IBookmarkList, any, any> {
+declare class BookmarkApi extends EntityApi<IBookmarkGet, IBookmarkList, never, never> {
     protected getFunction: string;
     protected listFunction: string;
     protected insertFunction: string;

@@ -24,8 +24,9 @@ export function TextField(props: {
     spellCheck?: boolean,
     //defaulted this to false... which is the right way to to a positive assetion...  
     autoCorrect?: boolean,
-    caption?: InputProps["caption"]
-} & TextInputProps) {
+    //caption?: InputProps["caption"],
+
+} & TextInputProps & Pick<InputProps, "caption" | "accessoryLeft">) {
     const rnuRef = useRef<Input>(null);
     const [caption, setCaption] = useState<InputProps["caption"]>();
     const [valueTracker, setValueTracker] = useState<string>();
@@ -48,6 +49,7 @@ export function TextField(props: {
     //const tt = { spellCheck: true, autoCorrect:false } as TextInputProps
 
     return <Input
+
         numberOfLines={props.numberOfLines}
         spellCheck={props.spellCheck || false}
         autoCorrect={props.autoCorrect || false}
@@ -56,6 +58,7 @@ export function TextField(props: {
         //placeholder="Enter Email..."
         //validateOnChange={props.validateOnChange}
         caption={caption}
+        accessoryLeft={props.accessoryLeft}
         //validate={props.validate}
         //errorMessage={props.errorMessage}
         value={props.value}

@@ -6,8 +6,8 @@ class PostApi extends EntityApi_1.EntityApi {
         super(...arguments);
         this.getFunction = "public.api_post_get";
         this.listFunction = "public.api_post_list";
-        this.insertFunction = "public.api_post_insert";
-        this.updateFunction = "public.api_post_update";
+        this.insertFunction = '';
+        this.updateFunction = '';
         /*extensions*/
     }
 }

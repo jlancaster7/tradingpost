@@ -1,6 +1,6 @@
 import { EntityApi } from '../static/EntityApi';
 import { ISubscriberGet, ISubscriberList } from '../interfaces';
-declare class SubscriberApi extends EntityApi<ISubscriberGet, ISubscriberList, any, any> {
+declare class SubscriberApi extends EntityApi<ISubscriberGet, ISubscriberList, never, never> {
     protected getFunction: string;
     protected listFunction: string;
     protected insertFunction: string;

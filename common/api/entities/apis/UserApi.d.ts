@@ -1,6 +1,6 @@
 import { EntityApi } from '../static/EntityApi';
 import { IUserGet, IUserList } from '../interfaces';
-declare class UserApi extends EntityApi<IUserGet, IUserList, any, any> {
+declare class UserApi extends EntityApi<IUserGet, IUserList, never, never> {
     protected getFunction: string;
     protected listFunction: string;
     protected insertFunction: string;

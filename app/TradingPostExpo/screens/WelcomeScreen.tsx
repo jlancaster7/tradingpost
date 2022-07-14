@@ -1,5 +1,5 @@
 
-import React, { Children, FC, PropsWithChildren, ReactElement, useEffect, useRef } from "react";
+import React, { Children, FC, PropsWithChildren, ReactElement, useEffect, useMemo, useRef } from "react";
 //import { Text, View } from "react-native-ui-lib";
 //import { LoginButtons } from "../components/LoginButtons";
 import { AppTitle, SplashWelcome } from "../images";
@@ -21,13 +21,13 @@ import { Section } from "../components/Section";
 //import { BaseScreenProps } from "../layouts/BaseLayout";
 //import LoginScreen from "./LoginScreen";
 //import { LoginButtons } from "../components/LoginButtons";
-import Auth from '@tradingpost/common/api/entities/static/AuthApi'
-import UserApi from '@tradingpost/common/api/entities/apis/UserApi'
+//import Auth from '@tradingpost/common/api/entities/static/AuthApi'
+//import UserApi from '@tradingpost/common/api/entities/apis/UserApi'
 
 
 import { useToast } from "react-native-toast-notifications";
-import { PublicPages } from "../navigation";
-import { EntityApiBase } from "@tradingpost/common/api/entities/static/EntityApiBase";
+//import { PublicPages } from "../navigation";
+//import { EntityApiBase } from "@tradingpost/common/api/entities/static/EntityApiBase";
 import { useAppUser } from "../App";
 
 
@@ -91,8 +91,6 @@ const SvgMagic: React.FC<{ children: ReactElement<SvgProps> }> = (props) => {
 // }
 //console.log("MY app type is " + typeof AppTitle)
 
-
-
 export default ({ navigation }: { navigation: NavigationProp<any> }) => {
     const cleanUp = useRef<number>(),
         [selectedIndex, setSelectedIndex] = useState(0);
@@ -116,14 +114,14 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
 
 
 
-    console.log("WTF SELECTED INDEX IS :" + selectedIndex);
     return <><View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>
         <AppTitle style={{ marginVertical: sizes.rem1, alignSelf: "center", width: "100%", aspectRatio: 5 }} />
         <TabView
-            selectedIndex={selectedIndex === NaN ? 0 : selectedIndex}
+            selectedIndex={selectedIndex}
             onSelect={index => {
                 //TODO: investigate whats happenign here. This is not normal....            
-                setSelectedIndex(index === NaN ? 0 : index)
+                //console.log("VALUE IS BEING SET TO " + (index === NaN ? 1 : index))
+                setSelectedIndex(isNaN(index) ? 0 : index)
             }}
             style={{ width: "100%" }}
             indicatorStyle={{
@@ -131,7 +129,6 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
             }}
             tabBarStyle={{
                 height: 0,
-
             }}
         >
             <Tab>
@@ -224,7 +221,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                             }).start();
                     }
                     else {
-                        try {
+                        try { 
                             await signIn(navigation, username, password);
                         }
                         catch (ex: any) {

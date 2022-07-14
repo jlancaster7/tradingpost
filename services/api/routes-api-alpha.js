@@ -106,12 +106,31 @@ var makeRoute = function (path, action) {
         });
     }); });
 };
+function resolver() {
+    var path = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        path[_i] = arguments[_i];
+    }
+    var output = path.find(function (p) {
+        try {
+            require.resolve(p);
+            return true;
+        }
+        catch (ex) {
+            return false;
+        }
+    });
+    if (!output)
+        throw new Error("Not path could be resolved ");
+    return output;
+}
 var sharedHandler = function (req, routeDetails) { return __awaiter(void 0, void 0, void 0, function () {
-    var reqPath, entity;
+    var entity;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                reqPath = (0, path_1.join)("@tradingpost/common/api/entities/apis/".concat(req.params.entity)), entity = require(reqPath).default;
+                entity = require(resolver((0, path_1.join)("@tradingpost/common/api/entities/apis/".concat(req.params.entity)), (0, path_1.join)("@tradingpost/common/api/entities/static/".concat(req.params.entity))))
+                    .default;
                 return [4 /*yield*/, routeDetails(entity)];
             case 1: return [2 /*return*/, _a.sent()];
         }

@@ -9,9 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EntityApiBase = exports.apiUrl = exports.PublicError = void 0;
-const apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8082";
-const versionCode = process.env.API_VERSION_CODE || "alpha";
+exports.EntityApiBase = exports.apiUrl = exports.PublicError = exports.configApi = void 0;
+let apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8082";
+let versionCode = process.env.API_VERSION_CODE || "alpha";
+const configApi = (settings) => {
+    apiBaseUrl = settings.apiBaseUrl || apiBaseUrl;
+    versionCode = settings.versionCode || versionCode;
+};
+exports.configApi = configApi;
 class PublicError extends Error {
     constructor(msg, code = 400) {
         super(msg);
@@ -25,7 +30,7 @@ const apiUrl = (...paths) => {
 exports.apiUrl = apiUrl;
 class EntityApiBase {
     constructor() {
-        this.makeUrl = (id) => (0, exports.apiUrl)(...(id === undefined ? [this.constructor.name] : [this.constructor.name, id]));
+        this.makeUrl = (id) => exports.apiUrl(...(id === undefined ? [this.constructor.name] : [this.constructor.name, id]));
     }
     static makeHeaders() {
         return {

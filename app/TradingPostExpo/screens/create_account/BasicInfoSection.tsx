@@ -75,10 +75,10 @@ export function BasicInfoSection(props: CreateAccountProps) {
                         }
                         else {
                             const { token } = await Auth.createUser(props.user.data.first_name, props.user.data.last_name, props.user.data.handle);
-                            await signIn(props.navigation, "", token);
+                            //await signIn(props.navigation, "", token);
 
                             //props.next();                            
-                            props.navigation.navigate("Root");
+                            //props.navigation.navigate("Root");
                             setLockButtons(false);
                         }
 

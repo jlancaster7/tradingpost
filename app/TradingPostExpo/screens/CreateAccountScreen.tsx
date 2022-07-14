@@ -1,5 +1,5 @@
 import React, { Dispatch, ReactElement, ReactNode, Ref, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView } from 'react-native-gesture-handler';
+//import { ScrollView } from 'react-native-gesture-handler';
 import { Tab, TabBar, TabView, Text } from '@ui-kitten/components';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { SecondaryButton } from '../components/SecondaryButton';
@@ -19,6 +19,8 @@ import { NavigationProp } from '@react-navigation/native';
 import { useToast, } from 'react-native-toast-notifications'
 import { BasicInfoSection } from './create_account/BasicInfoSection';
 import { EntityApiBase } from '@tradingpost/common/api/entities/static/EntityApiBase';
+import { ProfileIconSection } from './create_account/ProfileIconSection';
+import { WatchlistSection } from '../components/WatchlistSection';
 //import { Screen } from './BaseScreen';
 
 export type CreateAccountProps = {
@@ -30,7 +32,8 @@ export type CreateAccountProps = {
     //    prompt: PromptFunc,
     setWizardIndex: Dispatch<SetStateAction<number>>,
     navigation: NavigationProp<any>
-    next(): void
+    next(): void,
+    back(): void
 };
 //export type AuthAccountProps = CreateAccountProps & { user: IEntity<IAuthenticatedUser> }
 
@@ -44,7 +47,9 @@ export const sideMargin = sizes.rem1_5;
 const screens = {
     'Login Info': AccountInfoSection,
     'Verify': () => <View><Text>Verify Your Account</Text></View>,
-    'Baisc Info': BasicInfoSection,
+    'Basic Info': BasicInfoSection,
+    'Watchlist': WatchlistSection,
+    'Profile Picture': ProfileIconSection,
     'Investment Interests': InvestmentInterestSection,
     'Content Accounts': YourContent,
     'Account Settings': AccountSettings
@@ -132,6 +137,9 @@ export default (props: any) => {
         saveOnly: false, //props.asProfile,
         next: () => {
             setWizardIndex(wizardIndex + 1);
+        },
+        back: () => {
+            setWizardIndex(Math.max(wizardIndex - 1, 1));
         },
         // componentId
     }
