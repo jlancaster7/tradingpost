@@ -1,4 +1,5 @@
 import {DateTime} from "luxon";
+import {QueryArrayConfig, QueryArrayResult, QueryConfig, QueryResult, QueryResultRow, Submittable} from "pg";
 
 export interface addSecurityPrice {
     securityId: number
@@ -120,6 +121,34 @@ export interface getUSExchangeHoliday {
     CreatedAt: DateTime
 }
 
+export interface getSecurityWithLatestPrice {
+    id: number
+    symbol: string
+    companyName: string
+    exchange: string
+    industry: string
+    website: string
+    description: string
+    ceo: string
+    securityName: string
+    issueType: string
+    sector: string
+    primarySicCode: string
+    employees: string
+    tags: string[]
+    address: string
+    address2: string
+    state: string
+    zip: string
+    country: string
+    phone: string
+    logoUrl: string
+    lastUpdated: DateTime
+    createdAt: DateTime
+    latestTime: DateTime
+    latestPrice: number
+}
+
 export interface getSecurityBySymbol {
     id: number
     symbol: string
@@ -146,6 +175,10 @@ export interface getSecurityBySymbol {
     createdAt: Date
 }
 
+export interface getIexSecurityBySymbol extends getSecurityBySymbol {
+    validated: boolean
+}
+
 export interface addSecurity {
     symbol: string
     companyName: string
@@ -169,7 +202,38 @@ export interface addSecurity {
     logoUrl: string | null
 }
 
+export interface addIexSecurity extends addSecurity {
+    validated: boolean
+}
+
 export interface addSecurityResponse {
     id: number
     symbol: string
+}
+
+export interface IDatabaseClient {
+    clean(): Promise<number | undefined>
+
+    connect(): Promise<void>
+
+    query<T extends Submittable>(queryStream: T): T;
+
+    // tslint:disable:no-unnecessary-generics
+    query<R extends any[] = any[], I extends any[] = any[]>(
+        queryConfig: QueryArrayConfig<I>,
+        values?: I,
+    ): Promise<QueryArrayResult<R>>;
+
+    query<R extends QueryResultRow = any, I extends any[] = any[]>(
+        queryConfig: QueryConfig<I>,
+    ): Promise<QueryResult<R>>;
+
+    query<R extends QueryResultRow = any, I extends any[] = any[]>(
+        queryTextOrConfig: string | QueryConfig<I>,
+        values?: I,
+    ): Promise<QueryResult<R>>;
+
+    end(): Promise<any>
+
+    on(...args: any[]): void
 }

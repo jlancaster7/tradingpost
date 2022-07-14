@@ -1,18 +1,19 @@
 import fetch from 'node-fetch';
 import format from "pg-format";
-import { Client, PoolClient } from 'pg';
-import { rawYoutubeVideo, youtubeParams, formatedYoutubeVideo } from '../interfaces/youtube';
-import { youtubeConfig } from '../interfaces/utils';
+import {rawYoutubeVideo, youtubeParams, formatedYoutubeVideo} from '../interfaces/youtube';
+import {youtubeConfig} from '../interfaces/utils';
+import {IDatabase} from "pg-promise";
 
 
 export class YoutubeVideos {
     private youtubeConfig: youtubeConfig;
-    private pg_client: Client;
+    private pg_client: IDatabase<any>;
     private youtubeUrl: string;
     public startDate: string;
     public defaultStartDateDays: number;
     private params: youtubeParams;
-    constructor(youtubeConfig: youtubeConfig, pg_client: Client) {
+
+    constructor(youtubeConfig: youtubeConfig, pg_client: IDatabase<any>) {
         this.youtubeConfig = youtubeConfig;
         this.pg_client = pg_client;
         this.youtubeUrl = "https://www.googleapis.com/youtube/v3";
@@ -32,22 +33,23 @@ export class YoutubeVideos {
 
     getStartDate = async (youtubeChannelId: string) => {
         let query = 'SELECT youtube_channel_id, MAX(created_at) FROM youtube_videos WHERE youtube_channel_id = $1 GROUP BY youtube_channel_id';
-        //console.log(youtubeChannelId);
-        let result = (await this.pg_client.query(query, [youtubeChannelId]));
+        let result = await this.pg_client.result(query, [youtubeChannelId]);
 
         if (result.rowCount === 0) {
             let defaultDate = new Date();
             defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
-            this.setStartDate(defaultDate);
+            await this.setStartDate(defaultDate);
         } else {
-            this.setStartDate(result.rows[0].max);
+            await this.setStartDate(result.rows[0].max);
         }
     }
 
     importVideos = async (youtubeChannelId: string): Promise<[formatedYoutubeVideo[], number]> => {
         let data = await this.getVideos(youtubeChannelId);
 
-        if (!data[0]) {return [[], 0];}
+        if (!data[0]) {
+            return [[], 0];
+        }
 
         let formatedData = this.formatVideos(data);
         let result = await this.appendVideos(formatedData);
@@ -55,11 +57,17 @@ export class YoutubeVideos {
     }
 
     getVideos = async (youtubeChannelId: string): Promise<rawYoutubeVideo[]> => {
-        if (this.startDate === '') {await this.getStartDate(youtubeChannelId)}
+        if (this.startDate === '') {
+            await this.getStartDate(youtubeChannelId)
+        }
 
-        let fetchUrl: string; let channelParams: URLSearchParams; let response;
+        let fetchUrl: string;
+        let channelParams: URLSearchParams;
+        let response;
         const playlistEndpoint = '/activities?';
-        let nextToken = ''; let data: any[] = []; let items;
+        let nextToken = '';
+        let data: any[] = [];
+        let items;
         try {
             while (nextToken !== 'end') {
                 if (nextToken === '') {
@@ -85,9 +93,12 @@ export class YoutubeVideos {
                 response = await (await fetch(fetchUrl, this.params)).json();
                 items = response.items;
 
-                if (items === []) {return [];}
+                if (items === []) {
+                    return [];
+                }
+
                 items.forEach((element: any) => {
-                    if (element.snippet.type === 'upload'){
+                    if (element.snippet.type === 'upload') {
                         data.push(element);
                     }
                 });
@@ -99,13 +110,14 @@ export class YoutubeVideos {
                 }
             }
 
-        } catch(err) {
+        } catch (err) {
             console.log(err);
         }
         this.startDate = '';
 
         return data;
     }
+
     formatVideos = (rawVideos: rawYoutubeVideo[]): formatedYoutubeVideo[] => {
         let formatedVideos: any[] = JSON.parse(JSON.stringify(rawVideos));
 
@@ -129,7 +141,10 @@ export class YoutubeVideos {
 
     appendVideos = async (formatedVideos: formatedYoutubeVideo[]): Promise<number> => {
         let success = 0;
-        let query: string; let result; let keys: string; let values: any[] = [];
+        let query: string;
+        let result;
+        let keys: string;
+        let values: any[] = [];
         try {
 
             keys = Object.keys(formatedVideos[0]).join(' ,');
@@ -137,16 +152,19 @@ export class YoutubeVideos {
                 values.push(Object.values(element));
             })
 
-            query = `INSERT INTO youtube_videos(${keys}) VALUES %L ON CONFLICT (video_id) DO NOTHING`;
+            query = `INSERT INTO youtube_videos(${keys})
+            VALUES
+            %L
+                     ON CONFLICT (video_id)
+            DO NOTHING`;
+
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            result = await this.pg_client.query(format(query, values));
-
+            result = await this.pg_client.result(format(query, values));
             success += result.rowCount;
-
-        } catch(err) {
+        } catch (err) {
             console.log(err);
-
         }
+
         return success;
     }
 }

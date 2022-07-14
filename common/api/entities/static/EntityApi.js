@@ -15,7 +15,7 @@ class EntityApi extends EntityApiBase_1.EntityApiBase {
                             message: "List is not implemented on this api"
                         };
                     }
-                    return pool_1.execProc(this.parent.listFunction);
+                    return (0, pool_1.execProc)(this.parent.listFunction);
                 };
                 this.get = (id, settings) => {
                     if (!this.get) {
@@ -23,7 +23,7 @@ class EntityApi extends EntityApiBase_1.EntityApiBase {
                             message: "Get is not implemented on this api"
                         };
                     }
-                    return pool_1.execProcOne(this.parent.getFunction, Object.assign(Object.assign({}, settings), { data: { id } }));
+                    return (0, pool_1.execProcOne)(this.parent.getFunction, Object.assign(Object.assign({}, settings), { data: { id } }));
                 };
                 this.update = (id, update, settings) => {
                     if (!this.update) {
@@ -34,8 +34,8 @@ class EntityApi extends EntityApiBase_1.EntityApiBase {
                     const errs = this.parent.validate(false);
                     //Need to change this
                     if (errs)
-                        throw errors_1.makeError("VALIDATION_ERROR", errs);
-                    return pool_1.execProcOne(this.parent.updateFunction, Object.assign(Object.assign({}, settings), { data: Object.assign({ id }, update) }));
+                        throw (0, errors_1.makeError)("VALIDATION_ERROR", errs);
+                    return (0, pool_1.execProcOne)(this.parent.updateFunction, Object.assign(Object.assign({}, settings), { data: Object.assign({ id }, update) }));
                 };
                 this.insert = (insert, settings) => {
                     if (!this.insert) {
@@ -46,8 +46,8 @@ class EntityApi extends EntityApiBase_1.EntityApiBase {
                     const errs = this.parent.validate(true);
                     //Need to change this
                     if (errs)
-                        throw errors_1.makeError("VALIDATION_ERROR", errs);
-                    return pool_1.execProcOne(this.parent.insertFunction, Object.assign(Object.assign({}, settings), { data: insert }));
+                        throw (0, errors_1.makeError)("VALIDATION_ERROR", errs);
+                    return (0, pool_1.execProcOne)(this.parent.insertFunction, Object.assign(Object.assign({}, settings), { data: insert }));
                 };
                 this.parent = parent;
             }

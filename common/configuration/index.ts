@@ -1,19 +1,71 @@
-import { SSM } from '@aws-sdk/client-ssm';
+import {SSM} from '@aws-sdk/client-ssm';
 
-interface ConfigPaths {
-    elastic: {}
+type ConfigKeys =
+    "elastic"
+    | "iex"
+    | "postgres"
+    | "authkey"
+    | "spotify"
+    | "twitter"
+    | "youtube"
+    | "discord_bot"
+    | "ios"
+    | "fcm"
+    | "substack"
+    | "sendgrid"
+
+interface ConfigPaths extends Record<ConfigKeys, unknown> {
+    elastic: {
+        cloudId: string
+        apiKey: string
+    }
     postgres: {
-        host: string,
-        user: string,
-        password: string,
-        database: string,
+        host: string
+        user: string
+        password: string
+        database: string
         port: number
     }
-    authkey: string,
-    spotify: {}
-    twitter: {}
-    youtube: {}
-    discord_bot: {}
+    fcm: {
+        type: string
+        project_id: string
+        private_key_id: string
+        private_key: string
+        client_email: string
+        client_id: string
+        auth_uri: string
+        token_uri: string
+        auth_provider_x509_cert_url: string
+        client_x509_cert_url: string
+    }
+    ios: {
+        key: string
+        keyId: string
+        teamId: string
+    }
+    iex: { key: string }
+    authkey: string
+    spotify: {
+        client_id: string
+        client_secret: string
+    }
+    twitter: {
+        API_key: string
+        API_secret_key: string
+        bearer_token: string
+    }
+    youtube: {
+        api_key: string
+    }
+    discord_bot: {
+        token: string
+        guildId: string
+        clientId: string
+    }
+    substack: {}
+    sendgrid: {
+        key: string
+    }
 }
 
 export type ConfigurationEnv = "production" | "development" | "automation"
@@ -23,6 +75,11 @@ type ConfigOptions = {
     maxCacheDuration?: number
 }
 
+const defaultOptions: Partial<Record<ConfigKeys, ConfigOptions>> = {
+    authkey: {
+        raw: true,
+    }
+}
 
 type Expirable<T> = {
     [P in keyof T]?: {
@@ -54,7 +111,7 @@ export class Configuration<K extends Record<string, any>> {
     fromSSM = async <T extends keyof K>(path: T, options?: ConfigOptions): Promise<K[T]> => {
         const fullPath = `/${this.environment}/${path as string}`
         const res = (await this.ssmClient
-            .getParameter({ Name: fullPath, WithDecryption: true }));
+            .getParameter({Name: fullPath, WithDecryption: true}));
         if (res.Parameter?.Value === undefined)
             throw new Error(`Could not find value for parameter path '${fullPath}' please make sure the path exists and the value is populated`);
 

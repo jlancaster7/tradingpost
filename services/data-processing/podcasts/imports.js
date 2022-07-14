@@ -10,18 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.importSpotifyEpisodes = exports.importSpotifyShows = exports.lambdaImportEpisodes = void 0;
-const utils_1 = require("../utils/utils");
 const spotify_1 = require("./spotify");
-const awsConfigs = (0, utils_1.getAWSConfigs)();
-lambdaImportEpisodes();
-//importSpotifyEpisodes('2M5iqRSHj51j3Wkwh5oLMN');
-//importSpotifyShows(['2M5iqRSHj51j3Wkwh5oLMN', '5eXZwvvxt3K2dxha3BSaAe', '1VyK52NSZHaDKeMJzT4TSM'])
-function lambdaImportEpisodes() {
+function lambdaImportEpisodes(pgClient, spotifyConfiguration) {
     return __awaiter(this, void 0, void 0, function* () {
-        const pg_client = yield (0, utils_1.getPgClient)((yield awsConfigs).postgres);
         let query = 'SELECT spotify_show_id FROM spotify_users';
-        const spotifyShowIds = (yield pg_client.query(query)).rows;
-        const Spotify = new spotify_1.SpotifyShows((yield awsConfigs).spotify, pg_client);
+        const spotifyShowIds = yield pgClient.query(query);
+        const Spotify = new spotify_1.SpotifyShows(spotifyConfiguration, pgClient);
         let result;
         let episodeImported = 0;
         for (let i = 0; i < spotifyShowIds.length; i++) {
@@ -29,29 +23,24 @@ function lambdaImportEpisodes() {
             episodeImported += result[1];
         }
         console.log(`${episodeImported} episodes were imported!`);
-        pg_client.end();
     });
 }
 exports.lambdaImportEpisodes = lambdaImportEpisodes;
-function importSpotifyShows(showIds) {
+function importSpotifyShows(showIds, pgClient, spotifyCfg) {
     return __awaiter(this, void 0, void 0, function* () {
-        const pg_client = yield (0, utils_1.getPgClient)((yield awsConfigs).postgres);
-        const Spotify = new spotify_1.SpotifyShows((yield awsConfigs).spotify, pg_client);
+        const Spotify = new spotify_1.SpotifyShows(spotifyCfg, pgClient);
         let result;
         result = yield Spotify.importShows(showIds);
         console.log(`${result[1]} shows were imported!`);
-        pg_client.end();
     });
 }
 exports.importSpotifyShows = importSpotifyShows;
-function importSpotifyEpisodes(showId) {
+function importSpotifyEpisodes(showId, pgClient, spotifyCfg) {
     return __awaiter(this, void 0, void 0, function* () {
-        const pg_client = yield (0, utils_1.getPgClient)((yield awsConfigs).postgres);
-        const Spotify = new spotify_1.SpotifyShows((yield awsConfigs).spotify, pg_client);
+        const Spotify = new spotify_1.SpotifyShows(spotifyCfg, pgClient);
         let result;
         result = yield Spotify.importEpisdoes(showId);
         console.log(`${result[1]} episdoes were imported for ${showId}`);
-        pg_client.end();
         return result;
     });
 }

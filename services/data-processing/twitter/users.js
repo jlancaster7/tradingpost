@@ -21,7 +21,6 @@ class TwitterUsers {
             if (typeof handles === 'string') {
                 handles = [handles];
             }
-            ;
             const data = yield this.getUserInfo(handles);
             if (data === []) {
                 return [[], 0];
@@ -74,9 +73,13 @@ class TwitterUsers {
                 users.forEach(element => {
                     values.push(Object.values(element));
                 });
-                query = `INSERT INTO twitter_users(${keys}) VALUES %L ON CONFLICT (twitter_user_id) DO NOTHING`;
+                query = `INSERT INTO twitter_users(${keys})
+            VALUES
+            %L
+                     ON CONFLICT (twitter_user_id)
+            DO NOTHING`;
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.query((0, pg_format_1.default)(query, values));
+                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
                 success += result.rowCount;
             }
             catch (err) {

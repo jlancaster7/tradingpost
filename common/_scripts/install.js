@@ -19,11 +19,11 @@ const path_1 = require("path");
 //npm version <update_type>
 (() => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const commonRoot = path_1.join(__dirname, "..");
-        yield util_1.execAsync('tsc -b ' + commonRoot);
-        yield util_1.execAsync(`npm pack ${commonRoot}`);
-        yield util_1.execAsync(`npm uninstall @tradingpost/common`);
-        yield util_1.execAsync(`npm install tradingpost-common-${package_json_1.default.version}.tgz`);
+        const commonRoot = (0, path_1.join)(__dirname, "..");
+        yield (0, util_1.execAsync)('tsc -b ' + commonRoot);
+        yield (0, util_1.execAsync)(`npm pack ${commonRoot}`);
+        yield (0, util_1.execAsync)(`npm uninstall @tradingpost/common`);
+        yield (0, util_1.execAsync)(`npm install tradingpost-common-${package_json_1.default.version}.tgz`);
         console.log(`The version: ${package_json_1.default.version} of common has been installed from local!`);
     }
     catch (ex) {

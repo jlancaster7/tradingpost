@@ -21,7 +21,6 @@ class YoutubeUsers {
             if (typeof userChannelUrl === 'string') {
                 userChannelUrl = [userChannelUrl];
             }
-            ;
             let results = [];
             let data;
             let count = 0;
@@ -135,9 +134,13 @@ class YoutubeUsers {
             try {
                 keys = Object.keys(data).join(' ,');
                 values = Object.values(data);
-                query = `INSERT INTO youtube_users(${keys}) VALUES %L ON CONFLICT (youtube_channel_id) DO NOTHING`;
+                query = `INSERT INTO youtube_users(${keys})
+            VALUES
+            %L
+                     ON CONFLICT (youtube_channel_id)
+            DO NOTHING`;
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.query((0, pg_format_1.default)(query, values));
+                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
                 success += result.rowCount;
             }
             catch (err) {

@@ -18,6 +18,7 @@ export interface ElasticSearchBody {
     },
     ratingsCount: number | null
     postType: string | null
+    postTypeValue: number
     imageUrl: string | null
     postUrl: string | null
     platform: {
@@ -33,10 +34,10 @@ export interface ElasticSearchBody {
         htmlBody: string | null
         description: string | null
     },
-    platformUpdatedAt: DateTime | null
-    tradingpostUpdatedAt: DateTime | null
-    platformCreatedAt: DateTime | null
-    tradingpostCreatedAt: DateTime | null
+    platformUpdatedAt: DateTime | null | string
+    tradingpostUpdatedAt: DateTime | null | string
+    platformCreatedAt: DateTime | null | string
+    tradingpostCreatedAt: DateTime | null | string
     meta: object | null
 }
 

@@ -11,7 +11,7 @@ export default class Index {
     }
 
     isMarketOpen = async (): Promise<boolean> => {
-        await this.setMarketHolidays(); // TODO: Wonder if we could wrap this function
+        await this.setMarketHolidays();
 
         let currentTime = DateTime.now().setZone("America/New_York")
         const marketDate = currentTime.set({
@@ -42,7 +42,7 @@ export default class Index {
     }
 
     isTradingDay = async (t: DateTime): Promise<boolean> => {
-        await this.setMarketHolidays(); // TODO: Wonder if we could wrap this function
+        await this.setMarketHolidays();
         return this.holidayMap[t.toUnixInteger()] === undefined;
     }
 

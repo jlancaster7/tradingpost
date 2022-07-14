@@ -1,5 +1,13 @@
-import IEX, {GetCompany, GetLogo, GetPreviousDayPrice, GetQuote, GetStatsBasic} from "@tradingpost/common/iex";
-import {Client} from "pg";
+import 'dotenv/config';
+import IEX, {
+    GetCompany,
+    GetLogo,
+    GetPreviousDayPrice,
+    GetQuote,
+    GetStatsBasic,
+    GetIexSymbols,
+    GetOtcSymbols
+} from "@tradingpost/common/iex";
 import {Repository} from "../../services/market-data/repository";
 import {
     addSecurity,
@@ -7,15 +15,11 @@ import {
     getSecurityBySymbol,
     upsertSecuritiesInformation
 } from '../../services/market-data/interfaces';
-import {GetIexSymbols, GetOtcSymbols} from '@tradingpost/common/iex';
 import {DateTime} from "luxon";
-import {Configuration} from "@tradingpost/common/configuration";
+import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
+import pgPromise, {IDatabase, IMain} from "pg-promise";
 
-const AWS = require('aws-sdk')
-AWS.config.update({region: 'us-east-1'});
-const ssmClient = new AWS.SSM();
-const configuration = new Configuration(ssmClient);
 
 // Pricing Charge
 // AM
@@ -33,35 +37,44 @@ const configuration = new Configuration(ssmClient);
 // 1 Per Request = 268
 // Per Day = (26748 * 8) + 268 = 214,244 / Day * 21
 // Per Month = 4,501,308
+
+let pgClient: IDatabase<any>;
+let pgp: IMain;
+
 const run = async () => {
-    const postgresConfiguration = await configuration.fromSSM("/production/postgres");
-    const iexConfiguration = await configuration.fromSSM("/production/iex");
-    const iex = new IEX(iexConfiguration['key'] as string);
-    const pgClient = new Client({
-        host: postgresConfiguration['host'] as string,
-        user: postgresConfiguration['user'] as string,
-        password: postgresConfiguration['password'] as string,
-        database: postgresConfiguration['database'] as string,
-        port: 5432,
-    });
+    if (!pgClient || !pgp) {
+        const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+        pgp = pgPromise({});
+        pgClient = pgp({
+            host: postgresConfiguration['host'] as string,
+            user: postgresConfiguration['user'] as string,
+            password: postgresConfiguration['password'] as string,
+            database: postgresConfiguration['database'] as string
+        })
+    }
+
+    const iexConfiguration = await DefaultConfig.fromSSM("iex");
+    const iex = new IEX(iexConfiguration.key);
+
     await pgClient.connect();
-    const repository = new Repository(pgClient);
-    await start(pgClient, repository, iex)
-    await pgClient.end();
+    const repository = new Repository(pgClient, pgp);
+
+    // TODO: If Friday pull in prices....
+
+    try {
+        await start(repository, iex)
+    } catch (e) {
+        console.error(e)
+        throw e
+    } finally {
+        await pgp.end()
+    }
 }
 
-const start = async (pgClient: Client, repository: Repository, iex: IEX) => {
+const start = async (repository: Repository, iex: IEX) => {
     const now = DateTime.now().setZone("America/New_York");
-    if (now.hour == 16) {
-        console.log("ran evening ingestion")
-        await ingestEveningSecuritiesInformation(repository, iex);
-    }
-
-    if (now.hour == 8) {
-        console.log("ran morning ingestion")
-        await ingestMorningSecuritiesInformation(repository, iex);
-    }
-    console.log("finished running function")
+    if (now.hour == 16) await ingestEveningSecuritiesInformation(repository, iex);
+    if (now.hour == 8) await ingestMorningSecuritiesInformation(repository, iex);
 }
 
 const ingestEveningSecuritiesInformation = async (repository: Repository, iex: IEX) => {
@@ -250,6 +263,3 @@ const buildGroups = (securities: any[], max: number = 100): any[][] => {
 module.exports.run = async (event: any, context: Context) => {
     await run();
 };
-(async () => {
-    await run();
-})()

@@ -97,7 +97,7 @@ class SpotifyShows {
                 showResponse = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
                 if (Object.keys(showResponse).includes('error')) {
                     if (showResponse.error.status === 401) {
-                        this.setAccessToken();
+                        yield this.setAccessToken();
                         showResponse = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
                     }
                     else {
@@ -105,8 +105,8 @@ class SpotifyShows {
                     }
                 }
                 for (let i = 0; i < showResponse.items.length; i++) {
-                    let test = yield (yield (0, node_fetch_1.default)(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
-                    showResponse.items[i].embed = test;
+                    embedResponse = yield (yield (0, node_fetch_1.default)(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
+                    showResponse.items[i].embed = embedResponse;
                 }
                 showResponse.items.forEach((element) => {
                     formatedResponse = {
@@ -163,7 +163,6 @@ class SpotifyShows {
         };
         this.appendEpisdoes = (episodes) => __awaiter(this, void 0, void 0, function* () {
             let success = 0;
-            let value_index;
             let query;
             let result;
             let keys;
@@ -174,10 +173,12 @@ class SpotifyShows {
                     values.push(Object.values(element));
                 });
                 query = `INSERT INTO spotify_episodes(${keys})
-                     VALUES %L
-                     ON CONFLICT (spotify_episode_id) DO NOTHING`;
+            VALUES
+            %L
+                     ON CONFLICT (spotify_episode_id)
+            DO NOTHING`;
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.query((0, pg_format_1.default)(query, values));
+                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
                 success += result.rowCount;
             }
             catch (err) {
@@ -197,10 +198,12 @@ class SpotifyShows {
                     values.push(Object.values(element));
                 });
                 query = `INSERT INTO spotify_users(${keys})
-                     VALUES %L
-                     ON CONFLICT (spotify_show_id) DO NOTHING`;
+            VALUES
+            %L
+                     ON CONFLICT (spotify_show_id)
+            DO NOTHING`;
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.query((0, pg_format_1.default)(query, values));
+                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
                 success += result.rowCount;
             }
             catch (err) {

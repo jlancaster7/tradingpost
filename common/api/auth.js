@@ -19,7 +19,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const configuration_1 = require("../configuration");
 const EntityApiBase_1 = require("./entities/static/EntityApiBase");
 const hashPass = (pass, salt) => {
-    return salt + crypto_1.pbkdf2Sync(pass, Buffer.from(salt), 100000, 128, 'sha512').toString("base64");
+    return salt + (0, crypto_1.pbkdf2Sync)(pass, Buffer.from(salt), 100000, 128, 'sha512').toString("base64");
 };
 exports.hashPass = hashPass;
 const makeUserToken = (user_id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -29,10 +29,10 @@ const makeUserToken = (user_id) => __awaiter(void 0, void 0, void 0, function* (
 //return token
 const loginPass = (email, pass, csrf) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`${email}::::${pass}`);
-    const saltResult = yield pool_1.execProc("tp.api_local_login_get", { data: { email } });
+    const saltResult = yield (0, pool_1.execProc)("tp.api_local_login_get", { data: { email } });
     if (!saltResult.length)
         throw new EntityApiBase_1.PublicError(`User '${email}' does not exists or invalid password`, 401);
-    const hash = exports.hashPass(pass, saltResult[0].hash), passResult = yield pool_1.execProc("tp.api_local_login_get", { data: { email, hash } });
+    const hash = (0, exports.hashPass)(pass, saltResult[0].hash), passResult = yield (0, pool_1.execProc)("tp.api_local_login_get", { data: { email, hash } });
     if (!passResult.length)
         throw new EntityApiBase_1.PublicError(`User '${email}' does not exists or invalid password`, 401);
     const login = passResult[0];
@@ -66,8 +66,8 @@ const loginToken = (token) => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.loginToken = loginToken;
 const createLogin = (email, password) => __awaiter(void 0, void 0, void 0, function* () {
-    var byteBuf = crypto_1.randomBytes(30), salt = byteBuf.toString('base64'), hash = exports.hashPass(password, salt);
-    yield pool_1.execProc("tp.api_local_login_insert", {
+    var byteBuf = (0, crypto_1.randomBytes)(30), salt = byteBuf.toString('base64'), hash = (0, exports.hashPass)(password, salt);
+    yield (0, pool_1.execProc)("tp.api_local_login_insert", {
         data: {
             email,
             hash
@@ -81,7 +81,7 @@ const createLogin = (email, password) => __awaiter(void 0, void 0, void 0, funct
 });
 exports.createLogin = createLogin;
 const createUser = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    const [newUser] = yield pool_1.execProc("tp.api_local_login_create_user", {
+    const [newUser] = yield (0, pool_1.execProc)("tp.api_local_login_create_user", {
         data
     });
     return {

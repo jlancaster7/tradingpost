@@ -1,44 +1,43 @@
-import { Pool, Client, PoolClient } from 'pg';
-import { getPgClient, getAWSConfigs } from '../utils/utils';
-import { SubstackUser, SubstackFeed, SubstackArticles } from '../interfaces/rss_feeds';
-import { Substack } from './substack';
+import {SubstackUser, SubstackArticles} from '../interfaces/rss_feeds';
+import {Substack} from './substack';
+import {IDatabaseClient} from "../interfaces";
+import {IDatabase} from "pg-promise";
 
-const awsConfigs = getAWSConfigs();
+type SubstackConfiguration = {}
 
-async function lambdaImportRSSFeeds() {
-
-    const pg_client: Client = await getPgClient((await awsConfigs).postgres);
-
-    let query = `SELECT substack_user_id FROM substack_users`;
+async function lambdaImportRSSFeeds(pgClient: IDatabase<any>, substackConfiguration: SubstackConfiguration) {
+    let query = `SELECT substack_user_id
+                 FROM substack_users`;
     //TODO: I could do this a lot better.. making getting the substack Ids apart of the class
     //      and adding a function to set your own list of substackIds.. similar to start date.
     //      but its fine for now
-    const substackIds = (await pg_client.query(query)).rows;
+    const substackIds = await pgClient.query(query);
 
-    const ssArticles = new Substack(pg_client);
+    const ssArticles = new Substack(pgClient);
 
     let result: [SubstackArticles[], number];
     let articlesImported = 0;
 
     for (let i = 0; i < substackIds.length; i++) {
-
         result = await ssArticles.importArticles(substackIds[i].substack_user_id);
-
         articlesImported += result[1];
     }
+
     console.log(`Imported ${articlesImported} substack articles.`);
-    pg_client.end();
-    return ;
 }
 
-async function importSubstackUsers(username: string | string[]) {
-    const pg_client: Client = await getPgClient((await awsConfigs).postgres);
-    const ssUsers = new Substack(pg_client);
+async function importSubstackUsers(username: string | string[], pgClient: IDatabase<any>, substackConfiguration: SubstackConfiguration) {
+    const ssUsers = new Substack(pgClient);
 
     const result: [SubstackUser[], number] = await ssUsers.importUsers(username);
     let length: number;
-    if (typeof username === 'string') {length=1} else {length = username.length};
+    if (typeof username === 'string') {
+        length = 1
+    } else {
+        length = username.length
+    }
+
     console.log(`Successfully imported ${result[1]} of ${length} Substack users.`)
 }
 
-export { lambdaImportRSSFeeds, importSubstackUsers };
+export {lambdaImportRSSFeeds, importSubstackUsers};

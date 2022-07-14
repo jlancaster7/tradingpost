@@ -1,27 +1,36 @@
-import {Configuration} from "@tradingpost/common/configuration";
+import 'dotenv/config'
+import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
-import {Client} from "pg";
 import {Repository} from '../../services/market-data/repository';
+import pgPromise, {IDatabase, IMain} from "pg-promise";
 
-const AWS = require('aws-sdk')
-AWS.config.update({region: 'us-east-1'});
-const ssmClient = new AWS.SSM();
-const configuration = new Configuration(ssmClient);
+let pgClient: IDatabase<any>;
+let pgp: IMain;
 
 const run = async () => {
-    const postgresConfiguration = await configuration.fromSSM("/production/postgres");
-    const pgClient = new Client({
-        host: postgresConfiguration['host'] as string,
-        user: postgresConfiguration['user'] as string,
-        password: postgresConfiguration['password'] as string,
-        database: postgresConfiguration['database'] as string,
-        port: 5432,
-    });
+    if (!pgClient || !pgp) {
+        const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+        pgp = pgPromise({});
+        pgClient = pgp({
+            host: postgresConfiguration['host'] as string,
+            user: postgresConfiguration['user'] as string,
+            password: postgresConfiguration['password'] as string,
+            database: postgresConfiguration['database'] as string
+        })
+    }
 
     await pgClient.connect();
-    const repository = new Repository(pgClient);
-    await start(repository)
-    await pgClient.end();
+
+    const repository = new Repository(pgClient, pgp);
+
+    try {
+        await start(repository)
+    } catch (e) {
+        console.error(e)
+        throw e
+    } finally {
+        await pgp.end()
+    }
 }
 
 const start = async (repository: Repository) => {

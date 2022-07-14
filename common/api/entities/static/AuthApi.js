@@ -14,7 +14,7 @@ const EntityApiBase_1 = require("./EntityApiBase");
 class AuthApi {
     createLogin(email, pass) {
         return __awaiter(this, void 0, void 0, function* () {
-            const resp = yield fetch(EntityApiBase_1.apiUrl(this.constructor.name, "create"), {
+            const resp = yield fetch((0, EntityApiBase_1.apiUrl)(this.constructor.name, "create"), {
                 method: "POST",
                 body: JSON.stringify({
                     email,
@@ -29,7 +29,7 @@ class AuthApi {
     }
     createUser(first_name, last_name, handle) {
         return __awaiter(this, void 0, void 0, function* () {
-            const resp = yield fetch(EntityApiBase_1.apiUrl(this.constructor.name, "init"), {
+            const resp = yield fetch((0, EntityApiBase_1.apiUrl)(this.constructor.name, "init"), {
                 method: "POST",
                 body: JSON.stringify({
                     first_name,
@@ -53,7 +53,7 @@ class AuthApi {
     }
     login(email, pass) {
         return __awaiter(this, void 0, void 0, function* () {
-            const resp = yield fetch(EntityApiBase_1.apiUrl(this.constructor.name, "login"), {
+            const resp = yield fetch((0, EntityApiBase_1.apiUrl)(this.constructor.name, "login"), {
                 method: "POST",
                 body: JSON.stringify({
                     email,

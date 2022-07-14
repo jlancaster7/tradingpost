@@ -15,7 +15,7 @@ const execAsync = (cmd, options) => __awaiter(void 0, void 0, void 0, function* 
     const { err, stderr, stdout } = yield new Promise((resolve, reject) => {
         try {
             console.log(`Exec Async: ${cmd}`);
-            child_process_1.exec(cmd, options, (err, stdout, stderr) => {
+            (0, child_process_1.exec)(cmd, options, (err, stdout, stderr) => {
                 console.log("Resolved one time...");
                 resolve({
                     err: err,

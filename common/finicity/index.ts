@@ -120,15 +120,17 @@ export default class Finicity {
     }
 
     addCustomer = async (applicationId: string, username: string): Promise<Promise<AddCustomerResponse> | null> => {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Finicity-App-Key': this.appKey,
+            'Finicity-App-Token': this.accessToken
+        };
+        console.log(headers)
         const response = await fetch("https://api.finicity.com/aggregation/v2/customers/active", {
             method: "POST",
-            body: JSON.stringify({username}),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Finicity-App-Key': this.appKey,
-                'Finicity-App-Token': this.accessToken
-            }
+            body: JSON.stringify({username: username}),
+            headers,
         });
 
         const body = await response.text();
@@ -166,6 +168,19 @@ export default class Finicity {
     }
 
     generateConnectUrl = async (customerId: string, webhook: string, webhookContentType: string = "application/json", experience: string = "default"): Promise<GenerateLinkResponse> => {
+        console.log("Generating connect token...")
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Finicity-App-Key': this.appKey,
+            'Finicity-App-Token': this.accessToken
+        };
+
+        console.log("CustomerID: ", customerId);
+        console.log("Partner ID : ", this.partnerId);
+
+
         const response = await fetch("https://api.finicity.com/connect/v2/generate", {
             method: "POST",
             body: JSON.stringify({
@@ -175,18 +190,14 @@ export default class Finicity {
                 webhookContentType: webhookContentType,
                 // experience: experience
             }),
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Finicity-App-Key': this.appKey,
-                'Finicity-App-Token': this.accessToken
-            }
+            headers,
         });
 
         const body = await response.text();
         try {
             return JSON.parse(body) as GenerateLinkResponse
         } catch (e) {
+            console.log(body.toString())
             throw e
         }
     }

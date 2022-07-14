@@ -105,5 +105,5 @@
     "skipLibCheck": true
     /* Skip type checking all .d.ts files. */
   },
-  "include": ["api","configuration","_scripts"]
+  "include": ["api","configuration","_scripts", "finicity", "iex", "realizefi", "utils"] 
 }

@@ -427,6 +427,7 @@ export default class IEX {
                 url.searchParams.set(k, v);
             }
         }
+
         const config = {...HTTPConfigurationDefaults, ...httpConfiguration};
         return await fetch(url.toString(), config);
     }
@@ -750,9 +751,8 @@ export default class IEX {
     getUSHolidayAndTradingDays = async (type: "trade" | "holiday", direction: "next" | "last" = "next", last: number = 1, startDate?: string): Promise<GetUSHolidayAndTradingDays[]> => {
         const response = await this.retry(async () => {
             let u = `/ref-data/us/dates/${type}/${direction}/${last}`
-            if (startDate !== null) u += `/${startDate}`
 
-            const response = await this.fetch(`/ref-data/exchanges`, {
+            const response = await this.fetch(u, {
                 method: "GET",
             }, {"token": this.token});
             if (response.status == 429) throw new RetryError()

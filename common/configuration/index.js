@@ -11,6 +11,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AutomationConfig = exports.DefaultConfig = exports.Configuration = void 0;
 const client_ssm_1 = require("@aws-sdk/client-ssm");
+const defaultOptions = {
+    authkey: {
+        raw: true,
+    }
+};
 class Configuration {
     constructor(ssmClient, defaultOptions, environment = (process.env.CONFIGURATION_ENV || "development"), enableCache = process.env.CONFIGURATION_ENABLE_CACHE ? JSON.parse(process.env.CONFIGURATION_ENABLE_CACHE) : true) {
         this.cache = {};

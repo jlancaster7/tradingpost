@@ -32,7 +32,7 @@ const getHivePool = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.getHivePool = getHivePool;
 const execProc = (proc, prms, ensureCount, ensureCountMessage) => __awaiter(void 0, void 0, void 0, function* () {
-    yield exports.getHivePool();
+    yield (0, exports.getHivePool)();
     const result = prms ? yield hive.query(`SELECT * FROM ${proc}($1)`, [JSON.stringify(prms)]) :
         yield hive.query(`SELECT * FROM ${proc}('{}')`);
     if (ensureCount && result.rowCount !== ensureCount) {
@@ -54,6 +54,6 @@ const execProc = (proc, prms, ensureCount, ensureCountMessage) => __awaiter(void
 });
 exports.execProc = execProc;
 const execProcOne = (proc, prms, ensureCountMessage) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield exports.execProc(proc, prms, 1, ensureCountMessage);
+    return yield (0, exports.execProc)(proc, prms, 1, ensureCountMessage);
 });
 exports.execProcOne = execProcOne;

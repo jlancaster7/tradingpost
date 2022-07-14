@@ -1,39 +1,46 @@
+import 'dotenv/config'
 import {Context} from 'aws-lambda';
-import {Configuration} from "@tradingpost/common/configuration";
-import {Client} from "pg";
+import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Repository} from "../../services/market-data/repository";
-import {addSecurityPrice, getSecurityBySymbol} from '../../services/market-data/interfaces';
-import IEX from "@tradingpost/common/iex";
-import {GetQuote} from "@tradingpost/common/iex";
+import {addSecurityPrice, getSecurityBySymbol, getSecurityWithLatestPrice} from '../../services/market-data/interfaces';
+import IEX, {GetQuote} from "@tradingpost/common/iex";
 import {DateTime} from "luxon";
 import Index from "../../services/market-data";
+import pgPromise, {IDatabase, IMain} from "pg-promise";
 
-const AWS = require('aws-sdk')
-AWS.config.update({region: 'us-east-1'});
-const ssmClient = new AWS.SSM();
-const configuration = new Configuration(ssmClient);
-
+let pgClient: IDatabase<any>;
+let pgp: IMain;
 
 const run = async () => {
-    const postgresConfiguration = await configuration.fromSSM("/production/postgres");
-    const pgClient = new Client({
-        host: postgresConfiguration['host'] as string,
-        user: postgresConfiguration['user'] as string,
-        password: postgresConfiguration['password'] as string,
-        database: postgresConfiguration['database'] as string,
-        port: 5432,
-    });
+    if (!pgClient || !pgp) {
+        const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+        pgp = pgPromise({});
+        pgClient = pgp({
+            host: postgresConfiguration['host'] as string,
+            user: postgresConfiguration['user'] as string,
+            password: postgresConfiguration['password'] as string,
+            database: postgresConfiguration['database'] as string
+        })
+    }
 
-    const iexConfiguration = await configuration.fromSSM("/production/iex");
-    const iex = new IEX(iexConfiguration.key as string);
+    const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
+    const iex = new IEX(iexConfiguration.key);
+
     await pgClient.connect();
-    const repository = new Repository(pgClient);
+    const repository = new Repository(pgClient, pgp);
     const marketService = new Index(repository);
-    await start(pgClient, marketService, repository, iex)
-    await pgClient.end();
+
+    try {
+        await start(marketService, repository, iex)
+    } catch (e) {
+        console.error(e)
+        throw e
+    } finally {
+        await pgp.end()
+    }
 }
 
-const start = async (pgClient: Client, marketService: Index, repository: Repository, iex: IEX) => {
+const start = async (marketService: Index, repository: Repository, iex: IEX) => {
     const open = DateTime.now().setZone("America/New_York").set({hour: 9, minute: 29, second: 0, millisecond: 0});
     const close = DateTime.now().setZone("America/New_York").set({hour: 16, minute: 1, second: 0, millisecond: 0})
 
@@ -44,22 +51,39 @@ const start = async (pgClient: Client, marketService: Index, repository: Reposit
     const isTradingDay = await marketService.isTradingDay(d);
     if (!isTradingDay) return;
 
-    const securities = await repository.getUSExchangeListedSecurities();
+    const securities = await repository.getUsExchangedListSecuritiesWithPricing();
     const securityGroups: getSecurityBySymbol[][] = buildGroups(securities);
+
+    const securitiesMap: Record<string, getSecurityWithLatestPrice> = {};
+    securities.forEach((sec: getSecurityWithLatestPrice) => securitiesMap[sec.symbol] = sec)
 
     const currentTime = d.toJSDate();
     for (let i = 0; i < securityGroups.length; i++) {
         let securityGroup = securityGroups[i];
         const symbols = securityGroup.map(sec => sec.symbol);
         const response = await iex.bulk(symbols, ["quote"]);
+
         let securityPrices: addSecurityPrice[] = [];
         securityGroup.forEach(sec => {
             const {symbol, id} = sec;
-            if (response[symbol] === undefined || response[symbol] === null) return;
+            if (response[symbol] === undefined || response[symbol] === null) {
+                const s = securitiesMap[symbol]
+                if (s.latestPrice === undefined || s.latestPrice === null) return
+                securityPrices.push({price: s.latestPrice, securityId: id, time: currentTime});
+                return;
+            }
+
             const quote = (response[symbol].quote as GetQuote)
-            if (quote.latestPrice === undefined || quote.latestPrice === null) return;
+            if (quote.latestPrice === undefined || quote.latestPrice === null) {
+                const s = securitiesMap[symbol]
+                if (s.latestPrice === undefined || s.latestPrice === null) return
+                securityPrices.push({price: s.latestPrice, securityId: id, time: currentTime});
+                return;
+            }
+
             securityPrices.push({price: quote.latestPrice, securityId: id, time: currentTime})
         });
+
         await repository.addSecuritiesPrices(securityPrices);
     }
 }
@@ -79,7 +103,6 @@ const buildGroups = (securities: any[], max: number = 100): any[][] => {
 
     return groups;
 }
-
 
 // Pricing Charge
 // Total Securities W/Out OTC : 11,847

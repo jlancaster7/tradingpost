@@ -20,9 +20,9 @@ const util_1 = require("./util");
         if (!versionUpdateType) {
             throw new Error("Please provide a version update type (patch|minor|major)");
         }
-        yield util_1.execAsync('tsc');
-        const versionNumber = yield util_1.execAsync(`npm version ${versionUpdateType}`);
-        yield util_1.execAsync('npm publish', {
+        yield (0, util_1.execAsync)('tsc');
+        const versionNumber = yield (0, util_1.execAsync)(`npm version ${versionUpdateType}`);
+        yield (0, util_1.execAsync)('npm publish', {
             env: {
                 NPM_TOKEN: npm_key
             }

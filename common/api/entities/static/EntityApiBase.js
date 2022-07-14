@@ -30,7 +30,7 @@ const apiUrl = (...paths) => {
 exports.apiUrl = apiUrl;
 class EntityApiBase {
     constructor() {
-        this.makeUrl = (id) => exports.apiUrl(...(id === undefined ? [this.constructor.name] : [this.constructor.name, id]));
+        this.makeUrl = (id) => (0, exports.apiUrl)(...(id === undefined ? [this.constructor.name] : [this.constructor.name, id]));
     }
     static makeHeaders() {
         return {

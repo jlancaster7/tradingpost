@@ -1,0 +1,500 @@
+AAPL, Apple Inc, Apple
+MSFT, Microsoft Corporation, Microsoft
+GOOG, Alphabet Inc, Alphabet
+GOOGL, Alphabet Inc, Alphabet
+AMZN, Amazon.com Inc., Amazon
+TSLA, Tesla Inc, Tesla
+TFIFF, TFI International Inc., TFI
+FB, Meta Platforms Inc, Meta
+UNH, Unitedhealth Group Inc, Unitedhealth
+JNJ, Johnson & Johnson, J&J, J & J
+META, Meta Platforms Inc, Meta, Facebook
+V, Visa Inc, Visa
+NVDA, NVIDIA Corp, NVIDIA
+XOM, Exxon Mobil Corp., Exxon, Exxon Mobil
+PHIG, PHI Group Inc., PHI
+PG, Procter & Gamble Co., Procter,  P&G,  Procter & Gamble
+JPM, JPMorgan Chase & Co., JPMorgan,  JPMorganChase,  JPMorgan Chase,  Chase
+WMT, Walmart Inc, Walmart
+MA, Mastercard Incorporated, Mastercard
+LLY, Lilly & Co, Eli Lilly, Lilly
+PFE, Pfizer Inc., Pfizer
+HD, Home Depot Inc., Home Depot
+ABBV, Abbvie Inc, Abbvie
+KO, Coca-Cola Co, Coke, Coca-Cola
+BAC, Bank Of America Corp., Bank of America, BAML, BofA
+MRK, Merck & Co Inc, Merck
+PEP, PepsiCo Inc, PepsiCo, Pepsi
+VZ, Verizon Communications Inc, Verizon
+TMO, Thermo Fisher Scientific Inc., Thermo Fisher, Thermo, Termo Fisher Scientific
+COST, Costco Wholesale Corp, Costco, Costco Wholesale
+AVGO, Broadcom Inc, Broadcom
+ABT, Abbott Laboratories, Abbott, Abbott Labs
+ORCL, Oracle Corp., Oracle
+DHR, Danaher Corp., Danaher
+MCD, McDonald`s Corp, McDonald`s, McDonalds
+CMCSA, Comcast Corp, Comcast
+ADBE, Adobe Inc, Adobe
+CRM, Salesforce Inc, Salesforce
+TMUS, T-Mobile US Inc, T Mobile, T-Mobile, T-Mobile
+BMY, Bristol-Myers Squibb Co., Bristol, Bristol-Myers
+NKE, Nike Inc., Nike
+UPS, United Parcel Service Inc., United Parcel Services
+PM, Philip Morris International Inc, Philip Morris
+INTC, Intel Corp., Intel
+WFC, Wells Fargo & Co., Wells, Wells Fargo
+T, AT&T Inc., AT&T, ATT, AT T
+QCOM, Qualcomm Inc., Qualcomm
+TXN, Texas Instruments Inc., Texas Instruments
+RY, Royal Bank Of Canada, Royal Bank of Canada
+RTX, Raytheon Technologies Corporation, Raytheon
+MS, Morgan Stanley, Morgan Stanley
+UNP, Union Pacific Corp., Union Pacific
+AMGN, AMGEN Inc., AMGEN
+IBM, International Business Machines Corp., International Business Machine
+AMD, Advanced Micro Devices Inc., Advanced Micro
+CVS, CVS Health Corp, CVS
+SCHW, Charles Schwab Corp., Charles Schwab
+TD, Toronto Dominion Bank, Toronto Dominion,  TD Bank
+COP, Conoco Phillips, Conoco
+HON, Honeywell International Inc, Honeywell
+ANTM, Anthem Inc, Anthem
+AMT, American Tower Corp., American Tower
+SPGI, S&P Global Inc, S&P Global
+LOW, Lowe`s Cos. Inc., Lowe`s, Lowes
+LMT, Lockheed Martin Corp., Lockheed
+INTU, Intuit Inc, Intuit
+AXP, American Express Co., American Express
+GS, Goldman Sachs Group Inc., Goldman
+CAT, Caterpillar Inc., Caterpillar
+NOW, ServiceNow Inc, ServiceNow
+BLK, Blackrock Inc., Blackrock
+C, Citigroup Inc, Citigroup, Citi
+EL, Estee Lauder Cos. Inc., Estee Lauder
+DE, Deere & Co., Deere
+ADP, Automatic Data Processing Inc., Automatic Data Processing
+SBUX, Starbucks Corp., Starbucks
+PLD, Prologis Inc, Prologis
+ENB, Enbridge Inc, Enbridge
+MDLZ, Mondelez International Inc., Mondelez
+CI, Cigna Corp., Cigna
+PYPL, PayPal Holdings Inc, PayPal
+BA, Boeing Co., Boeing
+ZTS, Zoetis Inc, Zoetis
+DUK, Duke Energy Corp., Duke Energy
+AMAT, Applied Materials Inc., Applied Materials
+NFLX, NetFlix Inc, NetFlix
+GILD, Gilead Sciences Inc., Gilead
+CHTR, Charter Communications Inc., Charter Comm, Charter Communications
+MMC, Marsh & McLennan Cos. Inc., Marsh & McLennan
+CNI, Canadian National Railway Co., Canadian National Railway
+ADI, Analog Devices Inc., Analog Devices
+MO, Altria Group Inc., Altria
+SYK, Stryker Corp., Stryker
+SO, Southern Company, Southern Company
+CME, CME Group Inc, CME
+MMM, 3M Co., 3M
+BKNG, Booking Holdings Inc, Booking Holdings
+BAM, Brookfield Asset Management Inc., Brookfield
+ISRG, Intuitive Surgical Inc, Intuitive Surgical
+CCI, Crown Castle International Corp, Crown Castle
+NOC, Northrop Grumman Corp., Northrop
+VRTX, Vertex Pharmaceuticals Inc., Vertex Pharma, Vertex Pharmaceuticals
+BNS, Bank Of Nova Scotia, Bank of Nova Scotia
+BDX, Becton Dickinson And Co., "Becton,  Dickinson", Becton Dickinson
+GE, General Electric Co., General Electric
+USB, U.S. Bancorp., US Bank, US Bancorp, U.S. Bancorp
+TJX, TJX Companies Inc., TJ Maxx, TJ Max
+CL, Colgate-Palmolive Co., Colgate, Colgate-Palmolive
+PGR, Progressive Corp., Progressive
+EOG, EOG Resources Inc., EOG
+TGT, Target Corp, Target
+PNC, PNC Financial Services Group, PNC Financial
+BMO, Bank of Montreal, Bank of Montreal
+REGN, Regeneron Pharmaceuticals Inc., Regeneron Pharmaceuticals
+D, Dominion Energy Inc, Dominion Energy
+CSX, CSX Corp., CSX
+TFC, Truist Financial Corporation, Truist
+WM, Waste Management Inc., Waste Management
+MU, Micron Technology Inc., Micron
+CNQ, Canadian Natural Resources Ltd., Canadian Natural Resources
+ATVI, Activision Blizzard Inc, Activision
+GD, General Dynamics Corp., General Dynamics
+FDX, Fedex Corp, Fedex
+EW, Edwards Lifesciences Corp, Edwards Lifesciences
+FISV, Fiserv Inc., Fiserv
+HUM, Humana Inc., Humana
+LRCX, Lam Research Corp., Lam, Lam Research
+SHW, Sherwin-Williams Co., Sherwin Williams, Sherwin-Williams
+NSC, Norfolk Southern Corp., Norfolk Southern
+FIS, Fidelity National Information Services Inc., Fidelity National Information Services
+CCUR, CCUR Holdings Inc, CCUR
+MRNA, Moderna Inc, Moderna
+ABNB, Airbnb Inc, Airbnb
+ITW, Illinois Tool Works Inc., Illinois Tool
+DG, Dollar General Corp., Dollar General
+OXY, Occidental Petroleum Corp., Occidental
+PXD, Pioneer Natural Resources Co., Pioneer Natural
+PSA, Public Storage, Public Storage
+BSX, Boston Scientific Corp., Boston Scientific
+APD, Air Products & Chemicals Inc., Air Products
+ICE, Intercontinental Exchange Inc, Intercontinental Exchange
+HCA, HCA Healthcare Inc, HCA
+TRP, TC Energy Corporation, TC Energy
+MET, Metlife Inc, Metlife
+SLB, Schlumberger Ltd., Schlumberger
+KDP, Keurig Dr Pepper Inc, Keurig, Dr Pepper
+MCO, Moody`s Corp., Moody`s, Moodys
+TRI, Thomson-Reuters Corp, Thomson-Reuters, Thomson Reuters
+CNC, Centene Corp., Centene
+SU, Suncor Energy Inc., Suncor
+MNST, Monster Beverage Corp., Monster Beverage
+NEM, Newmont Corp, Newmont
+PANW, Palo Alto Networks Inc, Palo Alto Networks
+AEP, American Electric Power Company Inc., American Electric Power
+GM, General Motors Company, General Motors
+VMW, Vmware Inc., Vmware
+KLAC, KLA Corp., KLA
+EMR, Emerson Electric Co., Emerson Electric
+SRE, Sempra Energy, Sempra
+MCK, Mckesson Corporation, Mckesson
+SNPS, Synopsys Inc., Synopsys
+BDRBF, Bombardier Inc., Bombardier
+LHX, L3Harris Technologies Inc, L3Harris
+MPC, Marathon Petroleum Corp, Marathon Petroleum
+STZ, Constellation Brands Inc, Constellation Brands
+HSY, Hershey Company, Hershey
+F, Ford Motor Co., Ford
+NTR, Nutrien Ltd, Nutrien
+KMB, Kimberly-Clark Corp., Kimberly, Kimberly-Clark, Kimberly Clark
+MAR, Marriott International Inc., Marriott
+GIS, General Mills Inc., General Mills
+BCE, BCE Inc, BCE
+VLO, Valero Energy Corp., Valero
+FCX, Freeport-McMoRan Inc, Freeport
+CM, Canadian Imperial Bank Of Commerce, Canadian Imperial Bank Of Commerce
+ECL, Ecolab Inc., Ecolab
+ADM, Archer Daniels Midland Co., Archer Daniels
+EXC, Exelon Corp., Exelon
+SYY, Sysco Corp., Sysco
+ANCTF, Alimentation Couche-Tard Inc., Alimentation
+ORLY, O`Reilly Automotive Inc., O`Reilly
+O, Realty Income Corp., Realty Income
+AZO, Autozone Inc., Autozone
+ROP, Roper Technologies Inc, Roper Technologies
+CDNS, Cadence Design Systems Inc., Cadence Design Systems
+COF, Capital One Financial Corp., Capital One Financial
+PAYX, Paychex Inc., Paychex
+RSG, Republic Services Inc., Republic Services
+PSX, Phillips 66, Phillips 66
+SNOW, Snowflake Inc, Snowflake
+IQV, IQVIA Holdings Inc, IQVIA
+AIG, American International Group Inc, American International Group
+UBER, Uber Technologies Inc, Uber
+TRV, Travelers Companies Inc., Travelers
+SCCO, Southern Copper Corporation, Southern Copper
+CTVA, Corteva Inc, Corteva
+APH, Amphenol Corp., Amphenol
+ADSK, Autodesk Inc., Autodesk
+WMB, Williams Cos Inc, Williams Cos
+KMI, Kinder Morgan Inc, Kinder Morgan
+XEL, Xcel Energy Inc., Xcel
+CVE, Cenovus Energy Inc, Cenovus
+DOW, Dow Inc, Dow Inc,  Dow Chemical
+CRWD, Crowdstrike Holdings Inc, Crowdstrike
+DVN, Devon Energy Corp., Devon Energy
+DLR, Digital Realty Trust Inc, Digital Realty Trust
+PRU, Prudential Financial Inc., Prudential
+AFL, Aflac Inc., Aflac
+CTSH, Cognizant Technology Solutions Corp., Cognizant
+WBA, Walgreens Boots Alliance Inc, Walgreens
+A, Agilent Technologies Inc., Agilent
+MSI, Motorola Solutions Inc, Motorola
+DLTR, Dollar Tree Inc, Dollar Tree
+HPQ, HP Inc, HP
+LULU, Lululemon Athletica inc., Lululemon, Athletica
+ALL, Allstate Corp (The), Allstate
+KR, Kroger Co., Kroger
+EA, Electronic Arts Inc., Electronic Arts, EA
+DELL, Dell Technologies Inc, Dell
+AJG, Arthur J. Gallagher & Co., Arthur Gallagher
+LNG, Cheniere Energy Inc., Cheniere Energy
+BK, Bank Of New York Mellon Corp, Bank Of New York Mellon
+SBAC, SBA Communications Corp, SBA Communications
+HES, Hess Corporation, Hess
+MSCI, MSCI Inc, MSCI
+ED, Consolidated Edison Inc., Consolidated Edison
+MFC, Manulife Financial Corp., Manulife
+BAX, Baxter International Inc., Baxter
+YUM, Yum Brands Inc., Yum Brands
+MCHP, Microchip Technology Inc., Microchip Technology
+WCN, Waste Connections Inc, Waste Connections
+ZM, Zoom Video Communications Inc, Zoom
+SPG, Simon Property Group Inc., Simon Property, Simon Properties
+WBD, Warner Bros. Discovery Inc, Warner Brothers, Warner Bros, Discovery
+PH, Parker-Hannifin Corp., Parker-Hannifin, Parker Hannifin
+GPN, Global Payments Inc., Global Payments
+HLT, Hilton Worldwide Holdings Inc, Hilton
+TSN, Tyson Foods Inc., Tyson Foods
+WEC, WEC Energy Group Inc, WEC Energy
+PEG, Public Service Enterprise Group Inc., Public Service Enterprise
+RMD, Resmed Inc., Resmed
+TU, Telus Corp., Telus
+BKR, Baker Hughes Co, Baker Hughes
+CARR, Carrier Global Corp, Carrier Global
+IMO, Imperial Oil Ltd., Imperial Oil
+IDXX, Idexx Laboratories Inc., Idexx Labs, Idexx Laboratories
+ABC, Amerisource Bergen Corp., Amerisource
+BIIB, Biogen Inc, Biogen
+IFF, International Flavors & Fragrances Inc., International Flavors & Fragrances, International Flavors and Fragrances
+CNSWF, Constellation Software Inc., Constellation Software
+OTIS, Otis Worldwide Corp, Otis
+ILMN, Illumina Inc, Illumina
+ANET, Arista Networks Inc, Arista Networks
+MTB, M & T Bank Corp, M&T Bank, M & T, M&T
+HAL, Halliburton Co., Halliburton
+ODFL, Old Dominion Freight Line Inc., Old Dominion
+PCAR, Paccar Inc., Paccar
+TWTR, Twitter Inc, Twitter
+ES, Eversource Energy, Eversource Energy
+VICI, VICI Properties Inc, VICI
+DD, DuPont de Nemours Inc, DuPont
+FAST, Fastenal Co., Fastenal
+LBLCF, Loblaw Cos. Ltd., Loblaw
+NUE, Nucor Corp., Nucor
+CERN, Cerner Corp., Cerner
+DDOG, Datadog Inc, Datadog
+LSXMK, Liberty Media Corp., Liberty Media
+LSXMA, Liberty Media Corp., Liberty Media
+FWONK, Liberty Media Corp., Liberty Media
+BATRK, Liberty Media Corp., Liberty Media
+BATRB, Liberty Media Corp., Liberty Media
+LSXMB, Liberty Media Corp., Liberty Media
+PPG, PPG Industries Inc., PPG Industries
+FWONA, Liberty Media Corp., Liberty Media
+BATRA, Liberty Media Corp., Liberty Media
+FWONB, Liberty Media Corp., Liberty Media
+GLW, Corning Inc., Corning
+CMI, Cummins Inc., Cummins
+AVB, Avalonbay Communities Inc., Avalonbay
+EQR, Equity Residential Properties Trust, Equity Residential
+SQ, Block Inc, Block
+VRSK, Verisk Analytics Inc, Verisk
+SLF, Sun Life Financial Inc., Sun Life Financial
+DFS, Discover Financial Services, Discover Financial
+AWK, American Water Works Co. Inc., American Water
+AMP, Ameriprise Financial Inc, Ameriprise
+TROW, T. Rowe Price Group Inc., Trowe, T. Rowe, T Rowe
+HRL, Hormel Foods Corp., Hormel
+MTD, Mettler-Toledo International Inc., Mettler-Toledo, Mettler Toledo
+CPRT, Copart Inc., Copart
+LVS, Las Vegas Sands Corp, Las Vegas Sands
+AME, Ametek Inc, Ametek
+ROST, Ross Stores Inc., Ross Stores
+FRC, First Republic Bank, First Republic Bank
+OKE, Oneok Inc., Oneok
+KEYS, Keysight Technologies Inc, Keysight
+ENPH, Enphase Energy Inc, Enphase
+ALB, Albemarle Corp., Albemarle
+WY, Weyerhaeuser Co., Weyerhaeuser
+PCG, PG&E Corp., PG&E
+DTE, DTE Energy Co., DTE Energy
+K, Kellogg Co, Kellogg
+CBRE, CBRE Group Inc, CBRE
+SIRI, Sirius XM Holdings Inc, Sirius
+EIX, Edison International, Edison International
+EBAY, EBay Inc., EBay
+SIVB, SVB Financial Group, SVB Financial
+ARE, Alexandria Real Estate Equities Inc., Alexandria Real Estate
+STT, State Street Corp., State Street
+IFCZF, Intact Financial Corp., Intact Financial
+FITB, Fifth Third Bancorp, Fifth Third
+DHI, D.R. Horton Inc., DR Horton, D.R. Horton, Horton
+GWW, W.W. Grainger Inc., W.W. Grainger, WW Grainger
+AEE, Ameren Corp., Ameren
+EXR, Extra Space Storage Inc., Extra Space Storage
+ROK, Rockwell Automation Inc, Rockwell Automation
+GFS, GlobalFoundries Inc, GlobalFoundries, Global Foundries
+MKC, McCormick & Co. Inc., McCormick
+ETR, Entergy Corp., Entergy
+FTS, Fortis Inc., Fortis
+CHD, Church & Dwight Co. Inc., Church & Dwight
+ZBH, Zimmer Biomet Holdings Inc, Zimmer Biomet
+GWLIF, Great-West Lifeco Inc., Great-West Lifeco, Great West Lifeco
+LH, Laboratory Corp. Of America Holdings, Laboratory Corp. Of America, Lab Corp. Of America, Lab Corp of America, Laboratory Corp Of America
+ON, ON Semiconductor Corp., ON Semi, ON Semiconductor
+NTIOF, National Bank of Canada, National Bank of Canada
+WST, West Pharmaceutical Services Inc., West Pharmaceuticals, West Pharmaceutical, West Pharma
+EFX, Equifax Inc., Equifax
+ZS, Zscaler Inc, Zscaler
+TSCO, Tractor Supply Co., Tractor Supply
+BALL, Ball Corp., Ball Corp
+FE, Firstenergy Corp., Firstenergy
+AEM, Agnico Eagle Mines Ltd, Agnico
+FANG, Diamondback Energy Inc, Diamondback Energy
+CTRA, Coterra Energy Inc, Coterra Energy
+LUV, Southwest Airlines Co, Southwest
+TCKRF, Teck Resources Ltd., Teck Resources
+HIG, Hartford Financial Services Group Inc., Hartford Financial
+ANSS, Ansys Inc., Ansys
+SNAP, Snap Inc, Snap
+VTR, Ventas Inc, Ventas
+NTRS, Northern Trust Corp., Northern Trust
+MTCH, Match Group Inc., Match Group
+ULTA, Ulta Beauty Inc, Ulta
+LEN, Lennar Corp., Lennar
+MAA, Mid-America Apartment Communities Inc., Mid-America Apartment, Mid-America Apartments, Mid America Apartment, Mid America Apartments
+PPL, PPL Corp, PPL
+WAT, Waters Corp., Waters Corp
+PBA, Pembina Pipeline Corporation, Pembina Pipeline
+FTV, Fortive Corp, Fortive
+SUI, Sun Communities Inc., Sun Communities
+IT, Gartner Inc., Gartner
+CMS, CMS Energy Corporation, CMS Energy
+AVTR, Avantor Inc., Avantor
+LYV, Live Nation Entertainment Inc, Live Nation
+TTD, Trade Desk Inc, Trade Desk, TradeDesk
+ALGN, Align Technology Inc., Align Technology
+VMC, Vulcan Materials Co, Vulcan Materials
+DAL, Delta Air Lines Inc., Delta
+GPC, Genuine Parts Co., Genuine Parts
+CINF, Cincinnati Financial Corp., Cincinnati Financial
+RCI, Rogers Communications Inc., Rogers Communications
+MDB, MongoDB Inc, MongoDB
+RJF, Raymond James Financial Inc., Raymond James
+MLM, Martin Marietta Materials Inc., Martin Marietta Materials
+TRMLF, Tourmaline Oil Corp., Tourmaline
+LBRDA, Liberty Broadband Corp, Liberty Broadband
+CNP, Centerpoint Energy Inc., Centerpoint Energy
+RPRX, Royalty Pharma plc, Royalty Pharma
+LBRDK, Liberty Broadband Corp, Liberty Broadband
+MPWR, Monolithic Power System Inc, Monolithic Power
+RCIAF, Rogers Communications Inc., Rogers Communications
+VRSN, Verisign Inc., Verisign
+CF, CF Industries Holdings Inc, CF Industries
+LBRDB, Liberty Broadband Corp, Liberty Broadband
+RF, Regions Financial Corp., Regions Financial
+PLTR, Palantir Technologies Inc, Palantir
+PKI, Perkinelmer Inc., Perkinelmer
+WRB, W.R. Berkley Corp., W.R. Berkley, WR Berkley
+AGR, Avangrid Inc, Avangrid
+HBAN, Huntington Bancshares Inc., Huntington Bancshares
+EPAM, EPAM Systems Inc, EPAM Systems
+FOXA, Fox Corporation, Fox
+FOX, Fox Corporation, Fox
+ALNY, Alnylam Pharmaceuticals Inc, Alnylam Pharma, Alnylam Pharmaceuticals, Alnylam Pharmaceutical
+HOLX, Hologic Inc., Hologic
+VFC, VF Corp., VF
+DOV, Dover Corp., Dover
+MKL, Markel Corp, Markel
+MOS, Mosaic Company, Mosaic
+TDY, Teledyne Technologies Inc, Teledyne
+HPE, Hewlett Packard Enterprise Co, Hewlett Packard
+URI, United Rentals Inc., United Rentals, United Rental
+PWR, Quanta Services Inc., Quanta Services
+ROL, Rollins Inc., Rollins
+CLX, Clorox Co., Clorox
+IR, Ingersoll-Rand Inc, Ingersoll, Ingersoll-Rand
+ESS, Essex Property Trust Inc., Essex Property Trust
+PAYC, Paycom Software Inc, Paycom
+PFG, Principal Financial Group Inc, Principal Financial
+COO, Cooper Companies Inc., Cooper Companies
+WPM, Wheaton Precious Metals Corp, Wheaton Precious Metals
+GIB, CGI Inc, CGI
+INCY, Incyte Corp., Incyte
+TECK, Teck Resources Ltd, Teck Resources
+WNGRF, George Weston Ltd., George Weston
+PARAA, Paramount Global, Paramount
+MOH, Molina Healthcare Inc, Molina
+MGA, Magna International Inc., Magna
+JBHT, J.B. Hunt Transport Services Inc., J.B. Hunt
+CAG, Conagra Brands Inc, Conagra
+EXPD, Expeditors International Of Washington Inc., Expeditors International Of Washington
+PARA, Paramount Global, Paramount
+BRO, Brown & Brown Inc., Brown & Brown
+KEY, Keycorp, Keycorp
+FLT, Fleetcor Technologies Inc, Fleetcor
+WPC, W. P. Carey Inc, WP Carey, W.P. Carey
+DGX, Quest Diagnostics Inc., Quest Diagnostics
+SWK, Stanley Black & Decker Inc, Stanley Black & Decker, Stanley Black and Decker
+J, Jacobs Engineering Group Inc., Jacobs Engineering Group
+DLMAF, Dollarama Inc., Dollarama
+IP, International Paper Co., International Paper
+ZBRA, Zebra Technologies Corp., Zebra Technologies
+PWCDF, Power Corp. of Canada, Power Corp. of Canada, Power Corp of Canada
+HEI, Heico Corp., Heico
+BMRN, Biomarin Pharmaceutical Inc., Biomarin
+FQVLF, First Quantum Minerals Ltd., First Quantum Minerals
+ATO, Atmos Energy Corp., Atmos Energy
+PODD, Insulet Corporation, Insulet
+TWLO, Twilio Inc, Twilio
+TRU, TransUnion, TransUnion
+HRNNF, Hydro One Ltd., Hydro One
+QSR, Restaurant Brands International Inc, Restaurant Brands
+BBY, Best Buy Co. Inc., Best Buy
+SWKS, Skyworks Solutions Inc., Skyworks Solutions
+WAB, Westinghouse Air Brake Technologies Corp, Westinghouse Air Brake
+KMX, Carmax Inc, Carmax
+EVRG, Evergy Inc, Evergy
+SSNC, SS&C Technologies Holdings Inc, SS&C
+LPLA, LPL Financial Holdings Inc, LPL
+HUBS, HubSpot Inc, HubSpot
+TRMB, Trimble Inc, Trimble
+AKAM, Akamai Technologies Inc, Akamai
+UDR, UDR Inc, UDR
+BIO, Bio-Rad Laboratories Inc., Bio-Rad, Bio Rad
+NDAQ, Nasdaq Inc, Nasdaq
+CAH, Cardinal Health Inc., Cardinal Health
+EXPE, Expedia Group Inc, Expedia
+CPB, Campbell Soup Co., Campbell Soup
+TTWO, Take-Two Interactive Software Inc., Take-Two
+LNT, Alliant Energy Corp., Alliant Energy
+L, Loews Corp., Loews
+FDS, Factset Research Systems Inc., Factset
+TER, Teradyne Inc., Teradyne
+NTAP, Netapp Inc, Netapp
+SYF, Synchrony Financial, Synchrony
+CPT, Camden Property Trust, Camden Property Trust
+WDC, Western Digital Corp., Western Digital
+DRI, Darden Restaurants Inc., Darden Restaurants
+SJM, J.M. Smucker Co., J.M. Smucker
+SJR, Shaw Communications Inc., Shaw Communications
+BXP, Boston Properties Inc., Boston Properties
+NET, Cloudflare Inc, Cloudflare
+OKTA, Okta Inc, Okta
+XYL, Xylem Inc, Xylem
+POOL, Pool Corporation, Pool Corporation
+PEAK, Healthpeak Properties Inc, Healthpeak
+LKQ, LKQ Corp, LKQ
+BG, Bunge Ltd., Bunge
+EQT, EQT Corp, EQT
+TRGP, Targa Resources Corp, Targa
+IEX, Idex Corporation, Idex
+GNRC, Generac Holdings Inc, Generac
+TECH, Bio-Techne Corp, Bio-Techne, Bio Techne
+FMC, FMC Corp., FMC
+AES, AES Corp., AES
+LDOS, Leidos Holdings Inc, Leidos
+AVY, Avery Dennison Corp., Avery Dennison
+JKHY, Jack Henry & Associates Inc., Jack Henry
+ELS, Equity Lifestyle Properties Inc., Equity Lifestyle
+HWM, Howmet Aerospace Inc, Howmet Aerospace
+NVR, NVR Inc., NVR
+OMC, Omnicom Group Inc., Omnicom Group
+PKG, Packaging Corp Of America, Packaging Corp Of America
+CE, Celanese Corp, Celanese
+NLOK, NortonLifeLock Inc, NortonLifeLock
+CHRW, C.H. Robinson Worldwide Inc., C.H. Robinson
+TXT, Textron Inc., Textron
+ENTG, Entegris Inc, Entegris
+SJRWF, Shaw Communications Inc., Shaw Communications
+STLD, Steel Dynamics Inc., Steel Dynamics
+AZPN, Aspen Technology Inc., Aspen Tech, Aspen Technology
+WLK, Westlake Corporation, Westlake
+WSPOF, WSP Global Inc., WSP Global
+PTC, PTC Inc, PTC
+KIM, Kimco Realty Corp., Kimco
+MGM, MGM Resorts International, MGM
+MTRAF, Metro Inc., Metro
+CSL, Carlisle Companies Inc., Carlisle
+FRFHF, Fairfax Financial Holdings Ltd., Fairfax Financial
