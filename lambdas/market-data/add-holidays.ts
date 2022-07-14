@@ -5,37 +5,40 @@ import {DateTime} from 'luxon';
 import {Repository} from "../../services/market-data/repository";
 import {addUSHoliday} from '../../services/market-data/interfaces';
 import {DefaultConfig} from "@tradingpost/common/configuration";
-import ServerlessClient from "serverless-postgres";
-import {IDatabaseClient} from "../interfaces";
+import pgPromise, {IDatabase, IMain} from 'pg-promise'
 
-const pgClient = new ServerlessClient({port: 5432});
+let pgClient: IDatabase<any>;
+let pgp: IMain;
 
 const run = async () => {
-    const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-    pgClient.setConfig({
-        host: postgresConfiguration.host,
-        user: postgresConfiguration.user,
-        password: postgresConfiguration.password,
-        database: postgresConfiguration.database
-    });
+    if (!pgClient || !pgp) {
+        const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+        pgp = pgPromise({});
+        pgClient = pgp({
+            host: postgresConfiguration['host'] as string,
+            user: postgresConfiguration['user'] as string,
+            password: postgresConfiguration['password'] as string,
+            database: postgresConfiguration['database'] as string
+        })
+    }
 
     const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
     const iex = new IEX(iexConfiguration.key);
 
     await pgClient.connect()
 
-    const repository = new Repository(pgClient);
+    const repository = new Repository(pgClient, pgp);
     try {
-        await start(pgClient, repository, iex);
+        await start(repository, iex);
     } catch (e) {
         console.error(e)
         throw e
     } finally {
-        await pgClient.clean()
+        await pgp.end()
     }
 }
 
-const start = async (pgClient: IDatabaseClient, repository: Repository, iex: IEX) => {
+const start = async (repository: Repository, iex: IEX) => {
     const nextIexHolidays = await iex.getUSHolidayAndTradingDays("holiday", "next", 100000);
     const lastIexHolidays = await iex.getUSHolidayAndTradingDays("holiday", "last", 100000);
 

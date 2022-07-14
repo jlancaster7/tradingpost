@@ -1,18 +1,17 @@
 import fetch from 'node-fetch';
 import {rawTweet, formatedTweet, twitterParams} from '../interfaces/twitter';
 import {twitterConfig} from '../interfaces/utils';
-import {IDatabaseClient} from "../interfaces";
-
+import {IDatabase} from "pg-promise";
 
 export class Tweets {
     private twitterConfig: twitterConfig;
-    private pg_client: IDatabaseClient;
+    private pg_client: IDatabase<any>;
     private twitterUrl: string;
     public startDate: string;
     public defaultStartDateDays: number;
     private params: twitterParams;
 
-    constructor(twitterConfig: twitterConfig, pg_client: IDatabaseClient) {
+    constructor(twitterConfig: twitterConfig, pg_client: IDatabase<any>) {
         this.twitterConfig = twitterConfig;
         this.pg_client = pg_client;
         this.params = {
@@ -31,21 +30,18 @@ export class Tweets {
     }
 
     getStartDate = async (twitter_user_id: string) => {
-
         let query = 'SELECT twitter_user_id, MAX(created_at) FROM tweets WHERE twitter_user_id = $1 GROUP BY twitter_user_id ';
-        let result = (await this.pg_client.query(query, [twitter_user_id]));
+        let result = await this.pg_client.result(query, [twitter_user_id]);
         if (result.rowCount === 0) {
             let defaultDate = new Date();
             defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
-            this.setStartDate(defaultDate);
+            await this.setStartDate(defaultDate);
         } else {
-            this.setStartDate(result.rows[0].max);
+            await this.setStartDate(result.rows[0].max);
         }
-
     }
 
     importTweets = async (twitterUserId: string): Promise<[formatedTweet[], number]> => {
-
         const data = await this.getUserTweets(twitterUserId);
         if (data === []) {
             return [[], 0];
@@ -56,15 +52,12 @@ export class Tweets {
     }
 
     getUserTweets = async (twitterUserId: string): Promise<rawTweet[]> => {
-
         if (this.startDate === '') {
             await this.getStartDate(twitterUserId)
         }
 
-
         let data = [];
         try {
-
             const tweetsEndpoints = `/users/${twitterUserId}/tweets?`;
 
             let nextToken = '';
@@ -74,9 +67,7 @@ export class Tweets {
             let responseData;
 
             while (nextToken !== 'end') {
-
                 if (nextToken === '') {
-
                     fetchUrl = this.twitterUrl + tweetsEndpoints + new URLSearchParams({
                         exclude: "replies",
                         max_results: '5',
@@ -84,7 +75,6 @@ export class Tweets {
                         "tweet.fields": "id,lang,public_metrics,text,attachments,entities,created_at,possibly_sensitive",
                     });
                 } else {
-
                     fetchUrl = this.twitterUrl + tweetsEndpoints + new URLSearchParams({
                         exclude: "replies",
                         max_results: '5',
@@ -101,8 +91,8 @@ export class Tweets {
                     this.startDate = '';
                     return data;
                 }
-                for (let i = 0; i < responseData.length; i++) {
 
+                for (let i = 0; i < responseData.length; i++) {
                     tweetUrl = `https://twitter.com/${responseData[i].username}/status/${responseData[i].id}`
                     fetchUrl = `https://publish.twitter.com/oembed?url=${tweetUrl}`;
                     let response = await (await fetch(fetchUrl, this.params)).json();
@@ -113,7 +103,6 @@ export class Tweets {
 
                     data.push(responseData[i]);
                 }
-                ;
 
                 if (Object.keys(response.meta).includes('next_token')) {
                     nextToken = response.meta.next_token;
@@ -122,9 +111,7 @@ export class Tweets {
                 }
             }
         } catch (err) {
-
             console.log(err);
-
         }
 
         this.startDate = '';
@@ -132,12 +119,10 @@ export class Tweets {
     }
 
     formatTweets = (rawTweets: rawTweet[]): formatedTweet[] => {
-
         let keys;
         let formatedTweets: any[] = JSON.parse(JSON.stringify(rawTweets));
 
         for (let i = 0; i < rawTweets.length; i++) {
-
             formatedTweets[i].tweet_id = rawTweets[i].id;
             delete formatedTweets[i].id;
 
@@ -150,17 +135,13 @@ export class Tweets {
             delete formatedTweets[i].created_at;
             delete formatedTweets[i].public_metrics;
 
-
             if (Object.keys(rawTweets[i]).includes('attachments')) {
                 formatedTweets[i].media_keys = JSON.stringify({data: rawTweets[i].attachments!.media_keys});
-
                 delete formatedTweets[i].attachments;
             }
 
             if (Object.keys(rawTweets[i]).includes('entities')) {
-
                 keys = Object.keys(rawTweets[i].entities!);
-
                 if (keys.includes('urls')) {
                     formatedTweets[i].urls = JSON.stringify(rawTweets[i].entities!.urls);
                 }
@@ -180,15 +161,12 @@ export class Tweets {
                 delete formatedTweets[i].entities;
             }
         }
-
         return formatedTweets;
     }
 
     appendTweets = async (formatedTweets: formatedTweet[]): Promise<number> => {
-
         let success = 0;
         try {
-
             let keys: string;
             let values: string[];
             let query: string;
@@ -196,24 +174,20 @@ export class Tweets {
             let value_index = '';
 
             for (let i = 0; i < formatedTweets.length; i++) {
-
                 keys = Object.keys(formatedTweets[i]).join(' ,');
                 values = Object.values(formatedTweets[i]);
-
                 value_index = '';
                 values.map((obj, index) => {
                     value_index += `$${index + 1}, `;
                 });
-                value_index = value_index.substring(0, value_index.length - 2);
 
+                value_index = value_index.substring(0, value_index.length - 2);
                 query = `INSERT INTO tweets(${keys})
                          VALUES (${value_index})
                          ON CONFLICT (tweet_id) DO NOTHING`;
-                result = await this.pg_client.query(query, values);
-
+                result = await this.pg_client.result(query, values);
                 success += result.rowCount;
             }
-
         } catch (err) {
             console.log(err);
         }

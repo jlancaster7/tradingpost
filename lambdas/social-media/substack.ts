@@ -2,20 +2,24 @@ import 'dotenv/config';
 import {Context} from "aws-lambda";
 import {lambdaImportRSSFeeds} from "../../services/data-processing/rss_feeds/imports";
 import {DefaultConfig} from "@tradingpost/common/configuration";
-import ServerlessClient from "serverless-postgres";
+import pgPromise, {IDatabase, IMain} from "pg-promise";
 
-const pgClient = new ServerlessClient({port: 5432});
+let pgClient: IDatabase<any>;
+let pgp: IMain;
 
 const run = async () => {
-    const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-    const substackConfiguration = await DefaultConfig.fromCacheOrSSM("substack");
+    if (!pgClient || !pgp) {
+        const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+        pgp = pgPromise({});
+        pgClient = pgp({
+            host: postgresConfiguration['host'] as string,
+            user: postgresConfiguration['user'] as string,
+            password: postgresConfiguration['password'] as string,
+            database: postgresConfiguration['database'] as string
+        })
+    }
 
-    pgClient.setConfig({
-        host: postgresConfiguration.host,
-        user: postgresConfiguration.user,
-        password: postgresConfiguration.password,
-        database: postgresConfiguration.database
-    });
+    const substackConfiguration = await DefaultConfig.fromCacheOrSSM("substack");
 
     await pgClient.connect()
 
@@ -25,7 +29,7 @@ const run = async () => {
         console.error(e)
         throw e
     } finally {
-        await pgClient.clean()
+        await pgp.end()
     }
 }
 

@@ -18,7 +18,7 @@ function lambdaImportRSSFeeds(pgClient, substackConfiguration) {
         //TODO: I could do this a lot better.. making getting the substack Ids apart of the class
         //      and adding a function to set your own list of substackIds.. similar to start date.
         //      but its fine for now
-        const substackIds = (yield pgClient.query(query)).rows;
+        const substackIds = yield pgClient.query(query);
         const ssArticles = new substack_1.Substack(pgClient);
         let result;
         let articlesImported = 0;

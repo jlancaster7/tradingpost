@@ -21,14 +21,14 @@ class Tweets {
         });
         this.getStartDate = (twitter_user_id) => __awaiter(this, void 0, void 0, function* () {
             let query = 'SELECT twitter_user_id, MAX(created_at) FROM tweets WHERE twitter_user_id = $1 GROUP BY twitter_user_id ';
-            let result = (yield this.pg_client.query(query, [twitter_user_id]));
+            let result = yield this.pg_client.result(query, [twitter_user_id]);
             if (result.rowCount === 0) {
                 let defaultDate = new Date();
                 defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
-                this.setStartDate(defaultDate);
+                yield this.setStartDate(defaultDate);
             }
             else {
-                this.setStartDate(result.rows[0].max);
+                yield this.setStartDate(result.rows[0].max);
             }
         });
         this.importTweets = (twitterUserId) => __awaiter(this, void 0, void 0, function* () {
@@ -85,7 +85,6 @@ class Tweets {
                         responseData[i].twitter_user_id = twitterUserId;
                         data.push(responseData[i]);
                     }
-                    ;
                     if (Object.keys(response.meta).includes('next_token')) {
                         nextToken = response.meta.next_token;
                     }
@@ -158,7 +157,7 @@ class Tweets {
                     query = `INSERT INTO tweets(${keys})
                          VALUES (${value_index})
                          ON CONFLICT (tweet_id) DO NOTHING`;
-                    result = yield this.pg_client.query(query, values);
+                    result = yield this.pg_client.result(query, values);
                     success += result.rowCount;
                 }
             }

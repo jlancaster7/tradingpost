@@ -2,15 +2,16 @@ import {formatedYoutubeVideo, formatedChannelInfo} from '../interfaces/youtube';
 import {YoutubeUsers} from './users';
 import {YoutubeVideos} from './videos';
 import {IDatabaseClient} from "../interfaces";
+import {IDatabase} from "pg-promise";
 
 type YoutubeConfiguration = {
     api_key: string
 }
 
-async function lambdaImportYoutube(pgClient: IDatabaseClient, youtubeConfiguration: YoutubeConfiguration) {
+async function lambdaImportYoutube(pgClient: IDatabase<any>, youtubeConfiguration: YoutubeConfiguration) {
     let query = 'SELECT youtube_channel_id FROM youtube_users';
 
-    const channelIds = (await pgClient.query(query)).rows;
+    const channelIds = await pgClient.query(query);
 
     const Videos = new YoutubeVideos(youtubeConfiguration, pgClient);
 
@@ -18,14 +19,14 @@ async function lambdaImportYoutube(pgClient: IDatabaseClient, youtubeConfigurati
     let videosImported = 0;
 
     for (let i = 0; i < channelIds.length; i++) {
-
         result = await Videos.importVideos(channelIds[i].youtube_channel_id);
         videosImported += result[1];
     }
+
     console.log(`${videosImported} youtube videos were imported`);
 }
 
-async function importYoutubeUsers(pgClient: IDatabaseClient, youtubeConfiguration: YoutubeConfiguration, userChannelUrl: string | string[]): Promise<[formatedChannelInfo[], number]> {
+async function importYoutubeUsers(pgClient: IDatabase<any>, youtubeConfiguration: YoutubeConfiguration, userChannelUrl: string | string[]): Promise<[formatedChannelInfo[], number]> {
     const Users = new YoutubeUsers(youtubeConfiguration, pgClient);
 
     const result = await Users.importYoutubeUsers(userChannelUrl);
@@ -39,7 +40,7 @@ async function importYoutubeUsers(pgClient: IDatabaseClient, youtubeConfiguratio
     return result;
 }
 
-async function importVideos(pgClient: IDatabaseClient, youtubeConfiguration: YoutubeConfiguration, youtubeChannelId: string, startDate?: Date): Promise<[formatedYoutubeVideo[], number]> {
+async function importVideos(pgClient: IDatabase<any>, youtubeConfiguration: YoutubeConfiguration, youtubeChannelId: string, startDate?: Date): Promise<[formatedYoutubeVideo[], number]> {
     const Vidoes = new YoutubeVideos(youtubeConfiguration, pgClient);
 
     if (startDate !== undefined) {

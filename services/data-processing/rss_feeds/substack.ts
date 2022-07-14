@@ -2,12 +2,12 @@ import format from "pg-format";
 import Parser from 'rss-parser';
 import {SubstackUser, SubstackFeed, SubstackArticles} from '../interfaces/rss_feeds';
 import {IDatabaseClient} from "../interfaces";
-
+import {IDatabase} from "pg-promise";
 
 export class Substack {
-    private pg_client: IDatabaseClient;
+    private pg_client: IDatabase<any>;
 
-    constructor(pg_client: IDatabaseClient) {
+    constructor(pg_client: IDatabase<any>) {
         this.pg_client = pg_client;
     }
 
@@ -50,7 +50,6 @@ export class Substack {
         return [formatedArticles, success];
     }
 
-
     getUserFeed = async (username: string): Promise<SubstackFeed | undefined> => {
         const parser = new Parser();
 
@@ -64,9 +63,7 @@ export class Substack {
         }
     }
 
-
     formatUser = (userFeed: SubstackFeed): SubstackUser => {
-
         const formatedUser: SubstackUser = {
             substack_user_id: userFeed.username,
             title: userFeed.title,
@@ -106,7 +103,6 @@ export class Substack {
         return formatedArticles;
     }
 
-
     appendUser = async (data: SubstackUser): Promise<number> => {
         let keys: string;
         let values: string[];
@@ -126,24 +122,21 @@ export class Substack {
                      VALUES (${value_index})
                      ON CONFLICT (substack_user_id) DO NOTHING`;
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            result = await this.pg_client.query(query, values);
-
+            result = await this.pg_client.result(query, values);
             success += result.rowCount;
             return success;
         } catch (err) {
             return success;
         }
     }
+
     appendArticles = async (formatedArticles: SubstackArticles[]): Promise<number> => {
         let success = 0;
         try {
-
             let keys: string;
             let values: any[] = [];
             let query: string;
             let result;
-            let value_index = '';
-
 
             keys = Object.keys(formatedArticles[0]).join(' ,');
             formatedArticles.forEach(element => {
@@ -151,13 +144,12 @@ export class Substack {
             })
 
             query = `INSERT INTO substack_articles(${keys})
-                     VALUES %L
-                     ON CONFLICT (article_id) DO NOTHING`;
-            result = await this.pg_client.query(format(query, values));
-
+            VALUES
+            %L
+                     ON CONFLICT (article_id)
+            DO NOTHING`;
+            result = await this.pg_client.result(format(query, values));
             success += result.rowCount;
-
-
         } catch (err) {
             throw err;
         }

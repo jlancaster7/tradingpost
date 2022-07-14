@@ -22,14 +22,14 @@ class YoutubeVideos {
         });
         this.getStartDate = (youtubeChannelId) => __awaiter(this, void 0, void 0, function* () {
             let query = 'SELECT youtube_channel_id, MAX(created_at) FROM youtube_videos WHERE youtube_channel_id = $1 GROUP BY youtube_channel_id';
-            let result = (yield this.pg_client.query(query, [youtubeChannelId]));
+            let result = yield this.pg_client.result(query, [youtubeChannelId]);
             if (result.rowCount === 0) {
                 let defaultDate = new Date();
                 defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
-                this.setStartDate(defaultDate);
+                yield this.setStartDate(defaultDate);
             }
             else {
-                this.setStartDate(result.rows[0].max);
+                yield this.setStartDate(result.rows[0].max);
             }
         });
         this.importVideos = (youtubeChannelId) => __awaiter(this, void 0, void 0, function* () {
@@ -128,9 +128,13 @@ class YoutubeVideos {
                 formatedVideos.forEach(element => {
                     values.push(Object.values(element));
                 });
-                query = `INSERT INTO youtube_videos(${keys}) VALUES %L ON CONFLICT (video_id) DO NOTHING`;
+                query = `INSERT INTO youtube_videos(${keys})
+            VALUES
+            %L
+                     ON CONFLICT (video_id)
+            DO NOTHING`;
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.query((0, pg_format_1.default)(query, values));
+                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
                 success += result.rowCount;
             }
             catch (err) {

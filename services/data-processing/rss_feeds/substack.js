@@ -114,7 +114,7 @@ class Substack {
                      VALUES (${value_index})
                      ON CONFLICT (substack_user_id) DO NOTHING`;
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.query(query, values);
+                result = yield this.pg_client.result(query, values);
                 success += result.rowCount;
                 return success;
             }
@@ -129,15 +129,16 @@ class Substack {
                 let values = [];
                 let query;
                 let result;
-                let value_index = '';
                 keys = Object.keys(formatedArticles[0]).join(' ,');
                 formatedArticles.forEach(element => {
                     values.push(Object.values(element));
                 });
                 query = `INSERT INTO substack_articles(${keys})
-                     VALUES %L
-                     ON CONFLICT (article_id) DO NOTHING`;
-                result = yield this.pg_client.query((0, pg_format_1.default)(query, values));
+            VALUES
+            %L
+                     ON CONFLICT (article_id)
+            DO NOTHING`;
+                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
                 success += result.rowCount;
             }
             catch (err) {

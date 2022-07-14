@@ -1,16 +1,16 @@
 import {SpotifyShows} from './spotify';
 import {spotifyEpisode, spotifyShow} from '../interfaces/podcasts';
-import {IDatabaseClient} from "../interfaces";
+import {IDatabase} from 'pg-promise'
 
 type SpotifyConfiguration = {
     client_id: string
     client_secret: string
 }
 
-async function lambdaImportEpisodes(pgClient: IDatabaseClient, spotifyConfiguration: SpotifyConfiguration) {
+async function lambdaImportEpisodes(pgClient: IDatabase<any>, spotifyConfiguration: SpotifyConfiguration) {
     let query = 'SELECT spotify_show_id FROM spotify_users';
 
-    const spotifyShowIds = (await pgClient.query(query)).rows;
+    const spotifyShowIds = await pgClient.query(query);
 
     const Spotify = new SpotifyShows(spotifyConfiguration, pgClient);
 
@@ -25,7 +25,7 @@ async function lambdaImportEpisodes(pgClient: IDatabaseClient, spotifyConfigurat
     console.log(`${episodeImported} episodes were imported!`);
 }
 
-async function importSpotifyShows(showIds: string | string[], pgClient: IDatabaseClient, spotifyCfg: SpotifyConfiguration) {
+async function importSpotifyShows(showIds: string | string[], pgClient: IDatabase<any>, spotifyCfg: SpotifyConfiguration) {
     const Spotify = new SpotifyShows(spotifyCfg, pgClient);
 
     let result: [spotifyShow[], number];
@@ -35,7 +35,7 @@ async function importSpotifyShows(showIds: string | string[], pgClient: IDatabas
     console.log(`${result[1]} shows were imported!`);
 }
 
-async function importSpotifyEpisodes(showId: string, pgClient: IDatabaseClient, spotifyCfg: SpotifyConfiguration): Promise<[spotifyEpisode[], number]> {
+async function importSpotifyEpisodes(showId: string, pgClient: IDatabase<any>, spotifyCfg: SpotifyConfiguration): Promise<[spotifyEpisode[], number]> {
     const Spotify = new SpotifyShows(spotifyCfg, pgClient);
 
     let result: [spotifyEpisode[], number];

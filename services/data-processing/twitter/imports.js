@@ -16,7 +16,7 @@ function lambdaImportTweets(pgClient, twitterConfiguration) {
     return __awaiter(this, void 0, void 0, function* () {
         let query = `SELECT twitter_user_id
                  FROM twitter_users`;
-        const twitterIds = (yield pgClient.query(query)).rows;
+        const twitterIds = yield pgClient.query(query);
         const Tweet = new tweets_1.Tweets(twitterConfiguration, pgClient);
         let result;
         let tweetsImported = 0;

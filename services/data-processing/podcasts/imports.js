@@ -14,7 +14,7 @@ const spotify_1 = require("./spotify");
 function lambdaImportEpisodes(pgClient, spotifyConfiguration) {
     return __awaiter(this, void 0, void 0, function* () {
         let query = 'SELECT spotify_show_id FROM spotify_users';
-        const spotifyShowIds = (yield pgClient.query(query)).rows;
+        const spotifyShowIds = yield pgClient.query(query);
         const Spotify = new spotify_1.SpotifyShows(spotifyConfiguration, pgClient);
         let result;
         let episodeImported = 0;

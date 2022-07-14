@@ -1,26 +1,23 @@
-import 'dotenv/config';
-import IEX, {
-    GetCompany,
-    GetLogo,
-    GetPreviousDayPrice,
-    GetQuote,
-    GetStatsBasic,
-    GetIexSymbols,
-    GetOtcSymbols
-} from "@tradingpost/common/iex";
-import {Repository} from "../../services/market-data/repository";
-import {
-    addSecurity,
-    addSecurityPrice,
-    getSecurityBySymbol,
-    upsertSecuritiesInformation
-} from '../../services/market-data/interfaces';
-import {DateTime} from "luxon";
-import {DefaultConfig} from "@tradingpost/common/configuration";
-import {Context} from "aws-lambda";
-import pgPromise, {IDatabase, IMain} from "pg-promise";
-
-
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
+const iex_1 = __importDefault(require("@tradingpost/common/iex"));
+const repository_1 = require("../../services/market-data/repository");
+const luxon_1 = require("luxon");
+const configuration_1 = require("@tradingpost/common/configuration");
+const pg_promise_1 = __importDefault(require("pg-promise"));
 // Pricing Charge
 // AM
 // OTC Symbols = 100
@@ -37,74 +34,68 @@ import pgPromise, {IDatabase, IMain} from "pg-promise";
 // 1 Per Request = 268
 // Per Day = (26748 * 8) + 268 = 214,244 / Day * 21
 // Per Month = 4,501,308
-
-let pgClient: IDatabase<any>;
-let pgp: IMain;
-
-const run = async () => {
+let pgClient;
+let pgp;
+const run = () => __awaiter(void 0, void 0, void 0, function* () {
     if (!pgClient || !pgp) {
-        const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-        pgp = pgPromise({});
+        const postgresConfiguration = yield configuration_1.DefaultConfig.fromCacheOrSSM("postgres");
+        pgp = (0, pg_promise_1.default)({});
         pgClient = pgp({
-            host: postgresConfiguration['host'] as string,
-            user: postgresConfiguration['user'] as string,
-            password: postgresConfiguration['password'] as string,
-            database: postgresConfiguration['database'] as string
-        })
+            host: postgresConfiguration['host'],
+            user: postgresConfiguration['user'],
+            password: postgresConfiguration['password'],
+            database: postgresConfiguration['database']
+        });
     }
-
-    const iexConfiguration = await DefaultConfig.fromSSM("iex");
-    const iex = new IEX(iexConfiguration.key);
-
-    await pgClient.connect();
-    const repository = new Repository(pgClient, pgp);
-
+    const iexConfiguration = yield configuration_1.DefaultConfig.fromSSM("iex");
+    const iex = new iex_1.default(iexConfiguration.key);
+    yield pgClient.connect();
+    const repository = new repository_1.Repository(pgClient, pgp);
     try {
-        await start(repository, iex)
-    } catch (e) {
-        console.error(e)
-        throw e
-    } finally {
-        await pgp.end()
+        yield start(repository, iex);
     }
-}
-
-const start = async (repository: Repository, iex: IEX) => {
-    const now = DateTime.now().setZone("America/New_York");
-    if (now.hour == 16) await ingestEveningSecuritiesInformation(repository, iex);
-    if (now.hour == 8) await ingestMorningSecuritiesInformation(repository, iex);
-}
-
-const ingestEveningSecuritiesInformation = async (repository: Repository, iex: IEX) => {
-    const securities = await repository.getSecurities();
+    catch (e) {
+        console.error(e);
+        throw e;
+    }
+    finally {
+        yield pgp.end();
+    }
+});
+const start = (repository, iex) => __awaiter(void 0, void 0, void 0, function* () {
+    const now = luxon_1.DateTime.now().setZone("America/New_York");
+    if (now.hour == 16)
+        yield ingestEveningSecuritiesInformation(repository, iex);
+    if (now.hour == 8)
+        yield ingestMorningSecuritiesInformation(repository, iex);
+});
+const ingestEveningSecuritiesInformation = (repository, iex) => __awaiter(void 0, void 0, void 0, function* () {
+    const securities = yield repository.getSecurities();
     let securitiesMap = buildSecuritiesMap(securities);
     let securityGroups = buildGroups(securities, 100);
     for (let i = 0; i < securityGroups.length; i++) {
         const securities = securityGroups[i];
         const symbols = securities.map(sec => sec.symbol);
-        const iexResponse = await iex.bulk(symbols, ["previous", "stats", "quote"]);
-
-        let securitiesInformation: upsertSecuritiesInformation[] = [];
-        let securityPrices: addSecurityPrice[] = [];
+        const iexResponse = yield iex.bulk(symbols, ["previous", "stats", "quote"]);
+        let securitiesInformation = [];
+        let securityPrices = [];
         for (let i = 0; i < symbols.length; i++) {
             const symbol = symbols[i];
-            if (iexResponse[symbol] === undefined || iexResponse === null) continue;
-
+            if (iexResponse[symbol] === undefined || iexResponse === null)
+                continue;
             const existingSecurity = securitiesMap[symbol];
-            if (existingSecurity === undefined || existingSecurity === null) continue;
-
-            let quote = (iexResponse[symbol].quote as GetQuote);
-            let stats = (iexResponse[symbol].stats as GetStatsBasic);
-            let previous = (iexResponse[symbol].previous as GetPreviousDayPrice) || {};
-
+            if (existingSecurity === undefined || existingSecurity === null)
+                continue;
+            let quote = iexResponse[symbol].quote;
+            let stats = iexResponse[symbol].stats;
+            let previous = iexResponse[symbol].previous || {};
             if (quote.latestPrice !== null)
                 // Ingest end of day price & all stats stuff....
                 securityPrices.push({
                     price: quote.latestPrice,
                     securityId: existingSecurity.id,
-                    time: DateTime.now().setZone('America/New_York').set({hour: 16, minute: 0, second: 0}).toJSDate()
+                    time: luxon_1.DateTime.now().setZone('America/New_York').set({ hour: 16, minute: 0, second: 0 }).toJSDate()
                 });
-
             securitiesInformation.push({
                 avg10Volume: stats.avg10Volume,
                 avg30Volume: stats.avg30Volume,
@@ -172,43 +163,40 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
                 ytdChangePercent: stats.ytdChangePercent
             });
         }
-
-        await repository.upsertSecuritiesPrices(securityPrices);
-        await repository.upsertSecuritiesInformation(securitiesInformation);
+        yield repository.upsertSecuritiesPrices(securityPrices);
+        yield repository.upsertSecuritiesInformation(securitiesInformation);
     }
-}
-
-const ingestMorningSecuritiesInformation = async (repository: Repository, iex: IEX) => {
-    const currentSecurities = await repository.getSecurities();
+});
+const ingestMorningSecuritiesInformation = (repository, iex) => __awaiter(void 0, void 0, void 0, function* () {
+    const currentSecurities = yield repository.getSecurities();
     const currentSecuritiesMap = buildSecuritiesMap(currentSecurities);
-    const possiblyNewSecurities = await iex.getIexSymbols();
-    const possiblyNewOTCSymbols = await iex.getOtcSymbols();
-
-    let newSymbols: string[] = [];
-    possiblyNewSecurities.forEach((n: GetIexSymbols) => {
-        const cs = currentSecuritiesMap[n.symbol]
-        if (cs === undefined || cs === null) newSymbols.push(n.symbol)
-    })
-    possiblyNewOTCSymbols.forEach((n: GetOtcSymbols) => {
-        const cs = currentSecuritiesMap[n.symbol]
-        if (cs === undefined || cs === null) newSymbols.push(n.symbol)
+    const possiblyNewSecurities = yield iex.getIexSymbols();
+    const possiblyNewOTCSymbols = yield iex.getOtcSymbols();
+    let newSymbols = [];
+    possiblyNewSecurities.forEach((n) => {
+        const cs = currentSecuritiesMap[n.symbol];
+        if (cs === undefined || cs === null)
+            newSymbols.push(n.symbol);
     });
-
+    possiblyNewOTCSymbols.forEach((n) => {
+        const cs = currentSecuritiesMap[n.symbol];
+        if (cs === undefined || cs === null)
+            newSymbols.push(n.symbol);
+    });
     // These are companies I need to ingest company info, logo, and as a new security
     const newSymbolsGroups = buildGroups(newSymbols);
     for (let i = 0; i < newSymbolsGroups.length; i++) {
         let newSymbols = newSymbolsGroups[i];
-        const response = await iex.bulk(newSymbols, ["company", "logo"]);
-        let newSecurities: addSecurity[] = [];
+        const response = yield iex.bulk(newSymbols, ["company", "logo"]);
+        let newSecurities = [];
         newSymbols.forEach(symbol => {
             const res = response[symbol];
-            if (res === undefined || res === null) return;
-
-            const company = (res.company as GetCompany);
-            const logo = (res.logo as GetLogo);
-
-            if (company.companyName === null) return;
-
+            if (res === undefined || res === null)
+                return;
+            const company = res.company;
+            const logo = res.logo;
+            if (company.companyName === null)
+                return;
             newSecurities.push({
                 address: company.address || null,
                 address2: company.address2 || null,
@@ -232,32 +220,28 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
                 zip: company.zip || null
             });
         });
-        await repository.addSecurities(newSecurities);
+        yield repository.addSecurities(newSecurities);
     }
-}
-
-const buildSecuritiesMap = (securities: getSecurityBySymbol[]): Record<string, getSecurityBySymbol> => {
-    let m: Record<string, getSecurityBySymbol> = {};
+});
+const buildSecuritiesMap = (securities) => {
+    let m = {};
     securities.forEach(sec => m[sec.symbol] = sec);
-    return m
-}
-
-const buildGroups = (securities: any[], max: number = 100): any[][] => {
-    let groups: any[][] = [];
-    let group: any[] = [];
+    return m;
+};
+const buildGroups = (securities, max = 100) => {
+    let groups = [];
+    let group = [];
     securities.forEach(sec => {
-        group.push(sec)
+        group.push(sec);
         if (group.length === max) {
             groups.push(group);
             group = [];
         }
     });
-
-    if (group.length > 0) groups.push(group);
-
+    if (group.length > 0)
+        groups.push(group);
     return groups;
-}
-
-module.exports.run = async (event: any, context: Context) => {
-    await run();
 };
+module.exports.run = (event, context) => __awaiter(void 0, void 0, void 0, function* () {
+    yield run();
+});

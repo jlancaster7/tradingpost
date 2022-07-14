@@ -15,7 +15,7 @@ const videos_1 = require("./videos");
 function lambdaImportYoutube(pgClient, youtubeConfiguration) {
     return __awaiter(this, void 0, void 0, function* () {
         let query = 'SELECT youtube_channel_id FROM youtube_users';
-        const channelIds = (yield pgClient.query(query)).rows;
+        const channelIds = yield pgClient.query(query);
         const Videos = new videos_1.YoutubeVideos(youtubeConfiguration, pgClient);
         let result;
         let videosImported = 0;

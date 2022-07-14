@@ -3,17 +3,18 @@ import format from "pg-format";
 import {spotifyConfig} from '../interfaces/utils';
 import {rawSpotifyShow, spotifyParams, spotifyShow, spotifyEpisode} from '../interfaces/podcasts';
 import {IDatabaseClient} from "../interfaces";
+import {IDatabase} from "pg-promise";
 
 
 export class SpotifyShows {
     private spotifyConfig: spotifyConfig;
-    private pg_client: IDatabaseClient;
+    private pg_client: IDatabase<any>;
     private tokenUrl: string;
     private showUrl: string;
     private access_token: string;
     private params: spotifyParams;
 
-    constructor(spotifyConfig: spotifyConfig, pg_client: IDatabaseClient) {
+    constructor(spotifyConfig: spotifyConfig, pg_client: IDatabase<any>) {
         this.spotifyConfig = spotifyConfig;
         this.pg_client = pg_client;
         this.tokenUrl = 'https://accounts.spotify.com/api/token';
@@ -39,10 +40,11 @@ export class SpotifyShows {
                 },
                 body: new URLSearchParams({grant_type: 'client_credentials'})
             };
+
             const response = await (await fetch(this.tokenUrl, params)).json();
             this.access_token = response.access_token;
-
             this.params.headers.Authorization = this.params.headers.Authorization + this.access_token;
+
             return 1;
         } catch (err) {
             console.log(err);
@@ -60,6 +62,7 @@ export class SpotifyShows {
         if (data === []) {
             return [[], 0];
         }
+
         const formatedData = this.formatShowInfo(data);
 
         const result = await this.appendShow(formatedData);
@@ -72,13 +75,12 @@ export class SpotifyShows {
         if (data === []) {
             return [[], 0]
         }
-        const results = await this.appendEpisdoes(data);
 
+        const results = await this.appendEpisdoes(data);
         return [data, results]
     }
 
     getShowInfo = async (showIds: string[]): Promise<rawSpotifyShow[]> => {
-
         if (this.access_token === '') {
             await this.setAccessToken()
         }
@@ -96,14 +98,12 @@ export class SpotifyShows {
                 if (showResponse.error.status === 401) {
                     await this.setAccessToken();
                     showResponse = await (await fetch(fetchUrl, this.params)).json();
-
                 } else {
                     continue;
                 }
             }
             showResponse.spotify_show_id = showIds[i];
             results.push(showResponse);
-
         }
         return results;
     }
@@ -125,9 +125,8 @@ export class SpotifyShows {
             showResponse = await (await fetch(fetchUrl, this.params)).json();
             if (Object.keys(showResponse).includes('error')) {
                 if (showResponse.error.status === 401) {
-                    this.setAccessToken();
+                    await this.setAccessToken();
                     showResponse = await (await fetch(fetchUrl, this.params)).json();
-
                 } else {
                     return [];
                 }
@@ -164,7 +163,6 @@ export class SpotifyShows {
             } else {
                 fetchUrl = showResponse.next
             }
-
         }
         return results;
     }
@@ -190,12 +188,11 @@ export class SpotifyShows {
             }
             formatedShows.push(formatedShowInfo);
         }
-
         return formatedShows;
     }
+
     appendEpisdoes = async (episodes: spotifyEpisode[]) => {
         let success = 0;
-        let value_index: string;
         let query: string;
         let result;
         let keys: string;
@@ -207,22 +204,19 @@ export class SpotifyShows {
                 values.push(Object.values(element));
             })
 
-
             query = `INSERT INTO spotify_episodes(${keys})
-                     VALUES %L
-                     ON CONFLICT (spotify_episode_id) DO NOTHING`;
+            VALUES
+            %L
+                     ON CONFLICT (spotify_episode_id)
+            DO NOTHING`;
 
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            result = await this.pg_client.query(format(query, values));
-
+            result = await this.pg_client.result(format(query, values));
             success += result.rowCount;
-
         } catch (err) {
             console.log(err);
-
         }
         return success;
-
     }
 
     appendShow = async (formatedShow: spotifyShow[]): Promise<number> => {
@@ -239,16 +233,15 @@ export class SpotifyShows {
             })
 
             query = `INSERT INTO spotify_users(${keys})
-                     VALUES %L
-                     ON CONFLICT (spotify_show_id) DO NOTHING`;
+            VALUES
+            %L
+                     ON CONFLICT (spotify_show_id)
+            DO NOTHING`;
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            result = await this.pg_client.query(format(query, values));
-
+            result = await this.pg_client.result(format(query, values));
             success += result.rowCount;
-
         } catch (err) {
             console.log(err);
-
         }
         return success;
     }
