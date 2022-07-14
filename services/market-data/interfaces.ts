@@ -206,6 +206,12 @@ export interface addIexSecurity extends addSecurity {
     validated: boolean
 }
 
+export interface updateSecurity extends addSecurity {
+}
+
+export interface updateIexSecurity extends addIexSecurity {
+}
+
 export interface addSecurityResponse {
     id: number
     symbol: string

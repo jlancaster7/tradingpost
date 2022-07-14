@@ -18,6 +18,7 @@ const repository_1 = require("../../services/market-data/repository");
 const luxon_1 = require("luxon");
 const configuration_1 = require("@tradingpost/common/configuration");
 const pg_promise_1 = __importDefault(require("pg-promise"));
+const deep_object_diff_1 = require("deep-object-diff");
 // Pricing Charge
 // AM
 // OTC Symbols = 100
@@ -51,7 +52,6 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     const iex = new iex_1.default(iexConfiguration.key);
     yield pgClient.connect();
     const repository = new repository_1.Repository(pgClient, pgp);
-    // TODO: If Friday pull in prices....
     try {
         yield start(repository, iex);
     }
@@ -67,8 +67,78 @@ const start = (repository, iex) => __awaiter(void 0, void 0, void 0, function* (
     const now = luxon_1.DateTime.now().setZone("America/New_York");
     if (now.hour == 16)
         yield ingestEveningSecuritiesInformation(repository, iex);
-    if (now.hour == 8)
+    if (now.hour == 8) {
+        if (now.weekday === 5) {
+            yield updateSecurities(repository, iex);
+            return;
+        }
         yield ingestMorningSecuritiesInformation(repository, iex);
+    }
+});
+const updateSecurities = (repository, iex) => __awaiter(void 0, void 0, void 0, function* () {
+    const securities = yield repository.getIexSecurities();
+    let securitiesMap = buildSecuritiesMap(securities);
+    let securityGroups = buildGroups(securities, 100);
+    let updateSymbols = [];
+    for (let i = 0; i < securityGroups.length; i++) {
+        const securities = securityGroups[i];
+        const symbols = securities.map(sec => sec.symbol);
+        const iexResponse = yield iex.bulk(symbols, ["company", "logo"]);
+        let newSecurities = [];
+        let newIexSecurities = [];
+        let updateIexSecurities = [];
+        symbols.forEach((symbol) => {
+            const sec = iexResponse[symbol];
+            if (sec === undefined || sec === null)
+                return;
+            let logo = sec.logo;
+            let company = sec.company;
+            let newSec = {
+                address: company.address || null,
+                address2: company.address2 || null,
+                ceo: company.CEO || null,
+                companyName: company.companyName,
+                country: company.country || null,
+                description: company.description || null,
+                employees: company.employees !== null ? company.employees.toString() : null,
+                exchange: company.exchange || null,
+                industry: company.industry || null,
+                issueType: company.issueType || null,
+                logoUrl: logo.url || null,
+                phone: company.phone || null,
+                primarySicCode: company.primarySicCode !== null ? company.primarySicCode.toString() : null,
+                sector: company.sector || null,
+                securityName: company.securityName || null,
+                state: company.state || null,
+                symbol: company.symbol,
+                tags: company.tags || null,
+                website: company.website || null,
+                zip: company.zip || null
+            };
+            let newIexSecurity = Object.assign(Object.assign({}, newSec), { validated: false });
+            // Couldn't find anything, lets insert it!
+            const curSec = securitiesMap[symbol];
+            if (curSec === undefined || curSec === null) {
+                newSecurities.push(newSec);
+                newIexSecurities.push(newIexSecurity);
+                updateSymbols.push(symbol);
+                return;
+            }
+            newIexSecurity.validated = true;
+            curSec.validated = true;
+            // Compare Objects...
+            if (Object.keys((0, deep_object_diff_1.diff)(curSec, newIexSecurity)).length === 0)
+                return;
+            newIexSecurity.validated = false;
+            updateIexSecurities.push(newIexSecurity);
+            updateSymbols.push(newIexSecurity.symbol);
+        });
+        yield repository.addIexSecurities(newIexSecurities);
+        yield repository.addSecurities(newSecurities);
+        yield repository.updateIexSecurities(updateIexSecurities);
+    }
+    // TODO: Publish message to Teams
+    console.log(`${updateSymbols.length} New/Updated Securities. Security Symbols List: ${updateSymbols.join(",")}`);
 });
 const ingestEveningSecuritiesInformation = (repository, iex) => __awaiter(void 0, void 0, void 0, function* () {
     const securities = yield repository.getSecurities();
@@ -169,7 +239,7 @@ const ingestEveningSecuritiesInformation = (repository, iex) => __awaiter(void 0
     }
 });
 const ingestMorningSecuritiesInformation = (repository, iex) => __awaiter(void 0, void 0, void 0, function* () {
-    const currentSecurities = yield repository.getSecurities();
+    const currentSecurities = yield repository.getIexSecurities();
     const currentSecuritiesMap = buildSecuritiesMap(currentSecurities);
     const possiblyNewSecurities = yield iex.getIexSymbols();
     const possiblyNewOTCSymbols = yield iex.getOtcSymbols();
@@ -186,10 +256,12 @@ const ingestMorningSecuritiesInformation = (repository, iex) => __awaiter(void 0
     });
     // These are companies I need to ingest company info, logo, and as a new security
     const newSymbolsGroups = buildGroups(newSymbols);
+    let newSymbolsCollection = [];
     for (let i = 0; i < newSymbolsGroups.length; i++) {
         let newSymbols = newSymbolsGroups[i];
         const response = yield iex.bulk(newSymbols, ["company", "logo"]);
         let newSecurities = [];
+        let newIexSecurities = [];
         newSymbols.forEach(symbol => {
             const res = response[symbol];
             if (res === undefined || res === null)
@@ -198,7 +270,7 @@ const ingestMorningSecuritiesInformation = (repository, iex) => __awaiter(void 0
             const logo = res.logo;
             if (company.companyName === null)
                 return;
-            newSecurities.push({
+            let newSec = {
                 address: company.address || null,
                 address2: company.address2 || null,
                 ceo: company.CEO || null,
@@ -219,10 +291,17 @@ const ingestMorningSecuritiesInformation = (repository, iex) => __awaiter(void 0
                 tags: company.tags || null,
                 website: company.website || null,
                 zip: company.zip || null
-            });
+            };
+            let newIexSec = Object.assign(Object.assign({}, newSec), { validated: false });
+            newSecurities.push(newSec);
+            newIexSecurities.push(newIexSec);
+            newSymbolsCollection.push(newSec.symbol);
         });
         yield repository.addSecurities(newSecurities);
+        yield repository.addIexSecurities(newIexSecurities);
     }
+    // TODO: Publish message to Teams
+    console.log(`${newSymbolsCollection.length} New Securities. Security Symbols List: ${newSymbolsCollection.join(",")}`);
 });
 const buildSecuritiesMap = (securities) => {
     let m = {};

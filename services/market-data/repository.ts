@@ -7,7 +7,12 @@ import {
     getExchange,
     addExchange,
     upsertSecuritiesInformation,
-    addSecurityPrice, addIexSecurity, getIexSecurityBySymbol, getSecurityWithLatestPrice
+    addSecurityPrice,
+    addIexSecurity,
+    getIexSecurityBySymbol,
+    getSecurityWithLatestPrice,
+    updateIexSecurity,
+    updateSecurity
 } from "./interfaces";
 
 import {ColumnSet, IDatabase, IMain} from 'pg-promise';
@@ -27,7 +32,7 @@ export class Repository {
             {name: 'price', prop: 'price'},
             {name: 'time', prop: 'time'}
         ], {table: 'security_price'})
-        const query = this.pgp.helpers.insert(securityPrices, cs);
+        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, "security_id,time")
         await this.db.none(query);
     }
 
@@ -36,10 +41,10 @@ export class Repository {
             WITH latest_pricing AS (SELECT sp.security_id,
                                            sp.time,
                                            sp.price
-                                    FROM security_prices sp
+                                    FROM security_price sp
                                              INNER JOIN (SELECT security_id,
                                                                 max(time) time
-                                                         FROM security_prices
+                                                         FROM security_price
                                                          GROUP BY security_id) AS max_prices
                                                         ON
                                                                     max_prices.security_id =
@@ -71,7 +76,7 @@ export class Repository {
                    created_at,
                    lp.time  latest_time,
                    lp.price latest_price
-            FROM securities s
+            FROM security s
                      LEFT JOIN
                  latest_pricing lp ON
                      lp.security_id = s.id
@@ -248,6 +253,33 @@ export class Repository {
         await this.db.none(query);
     }
 
+    updateSecurities = async (securities: updateSecurity[]) => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'symbol', prop: 'symbol'},
+            {name: 'company_name', prop: 'companyName'},
+            {name: 'exchange', prop: 'exchange'},
+            {name: 'industry', prop: 'industry'},
+            {name: 'website', prop: 'website'},
+            {name: 'description', prop: 'description'},
+            {name: 'ceo', prop: 'ceo'},
+            {name: 'security_name', prop: 'securityName'},
+            {name: 'issue_type', prop: 'issueType'},
+            {name: 'sector', prop: 'sector'},
+            {name: 'primary_sic_code', prop: 'primarySicCode'},
+            {name: 'employees', prop: 'employees'},
+            {name: 'tags', prop: 'tags'},
+            {name: 'address', prop: 'address'},
+            {name: 'address2', prop: 'address2'},
+            {name: 'state', prop: 'state'},
+            {name: 'zip', prop: 'zip'},
+            {name: 'country', prop: 'country'},
+            {name: 'phone', prop: 'phone'},
+            {name: 'logoUrl', prop: 'logoUrl'},
+        ], {table: 'security'});
+        const query = this.pgp.helpers.update(securities, cs);
+        await this.db.none(query);
+    }
+
     addIexSecurities = async (securities: addIexSecurity[]) => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'symbol', prop: 'symbol'},
@@ -274,6 +306,34 @@ export class Repository {
         ], {table: 'iex_security'});
         const query = this.pgp.helpers.insert(securities, cs) + ` ON CONFLICT DO NOTHING;`;
         await this.db.none(query);
+    }
+
+    updateIexSecurities = async (securities: updateIexSecurity[]) => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'symbol', prop: 'symbol'},
+            {name: 'company_name', prop: 'companyName'},
+            {name: 'exchange', prop: 'exchange'},
+            {name: 'industry', prop: 'industry'},
+            {name: 'website', prop: 'website'},
+            {name: 'description', prop: 'description'},
+            {name: 'ceo', prop: 'ceo'},
+            {name: 'security_name', prop: 'securityName'},
+            {name: 'issue_type', prop: 'issueType'},
+            {name: 'sector', prop: 'sector'},
+            {name: 'primary_sic_code', prop: 'primarySicCode'},
+            {name: 'employees', prop: 'employees'},
+            {name: 'tags', prop: 'tags'},
+            {name: 'address', prop: 'address'},
+            {name: 'address2', prop: 'address2'},
+            {name: 'state', prop: 'state'},
+            {name: 'zip', prop: 'zip'},
+            {name: 'country', prop: 'country'},
+            {name: 'phone', prop: 'phone'},
+            {name: 'logoUrl', prop: 'logoUrl'},
+            {name: 'validated', prop: 'validated'},
+        ], {table: 'iex_security'});
+        const query = this.pgp.helpers.update(securities, cs);
+        await this.db.none(query)
     }
 
     getIexSecurities = async (): Promise<getIexSecurityBySymbol[]> => {
@@ -597,7 +657,7 @@ export class Repository {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'date', prop: 'date'},
             {name: 'settlement_date', prop: 'settlementDate'},
-        ], {table: 'us_exchange_holiday'})
+        ], {table: 'us_exchange_holidays'})
         const query = this.pgp.helpers.insert(holidays, cs) + ` ON CONFLICT DO NOTHING`;
         await this.db.none(query)
     }
@@ -640,7 +700,7 @@ export class Repository {
 
     removeSecurityPricesAfter7Days = async (): Promise<any> => {
         return await this.db.query(`DELETE
-                                    FROM security_prices
+                                    FROM security_price
                                     WHERE time < now() - INTERVAL '8 days'
                                       AND (time AT TIME ZONE 'America/New_York')::TIME != '16:00:00';`)
     }
