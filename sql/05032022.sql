@@ -55,6 +55,8 @@ CREATE TABLE security
     PRIMARY KEY (id)
 );
 
+CREATE INDEX security_exchange_idx ON security (exchange);
+
 CREATE TABLE security_price
 (
     id          BIGSERIAL                       NOT NULL,
@@ -172,86 +174,10 @@ CREATE TABLE us_exchange_holiday
     PRIMARY KEY (id)
 );
 
-CREATE TABLE realizefi_users
-(
-    id           BIGSERIAL NOT NULL PRIMARY KEY,
---    user_id uuid REFERENCES users(id) not null,
-    realizefi_id TEXT      NOT NULL UNIQUE
-);
-
--- Should have an enum type for health_status
-CREATE TABLE realizefi_accounts
-(
-    id                       BIGSERIAL                              NOT NULL PRIMARY KEY,
-    account_id               BIGINT REFERENCES realizefi_users (id) NOT NULL,
-    realizefi_institution_id TEXT UNIQUE                            NOT NULL,
-    institution              TEXT                                   NOT NULL,
-    account_number           TEXT                                   NOT NULL,
-    health_status            TEXT                                   NOT NULL,
-    permission_scopes        JSON,
-    buying_power             DECIMAL(24, 4)                         NOT NULL,
-    cash                     DECIMAL(24, 4)                         NOT NULL,
-    account_value            DECIMAL(24, 4)                         NOT NULL,
-    margin                   DECIMAL(24, 4)                         NOT NULL
-);
-
-CREATE UNIQUE INDEX realizefi_accounts_idx ON realizefi_accounts (account_id, institution, account_number);
-
-CREATE TABLE realizefi_account_transactions
-(
-    id                       BIGSERIAL                                 NOT NULL PRIMARY KEY,
-    account_id               BIGINT REFERENCES realizefi_accounts (id) NOT NULL,
-    realizefi_transaction_id TEXT UNIQUE                               NOT NULL,
-    transaction_date         timestamptz                               NOT NULL,
-    settlement_date          timestamptz                               NOT NULL,
-    -- top level transaction type(dont know if any different than detail transaction type within response)
-    transaction_type         TEXT                                      NOT NULL,
-    net_amount               DECIMAL(24, 4),
-    transaction_type_detail  TEXT,
-    transaction_sub_type     TEXT,
-    side                     TEXT,
-    -- TODO: How granular should we support(e.g., fractional shares)
-    quantity                 DECIMAL(24, 4),
-    price                    DECIMAL(24, 4),
-    adjustment_ratio         DECIMAL(24, 4),
-    instrument               JSON,
-    symbol                   TEXT,
-    fees                     DECIMAL(24, 4)
-);
-
--- Do we need this, and maybe we should report conflicts if doing bulk operations....
-CREATE UNIQUE INDEX realizefi_account_transactions_idx ON realizefi_account_transactions (account_id, transaction_date, transaction_type, symbol);
-
-CREATE TABLE realizefi_account_positions
-(
-    id                                 BIGSERIAL                                 NOT NULL PRIMARY KEY,
-    account_id                         BIGINT REFERENCES realizefi_accounts (id) NOT NULL,
-    symbol                             TEXT                                      NOT NULL,
-    average_price                      DECIMAL(24, 4)                            NOT NULL,
-    cost_basis                         DECIMAL(24, 4)                            NOT NULL,
-    long_quantity                      DECIMAL(24, 4)                            NOT NULL,
-    short_quantity                     DECIMAL(24, 4)                            NOT NULL,
-    market_value                       DECIMAL(24, 4)                            NOT NULL,
-    current_day_profit_loss            DECIMAL(24, 4)                            NOT NULL,
-    current_day_profit_loss_percentage DECIMAL(24, 4)                            NOT NULL,
-    security_type                      TEXT                                      NOT NULL,
-    security_id                        TEXT                                      NOT NULL,
-    security_symbol                    TEXT                                      NOT NULL,
-    security_share_class_figi          TEXT                                      NOT NULL,
-    security_composite_figi            TEXT                                      NOT NULL,
-    security_strike_price              DECIMAL(24, 4),
-    security_expiration                TIMESTAMPTZ,
-    security_contract_type             TEXT,
-    security_primary_exchange          TEXT                                      NOT NULL
-);
-
--- Does this hold true? Or, should it be over the symbol type? Want to investigate more...
-CREATE UNIQUE INDEX realizefi_account_positions_idx ON realizefi_account_positions (account_id, symbol);
-
 -- We could utilize user devices for web & mobile
 CREATE TABLE user_device
 (
-    id         BIGSERIAL                             NOT NULL PRIMARY KEY,
+    id         BIGSERIAL                             NOT NULL,
     user_id    UUID REFERENCES data_user (id)        NOT NULL,
     provider   TEXT                                  NOT NULL, -- Apple / Android / etc....
     device_id  TEXT                                  NOT NULL,
@@ -261,6 +187,386 @@ CREATE TABLE user_device
 
 CREATE UNIQUE INDEX user_devices_user_id_device_id_idx ON user_device (user_id, device_id);
 
-CREATE INDEX securities_exchange_idx ON securities(exchange);
+CREATE TABLE tradingpost_institution
+(
+    id                       BIGSERIAL                 NOT NULL,
+    name                     TEXT UNIQUE               NOT NULL,
+    account_type_description TEXT,
+    phone                    TEXT,
+    url_home_app             TEXT,
+    url_logon_app            TEXT,
+    oauth_enabled            BOOLEAN,
+    url_forgot_password      TEXT,
+    url_online_registration  TEXT,
+    class                    TEXT,
+    address_city             TEXT,
+    address_state            TEXT,
+    address_country          TEXT,
+    address_postal_code      TEXT,
+    address_address_line_1   TEXT,
+    address_address_line_2   TEXT,
+    email                    TEXT,
+    status                   TEXT,
+    updated_at               TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    created_at               TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    PRIMARY KEY (id)
+);
 
-CREATE INDEX security_exchange_idx ON security(exchange);
+CREATE TABLE finicity_institution
+(
+    id                          BIGSERIAL                 NOT NULL,
+    institution_id              BIGINT UNIQUE             NOT NULL,
+    name                        TEXT,
+    voa                         BOOLEAN,
+    voi                         BOOLEAN,
+    state_agg                   BOOLEAN,
+    ach                         BOOLEAN,
+    trans_agg                   BOOLEAN,
+    available_balance           BOOLEAN,
+    account_owner               BOOLEAN,
+    loan_payment_details        BOOLEAN,
+    student_loan_data           BOOLEAN,
+    phone                       TEXT,
+    url_home_app                TEXT,
+    url_logon_app               TEXT,
+    oauth_enabled               BOOLEAN,
+    url_forgot_password         TEXT,
+    url_online_registration     TEXT,
+    class                       TEXT,
+    special_text                TEXT,
+    time_zone                   TEXT,
+    special_instructions        TEXT,
+    special_instructions_title  TEXT,
+    address_city                TEXT,
+    address_state               TEXT,
+    address_country             TEXT,
+    address_postal_code         TEXT,
+    address_line_1              TEXT,
+    address_line_2              TEXT,
+    currency                    TEXT,
+    email                       TEXT,
+    status                      TEXT,
+    new_institution_id          TEXT,
+    branding_logo               TEXT,
+    branding_alternate_logo     TEXT,
+    branding_icon               TEXT,
+    branding_primary_color      TEXT,
+    branding_title              TEXT,
+    oauth_institution_id        TEXT,
+    production_status_overall   TEXT,
+    production_status_trans_agg TEXT,
+    production_status_voa       TEXT,
+    production_status_state_agg TEXT,
+    production_status_ach       TEXT,
+    production_status_aha       TEXT,
+    updated_at                  TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    created_at                  TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE finicity_user
+(
+    id          BIGSERIAL                             NOT NULL,
+    tp_user_id  UUID REFERENCES data_user (id) UNIQUE NOT NULL,
+    customer_id TEXT UNIQUE                           NOT NULL,
+    type        TEXT                                  NOT NULL,
+    updated_at  TIMESTAMPTZ                           NOT NULL DEFAULT NOW(),
+    created_at  TIMESTAMPTZ                           NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE finicity_account
+(
+    id                            BIGSERIAL                            NOT NULL,
+    finicity_user_id              BIGINT REFERENCES finicity_user (id) NOT NULL,
+    finicity_institution_id       BIGINT REFERENCES finicity_institution (id),
+
+    -- Finicity Fields
+    account_id                    TEXT UNIQUE                          NOT NULL,
+    number                        TEXT,
+    real_account_number_last_4    TEXT,
+    account_number_display        TEXT,
+    name                          TEXT,
+    balance                       DECIMAL(24, 4),
+    type                          TEXT,
+    aggregation_status_code       BIGINT,
+    status                        TEXT,
+    customer_id                   TEXT,
+    institution_id                TEXT,
+    balance_date                  BIGINT,
+    aggregation_success_date      BIGINT,
+    aggregation_attempt_date      BIGINT,
+    created_date                  BIGINT,
+    currency                      TEXT,
+    last_transaction_date         BIGINT,
+    oldest_transaction_date       BIGINT,
+    institution_login_id          BIGINT,
+    last_updated_date             BIGINT,
+    detail_margin                 DECIMAL(24, 4),
+    detail_margin_allowed         BOOLEAN,
+    detail_cash_account_allowed   BOOLEAN,
+    detail_description            TEXT,
+    detail_margin_balance         DECIMAL(24, 4),
+    detail_short_balance          DECIMAL(24, 4),
+    detail_available_cash_balance DECIMAL(24, 4),
+    detail_current_balance        DECIMAL(24, 4),
+    detail_date_as_of             BIGINT,
+    display_position              BIGINT,
+    parent_account                BIGINT,
+    account_nickname              TEXT,
+    market_segment                TEXT,
+    updated_at                    TIMESTAMPTZ DEFAULT NOW()            NOT NULL,
+    created_at                    TIMESTAMPTZ DEFAULT NOW()            NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE finicity_holding
+(
+    id                         BIGSERIAL                               NOT NULL,
+    finicity_account_id        BIGINT REFERENCES finicity_account (id) NOT NULL,
+    holding_id                 BIGINT UNIQUE,
+    security_id_type           TEXT,
+    pos_type                   TEXT,
+    sub_account_type           TEXT,
+    description                TEXT,
+    symbol                     TEXT,
+    cusip_no                   TEXT,
+    current_price              DECIMAL(24, 4),
+    transaction_type           TEXT,
+    market_value               TEXT,
+    security_unit_price        DECIMAL(24, 4),
+    units                      DECIMAL(24, 4),
+    cost_basis                 DECIMAL(24, 4),
+    status                     TEXT,
+    security_type              TEXT,
+    security_name              TEXT,
+    security_currency          TEXT,
+    current_price_date         BIGINT,
+    option_strike_price        DECIMAL(24, 4),
+    option_type                TEXT,
+    option_shares_per_contract DECIMAL(24, 4),
+    options_expire_date        BIGINT,
+    fi_asset_class             TEXT,
+    asset_class                TEXT,
+    currency_rate              DECIMAL(24, 4),
+    cost_basis_per_share       DECIMAL(24, 4),
+    mf_type                    TEXT,
+    total_gl_dollar            DECIMAL(24, 4),
+    total_gl_percent           DECIMAL(24, 4),
+    today_gl_dollar            DECIMAL(24, 4),
+    today_gl_percent           DECIMAL(24, 4),
+    updated_at                 TIMESTAMPTZ DEFAULT NOW()               NOT NULL,
+    created_at                 TIMESTAMPTZ DEFAULT NOW()               NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE finicity_transaction
+(
+    id                                   BIGSERIAL                               NOT NULL,
+    finicity_account_id                  BIGINT REFERENCES finicity_account (id) NOT NULL,
+    transaction_id                       BIGINT                                  NOT NULL UNIQUE,
+    amount                               DECIMAL(24, 4),
+    account_id                           TEXT,
+    customer_id                          TEXT,
+    status                               TEXT,
+    description                          TEXT,
+    memo                                 TEXT,
+    -- atm, cash, check, credit, debit, deposit, directDebit, directDeposit, dividend, fee, interest, other, payment,
+    -- pointOfSale,repeatPayment,serviceCharge,transfer
+    type                                 TEXT,
+    interest_amount                      DECIMAL(24, 4),
+    principal_amount                     DECIMAL(24, 4),
+    fee_amount                           DECIMAL(24, 4),
+    escrow_amount                        DECIMAL(24, 4),
+    unit_quantity                        DECIMAL(24, 4),
+    posted_date                          BIGINT,
+    transaction_date                     BIGINT,
+    created_date                         BIGINT,
+    categorization_normalized_payee_name TEXT,
+    categorization_category              TEXT,
+    categorization_city                  TEXT,
+    categorization_state                 TEXT,
+    categorization_postal_code           TEXT,
+    categorization_country               TEXT,
+    categorization_best_representation   TEXT,
+    running_balance_amount               DECIMAL(24, 4),
+    check_num                            BIGINT,
+    income_type                          TEXT,
+    subaccount_security_type             TEXT,
+    commission_amount                    DECIMAL(24, 4),
+    split_denominator                    DECIMAL(24, 4),
+    split_numerator                      DECIMAL(24, 4),
+    shares_per_contract                  DECIMAL(24, 4),
+    taxes_amount                         DECIMAL(24, 4),
+    unit_price                           DECIMAL(24, 4),
+    currency_symbol                      TEXT,
+    sub_account_fund                     TEXT,
+    ticker                               TEXT,
+    security_id                          TEXT,
+    security_id_type                     TEXT,
+    -- Investment Types: cancel, purchaseToClose, purchaseToCover, contribution, optionExercise, optionExpiration,
+    -- fee, soldToClose, soldToOpen, split, transfer, returnOfCapital, income, purchase, sold, dividendReinvest, tax,
+    -- dividend, reinvestOfIncome, interest, deposit, otherInfo
+    investment_transaction_type          TEXT,
+    effective_date                       TEXT,
+    first_effective_date                 TEXT,
+    updated_at                           TIMESTAMPTZ DEFAULT NOW()               NOT NULL,
+    created_at                           TIMESTAMPTZ DEFAULT NOW()               NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE tradingpost_brokerage_account
+(
+    id             BIGSERIAL UNIQUE                               NOT NULL,
+    user_id        UUID REFERENCES data_user (id)                 NOT NULL,
+    institution_id BIGINT REFERENCES tradingpost_institution (id) NOT NULL,
+    broker_name    TEXT                                           NOT NULL,
+    status         TEXT                                           NOT NULL,
+    account_number TEXT                                           NOT NULL,
+    mask           TEXT,
+    name           TEXT                                           NOT NULL,
+    official_name  TEXT,
+    type           TEXT                                           NOT NULL,
+    subtype        TEXT,
+    updated_at     TIMESTAMPTZ DEFAULT now()                      NOT NULL,
+    created_at     TIMESTAMPTZ DEFAULT now()                      NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX tp_brokerage_account_user_id_institution_id_account_number_idx ON tradingpost_brokerage_account (user_id, institution_id, account_number);
+
+CREATE TABLE tradingpost_account_group
+(
+    id                   BIGSERIAL UNIQUE                NOT NULL,
+    user_id              UUID REFERENCES data_user (id)  NOT NULL,
+    name                 TEXT                            NOT NULL,
+    default_benchmark_id BIGINT REFERENCES security (id) NOT NULL,
+    updated_at           TIMESTAMPTZ DEFAULT now()       NOT NULL,
+    created_at           TIMESTAMPTZ DEFAULT now()       NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX tradingpost_account_group_user_id_name_idx ON tradingpost_account_group (user_id, name);
+
+CREATE TABLE tradingpost_current_holding
+(
+    id            BIGSERIAL UNIQUE                                     NOT NULL,
+    account_id    BIGINT REFERENCES tradingpost_brokerage_account (id) NOT NULL,
+    security_id   BIGINT REFERENCES security (id)                      NOT NULL,
+    security_type TEXT,
+    price         DECIMAL(24, 4)                                       NOT NULL,
+    price_as_of   TIMESTAMPTZ                                          NOT NULL,
+    price_source  TEXT                                                 NOT NULL,
+    value         DECIMAL(24, 4)                                       NOT NULL,
+    cost_basis    DECIMAL(24, 4),
+    quantity      DECIMAL(24, 4)                                       NOT NULL,
+    currency      TEXT,
+    updated_at    TIMESTAMPTZ                                          NOT NULL DEFAULT now(),
+    created_at    TIMESTAMPTZ                                          NOT NULL DEFAULT now(),
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX tradingpost_current_holding_account_id_security_id_idx ON tradingpost_current_holding (account_id, security_id);
+
+CREATE TABLE tradingpost_historical_holding
+(
+    id            BIGSERIAL UNIQUE                                     NOT NULL,
+    account_id    BIGINT REFERENCES tradingpost_brokerage_account (id) NOT NULL,
+    security_id   BIGINT REFERENCES security (id)                      NOT NULL,
+    security_type TEXT,
+    price         DECIMAL(24, 4)                                       NOT NULL,
+    price_as_of   TIMESTAMPTZ                                          NOT NULL,
+    price_source  TEXT                                                 NOT NULL,
+    value         DECIMAL(24, 4)                                       NOT NULL,
+    cost_basis    DECIMAL(24, 4),
+    quantity      DECIMAL(24, 4)                                       NOT NULL,
+    currency      TEXT,
+    date          TIMESTAMPTZ                                          NOT NULL,
+    updated_at    TIMESTAMPTZ DEFAULT now()                            NOT NULL,
+    created_at    TIMESTAMPTZ DEFAULT now()                            NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE tradingpost_custom_industry
+(
+    id          BIGSERIAL UNIQUE                NOT NULL,
+    user_id     UUID REFERENCES data_user (id)  NOT NULL,
+    security_id BIGINT REFERENCES security (id) NOT NULL,
+    industry    TEXT                            NOT NULL,
+    updated_at  TIMESTAMPTZ DEFAULT now()       NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT now()       NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX tradingpost_custom_industry_user_security_industry ON tradingpost_custom_industry (user_id, security_id, industry);
+
+CREATE TABLE tradingpost_transaction
+(
+    id            BIGSERIAL UNIQUE                                     NOT NULL,
+    account_id    BIGINT REFERENCES tradingpost_brokerage_account (id) NOT NULL,
+    security_id   BIGINT REFERENCES security (id)                      NOT NULL,
+    security_type TEXT,
+    date          TIMESTAMPTZ                                          NOT NULL,
+    quantity      DECIMAL(24, 4)                                       NOT NULL,
+    price         DECIMAL(24, 4)                                       NOT NULL,
+    amount        DECIMAL(24, 4)                                       NOT NULL,
+    fees          DECIMAL(24, 4),
+    type          TEXT                                                 NOT NULL,
+    currency      TEXT,
+    updated_at    TIMESTAMPTZ DEFAULT now()                            NOT NULL,
+    created_at    TIMESTAMPTZ DEFAULT now()                            NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE tradingpost_account_group_stat
+(
+    id                   BIGSERIAL UNIQUE                                 NOT NULL,
+    account_group_id     BIGINT REFERENCES tradingpost_account_group (id) NOT NULL,
+    beta                 DECIMAL(24, 4),
+    sharpe               DECIMAL(20, 8),
+    industry_allocations JSONB,
+    exposure             JSONB,
+    date                 TIMESTAMPTZ                                      NOT NULL,
+    benchmark_id         BIGINT REFERENCES security (id),
+    updated_at           TIMESTAMPTZ DEFAULT now()                        NOT NULL,
+    created_at           TIMESTAMPTZ DEFAULT now()                        NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX tradingpost_account_group_stat_account_group_id_date_idx ON tradingpost_account_group_stat (account_group_id, date);
+
+CREATE TABLE _tradingpost_account_to_group
+(
+    id               BIGSERIAL UNIQUE                                     NOT NULL,
+    account_id       BIGINT REFERENCES tradingpost_brokerage_account (id) NOT NULL,
+    account_group_id BIGINT REFERENCES tradingpost_account_group (id)     NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX _tradingpost_account_to_group_account_id_account_group_id_idx ON _tradingpost_account_to_group (account_id, account_group_id);
+
+CREATE TABLE benchmark_hpr
+(
+    id          BIGSERIAL UNIQUE                NOT NULL,
+    security_id BIGINT REFERENCES security (id) NOT NULL,
+    date        TIMESTAMPTZ                     NOT NULL,
+    return      DECIMAL(24, 4),
+    updated_at  TIMESTAMPTZ DEFAULT now()       NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT now()       NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX benchmark_hpr_security_id_date_idx ON benchmark_hpr (security_id, date);
+
+CREATE TABLE account_group_hpr
+(
+    id               BIGSERIAL UNIQUE                                 NOT NULL,
+    account_group_id BIGINT REFERENCES tradingpost_account_group (id) NOT NULL,
+    date             TIMESTAMPTZ                                      NOT NULL,
+    return           DECIMAL(24, 4),
+    updated_at       TIMESTAMPTZ DEFAULT now()                        NOT NULL,
+    created_at       TIMESTAMPTZ DEFAULT now()                        NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX account_group_hpr_account_group_id_date_idx ON account_group_hpr (account_group_id, date);

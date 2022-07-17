@@ -111,11 +111,11 @@ export interface IWatchlistList {
     name: string;
     note?: string;
     item_count: string;
-    user: string;
+    user: IUserList[];
     type: string;
 }
 export interface IWatchlistGet {
-    user: string;
+    user: IUserList[];
     items: IWatchlistItemList[];
     note?: string;
     name: string;

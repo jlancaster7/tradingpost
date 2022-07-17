@@ -22,15 +22,5 @@ var InvestmentTransactionType;
     InvestmentTransactionType["fee"] = "fee";
     InvestmentTransactionType["cash"] = "cash";
     InvestmentTransactionType["transfer"] = "transfer";
-    InvestmentTransactionType["dividendOrInerest"] = "dividendOrInterest";
+    InvestmentTransactionType["dividendOrInterest"] = "dividendOrInterest";
 })(InvestmentTransactionType = exports.InvestmentTransactionType || (exports.InvestmentTransactionType = {}));
-// Could conditional type
-// Need to do nested ternary operator
-// type guards functions that you write that ensure that a value is something
-const ensureT = (data) => {
-    return true;
-};
-const X = "hello";
-if (ensureT(X)) {
-    X;
-}

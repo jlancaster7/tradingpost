@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { PartnerAuthenticationResponse, AddCustomerResponse, GetCustomersResponse, AddConsumerRequest, GenerateLinkResponse, CustomerAccount } from "./interfaces";
+import { PartnerAuthenticationResponse, AddCustomerResponse, GetCustomersResponse, AddConsumerRequest, GenerateLinkResponse, GetInstitutions, GetConsumerResponse, AddConsumerResponse, GetCustomerAccountsResponse, GetCustomerAccountByIdResponse, GetAccountOwner, GetAllCustomerTransactions } from "./interfaces";
 export default class Finicity {
     partnerId: string;
     partnerSecret: string;
@@ -14,18 +14,25 @@ export default class Finicity {
      * Validate partner id and secret + receive a secure access token
      * works for 2hrs, if exceeds 90 mins then re-authenticate
      */
-    partnerAuthentication: () => Promise<PartnerAuthenticationResponse | null>;
-    /**
-     * Adds user to testing FinBank
-     * @param username
-     */
-    addTestCustomer: (username: string) => Promise<AddCustomerResponse | null>;
-    addConsumer: (customerId: string, consumer: AddConsumerRequest, appKey: string, appToken: string) => Promise<void>;
-    addCustomer: (applicationId: string, username: string) => Promise<Promise<AddCustomerResponse> | null>;
-    getCustomers: () => Promise<Promise<GetCustomersResponse> | null>;
-    getCustomer: () => Promise<void>;
+    partnerAuthentication: () => Promise<PartnerAuthenticationResponse>;
+    getInstitutions: (start: number, limit: number) => Promise<GetInstitutions>;
+    addTestCustomer: (username: string) => Promise<AddCustomerResponse>;
+    getConsumer: (customerId: string) => Promise<GetConsumerResponse>;
+    addConsumer: (customerId: string, consumer: AddConsumerRequest) => Promise<AddConsumerResponse>;
+    addCustomer: (applicationId: string, username: string) => Promise<AddCustomerResponse>;
+    getCustomers: () => Promise<GetCustomersResponse>;
+    getCustomerAccounts: (customerId: string) => Promise<GetCustomerAccountsResponse>;
+    getCustomerAccountById: (customerId: string, accountId: string) => Promise<GetCustomerAccountByIdResponse>;
     generateConnectUrl: (customerId: string, webhook: string, webhookContentType?: string, experience?: string) => Promise<GenerateLinkResponse>;
-    generateConnectLiteUrl: () => Promise<void>;
-    generateConnectEmail: (customerId: string) => Promise<void>;
-    refreshCustomerAccounts: (customerId: string) => Promise<CustomerAccount[]>;
+    refreshCustomerAccounts: (customerId: string) => Promise<GetCustomerAccountsResponse[]>;
+    loadHistoricTransactionsForCustomerAccount: (customerId: string, accountId: string) => Promise<void>;
+    getAccountOwner: (customerId: string, accountId: string) => Promise<GetAccountOwner>;
+    getAllCustomerTransactions: (customerId: string, params: {
+        fromDate: number;
+        toDate: number;
+        start?: number;
+        limit?: number;
+        sort?: "asc" | "desc";
+        includePending?: boolean;
+    }) => Promise<GetAllCustomerTransactions>;
 }

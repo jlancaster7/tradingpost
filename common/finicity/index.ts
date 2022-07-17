@@ -6,7 +6,15 @@ import {
     LocalFinicityKey,
     GetCustomersCustomerResponse,
     GetCustomersResponse,
-    AddConsumerRequest, GenerateLinkResponse, CustomerAccount,
+    AddConsumerRequest,
+    GenerateLinkResponse,
+    GetInstitutions,
+    GetInstitutionsInstitution,
+    GetConsumerResponse,
+    AddConsumerResponse,
+    GetCustomerByAccountIdResponse,
+    GetCustomerAccountsResponse,
+    GetCustomerAccountByIdResponse, GetAccountOwner, GetAllCustomerTransactions,
 } from "./interfaces";
 import fs from "fs";
 
@@ -25,7 +33,7 @@ export default class Finicity {
         this.tokenFile = tokenFile;
     }
 
-    init = async () => {
+    init = async (): Promise<void> => {
         try {
             const now = DateTime.now();
             const {token, expires} = JSON.parse(fs.readFileSync(this.tokenFile, 'utf8'));
@@ -67,7 +75,7 @@ export default class Finicity {
      * Validate partner id and secret + receive a secure access token
      * works for 2hrs, if exceeds 90 mins then re-authenticate
      */
-    partnerAuthentication = async (): Promise<PartnerAuthenticationResponse | null> => {
+    partnerAuthentication = async (): Promise<PartnerAuthenticationResponse> => {
         const response = await fetch("https://api.finicity.com/aggregation/v2/partners/authentication", {
             method: "POST",
             body: JSON.stringify({
@@ -85,16 +93,34 @@ export default class Finicity {
         try {
             return JSON.parse(body) as PartnerAuthenticationResponse
         } catch (e) {
-            console.log(body)
-            return null
+            throw new Error(body.toString());
         }
     }
 
-    /**
-     * Adds user to testing FinBank
-     * @param username
-     */
-    addTestCustomer = async (username: string): Promise<AddCustomerResponse | null> => {
+    getInstitutions = async (start: number, limit: number): Promise<GetInstitutions> => {
+        const url = new URL("https://api.finicity.com/institution/v2/institutions");
+        url.searchParams.set("start", start.toString());
+        url.searchParams.set("limit", limit.toString());
+
+        const response = await fetch(url.toString(), {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            }
+        })
+
+        const body = await response.text();
+        try {
+            return JSON.parse(body) as GetInstitutions
+        } catch (e) {
+            throw new Error(body.toString());
+        }
+    }
+
+    addTestCustomer = async (username: string): Promise<AddCustomerResponse> => {
         const response = await fetch("https://api.finicity.com/aggregation/v2/customers/testing", {
             method: "POST",
             body: JSON.stringify({username}),
@@ -110,23 +136,57 @@ export default class Finicity {
         try {
             return JSON.parse(body) as AddCustomerResponse
         } catch (e) {
-            console.log(body)
-            return null
+            throw new Error(body.toString());
         }
     }
 
-    addConsumer = async (customerId: string, consumer: AddConsumerRequest, appKey: string, appToken: string) => {
+    getConsumer = async (customerId: string): Promise<GetConsumerResponse> => {
+        const response = await fetch(`https://api.finicity.com/decisioning/v1/customers/${customerId}/consumer`, {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            }
+        })
 
+        const body = await response.text();
+        try {
+            return JSON.parse(body) as GetConsumerResponse
+        } catch (e) {
+            throw new Error(body.toString());
+        }
     }
 
-    addCustomer = async (applicationId: string, username: string): Promise<Promise<AddCustomerResponse> | null> => {
+    addConsumer = async (customerId: string, consumer: AddConsumerRequest): Promise<AddConsumerResponse> => {
+        const response = await fetch(`https://api.finicity.com/decisioning/v1/customers/${customerId}/consumer`, {
+            method: "POST",
+            body: JSON.stringify(consumer),
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            }
+        })
+
+        const body = await response.text();
+        try {
+            return JSON.parse(body) as AddConsumerResponse
+        } catch (e) {
+            throw new Error(body.toString());
+        }
+    }
+
+    addCustomer = async (applicationId: string, username: string): Promise<AddCustomerResponse> => {
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Finicity-App-Key': this.appKey,
             'Finicity-App-Token': this.accessToken
         };
-        console.log(headers)
+
         const response = await fetch("https://api.finicity.com/aggregation/v2/customers/active", {
             method: "POST",
             body: JSON.stringify({username: username}),
@@ -135,16 +195,15 @@ export default class Finicity {
 
         const body = await response.text();
         try {
-            return JSON.parse(body) as AddCustomerResponse
+            return await JSON.parse(body) as AddCustomerResponse
         } catch (e) {
-            throw body.toString()
+            throw new Error(body.toString());
         }
     }
 
-    getCustomers = async (): Promise<Promise<GetCustomersResponse> | null> => {
+    getCustomers = async (): Promise<GetCustomersResponse> => {
         const response = await fetch("https://api.finicity.com/aggregation/v1/customers", {
             method: "POST",
-            // body: JSON.stringify({username, applicationId}),
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
@@ -152,34 +211,60 @@ export default class Finicity {
                 'Finicity-App-Token': this.accessToken
             }
         });
-        console.log(response.status)
-        console.log(response.statusText)
+
         const body = await response.text();
         try {
             return JSON.parse(body) as GetCustomersResponse
         } catch (e) {
-            console.log(body)
-            return null
+            throw new Error(body.toString());
         }
     }
 
-    getCustomer = async () => {
+    getCustomerAccounts = async (customerId: string): Promise<GetCustomerAccountsResponse> => {
+        const response = await fetch(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts`, {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            }
+        });
 
+        const body = await response.text();
+        try {
+            return JSON.parse(body) as GetCustomerAccountsResponse
+        } catch (e) {
+            throw new Error(body.toString());
+        }
+    }
+
+    getCustomerAccountById = async (customerId: string, accountId: string): Promise<GetCustomerAccountByIdResponse> => {
+        const response = await fetch(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts/${accountId}`, {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            }
+        });
+
+        const body = await response.text();
+        try {
+            return JSON.parse(body) as GetCustomerAccountByIdResponse
+        } catch (e) {
+            throw new Error(body.toString());
+        }
     }
 
     generateConnectUrl = async (customerId: string, webhook: string, webhookContentType: string = "application/json", experience: string = "default"): Promise<GenerateLinkResponse> => {
-        console.log("Generating connect token...")
-
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Finicity-App-Key': this.appKey,
             'Finicity-App-Token': this.accessToken
         };
-
-        console.log("CustomerID: ", customerId);
-        console.log("Partner ID : ", this.partnerId);
-
 
         const response = await fetch("https://api.finicity.com/connect/v2/generate", {
             method: "POST",
@@ -197,20 +282,11 @@ export default class Finicity {
         try {
             return JSON.parse(body) as GenerateLinkResponse
         } catch (e) {
-            console.log(body.toString())
-            throw e
+            throw new Error(body.toString());
         }
     }
 
-    generateConnectLiteUrl = async () => {
-
-    }
-
-    generateConnectEmail = async (customerId: string) => {
-
-    }
-
-    refreshCustomerAccounts = async (customerId: string): Promise<CustomerAccount[]> => {
+    refreshCustomerAccounts = async (customerId: string): Promise<GetCustomerAccountsResponse[]> => {
         const response = await fetch(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts`, {
             method: "POST",
             headers: {
@@ -223,9 +299,68 @@ export default class Finicity {
 
         const body = await response.text();
         try {
-            return JSON.parse(body) as CustomerAccount[]
+            return JSON.parse(body) as GetCustomerAccountsResponse[]
         } catch (e) {
-            throw e
+            throw new Error(body.toString());
+        }
+    }
+
+    loadHistoricTransactionsForCustomerAccount = async (customerId: string, accountId: string): Promise<void> => {
+        await fetch(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts/${accountId}/transactions/historic`, {
+            method: "POST",
+            body: JSON.stringify({}),
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            }
+        });
+    }
+
+    getAccountOwner = async (customerId: string, accountId: string): Promise<GetAccountOwner> => {
+        const response = await fetch(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts/${accountId}/owner`, {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            }
+        });
+
+        const body = await response.text();
+        try {
+            return JSON.parse(body) as GetAccountOwner
+        } catch (e) {
+            throw new Error(body.toString());
+        }
+    }
+
+    getAllCustomerTransactions = async (customerId: string, params: { fromDate: number, toDate: number, start?: number, limit?: number, sort?: "asc" | "desc", includePending?: boolean }): Promise<GetAllCustomerTransactions> => {
+        const url = new URL(`https://api.finicity.com/aggregation/v3/customers/${customerId}/transactions`)
+        Object.keys(params).forEach((key: string) => {
+            const val = params[key as keyof typeof params]
+            if (!val) return;
+            if (typeof val !== 'string' || typeof val.toString() === 'undefined') return;
+            url.searchParams.set(key, val.toString())
+        });
+
+        const response = await fetch(url.toString(), {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Finicity-App-Key': this.appKey,
+                'Finicity-App-Token': this.accessToken
+            }
+        });
+
+        const body = await response.text();
+        try {
+            return JSON.parse(body) as GetAllCustomerTransactions
+        } catch (e) {
+            throw new Error(body.toString());
         }
     }
 }

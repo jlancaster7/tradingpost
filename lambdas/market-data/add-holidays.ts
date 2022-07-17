@@ -12,20 +12,19 @@ let pgp: IMain;
 
 const run = async () => {
     if (!pgClient || !pgp) {
-        const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+        const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
         pgClient = pgp({
-            host: postgresConfiguration['host'] as string,
-            user: postgresConfiguration['user'] as string,
-            password: postgresConfiguration['password'] as string,
-            database: postgresConfiguration['database'] as string
+            host: pgCfg.host,
+            user: pgCfg.user,
+            password: pgCfg.password,
+            database: pgCfg.database
         })
+        await pgClient.connect()
     }
 
     const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
     const iex = new IEX(iexConfiguration.key);
-
-    await pgClient.connect()
 
     const repository = new Repository(pgClient, pgp);
     try {
@@ -33,8 +32,6 @@ const run = async () => {
     } catch (e) {
         console.error(e)
         throw e
-    } finally {
-        await pgp.end()
     }
 }
 

@@ -19,17 +19,14 @@ const run = async () => {
             password: postgresConfiguration['password'] as string,
             database: postgresConfiguration['database'] as string
         })
+        await pgClient.connect()
     }
-
-    await pgClient.connect()
 
     try {
         await lambdaImportYoutube(pgClient, youtubeConfiguration);
     } catch (e) {
         console.error(e)
         throw e;
-    } finally {
-        await pgp.end()
     }
 }
 

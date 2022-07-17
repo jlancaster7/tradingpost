@@ -53,12 +53,12 @@ const run = async () => {
             password: postgresConfiguration['password'] as string,
             database: postgresConfiguration['database'] as string
         })
+        await pgClient.connect();
     }
 
     const iexConfiguration = await DefaultConfig.fromSSM("iex");
     const iex = new IEX(iexConfiguration.key);
 
-    await pgClient.connect();
     const repository = new Repository(pgClient, pgp);
 
     try {
@@ -66,8 +66,6 @@ const run = async () => {
     } catch (e) {
         console.error(e)
         throw e
-    } finally {
-        await pgp.end()
     }
 }
 

@@ -44,7 +44,8 @@ export class Repository {
                                     FROM security_price sp
                                              INNER JOIN (SELECT security_id,
                                                                 max(time) time
-                                                         FROM security_price
+                                                         FROM security_price security_price
+                                                         WHERE time > NOW() - INTERVAL '5 Days'
                                                          GROUP BY security_id) AS max_prices
                                                         ON
                                                                     max_prices.security_id =

@@ -17,19 +17,16 @@ const run = async () => {
             password: postgresConfiguration['password'] as string,
             database: postgresConfiguration['database'] as string
         })
+        await pgClient.connect()
     }
 
     const substackConfiguration = await DefaultConfig.fromCacheOrSSM("substack");
-
-    await pgClient.connect()
 
     try {
         await lambdaImportRSSFeeds(pgClient, substackConfiguration);
     } catch (e) {
         console.error(e)
         throw e
-    } finally {
-        await pgp.end()
     }
 }
 
