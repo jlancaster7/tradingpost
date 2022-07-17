@@ -29,7 +29,7 @@ export interface IBrokerageRepository {
 }
 
 export interface IFinicityRepository {
-    getFinicityUser(userId: string): Promise<FinicityUser>
+    getFinicityUser(userId: string): Promise<FinicityUser | null>
 
     addFinicityUser(userId: string, customerId: string, type: string): Promise<FinicityUser>
 

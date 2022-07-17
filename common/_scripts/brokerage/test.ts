@@ -21,7 +21,8 @@ pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
         user: pgCfg.user,
         password: pgCfg.password,
         database: pgCfg.database
-    })
+    });
+
     await pgClient.connect()
     const repository = new Repository(pgClient, pgp);
 
