@@ -1,12 +1,13 @@
 import Express, { RequestHandler, response } from "express";
 import { join } from "path";
-import { EntityApi } from '@tradingpost/common/api/entities/static/EntityApi'
+import { EntityApi, RequestSettings } from '@tradingpost/common/api/entities/static/EntityApi'
 import { createLogin, createUser, loginPass, loginToken, } from '@tradingpost/common/api/auth'
-import { JwtPayload, verify } from 'jsonwebtoken'
+import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 import { DefaultConfig } from "@tradingpost/common/configuration";
 import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
+
 const router = Express.Router();
-const baseFormat = '/:entity/:id?';
+const baseFormat = '/:entity/:action';
 
 
 //TODO: need to throw errros that will set the status number. (401 in this case)
@@ -71,6 +72,7 @@ function resolver(...path: string[]) {
 
 const sharedHandler = async (req: Express.Request, routeDetails: (entity: EntityApi<any, any, any, any>) => Promise<void>) => {
     //For efficiency I will generate everything in "/api". For now doing a lookup to both
+    ///... this can already be changed.. will do it later.....
     const entity =
         require(
             resolver(
@@ -112,37 +114,54 @@ makeRoute("/authapi/init", async (req) => {
     });
 });
 
-//INSERT AND UPDATES
+//ALL RUOTES
 makeRoute(baseFormat, (req) => {
     return sharedHandler(req, async (entity) => {
-        const id = req.params.id;
-        return id ? await entity.internal.update(id, req.body) : await entity.internal.insert(req.body);
+        const info = await decodeToken(req);
+        //need to add to info about requests;
+        (req as any).extra = { userId: info.sub };
+
+
+        const internalHandler = entity.internal[req.params.action as keyof (typeof entity)["internal"]];
+        if (internalHandler) {
+            const settings: RequestSettings<any> = {
+                user_id: info.sub,
+                data: req.body
+            }
+            return await (internalHandler as any)(settings);
+        }
+        else if ((entity as any).extensions[req.params.action]) {
+            return await (entity as any).extensions[req.params.action](req);
+        }
+        else {
+            throw new PublicError("Unknown Action", 400);
+        }
     })
 });
 
 //GET AND LIST (TODO discuss list paylod)
-router.get(baseFormat, async (req, res) => {
-    sharedHandler(req, async (entity) => {
-        try {
-            const id = req.params.id;
-            res.json(id ? await entity.internal.get(id) : await entity.internal.list())
-        }
-        catch (ex) {
-            if (ex instanceof PublicError) {
-                res.status(ex.statusCode).json({
-                    statusCode: ex.statusCode,
-                    message: ex.message
-                });
-            }
-            else {
-                console.error(ex);
-                res.status(400).json({
-                    message: "An unknown error has occured. Please contact help@tradingpost.app"
-                });
-            }
-        }
-    })
-});
+// router.get(baseFormat, async (req, res) => {
+//     sharedHandler(req, async (entity) => {
+//         try {
+//             const id = req.params.id;
+//             res.json(id ? await entity.internal.get(id) : await entity.internal.list())
+//         }
+//         catch (ex) {
+//             if (ex instanceof PublicError) {
+//                 res.status(ex.statusCode).json({
+//                     statusCode: ex.statusCode,
+//                     message: ex.message
+//                 });
+//             }
+//             else {
+//                 console.error(ex);
+//                 res.status(400).json({
+//                     message: "An unknown error has occured. Please contact help@tradingpost.app"
+//                 });
+//             }
+//         }
+//     })
+// });
 
 //DELETE
 // router.delete(idReqFormat, async (req, res, next) => {

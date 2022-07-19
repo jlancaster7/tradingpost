@@ -3,8 +3,9 @@ import { execProc, execProcOne } from '../static/pool';
 import { EntityApiBase } from './EntityApiBase';
 import { makeError } from '../../errors'
 
-export type RequestSettings = {
+export type RequestSettings<T = any> = {
     user_id?: string,
+    data: T
     //add pagination stuff here too
 }
 
@@ -23,19 +24,15 @@ export abstract class EntityApi<TGet, TList, TInsert, TUpdate> extends EntityApi
             return execProc<TList>(this.parent.listFunction);
         }
 
-        get = (id: number | string, settings?: RequestSettings) => {
+        get = (settings?: RequestSettings) => {
             if (!this.get) {
                 throw {
                     message: "Get is not implemented on this api"
                 }
             }
-            return execProcOne<TGet>(this.parent.getFunction, {
-                ...settings,
-                data: { id }
-            });
+            return execProcOne<TGet>(this.parent.getFunction, settings);
         }
-
-        update = (id: number | string, update: TUpdate, settings?: RequestSettings) => {
+        update = (settings?: RequestSettings<TUpdate>) => {
             if (!this.update) {
                 throw {
                     message: "Update is not implemented on this api"
@@ -45,9 +42,9 @@ export abstract class EntityApi<TGet, TList, TInsert, TUpdate> extends EntityApi
             //Need to change this
             if (errs)
                 throw makeError("VALIDATION_ERROR", errs);
-            return execProcOne<TGet>(this.parent.updateFunction, { ...settings, data: { id, ...update } });
+            return execProcOne<TGet>(this.parent.updateFunction, settings);
         }
-        insert = (insert: TInsert, settings?: RequestSettings) => {
+        insert = (settings?: RequestSettings<TInsert>) => {
             if (!this.insert) {
                 throw {
                     message: "Insert is not implemented on this api"
@@ -58,9 +55,8 @@ export abstract class EntityApi<TGet, TList, TInsert, TUpdate> extends EntityApi
             if (errs)
                 throw makeError("VALIDATION_ERROR", errs);
 
-            return execProcOne<TGet>(this.parent.insertFunction, { ...settings, data: insert });
+            return execProcOne<TGet>(this.parent.insertFunction, settings);
         }
     }(this)
 }
-
 

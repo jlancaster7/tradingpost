@@ -5,6 +5,7 @@ declare class AlertApi extends EntityApi<IAlertGet, IAlertList, never, never> {
     protected listFunction: string;
     protected insertFunction: string;
     protected updateFunction: string;
+    extensions: import("../extensions").Extension;
 }
 declare const _default: AlertApi;
 export default _default;

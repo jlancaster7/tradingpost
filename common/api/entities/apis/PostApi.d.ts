@@ -5,6 +5,7 @@ declare class PostApi extends EntityApi<IPostGet, IPostList, never, never> {
     protected listFunction: string;
     protected insertFunction: string;
     protected updateFunction: string;
+    extensions: import("../extensions").Extension;
 }
 declare const _default: PostApi;
 export default _default;

@@ -30,7 +30,7 @@ const apiUrl = (...paths) => {
 exports.apiUrl = apiUrl;
 class EntityApiBase {
     constructor() {
-        this.makeUrl = (id) => (0, exports.apiUrl)(...(id === undefined ? [this.constructor.name] : [this.constructor.name, id]));
+        this.makeUrl = (method) => (0, exports.apiUrl)(this.constructor.name, method);
     }
     static makeHeaders() {
         return {
@@ -54,8 +54,9 @@ class EntityApiBase {
     //assumes fetch exists globally
     get(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            const resp = yield fetch(this.makeUrl(id), {
-                method: "GET",
+            const resp = yield fetch(this.makeUrl("get"), {
+                method: "POST",
+                body: JSON.stringify({ id }),
                 headers: EntityApiBase.makeHeaders()
             });
             return EntityApiBase.handleFetchResponse(resp);
@@ -63,8 +64,8 @@ class EntityApiBase {
     }
     list() {
         return __awaiter(this, void 0, void 0, function* () {
-            const resp = yield fetch(this.makeUrl(), {
-                method: "GET",
+            const resp = yield fetch(this.makeUrl("list"), {
+                method: "POST",
                 headers: EntityApiBase.makeHeaders()
             });
             return EntityApiBase.handleFetchResponse(resp);
@@ -72,7 +73,7 @@ class EntityApiBase {
     }
     insert(item) {
         return __awaiter(this, void 0, void 0, function* () {
-            const resp = yield fetch(this.makeUrl(), {
+            const resp = yield fetch(this.makeUrl("insert"), {
                 method: "POST",
                 body: JSON.stringify(item),
                 headers: EntityApiBase.makeHeaders()
@@ -82,9 +83,9 @@ class EntityApiBase {
     }
     update(id, item) {
         return __awaiter(this, void 0, void 0, function* () {
-            const resp = yield fetch(this.makeUrl(id), {
+            const resp = yield fetch(this.makeUrl("update"), {
                 method: "POST",
-                body: JSON.stringify(item),
+                body: JSON.stringify(Object.assign(Object.assign({}, item), { id })),
                 headers: EntityApiBase.makeHeaders()
             });
             return EntityApiBase.handleFetchResponse(resp);

@@ -48,26 +48,27 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
             throw data;
     }
 
-    makeUrl = (id?: string | number) => apiUrl(...(id === undefined ? [this.constructor.name] : [this.constructor.name, id]));
+    makeUrl = (method: string) => apiUrl(this.constructor.name, method);
     //`${this.constructor.name}${(id !== undefined ? "/" + id : "")}`
     //assumes fetch exists globally
     async get(id: string | number) {
-        const resp = await fetch(this.makeUrl(id), {
-            method: "GET",
+        const resp = await fetch(this.makeUrl("get"), {
+            method: "POST",
+            body: JSON.stringify({ id }),
             headers: EntityApiBase.makeHeaders()
         });
         return EntityApiBase.handleFetchResponse<TGet>(resp);
     }
     async list() {
-        const resp = await fetch(this.makeUrl(), {
-            method: "GET",
+        const resp = await fetch(this.makeUrl("list"), {
+            method: "POST",
             headers: EntityApiBase.makeHeaders()
         });
         return EntityApiBase.handleFetchResponse<TList[]>(resp);
     }
 
     async insert(item: TInsert) {
-        const resp = await fetch(this.makeUrl(), {
+        const resp = await fetch(this.makeUrl("insert"), {
             method: "POST",
             body: JSON.stringify(item),
             headers: EntityApiBase.makeHeaders()
@@ -75,9 +76,9 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
         return await EntityApiBase.handleFetchResponse<TGet>(resp)
     }
     async update(id: string | number, item: TUpdate) {
-        const resp = await fetch(this.makeUrl(id), {
+        const resp = await fetch(this.makeUrl("update"), {
             method: "POST",
-            body: JSON.stringify(item),
+            body: JSON.stringify({ ...item, id }),
             headers: EntityApiBase.makeHeaders()
         });
         return EntityApiBase.handleFetchResponse<TGet>(resp)

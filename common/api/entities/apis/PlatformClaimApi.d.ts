@@ -5,6 +5,7 @@ declare class PlatformClaimApi extends EntityApi<IPlatformClaimGet, IPlatformCla
     protected listFunction: string;
     protected insertFunction: string;
     protected updateFunction: string;
+    extensions: import("../extensions").Extension;
 }
 declare const _default: PlatformClaimApi;
 export default _default;

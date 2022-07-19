@@ -5,6 +5,7 @@ declare class WatchlistItemApi extends EntityApi<IWatchlistItemGet, IWatchlistIt
     protected listFunction: string;
     protected insertFunction: string;
     protected updateFunction: string;
+    extensions: import("../extensions").Extension;
 }
 declare const _default: WatchlistItemApi;
 export default _default;

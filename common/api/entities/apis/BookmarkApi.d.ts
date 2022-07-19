@@ -5,6 +5,7 @@ declare class BookmarkApi extends EntityApi<IBookmarkGet, IBookmarkList, never, 
     protected listFunction: string;
     protected insertFunction: string;
     protected updateFunction: string;
+    extensions: import("../extensions").Extension;
 }
 declare const _default: BookmarkApi;
 export default _default;

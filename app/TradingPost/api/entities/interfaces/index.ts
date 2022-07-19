@@ -1,3 +1,5 @@
+import * as Statics from '../static/interfaces'
+
 export interface IAlertList {
         id: number,
     data: any,
@@ -122,7 +124,8 @@ export interface IUserGet {
     first_name: string,
     last_name: string,
     profile_url?: string,
-    banner_url?: string
+    banner_url?: string,
+    analyst_profile?: Statics.IAnalystProfile
     };
 
 export interface IWatchlistList {

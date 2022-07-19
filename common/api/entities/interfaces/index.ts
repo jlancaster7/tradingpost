@@ -1,3 +1,5 @@
+import * as Statics from '../static/interfaces'
+
 export interface IAlertList {
         id: number,
     data: any,
@@ -122,7 +124,16 @@ export interface IUserGet {
     first_name: string,
     last_name: string,
     profile_url?: string,
-    banner_url?: string
+    banner_url?: string,
+    analyst_profile?: Statics.IAnalystProfile
+    };
+
+export interface IUserUpdate {
+        id?: string,
+    first_name?: string,
+    last_name?: string,
+    analyst_profile?: Statics.IAnalystProfile,
+    has_profile_pic?: unknown
     };
 
 export interface IWatchlistList {
@@ -151,11 +162,11 @@ export interface IWatchlistInsert {
     };
 
 export interface IWatchlistUpdate {
-        id: number,
-    name: string,
+        id?: number,
+    name?: string,
     note?: string,
-    items: Omit<IWatchlistItemList,'watchlist_id'|'id'>[],
-    type: string
+    items?: Omit<IWatchlistItemList,'watchlist_id'|'id'>[],
+    type?: string
     };
 
 export interface IWatchlistItemList {

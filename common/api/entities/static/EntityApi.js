@@ -17,15 +17,15 @@ class EntityApi extends EntityApiBase_1.EntityApiBase {
                     }
                     return (0, pool_1.execProc)(this.parent.listFunction);
                 };
-                this.get = (id, settings) => {
+                this.get = (settings) => {
                     if (!this.get) {
                         throw {
                             message: "Get is not implemented on this api"
                         };
                     }
-                    return (0, pool_1.execProcOne)(this.parent.getFunction, Object.assign(Object.assign({}, settings), { data: { id } }));
+                    return (0, pool_1.execProcOne)(this.parent.getFunction, settings);
                 };
-                this.update = (id, update, settings) => {
+                this.update = (settings) => {
                     if (!this.update) {
                         throw {
                             message: "Update is not implemented on this api"
@@ -35,9 +35,9 @@ class EntityApi extends EntityApiBase_1.EntityApiBase {
                     //Need to change this
                     if (errs)
                         throw (0, errors_1.makeError)("VALIDATION_ERROR", errs);
-                    return (0, pool_1.execProcOne)(this.parent.updateFunction, Object.assign(Object.assign({}, settings), { data: Object.assign({ id }, update) }));
+                    return (0, pool_1.execProcOne)(this.parent.updateFunction, settings);
                 };
-                this.insert = (insert, settings) => {
+                this.insert = (settings) => {
                     if (!this.insert) {
                         throw {
                             message: "Insert is not implemented on this api"
@@ -47,7 +47,7 @@ class EntityApi extends EntityApiBase_1.EntityApiBase {
                     //Need to change this
                     if (errs)
                         throw (0, errors_1.makeError)("VALIDATION_ERROR", errs);
-                    return (0, pool_1.execProcOne)(this.parent.insertFunction, Object.assign(Object.assign({}, settings), { data: insert }));
+                    return (0, pool_1.execProcOne)(this.parent.insertFunction, settings);
                 };
                 this.parent = parent;
             }

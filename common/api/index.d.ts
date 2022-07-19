@@ -1,0 +1,27 @@
+import Auth from './entities/static/AuthApi';
+import Security from './entities/static/SecurityApi';
+import Alert from './entities/apis/AlertApi';
+import Bookmark from './entities/apis/BookmarkApi';
+import Comment from './entities/apis/CommentApi';
+import PlatformClaim from './entities/apis/PlatformClaimApi';
+import Post from './entities/apis/PostApi';
+import Subscriber from './entities/apis/SubscriberApi';
+import Upvote from './entities/apis/UpvoteApi';
+import User from './entities/apis/UserApi';
+import Watchlist from './entities/apis/WatchlistApi';
+import WatchlistItem from './entities/apis/WatchlistItemApi';
+export * as Interface from './entities/interfaces';
+export declare const Api: {
+    Alert: typeof Alert;
+    Bookmark: typeof Bookmark;
+    Comment: typeof Comment;
+    PlatformClaim: typeof PlatformClaim;
+    Post: typeof Post;
+    Subscriber: typeof Subscriber;
+    Upvote: typeof Upvote;
+    User: typeof User;
+    Watchlist: typeof Watchlist;
+    WatchlistItem: typeof WatchlistItem;
+    Auth: typeof Auth;
+    Security: typeof Security;
+};

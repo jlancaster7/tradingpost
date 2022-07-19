@@ -46,7 +46,7 @@ var jsonwebtoken_1 = require("jsonwebtoken");
 var configuration_1 = require("@tradingpost/common/configuration");
 var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 var router = express_1.default.Router();
-var baseFormat = '/:entity/:id?';
+var baseFormat = '/:entity/:action';
 //TODO: need to throw errros that will set the status number. (401 in this case)
 var decodeToken = function (req, disableModelCheck) { return __awaiter(void 0, void 0, void 0, function () {
     var bearerHeader, bearer, result, _a, _b;
@@ -182,73 +182,57 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
         }
     });
 }); });
-//INSERT AND UPDATES
+//ALL RUOTES
 makeRoute(baseFormat, function (req) {
     return sharedHandler(req, function (entity) { return __awaiter(void 0, void 0, void 0, function () {
-        var id, _a;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    id = req.params.id;
-                    if (!id) return [3 /*break*/, 2];
-                    return [4 /*yield*/, entity.internal.update(id, req.body)];
+        var info, internalHandler, settings;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, decodeToken(req)];
                 case 1:
-                    _a = _b.sent();
-                    return [3 /*break*/, 4];
-                case 2: return [4 /*yield*/, entity.internal.insert(req.body)];
+                    info = _a.sent();
+                    //need to add to info about requests;
+                    req.extra = { userId: info.sub };
+                    internalHandler = entity.internal[req.params.action];
+                    if (!internalHandler) return [3 /*break*/, 3];
+                    settings = {
+                        user_id: info.sub,
+                        data: req.body
+                    };
+                    return [4 /*yield*/, internalHandler(settings)];
+                case 2: return [2 /*return*/, _a.sent()];
                 case 3:
-                    _a = _b.sent();
-                    _b.label = 4;
-                case 4: return [2 /*return*/, _a];
+                    if (!entity.extensions[req.params.action]) return [3 /*break*/, 5];
+                    return [4 /*yield*/, entity.extensions[req.params.action](req)];
+                case 4: return [2 /*return*/, _a.sent()];
+                case 5: throw new EntityApiBase_1.PublicError("Unknown Action", 400);
             }
         });
     }); });
 });
 //GET AND LIST (TODO discuss list paylod)
-router.get(baseFormat, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        sharedHandler(req, function (entity) { return __awaiter(void 0, void 0, void 0, function () {
-            var id, _a, _b, _c, ex_2;
-            return __generator(this, function (_d) {
-                switch (_d.label) {
-                    case 0:
-                        _d.trys.push([0, 5, , 6]);
-                        id = req.params.id;
-                        _b = (_a = res).json;
-                        if (!id) return [3 /*break*/, 2];
-                        return [4 /*yield*/, entity.internal.get(id)];
-                    case 1:
-                        _c = _d.sent();
-                        return [3 /*break*/, 4];
-                    case 2: return [4 /*yield*/, entity.internal.list()];
-                    case 3:
-                        _c = _d.sent();
-                        _d.label = 4;
-                    case 4:
-                        _b.apply(_a, [_c]);
-                        return [3 /*break*/, 6];
-                    case 5:
-                        ex_2 = _d.sent();
-                        if (ex_2 instanceof EntityApiBase_1.PublicError) {
-                            res.status(ex_2.statusCode).json({
-                                statusCode: ex_2.statusCode,
-                                message: ex_2.message
-                            });
-                        }
-                        else {
-                            console.error(ex_2);
-                            res.status(400).json({
-                                message: "An unknown error has occured. Please contact help@tradingpost.app"
-                            });
-                        }
-                        return [3 /*break*/, 6];
-                    case 6: return [2 /*return*/];
-                }
-            });
-        }); });
-        return [2 /*return*/];
-    });
-}); });
+// router.get(baseFormat, async (req, res) => {
+//     sharedHandler(req, async (entity) => {
+//         try {
+//             const id = req.params.id;
+//             res.json(id ? await entity.internal.get(id) : await entity.internal.list())
+//         }
+//         catch (ex) {
+//             if (ex instanceof PublicError) {
+//                 res.status(ex.statusCode).json({
+//                     statusCode: ex.statusCode,
+//                     message: ex.message
+//                 });
+//             }
+//             else {
+//                 console.error(ex);
+//                 res.status(400).json({
+//                     message: "An unknown error has occured. Please contact help@tradingpost.app"
+//                 });
+//             }
+//         }
+//     })
+// });
 //DELETE
 // router.delete(idReqFormat, async (req, res, next) => {
 //     sharedHandler(req, res, async (entity) => {

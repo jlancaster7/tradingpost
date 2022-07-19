@@ -1,0 +1,11 @@
+import * as Dummy from "../extensions";
+export declare const Alert: typeof Dummy;
+export declare const Bookmark: typeof Dummy;
+export declare const Comment: typeof Dummy;
+export declare const PlatformClaim: typeof Dummy;
+export declare const Post: typeof Dummy;
+export declare const Subscriber: typeof Dummy;
+export declare const Upvote: typeof Dummy;
+export * as User from '../extensions/User';
+export declare const Watchlist: typeof Dummy;
+export declare const WatchlistItem: typeof Dummy;
