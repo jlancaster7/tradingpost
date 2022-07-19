@@ -33,7 +33,8 @@ export class FinicityService implements IBrokerageService {
     generateBrokerageAuthenticationLink = async (userId: string, brokerageAccount?: string): Promise<string> => {
         let finicityUser = await this.repository.getFinicityUser(userId);
         if (!finicityUser) finicityUser = await this._createFinicityUser(userId);
-        const authPortal = await this.finicity.generateConnectUrl(finicityUser.customerId, "https://webhook.tradingpost.life/brokerage/finicity")
+        const authPortal = await this.finicity.generateConnectUrl(finicityUser.customerId,
+            "https://webhook.tradingpost.life/brokerage/finicity")
         return authPortal.link
     }
 
@@ -264,6 +265,7 @@ export class FinicityService implements IBrokerageService {
         let limit = 100;
         // TODO: Iterate over transactions, add them to array, pass back...
 
+        return [];
     }
 
     exportAccounts = async (userId: string): Promise<TradingPostBrokerageAccounts[]> => {

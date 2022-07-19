@@ -111,15 +111,7 @@ const setupRoutes = async (app: express.Application, repository: IRepository, up
         return res.json(response);
     });
 
-    app.post('/upload', upload.single('new-security-image'), (req: { file: { filename: any; encoding: any; mimetype: any; location: any; }; }, res: {
-        send: (arg0: {
-            message: string; imageMeta: {
-                fil: any; encoding: any; mimeType: any;
-                // @ts-ignore
-                url: any;
-            };
-        }) => void;
-    }, next: any) => {
+    app.post('/upload', upload.single('new-security-image'), (req, res, next) => {
         res.send({
             message: "Uploaded",
             imageMeta: {

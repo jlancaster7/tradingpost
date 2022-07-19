@@ -10,6 +10,7 @@
   "keywords": [],
   "dependencies": {
     "@aws-sdk/client-s3": "^3.121.0",
+    "@tradingpost/common": "file:../../common",
     "aws-sdk": "^2.1170.0",
     "cors": "^2.8.5",
     "deep-object-diff": "^1.1.7",

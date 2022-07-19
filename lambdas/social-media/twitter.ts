@@ -9,7 +9,6 @@ let pgp: IMain;
 
 const run = async () => {
     const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
-
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -33,3 +32,9 @@ const run = async () => {
 module.exports.run = async (event: any, context: Context) => {
     await run();
 }
+
+(async()=> {
+    console.log("Running")
+    await run();
+    console.log("Ending running")
+})()
