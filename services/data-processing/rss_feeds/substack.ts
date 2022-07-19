@@ -83,6 +83,7 @@ export class Substack {
         let formatedArticles = [];
         let temp: SubstackArticles;
         for (let i = 0; i < rawArticles.length; i++) {
+            if (!rawArticles[i].creator) { rawArticles[i].creator = ''; } 
             temp = {
                 substack_user_id: userFeed.username,
                 creator: rawArticles[i].creator,

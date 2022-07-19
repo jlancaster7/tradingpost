@@ -972,7 +972,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               ag.updated_at
                        FROM tradingpost_account_groups ag
                                 RIGHT JOIN _tradingpost_account_to_group atg
-                                           ON atg.account_group_id = ag.id
+                                ON atg.account_group_id = ag.id
                        WHERE user_id = $1
         `;
         const response = await this.db.any(query, [userId]);
@@ -1165,7 +1165,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         await this.db.none(query);
     }
 
-    getTradingPostHoldingsByAccount = async (userId: string, accountId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]> => {
+    getTradingPostHoldingsByAccount = async (accountId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]> => {
         let query = `SELECT account_id,
                             security_id,
                             price,
@@ -1197,7 +1197,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         return holdings;
     }
 
-    getTradingPostHoldingsByAccountGroup = async (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
+    getTradingPostHoldingsByAccountGroup = async (accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
         let query = `SELECT atg.account_group_id                                AS account_group_id,
                             ht.security_id                                      AS security_id,
                             AVG(ht.price)                                       AS price,
