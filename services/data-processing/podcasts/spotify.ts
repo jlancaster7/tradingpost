@@ -81,90 +81,105 @@ export class SpotifyShows {
     }
 
     getShowInfo = async (showIds: string[]): Promise<rawSpotifyShow[]> => {
-        if (this.access_token === '') {
-            await this.setAccessToken()
-        }
+        try {
 
-        let results = [];
-        let fetchUrl: string;
-        let showResponse;
-
-        for (let i = 0; i < showIds.length; i++) {
-            fetchUrl = this.showUrl + showIds[i] + '?market=US';
-
-            showResponse = await (await fetch(fetchUrl, this.params)).json();
-
-            if (Object.keys(showResponse).includes('error')) {
-                if (showResponse.error.status === 401) {
-                    await this.setAccessToken();
-                    showResponse = await (await fetch(fetchUrl, this.params)).json();
-                } else {
-                    continue;
-                }
+            
+            if (this.access_token === '') {
+                await this.setAccessToken()
             }
-            showResponse.spotify_show_id = showIds[i];
-            results.push(showResponse);
-        }
-        return results;
+
+            let results = [];
+            let fetchUrl: string;
+            let showResponse;
+
+            for (let i = 0; i < showIds.length; i++) {
+                fetchUrl = this.showUrl + showIds[i] + '?market=US';
+
+                showResponse = await (await fetch(fetchUrl, this.params)).json();
+
+                if (Object.keys(showResponse).includes('error')) {
+                    if (showResponse.error.status === 401) {
+                        await this.setAccessToken();
+                        showResponse = await (await fetch(fetchUrl, this.params)).json();
+                    } else {
+                        continue;
+                    }
+                }
+                showResponse.spotify_show_id = showIds[i];
+                results.push(showResponse);
+            }
+            return results;
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
     }
 
     getEpisodes = async (showId: string): Promise<spotifyEpisode[]> => {
-        if (this.access_token === '') {
-            await this.setAccessToken()
-        }
+        try {
 
-        let formatedResponse: spotifyEpisode;
-        let results: spotifyEpisode[] = [];
-        let fetchUrl: string;
-        let showResponse;
-        let next = '';
-        let embedResponse;
+            if (this.access_token === '') {
+                await this.setAccessToken()
+            }
 
-        fetchUrl = this.showUrl + showId + '/episodes?limit=50&market=US';
-        while (next !== 'end') {
-            showResponse = await (await fetch(fetchUrl, this.params)).json();
-            if (Object.keys(showResponse).includes('error')) {
-                if (showResponse.error.status === 401) {
-                    await this.setAccessToken();
-                    showResponse = await (await fetch(fetchUrl, this.params)).json();
+            let formatedResponse: spotifyEpisode;
+            let results: spotifyEpisode[] = [];
+            let fetchUrl: string;
+            let showResponse;
+            let next = '';
+            let embedResponse;
+
+            fetchUrl = this.showUrl + showId + '/episodes?limit=50&market=US';
+            while (next !== 'end') {
+                showResponse = await (await fetch(fetchUrl, this.params)).json();
+                if (Object.keys(showResponse).includes('error')) {
+                    if (showResponse.error.status === 401) {
+                        await this.setAccessToken();
+                        showResponse = await (await fetch(fetchUrl, this.params)).json();
+                    } else {
+                        return [];
+                    }
+                }
+                for (let i = 0; i < showResponse.items.length; i++) {
+
+                    embedResponse = await (await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
+                    showResponse.items[i].embed = embedResponse;
+
+                }
+                showResponse.items.forEach((element: any) => {
+                    formatedResponse = {
+                        spotify_episode_id: element.id,
+                        spotify_show_id: showId,
+                        audio_preview_url: element.audio_preview_url,
+                        name: element.name,
+                        description: element.description,
+                        duration_ms: element.duration_ms,
+                        explicit: element.explicit,
+                        html_description: element.html_description,
+                        is_externally_hosted: element.is_externally_hosted,
+                        is_playable: element.is_playable,
+                        language: element.language,
+                        languages: JSON.stringify(element.languages),
+                        embed: JSON.stringify(element.embed),
+                        external_urls: JSON.stringify(element.external_urls),
+                        images: JSON.stringify(element.images),
+                        release_date: new Date(element.release_date)
+                    }
+                    results.push(formatedResponse);
+                })
+
+                if (!showResponse.next) {
+                    next = 'end';
                 } else {
-                    return [];
+                    fetchUrl = showResponse.next
                 }
             }
-            for (let i = 0; i < showResponse.items.length; i++) {
-                embedResponse = await (await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
-                showResponse.items[i].embed = embedResponse;
-
-            }
-            showResponse.items.forEach((element: any) => {
-                formatedResponse = {
-                    spotify_episode_id: element.id,
-                    spotify_show_id: showId,
-                    audio_preview_url: element.audio_preview_url,
-                    name: element.name,
-                    description: element.description,
-                    duration_ms: element.duration_ms,
-                    explicit: element.explicit,
-                    html_description: element.html_description,
-                    is_externally_hosted: element.is_externally_hosted,
-                    is_playable: element.is_playable,
-                    language: element.language,
-                    languages: JSON.stringify(element.languages),
-                    embed: JSON.stringify(element.embed),
-                    external_urls: JSON.stringify(element.external_urls),
-                    images: JSON.stringify(element.images),
-                    release_date: new Date(element.release_date)
-                }
-                results.push(formatedResponse);
-            })
-
-            if (!showResponse.next) {
-                next = 'end';
-            } else {
-                fetchUrl = showResponse.next
-            }
+            return results;
+        } catch (err) {
+            console.log(err);
+            return []
         }
-        return results;
+        
     }
 
     formatShowInfo = (data: rawSpotifyShow[]): spotifyShow[] => {
