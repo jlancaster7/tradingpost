@@ -544,6 +544,7 @@ const rebuildElasticIndex = (elasticClient, indexName) => __awaiter(void 0, void
                         }
                     },
                     "analyzer": {
+                        // @ts-ignore
                         "synonym_analyzer": {
                             "tokenizer": "keyword",
                             "filter": ["lowercase", "synonym_filter"]

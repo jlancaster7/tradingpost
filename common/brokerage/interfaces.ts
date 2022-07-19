@@ -9,8 +9,6 @@ export interface IBrokerageService {
 
     importHoldings(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostCurrentHoldings[]>
 
-    computeHoldingsHistory(userId: string): Promise<TradingPostHistoricalHoldings[]>
-
     exportAccounts(userId: string): Promise<TradingPostBrokerageAccounts[]>
 
     exportTransactions(userId: string): Promise<TradingPostTransactions[]>
@@ -44,6 +42,10 @@ export interface IFinicityRepository {
     getFinicityAccounts(finicityUserId: number): Promise<FinicityAccount[]>
 
     upsertFinicityHoldings(holdings: FinicityHolding[]): Promise<void>
+
+    getFinicityHoldings(finicityUserId: number): Promise<FinicityHolding[]>
+
+    getFinicityTransactions(finicityUserId: number): Promise<FinicityTransaction[]>
 }
 
 export interface ISummaryRepository {
@@ -248,6 +250,7 @@ export type FinicityTransaction = {
     description: string
     memo: string
     type: string
+    buyType: string
     interestAmount: number
     principalAmount: number
     feeAmount: number
@@ -284,6 +287,16 @@ export type FinicityTransaction = {
     updatedAt: DateTime
     createdAt: DateTime
 }
+
+export type TradingPostBrokerageAccountWithFinicity = {
+    internalFinicityAccountId: number
+    internalFinicityUserId: number
+    internalFinicityInstitutionId: number
+    externalFinicityAccountId: string
+    externalFinicityAccountNumber: string
+    name: string
+    type: string
+} & TradingPostBrokerageAccountsTable
 
 export interface GetSecurityBySymbol {
     id: number
@@ -516,3 +529,10 @@ export type AccountGroupHPRs = {
 }
 
 export type AccountGroupHPRsTable = AccountGroupHPRs & TableInfo;
+
+export type SecurityIssue = {
+    id: number
+    symbol: string
+    name: string
+    issueType: string
+}

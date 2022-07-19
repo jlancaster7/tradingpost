@@ -16,7 +16,7 @@ export interface IBrokerageRepository {
     addTradingPostBrokerageHoldingsHistory(holdingsHistory: TradingPostHistoricalHoldings[]): Promise<void>;
 }
 export interface IFinicityRepository {
-    getFinicityUser(userId: string): Promise<FinicityUser>;
+    getFinicityUser(userId: string): Promise<FinicityUser | null>;
     addFinicityUser(userId: string, customerId: string, type: string): Promise<FinicityUser>;
     upsertFinicityInstitutions(institutions: FinicityInstitution[]): Promise<void>;
     upsertInstitutions(institutions: TradingPostInstitution[]): Promise<void>;
@@ -437,3 +437,8 @@ export declare type AccountGroupHPRs = {
     return: number;
 };
 export declare type AccountGroupHPRsTable = AccountGroupHPRs & TableInfo;
+export declare type SecuritySymbolAndName = {
+    id: number;
+    symbol: string;
+    name: string;
+};

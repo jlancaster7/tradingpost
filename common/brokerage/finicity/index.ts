@@ -11,20 +11,23 @@ import {
     TradingPostInstitution,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
-    IFinicityRepository, TradingPostHistoricalHoldings
-} from "./interfaces";
-import Finicity from "../finicity/index";
-import {GetInstitutionsInstitution} from "../finicity/interfaces";
+    IFinicityRepository, TradingPostHistoricalHoldings, TradingPostBrokerageAccountsTable
+} from "../interfaces";
+import Finicity from "../../finicity";
+import {GetInstitutionsInstitution} from "../../finicity/interfaces";
 import {DateTime} from "luxon";
-import {transformAccounts, transformHoldings} from "./transformer";
+import {FinicityTransformer} from "./transformer";
+
 
 export class FinicityService implements IBrokerageService {
     private finicity: Finicity;
     private repository: IFinicityRepository;
+    private transformer: FinicityTransformer;
 
-    constructor(finicity: Finicity, repository: IFinicityRepository) {
+    constructor(finicity: Finicity, repository: IFinicityRepository, transformer: FinicityTransformer) {
         this.finicity = finicity;
-        this.repository = repository
+        this.repository = repository;
+        this.transformer = transformer;
     }
 
     generateBrokerageAuthenticationLink = async (userId: string, brokerageAccount?: string): Promise<string> => {
@@ -182,7 +185,7 @@ export class FinicityService implements IBrokerageService {
         }));
 
         const accountsWithIds = await this.repository.getFinicityAccounts(finicityUser.id);
-        return transformAccounts(userId, accountsWithIds, finicityInstitutionMap);
+        return this.transformer.accounts(userId, accountsWithIds);
     }
 
     importHoldings = async (userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostCurrentHoldings[]> => {
@@ -194,12 +197,14 @@ export class FinicityService implements IBrokerageService {
         let accountMap: Record<string, number> = {}
         internalAccounts.forEach(acc => accountMap[acc.accountId] = acc.id);
 
-        let finicityHoldings: FinicityHolding[] = [];
-        finAccountsAndHoldings.accounts.forEach(acc => {
-            acc.position.forEach(pos => {
+        let tpHoldings: TradingPostCurrentHoldings[] = [];
+        for (let i = 0; i < finAccountsAndHoldings.accounts.length; i++) {
+            let account = finAccountsAndHoldings.accounts[i];
+            let finicityHoldings: FinicityHolding[] = [];
+            account.position.forEach(pos => {
                 finicityHoldings.push({
                     id: 0,
-                    finicityAccountId: accountMap[acc.id],
+                    finicityAccountId: accountMap[account.id],
                     holdingId: pos.id,
                     securityIdType: pos.securityIdType,
                     posType: pos.posType,
@@ -235,10 +240,13 @@ export class FinicityService implements IBrokerageService {
                     createdAt: DateTime.now()
                 });
             });
-        });
-        await this.repository.upsertFinicityHoldings(finicityHoldings);
+            await this.repository.upsertFinicityHoldings(finicityHoldings);
+            const transformedHoldings = await this.transformer.holdings(userId, account.id, finicityHoldings,
+                DateTime.fromSeconds(account.detail.dateAsOf), account.currency);
+            tpHoldings.push(...transformedHoldings)
+        }
 
-        return transformHoldings(finicityHoldings);
+        return tpHoldings;
     }
 
     importTransactions = async (userId: string, brokerageIds: string[] | number[]): Promise<TradingPostTransactions[]> => {
@@ -254,21 +262,33 @@ export class FinicityService implements IBrokerageService {
         let stillAvailable = true;
         let start = 1;
         let limit = 100;
+        // TODO: Iterate over transactions, add them to array, pass back...
+
     }
 
-    exportAccounts(userId: string): Promise<any> {
-        return Promise.resolve(undefined);
+    exportAccounts = async (userId: string): Promise<TradingPostBrokerageAccounts[]> => {
+        const finicityUser = await this.repository.getFinicityUser(userId);
+        if (finicityUser === undefined || finicityUser === null) throw new Error(`no finicity account exists for user id ${userId}`);
+        const accounts = await this.repository.getFinicityAccounts(finicityUser.id)
+        return await this.transformer.accounts(userId, accounts);
     }
 
-    exportHoldings(userId: string): Promise<any> {
-        return Promise.resolve(undefined);
+    exportHoldings = async (userId: string): Promise<TradingPostCurrentHoldings[]> => {
+        const finicityUser = await this.repository.getFinicityUser(userId);
+        if (finicityUser === undefined || finicityUser === null) throw new Error(`no finicity account exists for user id ${userId}`);
+        const holdings = await this.repository.getFinicityHoldings(finicityUser.id);
+        let tpHoldings: TradingPostCurrentHoldings[] = []
+        for (let i = 0; i < holdings.length; i++) {
+            let h = await this.transformer.holdings(userId, holdings[i].finicityAccountId.toString(), holdings, null, null)
+            tpHoldings.push(...h)
+        }
+        return tpHoldings
     }
 
-    exportTransactions(userId: string): Promise<any> {
-        return Promise.resolve(undefined);
-    }
-
-    computeHoldingsHistory(userId: string): Promise<TradingPostHistoricalHoldings[]> {
-        return Promise.resolve([]);
+    exportTransactions = async (userId: string): Promise<TradingPostTransactions[]> => {
+        const finicityUser = await this.repository.getFinicityUser(userId);
+        if (finicityUser === undefined || finicityUser === null) throw new Error(`no finicity account exists for user id ${userId}`);
+        const transactions = await this.repository.getFinicityTransactions(finicityUser.id)
+        return this.transformer.transactions(userId, transactions);
     }
 }

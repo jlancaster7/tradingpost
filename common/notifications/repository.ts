@@ -5,6 +5,17 @@ import {DateTime} from "luxon";
 // Create our own type of error response, if its not that type of errors response than we should not log that
 // message to our end user and instead we should just return a internal system issue message for the time being
 
+/**
+ *
+ *     const app = admin.initializeApp({
+ *         credential: admin.credential.cert({
+ *             projectId: fcmConfiguration.project_id,
+ *             clientEmail: fcmConfiguration.client_email,
+ *             privateKey: fcmConfiguration.private_key
+ *         })
+ *     });
+ */
+
 export default class Repository {
     private db: Client;
 

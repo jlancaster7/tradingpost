@@ -13,6 +13,11 @@ export class BrokerageService {
         this.portfolioSummaryService = portfolioSummaryService;
     }
 
+    generateBrokerageAuthenticationLink = async (userId: string, brokerageId: string): Promise<string> => {
+        const brokerage = this.brokerageMap[brokerageId];
+        return await brokerage.generateBrokerageAuthenticationLink(userId);
+    }
+
     newlyAuthenticatedBrokerage = async (userId: string, brokerageId: string) => {
         const brokerage = this.brokerageMap[brokerageId];
 
@@ -25,7 +30,7 @@ export class BrokerageService {
         const transactions = await brokerage.importTransactions(userId);
         await this.repository.addTradingPostBrokerageTransactions(transactions);
 
-        const holdingHistory = await brokerage.computeHoldingsHistory(userId);
+        const holdingHistory = await this.computeHoldingsHistory(userId);
         await this.repository.addTradingPostBrokerageHoldingsHistory(holdingHistory);
     }
 
@@ -35,8 +40,7 @@ export class BrokerageService {
         const holdings = await brokerage.importHoldings(userId);
         await this.repository.addTradingPostBrokerageHoldings(holdings);
 
-        let holdingHistory: TradingPostHistoricalHoldings[] = [];
-        holdings.forEach(holding => ({
+        let holdingHistory: TradingPostHistoricalHoldings[] = holdings.map(holding => ({
             accountId: holding.accountId,
             securityId: holding.securityId,
             securityType: holding.securityType,
@@ -53,5 +57,9 @@ export class BrokerageService {
 
         const transactions = await brokerage.importTransactions(userId);
         await this.repository.addTradingPostBrokerageTransactions(transactions);
+    }
+
+    computeHoldingsHistory = async (userId: string): Promise<TradingPostHistoricalHoldings[]> => {
+        return []
     }
 }

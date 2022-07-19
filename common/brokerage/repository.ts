@@ -12,12 +12,12 @@ import {
     ISummaryRepository,
     SecurityHPRs,
     SecurityPrices,
-    TradingPostAccountGroups, TradingPostAccountGroupsTable,
+    TradingPostAccountGroups,
     TradingPostAccountGroupStats,
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountsTable, TradingPostAccountToAccountGroup,
     TradingPostCurrentHoldings,
-    TradingPostCurrentHoldingsTable, TradingPostCustomIndustry,
+    TradingPostCustomIndustry,
     TradingPostHistoricalHoldings,
     TradingPostInstitution,
     TradingPostInstitutionTable,
@@ -36,6 +36,16 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     constructor(db: IDatabase<any>, pgp: IMain) {
         this.db = db;
         this.pgp = pgp;
+    }
+
+    addTradingPostBrokerageHoldings(holdings: TradingPostCurrentHoldings[]): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    addTradingPostBrokerageTransactions(transactions: TradingPostTransactions[]): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    addTradingPostBrokerageHoldingsHistory(holdingsHistory: TradingPostHistoricalHoldings[]): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     upsertInstitutions = async (institutions: TradingPostInstitution[]): Promise<void> => {
@@ -1011,8 +1021,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
 
         query = `INSERT INTO _tradingpost_account_to_group(account_id, account_group_id)
-                 VALUES (%L)
-        `;
+                 VALUES (%L)`;
         let values = [];
         for (let d of accountIds) {
             values.push([d, accountGroupId]);
@@ -1350,8 +1359,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             created_at,
                             validated
                      FROM securities
-                     WHERE id IN (%L)
-        `;
+                     WHERE id IN (%L)`;
         const response = await this.db.any(format(query, securityIds))
             .catch((error) => {
                 console.log(error);

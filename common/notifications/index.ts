@@ -1,29 +1,13 @@
 import {messaging} from 'firebase-admin';
-import {UserDevice, Message, MessageOptions} from "../interfaces";
+import {MessagesResponse, UserDevice, Message, MessageOptions, INotificationsRepository} from "./interfaces";
 
-
-interface Repository {
-    getUserDevices(userId: string): Promise<UserDevice[]>
-
-    getUsersDevices(userIds: string[]): Promise<UserDevice[]>
-
-    getUserDeviceByDeviceId(deviceId: string): Promise<UserDevice>
-}
-
-type MessagesResponse = {
-    errors: {
-        reason: string
-        deviceId: string
-        userId: string
-    }[]
-}
 
 export default class Notifications {
     private iOSMessenger: messaging.Messaging;
     private androidMessenger: messaging.Messaging;
-    private repository: Repository
+    private repository: INotificationsRepository
 
-    constructor(iosMessenger: messaging.Messaging, androidMessenger: messaging.Messaging, repository: Repository) {
+    constructor(iosMessenger: messaging.Messaging, androidMessenger: messaging.Messaging, repository: INotificationsRepository) {
         this.iOSMessenger = iosMessenger
         this.androidMessenger = androidMessenger
         this.repository = repository

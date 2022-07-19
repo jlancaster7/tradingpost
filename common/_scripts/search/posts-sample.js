@@ -35,6 +35,7 @@ const configuration_1 = require("@tradingpost/common/configuration");
                 query: {
                     function_score: {
                         query: { match_all: {} },
+                        // @ts-ignore
                         gauss: {
                             platformCreatedAt: {
                                 origin: "now-1h",

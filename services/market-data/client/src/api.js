@@ -7,7 +7,6 @@ export const uploadImage = async (formData, filename) => {
                 body: formData
             }
         );
-
         return await response.json();
     } catch (e) {
         throw e

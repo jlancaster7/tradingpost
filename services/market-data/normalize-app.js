@@ -30,9 +30,11 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
             s3: s3,
             acl: 'public-read',
             bucket: 'tradingpost-images',
+            // @ts-ignore
             metadata: function (req, file, cb) {
                 cb(null, { fieldName: file.fieldname });
             },
+            // @ts-ignore
             key: function (req, file, cb) {
                 // @ts-ignore
                 const { filename } = req.query;
@@ -65,47 +67,47 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 const setupRoutes = (app, repository, upload) => __awaiter(void 0, void 0, void 0, function* () {
     app.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-        const security = yield repository.getUncheckedSecurities();
-        if (!security)
+        const securityWithIexSecurity = yield repository.getInvalidatedSecurities();
+        if (!securityWithIexSecurity)
             return res.json({});
-        return res.json(security);
+        return res.json(securityWithIexToSecurityAndIex(securityWithIexSecurity));
     }));
     app.get('/:securityId', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const securityId = req.params.securityId;
-        const security = yield repository.getSecurity(securityId);
-        if (!security)
+        const securityWithIexSecurity = yield repository.getSecurity(securityId);
+        if (!securityWithIexSecurity)
             return res.json({});
-        return res.json(security);
+        return res.json(securityWithIexToSecurityAndIex(securityWithIexSecurity));
     }));
     app.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (req.body.security) {
             const security = req.body.security;
             const securityId = req.body.securityId;
-            yield repository.insertOverrideSecurity(securityId, {
-                address: security.address || null,
-                address2: security.address2 || null,
-                ceo: security.ceo || null,
-                companyName: security.companyName || null,
-                country: security.country || null,
-                description: security.description || null,
-                employees: security.employees || null,
-                exchange: security.exchange || null,
-                industry: security.industry || null,
-                issueType: security.issueType || null,
-                logoUrl: security.logoUrl || null,
-                phone: security.phone || null,
-                primarySicCode: security.primarySicCode || null,
-                sector: security.sector || null,
-                securityId: security.securityId || null,
-                securityName: security.securityName || null,
-                state: security.state || null,
-                symbol: security.symbol || null,
-                tags: security.tags || null,
-                website: security.website || null,
-                zip: security.zip || null
+            yield repository.updateSecurity(securityId, {
+                address: security.address,
+                address2: security.address2,
+                ceo: security.ceo,
+                companyName: security.companyName,
+                country: security.country,
+                description: security.description,
+                employees: security.employees,
+                exchange: security.exchange,
+                industry: security.industry,
+                issueType: security.issueType,
+                logoUrl: security.logoUrl,
+                phone: security.phone,
+                primarySicCode: security.primarySicCode,
+                sector: security.sector,
+                securityId: security.securityId,
+                securityName: security.securityName,
+                state: security.state,
+                symbol: security.symbol,
+                tags: security.tags,
+                website: security.website,
+                zip: security.zip
             });
+            yield repository.validateSecurity(req.body.security.symbol);
         }
-        yield repository.checkSecurity(req.body.securityId);
         return res.sendStatus(200);
     }));
     app.post('/search', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -130,10 +132,66 @@ const setupRoutes = (app, repository, upload) => __awaiter(void 0, void 0, void 
 (() => __awaiter(void 0, void 0, void 0, function* () {
     yield run();
 }))();
+const securityWithIexToSecurityAndIex = (s) => {
+    return {
+        security: {
+            id: s.securityId,
+            symbol: s.securitySymbol,
+            companyName: s.securityCompanyName,
+            exchange: s.securityExchange,
+            industry: s.securityIndustry,
+            website: s.securityWebsite,
+            description: s.securityDescription,
+            ceo: s.securityCeo,
+            securityName: s.securitySecurityName,
+            issueType: s.securityIssueType,
+            sector: s.securitySector,
+            primarySicCode: s.securityPrimarySicCode,
+            employees: s.securityEmployees,
+            tags: s.securityTags,
+            address: s.securityAddress,
+            address2: s.securityAddress2,
+            state: s.securityState,
+            zip: s.securityZip,
+            country: s.securityCountry,
+            phone: s.securityPhone,
+            logoUrl: s.securityLogoUrl,
+            lastUpdated: s.securityLastUpdated,
+            createdAt: s.securityCreatedAt,
+            validated: null
+        },
+        iexSecurity: {
+            id: s.iexId,
+            symbol: s.iexSymbol,
+            companyName: s.iexCompanyName,
+            exchange: s.iexExchange,
+            industry: s.iexIndustry,
+            website: s.iexWebsite,
+            description: s.iexDescription,
+            ceo: s.iexCeo,
+            securityName: s.iexSecurityName,
+            issueType: s.iexIssueType,
+            sector: s.iexSector,
+            primarySicCode: s.iexPrimarySicCode,
+            employees: s.iexEmployees,
+            tags: s.iexTags,
+            address: s.iexAddress,
+            address2: s.iexAddress2,
+            state: s.iexState,
+            zip: s.iexZip,
+            country: s.iexCountry,
+            phone: s.iexPhone,
+            logoUrl: s.iexLogoUrl,
+            lastUpdated: s.iexLastUpdated,
+            createdAt: s.iexCreatedAt,
+            validated: s.iexValidated,
+        }
+    };
+};
 class Repository {
     constructor(db) {
-        this.checkSecurity = (id) => __awaiter(this, void 0, void 0, function* () {
-            yield this.db.query("UPDATE securities SET validated = TRUE WHERE id = $1", [id]);
+        this.validateSecurity = (symbol) => __awaiter(this, void 0, void 0, function* () {
+            yield this.db.query("UPDATE iex_security SET validated = TRUE WHERE symbol = $1", [symbol]);
         });
         this.search = (query, opts) => __awaiter(this, void 0, void 0, function* () {
             let queryStr = `
@@ -159,16 +217,15 @@ class Repository {
                    phone,
                    logo_url,
                    last_updated,
-                   created_at,
-                   validated
-            FROM securities
+                   created_at
+            FROM security
             WHERE lower(symbol) like lower($1)
             LIMIT 10`;
             const insert = `%${query}%`;
             const response = yield this.db.query(queryStr, [insert]);
             if (response.rows.length <= 0)
                 return [];
-            return response.rows.map(row => ({
+            return response.rows.map((row) => ({
                 id: row.id,
                 symbol: row.symbol,
                 companyName: row.company_name,
@@ -192,164 +249,256 @@ class Repository {
                 logoUrl: row.logo_url,
                 lastUpdated: luxon_1.DateTime.fromJSDate(row.last_updated),
                 createdAt: luxon_1.DateTime.fromJSDate(row.created_at),
-                validated: row.validated
+                validated: false,
             }));
         });
-        this.getUncheckedSecurities = () => __awaiter(this, void 0, void 0, function* () {
+        this.getInvalidatedSecurities = () => __awaiter(this, void 0, void 0, function* () {
             const response = yield this.db.query(`
-            SELECT id,
-                   symbol,
-                   company_name,
-                   exchange,
-                   industry,
-                   website,
-                   description,
-                   ceo,
-                   security_name,
-                   issue_type,
-                   sector,
-                   primary_sic_code,
-                   employees,
-                   tags,
-                   address,
-                   address2,
-                   state,
-                   zip,
-                   country,
-                   phone,
-                   logo_url,
-                   last_updated,
-                   created_at,
-                   validated
-            FROM securities
-            WHERE validated = FALSE
-            LIMIT 1`);
+            SELECT s.id                 security_id,
+                   s.symbol             security_symbol,
+                   s.company_name       security_company_name,
+                   s.exchange           security_exchange,
+                   s.industry           security_industry,
+                   s.website            security_website,
+                   s.description        security_description,
+                   s.ceo                security_ceo,
+                   s.security_name      security_security_name,
+                   s.issue_type         security_issue_type,
+                   s.sector             security_sector,
+                   s.primary_sic_code   security_primary_sic_code,
+                   s.employees          security_employees,
+                   s.tags               security_tags,
+                   s.address            security_address,
+                   s.address2           security_address2,
+                   s.state              security_state,
+                   s.zip                security_zip,
+                   s.country            security_country,
+                   s.phone              security_phone,
+                   s.logo_url           security_logo_url,
+                   s.last_updated       security_last_updated,
+                   s.created_at         security_created_at,
+                   iex.id               iex_id,
+                   iex.symbol           iex_symbol,
+                   iex.company_name     iex_company_name,
+                   iex.exchange         iex_exchange,
+                   iex.industry         iex_industry,
+                   iex.website          iex_website,
+                   iex.description      iex_description,
+                   iex.ceo              iex_ceo,
+                   iex.security_name    iex_security_name,
+                   iex.issue_type       iex_issue_type,
+                   iex.sector           iex_sector,
+                   iex.primary_sic_code iex_primary_sic_code,
+                   iex.employees        iex_employees,
+                   iex.tags             iex_tags,
+                   iex.address          iex_address,
+                   iex.address2         iex_address2,
+                   iex.state            iex_state,
+                   iex.zip              iex_zip,
+                   iex.country          iex_country,
+                   iex.phone            iex_phone,
+                   iex.logo_url         iex_logo_url,
+                   iex.last_updated     iex_last_updated,
+                   iex.created_at       iex_created_at,
+                   iex.validated        iex_validated
+            FROM security s
+                     LEFT JOIN
+                 iex_security iex
+                 ON
+                     iex.symbol = s.symbol
+            WHERE iex.validated = FALSE
+            LIMIT 1;`);
             if (response.rows.length <= 0)
                 return null;
             const row = response.rows[0];
             return {
-                id: row.id,
-                symbol: row.symbol,
-                companyName: row.company_name,
-                exchange: row.exchange,
-                industry: row.industry,
-                website: row.website,
-                description: row.description,
-                ceo: row.ceo,
-                securityName: row.security_name,
-                issueType: row.issue_type,
-                sector: row.sector,
-                primarySicCode: row.primary_sic_code,
-                employees: row.employees,
-                tags: row.tags,
-                address: row.address,
-                address2: row.address2,
-                state: row.state,
-                zip: row.zip,
-                country: row.country,
-                phone: row.phone,
-                logoUrl: row.logo_url,
-                lastUpdated: luxon_1.DateTime.fromJSDate(row.last_updated),
-                createdAt: luxon_1.DateTime.fromJSDate(row.created_at),
-                validated: row.validated
+                securityId: row.security_id,
+                securitySymbol: row.security_symbol,
+                securityCompanyName: row.security_company_name,
+                securityExchange: row.security_exchange,
+                securityIndustry: row.security_industry,
+                securityWebsite: row.security_website,
+                securityDescription: row.security_description,
+                securityCeo: row.security_ceo,
+                securitySecurityName: row.security_security_name,
+                securityIssueType: row.security_issue_type,
+                securitySector: row.security_sector,
+                securityPrimarySicCode: row.security_primary_sic_code,
+                securityEmployees: row.security_employees,
+                securityTags: row.security_tags,
+                securityAddress: row.security_address,
+                securityAddress2: row.security_address2,
+                securityState: row.security_state,
+                securityZip: row.security_zip,
+                securityCountry: row.security_country,
+                securityPhone: row.security_phone,
+                securityLogoUrl: row.security_logo_url,
+                securityLastUpdated: luxon_1.DateTime.fromJSDate(row.security_last_updated),
+                securityCreatedAt: luxon_1.DateTime.fromJSDate(row.security_created_at),
+                iexId: row.iex_id,
+                iexSymbol: row.iex_symbol,
+                iexCompanyName: row.iex_company_name,
+                iexExchange: row.iex_exchange,
+                iexIndustry: row.iex_industry,
+                iexWebsite: row.iex_website,
+                iexDescription: row.iex_description,
+                iexCeo: row.iex_ceo,
+                iexSecurityName: row.iex_security_name,
+                iexIssueType: row.iex_issue_type,
+                iexSector: row.iex_sector,
+                iexPrimarySicCode: row.iex_primary_sic_code,
+                iexEmployees: row.iex_employees,
+                iexTags: row.iex_tags,
+                iexAddress: row.iex_address,
+                iexAddress2: row.iex_address2,
+                iexState: row.iex_state,
+                iexZip: row.iex_zip,
+                iexCountry: row.iex_country,
+                iexPhone: row.iex_phone,
+                iexLogoUrl: row.iex_logo_url,
+                iexLastUpdated: luxon_1.DateTime.fromJSDate(row.iex_last_updated),
+                iexCreatedAt: luxon_1.DateTime.fromJSDate(row.iex_created_at),
+                iexValidated: row.iex_validated
             };
         });
-        this.insertOverrideSecurity = (securityId, security) => __awaiter(this, void 0, void 0, function* () {
-            yield this.db.query(`INSERT INTO security_override
-                             (security_id, symbol, company_name, exchange, industry, website,
-                              description, ceo, security_name,
-                              issue_type, sector, primary_sic_code, employees, tags, address, address2,
-                              state, zip, country,
-                              phone, logo_url, last_updated, created_at)
-                             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                                     $16, $17, $18, $19,
-                                     $20, $21, NOW(), NOW())
-                             ON CONFLICT (security_id)
-                                 DO UPDATE SET symbol=EXCLUDED.symbol,
-                                               company_name=EXCLUDED.company_name,
-                                               exchange=EXCLUDED.exchange,
-                                               industry=EXCLUDED.industry,
-                                               website=EXCLUDED.website,
-                                               description=EXCLUDED.description,
-                                               ceo=EXCLUDED.ceo,
-                                               security_name=EXCLUDED.security_name,
-                                               issue_type=EXCLUDED.issue_type,
-                                               sector=EXCLUDED.sector,
-                                               primary_sic_code=EXCLUDED.primary_sic_code,
-                                               employees=EXCLUDED.employees,
-                                               tags=EXCLUDED.tags,
-                                               address=EXCLUDED.address,
-                                               address2=EXCLUDED.address2,
-                                               state=EXCLUDED.state,
-                                               zip=EXCLUDED.zip,
-                                               country=EXCLUDED.country,
-                                               phone=EXCLUDED.phone,
-                                               logo_url=EXCLUDED.logo_url,
-                                               last_updated=NOW()`, [securityId, security.symbol, security.companyName, security.exchange, security.industry,
-                security.website, security.description, security.ceo, security.securityName, security.issueType,
-                security.sector, security.primarySicCode, security.employees, security.tags, security.address,
-                security.address2, security.state, security.zip, security.country, security.phone, security.logoUrl]);
+        this.updateSecurity = (securityId, s) => __awaiter(this, void 0, void 0, function* () {
+            yield this.db.query(`
+            UPDATE
+                security
+            SET company_name=$1,
+                exchange=$2,
+                industry=$3,
+                website=$4,
+                description=$5,
+                ceo=$6,
+                security_name=$7,
+                issue_type=$8,
+                sector=$9,
+                primary_sic_code=$10,
+                employees=$11,
+                tags=$12,
+                address=$13,
+                address2=$14,
+                state=$15,
+                zip=$16,
+                country=$17,
+                phone=$18,
+                logo_url=$19,
+                last_updated=NOW()
+            WHERE id = $20;`, [s.companyName, s.exchange, s.industry, s.website, s.description, s.ceo,
+                s.securityName, s.issueType, s.securityName, s.primarySicCode, s.employees, s.tags, s.address,
+                s.address2, s.state, s.zip, s.country, s.phone, s.logoUrl, securityId]);
         });
         this.getSecurity = (securityId) => __awaiter(this, void 0, void 0, function* () {
             let queryStr = `
-            SELECT id,
-                   symbol,
-                   company_name,
-                   exchange,
-                   industry,
-                   website,
-                   description,
-                   ceo,
-                   security_name,
-                   issue_type,
-                   sector,
-                   primary_sic_code,
-                   employees,
-                   tags,
-                   address,
-                   address2,
-                   state,
-                   zip,
-                   country,
-                   phone,
-                   logo_url,
-                   last_updated,
-                   created_at,
-                   validated
-            FROM securities
-            WHERE id = $1`;
+            SELECT s.id                 security_id,
+                   s.symbol             security_symbol,
+                   s.company_name       security_company_name,
+                   s.exchange           security_exchange,
+                   s.industry           security_industry,
+                   s.website            security_website,
+                   s.description        security_description,
+                   s.ceo                security_ceo,
+                   s.security_name      security_security_name,
+                   s.issue_type         security_issue_type,
+                   s.sector             security_sector,
+                   s.primary_sic_code   security_primary_sic_code,
+                   s.employees          security_employees,
+                   s.tags               security_tags,
+                   s.address            security_address,
+                   s.address2           security_address2,
+                   s.state              security_state,
+                   s.zip                security_zip,
+                   s.country            security_country,
+                   s.phone              security_phone,
+                   s.logo_url           security_logo_url,
+                   s.last_updated       security_last_updated,
+                   s.created_at         security_created_at,
+                   iex.id               iex_id,
+                   iex.symbol           iex_symbol,
+                   iex.company_name     iex_company_name,
+                   iex.exchange         iex_exchange,
+                   iex.industry         iex_industry,
+                   iex.website          iex_website,
+                   iex.description      iex_description,
+                   iex.ceo              iex_ceo,
+                   iex.security_name    iex_security_name,
+                   iex.issue_type       iex_issue_type,
+                   iex.sector           iex_sector,
+                   iex.primary_sic_code iex_primary_sic_code,
+                   iex.employees        iex_employees,
+                   iex.tags             iex_tags,
+                   iex.address          iex_address,
+                   iex.address2         iex_address2,
+                   iex.state            iex_state,
+                   iex.zip              iex_zip,
+                   iex.country          iex_country,
+                   iex.phone            iex_phone,
+                   iex.logo_url         iex_logo_url,
+                   iex.last_updated     iex_last_updated,
+                   iex.created_at       iex_created_at,
+                   iex.validated        iex_validated
+            FROM SECURITY s
+                     LEFT JOIN
+                 iex_security iex
+                 ON
+                     iex.symbol = s.symbol
+            WHERE s.id = $1;`;
             const response = yield this.db.query(queryStr, [securityId]);
             if (response.rows.length <= 0)
                 throw new Error("no security exists for that id");
             const row = response.rows[0];
             return {
-                id: row.id,
-                symbol: row.symbol,
-                companyName: row.company_name,
-                exchange: row.exchange,
-                industry: row.industry,
-                website: row.website,
-                description: row.description,
-                ceo: row.ceo,
-                securityName: row.security_name,
-                issueType: row.issue_type,
-                sector: row.sector,
-                primarySicCode: row.primary_sic_code,
-                employees: row.employees,
-                tags: row.tags,
-                address: row.address,
-                address2: row.address2,
-                state: row.state,
-                zip: row.zip,
-                country: row.country,
-                phone: row.phone,
-                logoUrl: row.logo_url,
-                lastUpdated: luxon_1.DateTime.fromJSDate(row.last_updated),
-                createdAt: luxon_1.DateTime.fromJSDate(row.created_at),
-                validated: row.validated
+                securityId: row.security_id,
+                securitySymbol: row.security_symbol,
+                securityCompanyName: row.security_company_name,
+                securityExchange: row.security_exchange,
+                securityIndustry: row.security_industry,
+                securityWebsite: row.security_website,
+                securityDescription: row.security_description,
+                securityCeo: row.security_ceo,
+                securitySecurityName: row.security_security_name,
+                securityIssueType: row.security_issue_type,
+                securitySector: row.security_sector,
+                securityPrimarySicCode: row.security_primary_sic_code,
+                securityEmployees: row.security_employees,
+                securityTags: row.security_tags,
+                securityAddress: row.security_address,
+                securityAddress2: row.security_address2,
+                securityState: row.security_state,
+                securityZip: row.security_zip,
+                securityCountry: row.security_country,
+                securityPhone: row.security_phone,
+                securityLogoUrl: row.security_logo_url,
+                securityLastUpdated: luxon_1.DateTime.fromJSDate(row.security_last_updated),
+                securityCreatedAt: luxon_1.DateTime.fromJSDate(row.security_created_at),
+                iexId: row.iex_id,
+                iexSymbol: row.iex_symbol,
+                iexCompanyName: row.iex_company_name,
+                iexExchange: row.iex_exchange,
+                iexIndustry: row.iex_industry,
+                iexWebsite: row.iex_website,
+                iexDescription: row.iex_description,
+                iexCeo: row.iex_ceo,
+                iexSecurityName: row.iex_security_name,
+                iexIssueType: row.iex_issue_type,
+                iexSector: row.iex_sector,
+                iexPrimarySicCode: row.iex_primary_sic_code,
+                iexEmployees: row.iex_employees,
+                iexTags: row.iex_tags,
+                iexAddress: row.iex_address,
+                iexAddress2: row.iex_address2,
+                iexState: row.iex_state,
+                iexZip: row.iex_zip,
+                iexCountry: row.iex_country,
+                iexPhone: row.iex_phone,
+                iexLogoUrl: row.iex_logo_url,
+                iexLastUpdated: luxon_1.DateTime.fromJSDate(row.iex_last_updated),
+                iexCreatedAt: luxon_1.DateTime.fromJSDate(row.iex_created_at),
+                iexValidated: row.iex_validated
             };
         });
         this.db = db;
     }
 }
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibm9ybWFsaXplLWFwcC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIm5vcm1hbGl6ZS1hcHAudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSx5QkFBc0I7QUFDdEIsc0RBQThCO0FBQzlCLGdEQUF1QjtBQUN2QiwyQkFBOEM7QUFDOUMscUVBQWdFO0FBQ2hFLGlDQUErQjtBQUMvQixrREFBMkM7QUFDM0MsOERBQXFDO0FBQ3JDLG9EQUE0QjtBQUM1QiwwREFBaUM7QUFDakMsZ0RBQXdCO0FBR3hCLE1BQU0sR0FBRyxHQUFHLEdBQVMsRUFBRTtJQUNuQixNQUFNLEVBQUUsR0FBRyxJQUFJLG9CQUFRLENBQUMsRUFBRSxDQUFDLENBQUE7SUFFM0IsTUFBTSxNQUFNLEdBQUcsSUFBQSxnQkFBTSxFQUFDO1FBQ2xCLE9BQU8sRUFBRSxJQUFBLG1CQUFRLEVBQUM7WUFDZCxFQUFFLEVBQUUsRUFBRTtZQUNOLEdBQUcsRUFBRSxhQUFhO1lBQ2xCLE1BQU0sRUFBRSxvQkFBb0I7WUFDNUIsUUFBUSxFQUFFLFVBQVUsR0FBRyxFQUFFLElBQUksRUFBRSxFQUFFO2dCQUM3QixFQUFFLENBQUMsSUFBSSxFQUFFLEVBQUMsU0FBUyxFQUFFLElBQUksQ0FBQyxTQUFTLEVBQUMsQ0FBQyxDQUFDO1lBQzFDLENBQUM7WUFDRCxHQUFHLEVBQUUsVUFBVSxHQUFHLEVBQUUsSUFBSSxFQUFFLEVBQUU7Z0JBQ3hCLGFBQWE7Z0JBQ2IsTUFBTSxFQUFDLFFBQVEsRUFBQyxHQUFHLEdBQUcsQ0FBQyxLQUFLLENBQUM7Z0JBQzdCLE1BQU0sR0FBRyxHQUFHLGNBQUksQ0FBQyxPQUFPLENBQUMsSUFBSSxDQUFDLFlBQVksQ0FBQyxDQUFDO2dCQUM1QyxFQUFFLENBQUMsSUFBSSxFQUFFLEdBQUcsUUFBUSxJQUFJLElBQUksQ0FBQyxHQUFHLEVBQUUsQ0FBQyxRQUFRLEVBQUUsR0FBRyxHQUFHLEVBQUUsQ0FBQyxDQUFDO1lBQzNELENBQUM7U0FD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QkFBc0IsQ0FBQyxVQUFVLEVBQUU7Z0JBQ2hELE9BQU8sRUFBRSxRQUFRLENBQUMsT0FBTyxJQUFJLElBQUk7Z0JBQ2pDLFFBQVEsRUFBRSxRQUFRLENBQUMsUUFBUSxJQUFJLElBQUk7Z0JBQ25DLEdBQUcsRUFBRSxRQUFRLENBQUMsR0FBRyxJQUFJLElBQUk7Z0JBQ3pCLFdBQVcsRUFBRSxRQUFRLENBQUMsV0FBVyxJQUFJLElBQUk7Z0JBQ3pDLE9BQU8sRUFBRSxRQUFRLENBQUMsT0FBTyxJQUFJLElBQUk7Z0JBQ2pDLFdBQVcsRUFBRSxRQUFRLENBQUMsV0FBVyxJQUFJLElBQUk7Z0JBQ3pDLFNBQVMsRUFBRSxRQUFRLENBQUMsU0FBUyxJQUFJLElBQUk7Z0JBQ3JDLFFBQVEsRUFBRSxRQUFRLENBQUMsUUFBUSxJQUFJLElBQUk7Z0JBQ25DLFFBQVEsRUFBRSxRQUFRLENBQUMsUUFBUSxJQUFJLElBQUk7Z0JBQ25DLFNBQVMsRUFBRSxRQUFRLENBQUMsU0FBUyxJQUFJLElBQUk7Z0JBQ3JDLE9BQU8sRUFBRSxRQUFRLENBQUMsT0FBTyxJQUFJLElBQUk7Z0JBQ2pDLEtBQUssRUFBRSxRQUFRLENBQUMsS0FBSyxJQUFJLElBQUk7Z0JBQzdCLGNBQWMsRUFBRSxRQUFRLENBQUMsY0FBYyxJQUFJLElBQUk7Z0JBQy9DLE1BQU0sRUFBRSxRQUFRLENBQUMsTUFBTSxJQUFJLElBQUk7Z0JBQy9CLFVBQVUsRUFBRSxRQUFRLENBQUMsVUFBVSxJQUFJLElBQUk7Z0JBQ3ZDLFlBQVksRUFBRSxRQUFRLENBQUMsWUFBWSxJQUFJLElBQUk7Z0JBQzNDLEtBQUssRUFBRSxRQUFRLENBQUMsS0FBSyxJQUFJLElBQUk7Z0JBQzdCLE1BQU0sRUFBRSxRQUFRLENBQUMsTUFBTSxJQUFJLElBQUk7Z0JBQy9CLElBQUksRUFBRSxRQUFRLENBQUMsSUFBSSxJQUFJLElBQUk7Z0JBQzNCLE9BQU8sRUFBRSxRQUFRLENBQUMsT0FBTyxJQUFJLElBQUk7Z0JBQ2pDLEdBQUcsRUFBRSxRQUFRLENBQUMsR0FBRyxJQUFJLElB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
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibm9ybWFsaXplLWFwcC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIm5vcm1hbGl6ZS1hcHAudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSx5QkFBc0I7QUFDdEIsc0RBQThCO0FBQzlCLGdEQUF1QjtBQUN2QiwyQkFBOEM7QUFDOUMscUVBQWdFO0FBQ2hFLGlDQUErQjtBQUMvQixrREFBMkM7QUFDM0MsOERBQXFDO0FBQ3JDLG9EQUE0QjtBQUM1QiwwREFBaUM7QUFDakMsZ0RBQXdCO0FBR3hCLE1BQU0sR0FBRyxHQUFHLEdBQVMsRUFBRTtJQUNuQixNQUFNLEVBQUUsR0FBRyxJQUFJLG9CQUFRLENBQUMsRUFBRSxDQUFDLENBQUE7SUFFM0IsTUFBTSxNQUFNLEdBQUcsSUFBQSxnQkFBTSxFQUFDO1FBQ2xCLE9BQU8sRUFBRSxJQUFBLG1CQUFRLEVBQUM7WUFDZCxFQUFFLEVBQUUsRUFBRTtZQUNOLEdBQUcsRUFBRSxhQUFhO1lBQ2xCLE1BQU0sRUFBRSxvQkFBb0I7WUFDNUIsYUFBYTtZQUNiLFFBQVEsRUFBRSxVQUFVLEdBQUcsRUFBRSxJQUFJLEVBQUUsRUFBRTtnQkFDN0IsRUFBRSxDQUFDLElBQUksRUFBRSxFQUFDLFNBQVMsRUFBRSxJQUFJLENBQUMsU0FBUyxFQUFDLENBQUMsQ0FBQztZQUMxQyxDQUFDO1lBQ0QsYUFBYTtZQUNiLEdBQUcsRUFBRSxVQUFVLEdBQUcsRUFBRSxJQUFJLEVBQUUsRUFBRTtnQkFDeEIsYUFBYTtnQkFDYixNQUFNLEVBQUMsUUFBUSxFQUFDLEdBQUcsR0FBRyxDQUFDLEtBQUssQ0FBQztnQkFDN0IsTUFBTSxHQUFHLEdBQUcsY0FBSSxDQUFDLE9BQU8sQ0FBQyxJQUFJLENBQUMsWUFBWSxDQUFDLENBQUM7Z0JBQzVDLEVBQUUsQ0FBQyxJQUFJLEVBQUUsR0FBRyxRQUFRLElBQUksSUFBSSxDQUFDLEdBQUcsRUFBRSxDQUFDLFFBQVEsRUFBRSxHQUFHLEdBQUcsRUFBRSxDQUFD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

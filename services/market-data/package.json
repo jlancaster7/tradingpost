@@ -29,10 +29,11 @@
   "devDependencies": {
     "@tsconfig/node16": "^1.0.2",
     "@types/aws-sdk": "^2.7.0",
+    "@types/body-parser": "^1.19.2",
     "@types/cors": "^2.8.12",
     "@types/express": "^4.17.13",
     "@types/knex": "^0.16.1",
-    "@types/luxon": "^2.3.2",
+    "@types/luxon": "^2.4.0",
     "@types/multer": "^1.4.7",
     "@types/multer-s3": "^3.0.0",
     "@types/node": "^10.12.18",
