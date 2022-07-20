@@ -1,0 +1,10 @@
+import { spotifyEpisode } from '../interfaces/podcasts';
+import { IDatabase, IMain } from 'pg-promise';
+declare type SpotifyConfiguration = {
+    client_id: string;
+    client_secret: string;
+};
+declare function lambdaImportEpisodes(pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration): Promise<void>;
+declare function importSpotifyShows(showIds: string | string[], pgClient: IDatabase<any>, pgp: IMain, spotifyCfg: SpotifyConfiguration): Promise<void>;
+declare function importSpotifyEpisodes(showId: string, pgClient: IDatabase<any>, pgp: IMain, spotifyCfg: SpotifyConfiguration): Promise<[spotifyEpisode[], number]>;
+export { lambdaImportEpisodes, importSpotifyShows, importSpotifyEpisodes };

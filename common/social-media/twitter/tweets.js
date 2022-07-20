@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Tweets = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
 class Tweets {
-    constructor(twitterConfig, pg_client) {
+    constructor(twitterConfig, pg_client, pgp) {
         this.setStartDate = (startDate) => __awaiter(this, void 0, void 0, function* () {
             this.startDate = startDate.toISOString();
         });
@@ -168,6 +168,7 @@ class Tweets {
         });
         this.twitterConfig = twitterConfig;
         this.pg_client = pg_client;
+        this.pgp = pgp;
         this.params = {
             method: 'GET',
             headers: {

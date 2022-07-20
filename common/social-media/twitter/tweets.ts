@@ -1,19 +1,21 @@
 import fetch from 'node-fetch';
 import {rawTweet, formatedTweet, twitterParams} from '../interfaces/twitter';
 import {twitterConfig} from '../interfaces/utils';
-import {IDatabase} from "pg-promise";
+import {IDatabase, IMain} from "pg-promise";
 
 export class Tweets {
     private twitterConfig: twitterConfig;
     private pg_client: IDatabase<any>;
+    private pgp: IMain;
     private twitterUrl: string;
     public startDate: string;
     public defaultStartDateDays: number;
     private params: twitterParams;
 
-    constructor(twitterConfig: twitterConfig, pg_client: IDatabase<any>) {
+    constructor(twitterConfig: twitterConfig, pg_client: IDatabase<any>, pgp: IMain) {
         this.twitterConfig = twitterConfig;
         this.pg_client = pg_client;
+        this.pgp = pgp;
         this.params = {
             method: 'GET',
             headers: {

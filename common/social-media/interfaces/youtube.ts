@@ -40,14 +40,14 @@ export interface rawYoutubeVideo {
 }
 
 export interface formatedYoutubeVideo {
-    video_id: string,
-    youtube_channel_id: string,
-    title: string,
-    description: string,
-    thumbnails: string,
-    video_url: string,
-    embed_url: string,
-    youtube_created_at: string,
+    video_id: string
+    youtube_created_at: string
+    youtube_channel_id: string
+    title: string
+    description: string
+    thumbnails: string
+    video_url: string
+    video_embed: string
 }
 
 export interface youtubeParams {

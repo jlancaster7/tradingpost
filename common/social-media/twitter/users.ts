@@ -1,17 +1,19 @@
 import fetch from 'node-fetch';
 import {twitterConfig} from '../interfaces/utils';
 import {rawTwitterUser, formatedTwitterUser, twitterParams} from '../interfaces/twitter';
-import {IDatabase} from "pg-promise";
+import {IDatabase, IMain} from "pg-promise";
 
 export class TwitterUsers {
     private twitterConfig: twitterConfig;
     private pg_client: IDatabase<any>;
+    private pgp: IMain
     private twitterUrl: string;
     private params: twitterParams;
 
-    constructor(twitterConfig: twitterConfig, pg_client: IDatabase<any>) {
+    constructor(twitterConfig: twitterConfig, pg_client: IDatabase<any>, pgp: IMain) {
         this.twitterConfig = twitterConfig;
         this.pg_client = pg_client;
+        this.pgp = pgp;
         this.twitterUrl = "https://api.twitter.com/2";
         this.params = {
             method: 'GET',
@@ -76,31 +78,27 @@ export class TwitterUsers {
     }
 
     appendUserInfo = async (users: formatedTwitterUser[]): Promise<number> => {
-        return 1
-        // let success = 0;
-        // let query: string;
-        // let result;
-        // let keys: string;
-        // let values: any[] = [];
-        //
-        // try {
-        //     keys = Object.keys(users[0]).join(' ,');
-        //     users.forEach(element => {
-        //         values.push(Object.values(element));
-        //     })
-        //
-        //     query = `INSERT INTO twitter_users(${keys})
-        //     VALUES
-        //     %L
-        //              ON CONFLICT (twitter_user_id)
-        //     DO NOTHING`;
-        //     // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-        //     result = await this.pg_client.result(query)//format(query, values));
-        //
-        //     success += result.rowCount;
-        // } catch (err) {
-        //     console.log(err);
-        // }
-        // return success;
+        try {
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'protected', prop: 'protected'},
+                {name: 'display_name', prop: 'display_name'},
+                {name: 'follower_count', prop: 'follower_count'},
+                {name: 'following_count', prop: 'following_count'},
+                {name: 'location', prop: 'location'},
+                {name: 'twitter_created_at', prop: 'twitter_created_at'},
+                {name: 'username', prop: 'username'},
+                {name: 'description', prop: 'description'},
+                {name: 'profile_img_url', prop: 'profile_img_url'},
+                {name: 'profile_url', prop: 'profile_url'},
+                {name: 'twitter_user_id', prop: 'twitter_user_id'},
+            ], {table: 'twitter_users'})
+            const query = this.pgp.helpers.insert(users, cs) + ' ON CONFLICT DO NOTHING';
+            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+            const result = await this.pg_client.result(query);
+            return result.rowCount
+        } catch (err) {
+            console.log(err);
+            throw err
+        }
     }
 }

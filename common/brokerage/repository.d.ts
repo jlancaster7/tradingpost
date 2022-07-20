@@ -5,6 +5,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     private db;
     private readonly pgp;
     constructor(db: IDatabase<any>, pgp: IMain);
+    addTradingPostBrokerageHoldings(holdings: TradingPostCurrentHoldings[]): Promise<void>;
+    addTradingPostBrokerageTransactions(transactions: TradingPostTransactions[]): Promise<void>;
+    addTradingPostBrokerageHoldingsHistory(holdingsHistory: TradingPostHistoricalHoldings[]): Promise<void>;
     upsertInstitutions: (institutions: TradingPostInstitution[]) => Promise<void>;
     getInstitutions: () => Promise<TradingPostInstitutionTable[]>;
     getTradingPostInstitutionsWithFinicityInstitutionId: () => Promise<TradingPostInstitutionWithFinicityInstitutionId[]>;

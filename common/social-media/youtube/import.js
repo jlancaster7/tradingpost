@@ -12,11 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.importVideos = exports.importYoutubeUsers = exports.lambdaImportYoutube = void 0;
 const users_1 = require("./users");
 const videos_1 = require("./videos");
-function lambdaImportYoutube(pgClient, youtubeConfiguration) {
+function lambdaImportYoutube(pgClient, pgp, youtubeConfiguration) {
     return __awaiter(this, void 0, void 0, function* () {
         let query = 'SELECT youtube_channel_id FROM youtube_users';
         const channelIds = yield pgClient.query(query);
-        const Videos = new videos_1.YoutubeVideos(youtubeConfiguration, pgClient);
+        const Videos = new videos_1.YoutubeVideos(youtubeConfiguration, pgClient, pgp);
         let result;
         let videosImported = 0;
         for (let i = 0; i < channelIds.length; i++) {
@@ -27,9 +27,9 @@ function lambdaImportYoutube(pgClient, youtubeConfiguration) {
     });
 }
 exports.lambdaImportYoutube = lambdaImportYoutube;
-function importYoutubeUsers(pgClient, youtubeConfiguration, userChannelUrl) {
+function importYoutubeUsers(pgClient, pgp, youtubeConfiguration, userChannelUrl) {
     return __awaiter(this, void 0, void 0, function* () {
-        const Users = new users_1.YoutubeUsers(youtubeConfiguration, pgClient);
+        const Users = new users_1.YoutubeUsers(youtubeConfiguration, pgClient, pgp);
         const result = yield Users.importYoutubeUsers(userChannelUrl);
         let length;
         if (typeof userChannelUrl === 'string') {
@@ -43,9 +43,9 @@ function importYoutubeUsers(pgClient, youtubeConfiguration, userChannelUrl) {
     });
 }
 exports.importYoutubeUsers = importYoutubeUsers;
-function importVideos(pgClient, youtubeConfiguration, youtubeChannelId, startDate) {
+function importVideos(pgClient, pgp, youtubeConfiguration, youtubeChannelId, startDate) {
     return __awaiter(this, void 0, void 0, function* () {
-        const Vidoes = new videos_1.YoutubeVideos(youtubeConfiguration, pgClient);
+        const Vidoes = new videos_1.YoutubeVideos(youtubeConfiguration, pgClient, pgp);
         if (startDate !== undefined) {
             yield Vidoes.setStartDate(startDate);
         }

@@ -14,9 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SpotifyShows = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
-const pg_format_1 = __importDefault(require("pg-format"));
 class SpotifyShows {
-    constructor(spotifyConfig, pg_client) {
+    constructor(spotifyConfig, pg_client, pgp) {
         this.setAccessToken = () => __awaiter(this, void 0, void 0, function* () {
             try {
                 let buffer = Buffer.from(this.spotifyConfig.client_id + ':' + this.spotifyConfig.client_secret).toString('base64');
@@ -50,13 +49,15 @@ class SpotifyShows {
             const result = yield this.appendShow(formatedData);
             return [formatedData, result];
         });
-        this.importEpisdoes = (showId) => __awaiter(this, void 0, void 0, function* () {
+        this.importEpisodes = (showId) => __awaiter(this, void 0, void 0, function* () {
             const data = yield this.getEpisodes(showId);
-            if (data === []) {
+            if (data.length <= 0) {
                 return [[], 0];
             }
-            const results = yield this.appendEpisdoes(data);
-            return [data, results];
+            const results = yield this.appendEpisodes(data);
+            if (results)
+                return [data, results];
+            return [[], 0];
         });
         this.getShowInfo = (showIds) => __awaiter(this, void 0, void 0, function* () {
             try {
@@ -90,33 +91,39 @@ class SpotifyShows {
         });
         this.getEpisodes = (showId) => __awaiter(this, void 0, void 0, function* () {
             try {
-                if (this.access_token === '') {
+                if (this.access_token === '')
                     yield this.setAccessToken();
-                }
-                let formatedResponse;
                 let results = [];
                 let fetchUrl;
-                let showResponse;
-                let next = '';
+                let next = null;
                 let embedResponse;
                 fetchUrl = this.showUrl + showId + '/episodes?limit=50&market=US';
-                while (next !== 'end') {
-                    showResponse = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
-                    if (Object.keys(showResponse).includes('error')) {
-                        if (showResponse.error.status === 401) {
-                            yield this.setAccessToken();
-                            showResponse = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                while (next === null) {
+                    const response = yield (0, node_fetch_1.default)(fetchUrl, this.params);
+                    const body = yield response.json();
+                    if (Object.hasOwnProperty("error"))
+                        throw new Error(body["error"]);
+                    next = body.next;
+                    for (let i = 0; i < body.items.length; i++) {
+                        const embeddedResponse = yield (0, node_fetch_1.default)(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${body.items[i].id}`);
+                        const embeddedBody = yield embeddedResponse.text();
+                        try {
+                            embedResponse = yield JSON.parse(embeddedBody);
+                            body.items[i].embed = embedResponse;
                         }
-                        else {
-                            return [];
+                        catch (err) {
+                            console.error(err);
+                            console.log("body of json response from spotify: ", embeddedBody);
+                            console.log(embeddedResponse.status);
                         }
                     }
-                    for (let i = 0; i < showResponse.items.length; i++) {
-                        embedResponse = yield (yield (0, node_fetch_1.default)(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
-                        showResponse.items[i].embed = embedResponse;
-                    }
-                    showResponse.items.forEach((element) => {
-                        formatedResponse = {
+                    body.items.forEach((element) => {
+                        let x = {
+                            href: element.href,
+                            type: element.type,
+                            uri: element.uri,
+                            id: element.id,
+                            release_date_precision: '',
                             spotify_episode_id: element.id,
                             spotify_show_id: showId,
                             audio_preview_url: element.audio_preview_url,
@@ -134,20 +141,14 @@ class SpotifyShows {
                             images: JSON.stringify(element.images),
                             release_date: new Date(element.release_date)
                         };
-                        results.push(formatedResponse);
+                        results.push(x);
                     });
-                    if (!showResponse.next) {
-                        next = 'end';
-                    }
-                    else {
-                        fetchUrl = showResponse.next;
-                    }
                 }
                 return results;
             }
-            catch (err) {
-                console.log(err);
-                return [];
+            catch (e) {
+                console.log(e);
+                throw e;
             }
         });
         this.formatShowInfo = (data) => {
@@ -173,58 +174,70 @@ class SpotifyShows {
             }
             return formatedShows;
         };
-        this.appendEpisdoes = (episodes) => __awaiter(this, void 0, void 0, function* () {
-            let success = 0;
-            let query;
-            let result;
-            let keys;
-            let values = [];
+        this.appendEpisodes = (episodes) => __awaiter(this, void 0, void 0, function* () {
             try {
-                keys = Object.keys(episodes[0]).join(' ,');
-                episodes.forEach(element => {
-                    values.push(Object.values(element));
-                });
-                query = `INSERT INTO spotify_episodes(${keys})
-            VALUES
-            %L
-                     ON CONFLICT (spotify_episode_id)
-            DO NOTHING`;
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'spotify_episode_id', prop: 'spotify_episode_id' },
+                    { name: 'spotify_show_id', prop: 'spotify_show_id' },
+                    { name: 'audio_preview_url', prop: 'audio_preview_url' },
+                    { name: 'name', prop: 'name' },
+                    { name: 'description', prop: 'description' },
+                    { name: 'duration_ms', prop: 'duration_ms' },
+                    { name: 'explicit', prop: 'explicit' },
+                    { name: 'html_description', prop: 'html_description' },
+                    { name: 'is_externally_hosted', prop: 'is_externally_hosted' },
+                    { name: 'is_playable', prop: 'is_playable' },
+                    { name: 'language', prop: 'language' },
+                    { name: 'languages', prop: 'languages' },
+                    { name: 'embed', prop: 'embed' },
+                    { name: 'external_urls', prop: 'external_urls' },
+                    { name: 'images', prop: 'images' },
+                    { name: 'release_date', prop: 'release_date' },
+                ], { table: 'spotify_episodes' });
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
-                success += result.rowCount;
+                const query = this.pgp.helpers.insert(episodes, cs) + ' ON CONFLICT DO NOTHING';
+                const results = yield this.pg_client.result(query);
+                if (!results)
+                    return 0;
+                return results.rowCount;
             }
             catch (err) {
                 console.log(err);
+                throw err;
             }
-            return success;
         });
-        this.appendShow = (formatedShow) => __awaiter(this, void 0, void 0, function* () {
-            let success = 0;
-            let query;
-            let result;
-            let keys;
-            let values = [];
+        this.appendShow = (formattedShows) => __awaiter(this, void 0, void 0, function* () {
             try {
-                keys = Object.keys(formatedShow[0]).join(' ,');
-                formatedShow.forEach(element => {
-                    values.push(Object.values(element));
-                });
-                query = `INSERT INTO spotify_users(${keys})
-            VALUES
-            %L
-                     ON CONFLICT (spotify_show_id)
-            DO NOTHING`;
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
-                success += result.rowCount;
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'spotify_show_id', prop: 'spotify_show_id' },
+                    { name: 'name', prop: 'name' },
+                    { name: 'description', prop: 'description' },
+                    { name: 'explicit', prop: 'explicit' },
+                    { name: 'html_description', prop: 'html_description' },
+                    { name: 'is_externally_hosted', prop: 'is_externally_hosted' },
+                    { name: 'media_type', prop: 'media_type' },
+                    { name: 'publisher', prop: 'publisher' },
+                    { name: 'copyrights', prop: 'copyrights' },
+                    { name: 'total_episodes', prop: 'total_episodes' },
+                    { name: 'languages', prop: 'languages' },
+                    { name: 'external_urls', prop: 'external_urls' },
+                    { name: 'images', prop: 'images' },
+                ], { table: 'spotify_users' });
+                const query = this.pgp.helpers.insert(formattedShows, cs) + ' ON CONFLICT DO NOTHING';
+                const results = yield this.pg_client.result(query);
+                if (!results)
+                    return 0;
+                return results.rowCount;
             }
             catch (err) {
                 console.log(err);
+                throw err;
             }
-            return success;
         });
         this.spotifyConfig = spotifyConfig;
         this.pg_client = pg_client;
+        this.pgp = pgp;
         this.tokenUrl = 'https://accounts.spotify.com/api/token';
         this.showUrl = 'https://api.spotify.com/v1/shows/';
         this.access_token = '';

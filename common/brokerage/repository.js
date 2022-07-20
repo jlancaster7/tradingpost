@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const luxon_1 = require("luxon");
-const format = require('pg-format');
 class Repository {
     constructor(db, pgp) {
         this.upsertInstitutions = (institutions) => __awaiter(this, void 0, void 0, function* () {
@@ -949,34 +948,22 @@ class Repository {
         this.addTradingPostAccountGroup = (userId, name, accountIds, defaultBenchmarkId) => __awaiter(this, void 0, void 0, function* () {
             let query = `INSERT INTO tradingpost_account_groups(user_id, name, default_benchmark_id)
                      VALUES ($1, $2, $3)
-                     RETURNING id;
-        `;
-            let accountGroupId = yield this.db.any(query, [userId, name, defaultBenchmarkId])
-                .catch(error => {
-                console.log(error);
-                return null;
-            });
-            if (!accountGroupId) {
+                     RETURNING id;`;
+            const accountGroupIdResults = yield this.db.any(query, [userId, name, defaultBenchmarkId]);
+            if (accountGroupIdResults.length <= 0)
                 return 0;
-            }
-            else {
-                accountGroupId = accountGroupId[0].id;
-            }
-            query = `INSERT INTO _tradingpost_account_to_group(account_id, account_group_id)
-                 VALUES (%L)
-        `;
-            let values = [];
-            for (let d of accountIds) {
-                values.push([d, accountGroupId]);
-            }
-            let result = yield this.db.any(format(query, values))
-                .catch(error => {
-                console.log(error);
-                return null;
-            });
-            if (!result)
-                return 0;
-            return 1;
+            const accountGroupId = accountGroupIdResults[0].id;
+            let values = accountIds.map(accountId => ({
+                account_id: accountId,
+                account_group_id: accountGroupId
+            }));
+            const cs = new this.pgp.helpers.ColumnSet([
+                { name: 'account_id', prop: 'account_id' },
+                { name: 'account_group_id', prop: 'account_group_id' },
+            ], { table: '_tradingpost_account_to_group' });
+            const accountGroupsQuery = this.pgp.helpers.insert(values, cs);
+            const result = yield this.db.result(accountGroupsQuery);
+            return result.rowCount > 0 ? 1 : 0;
         });
         this.addTradingPostCurrentHoldings = (currentHoldings) => __awaiter(this, void 0, void 0, function* () {
             const cs = new this.pgp.helpers.ColumnSet([
@@ -1277,16 +1264,10 @@ class Repository {
                             created_at,
                             validated
                      FROM securities
-                     WHERE id IN (%L)
-        `;
-            const response = yield this.db.any(format(query, securityIds))
-                .catch((error) => {
-                console.log(error);
-                return '';
-            });
-            if (!response || response.length <= 0) {
+                     WHERE id IN ($1)`;
+            const response = yield this.db.query(query, [securityIds]);
+            if (response.length <= 0)
                 return [];
-            }
             let sec = [];
             for (let d of response) {
                 sec.push({
@@ -1325,80 +1306,50 @@ class Repository {
             return latestDate.max;
         });
         this.addAccountGroupReturns = (accountGroupReturns) => __awaiter(this, void 0, void 0, function* () {
-            let values = [];
-            for (let d of accountGroupReturns) {
-                values.push(Object.values(d));
-            }
-            let query = `INSERT INTO account_group_hprs (account_group_id, date, return)
-        VALUES
-        %L
-                     ON CONFLICT ON CONSTRAINT account_group_hprs_account_group_id_date_key
-        DO UPDATE SET
-        return = EXCLUDED.return
-        `;
-            let result = 2;
-            //console.log(format(query, values));
-            yield this.db.any(format(query, values))
-                .then(() => {
-                result = 1;
-            })
-                .catch(error => {
-                console.log(error);
-                result = 0;
-            });
-            return result;
+            const cs = new this.pgp.helpers.ColumnSet([
+                { name: 'account_group_id', prop: 'accountGroupId' },
+                { name: 'date', prop: 'date' },
+                { name: 'return', prop: 'return' },
+            ], { table: 'account_group_hprs' });
+            const query = upsertReplaceQueryWithColumns(accountGroupReturns, cs, this.pgp, ["return"], "account_group_hprs_account_group_id_date_key");
+            const result = yield this.db.result(query);
+            return result.rowCount > 0 ? 1 : 0;
         });
         this.addBenchmarkReturns = (benchmarkReturns) => __awaiter(this, void 0, void 0, function* () {
-            let values = [];
-            for (let d of benchmarkReturns) {
-                values.push(Object.values(d));
-            }
-            let query = `INSERT INTO benchmark_hprs(security_id, date, return)
-                     VALUES (%L)
-                     ON CONFLICT ON CONSTRAINT benchmark_hprs_security_id_date_key
-                         DO UPDATE SET return = EXCLUDED.return
-        `;
-            let result = 2;
-            yield this.db.any(format(query, values))
-                .then(() => {
-                result = 1;
-            })
-                .catch(error => {
-                console.log(error);
-                result = 0;
-            });
-            return result;
+            const cs = new this.pgp.helpers.ColumnSet([
+                { name: 'security_id', prop: 'securityId' },
+                { name: 'date', prop: 'date' },
+                { name: 'return', prop: 'return' }
+            ], { table: 'benchmark_hprs' });
+            const query = upsertReplaceQueryWithColumns(benchmarkReturns, cs, this.pgp, ["return"], "benchmark_hprs_security_id_date_key");
+            const result = yield this.db.result(query);
+            return result.rowCount > 0 ? 1 : 0;
         });
         this.addAccountGroupSummary = (accountGroupSummary) => __awaiter(this, void 0, void 0, function* () {
-            let values = Object.values(accountGroupSummary);
-            values[3] = JSON.stringify(values[3]);
-            values[4] = JSON.stringify(values[4]);
-            // @ts-ignore
-            values[5] = new Date(values[5].toString());
-            let query = `INSERT INTO tradingpost_account_group_stats(account_group_id, beta, sharpe, industry_allocations,
-                                                                 exposure, date, benchmark_id)
-                     VALUES (%L)
-                     ON CONFLICT ON CONSTRAINT tradingpost_account_group_stats_account_group_id_date_key
-                         DO UPDATE SET beta                 = EXCLUDED.beta,
-                                       sharpe               = EXCLUDED.sharpe,
-                                       industry_allocations = EXCLUDED.industry_allocations,
-                                       exposure             = EXCLUDED.exposure,
-                                       date                 = EXCLUDED.date,
-                                       benchmark_id         = EXCLUDED.benchmark_id
-        `;
-            let result = 2;
-            yield this.db.any(format(query, values))
-                .then(() => {
-                result = 1;
-            })
-                .catch(error => {
-                console.log(error);
-                result = 0;
-            });
-            return result;
+            const cs = new this.pgp.helpers.ColumnSet([
+                { name: 'account_group_id', prop: 'accountGroupId' },
+                { name: 'beta', prop: 'beta' },
+                { name: 'sharpe', prop: 'sharpe' },
+                { name: 'industry_allocations', prop: 'industryAllocations' },
+                { name: 'exposure', prop: 'exposure' },
+                { name: 'date', prop: 'date' },
+                { name: 'benchmark_id', prop: 'benchmarkId' }
+            ], { table: 'tradingpost_account_group_stats' });
+            const query = upsertReplaceQueryWithColumns(accountGroupSummary, cs, this.pgp, ["beta", "sharpe", "industry_allocations", "exposure", "date", "benchmark_id"], "tradingpost_account_group_stats_account_group_id_date_key");
+            const result = yield this.db.result(query);
+            return result.rowCount > 0 ? 1 : 0;
         });
         this.db = db;
         this.pgp = pgp;
+    }
+    addTradingPostBrokerageHoldings(holdings) {
+        throw new Error("Method not implemented.");
+    }
+    addTradingPostBrokerageTransactions(transactions) {
+        throw new Error("Method not implemented.");
+    }
+    addTradingPostBrokerageHoldingsHistory(holdingsHistory) {
+        throw new Error("Method not implemented.");
     }
 }
 exports.default = Repository;
@@ -1407,6 +1358,13 @@ function upsertReplaceQuery(data, cs, pgp, conflict = "id") {
         ` ON CONFLICT(${conflict}) DO UPDATE SET ` +
         cs.columns.map(x => {
             let col = pgp.as.name(x.name);
+            return `${col}=EXCLUDED.${col}`;
+        }).join();
+}
+function upsertReplaceQueryWithColumns(data, cs, pgp, columns, conflict = "id") {
+    return pgp.helpers.insert(data, cs) +
+        ` ON CONFLICT(${conflict}) DO UPDATE SET ` +
+        columns.map(col => {
             return `${col}=EXCLUDED.${col}`;
         }).join();
 }

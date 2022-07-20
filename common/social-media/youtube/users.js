@@ -14,9 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.YoutubeUsers = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
-const pg_format_1 = __importDefault(require("pg-format"));
 class YoutubeUsers {
-    constructor(youtubeConfig, pg_client) {
+    constructor(youtubeConfig, pg_client, pgp) {
         this.importYoutubeUsers = (userChannelUrl) => __awaiter(this, void 0, void 0, function* () {
             if (typeof userChannelUrl === 'string') {
                 userChannelUrl = [userChannelUrl];
@@ -53,7 +52,7 @@ class YoutubeUsers {
                     });
                     fetchUrl = this.youtubeUrl + channelEndpoint + channelParams;
                     response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
-                    let dataOutput = {
+                    return {
                         id: response.items[0].id,
                         title: response.items[0].snippet.title,
                         description: response.items[0].snippet.description,
@@ -64,7 +63,6 @@ class YoutubeUsers {
                         statistics: response.items[0].statistics,
                         status: response.items[0].status
                     };
-                    return dataOutput;
                 }
                 else if (userChannelUrl.includes(this.customYtUrl)) {
                     customChannelName = userChannelUrl.replace(this.customYtUrl, '').toLowerCase();
@@ -93,7 +91,7 @@ class YoutubeUsers {
                     fetchUrl = this.youtubeUrl + channelEndpoint + channelParams;
                     response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
                     if (response.items[0].snippet.customUrl === customChannelName) {
-                        let dataOutput = {
+                        return {
                             id: response.items[0].id,
                             title: response.items[0].snippet.title,
                             description: response.items[0].snippet.description,
@@ -104,7 +102,6 @@ class YoutubeUsers {
                             statistics: response.items[0].statistics,
                             status: response.items[0].status
                         };
-                        return dataOutput;
                     }
                 }
                 console.log('Could not find Channel ID based on the channel profile URL provided');
@@ -126,30 +123,31 @@ class YoutubeUsers {
             return formatedChannel;
         };
         this.appendChannelInfo = (data) => __awaiter(this, void 0, void 0, function* () {
-            let success = 0;
-            let query;
-            let result;
-            let keys;
-            let values = [];
             try {
-                keys = Object.keys(data).join(' ,');
-                values = Object.values(data);
-                query = `INSERT INTO youtube_users(${keys})
-            VALUES
-            %L
-                     ON CONFLICT (youtube_channel_id)
-            DO NOTHING`;
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'youtube_channel_id', prop: 'youtube_channel_id' },
+                    { name: 'title', prop: 'title' },
+                    { name: 'description', prop: 'description' },
+                    { name: 'country', prop: 'country' },
+                    { name: 'custom_url', prop: 'custom_url' },
+                    { name: 'youtube_created_at', prop: 'youtube_created_at' },
+                    { name: 'thumbnails', prop: 'thumbnails' },
+                    { name: 'statistics', prop: 'statistics' },
+                    { name: 'status', prop: 'status' },
+                ], { table: 'youtube_users' });
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
-                success += result.rowCount;
+                const query = this.pgp.helpers.insert(data, cs) + `ON CONFLICT DO NOTHING`;
+                const result = yield this.pg_client.result(query);
+                return result.rowCount;
             }
-            catch (err) {
-                console.log(err);
+            catch (e) {
+                console.log(e);
+                throw e;
             }
-            return success;
         });
         this.youtubeConfig = youtubeConfig;
         this.pg_client = pg_client;
+        this.pgp = pgp;
         this.youtubeUrl = "https://www.googleapis.com/youtube/v3";
         this.standardYtUrl = 'https://www.youtube.com/channel/';
         this.customYtUrl = 'https://www.youtube.com/c/';

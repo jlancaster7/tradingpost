@@ -8,8 +8,6 @@ let pgClient: IDatabase<any>;
 let pgp: IMain;
 
 const run = async () => {
-    console.log("Can Run")
-    const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -21,9 +19,9 @@ const run = async () => {
         })
         await pgClient.connect()
     }
-
+    const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
     try {
-        await lambdaImportTweets(pgClient, twitterConfiguration);
+        await lambdaImportTweets(pgClient, pgp, twitterConfiguration);
     } catch (e) {
         console.error(e)
         throw e;

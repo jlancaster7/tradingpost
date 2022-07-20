@@ -11,9 +11,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FinicityService = void 0;
 const luxon_1 = require("luxon");
-const transformer_1 = require("./transformer");
 class FinicityService {
-    constructor(finicity, repository) {
+    constructor(finicity, repository, transformer) {
         this.generateBrokerageAuthenticationLink = (userId, brokerageAccount) => __awaiter(this, void 0, void 0, function* () {
             let finicityUser = yield this.repository.getFinicityUser(userId);
             if (!finicityUser)
@@ -167,7 +166,7 @@ class FinicityService {
                 return o;
             }));
             const accountsWithIds = yield this.repository.getFinicityAccounts(finicityUser.id);
-            return (0, transformer_1.transformAccounts)(userId, accountsWithIds, finicityInstitutionMap);
+            return this.transformer.accounts(userId, accountsWithIds);
         });
         this.importHoldings = (userId, brokerageIds) => __awaiter(this, void 0, void 0, function* () {
             const finicityUser = yield this.repository.getFinicityUser(userId);
@@ -177,12 +176,14 @@ class FinicityService {
             const internalAccounts = yield this.repository.getFinicityAccounts(finicityUser.id);
             let accountMap = {};
             internalAccounts.forEach(acc => accountMap[acc.accountId] = acc.id);
-            let finicityHoldings = [];
-            finAccountsAndHoldings.accounts.forEach(acc => {
-                acc.position.forEach(pos => {
+            let tpHoldings = [];
+            for (let i = 0; i < finAccountsAndHoldings.accounts.length; i++) {
+                let account = finAccountsAndHoldings.accounts[i];
+                let finicityHoldings = [];
+                account.position.forEach(pos => {
                     finicityHoldings.push({
                         id: 0,
-                        finicityAccountId: accountMap[acc.id],
+                        finicityAccountId: accountMap[account.id],
                         holdingId: pos.id,
                         securityIdType: pos.securityIdType,
                         posType: pos.posType,
@@ -218,9 +219,11 @@ class FinicityService {
                         createdAt: luxon_1.DateTime.now()
                     });
                 });
-            });
-            yield this.repository.upsertFinicityHoldings(finicityHoldings);
-            return (0, transformer_1.transformHoldings)(finicityHoldings);
+                yield this.repository.upsertFinicityHoldings(finicityHoldings);
+                const transformedHoldings = yield this.transformer.holdings(userId, account.id, finicityHoldings, luxon_1.DateTime.fromSeconds(account.detail.dateAsOf), account.currency);
+                tpHoldings.push(...transformedHoldings);
+            }
+            return tpHoldings;
         });
         this.importTransactions = (userId, brokerageIds) => __awaiter(this, void 0, void 0, function* () {
             const finicityUser = yield this.repository.getFinicityUser(userId);
@@ -235,21 +238,38 @@ class FinicityService {
             let stillAvailable = true;
             let start = 1;
             let limit = 100;
+            // TODO: Iterate over transactions, add them to array, pass back...
+            return [];
+        });
+        this.exportAccounts = (userId) => __awaiter(this, void 0, void 0, function* () {
+            const finicityUser = yield this.repository.getFinicityUser(userId);
+            if (finicityUser === undefined || finicityUser === null)
+                throw new Error(`no finicity account exists for user id ${userId}`);
+            const accounts = yield this.repository.getFinicityAccounts(finicityUser.id);
+            return yield this.transformer.accounts(userId, accounts);
+        });
+        this.exportHoldings = (userId) => __awaiter(this, void 0, void 0, function* () {
+            const finicityUser = yield this.repository.getFinicityUser(userId);
+            if (finicityUser === undefined || finicityUser === null)
+                throw new Error(`no finicity account exists for user id ${userId}`);
+            const holdings = yield this.repository.getFinicityHoldings(finicityUser.id);
+            let tpHoldings = [];
+            for (let i = 0; i < holdings.length; i++) {
+                let h = yield this.transformer.holdings(userId, holdings[i].finicityAccountId.toString(), holdings, null, null);
+                tpHoldings.push(...h);
+            }
+            return tpHoldings;
+        });
+        this.exportTransactions = (userId) => __awaiter(this, void 0, void 0, function* () {
+            const finicityUser = yield this.repository.getFinicityUser(userId);
+            if (finicityUser === undefined || finicityUser === null)
+                throw new Error(`no finicity account exists for user id ${userId}`);
+            const transactions = yield this.repository.getFinicityTransactions(finicityUser.id);
+            return this.transformer.transactions(userId, transactions);
         });
         this.finicity = finicity;
         this.repository = repository;
-    }
-    exportAccounts(userId) {
-        return Promise.resolve(undefined);
-    }
-    exportHoldings(userId) {
-        return Promise.resolve(undefined);
-    }
-    exportTransactions(userId) {
-        return Promise.resolve(undefined);
-    }
-    computeHoldingsHistory(userId) {
-        return Promise.resolve([]);
+        this.transformer = transformer;
     }
 }
 exports.FinicityService = FinicityService;

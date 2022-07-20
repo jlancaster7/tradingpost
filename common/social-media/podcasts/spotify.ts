@@ -68,15 +68,17 @@ export class SpotifyShows {
         return [formatedData, result];
     }
 
-    importEpisdoes = async (showId: string): Promise<[spotifyEpisode[], number]> => {
+    importEpisodes = async (showId: string): Promise<[spotifyEpisode[], number]> => {
         const data = await this.getEpisodes(showId);
 
-        if (data === []) {
+        if (data.length <= 0) {
             return [[], 0]
         }
 
-        const results = await this.appendEpisdoes(data);
-        return [data, results]
+        const results = await this.appendEpisodes(data);
+        if (results) return [data, results]
+
+        return [[], 0]
     }
 
     getShowInfo = async (showIds: string[]): Promise<rawSpotifyShow[]> => {
@@ -116,37 +118,38 @@ export class SpotifyShows {
 
     getEpisodes = async (showId: string): Promise<spotifyEpisode[]> => {
         try {
-
-            if (this.access_token === '') {
-                await this.setAccessToken()
-            }
-
-            let formatedResponse: spotifyEpisode;
+            if (this.access_token === '') await this.setAccessToken()
             let results: spotifyEpisode[] = [];
             let fetchUrl: string;
-            let showResponse;
-            let next = '';
+            let next = null;
             let embedResponse;
 
             fetchUrl = this.showUrl + showId + '/episodes?limit=50&market=US';
-            while (next !== 'end') {
-                showResponse = await (await fetch(fetchUrl, this.params)).json();
-                if (Object.keys(showResponse).includes('error')) {
-                    if (showResponse.error.status === 401) {
-                        await this.setAccessToken();
-                        showResponse = await (await fetch(fetchUrl, this.params)).json();
-                    } else {
-                        return [];
+            while (next === null) {
+                const response = await fetch(fetchUrl, this.params);
+                const body = await response.json();
+                if (Object.hasOwnProperty("error")) throw new Error(body["error"]);
+                next = body.next;
+                for (let i = 0; i < body.items.length; i++) {
+                    const embeddedResponse = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${body.items[i].id}`);
+                    const embeddedBody = await embeddedResponse.text();
+                    try {
+                        embedResponse = await JSON.parse(embeddedBody);
+                        body.items[i].embed = embedResponse;
+                    } catch (err) {
+                        console.error(err)
+                        console.log("body of json response from spotify: ", embeddedBody)
+                        console.log(embeddedResponse.status)
                     }
                 }
-                for (let i = 0; i < showResponse.items.length; i++) {
 
-                    embedResponse = await (await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${showResponse.items[i].id}`)).json();
-                    showResponse.items[i].embed = embedResponse;
-
-                }
-                showResponse.items.forEach((element: any) => {
-                    formatedResponse = {
+                body.items.forEach((element: any) => {
+                    let x: spotifyEpisode = {
+                        href: element.href,
+                        type: element.type,
+                        uri: element.uri,
+                        id: element.id,
+                        release_date_precision: '',
                         spotify_episode_id: element.id,
                         spotify_show_id: showId,
                         audio_preview_url: element.audio_preview_url,
@@ -164,19 +167,13 @@ export class SpotifyShows {
                         images: JSON.stringify(element.images),
                         release_date: new Date(element.release_date)
                     }
-                    results.push(formatedResponse);
-                })
-
-                if (!showResponse.next) {
-                    next = 'end';
-                } else {
-                    fetchUrl = showResponse.next
-                }
+                    results.push(x)
+                });
             }
             return results;
-        } catch (err) {
-            console.log(err);
-            return []
+        } catch (e) {
+            console.log(e);
+            throw e
         }
 
     }
@@ -205,7 +202,7 @@ export class SpotifyShows {
         return formatedShows;
     }
 
-    appendEpisdoes = async (episodes: spotifyEpisode[]) => {
+    appendEpisodes = async (episodes: spotifyEpisode[]): Promise<number> => {
         try {
             const cs = new this.pgp.helpers.ColumnSet([
                 {name: 'spotify_episode_id', prop: 'spotify_episode_id'},
@@ -218,7 +215,7 @@ export class SpotifyShows {
                 {name: 'html_description', prop: 'html_description'},
                 {name: 'is_externally_hosted', prop: 'is_externally_hosted'},
                 {name: 'is_playable', prop: 'is_playable'},
-                {name: 'language', prop: 'langauge'},
+                {name: 'language', prop: 'language'},
                 {name: 'languages', prop: 'languages'},
                 {name: 'embed', prop: 'embed'},
                 {name: 'external_urls', prop: 'external_urls'},
@@ -227,9 +224,12 @@ export class SpotifyShows {
             ], {table: 'spotify_episodes'});
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile
             const query = this.pgp.helpers.insert(episodes, cs) + ' ON CONFLICT DO NOTHING';
-            return (await this.pg_client.result(query)).rowCount
+            const results = await this.pg_client.result(query);
+            if (!results) return 0;
+            return results.rowCount;
         } catch (err) {
             console.log(err);
+            throw err;
         }
     }
 
@@ -252,9 +252,12 @@ export class SpotifyShows {
                 {name: 'images', prop: 'images'},
             ], {table: 'spotify_users'});
             const query = this.pgp.helpers.insert(formattedShows, cs) + ' ON CONFLICT DO NOTHING';
-            return (await this.pg_client.result(query)).rowCount
+            const results = await this.pg_client.result(query);
+            if (!results) return 0;
+            return results.rowCount;
         } catch (err) {
             console.log(err);
+            throw err;
         }
     }
 }

@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.importSubstackUsers = exports.lambdaImportRSSFeeds = void 0;
 const substack_1 = require("./substack");
-function lambdaImportRSSFeeds(pgClient, substackConfiguration) {
+function lambdaImportRSSFeeds(pgClient, pgp, substackConfiguration) {
     return __awaiter(this, void 0, void 0, function* () {
         let query = `SELECT substack_user_id
                  FROM substack_users`;
@@ -19,7 +19,7 @@ function lambdaImportRSSFeeds(pgClient, substackConfiguration) {
         //      and adding a function to set your own list of substackIds.. similar to start date.
         //      but its fine for now
         const substackIds = yield pgClient.query(query);
-        const ssArticles = new substack_1.Substack(pgClient);
+        const ssArticles = new substack_1.Substack(pgClient, pgp);
         let result;
         let articlesImported = 0;
         for (let i = 0; i < substackIds.length; i++) {
@@ -30,9 +30,9 @@ function lambdaImportRSSFeeds(pgClient, substackConfiguration) {
     });
 }
 exports.lambdaImportRSSFeeds = lambdaImportRSSFeeds;
-function importSubstackUsers(username, pgClient, substackConfiguration) {
+function importSubstackUsers(username, pgClient, pgp, substackConfiguration) {
     return __awaiter(this, void 0, void 0, function* () {
-        const ssUsers = new substack_1.Substack(pgClient);
+        const ssUsers = new substack_1.Substack(pgClient, pgp);
         const result = yield ssUsers.importUsers(username);
         let length;
         if (typeof username === 'string') {

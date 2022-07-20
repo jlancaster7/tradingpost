@@ -111,8 +111,9 @@ export class YoutubeVideos {
                 }
             }
 
-        } catch (err) {
-            console.log(err);
+        } catch (e) {
+            console.log(e);
+            throw e
         }
         this.startDate = '';
 
@@ -145,18 +146,19 @@ export class YoutubeVideos {
             const cs = new this.pgp.helpers.ColumnSet([
                 {name: 'video_id', prop: 'video_id'},
                 {name: 'youtube_channel_id', prop: 'youtube_channel_id'},
+                {name: 'youtube_created_at', prop: 'youtube_created_at'},
                 {name: 'title', prop: 'title'},
                 {name: 'description', prop: 'description'},
                 {name: 'thumbnails', prop: 'thumbnails'},
                 {name: 'video_url', prop: 'video_url'},
-                {name: 'embed_url', prop: 'embed_url'},
-                {name: 'youtube_created_at', prop: 'youtube_created_at'},
+                {name: 'video_embed', prop: 'video_embed'},
             ], {table: 'youtube_videos'});
             const query = this.pgp.helpers.insert(formattedVideos, cs) + ' ON CONFLICT DO NOTHING;'
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile
             return (await this.pg_client.result(query)).rowCount
         } catch (err) {
             console.log(err);
+            throw err
         }
     }
 }

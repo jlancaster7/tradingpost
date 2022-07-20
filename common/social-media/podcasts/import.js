@@ -11,35 +11,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.importSpotifyEpisodes = exports.importSpotifyShows = exports.lambdaImportEpisodes = void 0;
 const spotify_1 = require("./spotify");
-function lambdaImportEpisodes(pgClient, spotifyConfiguration) {
+function lambdaImportEpisodes(pgClient, pgp, spotifyConfiguration) {
     return __awaiter(this, void 0, void 0, function* () {
         let query = 'SELECT spotify_show_id FROM spotify_users';
         const spotifyShowIds = yield pgClient.query(query);
-        const Spotify = new spotify_1.SpotifyShows(spotifyConfiguration, pgClient);
+        const Spotify = new spotify_1.SpotifyShows(spotifyConfiguration, pgClient, pgp);
         let result;
         let episodeImported = 0;
         for (let i = 0; i < spotifyShowIds.length; i++) {
-            result = yield Spotify.importEpisdoes(spotifyShowIds[i].spotify_show_id);
+            result = yield Spotify.importEpisodes(spotifyShowIds[i].spotify_show_id);
             episodeImported += result[1];
         }
         console.log(`${episodeImported} episodes were imported!`);
     });
 }
 exports.lambdaImportEpisodes = lambdaImportEpisodes;
-function importSpotifyShows(showIds, pgClient, spotifyCfg) {
+function importSpotifyShows(showIds, pgClient, pgp, spotifyCfg) {
     return __awaiter(this, void 0, void 0, function* () {
-        const Spotify = new spotify_1.SpotifyShows(spotifyCfg, pgClient);
+        const Spotify = new spotify_1.SpotifyShows(spotifyCfg, pgClient, pgp);
         let result;
         result = yield Spotify.importShows(showIds);
         console.log(`${result[1]} shows were imported!`);
     });
 }
 exports.importSpotifyShows = importSpotifyShows;
-function importSpotifyEpisodes(showId, pgClient, spotifyCfg) {
+function importSpotifyEpisodes(showId, pgClient, pgp, spotifyCfg) {
     return __awaiter(this, void 0, void 0, function* () {
-        const Spotify = new spotify_1.SpotifyShows(spotifyCfg, pgClient);
+        const Spotify = new spotify_1.SpotifyShows(spotifyCfg, pgClient, pgp);
         let result;
-        result = yield Spotify.importEpisdoes(showId);
+        result = yield Spotify.importEpisodes(showId);
         console.log(`${result[1]} episdoes were imported for ${showId}`);
         return result;
     });

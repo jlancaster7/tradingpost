@@ -14,9 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.YoutubeVideos = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
-const pg_format_1 = __importDefault(require("pg-format"));
 class YoutubeVideos {
-    constructor(youtubeConfig, pg_client) {
+    constructor(youtubeConfig, pg_client, pgp) {
         this.setStartDate = (startDate) => __awaiter(this, void 0, void 0, function* () {
             this.startDate = startDate.toISOString();
         });
@@ -92,8 +91,9 @@ class YoutubeVideos {
                     }
                 }
             }
-            catch (err) {
-                console.log(err);
+            catch (e) {
+                console.log(e);
+                throw e;
             }
             this.startDate = '';
             return data;
@@ -117,33 +117,30 @@ class YoutubeVideos {
             }
             return formatedVideos;
         };
-        this.appendVideos = (formatedVideos) => __awaiter(this, void 0, void 0, function* () {
-            let success = 0;
-            let query;
-            let result;
-            let keys;
-            let values = [];
+        this.appendVideos = (formattedVideos) => __awaiter(this, void 0, void 0, function* () {
             try {
-                keys = Object.keys(formatedVideos[0]).join(' ,');
-                formatedVideos.forEach(element => {
-                    values.push(Object.values(element));
-                });
-                query = `INSERT INTO youtube_videos(${keys})
-            VALUES
-            %L
-                     ON CONFLICT (video_id)
-            DO NOTHING`;
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'video_id', prop: 'video_id' },
+                    { name: 'youtube_channel_id', prop: 'youtube_channel_id' },
+                    { name: 'youtube_created_at', prop: 'youtube_created_at' },
+                    { name: 'title', prop: 'title' },
+                    { name: 'description', prop: 'description' },
+                    { name: 'thumbnails', prop: 'thumbnails' },
+                    { name: 'video_url', prop: 'video_url' },
+                    { name: 'video_embed', prop: 'video_embed' },
+                ], { table: 'youtube_videos' });
+                const query = this.pgp.helpers.insert(formattedVideos, cs) + ' ON CONFLICT DO NOTHING;';
                 // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
-                success += result.rowCount;
+                return (yield this.pg_client.result(query)).rowCount;
             }
             catch (err) {
                 console.log(err);
+                throw err;
             }
-            return success;
         });
         this.youtubeConfig = youtubeConfig;
         this.pg_client = pg_client;
+        this.pgp = pgp;
         this.youtubeUrl = "https://www.googleapis.com/youtube/v3";
         this.startDate = '';
         this.defaultStartDateDays = 90;

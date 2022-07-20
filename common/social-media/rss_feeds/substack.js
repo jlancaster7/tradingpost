@@ -13,10 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Substack = void 0;
-const pg_format_1 = __importDefault(require("pg-format"));
 const rss_parser_1 = __importDefault(require("rss-parser"));
 class Substack {
-    constructor(pg_client) {
+    constructor(pg_client, pgp) {
         this.importUsers = (username) => __awaiter(this, void 0, void 0, function* () {
             if (typeof username === 'string') {
                 username = [username];
@@ -125,31 +124,32 @@ class Substack {
                 return success;
             }
         });
-        this.appendArticles = (formatedArticles) => __awaiter(this, void 0, void 0, function* () {
-            let success = 0;
+        this.appendArticles = (formattedArticles) => __awaiter(this, void 0, void 0, function* () {
             try {
-                let keys;
-                let values = [];
-                let query;
-                let result;
-                keys = Object.keys(formatedArticles[0]).join(' ,');
-                formatedArticles.forEach(element => {
-                    values.push(Object.values(element));
-                });
-                query = `INSERT INTO substack_articles(${keys})
-            VALUES
-            %L
-                     ON CONFLICT (article_id)
-            DO NOTHING`;
-                result = yield this.pg_client.result((0, pg_format_1.default)(query, values));
-                success += result.rowCount;
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'substack_user_id', prop: 'substack_user_id' },
+                    { name: 'creator', prop: 'creator' },
+                    { name: 'title', prop: 'title' },
+                    { name: 'link', prop: 'link' },
+                    { name: 'substack_created_at', prop: 'substack_created_at' },
+                    { name: 'content_encoded', prop: 'content_encoded' },
+                    { name: 'content_encoded_snippet', prop: 'content_encoded_snippet' },
+                    { name: 'enclosure', prop: 'enclosure' },
+                    { name: 'dc_creator', prop: 'dc_creator' },
+                    { name: 'content', prop: 'content' },
+                    { name: 'content_snippet', prop: 'content_snippet' },
+                    { name: 'article_id', prop: 'article_id' },
+                    { name: 'itunes', prop: 'itunes' },
+                ], { table: 'substack_articles' });
+                const query = this.pgp.helpers.insert(formattedArticles, cs) + ' ON CONFLICT DO NOTHING';
+                return (yield this.pg_client.result(query)).rowCount;
             }
             catch (err) {
                 throw err;
             }
-            return success;
         });
         this.pg_client = pg_client;
+        this.pgp = pgp;
     }
 }
 exports.Substack = Substack;

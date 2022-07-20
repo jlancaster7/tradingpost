@@ -8,44 +8,118 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const IOSNotifications_1 = __importDefault(require("./IOSNotifications"));
-const AndroidNotifications_1 = __importDefault(require("./AndroidNotifications"));
-function bar(x1, x2) {
-    return x1.length > x2.length ? x1 : x2;
-}
-function foo(x1, x2) {
-    return x1.length > x2.length ? x1 : x2;
-}
-foo([1, 2, 3]);
-foo(1);
-foo("1234");
-/**
- * 1. Build each respective Notification Service
- * 2. Build a Notification API that abstracts the two away
- * 3. Build tables with devices and users
- * 4. Call API with UserID and/or Device ID to push out a notification depending on what's registered
- * 5. Setup a CRON job table that will run a job or something to run push notifications to all users devices
- *
- *
- *
- *  SSM for iOS and Android
- *
- * TODO:
- *  - Setup Firebase Account
- *  - How can we clean up device registrations? e.g., old bad device, new install of OS, etc... can remove old token?
- *       maybe we do this upon failed request, comes back with error like device token not found,
- *       then we prune accordingly
- */
 class Notifications {
-    constructor(apnProvider) {
-        this.test = () => __awaiter(this, void 0, void 0, function* () {
+    constructor(iosMessenger, androidMessenger, repository) {
+        this.sendMessageToUser = (userId, msg, msgOpts) => __awaiter(this, void 0, void 0, function* () {
+            const userDevices = yield this.repository.getUserDevices(userId);
+            const errors = [];
+            for (let i = 0; i < userDevices.length; i++) {
+                const userDevice = userDevices[i];
+                try {
+                    let sendMsg = { token: userDevice.deviceId };
+                    switch (userDevice.provider) {
+                        case "Apple":
+                            sendMsg.apns = Object.assign(Object.assign({}, sendMsg.apns), { headers: {}, payload: {
+                                    aps: {}
+                                }, fcmOptions: {
+                                    imageUrl: msg.imageUrl,
+                                    analyticsLabel: msgOpts === null || msgOpts === void 0 ? void 0 : msgOpts.analyticsLabel
+                                } });
+                            yield this.iOSMessenger.send(sendMsg);
+                            break;
+                        case "Android":
+                            sendMsg.android = Object.assign(Object.assign({}, sendMsg.android), { notification: {
+                                    title: msg.title,
+                                    body: msg.body,
+                                    imageUrl: msg.imageUrl
+                                }, fcmOptions: {
+                                    analyticsLabel: msgOpts === null || msgOpts === void 0 ? void 0 : msgOpts.analyticsLabel
+                                } });
+                            yield this.androidMessenger.send(sendMsg);
+                            break;
+                        case "Web":
+                            // TODO: Implement later
+                            break;
+                        default:
+                            errors.push({
+                                userId: userDevice.userId,
+                                deviceId: userDevice.deviceId,
+                                reason: `Unknown notification provider registered: Provider:[${userDevice.provider}] for sending notification`
+                            });
+                    }
+                }
+                catch (e) {
+                    errors.push({
+                        userId: userDevice.userId,
+                        deviceId: userDevice.deviceId,
+                        reason: e.toString()
+                    });
+                }
+            }
+            return { errors };
         });
-        this._iosProvider = new IOSNotifications_1.default(apnProvider);
-        this._androidProvider = new AndroidNotifications_1.default();
+        this.sendMessageToUserDevice = (userId, deviceId, msg, msgOpts) => __awaiter(this, void 0, void 0, function* () {
+            let userDevice;
+            try {
+                userDevice = yield this.repository.getUserDeviceByDeviceId(deviceId);
+            }
+            catch (e) {
+                return {
+                    errors: [{ userId, deviceId, reason: e.toString() }]
+                };
+            }
+            try {
+                let sendMsg = { token: deviceId };
+                switch (userDevice.provider) {
+                    case "Apple":
+                        sendMsg.apns = Object.assign(Object.assign({}, sendMsg.apns), { headers: {}, payload: {
+                                aps: {}
+                            }, fcmOptions: {
+                                imageUrl: msg.imageUrl,
+                                analyticsLabel: msgOpts === null || msgOpts === void 0 ? void 0 : msgOpts.analyticsLabel
+                            } });
+                        yield this.iOSMessenger.send(sendMsg);
+                        break;
+                    case "Android":
+                        sendMsg.android = Object.assign(Object.assign({}, sendMsg.android), { notification: {
+                                title: msg.title,
+                                body: msg.body,
+                                imageUrl: msg.imageUrl
+                            }, fcmOptions: {
+                                analyticsLabel: msgOpts === null || msgOpts === void 0 ? void 0 : msgOpts.analyticsLabel
+                            } });
+                        yield this.androidMessenger.send(sendMsg);
+                        break;
+                    case "Web": // TODO: Implement Web Notifications
+                        break;
+                    default:
+                        return {
+                            errors: [{
+                                    userId: userId,
+                                    deviceId: deviceId,
+                                    reason: `Unknown notification provider registered: Provider:[${userDevice.provider}] for sending notification`
+                                }]
+                        };
+                }
+            }
+            catch (e) {
+                return {
+                    errors: [{
+                            userId: userId,
+                            deviceId: deviceId,
+                            reason: e.toString()
+                        }]
+                };
+            }
+            return { errors: [] };
+        });
+        this.sendMessageToAllUsers = (msg, msgOptions) => __awaiter(this, void 0, void 0, function* () {
+            // Paginate over
+        });
+        this.iOSMessenger = iosMessenger;
+        this.androidMessenger = androidMessenger;
+        this.repository = repository;
     }
 }
 exports.default = Notifications;
