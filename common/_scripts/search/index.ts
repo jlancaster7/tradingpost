@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import {Client as PostgresClient} from 'pg';
 import {Client as ElasticClient} from '@elastic/elasticsearch';
-import {DefaultConfig} from '@tradingpost/common/configuration';
+import {DefaultConfig} from '../../configuration';
 import {
     TweetsAndUser,
     ElasticSearchBody,
@@ -23,7 +23,7 @@ class Twitter {
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
         if (lastId === null) lastId = 0
-        let query = `SELECT t.id AS id, 
+        let query = `SELECT t.id                  AS id,
                             t.tweet_id            AS tweet_id,
                             t.user_id             AS trading_post_user_id,
                             t.twitter_user_id,
@@ -62,7 +62,7 @@ class Twitter {
                      ORDER BY t.id ASC
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
-        
+
         if (response.rows.length <= 0) return {items: [], lastId: null};
 
         const tweetsAndUsers = response.rows.map((row: any) => {
@@ -103,10 +103,11 @@ class Twitter {
         });
         return {items: this.map(tweetsAndUsers), lastId: response.rows[response.rows.length - 1].id}
     }
+
     map = (items: TweetsAndUser[]): ElasticSearchBody[] => {
         return items.map(tw => {
             let obj: ElasticSearchBody = {
-                id: null,
+                id: `twitter_${tw.tweetID}`,
                 content: {
                     body: tw.text,
                     description: tw.text,
@@ -153,7 +154,7 @@ class SubStack {
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
         if (lastId === null) lastId = 0
-        let query = `SELECT sa.id AS id,
+        let query = `SELECT sa.id                  AS id,
                             sa.substack_user_id,
                             sa.article_id,
                             sa.creator,
@@ -184,7 +185,7 @@ class SubStack {
                      WHERE sa.id > ${lastId}
                      ORDER BY sa.id ASC;`
         const response = await this.dbClient.query(query);
-        
+
         if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const substackAndNewsletters = response.rows.map((row: any) => {
             let obj: SubstackAndNewsletter = {
@@ -218,10 +219,11 @@ class SubStack {
 
         return {items: this.map(substackAndNewsletters), lastId: response.rows[response.rows.length - 1].id}
     }
+
     map = (items: SubstackAndNewsletter[]): ElasticSearchBody[] => {
         return items.map((n: SubstackAndNewsletter) => {
             let obj: ElasticSearchBody = {
-                id: null,
+                id: `substack_${n.article_id}`,
                 content: {
                     body: n.content,
                     description: n.content_snippet,
@@ -267,7 +269,7 @@ class Spotify {
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
         if (lastId === null) lastId = 0
-        let query = `SELECT se.id AS id,
+        let query = `SELECT se.id                   AS id,
                             se.spotify_episode_id,
                             se.spotify_show_id,
                             se.audio_preview_url,
@@ -306,7 +308,7 @@ class Spotify {
                      ORDER BY se.id ASC
                      LIMIT 5000;`;
         const response = await this.dbClient.query(query);
-        
+
         if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const spotifyItems = response.rows.map((row: any) => {
             let obj: SpotifyEpisodeAndUser = {
@@ -344,12 +346,14 @@ class Spotify {
             };
             return obj;
         });
+
         return {items: this.map(spotifyItems), lastId: response.rows[response.rows.length - 1].id}
     }
+
     map = (items: SpotifyEpisodeAndUser[]): ElasticSearchBody[] => {
         return items.map((si: SpotifyEpisodeAndUser) => {
             let obj: ElasticSearchBody = {
-                id: null,
+                id: `spotify_${si.spotify_episode_id}`,
                 content: {
                     body: si.episode_embed.html,
                     description: si.episode_description,
@@ -395,7 +399,7 @@ class YouTube {
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
         if (lastId === null) lastId = 0
-        let query = `select yv.id AS id,
+        let query = `select yv.id                 AS id,
                             yv.video_id,
                             yv.youtube_channel_id,
                             yv.user_id,
@@ -424,7 +428,7 @@ class YouTube {
                      ORDER BY yv.id ASC
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
-        
+
         if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const youtubeVideosAndChannel: YouTubeVideoAndChannel[] = response.rows.map((row: any) => {
             let obj: YouTubeVideoAndChannel = {
@@ -450,12 +454,14 @@ class YouTube {
             }
             return obj;
         });
+
         return {items: this.map(youtubeVideosAndChannel), lastId: response.rows[response.rows.length - 1].id}
     }
+
     map = (items: YouTubeVideoAndChannel[]): ElasticSearchBody[] => {
         return items.map((yv: YouTubeVideoAndChannel) => {
             let obj: ElasticSearchBody = {
-                id: null,
+                id: `youtube_${yv.video_id}`,
                 content: {
                     body: yv.description,
                     description: yv.description,
@@ -495,16 +501,16 @@ class YouTube {
 
 const run = async () => {
     const indexName = "tradingpost-search";
-    
+
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-    
+
     const pgClient = new PostgresClient({
         host: postgresConfiguration['host'] as string,
         user: postgresConfiguration['user'] as string,
         password: postgresConfiguration['password'] as string,
         database: postgresConfiguration['database'] as string
     });
-    
+
     await pgClient.connect()
     const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
     const elasticClient = new ElasticClient({
@@ -524,12 +530,12 @@ const run = async () => {
     let providers: Provider[] = [new Twitter(pgClient), new SubStack(pgClient), new Spotify(pgClient), new YouTube(pgClient)];
     for (let i = 0; i < providers.length; i++) {
         const provider = providers[i];
-        
+
         let id: LastID = null;
         while (true) {
             let items: ElasticSearchBody[], lastId: string | number | null;
             ({items, lastId: lastId} = await provider.getItems(id));
-        
+
             if (items.length <= 0) break;
             await ingestToElastic(elasticClient, items, indexName)
             id = lastId
@@ -545,26 +551,27 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
     } catch (e) {
         console.error()
     }
-    const esIndexSchema = JSON.parse(fs.readFileSync('./schema.json', 'utf8'));
-    const synonymList = fs.readFileSync('stock_ticker_synonyms.txt').toString().split("\n");
+
+    const esIndexSchema = JSON.parse(fs.readFileSync('../../../elastic/schema.json', 'utf8'));
+    const synonymList = fs.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
     await elasticClient.indices.create({
         index: indexName,
-        mappings: esIndexSchema.mappings,  
+        mappings: esIndexSchema.mappings,
         settings: {
-            "index" : {
-                "analysis" : {
-                    "filter" : {
-                        "synonym_filter" : {
-                            "type" : "synonym",
-                            "synonyms" : synonymList,
+            "index": {
+                "analysis": {
+                    "filter": {
+                        "synonym_filter": {
+                            "type": "synonym",
+                            "synonyms": synonymList,
                             "updateable": true
                         }
                     },
-                    "analyzer" : {
+                    "analyzer": {
                         // @ts-ignore
-                        "synonym_analyzer" : {
-                            "tokenizer" : "keyword",
-                            "filter" : ["lowercase", "synonym_filter"] 
+                        "synonym_analyzer": {
+                            "tokenizer": "keyword",
+                            "filter": ["lowercase", "synonym_filter"]
                         }
                     }
                 }
@@ -577,15 +584,15 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
  * Bulk upload documents into ElasticSearch
  * @param elasticClient
  * @param items
+ * @param indexName
  */
 const ingestToElastic = async (elasticClient: ElasticClient, items: ElasticSearchBody[], indexName: string) => {
     let group = [];
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        if (!item.id) delete (item.id)
         group.push(item)
         if (group.length === 100 || i === items.length - 1) {
-            const operations = group.flatMap(doc => [{index: {_index: indexName}}, doc]);
+            const operations = group.flatMap(doc => [{index: {_index: indexName, _id: doc.id}}, doc]);
             const bulkResponse = await elasticClient.bulk({refresh: false, operations});
             if (bulkResponse.errors) {
                 const erroredDocs: {

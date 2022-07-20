@@ -8,7 +8,7 @@ export interface Provider {
 
 
 export interface ElasticSearchBody {
-    id?: null
+    id: string
     user: {
         imageUrl: string | null
         id: string | null

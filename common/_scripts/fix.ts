@@ -1,4 +1,4 @@
-import {DefaultConfig} from "@tradingpost/common/configuration/index";
+import {DefaultConfig} from "../configuration";
 import {DateTime} from 'luxon';
 import knex, {Knex} from 'knex'
 import pg from "pg";
@@ -16,7 +16,7 @@ const getTradingMap = async (client: Knex) => {
         .orderBy('date').select('date');
 
     let holidayMap: Record<string, unknown> = {};
-    response.forEach(row => {
+    response.forEach((row: any) => {
         const dt = DateTime.fromJSDate(row.date)
         dt.set({hour: 16, minute: 0, second: 0, millisecond: 0})
         holidayMap[dt.toSeconds()] = {}
@@ -37,7 +37,7 @@ const getTradingMap = async (client: Knex) => {
 const getSecurities = async (client: Knex): Promise<{ id: number; symbol: string }[]> => {
     const response = await client('securities').select('id', 'symbol');
 
-    return response.map(row => {
+    return response.map((row: any) => {
         return {id: row.id, symbol: row.symbol}
     }) as { id: number, symbol: string }[];
 }
@@ -50,7 +50,7 @@ const getTimeAndPriceMap = async (client: Knex, securityId: number): Promise<Rec
         .orderBy('time')
 
     let pp: Record<string, string> = {};
-    response.forEach(row => {
+    response.forEach((row: any) => {
         const dt = DateTime.fromJSDate(row.time)
         pp[dt.toSeconds()] = row.price
     });

@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const elasticsearch_1 = require("@elastic/elasticsearch");
-const configuration_1 = require("@tradingpost/common/configuration");
+const configuration_1 = require("../../configuration");
 (() => __awaiter(void 0, void 0, void 0, function* () {
     const indexName = "tradingpost-search";
     const postgresConfiguration = yield configuration_1.DefaultConfig.fromCacheOrSSM("postgres");

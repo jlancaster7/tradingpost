@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import {Client as ElasticClient} from '@elastic/elasticsearch';
-import {DefaultConfig} from "@tradingpost/common/configuration";
+import {DefaultConfig} from "../../configuration";
 
 (async () => {
     const indexName = "tradingpost-search";
@@ -19,29 +19,29 @@ import {DefaultConfig} from "@tradingpost/common/configuration";
     // Get Users Following IDs
     const response = await elasticClient.search({
         index: indexName,
-        size: 50, 
+        size: 50,
         from: 0,
         query: {
-          function_score: {
-            query: {
-              function_score: {
-                query: {match_all: {}},
-                // @ts-ignore
-                gauss: {
-                  platformCreatedAt: {
-                    origin: "now-1h",
-                    scale: "1d"
-                  }
+            function_score: {
+                query: {
+                    function_score: {
+                        query: {match_all: {}},
+                        // @ts-ignore
+                        gauss: {
+                            platformCreatedAt: {
+                                origin: "now-1h",
+                                scale: "1d"
+                            }
+                        }
+                    }
+                },
+                field_value_factor: {
+                    field: "postTypeValue",
+                    factor: 1,
+                    modifier: "none"
+
                 }
-              }
-            },
-            field_value_factor: {
-              field: "postTypeValue",
-              factor: 1,
-              modifier: "none"
-              
             }
-          }
         }
     });
     const {hits} = response.hits;

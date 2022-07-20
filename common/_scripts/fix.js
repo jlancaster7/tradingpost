@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const index_1 = require("@tradingpost/common/configuration/index");
+const configuration_1 = require("../configuration");
 const luxon_1 = require("luxon");
 const knex_1 = __importDefault(require("knex"));
 const pg_1 = __importDefault(require("pg"));
@@ -26,7 +26,7 @@ const getTradingMap = (client) => __awaiter(void 0, void 0, void 0, function* ()
     const response = yield client('us_exchange_holidays')
         .orderBy('date').select('date');
     let holidayMap = {};
-    response.forEach(row => {
+    response.forEach((row) => {
         const dt = luxon_1.DateTime.fromJSDate(row.date);
         dt.set({ hour: 16, minute: 0, second: 0, millisecond: 0 });
         holidayMap[dt.toSeconds()] = {};
@@ -45,7 +45,7 @@ const getTradingMap = (client) => __awaiter(void 0, void 0, void 0, function* ()
 });
 const getSecurities = (client) => __awaiter(void 0, void 0, void 0, function* () {
     const response = yield client('securities').select('id', 'symbol');
-    return response.map(row => {
+    return response.map((row) => {
         return { id: row.id, symbol: row.symbol };
     });
 });
@@ -56,7 +56,7 @@ const getTimeAndPriceMap = (client, securityId) => __awaiter(void 0, void 0, voi
         .whereRaw(`time < NOW() - INTERVAL '8 DAYS'`)
         .orderBy('time');
     let pp = {};
-    response.forEach(row => {
+    response.forEach((row) => {
         const dt = luxon_1.DateTime.fromJSDate(row.time);
         pp[dt.toSeconds()] = row.price;
     });
@@ -75,7 +75,7 @@ const insertPrices = (client, prices) => __awaiter(void 0, void 0, void 0, funct
     yield client.batchInsert('security_prices', prices);
 });
 (() => __awaiter(void 0, void 0, void 0, function* () {
-    const postgresConfiguration = yield index_1.DefaultConfig.fromCacheOrSSM("postgres");
+    const postgresConfiguration = yield configuration_1.DefaultConfig.fromCacheOrSSM("postgres");
     const pgClient = (0, knex_1.default)({
         client: 'pg',
         connection: {

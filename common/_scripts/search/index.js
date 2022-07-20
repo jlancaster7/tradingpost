@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const pg_1 = require("pg");
 const elasticsearch_1 = require("@elastic/elasticsearch");
-const configuration_1 = require("@tradingpost/common/configuration");
+const configuration_1 = require("../../configuration");
 const luxon_1 = require("luxon");
 const yargs_1 = __importDefault(require("yargs"));
 const fs_1 = __importDefault(require("fs"));
@@ -24,7 +24,7 @@ class Twitter {
         this.getItems = (lastId) => __awaiter(this, void 0, void 0, function* () {
             if (lastId === null)
                 lastId = 0;
-            let query = `SELECT t.id AS id, 
+            let query = `SELECT t.id                  AS id,
                             t.tweet_id            AS tweet_id,
                             t.user_id             AS trading_post_user_id,
                             t.twitter_user_id,
@@ -106,7 +106,7 @@ class Twitter {
         this.map = (items) => {
             return items.map(tw => {
                 let obj = {
-                    id: null,
+                    id: `twitter_${tw.tweetID}`,
                     content: {
                         body: tw.text,
                         description: tw.text,
@@ -149,7 +149,7 @@ class SubStack {
         this.getItems = (lastId) => __awaiter(this, void 0, void 0, function* () {
             if (lastId === null)
                 lastId = 0;
-            let query = `SELECT sa.id AS id,
+            let query = `SELECT sa.id                  AS id,
                             sa.substack_user_id,
                             sa.article_id,
                             sa.creator,
@@ -216,7 +216,7 @@ class SubStack {
         this.map = (items) => {
             return items.map((n) => {
                 let obj = {
-                    id: null,
+                    id: `substack_${n.article_id}`,
                     content: {
                         body: n.content,
                         description: n.content_snippet,
@@ -259,7 +259,7 @@ class Spotify {
         this.getItems = (lastId) => __awaiter(this, void 0, void 0, function* () {
             if (lastId === null)
                 lastId = 0;
-            let query = `SELECT se.id AS id,
+            let query = `SELECT se.id                   AS id,
                             se.spotify_episode_id,
                             se.spotify_show_id,
                             se.audio_preview_url,
@@ -341,7 +341,7 @@ class Spotify {
         this.map = (items) => {
             return items.map((si) => {
                 let obj = {
-                    id: null,
+                    id: `spotify_${si.spotify_episode_id}`,
                     content: {
                         body: si.episode_embed.html,
                         description: si.episode_description,
@@ -384,7 +384,7 @@ class YouTube {
         this.getItems = (lastId) => __awaiter(this, void 0, void 0, function* () {
             if (lastId === null)
                 lastId = 0;
-            let query = `select yv.id AS id,
+            let query = `select yv.id                 AS id,
                             yv.video_id,
                             yv.youtube_channel_id,
                             yv.user_id,
@@ -444,7 +444,7 @@ class YouTube {
         this.map = (items) => {
             return items.map((yv) => {
                 let obj = {
-                    id: null,
+                    id: `youtube_${yv.video_id}`,
                     content: {
                         body: yv.description,
                         description: yv.description,
@@ -528,8 +528,8 @@ const rebuildElasticIndex = (elasticClient, indexName) => __awaiter(void 0, void
     catch (e) {
         console.error();
     }
-    const esIndexSchema = JSON.parse(fs_1.default.readFileSync('./schema.json', 'utf8'));
-    const synonymList = fs_1.default.readFileSync('stock_ticker_synonyms.txt').toString().split("\n");
+    const esIndexSchema = JSON.parse(fs_1.default.readFileSync('../../../elastic/schema.json', 'utf8'));
+    const synonymList = fs_1.default.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
     yield elasticClient.indices.create({
         index: indexName,
         mappings: esIndexSchema.mappings,
@@ -559,16 +559,15 @@ const rebuildElasticIndex = (elasticClient, indexName) => __awaiter(void 0, void
  * Bulk upload documents into ElasticSearch
  * @param elasticClient
  * @param items
+ * @param indexName
  */
 const ingestToElastic = (elasticClient, items, indexName) => __awaiter(void 0, void 0, void 0, function* () {
     let group = [];
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        if (!item.id)
-            delete (item.id);
         group.push(item);
         if (group.length === 100 || i === items.length - 1) {
-            const operations = group.flatMap(doc => [{ index: { _index: indexName } }, doc]);
+            const operations = group.flatMap(doc => [{ index: { _index: indexName, _id: doc.id } }, doc]);
             const bulkResponse = yield elasticClient.bulk({ refresh: false, operations });
             if (bulkResponse.errors) {
                 const erroredDocs = [];
