@@ -1,7 +1,8 @@
 import 'dotenv/config';
+//process.env.CONFIGURATION_ENV = "production";
 import {Client as PostgresClient} from 'pg';
 import {Client as ElasticClient} from '@elastic/elasticsearch';
-import {DefaultConfig} from '../../configuration';
+import {DefaultConfig} from '@tradingpost/common/configuration';
 import {
     TweetsAndUser,
     ElasticSearchBody,
@@ -553,7 +554,9 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
     }
 
     const esIndexSchema = JSON.parse(fs.readFileSync('../../../elastic/schema.json', 'utf8'));
-    const synonymList = fs.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
+    let synonymList = fs.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
+    synonymList = synonymList.map(a => a.slice(0,-1));
+    // @ts-ignore
     await elasticClient.indices.create({
         index: indexName,
         mappings: esIndexSchema.mappings,
@@ -567,12 +570,24 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
                             "updateable": true
                         }
                     },
+                    "tokenizer": {
+                        "my_tokenizer": {
+                          "type": "pattern",
+                          "pattern": ","
+                        }
+                    },
                     "analyzer": {
                         // @ts-ignore
                         "synonym_analyzer": {
-                            "tokenizer": "keyword",
-                            "filter": ["lowercase", "synonym_filter"]
-                        }
+                            "tokenizer": "my_tokenizer",
+                            "filter": ["synonym_filter"]
+                        },
+                        "default": {
+                            "type": "whitespace"
+                          },
+                          "default_search": {
+                            "type": "keyword"
+                          }
                     }
                 }
             }
