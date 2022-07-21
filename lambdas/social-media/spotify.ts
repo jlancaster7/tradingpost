@@ -35,9 +35,3 @@ module.exports.run = async (event: any, context: Context) => {
     await run();
     console.log("Ended")
 }
-
-(async () => {
-    console.log("Starting")
-    await run();
-    console.log("Ended")
-})()
