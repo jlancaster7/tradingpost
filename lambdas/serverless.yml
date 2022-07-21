@@ -3,12 +3,6 @@ app: tradingpost-app
 
 frameworkVersion: '3'
 
-plugins:
-  - serverless-webpack
-custom:
-  webpack:
-    webpackConfig: ./webpack.config.js
-
 provider:
   stage: production
   name: aws

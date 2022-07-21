@@ -114,7 +114,6 @@ class SpotifyShows {
                         catch (err) {
                             console.error(err);
                             console.log("body of json response from spotify: ", embeddedBody);
-                            console.log(embeddedResponse.status);
                         }
                     }
                     body.items.forEach((element) => {
