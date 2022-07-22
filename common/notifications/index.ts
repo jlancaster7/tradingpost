@@ -1,8 +1,10 @@
 import {messaging} from 'firebase-admin';
 import {MessagesResponse, UserDevice, Message, MessageOptions, INotificationsRepository} from "./interfaces";
+import Repository from "./repository"
 
+export {Repository};
 
-export default class Notifications {
+export class Notifications {
     private iOSMessenger: messaging.Messaging;
     private androidMessenger: messaging.Messaging;
     private repository: INotificationsRepository

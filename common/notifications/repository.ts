@@ -1,5 +1,5 @@
 import {UserDevice} from "./interfaces";
-import {Client} from 'pg';
+import {IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
 
 // Create our own type of error response, if its not that type of errors response than we should not log that
@@ -17,10 +17,12 @@ import {DateTime} from "luxon";
  */
 
 export default class Repository {
-    private db: Client;
+    private db: IDatabase<any>;
+    private pgp: IMain;
 
-    constructor(db: Client) {
+    constructor(db: IDatabase<any>, pgp: IMain) {
         this.db = db;
+        this.pgp = pgp;
     }
 
     getUserDevices = async (userId: string): Promise<UserDevice[]> => {
@@ -36,7 +38,7 @@ export default class Repository {
                    created_at
             FROM user_device
             WHERE user_id = ANY ($1::UUID)`, [userIds]);
-        return response.rows.map(row => {
+        return response.map((row: any) => {
             return {
                 userId: row[0],
                 deviceId: row[1],
@@ -57,14 +59,14 @@ export default class Repository {
             FROM user_device
             WHERE device_id = $1`, [deviceId]);
 
-        if (response.rows.length <= 0) throw new Error(`device id ${deviceId} does not exist within our system`);
+        if (response.length <= 0) throw new Error(`device id ${deviceId} does not exist within our system`);
 
         return {
-            userId: response.rows[0],
-            deviceId: response.rows[1],
-            provider: response.rows[2],
-            updatedAt: DateTime.fromJSDate(response.rows[3]),
-            createdAt: DateTime.fromJSDate(response.rows[4])
+            userId: response[0],
+            deviceId: response[1],
+            provider: response[2],
+            updatedAt: DateTime.fromJSDate(response[3]),
+            createdAt: DateTime.fromJSDate(response[4])
         }
     }
 }

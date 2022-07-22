@@ -31,7 +31,5 @@ const run = async () => {
 }
 
 module.exports.run = async (event: any, context: Context) => {
-    console.log("Starting")
     await run();
-    console.log("Ended")
 }
