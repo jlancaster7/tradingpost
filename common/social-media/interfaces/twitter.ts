@@ -24,12 +24,12 @@ export interface formatedTweet {
     possibly_sensitive: boolean,
     text: string,
     tweet_url: string,
-    urls?: {[key: string]: string},
-    media_keys?: {[key: string]: string},
-    annotations?: {[key: string]: string},
-    cashtags?: {[key: string]: string},
-    hashtags?: {[key: string]: string},
-    mentions?: {[key: string]: string},
+    urls: string | null,
+    media_keys: string | null,
+    annotations: string | null,
+    cashtags: string | null,
+    hashtags: string | null,
+    mentions: string | null,
     twitter_created_at: Date
 }
 
@@ -46,17 +46,17 @@ export interface rawTwitterUser {
 }
 
 export interface formatedTwitterUser {
-    protected: boolean,
-    display_name: string,
+    protected: boolean,//
+    display_name: string, //
     follower_count: number,
     following_count: number,
-    location: string,
+    location: string,//
     twitter_created_at: Date,
-    username: string,
-    description: string,
-    profile_img_url: string,
-    profile_url: string,
-    twitter_user_id: string
+    username: string, //
+    description: string, //
+    profile_img_url: string,//
+    profile_url: string, //
+    twitter_user_id: string //
 }
 
 export interface twitterParams {

@@ -20,8 +20,8 @@ class Tweets {
             this.startDate = startDate.toISOString();
         });
         this.getStartDate = (twitter_user_id) => __awaiter(this, void 0, void 0, function* () {
-            let query = 'SELECT twitter_user_id, MAX(created_at) FROM tweets WHERE twitter_user_id = $1 GROUP BY twitter_user_id ';
-            let result = yield this.pg_client.result(query, [twitter_user_id]);
+            const query = 'SELECT twitter_user_id, MAX(created_at) FROM tweets WHERE twitter_user_id = $1 GROUP BY twitter_user_id ';
+            const result = yield this.pg_client.result(query, [twitter_user_id]);
             if (result.rowCount === 0) {
                 let defaultDate = new Date();
                 defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
@@ -31,8 +31,8 @@ class Tweets {
                 yield this.setStartDate(result.rows[0].max);
             }
         });
-        this.importTweets = (twitterUserId) => __awaiter(this, void 0, void 0, function* () {
-            const data = yield this.getUserTweets(twitterUserId);
+        this.importTweets = (twitterUserId, userToken = null) => __awaiter(this, void 0, void 0, function* () {
+            const data = yield this.getUserTweets(twitterUserId, userToken);
             if (data === []) {
                 return [[], 0];
             }
@@ -40,9 +40,15 @@ class Tweets {
             const result = yield this.appendTweets(formatedData);
             return [formatedData, result];
         });
-        this.getUserTweets = (twitterUserId) => __awaiter(this, void 0, void 0, function* () {
+        this.getUserTweets = (twitterUserId, userToken) => __awaiter(this, void 0, void 0, function* () {
             if (this.startDate === '') {
                 yield this.getStartDate(twitterUserId);
+            }
+            if (userToken) {
+                this.params.headers.authorization = 'BEARER ' + userToken;
+            }
+            else {
+                this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'];
             }
             let data = [];
             try {
@@ -71,6 +77,7 @@ class Tweets {
                         });
                     }
                     response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                    console.log(fetchUrl);
                     responseData = response.data;
                     if (responseData === undefined) {
                         this.startDate = '';
@@ -100,63 +107,52 @@ class Tweets {
             return data;
         });
         this.formatTweets = (rawTweets) => {
-            let keys;
-            let formatedTweets = JSON.parse(JSON.stringify(rawTweets));
+            let formatedTweets = [];
             for (let i = 0; i < rawTweets.length; i++) {
-                formatedTweets[i].tweet_id = rawTweets[i].id;
-                delete formatedTweets[i].id;
-                formatedTweets[i].retweet_count = rawTweets[i].public_metrics.retweet_count;
-                formatedTweets[i].reply_count = rawTweets[i].public_metrics.reply_count;
-                formatedTweets[i].like_count = rawTweets[i].public_metrics.like_count;
-                formatedTweets[i].quote_count = rawTweets[i].public_metrics.quote_count;
-                formatedTweets[i].twitter_created_at = rawTweets[i].created_at;
-                delete formatedTweets[i].created_at;
-                delete formatedTweets[i].public_metrics;
-                if (Object.keys(rawTweets[i]).includes('attachments')) {
-                    formatedTweets[i].media_keys = JSON.stringify({ data: rawTweets[i].attachments.media_keys });
-                    delete formatedTweets[i].attachments;
-                }
-                if (Object.keys(rawTweets[i]).includes('entities')) {
-                    keys = Object.keys(rawTweets[i].entities);
-                    if (keys.includes('urls')) {
-                        formatedTweets[i].urls = JSON.stringify(rawTweets[i].entities.urls);
-                    }
-                    if (keys.includes('annotations')) {
-                        formatedTweets[i].annotations = JSON.stringify(rawTweets[i].entities.annotations);
-                    }
-                    if (keys.includes('cashtags')) {
-                        formatedTweets[i].cashtags = JSON.stringify(rawTweets[i].entities.cashtags);
-                    }
-                    if (keys.includes('mentions')) {
-                        formatedTweets[i].mentions = JSON.stringify(rawTweets[i].entities.mentions);
-                    }
-                    if (keys.includes('hashtags')) {
-                        formatedTweets[i].hashtags = JSON.stringify(rawTweets[i].entities.hashtags);
-                    }
-                    delete formatedTweets[i].entities;
-                }
+                formatedTweets.push({
+                    tweet_id: rawTweets[i].id,
+                    twitter_user_id: rawTweets[i].twitter_user_id,
+                    embed: rawTweets[i].embed,
+                    lang: rawTweets[i].lang,
+                    like_count: rawTweets[i].public_metrics.like_count,
+                    quote_count: rawTweets[i].public_metrics.quote_count,
+                    reply_count: rawTweets[i].public_metrics.reply_count,
+                    retweet_count: rawTweets[i].public_metrics.retweet_count,
+                    possibly_sensitive: rawTweets[i].possibly_sensitive,
+                    text: rawTweets[i].text,
+                    tweet_url: rawTweets[i].tweet_url,
+                    urls: (rawTweets[i].entities.urls ? JSON.stringify(rawTweets[i].entities.urls) : null),
+                    media_keys: (rawTweets[i].entities.media_keys ? JSON.stringify(rawTweets[i].entities.media_keys) : null),
+                    annotations: (rawTweets[i].entities.annotations ? JSON.stringify(rawTweets[i].entities.annotations) : null),
+                    cashtags: (rawTweets[i].entities.cashtags ? JSON.stringify(rawTweets[i].entities.cashtags) : null),
+                    hashtags: (rawTweets[i].entities.hashtags ? JSON.stringify(rawTweets[i].entities.hashtags) : null),
+                    mentions: (rawTweets[i].entities.mentions ? JSON.stringify(rawTweets[i].entities.mentions) : null),
+                    twitter_created_at: rawTweets[i].created_at
+                });
             }
             return formatedTweets;
         };
         this.appendTweets = (formatedTweets) => __awaiter(this, void 0, void 0, function* () {
             let success = 0;
             try {
-                let keys;
                 let values;
                 let query;
                 let result;
                 let value_index = '';
                 for (let i = 0; i < formatedTweets.length; i++) {
-                    keys = Object.keys(formatedTweets[i]).join(' ,');
                     values = Object.values(formatedTweets[i]);
                     value_index = '';
                     values.map((obj, index) => {
                         value_index += `$${index + 1}, `;
                     });
                     value_index = value_index.substring(0, value_index.length - 2);
-                    query = `INSERT INTO tweets(${keys})
+                    query = `INSERT INTO tweets(tweet_id, twitter_user_id, embed, lang, like_count, quote_count, reply_count, retweet_count, possibly_sensitive, text, tweet_url, urls, media_keys, annotations, cashtags, hashtags, mentions, twitter_created_at)
                          VALUES (${value_index})
-                         ON CONFLICT (tweet_id) DO NOTHING`;
+                         ON CONFLICT (tweet_id) DO UPDATE SET like_count = EXCLUDED.like_count
+                                                              quote_count = EXCLUDED.quote_count
+                                                              reply_count = EXCLUDED.reply_count
+                                                              retweet_count = EXCLUDED.retweet_count
+                                                              `;
                     result = yield this.pg_client.result(query, values);
                     success += result.rowCount;
                 }

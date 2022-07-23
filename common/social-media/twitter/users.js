@@ -16,7 +16,28 @@ exports.TwitterUsers = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
 class TwitterUsers {
     constructor(twitterConfig, pg_client, pgp) {
-        this.importUser = (handles) => __awaiter(this, void 0, void 0, function* () {
+        this.upsertUserToken = (twitterUsers) => __awaiter(this, void 0, void 0, function* () {
+            // TODO: add query to upsert token into third-party claims table
+        });
+        this.importUserByToken = (twitterUsers) => __awaiter(this, void 0, void 0, function* () {
+            let data = [];
+            let temp;
+            for (let d of twitterUsers) {
+                temp = yield this.getUserInfoByToken(d.tokens);
+                if (temp) {
+                    console.log('The following token failed to import: ' + d);
+                    continue;
+                }
+                data.push(temp);
+            }
+            if (data === []) {
+                return [[], 0];
+            }
+            const formatedData = this.formatUserInfo(data);
+            const result = yield this.appendUserInfo(formatedData);
+            return [formatedData, result];
+        });
+        this.importUserByHandle = (handles) => __awaiter(this, void 0, void 0, function* () {
             if (typeof handles === 'string') {
                 handles = [handles];
             }
@@ -31,6 +52,7 @@ class TwitterUsers {
         this.getUserInfo = (handles) => __awaiter(this, void 0, void 0, function* () {
             let data;
             try {
+                this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'];
                 const userInfoEndpoint = "/users/by?";
                 const fetchUrl = this.twitterUrl + userInfoEndpoint + new URLSearchParams({
                     usernames: handles.join(),
@@ -45,19 +67,39 @@ class TwitterUsers {
                 return [];
             }
         });
+        this.getUserInfoByToken = (token) => __awaiter(this, void 0, void 0, function* () {
+            let data;
+            try {
+                this.params.headers.authorization = 'BEARER ' + token;
+                const userInfoEndpoint = "/users/me?";
+                const fetchUrl = this.twitterUrl + userInfoEndpoint + new URLSearchParams({
+                    "user.fields": "created_at,description,id,location,name,profile_image_url,protected,public_metrics,username",
+                });
+                const response = yield (0, node_fetch_1.default)(fetchUrl, this.params);
+                data = (yield response.json()).data;
+                return data;
+            }
+            catch (err) {
+                console.log(err);
+                return null;
+            }
+        });
         this.formatUserInfo = (rawUsers) => {
-            let formatedUsers = JSON.parse(JSON.stringify(rawUsers));
+            let formatedUsers = [];
             for (let i = 0; i < rawUsers.length; i++) {
-                formatedUsers[i].follower_count = rawUsers[i].public_metrics.followers_count;
-                formatedUsers[i].following_count = rawUsers[i].public_metrics.following_count;
-                formatedUsers[i].twitter_created_at = new Date(rawUsers[i].created_at);
-                formatedUsers[i].twitter_user_id = rawUsers[i].id;
-                formatedUsers[i].display_name = rawUsers[i].name;
-                formatedUsers[i].profile_url = 'https://www.twitter.com/' + rawUsers[i].username;
-                delete formatedUsers[i].name;
-                delete formatedUsers[i].created_at;
-                delete formatedUsers[i].id;
-                delete formatedUsers[i].public_metrics;
+                formatedUsers.push({
+                    twitter_user_id: rawUsers[i].id,
+                    username: rawUsers[i].username,
+                    display_name: rawUsers[i].name,
+                    description: rawUsers[i].description,
+                    profile_url: 'https://www.twitter.com/' + rawUsers[i].username,
+                    profile_img_url: rawUsers[i].profile_img_url,
+                    location: rawUsers[i].location,
+                    protected: rawUsers[i].protected,
+                    twitter_created_at: new Date(rawUsers[i].created_at),
+                    follower_count: rawUsers[i].public_metrics.followers_count,
+                    following_count: rawUsers[i].public_metrics.following_count
+                });
             }
             return formatedUsers;
         };
@@ -76,8 +118,14 @@ class TwitterUsers {
                     { name: 'profile_url', prop: 'profile_url' },
                     { name: 'twitter_user_id', prop: 'twitter_user_id' },
                 ], { table: 'twitter_users' });
-                const query = this.pgp.helpers.insert(users, cs) + ' ON CONFLICT DO NOTHING';
-                // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+                const query = this.pgp.helpers.insert(users, cs) + ` ON CONFLICT DO UPDATE SET
+                                                                 display_name = EXCLUDED.display_name,
+                                                                 follower_count = EXCLUDED.follower_count,
+                                                                 following_count = EXCLUDED.following_count,
+                                                                 description = EXCLUDED.description,
+                                                                 profile_img_url = EXCLUDED.profile_img_url,
+                                                                 profile_url = EXCLUDED.profile_url
+                                                                 `;
                 const result = yield this.pg_client.result(query);
                 return result.rowCount;
             }

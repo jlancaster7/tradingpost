@@ -1,4 +1,5 @@
 import 'dotenv/config';
+process.env.CONFIGURATION_ENV = "production";
 import {Context} from "aws-lambda";
 import {lambdaImportTweets} from "@tradingpost/common/social-media/twitter";
 import {DefaultConfig} from "@tradingpost/common/configuration";
@@ -17,16 +18,19 @@ const run = async () => {
             password: postgresConfiguration.password,
             database: postgresConfiguration.database
         })
-        await pgClient.connect()
+        //await pgClient.connect()
     }
     const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
     try {
         await lambdaImportTweets(pgClient, pgp, twitterConfiguration);
+        pgp.end();
     } catch (e) {
+        pgp.end();
         console.error(e)
         throw e;
     }
 }
+run();
 
 module.exports.run = async (event: any, context: Context) => {
     await run();
