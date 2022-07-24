@@ -8,14 +8,14 @@ import IEX, {
     GetIexSymbols,
     GetOtcSymbols
 } from "@tradingpost/common/iex";
-import {Repository} from "../../services/market-data/repository";
+import {Repository} from "@tradingpost/common/market-data/repository";
 import {
     addIexSecurity,
     addSecurity,
     addSecurityPrice,
     updateIexSecurity,
     upsertSecuritiesInformation
-} from '../../services/market-data/interfaces';
+} from '@tradingpost/common/market-data/interfaces';
 import {DateTime} from "luxon";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";

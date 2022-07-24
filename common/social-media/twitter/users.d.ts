@@ -8,8 +8,17 @@ export declare class TwitterUsers {
     private twitterUrl;
     private params;
     constructor(twitterConfig: twitterConfig, pg_client: IDatabase<any>, pgp: IMain);
-    importUser: (handles: string | string[]) => Promise<[formatedTwitterUser[], number]>;
+    upsertUserToken: (twitterUsers: {
+        userIds: string;
+        tokens: string;
+    }[]) => Promise<void>;
+    importUserByToken: (twitterUsers: {
+        userIds: string;
+        tokens: string;
+    }[]) => Promise<[formatedTwitterUser[], number]>;
+    importUserByHandle: (handles: string | string[]) => Promise<[formatedTwitterUser[], number]>;
     getUserInfo: (handles: string[]) => Promise<rawTwitterUser[]>;
+    getUserInfoByToken: (token: string) => Promise<rawTwitterUser | null>;
     formatUserInfo: (rawUsers: rawTwitterUser[]) => formatedTwitterUser[];
     appendUserInfo: (users: formatedTwitterUser[]) => Promise<number>;
 }

@@ -1,5 +1,5 @@
 import { UserDevice } from "./interfaces";
-import { Client } from 'pg';
+import { IDatabase, IMain } from "pg-promise";
 /**
  *
  *     const app = admin.initializeApp({
@@ -12,7 +12,8 @@ import { Client } from 'pg';
  */
 export default class Repository {
     private db;
-    constructor(db: Client);
+    private pgp;
+    constructor(db: IDatabase<any>, pgp: IMain);
     getUserDevices: (userId: string) => Promise<UserDevice[]>;
     getUsersDevices: (userIds: string[]) => Promise<UserDevice[]>;
     getUserDeviceByDeviceId: (deviceId: string) => Promise<UserDevice>;

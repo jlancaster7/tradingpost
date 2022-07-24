@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
-import {Repository} from '../../services/market-data/repository';
+import {Repository} from '@tradingpost/common/market-data/repository';
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
 let pgClient: IDatabase<any>;

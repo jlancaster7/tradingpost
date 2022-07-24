@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const pg_1 = require("pg");
 const elasticsearch_1 = require("@elastic/elasticsearch");
-const configuration_1 = require("../../configuration");
+const configuration_1 = require("../..//configuration");
 const luxon_1 = require("luxon");
 const yargs_1 = __importDefault(require("yargs"));
 const fs_1 = __importDefault(require("fs"));
@@ -529,7 +529,9 @@ const rebuildElasticIndex = (elasticClient, indexName) => __awaiter(void 0, void
         console.error();
     }
     const esIndexSchema = JSON.parse(fs_1.default.readFileSync('../../../elastic/schema.json', 'utf8'));
-    const synonymList = fs_1.default.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
+    let synonymList = fs_1.default.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
+    synonymList = synonymList.map(a => a.slice(0, -1));
+    // @ts-ignore
     yield elasticClient.indices.create({
         index: indexName,
         mappings: esIndexSchema.mappings,
@@ -543,11 +545,23 @@ const rebuildElasticIndex = (elasticClient, indexName) => __awaiter(void 0, void
                             "updateable": true
                         }
                     },
+                    "tokenizer": {
+                        "my_tokenizer": {
+                            "type": "pattern",
+                            "pattern": ","
+                        }
+                    },
                     "analyzer": {
                         // @ts-ignore
                         "synonym_analyzer": {
-                            "tokenizer": "keyword",
-                            "filter": ["lowercase", "synonym_filter"]
+                            "tokenizer": "my_tokenizer",
+                            "filter": ["synonym_filter"]
+                        },
+                        "default": {
+                            "type": "whitespace"
+                        },
+                        "default_search": {
+                            "type": "keyword"
                         }
                     }
                 }

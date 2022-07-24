@@ -1,11 +1,15 @@
 import 'dotenv/config'
 import {Context} from 'aws-lambda';
 import {DefaultConfig} from "@tradingpost/common/configuration";
-import {Repository} from "../../services/market-data/repository";
-import {addSecurityPrice, getSecurityBySymbol, getSecurityWithLatestPrice} from '../../services/market-data/interfaces';
+import {Repository} from "@tradingpost/common/market-data/repository";
+import {
+    addSecurityPrice,
+    getSecurityBySymbol,
+    getSecurityWithLatestPrice
+} from '@tradingpost/common/market-data/interfaces';
 import IEX, {GetQuote} from "@tradingpost/common/iex";
 import {DateTime} from "luxon";
-import Index from "../../services/market-data";
+import MarketClosure from "@tradingpost/common/market-data/market-closure";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
 let pgClient: IDatabase<any>;
@@ -28,7 +32,7 @@ const run = async () => {
     const iex = new IEX(iexConfiguration.key);
 
     const repository = new Repository(pgClient, pgp);
-    const marketService = new Index(repository);
+    const marketService = new MarketClosure(repository);
 
     try {
         await start(marketService, repository, iex)
@@ -38,7 +42,7 @@ const run = async () => {
     }
 }
 
-const start = async (marketService: Index, repository: Repository, iex: IEX) => {
+const start = async (marketService: MarketClosure, repository: Repository, iex: IEX) => {
     const open = DateTime.now().setZone("America/New_York").set({hour: 9, minute: 29, second: 0, millisecond: 0});
     const close = DateTime.now().setZone("America/New_York").set({hour: 16, minute: 1, second: 0, millisecond: 0})
 

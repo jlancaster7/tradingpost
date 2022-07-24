@@ -23,7 +23,7 @@ const luxon_1 = require("luxon");
  *     });
  */
 class Repository {
-    constructor(db) {
+    constructor(db, pgp) {
         this.getUserDevices = (userId) => __awaiter(this, void 0, void 0, function* () {
             return yield this.getUsersDevices([userId]);
         });
@@ -36,7 +36,7 @@ class Repository {
                    created_at
             FROM user_device
             WHERE user_id = ANY ($1::UUID)`, [userIds]);
-            return response.rows.map(row => {
+            return response.map((row) => {
                 return {
                     userId: row[0],
                     deviceId: row[1],
@@ -55,17 +55,18 @@ class Repository {
                    created_at
             FROM user_device
             WHERE device_id = $1`, [deviceId]);
-            if (response.rows.length <= 0)
+            if (response.length <= 0)
                 throw new Error(`device id ${deviceId} does not exist within our system`);
             return {
-                userId: response.rows[0],
-                deviceId: response.rows[1],
-                provider: response.rows[2],
-                updatedAt: luxon_1.DateTime.fromJSDate(response.rows[3]),
-                createdAt: luxon_1.DateTime.fromJSDate(response.rows[4])
+                userId: response[0],
+                deviceId: response[1],
+                provider: response[2],
+                updatedAt: luxon_1.DateTime.fromJSDate(response[3]),
+                createdAt: luxon_1.DateTime.fromJSDate(response[4])
             };
         });
         this.db = db;
+        this.pgp = pgp;
     }
 }
 exports.default = Repository;

@@ -77,7 +77,6 @@ class Tweets {
                         });
                     }
                     response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
-                    console.log(fetchUrl);
                     responseData = response.data;
                     if (responseData === undefined) {
                         this.startDate = '';

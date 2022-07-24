@@ -6,6 +6,10 @@ declare type TwitterConfiguration = {
     bearer_token: string;
 };
 export declare const lambdaImportTweets: (pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => Promise<void>;
-export declare const addTwitterUsers: (handles: string | string[], pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => Promise<[formatedTwitterUser[], number]>;
+export declare const addTwitterUsersByHandle: (handles: string | string[], pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => Promise<[formatedTwitterUser[], number]>;
+export declare const addTwitterUsersByToken: (twitterUsers: {
+    userIds: string;
+    tokens: string;
+}[], pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => Promise<[formatedTwitterUser[], number]>;
 export declare const addTweets: (twitterUserId: string, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration, startDate?: Date | undefined) => Promise<[formatedTweet[], number]>;
 export {};

@@ -12,8 +12,8 @@ export declare class Tweets {
     constructor(twitterConfig: twitterConfig, pg_client: IDatabase<any>, pgp: IMain);
     setStartDate: (startDate: Date) => Promise<void>;
     getStartDate: (twitter_user_id: string) => Promise<void>;
-    importTweets: (twitterUserId: string) => Promise<[formatedTweet[], number]>;
-    getUserTweets: (twitterUserId: string) => Promise<rawTweet[]>;
+    importTweets: (twitterUserId: string, userToken?: string | null) => Promise<[formatedTweet[], number]>;
+    getUserTweets: (twitterUserId: string, userToken: string | null) => Promise<rawTweet[]>;
     formatTweets: (rawTweets: rawTweet[]) => formatedTweet[];
     appendTweets: (formatedTweets: formatedTweet[]) => Promise<number>;
 }

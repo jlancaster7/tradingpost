@@ -1,7 +1,6 @@
 import 'dotenv/config';
-//process.env.CONFIGURATION_ENV = "production";
 import {Client as ElasticClient} from '@elastic/elasticsearch';
-import { DefaultConfig } from "@tradingpost/common/configuration";
+import { DefaultConfig } from "../../configuration";
 import pgPromise from "pg-promise";
 import yargs from "yargs";
 

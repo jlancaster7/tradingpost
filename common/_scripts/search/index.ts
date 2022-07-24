@@ -1,8 +1,7 @@
 import 'dotenv/config';
-//process.env.CONFIGURATION_ENV = "production";
 import {Client as PostgresClient} from 'pg';
 import {Client as ElasticClient} from '@elastic/elasticsearch';
-import {DefaultConfig} from '@tradingpost/common/configuration';
+import {DefaultConfig} from '../..//configuration';
 import {
     TweetsAndUser,
     ElasticSearchBody,
