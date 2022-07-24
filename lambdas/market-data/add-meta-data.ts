@@ -10,15 +10,17 @@ import IEX, {
 } from "@tradingpost/common/iex";
 import {Repository} from "../../services/market-data/repository";
 import {
+    addIexSecurity,
     addSecurity,
     addSecurityPrice,
-    getSecurityBySymbol,
+    updateIexSecurity,
     upsertSecuritiesInformation
 } from '../../services/market-data/interfaces';
 import {DateTime} from "luxon";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
+import {diff} from "deep-object-diff";
 
 
 // Pricing Charge
@@ -51,30 +53,114 @@ const run = async () => {
             password: postgresConfiguration['password'] as string,
             database: postgresConfiguration['database'] as string
         })
+        await pgClient.connect();
     }
 
     const iexConfiguration = await DefaultConfig.fromSSM("iex");
     const iex = new IEX(iexConfiguration.key);
 
-    await pgClient.connect();
     const repository = new Repository(pgClient, pgp);
-
-    // TODO: If Friday pull in prices....
 
     try {
         await start(repository, iex)
     } catch (e) {
         console.error(e)
         throw e
-    } finally {
-        await pgp.end()
     }
 }
 
 const start = async (repository: Repository, iex: IEX) => {
     const now = DateTime.now().setZone("America/New_York");
     if (now.hour == 16) await ingestEveningSecuritiesInformation(repository, iex);
-    if (now.hour == 8) await ingestMorningSecuritiesInformation(repository, iex);
+
+    if (now.hour == 8) {
+        if (now.weekday === 5) {
+            await updateSecurities(repository, iex);
+            return
+        }
+
+        await ingestMorningSecuritiesInformation(repository, iex);
+    }
+}
+
+const updateSecurities = async (repository: Repository, iex: IEX) => {
+    const securities = await repository.getIexSecurities();
+    let securitiesMap = buildSecuritiesMap(securities);
+    let securityGroups = buildGroups(securities, 100);
+
+    let updateSymbols: string[] = [];
+
+    for (let i = 0; i < securityGroups.length; i++) {
+        const securities = securityGroups[i];
+        const symbols = securities.map(sec => sec.symbol);
+        const iexResponse = await iex.bulk(symbols, ["company", "logo"]);
+
+        let newSecurities: addSecurity[] = [];
+        let newIexSecurities: addIexSecurity[] = [];
+        let updateIexSecurities: updateIexSecurity[] = [];
+
+        symbols.forEach((symbol: string) => {
+            const sec = iexResponse[symbol];
+            if (sec === undefined || sec === null) return;
+
+            let logo = sec.logo as GetLogo
+            let company = sec.company as GetCompany
+
+            let newSec: addSecurity = {
+                address: company.address || null,
+                address2: company.address2 || null,
+                ceo: company.CEO || null,
+                companyName: company.companyName,
+                country: company.country || null,
+                description: company.description || null,
+                employees: company.employees !== null ? company.employees.toString() : null,
+                exchange: company.exchange || null,
+                industry: company.industry || null,
+                issueType: company.issueType || null,
+                logoUrl: logo.url || null,
+                phone: company.phone || null,
+                primarySicCode: company.primarySicCode !== null ? company.primarySicCode.toString() : null,
+                sector: company.sector || null,
+                securityName: company.securityName || null,
+                state: company.state || null,
+                symbol: company.symbol,
+                tags: company.tags || null,
+                website: company.website || null,
+                zip: company.zip || null
+            }
+
+            let newIexSecurity: addIexSecurity = {
+                ...newSec,
+                validated: false
+            }
+
+            // Couldn't find anything, lets insert it!
+            const curSec = securitiesMap[symbol];
+            if (curSec === undefined || curSec === null) {
+                newSecurities.push(newSec);
+                newIexSecurities.push(newIexSecurity);
+                updateSymbols.push(symbol)
+                return
+            }
+
+            newIexSecurity.validated = true
+            curSec.validated = true;
+
+            // Compare Objects...
+            if (Object.keys(diff(curSec, newIexSecurity)).length === 0) return;
+
+            newIexSecurity.validated = false
+            updateIexSecurities.push(newIexSecurity)
+            updateSymbols.push(newIexSecurity.symbol)
+        })
+
+        await repository.addIexSecurities(newIexSecurities)
+        await repository.addSecurities(newSecurities)
+        await repository.updateIexSecurities(updateIexSecurities)
+    }
+
+    // TODO: Publish message to Teams
+    console.log(`${updateSymbols.length} New/Updated Securities. Security Symbols List: ${updateSymbols.join(",")}`)
 }
 
 const ingestEveningSecuritiesInformation = async (repository: Repository, iex: IEX) => {
@@ -181,7 +267,7 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
 }
 
 const ingestMorningSecuritiesInformation = async (repository: Repository, iex: IEX) => {
-    const currentSecurities = await repository.getSecurities();
+    const currentSecurities = await repository.getIexSecurities();
     const currentSecuritiesMap = buildSecuritiesMap(currentSecurities);
     const possiblyNewSecurities = await iex.getIexSymbols();
     const possiblyNewOTCSymbols = await iex.getOtcSymbols();
@@ -190,7 +276,8 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
     possiblyNewSecurities.forEach((n: GetIexSymbols) => {
         const cs = currentSecuritiesMap[n.symbol]
         if (cs === undefined || cs === null) newSymbols.push(n.symbol)
-    })
+    });
+
     possiblyNewOTCSymbols.forEach((n: GetOtcSymbols) => {
         const cs = currentSecuritiesMap[n.symbol]
         if (cs === undefined || cs === null) newSymbols.push(n.symbol)
@@ -198,10 +285,13 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
 
     // These are companies I need to ingest company info, logo, and as a new security
     const newSymbolsGroups = buildGroups(newSymbols);
+    let newSymbolsCollection: string[] = [];
     for (let i = 0; i < newSymbolsGroups.length; i++) {
         let newSymbols = newSymbolsGroups[i];
         const response = await iex.bulk(newSymbols, ["company", "logo"]);
         let newSecurities: addSecurity[] = [];
+        let newIexSecurities: addIexSecurity[] = [];
+
         newSymbols.forEach(symbol => {
             const res = response[symbol];
             if (res === undefined || res === null) return;
@@ -211,7 +301,7 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
 
             if (company.companyName === null) return;
 
-            newSecurities.push({
+            let newSec: addSecurity = {
                 address: company.address || null,
                 address2: company.address2 || null,
                 ceo: company.CEO || null,
@@ -232,14 +322,24 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
                 tags: company.tags || null,
                 website: company.website || null,
                 zip: company.zip || null
-            });
+            }
+            let newIexSec: addIexSecurity = {...newSec, validated: false}
+
+            newSecurities.push(newSec);
+            newIexSecurities.push(newIexSec);
+            newSymbolsCollection.push(newSec.symbol)
         });
+
         await repository.addSecurities(newSecurities);
+        await repository.addIexSecurities(newIexSecurities)
     }
+
+    // TODO: Publish message to Teams
+    console.log(`${newSymbolsCollection.length} New Securities. Security Symbols List: ${newSymbolsCollection.join(",")}`)
 }
 
-const buildSecuritiesMap = (securities: getSecurityBySymbol[]): Record<string, getSecurityBySymbol> => {
-    let m: Record<string, getSecurityBySymbol> = {};
+const buildSecuritiesMap = <T extends { symbol: string }>(securities: T[]): Record<string, T> => {
+    let m: Record<string, T> = {};
     securities.forEach(sec => m[sec.symbol] = sec);
     return m
 }
@@ -256,7 +356,6 @@ const buildGroups = (securities: any[], max: number = 100): any[][] => {
     });
 
     if (group.length > 0) groups.push(group);
-
     return groups;
 }
 

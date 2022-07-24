@@ -194,7 +194,8 @@ makeRoute(baseFormat, function (req) {
                     //need to add to info about requests;
                     req.extra = { userId: info.sub };
                     internalHandler = entity.internal[req.params.action];
-                    if (!internalHandler) return [3 /*break*/, 3];
+                    console.log("INTERNAL " + JSON.stringify(entity.internal.extensions));
+                    if (!(req.params.action !== "extensions" && internalHandler)) return [3 /*break*/, 3];
                     settings = {
                         user_id: info.sub,
                         data: req.body
@@ -202,7 +203,7 @@ makeRoute(baseFormat, function (req) {
                     return [4 /*yield*/, internalHandler(settings)];
                 case 2: return [2 /*return*/, _a.sent()];
                 case 3:
-                    if (!entity.extensions[req.params.action]) return [3 /*break*/, 5];
+                    if (!entity.internal.extensions[req.params.action]) return [3 /*break*/, 5];
                     return [4 /*yield*/, entity.extensions[req.params.action](req)];
                 case 4: return [2 /*return*/, _a.sent()];
                 case 5: throw new EntityApiBase_1.PublicError("Unknown Action", 400);

@@ -11,11 +11,11 @@ import User from './entities/apis/UserApi'
 import Watchlist from './entities/apis/WatchlistApi'
 import WatchlistItem from './entities/apis/WatchlistItemApi'
 export * as Interface from './entities/interfaces'
-export const Api: {
-    Alert: typeof Alert, Bookmark: typeof Bookmark, Comment: typeof Comment, PlatformClaim: typeof PlatformClaim, Post: typeof Post, Subscriber: typeof Subscriber, Upvote: typeof Upvote, User: typeof User, Watchlist: typeof Watchlist, WatchlistItem: typeof WatchlistItem,
-    Auth: typeof Auth, Security: typeof Security
+export const Api:{ 
+Alert: typeof Alert,Bookmark: typeof Bookmark,Comment: typeof Comment,PlatformClaim: typeof PlatformClaim,Post: typeof Post,Subscriber: typeof Subscriber,Upvote: typeof Upvote,User: typeof User,Watchlist: typeof Watchlist,WatchlistItem: typeof WatchlistItem,
+Auth: typeof Auth,Security: typeof Security
 }
-    = {
-    Alert, Bookmark, Comment, PlatformClaim, Post, Subscriber, Upvote, User, Watchlist, WatchlistItem,
-    Auth, Security
+ = {
+Alert,Bookmark,Comment,PlatformClaim,Post,Subscriber,Upvote,User,Watchlist,WatchlistItem,
+Auth,Security
 }

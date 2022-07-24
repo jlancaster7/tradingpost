@@ -83,14 +83,30 @@ class Finicity {
                 return JSON.parse(body);
             }
             catch (e) {
-                console.log(body);
-                return null;
+                throw new Error(body.toString());
             }
         });
-        /**
-         * Adds user to testing FinBank
-         * @param username
-         */
+        this.getInstitutions = (start, limit) => __awaiter(this, void 0, void 0, function* () {
+            const url = new URL("https://api.finicity.com/institution/v2/institutions");
+            url.searchParams.set("start", start.toString());
+            url.searchParams.set("limit", limit.toString());
+            const response = yield (0, node_fetch_1.default)(url.toString(), {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Finicity-App-Key': this.appKey,
+                    'Finicity-App-Token': this.accessToken
+                }
+            });
+            const body = yield response.text();
+            try {
+                return JSON.parse(body);
+            }
+            catch (e) {
+                throw new Error(body.toString());
+            }
+        });
         this.addTestCustomer = (username) => __awaiter(this, void 0, void 0, function* () {
             const response = yield (0, node_fetch_1.default)("https://api.finicity.com/aggregation/v2/customers/testing", {
                 method: "POST",
@@ -107,11 +123,45 @@ class Finicity {
                 return JSON.parse(body);
             }
             catch (e) {
-                console.log(body);
-                return null;
+                throw new Error(body.toString());
             }
         });
-        this.addConsumer = (customerId, consumer, appKey, appToken) => __awaiter(this, void 0, void 0, function* () {
+        this.getConsumer = (customerId) => __awaiter(this, void 0, void 0, function* () {
+            const response = yield (0, node_fetch_1.default)(`https://api.finicity.com/decisioning/v1/customers/${customerId}/consumer`, {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Finicity-App-Key': this.appKey,
+                    'Finicity-App-Token': this.accessToken
+                }
+            });
+            const body = yield response.text();
+            try {
+                return JSON.parse(body);
+            }
+            catch (e) {
+                throw new Error(body.toString());
+            }
+        });
+        this.addConsumer = (customerId, consumer) => __awaiter(this, void 0, void 0, function* () {
+            const response = yield (0, node_fetch_1.default)(`https://api.finicity.com/decisioning/v1/customers/${customerId}/consumer`, {
+                method: "POST",
+                body: JSON.stringify(consumer),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Finicity-App-Key': this.appKey,
+                    'Finicity-App-Token': this.accessToken
+                }
+            });
+            const body = yield response.text();
+            try {
+                return JSON.parse(body);
+            }
+            catch (e) {
+                throw new Error(body.toString());
+            }
         });
         this.addCustomer = (applicationId, username) => __awaiter(this, void 0, void 0, function* () {
             const headers = {
@@ -120,7 +170,6 @@ class Finicity {
                 'Finicity-App-Key': this.appKey,
                 'Finicity-App-Token': this.accessToken
             };
-            console.log(headers);
             const response = yield (0, node_fetch_1.default)("https://api.finicity.com/aggregation/v2/customers/active", {
                 method: "POST",
                 body: JSON.stringify({ username: username }),
@@ -128,16 +177,15 @@ class Finicity {
             });
             const body = yield response.text();
             try {
-                return JSON.parse(body);
+                return yield JSON.parse(body);
             }
             catch (e) {
-                throw body.toString();
+                throw new Error(body.toString());
             }
         });
         this.getCustomers = () => __awaiter(this, void 0, void 0, function* () {
             const response = yield (0, node_fetch_1.default)("https://api.finicity.com/aggregation/v1/customers", {
                 method: "POST",
-                // body: JSON.stringify({username, applicationId}),
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -145,29 +193,57 @@ class Finicity {
                     'Finicity-App-Token': this.accessToken
                 }
             });
-            console.log(response.status);
-            console.log(response.statusText);
             const body = yield response.text();
             try {
                 return JSON.parse(body);
             }
             catch (e) {
-                console.log(body);
-                return null;
+                throw new Error(body.toString());
             }
         });
-        this.getCustomer = () => __awaiter(this, void 0, void 0, function* () {
+        this.getCustomerAccounts = (customerId) => __awaiter(this, void 0, void 0, function* () {
+            const response = yield (0, node_fetch_1.default)(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts`, {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Finicity-App-Key': this.appKey,
+                    'Finicity-App-Token': this.accessToken
+                }
+            });
+            const body = yield response.text();
+            try {
+                return JSON.parse(body);
+            }
+            catch (e) {
+                throw new Error(body.toString());
+            }
+        });
+        this.getCustomerAccountById = (customerId, accountId) => __awaiter(this, void 0, void 0, function* () {
+            const response = yield (0, node_fetch_1.default)(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts/${accountId}`, {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Finicity-App-Key': this.appKey,
+                    'Finicity-App-Token': this.accessToken
+                }
+            });
+            const body = yield response.text();
+            try {
+                return JSON.parse(body);
+            }
+            catch (e) {
+                throw new Error(body.toString());
+            }
         });
         this.generateConnectUrl = (customerId, webhook, webhookContentType = "application/json", experience = "default") => __awaiter(this, void 0, void 0, function* () {
-            console.log("Generating connect token...");
             const headers = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'Finicity-App-Key': this.appKey,
                 'Finicity-App-Token': this.accessToken
             };
-            console.log("CustomerID: ", customerId);
-            console.log("Partner ID : ", this.partnerId);
             const response = yield (0, node_fetch_1.default)("https://api.finicity.com/connect/v2/generate", {
                 method: "POST",
                 body: JSON.stringify({
@@ -184,13 +260,8 @@ class Finicity {
                 return JSON.parse(body);
             }
             catch (e) {
-                console.log(body.toString());
-                throw e;
+                throw new Error(body.toString());
             }
-        });
-        this.generateConnectLiteUrl = () => __awaiter(this, void 0, void 0, function* () {
-        });
-        this.generateConnectEmail = (customerId) => __awaiter(this, void 0, void 0, function* () {
         });
         this.refreshCustomerAccounts = (customerId) => __awaiter(this, void 0, void 0, function* () {
             const response = yield (0, node_fetch_1.default)(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts`, {
@@ -207,7 +278,64 @@ class Finicity {
                 return JSON.parse(body);
             }
             catch (e) {
-                throw e;
+                throw new Error(body.toString());
+            }
+        });
+        this.loadHistoricTransactionsForCustomerAccount = (customerId, accountId) => __awaiter(this, void 0, void 0, function* () {
+            yield (0, node_fetch_1.default)(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts/${accountId}/transactions/historic`, {
+                method: "POST",
+                body: JSON.stringify({}),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Finicity-App-Key': this.appKey,
+                    'Finicity-App-Token': this.accessToken
+                }
+            });
+        });
+        this.getAccountOwner = (customerId, accountId) => __awaiter(this, void 0, void 0, function* () {
+            const response = yield (0, node_fetch_1.default)(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts/${accountId}/owner`, {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Finicity-App-Key': this.appKey,
+                    'Finicity-App-Token': this.accessToken
+                }
+            });
+            const body = yield response.text();
+            try {
+                return JSON.parse(body);
+            }
+            catch (e) {
+                throw new Error(body.toString());
+            }
+        });
+        this.getAllCustomerTransactions = (customerId, params) => __awaiter(this, void 0, void 0, function* () {
+            const url = new URL(`https://api.finicity.com/aggregation/v3/customers/${customerId}/transactions`);
+            Object.keys(params).forEach((key) => {
+                const val = params[key];
+                if (!val)
+                    return;
+                if (typeof val !== 'string' || typeof val.toString() === 'undefined')
+                    return;
+                url.searchParams.set(key, val.toString());
+            });
+            const response = yield (0, node_fetch_1.default)(url.toString(), {
+                method: "GET",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Finicity-App-Key': this.appKey,
+                    'Finicity-App-Token': this.accessToken
+                }
+            });
+            const body = yield response.text();
+            try {
+                return JSON.parse(body);
+            }
+            catch (e) {
+                throw new Error(body.toString());
             }
         });
         this.partnerId = partnerId;

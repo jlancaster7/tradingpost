@@ -5,6 +5,10 @@ import bodyParser from 'body-parser';
 import api from './routes-api-alpha'
 import cors from 'cors'
 import { healthCheck } from './healthcheck'
+import fetch from 'node-fetch'
+
+
+(globalThis as any)["fetch" as any] = fetch;
 //fromWebToken()
 
 const app = express();

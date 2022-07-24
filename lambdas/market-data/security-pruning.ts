@@ -17,9 +17,8 @@ const run = async () => {
             password: postgresConfiguration['password'] as string,
             database: postgresConfiguration['database'] as string
         })
+        await pgClient.connect();
     }
-
-    await pgClient.connect();
 
     const repository = new Repository(pgClient, pgp);
 
@@ -28,8 +27,6 @@ const run = async () => {
     } catch (e) {
         console.error(e)
         throw e
-    } finally {
-        await pgp.end()
     }
 }
 

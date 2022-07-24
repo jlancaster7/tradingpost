@@ -6,6 +6,7 @@ export declare type RequestSettings<T = any> = {
 export declare abstract class EntityApi<TGet, TList, TInsert, TUpdate> extends EntityApiBase<TGet, TList, TInsert, TUpdate> {
     internal: {
         parent: EntityApi<TGet, TList, TInsert, TUpdate>;
+        extensions: any;
         list: () => Promise<TList[]>;
         get: (settings?: RequestSettings) => Promise<TGet>;
         update: (settings?: RequestSettings<TUpdate>) => Promise<TGet>;

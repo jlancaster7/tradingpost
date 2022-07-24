@@ -8,23 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const index_1 = require("@tradingpost/common/configuration/index");
-const pg_promise_1 = __importDefault(require("pg-promise"));
+const deep_object_diff_1 = require("deep-object-diff");
 (() => __awaiter(void 0, void 0, void 0, function* () {
-    const postgresConfiguration = yield index_1.DefaultConfig.fromSSM("postgres");
-    const pgp = (0, pg_promise_1.default)({});
-    const conn = pgp({
-        host: postgresConfiguration['host'],
-        user: postgresConfiguration['user'],
-        password: postgresConfiguration['password'],
-        database: postgresConfiguration['database']
-    });
-    yield conn.connect();
-    const data = yield conn.result("SELECT symbol from security");
-    console.log(data.rows);
+    let obj1 = {
+        name: 'Steve',
+        foo: 'bar',
+        age: 21
+    };
+    let obj2 = {
+        foo: 'barr',
+        age: 21,
+        name: 'Steve'
+    };
+    console.log(Object.keys((0, deep_object_diff_1.diff)(obj1, obj2)).length === 0);
 }))();
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGVzdC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbInRlc3QudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7QUFBQSxtRUFBc0U7QUFDdEUsNERBQW1DO0FBRW5DLENBQUMsR0FBUSxFQUFFO0lBQ1AsTUFBTSxxQkFBcUIsR0FBRyxNQUFNLHFCQUFhLENBQUMsT0FBTyxDQUFDLFVBQVUsQ0FBQyxDQUFDO0lBQ3RFLE1BQU0sR0FBRyxHQUFHLElBQUEsb0JBQVMsRUFBQyxFQUFFLENBQUMsQ0FBQztJQUMxQixNQUFNLElBQUksR0FBRyxHQUFHLENBQUM7UUFDYixJQUFJLEVBQUUscUJBQXFCLENBQUMsTUFBTSxDQUFXO1FBQzdDLElBQUksRUFBRSxxQkFBcUIsQ0FBQyxNQUFNLENBQVc7UUFDN0MsUUFBUSxFQUFFLHFCQUFxQixDQUFDLFVBQVUsQ0FBVztRQUNyRCxRQUFRLEVBQUUscUJBQXFCLENBQUMsVUFBVSxDQUFXO0tBQ3hELENBQUMsQ0FBQTtJQUVGLE1BQU0sSUFBSSxDQUFDLE9BQU8sRUFBRSxDQUFDO0lBRXJCLE1BQU0sSUFBSSxHQUFHLE1BQU0sSUFBSSxDQUFDLE1BQU0sQ0FBQyw2QkFBNkIsQ0FBQyxDQUFDO0lBQzlELE9BQU8sQ0FBQyxHQUFHLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxDQUFBO0FBQzFCLENBQUMsQ0FBQSxDQUFDLEVBQUUsQ0FBQSJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoidGVzdC5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbInRlc3QudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7QUFBQSx1REFBc0M7QUFFdEMsQ0FBQyxHQUFTLEVBQUU7SUFDUixJQUFJLElBQUksR0FBRztRQUNQLElBQUksRUFBRSxPQUFPO1FBQ2IsR0FBRyxFQUFFLEtBQUs7UUFDVixHQUFHLEVBQUUsRUFBRTtLQUNWLENBQUE7SUFFRCxJQUFJLElBQUksR0FBRztRQUNQLEdBQUcsRUFBRSxNQUFNO1FBQ1gsR0FBRyxFQUFFLEVBQUU7UUFDUCxJQUFJLEVBQUUsT0FBTztLQUNoQixDQUFBO0lBRUQsT0FBTyxDQUFDLEdBQUcsQ0FBQyxNQUFNLENBQUMsSUFBSSxDQUFDLElBQUEsdUJBQUksRUFBQyxJQUFJLEVBQUUsSUFBSSxDQUFDLENBQUMsQ0FBQyxNQUFNLEtBQUksQ0FBQyxDQUFDLENBQUE7QUFDMUQsQ0FBQyxDQUFBLENBQUMsRUFBRSxDQUFBIn0=

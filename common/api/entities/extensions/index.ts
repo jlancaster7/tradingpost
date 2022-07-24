@@ -1,8 +1,5 @@
 import { EntityApiBase } from "../static/EntityApiBase"
 
-
-
-type AnyApi = EntityApiBase<any, any, any, any>;
 export class Extension {
     protected baseApi: EntityApiBase<any, any, any, any>;
 
@@ -11,17 +8,21 @@ export class Extension {
     }
     protected _makeFetch = <S, T = any>(methodName: keyof typeof this, requestInit: (settings: S) => RequestInit) => {
         return async (settings: S) => {
-            const resp = await fetch(this.baseApi.makeUrl(methodName as string), { headers: EntityApiBase.makeHeaders(), ...requestInit(settings) });
+            const resp = await fetch(this.baseApi.makeUrl(methodName as string), { method: "POST", headers: EntityApiBase.makeHeaders(), ...requestInit(settings) });
             return EntityApiBase.handleFetchResponse<T>(resp);
         }
     }
 }
 export default Extension;
 //should be bound in the future
-export const ensureServerExtensions = <T>(defs: Record<keyof T, (req: IRequest) => Promise<any>>) => undefined
+export const ensureServerExtensions = <T>(defs: Record<keyof T, (req: {
+    body: any, extra: {
+        userId: string
+    }
+}) => Promise<any>>) => defs
 
-//Shallow Request Def commented some stuff out to not have to define/include all node types
-export interface IRequest<
+//Gave up on this idea
+interface IRequest<
     P = ParamsDictionary,
     ResBody = any,
     ReqBody = any,
@@ -30,9 +31,7 @@ export interface IRequest<
     > extends
     //http.IncomingMessage,
     Express.Request {
-    extra: {
-        userId: string
-    }
+
     /**
      * Return request header.
      *

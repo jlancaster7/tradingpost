@@ -15,7 +15,7 @@ class Extension {
     constructor(baseApi) {
         this._makeFetch = (methodName, requestInit) => {
             return (settings) => __awaiter(this, void 0, void 0, function* () {
-                const resp = yield fetch(this.baseApi.makeUrl(methodName), requestInit(settings));
+                const resp = yield fetch(this.baseApi.makeUrl(methodName), Object.assign({ method: "POST", headers: EntityApiBase_1.EntityApiBase.makeHeaders() }, requestInit(settings)));
                 return EntityApiBase_1.EntityApiBase.handleFetchResponse(resp);
             });
         };
@@ -25,5 +25,5 @@ class Extension {
 exports.Extension = Extension;
 exports.default = Extension;
 //should be bound in the future
-const ensureServerExtensions = (defs) => undefined;
+const ensureServerExtensions = (defs) => defs;
 exports.ensureServerExtensions = ensureServerExtensions;

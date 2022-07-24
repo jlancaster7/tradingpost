@@ -8,6 +8,9 @@ class User extends index_1.Extension {
             method: "POST",
             body: JSON.stringify(s)
         }));
+        this.generateBrokerageLink = this._makeFetch("generateBrokerageLink", (s) => ({
+            method: "POST"
+        }));
     }
 }
 exports.default = User;

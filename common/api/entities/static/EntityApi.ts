@@ -1,7 +1,8 @@
-
 import { execProc, execProcOne } from '../static/pool';
 import { EntityApiBase } from './EntityApiBase';
 import { makeError } from '../../errors'
+import { existsSync } from 'fs'
+import { join } from 'path';
 
 export type RequestSettings<T = any> = {
     user_id?: string,
@@ -9,11 +10,25 @@ export type RequestSettings<T = any> = {
     //add pagination stuff here too
 }
 
+function makeExtensions(name: string) {
+    const path = join(__dirname, "../", "extensions", name.substring(0, name.length - 3) + ".server");
+    console.log(path);
+    if (existsSync(path + ".js")) {
+        console.log("FOUND THE FILE");
+        return require(path).default;
+    } else {
+        return {};
+    }
+}
+
 export abstract class EntityApi<TGet, TList, TInsert, TUpdate> extends EntityApiBase<TGet, TList, TInsert, TUpdate> {
     internal = new class {
+
         parent: EntityApi<TGet, TList, TInsert, TUpdate>;
+        extensions: any
         constructor(parent: EntityApi<TGet, TList, TInsert, TUpdate>) {
             this.parent = parent;
+            this.extensions = makeExtensions(this.parent.constructor.name)
         }
         list = () => {
             if (!this.list) {

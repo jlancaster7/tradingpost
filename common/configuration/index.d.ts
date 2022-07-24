@@ -1,9 +1,14 @@
 import { SSM } from '@aws-sdk/client-ssm';
-declare type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid";
+declare type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid" | "finicity";
 interface ConfigPaths extends Record<ConfigKeys, unknown> {
     elastic: {
         cloudId: string;
         apiKey: string;
+    };
+    finicity: {
+        partnerId: string;
+        partnerSecret: string;
+        appKey: string;
     };
     postgres: {
         host: string;

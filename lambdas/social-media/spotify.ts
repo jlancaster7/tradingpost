@@ -17,18 +17,16 @@ const run = async () => {
             password: postgresConfiguration['password'] as string,
             database: postgresConfiguration['database'] as string
         })
+        await pgClient.connect()
     }
 
     const spotifyConfiguration = await DefaultConfig.fromCacheOrSSM("spotify");
-    await pgClient.connect()
 
     try {
         await lambdaImportEpisodes(pgClient, spotifyConfiguration);
     } catch (e) {
         console.error(e)
         throw e
-    } finally {
-        await pgp.end()
     }
 }
 

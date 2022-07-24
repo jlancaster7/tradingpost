@@ -2,11 +2,37 @@ import User, { UploadProfilePicBody } from "./User"
 import { ensureServerExtensions } from "."
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import UserApi, { IUserUpdate } from '../apis/UserApi'
+import { FinicityService } from '../../../brokerage/finicity'
+import { DefaultConfig } from "../../../configuration";
+import pgPromise from "pg-promise";
+import Finicity from "../../../finicity";
+import Repository from '../../../brokerage/repository'
+
 const client = new S3Client({
     region: "us-east-1"
 });
 
 export default ensureServerExtensions<User>({
+    generateBrokerageLink: async (req) => {
+        const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
+        const pgp = pgPromise({});
+        const pgClient = pgp({
+            host: pgCfg.host,
+            user: pgCfg.user,
+            password: pgCfg.password,
+            database: pgCfg.database
+        });
+
+        await pgClient.connect();
+        const repository = new Repository(pgClient, pgp);
+
+        const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
+        const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
+        const finicityService = new FinicityService(finicity, repository);
+        return {
+            link: finicityService.generateBrokerageAuthenticationLink(req.extra.userId)
+        }
+    },
     uploadProfilePic: async (req) => {
         const body = req.body as UploadProfilePicBody;
         if (req.extra.userId !== body.userId) {
@@ -25,4 +51,9 @@ export default ensureServerExtensions<User>({
                 code: 401
             }
     }
-});
+})
+
+
+
+
+

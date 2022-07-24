@@ -13,11 +13,17 @@ type ConfigKeys =
     | "fcm"
     | "substack"
     | "sendgrid"
+    | "finicity"
 
 interface ConfigPaths extends Record<ConfigKeys, unknown> {
     elastic: {
         cloudId: string
         apiKey: string
+    }
+    finicity: {
+        partnerId: string
+        partnerSecret: string
+        appKey: string
     }
     postgres: {
         host: string
@@ -140,12 +146,12 @@ const API_VERSION = '2014-11-06';
 export const DefaultConfig = new Configuration<ConfigPaths>(new SSM({
     apiVersion: API_VERSION,
     region: BASE_REGION,
-}), { authkey: { raw: true } });
+}), {authkey: {raw: true}});
 
 
 export const AutomationConfig = new Configuration<{ npm_key: string }>(new SSM({
     apiVersion: API_VERSION,
     region: BASE_REGION,
-}), { npm_key: { raw: true } }, "automation");
+}), {npm_key: {raw: true}}, "automation");
 
 

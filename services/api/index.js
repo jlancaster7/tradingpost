@@ -10,6 +10,8 @@ var body_parser_1 = __importDefault(require("body-parser"));
 var routes_api_alpha_1 = __importDefault(require("./routes-api-alpha"));
 var cors_1 = __importDefault(require("cors"));
 var healthcheck_1 = require("./healthcheck");
+var node_fetch_1 = __importDefault(require("node-fetch"));
+globalThis["fetch"] = node_fetch_1.default;
 //fromWebToken()
 var app = (0, express_1.default)();
 var port = process.env.PORT || 8082; // default port to listen

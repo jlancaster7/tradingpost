@@ -5,4 +5,7 @@ export declare type UploadProfilePicBody = {
 };
 export default class User extends Extension {
     uploadProfilePic: (settings: UploadProfilePicBody) => Promise<any>;
+    generateBrokerageLink: (settings: undefined) => Promise<{
+        link: string;
+    }>;
 }

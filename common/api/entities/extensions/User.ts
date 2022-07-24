@@ -1,6 +1,4 @@
 import { Extension } from "./index"
-import { EntityApiBase } from "../static/EntityApiBase";
-
 
 export type UploadProfilePicBody = { userId: string, image: string };
 
@@ -9,5 +7,9 @@ export default class User extends Extension {
         method: "POST",
         body: JSON.stringify(s)
     }))
+    generateBrokerageLink = this._makeFetch<undefined, { link: string }>("generateBrokerageLink", (s) => ({
+        method: "POST"
+    }))
+
 }
 

@@ -1,18 +1,17 @@
-import {DefaultConfig} from "@tradingpost/common/configuration/index";
-import pgPromise from "pg-promise";
+import {diff} from 'deep-object-diff';
 
-(async() => {
-    const postgresConfiguration = await DefaultConfig.fromSSM("postgres");
-    const pgp = pgPromise({});
-    const conn = pgp({
-        host: postgresConfiguration['host'] as string,
-        user: postgresConfiguration['user'] as string,
-        password: postgresConfiguration['password'] as string,
-        database: postgresConfiguration['database'] as string
-    })
+(async () => {
+    let obj1 = {
+        name: 'Steve',
+        foo: 'bar',
+        age: 21
+    }
 
-    await conn.connect();
+    let obj2 = {
+        foo: 'barr',
+        age: 21,
+        name: 'Steve'
+    }
 
-    const data = await conn.result("SELECT symbol from security");
-    console.log(data.rows)
+    console.log(Object.keys(diff(obj1, obj2)).length ===0)
 })()

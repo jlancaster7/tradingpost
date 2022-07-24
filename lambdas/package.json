@@ -2,6 +2,7 @@
   "dependencies": {
     "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1153.0",
+    "deep-object-diff": "^1.1.7",
     "dotenv": "^10.0.0",
     "luxon": "^2.4.0",
     "pg": "^8.7.3",

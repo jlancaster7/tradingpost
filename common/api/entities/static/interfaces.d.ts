@@ -18,3 +18,43 @@ export interface IAnalystProfile {
     benchmark: string;
     interests: string[];
 }
+export interface IElasticResponse {
+    hits: IElasticPost[];
+}
+export interface IElasticPost {
+    _index: string;
+    _id: string;
+    _score: number;
+    _source: {
+        content: {
+            body: string;
+            description: string;
+            htmlBody: string;
+            htmlTitle: string | null;
+            title: string | null;
+        };
+        imageUrl: null;
+        meta: {};
+        platform: {
+            displayName: string;
+            imageUrl: string;
+            profileUrl: string;
+            username: string;
+        };
+        platformCreatedAt: string;
+        platformUpdatedAt: null;
+        postType: 'tweet';
+        postTypeValue: number;
+        postUrl: string;
+        ratingsCount: 0;
+        tradingpostCreatedAt: string;
+        tradingpostUpdatedAt: null;
+        user: {
+            id: string;
+            imageUrl: string;
+            name: string;
+            type: "husk";
+            username: string;
+        };
+    };
+}

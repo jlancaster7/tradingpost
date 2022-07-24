@@ -123,14 +123,17 @@ makeRoute(baseFormat, (req) => {
 
 
         const internalHandler = entity.internal[req.params.action as keyof (typeof entity)["internal"]];
-        if (internalHandler) {
+
+        console.log("INTERNAL " + JSON.stringify(entity.internal.extensions));
+
+        if (req.params.action !== "extensions" && internalHandler) {
             const settings: RequestSettings<any> = {
                 user_id: info.sub,
                 data: req.body
             }
             return await (internalHandler as any)(settings);
         }
-        else if ((entity as any).extensions[req.params.action]) {
+        else if (entity.internal.extensions[req.params.action]) {
             return await (entity as any).extensions[req.params.action](req);
         }
         else {
