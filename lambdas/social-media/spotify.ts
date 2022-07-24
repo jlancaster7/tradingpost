@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import {Context} from "aws-lambda";
-import {lambdaImportEpisodes} from "../../services/data-processing/podcasts/imports";
+import {lambdaImportEpisodes} from "@tradingpost/common/social-media/podcasts/import"
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
@@ -12,10 +12,10 @@ const run = async () => {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
         pgClient = pgp({
-            host: postgresConfiguration['host'] as string,
-            user: postgresConfiguration['user'] as string,
-            password: postgresConfiguration['password'] as string,
-            database: postgresConfiguration['database'] as string
+            host: postgresConfiguration.host,
+            user: postgresConfiguration.user,
+            password: postgresConfiguration.password,
+            database: postgresConfiguration.database
         })
         await pgClient.connect()
     }
@@ -23,7 +23,7 @@ const run = async () => {
     const spotifyConfiguration = await DefaultConfig.fromCacheOrSSM("spotify");
 
     try {
-        await lambdaImportEpisodes(pgClient, spotifyConfiguration);
+        await lambdaImportEpisodes(pgClient, pgp, spotifyConfiguration);
     } catch (e) {
         console.error(e)
         throw e

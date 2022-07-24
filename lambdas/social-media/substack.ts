@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import {Context} from "aws-lambda";
-import {lambdaImportRSSFeeds} from "../../services/data-processing/rss_feeds/imports";
+import {lambdaImportRSSFeeds} from "@tradingpost/common/social-media/rss_feeds/import";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
@@ -12,10 +12,10 @@ const run = async () => {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
         pgClient = pgp({
-            host: postgresConfiguration['host'] as string,
-            user: postgresConfiguration['user'] as string,
-            password: postgresConfiguration['password'] as string,
-            database: postgresConfiguration['database'] as string
+            host: postgresConfiguration.host,
+            user: postgresConfiguration.user,
+            password: postgresConfiguration.password,
+            database: postgresConfiguration.database
         })
         await pgClient.connect()
     }
@@ -23,7 +23,7 @@ const run = async () => {
     const substackConfiguration = await DefaultConfig.fromCacheOrSSM("substack");
 
     try {
-        await lambdaImportRSSFeeds(pgClient, substackConfiguration);
+        await lambdaImportRSSFeeds(pgClient, pgp, substackConfiguration);
     } catch (e) {
         console.error(e)
         throw e

@@ -4,7 +4,6 @@ export interface IBrokerageService {
     importAccounts(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostBrokerageAccounts[]>;
     importTransactions(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostTransactions[]>;
     importHoldings(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostCurrentHoldings[]>;
-    computeHoldingsHistory(userId: string): Promise<TradingPostHistoricalHoldings[]>;
     exportAccounts(userId: string): Promise<TradingPostBrokerageAccounts[]>;
     exportTransactions(userId: string): Promise<TradingPostTransactions[]>;
     exportHoldings(userId: string): Promise<TradingPostCurrentHoldings[]>;
@@ -24,6 +23,8 @@ export interface IFinicityRepository {
     addFinicityAccounts(accounts: FinicityAccount[]): Promise<void>;
     getFinicityAccounts(finicityUserId: number): Promise<FinicityAccount[]>;
     upsertFinicityHoldings(holdings: FinicityHolding[]): Promise<void>;
+    getFinicityHoldings(finicityUserId: number): Promise<FinicityHolding[]>;
+    getFinicityTransactions(finicityUserId: number): Promise<FinicityTransaction[]>;
 }
 export interface ISummaryRepository {
     getTradingPostBrokerageAccounts(userId: string): Promise<TradingPostBrokerageAccountsTable[]>;
@@ -199,6 +200,7 @@ export declare type FinicityTransaction = {
     description: string;
     memo: string;
     type: string;
+    buyType: string;
     interestAmount: number;
     principalAmount: number;
     feeAmount: number;
@@ -235,6 +237,15 @@ export declare type FinicityTransaction = {
     updatedAt: DateTime;
     createdAt: DateTime;
 };
+export declare type TradingPostBrokerageAccountWithFinicity = {
+    internalFinicityAccountId: number;
+    internalFinicityUserId: number;
+    internalFinicityInstitutionId: number;
+    externalFinicityAccountId: string;
+    externalFinicityAccountNumber: string;
+    name: string;
+    type: string;
+} & TradingPostBrokerageAccountsTable;
 export interface GetSecurityBySymbol {
     id: number;
     symbol: string;
@@ -437,3 +448,9 @@ export declare type AccountGroupHPRs = {
     return: number;
 };
 export declare type AccountGroupHPRsTable = AccountGroupHPRs & TableInfo;
+export declare type SecurityIssue = {
+    id: number;
+    symbol: string;
+    name: string;
+    issueType: string;
+};

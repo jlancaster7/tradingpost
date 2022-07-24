@@ -3,9 +3,6 @@ app: tradingpost-app
 
 frameworkVersion: '3'
 
-plugins:
-  - serverless-webpack
-
 provider:
   stage: production
   name: aws
@@ -125,7 +122,6 @@ functions:
       - schedule:
           rate: cron(*/10 * ? * MON-SUN *) # Run every 10 minutes every day
           enabled: true
-
   youtube:
     handler: social-media/youtube.run
     description: Ingests YouTube User Data

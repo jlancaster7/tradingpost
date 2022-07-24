@@ -1,6 +1,14 @@
 {
   "mappings": {
     "properties": {
+      "id": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
       "user": {
         "properties": {
           "imageUrl": {

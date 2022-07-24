@@ -28,9 +28,12 @@ export default ensureServerExtensions<User>({
 
         const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
         const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-        const finicityService = new FinicityService(finicity, repository);
+        //const finicityService = new FinicityService(finicity, repository);
+        // return {
+        //     link: finicityService.generateBrokerageAuthenticationLink(req.extra.userId)
+        // }
         return {
-            link: finicityService.generateBrokerageAuthenticationLink(req.extra.userId)
+            
         }
     },
     uploadProfilePic: async (req) => {

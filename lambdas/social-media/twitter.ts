@@ -1,6 +1,7 @@
 import 'dotenv/config';
+process.env.CONFIGURATION_ENV = "production";
 import {Context} from "aws-lambda";
-import {lambdaImportTweets} from "../../services/data-processing/twitter/imports";
+import {lambdaImportTweets} from "@tradingpost/common/social-media/twitter";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
@@ -8,27 +9,28 @@ let pgClient: IDatabase<any>;
 let pgp: IMain;
 
 const run = async () => {
-    const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
-
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
         pgClient = pgp({
-            host: postgresConfiguration['host'] as string,
-            user: postgresConfiguration['user'] as string,
-            password: postgresConfiguration['password'] as string,
-            database: postgresConfiguration['database'] as string
+            host: postgresConfiguration.host,
+            user: postgresConfiguration.user,
+            password: postgresConfiguration.password,
+            database: postgresConfiguration.database
         })
-        await pgClient.connect()
+        //await pgClient.connect()
     }
-
+    const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
     try {
-        await lambdaImportTweets(pgClient, twitterConfiguration);
+        await lambdaImportTweets(pgClient, pgp, twitterConfiguration);
+        pgp.end();
     } catch (e) {
+        pgp.end();
         console.error(e)
         throw e;
     }
 }
+run();
 
 module.exports.run = async (event: any, context: Context) => {
     await run();

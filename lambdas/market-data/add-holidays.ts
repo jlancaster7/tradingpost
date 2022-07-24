@@ -2,8 +2,8 @@ import 'dotenv/config';
 import {Context} from 'aws-lambda';
 import IEX, {GetUSHolidayAndTradingDays} from '@tradingpost/common/iex';
 import {DateTime} from 'luxon';
-import {Repository} from "../../services/market-data/repository";
-import {addUSHoliday} from '../../services/market-data/interfaces';
+import {Repository} from "@tradingpost/common/market-data/repository";
+import {addUSHoliday} from '@tradingpost/common/market-data/interfaces';
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from 'pg-promise'
 

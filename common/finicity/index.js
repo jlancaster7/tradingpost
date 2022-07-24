@@ -244,6 +244,9 @@ class Finicity {
                 'Finicity-App-Key': this.appKey,
                 'Finicity-App-Token': this.accessToken
             };
+            const finicityCallbackUrl = process.env.FINICITY_CALLBACK_URL;
+            if (!finicityCallbackUrl)
+                throw new Error("finicity callback url not set within the system");
             const response = yield (0, node_fetch_1.default)("https://api.finicity.com/connect/v2/generate", {
                 method: "POST",
                 body: JSON.stringify({
@@ -251,7 +254,7 @@ class Finicity {
                     customerId: customerId,
                     webhook: webhook,
                     webhookContentType: webhookContentType,
-                    // experience: experience
+                    redirectUri: finicityCallbackUrl,
                 }),
                 headers,
             });
