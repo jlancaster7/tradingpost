@@ -7,6 +7,7 @@ import { DefaultConfig } from "../../../configuration";
 import pgPromise from "pg-promise";
 import Finicity from "../../../finicity";
 import Repository from '../../../brokerage/repository'
+import { FinicityTransformer } from '../../../brokerage/finicity/transformer'
 
 const client = new S3Client({
     region: "us-east-1"
@@ -28,13 +29,21 @@ export default ensureServerExtensions<User>({
 
         const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
         const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-        //const finicityService = new FinicityService(finicity, repository);
-        // return {
-        //     link: finicityService.generateBrokerageAuthenticationLink(req.extra.userId)
-        // }
+        const finicityService = new FinicityService(finicity, repository, new FinicityTransformer({
+            getFinicityInstitutions() {
+                throw new Error("Method Not Implemented");
+            },
+            getSecuritiesWithIssue() {
+                throw new Error("Method Not Implemented");
+            },
+            getTradingPostAccountsWithFinicityNumber(userId: any) {
+                throw new Error("Method Not Implemented");
+            },
+        }));
         return {
-            
+            link: finicityService.generateBrokerageAuthenticationLink(req.extra.userId)
         }
+
     },
     uploadProfilePic: async (req) => {
         const body = req.body as UploadProfilePicBody;
@@ -55,8 +64,3 @@ export default ensureServerExtensions<User>({
             }
     }
 })
-
-
-
-
-

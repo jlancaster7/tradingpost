@@ -121,11 +121,7 @@ makeRoute(baseFormat, (req) => {
         //need to add to info about requests;
         (req as any).extra = { userId: info.sub };
 
-
         const internalHandler = entity.internal[req.params.action as keyof (typeof entity)["internal"]];
-
-        console.log("INTERNAL " + JSON.stringify(entity.internal.extensions));
-
         if (req.params.action !== "extensions" && internalHandler) {
             const settings: RequestSettings<any> = {
                 user_id: info.sub,
@@ -134,7 +130,7 @@ makeRoute(baseFormat, (req) => {
             return await (internalHandler as any)(settings);
         }
         else if (entity.internal.extensions[req.params.action]) {
-            return await (entity as any).extensions[req.params.action](req);
+            return await entity.internal.extensions[req.params.action](req);
         }
         else {
             throw new PublicError("Unknown Action", 400);

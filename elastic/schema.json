@@ -87,6 +87,16 @@
           }
         }
       },
+      "size": {
+        "properties": {
+          "maxWidthPx": {
+            "type": "integer"
+          },
+          "aspectRatio": {
+            "type": "half_float"
+          }
+        }
+      },
       "platformUpdatedAt": {
         "type": "date",
         "format": "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"

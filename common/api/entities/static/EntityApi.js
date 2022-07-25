@@ -10,10 +10,12 @@ function makeExtensions(name) {
     const path = (0, path_1.join)(__dirname, "../", "extensions", name.substring(0, name.length - 3) + ".server");
     console.log(path);
     if ((0, fs_1.existsSync)(path + ".js")) {
-        console.log("FOUND THE FILE");
-        return require(path).default;
+        const returned = require(path).default;
+        console.log("##############################FOUND THE FILE" + Object.keys(returned));
+        return returned;
     }
     else {
+        console.log("######################DID NOTTTTTTT FOUND THE FILE");
         return {};
     }
 }

@@ -1,7 +1,8 @@
 import 'dotenv/config';
-import {Client as PostgresClient} from 'pg';
-import {Client as ElasticClient} from '@elastic/elasticsearch';
-import {DefaultConfig} from '../..//configuration';
+process.env.CONFIGURATION_ENV="production";
+import { Client as PostgresClient } from 'pg';
+import { Client as ElasticClient } from '@elastic/elasticsearch';
+import { DefaultConfig } from '../..//configuration';
 import {
     TweetsAndUser,
     ElasticSearchBody,
@@ -9,8 +10,8 @@ import {
     SubstackAndNewsletter,
     SpotifyEpisodeAndUser
 } from "./interfaces";
-import {DateTime} from 'luxon';
-import {LastID, Provider} from "./interfaces";
+import { DateTime } from 'luxon';
+import { LastID, Provider } from "./interfaces";
 import yargs from "yargs";
 import fs from "fs";
 
@@ -63,7 +64,7 @@ class Twitter {
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
 
-        if (response.rows.length <= 0) return {items: [], lastId: null};
+        if (response.rows.length <= 0) return { items: [], lastId: null };
 
         const tweetsAndUsers = response.rows.map((row: any) => {
             let obj: TweetsAndUser = {
@@ -101,7 +102,7 @@ class Twitter {
             }
             return obj;
         });
-        return {items: this.map(tweetsAndUsers), lastId: response.rows[response.rows.length - 1].id}
+        return { items: this.map(tweetsAndUsers), lastId: response.rows[response.rows.length - 1].id }
     }
 
     map = (items: TweetsAndUser[]): ElasticSearchBody[] => {
@@ -186,7 +187,7 @@ class SubStack {
                      ORDER BY sa.id ASC;`
         const response = await this.dbClient.query(query);
 
-        if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
+        if (!response.rows || response.rows.length <= 0) return { items: [], lastId: null };
         const substackAndNewsletters = response.rows.map((row: any) => {
             let obj: SubstackAndNewsletter = {
                 article_id: row.article_id,
@@ -217,7 +218,7 @@ class SubStack {
             return obj;
         });
 
-        return {items: this.map(substackAndNewsletters), lastId: response.rows[response.rows.length - 1].id}
+        return { items: this.map(substackAndNewsletters), lastId: response.rows[response.rows.length - 1].id }
     }
 
     map = (items: SubstackAndNewsletter[]): ElasticSearchBody[] => {
@@ -309,7 +310,7 @@ class Spotify {
                      LIMIT 5000;`;
         const response = await this.dbClient.query(query);
 
-        if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
+        if (!response.rows || response.rows.length <= 0) return { items: [], lastId: null };
         const spotifyItems = response.rows.map((row: any) => {
             let obj: SpotifyEpisodeAndUser = {
                 audio_preview_url: row.audio_preview_url,
@@ -347,7 +348,7 @@ class Spotify {
             return obj;
         });
 
-        return {items: this.map(spotifyItems), lastId: response.rows[response.rows.length - 1].id}
+        return { items: this.map(spotifyItems), lastId: response.rows[response.rows.length - 1].id }
     }
 
     map = (items: SpotifyEpisodeAndUser[]): ElasticSearchBody[] => {
@@ -429,7 +430,7 @@ class YouTube {
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
 
-        if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
+        if (!response.rows || response.rows.length <= 0) return { items: [], lastId: null };
         const youtubeVideosAndChannel: YouTubeVideoAndChannel[] = response.rows.map((row: any) => {
             let obj: YouTubeVideoAndChannel = {
                 channel_created_at: row.channel_created_at,
@@ -455,7 +456,7 @@ class YouTube {
             return obj;
         });
 
-        return {items: this.map(youtubeVideosAndChannel), lastId: response.rows[response.rows.length - 1].id}
+        return { items: this.map(youtubeVideosAndChannel), lastId: response.rows[response.rows.length - 1].id }
     }
 
     map = (items: YouTubeVideoAndChannel[]): ElasticSearchBody[] => {
@@ -534,7 +535,7 @@ const run = async () => {
         let id: LastID = null;
         while (true) {
             let items: ElasticSearchBody[], lastId: string | number | null;
-            ({items, lastId: lastId} = await provider.getItems(id));
+            ({ items, lastId: lastId } = await provider.getItems(id));
 
             if (items.length <= 0) break;
             await ingestToElastic(elasticClient, items, indexName)
@@ -547,14 +548,15 @@ const run = async () => {
 
 const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: string) => {
     try {
-        await elasticClient.indices.delete({index: indexName});
+        await elasticClient.indices.delete({ index: indexName });
     } catch (e) {
         console.error()
     }
 
     const esIndexSchema = JSON.parse(fs.readFileSync('../../../elastic/schema.json', 'utf8'));
     let synonymList = fs.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
-    synonymList = synonymList.map(a => a.slice(0,-1));
+    synonymList = synonymList.map(a => a.slice(0, -1));
+    
     // @ts-ignore
     await elasticClient.indices.create({
         index: indexName,
@@ -571,8 +573,8 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
                     },
                     "tokenizer": {
                         "my_tokenizer": {
-                          "type": "pattern",
-                          "pattern": ","
+                            "type": "pattern",
+                            "pattern": ","
                         }
                     },
                     "analyzer": {
@@ -583,10 +585,10 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
                         },
                         "default": {
                             "type": "whitespace"
-                          },
-                          "default_search": {
+                        },
+                        "default_search": {
                             "type": "keyword"
-                          }
+                        }
                     }
                 }
             }
@@ -606,8 +608,8 @@ const ingestToElastic = async (elasticClient: ElasticClient, items: ElasticSearc
         const item = items[i];
         group.push(item)
         if (group.length === 100 || i === items.length - 1) {
-            const operations = group.flatMap(doc => [{index: {_index: indexName, _id: doc.id}}, doc]);
-            const bulkResponse = await elasticClient.bulk({refresh: false, operations});
+            const operations = group.flatMap(doc => [{ index: { _index: indexName, _id: doc.id } }, doc]);
+            const bulkResponse = await elasticClient.bulk({ refresh: false, operations });
             if (bulkResponse.errors) {
                 const erroredDocs: {
                     // @ts-ignore

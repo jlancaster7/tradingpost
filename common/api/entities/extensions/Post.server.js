@@ -13,16 +13,15 @@ const _1 = require(".");
 const configuration_1 = require("../../../configuration");
 const EntityApiBase_1 = require("../static/EntityApiBase");
 const elasticsearch_1 = require("@elastic/elasticsearch");
-let postsPerPage = 20;
+let postsPerPage = 5;
 exports.default = (0, _1.ensureServerExtensions)({
     feed: (req) => __awaiter(void 0, void 0, void 0, function* () {
-        if (!req.body.page)
+        if (req.body.page === null || req.body.page === undefined)
             throw new EntityApiBase_1.PublicError("Invalid Request missing page", 400);
         const page = Number(req.body.page);
         if (page * postsPerPage + 20 > 10000)
             return [];
         const indexName = "tradingpost-search";
-        //  const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         const elasticConfiguration = yield configuration_1.DefaultConfig.fromCacheOrSSM("elastic");
         const elasticClient = new elasticsearch_1.Client({
             cloud: {
@@ -34,28 +33,80 @@ exports.default = (0, _1.ensureServerExtensions)({
             maxRetries: 5,
         });
         // Get Users Following IDs
+        // const response = await elasticClient.search({
+        //     index: indexName,
+        //     size: postsPerPage,
+        //     from: page * postsPerPage,
+        //     query: {
+        //         function_score: {
+        //             query: {
+        //                 function_score: {
+        //                     query: { match_all: {} },
+        //                     // @ts-ignore
+        //                     gauss: {
+        //                         platformCreatedAt: {
+        //                             origin: "now-1h",
+        //                             scale: "1d"
+        //                         }
+        //                     }
+        //                 }
+        //             },
+        //             field_value_factor: {
+        //                 field: "postTypeValue",
+        //                 factor: 1,
+        //                 modifier: "none"
+        //             }
+        //         }
+        //     }
+        // });
+        //Twitter test
+        // const response = await elasticClient.search({
+        //     index: indexName,
+        //     size: postsPerPage,
+        //     from: page * postsPerPage,
+        //     query: {
+        //         //         function_score: {
+        // //             query: {
+        // //                 function_score: {
+        // //                     query: { match_all: {} },
+        // //                     // @ts-ignore
+        // //                     gauss: {
+        // //                         platformCreatedAt: {
+        // //                             origin: "now-1h",
+        // //                             scale: "1d"
+        // //                         }
+        // //                     }
+        // //                 }
+        // //             },
+        // //             field_value_factor: {
+        // //                 field: "postTypeValue",
+        // //                 factor: 1,
+        // //                 modifier: "none"
+        // //             }
+        // //         }
+        // //     }
+        //         bool: {
+        //             must: {
+        //                 exists: {
+        //                     field: "size"
+        //                 },
+        //                 terms:{
+        //                     postType:["tweet", "spotify","youtube"]
+        //                 }
+        //             }
+        //         }
+        //     }
+        // });
         const response = yield elasticClient.search({
             index: indexName,
             size: postsPerPage,
             from: page * postsPerPage,
             query: {
-                function_score: {
-                    query: {
-                        function_score: {
-                            query: { match_all: {} },
-                            // @ts-ignore
-                            gauss: {
-                                platformCreatedAt: {
-                                    origin: "now-1h",
-                                    scale: "1d"
-                                }
-                            }
+                bool: {
+                    must: {
+                        terms: {
+                            postType: ["spotify", "youtube"]
                         }
-                    },
-                    field_value_factor: {
-                        field: "postTypeValue",
-                        factor: 1,
-                        modifier: "none"
                     }
                 }
             }

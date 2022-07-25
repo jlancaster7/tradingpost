@@ -48,12 +48,16 @@ export interface IElasticPost {
         ,
         platformCreatedAt: string,
         platformUpdatedAt: null,
-        postType: 'tweet',
+        postType: 'tweet'|'spotify'|'substack'|'youtube',
         postTypeValue: number,
         postUrl: string,
         ratingsCount: 0,
         tradingpostCreatedAt: string,
         tradingpostUpdatedAt: null,
+        size: {
+            maxWidth: number,
+            aspectRatio: number
+        },
         user: {
             id: string,
             imageUrl: string,
