@@ -531,7 +531,6 @@ const run = async () => {
     let providers: Provider[] = [new Twitter(pgClient), new SubStack(pgClient), new Spotify(pgClient), new YouTube(pgClient)];
     for (let i = 0; i < providers.length; i++) {
         const provider = providers[i];
-
         let id: LastID = null;
         while (true) {
             let items: ElasticSearchBody[], lastId: string | number | null;

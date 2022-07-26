@@ -14,11 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const configuration_1 = require("@tradingpost/common/configuration");
-const repository_1 = require("../../services/market-data/repository");
+const repository_1 = __importDefault(require("@tradingpost/common/market-data/repository"));
 const iex_1 = __importDefault(require("@tradingpost/common/iex"));
 const luxon_1 = require("luxon");
-const market_data_1 = __importDefault(require("../../services/market-data"));
+const market_trading_hours_1 = __importDefault(require("@tradingpost/common/market-data/market-trading-hours"));
 const pg_promise_1 = __importDefault(require("pg-promise"));
+const utils_1 = require("./utils");
 let pgClient;
 let pgp;
 const run = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -35,8 +36,8 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     const iexConfiguration = yield configuration_1.DefaultConfig.fromCacheOrSSM("iex");
     const iex = new iex_1.default(iexConfiguration.key);
-    const repository = new repository_1.Repository(pgClient, pgp);
-    const marketService = new market_data_1.default(repository);
+    const repository = new repository_1.default(pgClient, pgp);
+    const marketService = new market_trading_hours_1.default(repository);
     try {
         yield start(marketService, repository, iex);
     }
@@ -46,19 +47,14 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const start = (marketService, repository, iex) => __awaiter(void 0, void 0, void 0, function* () {
-    const open = luxon_1.DateTime.now().setZone("America/New_York").set({ hour: 9, minute: 29, second: 0, millisecond: 0 });
-    const close = luxon_1.DateTime.now().setZone("America/New_York").set({ hour: 16, minute: 1, second: 0, millisecond: 0 });
-    let d = luxon_1.DateTime.now().setZone("America/New_York").set({ second: 0, millisecond: 0 });
-    if (d.toSeconds() >= close.toSeconds() || d.toSeconds() <= open.toSeconds())
-        return;
-    const isTradingDay = yield marketService.isTradingDay(d);
-    if (!isTradingDay)
+    const marketIsOpen = yield marketService.isOpen();
+    if (!marketIsOpen)
         return;
     const securities = yield repository.getUsExchangedListSecuritiesWithPricing();
-    const securityGroups = buildGroups(securities);
+    const securityGroups = (0, utils_1.buildGroups)(securities);
     const securitiesMap = {};
     securities.forEach((sec) => securitiesMap[sec.symbol] = sec);
-    const currentTime = d.toJSDate();
+    const currentTime = luxon_1.DateTime.now().setZone("America/New_York").set({ second: 0, millisecond: 0 }).toJSDate();
     for (let i = 0; i < securityGroups.length; i++) {
         let securityGroup = securityGroups[i];
         const symbols = securityGroup.map(sec => sec.symbol);
@@ -70,7 +66,14 @@ const start = (marketService, repository, iex) => __awaiter(void 0, void 0, void
                 const s = securitiesMap[symbol];
                 if (s.latestPrice === undefined || s.latestPrice === null)
                     return;
-                securityPrices.push({ price: s.latestPrice, securityId: id, time: currentTime });
+                securityPrices.push({
+                    price: s.latestPrice,
+                    high: s.latestHigh,
+                    low: s.latestLow,
+                    open: s.latestOpen,
+                    securityId: id,
+                    time: currentTime
+                });
                 return;
             }
             const quote = response[symbol].quote;
@@ -78,28 +81,28 @@ const start = (marketService, repository, iex) => __awaiter(void 0, void 0, void
                 const s = securitiesMap[symbol];
                 if (s.latestPrice === undefined || s.latestPrice === null)
                     return;
-                securityPrices.push({ price: s.latestPrice, securityId: id, time: currentTime });
+                securityPrices.push({
+                    price: s.latestPrice,
+                    open: s.latestOpen,
+                    low: s.latestLow,
+                    high: s.latestHigh,
+                    securityId: id,
+                    time: currentTime
+                });
                 return;
             }
-            securityPrices.push({ price: quote.latestPrice, securityId: id, time: currentTime });
+            securityPrices.push({
+                price: quote.latestPrice,
+                high: quote.high ? quote.high : quote.latestPrice,
+                low: quote.low ? quote.low : quote.latestPrice,
+                open: quote.open ? quote.open : quote.open,
+                securityId: id,
+                time: currentTime
+            });
         });
         yield repository.addSecuritiesPrices(securityPrices);
     }
 });
-const buildGroups = (securities, max = 100) => {
-    let groups = [];
-    let group = [];
-    securities.forEach(sec => {
-        group.push(sec);
-        if (group.length === max) {
-            groups.push(group);
-            group = [];
-        }
-    });
-    if (group.length > 0)
-        groups.push(group);
-    return groups;
-};
 // Pricing Charge
 // Total Securities W/Out OTC : 11,847
 // Total Securities W/ OTC: 26,746

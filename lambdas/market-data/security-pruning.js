@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const configuration_1 = require("@tradingpost/common/configuration");
-const repository_1 = require("../../services/market-data/repository");
+const repository_1 = __importDefault(require("@tradingpost/common/market-data/repository"));
 const pg_promise_1 = __importDefault(require("pg-promise"));
 let pgClient;
 let pgp;
@@ -30,7 +30,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         });
         yield pgClient.connect();
     }
-    const repository = new repository_1.Repository(pgClient, pgp);
+    const repository = new repository_1.default(pgClient, pgp);
     try {
         yield start(repository);
     }

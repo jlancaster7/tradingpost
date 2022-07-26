@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
+process.env.CONFIGURATION_ENV = "production";
 const twitter_1 = require("@tradingpost/common/social-media/twitter");
 const configuration_1 = require("@tradingpost/common/configuration");
 const pg_promise_1 = __importDefault(require("pg-promise"));
@@ -28,17 +29,20 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
             password: postgresConfiguration.password,
             database: postgresConfiguration.database
         });
-        yield pgClient.connect();
+        //await pgClient.connect()
     }
     const twitterConfiguration = yield configuration_1.DefaultConfig.fromCacheOrSSM("twitter");
     try {
         yield (0, twitter_1.lambdaImportTweets)(pgClient, pgp, twitterConfiguration);
+        pgp.end();
     }
     catch (e) {
+        pgp.end();
         console.error(e);
         throw e;
     }
 });
+run();
 module.exports.run = (event, context) => __awaiter(void 0, void 0, void 0, function* () {
     yield run();
 });

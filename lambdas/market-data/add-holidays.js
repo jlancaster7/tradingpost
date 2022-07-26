@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const iex_1 = __importDefault(require("@tradingpost/common/iex"));
 const luxon_1 = require("luxon");
-const repository_1 = require("../../services/market-data/repository");
+const repository_1 = __importDefault(require("@tradingpost/common/market-data/repository"));
 const configuration_1 = require("@tradingpost/common/configuration");
 const pg_promise_1 = __importDefault(require("pg-promise"));
 let pgClient;
@@ -34,7 +34,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     const iexConfiguration = yield configuration_1.DefaultConfig.fromCacheOrSSM("iex");
     const iex = new iex_1.default(iexConfiguration.key);
-    const repository = new repository_1.Repository(pgClient, pgp);
+    const repository = new repository_1.default(pgClient, pgp);
     try {
         yield start(repository, iex);
     }

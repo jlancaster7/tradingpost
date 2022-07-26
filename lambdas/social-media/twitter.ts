@@ -30,6 +30,7 @@ const run = async () => {
         throw e;
     }
 }
+
 run();
 
 module.exports.run = async (event: any, context: Context) => {

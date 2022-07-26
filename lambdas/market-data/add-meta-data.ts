@@ -8,7 +8,7 @@ import IEX, {
     GetIexSymbols,
     GetOtcSymbols
 } from "@tradingpost/common/iex";
-import {Repository} from "@tradingpost/common/market-data/repository";
+import Repository from "@tradingpost/common/market-data/repository";
 import {
     addIexSecurity,
     addSecurity,
@@ -188,6 +188,9 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
             if (quote.latestPrice !== null)
                 // Ingest end of day price & all stats stuff....
                 securityPrices.push({
+                    open: quote.open,
+                    high: quote.high,
+                    low: quote.low,
                     price: quote.latestPrice,
                     securityId: existingSecurity.id,
                     time: DateTime.now().setZone('America/New_York').set({hour: 16, minute: 0, second: 0}).toJSDate()
