@@ -92,3 +92,15 @@ Thumbs.db
 
 # Api Token
 *-api-token.json
+services/brokerage/loadDummyData.js
+services/brokerage/loadDummyData.ts
+services/brokerage/test.js
+services/brokerage/test.ts
+services/brokerage/testHistoricalHoldings.csv
+services/data-processing/podcasts/admin-imports.js
+services/data-processing/podcasts/admin-imports.ts
+services/data-processing/rss_feeds/admin-import.js
+services/data-processing/rss_feeds/admin-import.ts
+services/market-data/data.csv
+services/market-data/updateSectors.js
+services/market-data/updateSectors.ts
