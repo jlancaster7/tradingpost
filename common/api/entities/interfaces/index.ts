@@ -37,7 +37,6 @@ export interface ICommentGet {
 
 export interface IPlatformClaimList {
         platform: string,
-    handle: string,
     claims?: any,
     id: number,
     user_id: string
@@ -45,7 +44,6 @@ export interface IPlatformClaimList {
 
 export interface IPlatformClaimGet {
         platform: string,
-    handle: string,
     claims?: any,
     id: number,
     user_id: string
@@ -158,7 +156,8 @@ export interface IWatchlistInsert {
         name: string,
     note?: string,
     items: Omit<IWatchlistItemList,'watchlist_id'|'id'>[],
-    type: string
+    type: string,
+    user_id: string
     };
 
 export interface IWatchlistUpdate {
@@ -166,7 +165,8 @@ export interface IWatchlistUpdate {
     name?: string,
     note?: string,
     items?: Omit<IWatchlistItemList,'watchlist_id'|'id'>[],
-    type?: string
+    type?: string,
+    user_id?: string
     };
 
 export interface IWatchlistItemList {

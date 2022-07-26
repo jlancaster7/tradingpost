@@ -12,6 +12,7 @@ export interface ISecurityList {
     security_name: string
     company_name: string
     logo_url: string
+    is_benchmark: boolean
 }
 
 export interface IAnalystProfile {
@@ -48,7 +49,7 @@ export interface IElasticPost {
         ,
         platformCreatedAt: string,
         platformUpdatedAt: null,
-        postType: 'tweet'|'spotify'|'substack'|'youtube',
+        postType: 'tweet' | 'spotify' | 'substack' | 'youtube',
         postTypeValue: number,
         postUrl: string,
         ratingsCount: 0,
