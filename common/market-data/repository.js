@@ -102,6 +102,7 @@ class Repository {
                  latest_pricing lp ON
                      lp.security_id = s.id
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             WHERE exchange NOT LIKE '%OTC%';`);
             return data.map((row) => {
                 let obj = {
@@ -136,6 +137,8 @@ class Repository {
         });
         this.getUSExchangeListedSecurities = () => __awaiter(this, void 0, void 0, function* () {
 =======
+=======
+>>>>>>> Stashed changes
             WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC');`);
             return data.map((row) => {
@@ -200,6 +203,7 @@ class Repository {
                    created_at
             FROM security
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             WHERE exchange NOT LIKE '%OTC%';`);
             return data.map((row) => {
                 let obj = {
@@ -232,6 +236,8 @@ class Repository {
         });
         this.getSecurities = () => __awaiter(this, void 0, void 0, function* () {
 =======
+=======
+>>>>>>> Stashed changes
             WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC');`);
             return data.map((row) => {

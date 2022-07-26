@@ -419,4 +419,7 @@ export interface updateSecurity extends addSecurity {
 }
 export interface updateIexSecurity extends addIexSecurity {
 }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
