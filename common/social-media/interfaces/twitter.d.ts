@@ -47,7 +47,7 @@ export interface rawTwitterUser {
     created_at: string;
     username: string;
     description: string;
-    profile_img_url: string;
+    profile_image_url: string;
     id: string;
 }
 export interface formatedTwitterUser {
@@ -59,10 +59,18 @@ export interface formatedTwitterUser {
     twitter_created_at: Date;
     username: string;
     description: string;
-    profile_img_url: string;
+    profile_image_url: string;
     profile_url: string;
     twitter_user_id: string;
 }
+export declare type PlatformToken = {
+    userId: string;
+    platform: string;
+    platformUserId: string;
+    accessToken: string;
+    refreshToken: string;
+    expiration: string;
+};
 export interface twitterParams {
     method: string;
     headers: {

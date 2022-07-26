@@ -385,7 +385,7 @@ class Repository {
             });
         });
         this.getFinicityUser = (userId) => __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.one("SELECT FROM finicity_user WHERE user_id = $1", [userId]);
+            return yield this.db.one("SELECT FROM finicity_user WHERE tp_user_id = $1", [userId]);
         });
         this.addFinicityUser = (userId, customerId, type) => __awaiter(this, void 0, void 0, function* () {
             const query = `INSERT INTO finicity_user(tp_user_id, customer_id, type)
