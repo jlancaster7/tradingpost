@@ -406,6 +406,9 @@ const getFirstValue = (values, tag) => {
 // Fill in intra-day with High/Low/Open
 // Fill in any missing days for those prices
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes

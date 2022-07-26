@@ -103,6 +103,7 @@ class Repository {
                      lp.security_id = s.id
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             WHERE exchange NOT LIKE '%OTC%';`);
             return data.map((row) => {
                 let obj = {
@@ -137,6 +138,8 @@ class Repository {
         });
         this.getUSExchangeListedSecurities = () => __awaiter(this, void 0, void 0, function* () {
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
@@ -204,6 +207,7 @@ class Repository {
             FROM security
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             WHERE exchange NOT LIKE '%OTC%';`);
             return data.map((row) => {
                 let obj = {
@@ -236,6 +240,8 @@ class Repository {
         });
         this.getSecurities = () => __awaiter(this, void 0, void 0, function* () {
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
