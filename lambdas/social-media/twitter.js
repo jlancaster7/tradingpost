@@ -29,20 +29,17 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
             password: postgresConfiguration.password,
             database: postgresConfiguration.database
         });
-        //await pgClient.connect()
+        yield pgClient.connect();
     }
     const twitterConfiguration = yield configuration_1.DefaultConfig.fromCacheOrSSM("twitter");
     try {
         yield (0, twitter_1.lambdaImportTweets)(pgClient, pgp, twitterConfiguration);
-        pgp.end();
     }
     catch (e) {
-        pgp.end();
         console.error(e);
         throw e;
     }
 });
-run();
 module.exports.run = (event, context) => __awaiter(void 0, void 0, void 0, function* () {
     yield run();
 });

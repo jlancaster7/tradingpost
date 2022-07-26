@@ -106,8 +106,27 @@ class Tweets {
             return data;
         });
         this.formatTweets = (rawTweets) => {
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
             let formatedTweets = [];
             for (let i = 0; i < rawTweets.length; i++) {
+                let urls = null;
+                if ((_a = rawTweets[i].entities) === null || _a === void 0 ? void 0 : _a.urls)
+                    urls = JSON.stringify((_b = rawTweets[i].entities) === null || _b === void 0 ? void 0 : _b.urls);
+                let mediaKeys = null;
+                if ((_c = rawTweets[i].entities) === null || _c === void 0 ? void 0 : _c.media_keys)
+                    mediaKeys = JSON.stringify((_d = rawTweets[i].entities) === null || _d === void 0 ? void 0 : _d.media_keys);
+                let cashtags = null;
+                if ((_e = rawTweets[i].entities) === null || _e === void 0 ? void 0 : _e.cashtags)
+                    cashtags = JSON.stringify((_f = rawTweets[i].entities) === null || _f === void 0 ? void 0 : _f.cashtags);
+                let annotations = null;
+                if ((_g = rawTweets[i].entities) === null || _g === void 0 ? void 0 : _g.annotations)
+                    annotations = JSON.stringify((_h = rawTweets[i].entities) === null || _h === void 0 ? void 0 : _h.annotations);
+                let hashtags = null;
+                if ((_j = rawTweets[i].entities) === null || _j === void 0 ? void 0 : _j.hashtags)
+                    cashtags = JSON.stringify((_k = rawTweets[i].entities) === null || _k === void 0 ? void 0 : _k.hashtags);
+                let mentions = null;
+                if ((_l = rawTweets[i].entities) === null || _l === void 0 ? void 0 : _l.mentions)
+                    mentions = JSON.stringify((_m = rawTweets[i].entities) === null || _m === void 0 ? void 0 : _m.mentions);
                 formatedTweets.push({
                     tweet_id: rawTweets[i].id,
                     twitter_user_id: rawTweets[i].twitter_user_id,
@@ -120,12 +139,12 @@ class Tweets {
                     possibly_sensitive: rawTweets[i].possibly_sensitive,
                     text: rawTweets[i].text,
                     tweet_url: rawTweets[i].tweet_url,
-                    urls: (rawTweets[i].entities.urls ? JSON.stringify(rawTweets[i].entities.urls) : null),
-                    media_keys: (rawTweets[i].entities.media_keys ? JSON.stringify(rawTweets[i].entities.media_keys) : null),
-                    annotations: (rawTweets[i].entities.annotations ? JSON.stringify(rawTweets[i].entities.annotations) : null),
-                    cashtags: (rawTweets[i].entities.cashtags ? JSON.stringify(rawTweets[i].entities.cashtags) : null),
-                    hashtags: (rawTweets[i].entities.hashtags ? JSON.stringify(rawTweets[i].entities.hashtags) : null),
-                    mentions: (rawTweets[i].entities.mentions ? JSON.stringify(rawTweets[i].entities.mentions) : null),
+                    urls: urls,
+                    media_keys: mediaKeys,
+                    annotations: annotations,
+                    cashtags: cashtags,
+                    hashtags: hashtags,
+                    mentions: mentions,
                     twitter_created_at: rawTweets[i].created_at
                 });
             }
@@ -145,13 +164,14 @@ class Tweets {
                         value_index += `$${index + 1}, `;
                     });
                     value_index = value_index.substring(0, value_index.length - 2);
-                    query = `INSERT INTO tweets(tweet_id, twitter_user_id, embed, lang, like_count, quote_count, reply_count, retweet_count, possibly_sensitive, text, tweet_url, urls, media_keys, annotations, cashtags, hashtags, mentions, twitter_created_at)
+                    query = `INSERT INTO tweets(tweet_id, twitter_user_id, embed, lang, like_count, quote_count,
+                                            reply_count, retweet_count, possibly_sensitive, text, tweet_url, urls,
+                                            media_keys, annotations, cashtags, hashtags, mentions, twitter_created_at)
                          VALUES (${value_index})
-                         ON CONFLICT (tweet_id) DO UPDATE SET like_count = EXCLUDED.like_count
-                                                              quote_count = EXCLUDED.quote_count
-                                                              reply_count = EXCLUDED.reply_count
-                                                              retweet_count = EXCLUDED.retweet_count
-                                                              `;
+                         ON CONFLICT (tweet_id) DO UPDATE SET like_count    = EXCLUDED.like_count,
+                                                              quote_count   = EXCLUDED.quote_count,
+                                                              reply_count   = EXCLUDED.reply_count,
+                                                              retweet_count = EXCLUDED.retweet_count`;
                     result = yield this.pg_client.result(query, values);
                     success += result.rowCount;
                 }

@@ -71,7 +71,7 @@ export class Tweets {
             let tweetUrl: string;
             let response;
             let responseData;
-            
+
             while (nextToken !== 'end') {
                 if (nextToken === '') {
                     fetchUrl = this.twitterUrl + tweetsEndpoints + new URLSearchParams({
@@ -92,7 +92,7 @@ export class Tweets {
 
                 response = await (await fetch(fetchUrl, this.params)).json();
                 responseData = response.data;
-                
+
 
                 if (responseData === undefined) {
                     this.startDate = '';
@@ -126,9 +126,25 @@ export class Tweets {
     }
 
     formatTweets = (rawTweets: rawTweet[]): formatedTweet[] => {
-        
-        let formatedTweets:formatedTweet[] = [];
+        let formatedTweets: formatedTweet[] = [];
         for (let i = 0; i < rawTweets.length; i++) {
+            let urls = null;
+            if (rawTweets[i].entities?.urls) urls = JSON.stringify(rawTweets[i].entities?.urls)
+
+            let mediaKeys = null;
+            if (rawTweets[i].entities?.media_keys) mediaKeys = JSON.stringify(rawTweets[i].entities?.media_keys)
+
+            let cashtags = null;
+            if (rawTweets[i].entities?.cashtags) cashtags = JSON.stringify(rawTweets[i].entities?.cashtags)
+
+            let annotations = null;
+            if (rawTweets[i].entities?.annotations) annotations = JSON.stringify(rawTweets[i].entities?.annotations)
+
+            let hashtags = null;
+            if (rawTweets[i].entities?.hashtags) cashtags = JSON.stringify(rawTweets[i].entities?.hashtags)
+
+            let mentions = null;
+            if (rawTweets[i].entities?.mentions) mentions = JSON.stringify(rawTweets[i].entities?.mentions)
 
             formatedTweets.push({
                 tweet_id: rawTweets[i].id,
@@ -142,15 +158,14 @@ export class Tweets {
                 possibly_sensitive: rawTweets[i].possibly_sensitive,
                 text: rawTweets[i].text,
                 tweet_url: rawTweets[i].tweet_url,
-                urls: (rawTweets[i].entities!.urls ? JSON.stringify(rawTweets[i].entities!.urls) : null),
-                media_keys: (rawTweets[i].entities!.media_keys ? JSON.stringify(rawTweets[i].entities!.media_keys) : null),
-                annotations: (rawTweets[i].entities!.annotations ? JSON.stringify(rawTweets[i].entities!.annotations) : null),
-                cashtags: (rawTweets[i].entities!.cashtags ? JSON.stringify(rawTweets[i].entities!.cashtags) : null),
-                hashtags: (rawTweets[i].entities!.hashtags ? JSON.stringify(rawTweets[i].entities!.hashtags) : null),
-                mentions: (rawTweets[i].entities!.mentions ? JSON.stringify(rawTweets[i].entities!.mentions) : null),
+                urls: urls,
+                media_keys: mediaKeys,
+                annotations: annotations,
+                cashtags: cashtags,
+                hashtags: hashtags,
+                mentions: mentions,
                 twitter_created_at: rawTweets[i].created_at
             })
-            
         }
         return formatedTweets;
     }
@@ -164,21 +179,21 @@ export class Tweets {
             let value_index = '';
 
             for (let i = 0; i < formatedTweets.length; i++) {
-                
+
                 values = Object.values(formatedTweets[i]);
                 value_index = '';
                 values.map((obj, index) => {
                     value_index += `$${index + 1}, `;
                 });
-
                 value_index = value_index.substring(0, value_index.length - 2);
-                query = `INSERT INTO tweets(tweet_id, twitter_user_id, embed, lang, like_count, quote_count, reply_count, retweet_count, possibly_sensitive, text, tweet_url, urls, media_keys, annotations, cashtags, hashtags, mentions, twitter_created_at)
+                query = `INSERT INTO tweets(tweet_id, twitter_user_id, embed, lang, like_count, quote_count,
+                                            reply_count, retweet_count, possibly_sensitive, text, tweet_url, urls,
+                                            media_keys, annotations, cashtags, hashtags, mentions, twitter_created_at)
                          VALUES (${value_index})
-                         ON CONFLICT (tweet_id) DO UPDATE SET like_count = EXCLUDED.like_count
-                                                              quote_count = EXCLUDED.quote_count
-                                                              reply_count = EXCLUDED.reply_count
-                                                              retweet_count = EXCLUDED.retweet_count
-                                                              `;
+                         ON CONFLICT (tweet_id) DO UPDATE SET like_count    = EXCLUDED.like_count,
+                                                              quote_count   = EXCLUDED.quote_count,
+                                                              reply_count   = EXCLUDED.reply_count,
+                                                              retweet_count = EXCLUDED.retweet_count`;
                 result = await this.pg_client.result(query, values);
                 success += result.rowCount;
             }
