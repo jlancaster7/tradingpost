@@ -17,7 +17,7 @@ import {
 
 import {ColumnSet, IDatabase, IMain} from 'pg-promise';
 
-export class Repository {
+export default class Repository {
     private db: IDatabase<any>;
     private readonly pgp: IMain;
 
@@ -29,6 +29,9 @@ export class Repository {
     upsertSecuritiesPrices = async (securityPrices: addSecurityPrice[]) => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'security_id', prop: 'securityId'},
+            {name: 'high', prop: 'high'},
+            {name: 'low', prop: 'low'},
+            {name: 'open', prop: 'open'},
             {name: 'price', prop: 'price'},
             {name: 'time', prop: 'time'}
         ], {table: 'security_price'})
@@ -39,6 +42,9 @@ export class Repository {
     getUsExchangedListSecuritiesWithPricing = async (): Promise<getSecurityWithLatestPrice[]> => {
         const data = await this.db.query(`
             WITH latest_pricing AS (SELECT sp.security_id,
+                                           sp.high,
+                                           sp.low,
+                                           sp.open,
                                            sp.time,
                                            sp.price
                                     FROM security_price sp
@@ -48,10 +54,8 @@ export class Repository {
                                                          WHERE time > NOW() - INTERVAL '5 Days'
                                                          GROUP BY security_id) AS max_prices
                                                         ON
-                                                                    max_prices.security_id =
-                                                                    sp.security_id
-                                                                AND max_prices.time =
-                                                                    sp.time)
+                                                                    max_prices.security_id = sp.security_id
+                                                                AND max_prices.time = sp.time)
             SELECT id,
                    symbol,
                    company_name,
@@ -76,12 +80,16 @@ export class Repository {
                    last_updated,
                    created_at,
                    lp.time  latest_time,
-                   lp.price latest_price
-            FROM security s
+                   lp.price latest_price,
+                   lp.high  latest_high_price,
+                   lp.low   latest_low_price,
+                   lp.open  latest_open
+            FROM SECURITY s
                      LEFT JOIN
                  latest_pricing lp ON
                      lp.security_id = s.id
-            WHERE exchange NOT LIKE '%OTC%';`)
+            WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
+                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC');`)
         return data.map((row: any) => {
             let obj: getSecurityWithLatestPrice = {
                 id: row.id,
@@ -108,7 +116,10 @@ export class Repository {
                 lastUpdated: DateTime.fromJSDate(row.last_updated),
                 createdAt: DateTime.fromJSDate(row.created_at),
                 latestTime: DateTime.fromJSDate(row.latest_time),
-                latestPrice: row.latest_price
+                latestPrice: row.latest_price,
+                latestHigh: row.latest_high,
+                latestLow: row.latest_low,
+                latestOpen: row.latest_open
             }
             return obj
         })
@@ -140,7 +151,8 @@ export class Repository {
                    last_updated,
                    created_at
             FROM security
-            WHERE exchange NOT LIKE '%OTC%';`)
+            WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
+                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC');`)
         return data.map((row: any) => {
             let obj: getSecurityBySymbol = {
                 id: row.id,
@@ -574,6 +586,9 @@ export class Repository {
     addSecuritiesPrices = async (securitiesPrices: addSecurityPrice[]) => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'security_id', prop: 'securityId'},
+            {name: 'high', prop: 'high'},
+            {name: 'low', prop: 'low'},
+            {name: 'open', prop: 'open'},
             {name: 'price', prop: 'price'},
             {name: 'time', prop: 'time'},
         ], {table: 'security_price'})
@@ -675,7 +690,7 @@ export class Repository {
                 id: row.id,
                 date: row.date,
                 settlementDate: row.settlement_date,
-                CreatedAt: row.created_at
+                createdAt: row.created_at
             }
             return obj;
         })
@@ -693,7 +708,7 @@ export class Repository {
                 id: row.id,
                 date: DateTime.fromJSDate(row.date).setZone("America/New_York"),
                 settlementDate: DateTime.fromJSDate(row.settlement_date).setZone("America/New_York"),
-                CreatedAt: DateTime.fromJSDate(row.created_at)
+                createdAt: DateTime.fromJSDate(row.created_at)
             }
             return obj;
         })

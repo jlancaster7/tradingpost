@@ -9,13 +9,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Repository = void 0;
 const luxon_1 = require("luxon");
 class Repository {
     constructor(db, pgp) {
         this.upsertSecuritiesPrices = (securityPrices) => __awaiter(this, void 0, void 0, function* () {
             const cs = new this.pgp.helpers.ColumnSet([
                 { name: 'security_id', prop: 'securityId' },
+                { name: 'high', prop: 'high' },
+                { name: 'low', prop: 'low' },
+                { name: 'open', prop: 'open' },
                 { name: 'price', prop: 'price' },
                 { name: 'time', prop: 'time' }
             ], { table: 'security_price' });
@@ -25,6 +27,9 @@ class Repository {
         this.getUsExchangedListSecuritiesWithPricing = () => __awaiter(this, void 0, void 0, function* () {
             const data = yield this.db.query(`
             WITH latest_pricing AS (SELECT sp.security_id,
+                                           sp.high,
+                                           sp.low,
+                                           sp.open,
                                            sp.time,
                                            sp.price
                                     FROM security_price sp
@@ -34,10 +39,8 @@ class Repository {
                                                          WHERE time > NOW() - INTERVAL '5 Days'
                                                          GROUP BY security_id) AS max_prices
                                                         ON
-                                                                    max_prices.security_id =
-                                                                    sp.security_id
-                                                                AND max_prices.time =
-                                                                    sp.time)
+                                                                    max_prices.security_id = sp.security_id
+                                                                AND max_prices.time = sp.time)
             SELECT id,
                    symbol,
                    company_name,
@@ -62,12 +65,16 @@ class Repository {
                    last_updated,
                    created_at,
                    lp.time  latest_time,
-                   lp.price latest_price
-            FROM security s
+                   lp.price latest_price,
+                   lp.high  latest_high_price,
+                   lp.low   latest_low_price,
+                   lp.open  latest_open
+            FROM SECURITY s
                      LEFT JOIN
                  latest_pricing lp ON
                      lp.security_id = s.id
-            WHERE exchange NOT LIKE '%OTC%';`);
+            WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
+                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC');`);
             return data.map((row) => {
                 let obj = {
                     id: row.id,
@@ -94,7 +101,10 @@ class Repository {
                     lastUpdated: luxon_1.DateTime.fromJSDate(row.last_updated),
                     createdAt: luxon_1.DateTime.fromJSDate(row.created_at),
                     latestTime: luxon_1.DateTime.fromJSDate(row.latest_time),
-                    latestPrice: row.latest_price
+                    latestPrice: row.latest_price,
+                    latestHigh: row.latest_high,
+                    latestLow: row.latest_low,
+                    latestOpen: row.latest_open
                 };
                 return obj;
             });
@@ -125,7 +135,8 @@ class Repository {
                    last_updated,
                    created_at
             FROM security
-            WHERE exchange NOT LIKE '%OTC%';`);
+            WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
+                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC');`);
             return data.map((row) => {
                 let obj = {
                     id: row.id,
@@ -548,6 +559,9 @@ class Repository {
         this.addSecuritiesPrices = (securitiesPrices) => __awaiter(this, void 0, void 0, function* () {
             const cs = new this.pgp.helpers.ColumnSet([
                 { name: 'security_id', prop: 'securityId' },
+                { name: 'high', prop: 'high' },
+                { name: 'low', prop: 'low' },
+                { name: 'open', prop: 'open' },
                 { name: 'price', prop: 'price' },
                 { name: 'time', prop: 'time' },
             ], { table: 'security_price' });
@@ -646,7 +660,7 @@ class Repository {
                     id: row.id,
                     date: row.date,
                     settlementDate: row.settlement_date,
-                    CreatedAt: row.created_at
+                    createdAt: row.created_at
                 };
                 return obj;
             });
@@ -663,7 +677,7 @@ class Repository {
                     id: row.id,
                     date: luxon_1.DateTime.fromJSDate(row.date).setZone("America/New_York"),
                     settlementDate: luxon_1.DateTime.fromJSDate(row.settlement_date).setZone("America/New_York"),
-                    CreatedAt: luxon_1.DateTime.fromJSDate(row.created_at)
+                    createdAt: luxon_1.DateTime.fromJSDate(row.created_at)
                 };
                 return obj;
             });
@@ -678,7 +692,7 @@ class Repository {
         this.pgp = pgp;
     }
 }
-exports.Repository = Repository;
+exports.default = Repository;
 function upsertReplaceQuery(data, cs, pgp, conflict = "id") {
     return pgp.helpers.insert(data, cs) +
         ` ON CONFLICT(${conflict}) DO UPDATE SET ` +

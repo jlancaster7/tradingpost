@@ -424,7 +424,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getFinicityUser = async (userId: string): Promise<FinicityUser | null> => {
-        return await this.db.one("SELECT FROM finicity_user WHERE user_id = $1", [userId]);
+        return await this.db.one("SELECT FROM finicity_user WHERE tp_user_id = $1", [userId]);
     }
 
     addFinicityUser = async (userId: string, customerId: string, type: string): Promise<FinicityUser> => {

@@ -280,8 +280,6 @@ CREATE TABLE finicity_account
     id                            BIGSERIAL                            NOT NULL,
     finicity_user_id              BIGINT REFERENCES finicity_user (id) NOT NULL,
     finicity_institution_id       BIGINT REFERENCES finicity_institution (id),
-
-    -- Finicity Fields
     account_id                    TEXT UNIQUE                          NOT NULL,
     number                        TEXT,
     real_account_number_last_4    TEXT,
@@ -570,3 +568,13 @@ CREATE TABLE account_group_hpr
 );
 
 CREATE UNIQUE INDEX account_group_hpr_account_group_id_date_idx ON account_group_hpr (account_group_id, date);
+
+ALTER TABLE security_price
+    ADD COLUMN open DECIMAL(24, 4);
+ALTER TABLE security_price
+    ADD COLUMN high DECIMAL(24, 4);
+ALTER TABLE security_price
+    ADD COLUMN low DECIMAL(24, 4);
+DROP INDEX security_price_idx;
+CREATE UNIQUE INDEX security_price_idx ON security_price (security_id, time DESC);
+CREATE INDEX security_price_idx_time ON security_price (time DESC);

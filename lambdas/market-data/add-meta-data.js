@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 const iex_1 = __importDefault(require("@tradingpost/common/iex"));
-const repository_1 = require("../../services/market-data/repository");
+const repository_1 = __importDefault(require("@tradingpost/common/market-data/repository"));
 const luxon_1 = require("luxon");
 const configuration_1 = require("@tradingpost/common/configuration");
 const pg_promise_1 = __importDefault(require("pg-promise"));
@@ -51,7 +51,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     }
     const iexConfiguration = yield configuration_1.DefaultConfig.fromSSM("iex");
     const iex = new iex_1.default(iexConfiguration.key);
-    const repository = new repository_1.Repository(pgClient, pgp);
+    const repository = new repository_1.default(pgClient, pgp);
     try {
         yield start(repository, iex);
     }
@@ -160,6 +160,9 @@ const ingestEveningSecuritiesInformation = (repository, iex) => __awaiter(void 0
             if (quote.latestPrice !== null)
                 // Ingest end of day price & all stats stuff....
                 securityPrices.push({
+                    open: quote.open,
+                    high: quote.high,
+                    low: quote.low,
                     price: quote.latestPrice,
                     securityId: existingSecurity.id,
                     time: luxon_1.DateTime.now().setZone('America/New_York').set({ hour: 16, minute: 0, second: 0 }).toJSDate()

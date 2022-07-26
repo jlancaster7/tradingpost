@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import {Context} from 'aws-lambda';
 import {DefaultConfig} from "@tradingpost/common/configuration";
-import {Repository} from "@tradingpost/common/market-data/repository";
+import Repository from "@tradingpost/common/market-data/repository";
 import {
     addSecurityPrice,
     getSecurityBySymbol,
@@ -9,8 +9,9 @@ import {
 } from '@tradingpost/common/market-data/interfaces';
 import IEX, {GetQuote} from "@tradingpost/common/iex";
 import {DateTime} from "luxon";
-import MarketClosure from "@tradingpost/common/market-data/market-closure";
+import MarketTradingHours from "@tradingpost/common/market-data/market-trading-hours";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
+import {buildGroups} from "./utils";
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
@@ -32,7 +33,7 @@ const run = async () => {
     const iex = new IEX(iexConfiguration.key);
 
     const repository = new Repository(pgClient, pgp);
-    const marketService = new MarketClosure(repository);
+    const marketService = new MarketTradingHours(repository);
 
     try {
         await start(marketService, repository, iex)
@@ -42,16 +43,9 @@ const run = async () => {
     }
 }
 
-const start = async (marketService: MarketClosure, repository: Repository, iex: IEX) => {
-    const open = DateTime.now().setZone("America/New_York").set({hour: 9, minute: 29, second: 0, millisecond: 0});
-    const close = DateTime.now().setZone("America/New_York").set({hour: 16, minute: 1, second: 0, millisecond: 0})
-
-    let d = DateTime.now().setZone("America/New_York").set({second: 0, millisecond: 0});
-
-    if (d.toSeconds() >= close.toSeconds() || d.toSeconds() <= open.toSeconds()) return
-
-    const isTradingDay = await marketService.isTradingDay(d);
-    if (!isTradingDay) return;
+const start = async (marketService: MarketTradingHours, repository: Repository, iex: IEX) => {
+    const marketIsOpen = await marketService.isOpen();
+    if (!marketIsOpen) return;
 
     const securities = await repository.getUsExchangedListSecuritiesWithPricing();
     const securityGroups: getSecurityBySymbol[][] = buildGroups(securities);
@@ -59,7 +53,7 @@ const start = async (marketService: MarketClosure, repository: Repository, iex: 
     const securitiesMap: Record<string, getSecurityWithLatestPrice> = {};
     securities.forEach((sec: getSecurityWithLatestPrice) => securitiesMap[sec.symbol] = sec)
 
-    const currentTime = d.toJSDate();
+    const currentTime = DateTime.now().setZone("America/New_York").set({second: 0, millisecond: 0}).toJSDate();
     for (let i = 0; i < securityGroups.length; i++) {
         let securityGroup = securityGroups[i];
         const symbols = securityGroup.map(sec => sec.symbol);
@@ -71,7 +65,14 @@ const start = async (marketService: MarketClosure, repository: Repository, iex: 
             if (response[symbol] === undefined || response[symbol] === null) {
                 const s = securitiesMap[symbol]
                 if (s.latestPrice === undefined || s.latestPrice === null) return
-                securityPrices.push({price: s.latestPrice, securityId: id, time: currentTime});
+                securityPrices.push({
+                    price: s.latestPrice,
+                    high: s.latestHigh,
+                    low: s.latestLow,
+                    open: s.latestOpen,
+                    securityId: id,
+                    time: currentTime
+                });
                 return;
             }
 
@@ -79,31 +80,29 @@ const start = async (marketService: MarketClosure, repository: Repository, iex: 
             if (quote.latestPrice === undefined || quote.latestPrice === null) {
                 const s = securitiesMap[symbol]
                 if (s.latestPrice === undefined || s.latestPrice === null) return
-                securityPrices.push({price: s.latestPrice, securityId: id, time: currentTime});
+                securityPrices.push({
+                    price: s.latestPrice,
+                    open: s.latestOpen,
+                    low: s.latestLow,
+                    high: s.latestHigh,
+                    securityId: id,
+                    time: currentTime
+                });
                 return;
             }
 
-            securityPrices.push({price: quote.latestPrice, securityId: id, time: currentTime})
+            securityPrices.push({
+                price: quote.latestPrice,
+                high: quote.high ? quote.high : quote.latestPrice,
+                low: quote.low ? quote.low : quote.latestPrice,
+                open: quote.open ? quote.open : quote.open,
+                securityId: id,
+                time: currentTime
+            })
         });
 
         await repository.addSecuritiesPrices(securityPrices);
     }
-}
-
-const buildGroups = (securities: any[], max: number = 100): any[][] => {
-    let groups: any[][] = [];
-    let group: any[] = [];
-    securities.forEach(sec => {
-        group.push(sec)
-        if (group.length === max) {
-            groups.push(group);
-            group = [];
-        }
-    });
-
-    if (group.length > 0) groups.push(group);
-
-    return groups;
 }
 
 // Pricing Charge

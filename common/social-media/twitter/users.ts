@@ -1,19 +1,22 @@
 import fetch from 'node-fetch';
 import {twitterConfig} from '../interfaces/utils';
-import {rawTwitterUser, formatedTwitterUser, twitterParams} from '../interfaces/twitter';
+import {rawTwitterUser, formatedTwitterUser, PlatformToken, twitterParams} from '../interfaces/twitter';
+import Repository from '../repository'
 import {IDatabase, IMain} from "pg-promise";
 
 export class TwitterUsers {
     private twitterConfig: twitterConfig;
-    private pg_client: IDatabase<any>;
-    private pgp: IMain
+    //private pg_client: IDatabase<any>;
+    //private pgp: IMain
+    private repository: Repository;
     private twitterUrl: string;
     private params: twitterParams;
 
-    constructor(twitterConfig: twitterConfig, pg_client: IDatabase<any>, pgp: IMain) {
+    constructor(twitterConfig: twitterConfig, repository: Repository) {
         this.twitterConfig = twitterConfig;
-        this.pg_client = pg_client;
-        this.pgp = pgp;
+        this.repository = repository;
+        //this.pg_client = pg_client;
+        //this.pgp = pgp;
         this.twitterUrl = "https://api.twitter.com/2";
         this.params = {
             method: 'GET',
@@ -22,33 +25,63 @@ export class TwitterUsers {
             }
         }
     }
-
-    upsertUserToken = async (twitterUsers: {userIds: string, tokens: string}[]) => {
-        // TODO: add query to upsert token into third-party claims table
+    
+    refreshTokensbyId = async (userIds: string[]) => {
+        try {
+            const response = await this.repository.getTokens(userIds, 'twitter');
+            const authUrl = '/oauth2/token';
+            let data = [];
+            for (let d of response) {
+                const refreshParams = {
+                    method: 'POST',
+                    headers: {
+                        "content-type": 'application/x-www-form-urlencoded'
+                    }, 
+                    form: {
+                        refresh_token: d.claims.refresh_token,
+                        grant_type: 'refresh_token',
+                        client_id: this.twitterConfig.clientId
+                    }
+                }
+                const fetchUrl = this.twitterUrl + authUrl;
+                const response = (await (await fetch(fetchUrl, refreshParams)).json()).data;
+                data.push({userId: d.user_id, platform: d.platform, platformUserId: d.platform_user_id, accessToken: response.access_token, refreshToken: response.refresh_token, expiration: response.expires_in});
+            }
+            await this.repository.upsertUserTokens(data);
+        } catch (err) {
+            console.error(err);
+        }
     }
+   
 
-    importUserByToken = async (twitterUsers: {userIds: string, tokens: string}[]): Promise<[formatedTwitterUser[], number]> => {
+    importUserByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: string}[]): Promise<[formatedTwitterUser[], number]> => {
 
-        let data: rawTwitterUser[] = []; let temp: any;
+        let data: rawTwitterUser[] = [];
+        let out: PlatformToken[] = []; 
+        let temp: rawTwitterUser | null;
+        
         for (let d of twitterUsers) {
-            temp = await this.getUserInfoByToken(d.tokens);
-            if (temp) { 
-                console.log('The following token failed to import: ' + d);
-                continue; 
-            } 
+            temp = await this.getUserInfoByToken(d.accessToken);
+            if (!temp) { 
+                await this.refreshTokensbyId([d.userId]);
+                temp = await this.getUserInfoByToken(d.accessToken);
+                if (!temp) { continue; }
+            }
+            out.push({userId: d.userId, platform: 'twitter', platformUserId: temp.id, accessToken: d.accessToken, refreshToken: d.refreshToken, expiration: d.expiration})
             data.push(temp);
         }
         
         if (data === []) {
-            return [[], 0]
+            return [[],0]
         }
-        const formatedData = this.formatUserInfo(data);
-        const result = await this.appendUserInfo(formatedData);
+        const formatedData = this.formatUser(data);
+        await this.repository.upsertUserTokens(out);
+        const result = await this.repository.upsertTwitterUser(formatedData);
 
-        return [formatedData, result];
+        return [formatedData, result] ;
     }
 
-    importUserByHandle = async (handles: string | string[]): Promise<[formatedTwitterUser[], number]> => {
+    importUserByHandle = async (handles: string | string[]): Promise<formatedTwitterUser[]> => {
         if (typeof handles === 'string') {
             handles = [handles];
         }
@@ -56,12 +89,12 @@ export class TwitterUsers {
 
         const data = await this.getUserInfo(handles);
         if (data === []) {
-            return [[], 0]
+            return []
         }
-        const formatedData = this.formatUserInfo(data);
-        const result = await this.appendUserInfo(formatedData);
+        const formatedData = this.formatUser(data);
+        const result = await this.repository.upsertTwitterUser(formatedData);
 
-        return [formatedData, result];
+        return formatedData;
     }
 
     getUserInfo = async (handles: string[]): Promise<rawTwitterUser[]> => {
@@ -103,8 +136,8 @@ export class TwitterUsers {
         }
     }
 
-    formatUserInfo = (rawUsers: rawTwitterUser[]): formatedTwitterUser[] => {
-
+    formatUser = (rawUsers: rawTwitterUser[]): formatedTwitterUser[] => {
+        
         let formatedUsers: formatedTwitterUser[] = [];
         for (let i = 0; i < rawUsers.length; i++) {
             formatedUsers.push({
@@ -113,7 +146,7 @@ export class TwitterUsers {
                 display_name: rawUsers[i].name,
                 description: rawUsers[i].description,
                 profile_url: 'https://www.twitter.com/' + rawUsers[i].username,
-                profile_img_url: rawUsers[i].profile_img_url,
+                profile_image_url: rawUsers[i].profile_image_url,
                 location: rawUsers[i].location,
                 protected: rawUsers[i].protected,
                 twitter_created_at: new Date(rawUsers[i].created_at),
@@ -126,34 +159,5 @@ export class TwitterUsers {
         return formatedUsers;
     }
 
-    appendUserInfo = async (users: formatedTwitterUser[]): Promise<number> => {
-        try {
-            const cs = new this.pgp.helpers.ColumnSet([
-                {name: 'protected', prop: 'protected'},
-                {name: 'display_name', prop: 'display_name'},
-                {name: 'follower_count', prop: 'follower_count'},
-                {name: 'following_count', prop: 'following_count'},
-                {name: 'location', prop: 'location'},
-                {name: 'twitter_created_at', prop: 'twitter_created_at'},
-                {name: 'username', prop: 'username'},
-                {name: 'description', prop: 'description'},
-                {name: 'profile_img_url', prop: 'profile_img_url'},
-                {name: 'profile_url', prop: 'profile_url'},
-                {name: 'twitter_user_id', prop: 'twitter_user_id'},
-            ], {table: 'twitter_users'})
-            const query = this.pgp.helpers.insert(users, cs) + ` ON CONFLICT DO UPDATE SET
-                                                                 display_name = EXCLUDED.display_name,
-                                                                 follower_count = EXCLUDED.follower_count,
-                                                                 following_count = EXCLUDED.following_count,
-                                                                 description = EXCLUDED.description,
-                                                                 profile_img_url = EXCLUDED.profile_img_url,
-                                                                 profile_url = EXCLUDED.profile_url
-                                                                 `;
-            const result = await this.pg_client.result(query);
-            return result.rowCount
-        } catch (err) {
-            console.log(err);
-            throw err
-        }
-    }
+   
 }

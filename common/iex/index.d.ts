@@ -358,7 +358,7 @@ export default class IEX {
     private readonly token;
     private readonly retryMax;
     constructor(token: string, baseURL?: string, retryMax?: number);
-    fetch: (endpoint: string, httpConfiguration: HTTPConfiguration, queryParameters?: Record<string, any>) => Promise<any>;
+    fetch: (endpoint: string, httpConfiguration: HTTPConfiguration, queryParameters?: Record<string, any> | undefined) => Promise<any>;
     retry: (fn: () => Promise<Response>, retryNum: number) => Promise<Response>;
     getCompany: (symbol: string) => Promise<GetCompany>;
     getStatus: () => Promise<GetStatus>;
@@ -446,6 +446,6 @@ export default class IEX {
      * @param last
      * @param startDate
      */
-    getUSHolidayAndTradingDays: (type: "trade" | "holiday", direction?: "next" | "last", last?: number, startDate?: string) => Promise<GetUSHolidayAndTradingDays[]>;
-    bulk: (symbols: string[], types: BulkTypes[], queryParams?: object) => Promise<Record<string, any>>;
+    getUSHolidayAndTradingDays: (type: "trade" | "holiday", direction?: "next" | "last", last?: number, startDate?: string | undefined) => Promise<GetUSHolidayAndTradingDays[]>;
+    bulk: (symbols: string[], types: BulkTypes[], queryParams?: object | undefined) => Promise<Record<string, any>>;
 }

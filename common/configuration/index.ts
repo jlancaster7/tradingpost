@@ -59,6 +59,7 @@ interface ConfigPaths extends Record<ConfigKeys, unknown> {
         API_key: string
         API_secret_key: string
         bearer_token: string
+        client_id: string
     }
     youtube: {
         api_key: string

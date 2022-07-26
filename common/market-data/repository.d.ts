@@ -1,6 +1,6 @@
 import { addSecurity, getSecurityBySymbol, getUSExchangeHoliday, addUSHoliday, getExchange, addExchange, upsertSecuritiesInformation, addSecurityPrice, addIexSecurity, getIexSecurityBySymbol, getSecurityWithLatestPrice, updateIexSecurity, updateSecurity } from "./interfaces";
 import { IDatabase, IMain } from 'pg-promise';
-export declare class Repository {
+export default class Repository {
     private db;
     private readonly pgp;
     constructor(db: IDatabase<any>, pgp: IMain);

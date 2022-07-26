@@ -46,6 +46,7 @@ interface ConfigPaths extends Record<ConfigKeys, unknown> {
         API_key: string;
         API_secret_key: string;
         bearer_token: string;
+        client_id: string;
     };
     youtube: {
         api_key: string;
@@ -72,7 +73,7 @@ export declare class Configuration<K extends Record<string, any>> {
     private cache;
     private defaultOptions;
     constructor(ssmClient: SSM, defaultOptions?: Configuration<K>["defaultOptions"], environment?: ConfigurationEnv, enableCache?: any);
-    fromSSM: <T extends keyof K>(path: T, options?: ConfigOptions) => Promise<K[T]>;
+    fromSSM: <T extends keyof K>(path: T, options?: ConfigOptions | undefined) => Promise<K[T]>;
     fromCacheOrSSM: <T extends keyof K>(path: T) => Promise<K[T]>;
 }
 export declare const DefaultConfig: Configuration<ConfigPaths>;

@@ -15,26 +15,56 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TwitterUsers = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
 class TwitterUsers {
-    constructor(twitterConfig, pg_client, pgp) {
-        this.upsertUserToken = (twitterUsers) => __awaiter(this, void 0, void 0, function* () {
-            // TODO: add query to upsert token into third-party claims table
+    constructor(twitterConfig, repository) {
+        this.refreshTokensbyId = (userIds) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const response = yield this.repository.getTokens(userIds, 'twitter');
+                const authUrl = '/oauth2/token';
+                let data = [];
+                for (let d of response) {
+                    const refreshParams = {
+                        method: 'POST',
+                        headers: {
+                            "content-type": 'application/x-www-form-urlencoded'
+                        },
+                        form: {
+                            refresh_token: d.claims.refresh_token,
+                            grant_type: 'refresh_token',
+                            client_id: this.twitterConfig.clientId
+                        }
+                    };
+                    const fetchUrl = this.twitterUrl + authUrl;
+                    const response = (yield (yield (0, node_fetch_1.default)(fetchUrl, refreshParams)).json()).data;
+                    data.push({ userId: d.user_id, platform: d.platform, platformUserId: d.platform_user_id, accessToken: response.access_token, refreshToken: response.refresh_token, expiration: response.expires_in });
+                }
+                yield this.repository.upsertUserTokens(data);
+            }
+            catch (err) {
+                console.error(err);
+            }
         });
         this.importUserByToken = (twitterUsers) => __awaiter(this, void 0, void 0, function* () {
             let data = [];
+            let out = [];
             let temp;
             for (let d of twitterUsers) {
-                temp = yield this.getUserInfoByToken(d.tokens);
-                if (temp) {
-                    console.log('The following token failed to import: ' + d);
-                    continue;
+                temp = yield this.getUserInfoByToken(d.accessToken);
+                if (!temp) {
+                    yield this.refreshTokensbyId([d.userId]);
+                    temp = yield this.getUserInfoByToken(d.accessToken);
+                    if (!temp) {
+                        continue;
+                    }
                 }
+                out.push({ userId: d.userId, platform: 'twitter', platformUserId: temp.id, accessToken: d.accessToken, refreshToken: d.refreshToken, expiration: d.expiration });
                 data.push(temp);
             }
             if (data === []) {
                 return [[], 0];
             }
-            const formatedData = this.formatUserInfo(data);
-            const result = yield this.appendUserInfo(formatedData);
+            const formatedData = this.formatUser(data);
+            yield this.repository.upsertUserTokens(out);
+            const result = yield this.repository.upsertTwitterUser(formatedData);
             return [formatedData, result];
         });
         this.importUserByHandle = (handles) => __awaiter(this, void 0, void 0, function* () {
@@ -43,11 +73,11 @@ class TwitterUsers {
             }
             const data = yield this.getUserInfo(handles);
             if (data === []) {
-                return [[], 0];
+                return [];
             }
-            const formatedData = this.formatUserInfo(data);
-            const result = yield this.appendUserInfo(formatedData);
-            return [formatedData, result];
+            const formatedData = this.formatUser(data);
+            const result = yield this.repository.upsertTwitterUser(formatedData);
+            return formatedData;
         });
         this.getUserInfo = (handles) => __awaiter(this, void 0, void 0, function* () {
             let data;
@@ -84,7 +114,7 @@ class TwitterUsers {
                 return null;
             }
         });
-        this.formatUserInfo = (rawUsers) => {
+        this.formatUser = (rawUsers) => {
             let formatedUsers = [];
             for (let i = 0; i < rawUsers.length; i++) {
                 formatedUsers.push({
@@ -93,7 +123,7 @@ class TwitterUsers {
                     display_name: rawUsers[i].name,
                     description: rawUsers[i].description,
                     profile_url: 'https://www.twitter.com/' + rawUsers[i].username,
-                    profile_img_url: rawUsers[i].profile_img_url,
+                    profile_image_url: rawUsers[i].profile_image_url,
                     location: rawUsers[i].location,
                     protected: rawUsers[i].protected,
                     twitter_created_at: new Date(rawUsers[i].created_at),
@@ -103,40 +133,10 @@ class TwitterUsers {
             }
             return formatedUsers;
         };
-        this.appendUserInfo = (users) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                const cs = new this.pgp.helpers.ColumnSet([
-                    { name: 'protected', prop: 'protected' },
-                    { name: 'display_name', prop: 'display_name' },
-                    { name: 'follower_count', prop: 'follower_count' },
-                    { name: 'following_count', prop: 'following_count' },
-                    { name: 'location', prop: 'location' },
-                    { name: 'twitter_created_at', prop: 'twitter_created_at' },
-                    { name: 'username', prop: 'username' },
-                    { name: 'description', prop: 'description' },
-                    { name: 'profile_img_url', prop: 'profile_img_url' },
-                    { name: 'profile_url', prop: 'profile_url' },
-                    { name: 'twitter_user_id', prop: 'twitter_user_id' },
-                ], { table: 'twitter_users' });
-                const query = this.pgp.helpers.insert(users, cs) + ` ON CONFLICT DO UPDATE SET
-                                                                 display_name = EXCLUDED.display_name,
-                                                                 follower_count = EXCLUDED.follower_count,
-                                                                 following_count = EXCLUDED.following_count,
-                                                                 description = EXCLUDED.description,
-                                                                 profile_img_url = EXCLUDED.profile_img_url,
-                                                                 profile_url = EXCLUDED.profile_url
-                                                                 `;
-                const result = yield this.pg_client.result(query);
-                return result.rowCount;
-            }
-            catch (err) {
-                console.log(err);
-                throw err;
-            }
-        });
         this.twitterConfig = twitterConfig;
-        this.pg_client = pg_client;
-        this.pgp = pgp;
+        this.repository = repository;
+        //this.pg_client = pg_client;
+        //this.pgp = pgp;
         this.twitterUrl = "https://api.twitter.com/2";
         this.params = {
             method: 'GET',
