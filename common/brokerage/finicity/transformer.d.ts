@@ -3,7 +3,7 @@ import { DateTime } from "luxon";
 interface TransformerRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>;
     getSecuritiesWithIssue(): Promise<SecurityIssue[]>;
-    getFinicityInstitutions(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>;
+    getTradingPostInstitutionsWithFinicityId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>;
 }
 export declare class FinicityTransformer {
     private repository;

@@ -2,7 +2,6 @@ import fetch from 'node-fetch';
 import {rawTweet, formatedTweet, twitterParams} from '../interfaces/twitter';
 import Repository from '../repository'
 import {twitterConfig} from '../interfaces/utils';
-import {IDatabase, IMain} from "pg-promise";
 
 export class Tweets {
     private twitterConfig: twitterConfig;
@@ -32,7 +31,7 @@ export class Tweets {
         } else {
             this.startDate = (await this.repository.getTweetsLastUpdate(twitterUserId)).toISOString();
         }
-        
+
     }
     refreshTokensbyId = async (userIds: string[]) => {
         try {
@@ -44,7 +43,7 @@ export class Tweets {
                     method: 'POST',
                     headers: {
                         "content-type": 'application/x-www-form-urlencoded'
-                    }, 
+                    },
                     form: {
                         refresh_token: d.claims.refresh_token,
                         grant_type: 'refresh_token',
@@ -53,7 +52,14 @@ export class Tweets {
                 }
                 const fetchUrl = this.twitterUrl + authUrl;
                 const response = (await (await fetch(fetchUrl, refreshParams)).json()).data;
-                data.push({userId: d.user_id, platform: d.platform, platformUserId: d.platform_user_id, accessToken: response.access_token, refreshToken: response.refresh_token, expiration: response.expires_in});
+                data.push({
+                    userId: d.user_id,
+                    platform: d.platform,
+                    platformUserId: d.platform_user_id,
+                    accessToken: response.access_token,
+                    refreshToken: response.refresh_token,
+                    expiration: response.expires_in
+                });
             }
             await this.repository.upsertUserTokens(data);
         } catch (err) {
@@ -65,9 +71,9 @@ export class Tweets {
         if (data === []) {
             return [[], 0];
         }
-        
+
         const formatedData = this.formatTweets(data);
-       
+
         const result = await this.repository.upsertTweets(formatedData);
         return [formatedData, result];
     }
@@ -82,7 +88,7 @@ export class Tweets {
             this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'] as string
         }
         let data = [];
-        
+
         try {
             const tweetsEndpoints = `/users/${twitterUserId}/tweets?`;
 
@@ -92,7 +98,7 @@ export class Tweets {
             let response;
             let responseData;
             let username: string;
-            
+
             while (nextToken !== 'end') {
                 if (nextToken === '') {
                     fetchUrl = this.twitterUrl + tweetsEndpoints + new URLSearchParams({
@@ -124,7 +130,7 @@ export class Tweets {
                     return data;
                 }
                 username = response.includes.users[0].username;
-                
+
                 for (let i = 0; i < responseData.length; i++) {
                     tweetUrl = `https://twitter.com/${username}/status/${responseData[i].id}`
                     fetchUrl = `https://publish.twitter.com/oembed?url=${tweetUrl}`;

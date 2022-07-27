@@ -1,7 +1,7 @@
 import { FinicityUser, IBrokerageService, TradingPostBrokerageAccounts, TradingPostCurrentHoldings, TradingPostTransactions, IFinicityRepository } from "../interfaces";
 import Finicity from "../../finicity";
 import { FinicityTransformer } from "./transformer";
-export declare class FinicityService implements IBrokerageService {
+export default class FinicityService implements IBrokerageService {
     private finicity;
     private repository;
     private transformer;
@@ -10,7 +10,7 @@ export declare class FinicityService implements IBrokerageService {
     _createFinicityUser: (userId: string) => Promise<FinicityUser>;
     importInstitutions: () => Promise<void>;
     importAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
-    importHoldings: (userId: string, brokerageIds?: string[] | number[] | undefined) => Promise<TradingPostCurrentHoldings[]>;
+    importHoldings: (userId: string, brokerageIds?: number[] | string[] | undefined) => Promise<TradingPostCurrentHoldings[]>;
     importTransactions: (userId: string, brokerageIds: string[] | number[]) => Promise<TradingPostTransactions[]>;
     exportAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
     exportHoldings: (userId: string) => Promise<TradingPostCurrentHoldings[]>;

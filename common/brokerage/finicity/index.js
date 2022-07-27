@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FinicityService = void 0;
 const luxon_1 = require("luxon");
 class FinicityService {
     constructor(finicity, repository, transformer) {
@@ -272,4 +271,4 @@ class FinicityService {
         this.transformer = transformer;
     }
 }
-exports.FinicityService = FinicityService;
+exports.default = FinicityService;

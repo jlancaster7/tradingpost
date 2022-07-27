@@ -43,7 +43,14 @@ class Tweets {
                     };
                     const fetchUrl = this.twitterUrl + authUrl;
                     const response = (yield (yield (0, node_fetch_1.default)(fetchUrl, refreshParams)).json()).data;
-                    data.push({ userId: d.user_id, platform: d.platform, platformUserId: d.platform_user_id, accessToken: response.access_token, refreshToken: response.refresh_token, expiration: response.expires_in });
+                    data.push({
+                        userId: d.user_id,
+                        platform: d.platform,
+                        platformUserId: d.platform_user_id,
+                        accessToken: response.access_token,
+                        refreshToken: response.refresh_token,
+                        expiration: response.expires_in
+                    });
                 }
                 yield this.repository.upsertUserTokens(data);
             }
