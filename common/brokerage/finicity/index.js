@@ -22,6 +22,7 @@ class FinicityService {
         });
         this._createFinicityUser = (userId) => __awaiter(this, void 0, void 0, function* () {
             const finCustomer = yield this.finicity.addCustomer("trading-post", userId);
+            console.log(finCustomer);
             return this.repository.addFinicityUser(userId, finCustomer.id, "active");
         });
         this.importInstitutions = () => __awaiter(this, void 0, void 0, function* () {

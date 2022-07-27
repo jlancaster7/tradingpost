@@ -38,6 +38,7 @@ exports.default = (0, _1.ensureServerExtensions)({
         const repository = new repository_1.default(pgClient, pgp);
         const finicityCfg = yield configuration_1.DefaultConfig.fromCacheOrSSM("finicity");
         const finicity = new finicity_2.default(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
+        yield finicity.init();
         const finicityService = new finicity_1.FinicityService(finicity, repository, new transformer_1.FinicityTransformer({
             getFinicityInstitutions() {
                 throw new Error("Method Not Implemented");
@@ -49,8 +50,11 @@ exports.default = (0, _1.ensureServerExtensions)({
                 throw new Error("Method Not Implemented");
             },
         }));
+        const test = finicityService.generateBrokerageAuthenticationLink(req.extra.userId);
+        console.log(typeof test);
+        console.log(JSON.stringify(test));
         return {
-            link: finicityService.generateBrokerageAuthenticationLink(req.extra.userId)
+            link: test
         };
     }),
     uploadProfilePic: (req) => __awaiter(void 0, void 0, void 0, function* () {

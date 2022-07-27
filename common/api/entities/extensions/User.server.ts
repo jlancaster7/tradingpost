@@ -29,6 +29,7 @@ export default ensureServerExtensions<User>({
 
         const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
         const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
+        await finicity.init();
         const finicityService = new FinicityService(finicity, repository, new FinicityTransformer({
             getFinicityInstitutions() {
                 throw new Error("Method Not Implemented");
@@ -40,8 +41,11 @@ export default ensureServerExtensions<User>({
                 throw new Error("Method Not Implemented");
             },
         }));
+        const test = finicityService.generateBrokerageAuthenticationLink(req.extra.userId);
+        console.log(typeof test);
+        console.log(JSON.stringify(test));
         return {
-            link: finicityService.generateBrokerageAuthenticationLink(req.extra.userId)
+            link: test
         }
 
     },
