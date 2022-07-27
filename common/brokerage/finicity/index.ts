@@ -40,7 +40,6 @@ export class FinicityService implements IBrokerageService {
 
     _createFinicityUser = async (userId: string): Promise<FinicityUser> => {
         const finCustomer = await this.finicity.addCustomer("trading-post", userId);
-        console.log(finCustomer)
         return this.repository.addFinicityUser(userId, finCustomer.id, "active");
     }
 

@@ -385,7 +385,17 @@ class Repository {
             });
         });
         this.getFinicityUser = (userId) => __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.oneOrNone("SELECT FROM finicity_user WHERE tp_user_id = $1", [userId]);
+            const response = yield this.db.oneOrNone("SELECT id, tp_user_id, customer_id, type, updated_at, created_at FROM finicity_user WHERE tp_user_id = $1", [userId]);
+            if (!response)
+                return null;
+            return {
+                id: response.id,
+                tpUserId: response.tp_user_id,
+                customerId: response.customer_id,
+                type: response.type,
+                updatedAt: luxon_1.DateTime.fromJSDate(response.updated_at),
+                createdAt: luxon_1.DateTime.fromJSDate(response.created_at)
+            };
         });
         this.addFinicityUser = (userId, customerId, type) => __awaiter(this, void 0, void 0, function* () {
             const query = `INSERT INTO finicity_user(tp_user_id, customer_id, type)

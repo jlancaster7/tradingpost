@@ -35,16 +35,19 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         this.db = db;
         this.pgp = pgp;
     }
+
     addTradingPostBrokerageHoldings(holdings: TradingPostCurrentHoldings[]): Promise<void> {
         throw new Error("Method not implemented.");
     }
+
     addTradingPostBrokerageTransactions(transactions: TradingPostTransactions[]): Promise<void> {
         throw new Error("Method not implemented.");
     }
+
     addTradingPostBrokerageHoldingsHistory(holdingsHistory: TradingPostHistoricalHoldings[]): Promise<void> {
         throw new Error("Method not implemented.");
     }
-   
+
     upsertInstitutions = async (institutions: TradingPostInstitution[]): Promise<void> => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'name', prop: 'name'},
@@ -424,7 +427,16 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getFinicityUser = async (userId: string): Promise<FinicityUser | null> => {
-        return await this.db.oneOrNone("SELECT FROM finicity_user WHERE tp_user_id = $1", [userId]);
+        const response = await this.db.oneOrNone("SELECT id, tp_user_id, customer_id, type, updated_at, created_at FROM finicity_user WHERE tp_user_id = $1", [userId]);
+        if (!response) return null;
+        return {
+            id: response.id,
+            tpUserId: response.tp_user_id,
+            customerId: response.customer_id,
+            type: response.type,
+            updatedAt: DateTime.fromJSDate(response.updated_at),
+            createdAt: DateTime.fromJSDate(response.created_at)
+        }
     }
 
     addFinicityUser = async (userId: string, customerId: string, type: string): Promise<FinicityUser> => {
