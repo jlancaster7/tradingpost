@@ -94,3 +94,4 @@ Thumbs.db
 *-api-token.json
 *.js
 *.d.ts
+*.js.map

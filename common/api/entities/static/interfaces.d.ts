@@ -11,6 +11,7 @@ export interface ISecurityList {
     security_name: string;
     company_name: string;
     logo_url: string;
+    is_benchmark: boolean;
 }
 export interface IAnalystProfile {
     investment_strategy: string;

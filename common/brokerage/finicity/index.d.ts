@@ -6,11 +6,11 @@ export declare class FinicityService implements IBrokerageService {
     private repository;
     private transformer;
     constructor(finicity: Finicity, repository: IFinicityRepository, transformer: FinicityTransformer);
-    generateBrokerageAuthenticationLink: (userId: string, brokerageAccount?: string | undefined) => Promise<string>;
+    generateBrokerageAuthenticationLink: (userId: string, brokerageAccount?: string) => Promise<string>;
     _createFinicityUser: (userId: string) => Promise<FinicityUser>;
     importInstitutions: () => Promise<void>;
     importAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
-    importHoldings: (userId: string, brokerageIds?: string[] | number[] | undefined) => Promise<TradingPostCurrentHoldings[]>;
+    importHoldings: (userId: string, brokerageIds?: string[] | number[]) => Promise<TradingPostCurrentHoldings[]>;
     importTransactions: (userId: string, brokerageIds: string[] | number[]) => Promise<TradingPostTransactions[]>;
     exportAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
     exportHoldings: (userId: string) => Promise<TradingPostCurrentHoldings[]>;
