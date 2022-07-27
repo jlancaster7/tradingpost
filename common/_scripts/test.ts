@@ -1,3 +1,5 @@
+process.env.CONFIGURATION_ENV = "production"
+process.env.FINICITY_CALLBACK_URL = "ndad"
 import {BrokerageService} from "../brokerage/service";
 import BrokerageRepository from "../brokerage/repository";
 import {DefaultConfig} from "../configuration/index";

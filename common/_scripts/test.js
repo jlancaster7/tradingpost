@@ -12,6 +12,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+process.env.CONFIGURATION_ENV = "production";
+process.env.FINICITY_CALLBACK_URL = "ndad";
 const repository_1 = __importDefault(require("../brokerage/repository"));
 const index_1 = require("../configuration/index");
 const pg_promise_1 = __importDefault(require("pg-promise"));
