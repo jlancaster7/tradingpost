@@ -17,13 +17,8 @@ const users_1 = require("./users");
 const tweets_1 = require("./tweets");
 const repository_1 = __importDefault(require("../repository"));
 const lambdaImportTweets = (pgClient, pgp, twitterConfiguration) => __awaiter(void 0, void 0, void 0, function* () {
-    let query = `SELECT twitter_user_id, a.access_token, a.refresh_token
-                 FROM twitter_users
-                 LEFT JOIN (SELECT platform_user_id, access_token, refresh_token FROM data_platform_claim WHERE platform = 'twitter') as a
-                 ON twitter_users.twitter_user_id = a.platform_user_id
-                 `;
-    const twitterIds = yield pgClient.query(query);
     const repository = new repository_1.default(pgClient, pgp);
+    const twitterIds = yield repository.getTwitterUsers();
     const Tweet = new tweets_1.Tweets(twitterConfiguration, repository);
     let result;
     let tweetsImported = 0;

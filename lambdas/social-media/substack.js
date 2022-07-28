@@ -30,9 +30,8 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         });
         yield pgClient.connect();
     }
-    const substackConfiguration = yield configuration_1.DefaultConfig.fromCacheOrSSM("substack");
     try {
-        yield (0, import_1.lambdaImportRSSFeeds)(pgClient, pgp, substackConfiguration);
+        yield (0, import_1.lambdaImportRSSFeeds)(pgClient, pgp);
     }
     catch (e) {
         console.error(e);

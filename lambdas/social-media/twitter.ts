@@ -1,6 +1,4 @@
 import 'dotenv/config';
-
-process.env.CONFIGURATION_ENV = "production";
 import {Context} from "aws-lambda";
 import {lambdaImportTweets, addTwitterUsersByHandle} from "@tradingpost/common/social-media/twitter";
 import {DefaultConfig} from "@tradingpost/common/configuration";

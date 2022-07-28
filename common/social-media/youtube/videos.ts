@@ -1,22 +1,21 @@
 import fetch from 'node-fetch';
-import {rawYoutubeVideo, youtubeParams, formatedYoutubeVideo} from '../interfaces/youtube';
-import {youtubeConfig} from '../interfaces/utils';
-import {IDatabase, IMain} from "pg-promise";
+import { rawYoutubeVideo, youtubeParams, formatedYoutubeVideo } from '../interfaces/youtube';
+import { youtubeConfig } from '../interfaces/utils';
+import Repository from '../repository';
 
 
 export class YoutubeVideos {
     private youtubeConfig: youtubeConfig;
-    private pg_client: IDatabase<any>;
+    private repository: Repository;
     private youtubeUrl: string;
     public startDate: string;
     public defaultStartDateDays: number;
     private params: youtubeParams;
-    private pgp: IMain;
+    
 
-    constructor(youtubeConfig: youtubeConfig, pg_client: IDatabase<any>, pgp: IMain) {
+    constructor(repository: Repository, youtubeConfig: youtubeConfig) {
         this.youtubeConfig = youtubeConfig;
-        this.pg_client = pg_client;
-        this.pgp = pgp;
+        this.repository = repository;
         this.youtubeUrl = "https://www.googleapis.com/youtube/v3";
         this.startDate = '';
         this.defaultStartDateDays = 90;
@@ -33,16 +32,8 @@ export class YoutubeVideos {
     }
 
     getStartDate = async (youtubeChannelId: string) => {
-        let query = 'SELECT youtube_channel_id, MAX(created_at) FROM youtube_videos WHERE youtube_channel_id = $1 GROUP BY youtube_channel_id';
-        let result = await this.pg_client.result(query, [youtubeChannelId]);
-
-        if (result.rowCount === 0) {
-            let defaultDate = new Date();
-            defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
-            await this.setStartDate(defaultDate);
-        } else {
-            await this.setStartDate(result.rows[0].max);
-        }
+        const result = await this.repository.getYoutubeLastUpdate(youtubeChannelId);
+        this.setStartDate(result);
     }
 
     importVideos = async (youtubeChannelId: string): Promise<[formatedYoutubeVideo[], number]> => {
@@ -53,7 +44,7 @@ export class YoutubeVideos {
         }
 
         let formatedData = this.formatVideos(data);
-        let result = await this.appendVideos(formatedData);
+        let result = await this.repository.insertYoutubeVideos(formatedData);
         return [formatedData, result];
     }
 
@@ -139,27 +130,6 @@ export class YoutubeVideos {
             delete formatedVideos[i].id;
         }
         return formatedVideos;
-    }
-
-    appendVideos = async (formattedVideos: formatedYoutubeVideo[]): Promise<number> => {
-        try {
-            const cs = new this.pgp.helpers.ColumnSet([
-                {name: 'video_id', prop: 'video_id'},
-                {name: 'youtube_channel_id', prop: 'youtube_channel_id'},
-                {name: 'youtube_created_at', prop: 'youtube_created_at'},
-                {name: 'title', prop: 'title'},
-                {name: 'description', prop: 'description'},
-                {name: 'thumbnails', prop: 'thumbnails'},
-                {name: 'video_url', prop: 'video_url'},
-                {name: 'video_embed', prop: 'video_embed'},
-            ], {table: 'youtube_videos'});
-            const query = this.pgp.helpers.insert(formattedVideos, cs) + ' ON CONFLICT DO NOTHING;'
-            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            return (await this.pg_client.result(query)).rowCount
-        } catch (err) {
-            console.log(err);
-            throw err
-        }
     }
 }
 

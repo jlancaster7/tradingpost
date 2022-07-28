@@ -1,6 +1,6 @@
 import { SSM } from '@aws-sdk/client-ssm';
 declare type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid" | "finicity";
-interface ConfigPaths extends Record<ConfigKeys, unknown> {
+export interface ConfigPaths extends Record<ConfigKeys, unknown> {
     elastic: {
         cloudId: string;
         apiKey: string;
@@ -73,7 +73,7 @@ export declare class Configuration<K extends Record<string, any>> {
     private cache;
     private defaultOptions;
     constructor(ssmClient: SSM, defaultOptions?: Configuration<K>["defaultOptions"], environment?: ConfigurationEnv, enableCache?: any);
-    fromSSM: <T extends keyof K>(path: T, options?: ConfigOptions | undefined) => Promise<K[T]>;
+    fromSSM: <T extends keyof K>(path: T, options?: ConfigOptions) => Promise<K[T]>;
     fromCacheOrSSM: <T extends keyof K>(path: T) => Promise<K[T]>;
 }
 export declare const DefaultConfig: Configuration<ConfigPaths>;

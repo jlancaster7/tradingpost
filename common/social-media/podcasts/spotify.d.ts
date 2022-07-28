@@ -1,21 +1,17 @@
 import { spotifyConfig } from '../interfaces/utils';
-import { rawSpotifyShow, spotifyShow, spotifyEpisode } from '../interfaces/podcasts';
-import { IDatabase, IMain } from "pg-promise";
+import { spotifyShow, spotifyEpisode } from '../interfaces/podcasts';
+import Repository from '../repository';
 export declare class SpotifyShows {
     private spotifyConfig;
-    private pg_client;
-    private pgp;
+    private repository;
     private tokenUrl;
     private showUrl;
     private access_token;
     private params;
-    constructor(spotifyConfig: spotifyConfig, pg_client: IDatabase<any>, pgp: IMain);
+    constructor(repository: Repository, spotifyConfig: spotifyConfig);
     setAccessToken: () => Promise<0 | 1>;
     importShows: (showIds: string | string[]) => Promise<[spotifyShow[], number]>;
     importEpisodes: (showId: string) => Promise<[spotifyEpisode[], number]>;
-    getShowInfo: (showIds: string[]) => Promise<rawSpotifyShow[]>;
+    getShowInfo: (showIds: string[]) => Promise<spotifyShow[]>;
     getEpisodes: (showId: string) => Promise<spotifyEpisode[]>;
-    formatShowInfo: (data: rawSpotifyShow[]) => spotifyShow[];
-    appendEpisodes: (episodes: spotifyEpisode[]) => Promise<number>;
-    appendShow: (formattedShows: spotifyShow[]) => Promise<number>;
 }

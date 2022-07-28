@@ -71,9 +71,7 @@ export class Tweets {
         if (data === []) {
             return [[], 0];
         }
-
         const formatedData = this.formatTweets(data);
-
         const result = await this.repository.upsertTweets(formatedData);
         return [formatedData, result];
     }

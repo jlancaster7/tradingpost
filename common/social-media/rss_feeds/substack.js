@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Substack = void 0;
 const rss_parser_1 = __importDefault(require("rss-parser"));
 class Substack {
-    constructor(pg_client, pgp) {
+    constructor(repository) {
         this.importUsers = (username) => __awaiter(this, void 0, void 0, function* () {
             if (typeof username === 'string') {
                 username = [username];
@@ -30,7 +30,7 @@ class Substack {
                     continue;
                 }
                 formatedUser = this.formatUser(data);
-                count += yield this.appendUser(formatedUser);
+                count += yield this.repository.insertSubstackUser(formatedUser);
                 results.push(formatedUser);
             }
             return [results, count];
@@ -41,7 +41,7 @@ class Substack {
                 return [[], 0];
             }
             const formatedArticles = this.formatArticles(results);
-            const success = yield this.appendArticles(formatedArticles);
+            const success = yield this.repository.insertSubstackArticles(formatedArticles);
             return [formatedArticles, success];
         });
         this.getUserFeed = (username) => __awaiter(this, void 0, void 0, function* () {
@@ -97,59 +97,7 @@ class Substack {
             }
             return formatedArticles;
         };
-        this.appendUser = (data) => __awaiter(this, void 0, void 0, function* () {
-            let keys;
-            let values;
-            let value_index;
-            let query;
-            let result;
-            let success = 0;
-            try {
-                keys = Object.keys(data).join(' ,');
-                values = Object.values(data);
-                value_index = '';
-                values.map((obj, index) => {
-                    value_index += `$${index + 1}, `;
-                });
-                value_index = value_index.substring(0, value_index.length - 2);
-                query = `INSERT INTO substack_users(${keys})
-                     VALUES (${value_index})
-                     ON CONFLICT (substack_user_id) DO NOTHING`;
-                // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.result(query, values);
-                success += result.rowCount;
-                return success;
-            }
-            catch (err) {
-                return success;
-            }
-        });
-        this.appendArticles = (formattedArticles) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                const cs = new this.pgp.helpers.ColumnSet([
-                    { name: 'substack_user_id', prop: 'substack_user_id' },
-                    { name: 'creator', prop: 'creator' },
-                    { name: 'title', prop: 'title' },
-                    { name: 'link', prop: 'link' },
-                    { name: 'substack_created_at', prop: 'substack_created_at' },
-                    { name: 'content_encoded', prop: 'content_encoded' },
-                    { name: 'content_encoded_snippet', prop: 'content_encoded_snippet' },
-                    { name: 'enclosure', prop: 'enclosure' },
-                    { name: 'dc_creator', prop: 'dc_creator' },
-                    { name: 'content', prop: 'content' },
-                    { name: 'content_snippet', prop: 'content_snippet' },
-                    { name: 'article_id', prop: 'article_id' },
-                    { name: 'itunes', prop: 'itunes' },
-                ], { table: 'substack_articles' });
-                const query = this.pgp.helpers.insert(formattedArticles, cs) + ' ON CONFLICT DO NOTHING';
-                return (yield this.pg_client.result(query)).rowCount;
-            }
-            catch (err) {
-                throw err;
-            }
-        });
-        this.pg_client = pg_client;
-        this.pgp = pgp;
+        this.repository = repository;
     }
 }
 exports.Substack = Substack;

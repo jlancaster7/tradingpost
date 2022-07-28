@@ -16,3 +16,11 @@ export interface postgresConfig {
 export interface spotifyConfig {
     [key: string]: string | number | boolean;
 }
+export declare type PlatformToken = {
+    userId: string;
+    platform: string;
+    platformUserId: string;
+    accessToken: string;
+    refreshToken: string;
+    expiration: string;
+};

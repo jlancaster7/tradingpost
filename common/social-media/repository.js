@@ -11,6 +11,36 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 class Repository {
     constructor(db, pgp) {
+        this.getSpotifyUsers = () => __awaiter(this, void 0, void 0, function* () {
+            let query = `SELECT spotify_show_id 
+                     FROM spotify_users
+                     `;
+            const spotifyShowIds = yield this.db.query(query);
+            return spotifyShowIds;
+        });
+        this.getTwitterUsers = () => __awaiter(this, void 0, void 0, function* () {
+            let query = `SELECT twitter_user_id, a.access_token, a.refresh_token
+                     FROM twitter_users
+                     LEFT JOIN (SELECT platform_user_id, access_token, refresh_token FROM data_platform_claim WHERE platform = 'twitter') as a
+                     ON twitter_users.twitter_user_id = a.platform_user_id
+                     `;
+            const twitterIds = yield this.db.query(query);
+            return twitterIds;
+        });
+        this.getSubstackUsers = () => __awaiter(this, void 0, void 0, function* () {
+            let query = `SELECT substack_user_id
+                     FROM substack_users
+                     `;
+            const substackIds = yield this.db.query(query);
+            return substackIds;
+        });
+        this.getYoutubeUsers = () => __awaiter(this, void 0, void 0, function* () {
+            let query = `SELECT youtube_channel_id 
+                     FROM youtube_users
+                     `;
+            const channelIds = yield this.db.query(query);
+            return channelIds;
+        });
         this.getTweetsLastUpdate = (twitterUserId) => __awaiter(this, void 0, void 0, function* () {
             let query = `SELECT twitter_user_id, MAX(created_at) 
                      FROM tweets 
@@ -24,6 +54,30 @@ class Repository {
             }
             else {
                 return result[0].max;
+            }
+        });
+        this.getYoutubeLastUpdate = (youtubeChannelId) => __awaiter(this, void 0, void 0, function* () {
+            let query = `SELECT youtube_channel_id, MAX(created_at) 
+                     FROM youtube_videos WHERE youtube_channel_id = $1 
+                     GROUP BY youtube_channel_id`;
+            let result = yield this.db.result(query, [youtubeChannelId]);
+            if (!result.rows) {
+                return new Date('1/1/2018');
+            }
+            else {
+                return result.rows[0].max;
+            }
+        });
+        this.getSpotifyLastUpdate = (spotify_show_id) => __awaiter(this, void 0, void 0, function* () {
+            let query = `SELECT spotify_show_id, MAX(release_date) 
+                        FROM spotify_episodes WHERE spotify_show_id = $1 
+                        GROUP BY spotify_show_id`;
+            let result = yield this.db.result(query, [spotify_show_id]);
+            if (!result.rows) {
+                return new Date('1/1/2018');
+            }
+            else {
+                return result.rows[0].max;
             }
         });
         this.getTokens = (userIds, platform) => __awaiter(this, void 0, void 0, function* () {
@@ -124,8 +178,171 @@ class Repository {
                 return result.rowCount;
             }
             catch (err) {
+                console.error(err);
+                throw err;
+            }
+        });
+        this.insertSubstackArticles = (formattedArticles) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'substack_user_id', prop: 'substack_user_id' },
+                    { name: 'creator', prop: 'creator' },
+                    { name: 'title', prop: 'title' },
+                    { name: 'link', prop: 'link' },
+                    { name: 'substack_created_at', prop: 'substack_created_at' },
+                    { name: 'content_encoded', prop: 'content_encoded' },
+                    { name: 'content_encoded_snippet', prop: 'content_encoded_snippet' },
+                    { name: 'enclosure', prop: 'enclosure' },
+                    { name: 'dc_creator', prop: 'dc_creator' },
+                    { name: 'content', prop: 'content' },
+                    { name: 'content_snippet', prop: 'content_snippet' },
+                    { name: 'article_id', prop: 'article_id' },
+                    { name: 'itunes', prop: 'itunes' },
+                ], { table: 'substack_articles' });
+                const query = this.pgp.helpers.insert(formattedArticles, cs) + ' ON CONFLICT DO NOTHING';
+                const result = yield this.db.result(query);
+                return result.rowCount;
+            }
+            catch (err) {
+                console.error(err);
+                throw err;
+            }
+        });
+        this.insertSubstackUser = (data) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'substack_user_id', prop: 'substack_user_id' },
+                    { name: 'title', prop: 'title' },
+                    { name: 'description', prop: 'description' },
+                    { name: 'link', prop: 'link' },
+                    { name: 'language', prop: 'language' },
+                    { name: 'email', prop: 'email' },
+                    { name: 'image', prop: 'image' },
+                    { name: 'itunes', prop: 'itunes' },
+                    { name: 'last_build_date', prop: 'last_build_date' },
+                ], { table: 'substack_users' });
+                const query = this.pgp.helpers.insert(data, cs) + ' ON CONFLICT (substack_user_id) DO NOTHING';
+                // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+                const result = yield this.db.result(query);
+                return result.rowCount;
+                ;
+            }
+            catch (err) {
+                console.error(err);
+                throw err;
+            }
+        });
+        this.insertSpotifyEpisodes = (episodes) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'spotify_episode_id', prop: 'spotify_episode_id' },
+                    { name: 'spotify_show_id', prop: 'spotify_show_id' },
+                    { name: 'audio_preview_url', prop: 'audio_preview_url' },
+                    { name: 'name', prop: 'name' },
+                    { name: 'description', prop: 'description' },
+                    { name: 'duration_ms', prop: 'duration_ms' },
+                    { name: 'explicit', prop: 'explicit' },
+                    { name: 'html_description', prop: 'html_description' },
+                    { name: 'is_externally_hosted', prop: 'is_externally_hosted' },
+                    { name: 'is_playable', prop: 'is_playable' },
+                    { name: 'language', prop: 'language' },
+                    { name: 'languages', prop: 'languages' },
+                    { name: 'embed', prop: 'embed' },
+                    { name: 'external_urls', prop: 'external_urls' },
+                    { name: 'images', prop: 'images' },
+                    { name: 'release_date', prop: 'release_date' },
+                ], { table: 'spotify_episodes' });
+                // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+                const query = this.pgp.helpers.insert(episodes, cs) + ' ON CONFLICT DO NOTHING';
+                const results = yield this.db.result(query);
+                if (!results)
+                    return 0;
+                return results.rowCount;
+            }
+            catch (err) {
                 console.log(err);
                 throw err;
+            }
+        });
+        this.upsertSpotifyShow = (formattedShows) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'spotify_show_id', prop: 'spotify_show_id' },
+                    { name: 'name', prop: 'name' },
+                    { name: 'description', prop: 'description' },
+                    { name: 'explicit', prop: 'explicit' },
+                    { name: 'html_description', prop: 'html_description' },
+                    { name: 'is_externally_hosted', prop: 'is_externally_hosted' },
+                    { name: 'media_type', prop: 'media_type' },
+                    { name: 'publisher', prop: 'publisher' },
+                    { name: 'copyrights', prop: 'copyrights' },
+                    { name: 'total_episodes', prop: 'total_episodes' },
+                    { name: 'languages', prop: 'languages' },
+                    { name: 'external_urls', prop: 'external_urls' },
+                    { name: 'images', prop: 'images' },
+                ], { table: 'spotify_users' });
+                const query = this.pgp.helpers.insert(formattedShows, cs) + ` ON CONFLICT ON CONSTRAINT spotify_users_spotify_show_id_key DO UPDATE SET
+                                                                          name = EXCLUDED.name,
+                                                                          description = EXCLUDED.description,
+                                                                          html_description = EXCLUDED.html_description,
+                                                                          total_episodes = EXCLUDED.total_episodes,
+                                                                          external_urls = EXCLUDED.external_urls,
+                                                                          images - EXCLUDED.images
+                                                                          `;
+                const results = yield this.db.result(query);
+                if (!results)
+                    return 0;
+                return results.rowCount;
+            }
+            catch (err) {
+                console.log(err);
+                throw err;
+            }
+        });
+        this.insertYoutubeVideos = (formattedVideos) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'video_id', prop: 'video_id' },
+                    { name: 'youtube_channel_id', prop: 'youtube_channel_id' },
+                    { name: 'youtube_created_at', prop: 'youtube_created_at' },
+                    { name: 'title', prop: 'title' },
+                    { name: 'description', prop: 'description' },
+                    { name: 'thumbnails', prop: 'thumbnails' },
+                    { name: 'video_url', prop: 'video_url' },
+                    { name: 'video_embed', prop: 'video_embed' },
+                ], { table: 'youtube_videos' });
+                const query = this.pgp.helpers.insert(formattedVideos, cs) + ' ON CONFLICT DO NOTHING;';
+                // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+                const result = yield this.db.result(query);
+                return result.rowCount;
+            }
+            catch (err) {
+                console.log(err);
+                throw err;
+            }
+        });
+        this.insertChannelInfo = (data) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const cs = new this.pgp.helpers.ColumnSet([
+                    { name: 'youtube_channel_id', prop: 'youtube_channel_id' },
+                    { name: 'title', prop: 'title' },
+                    { name: 'description', prop: 'description' },
+                    { name: 'country', prop: 'country' },
+                    { name: 'custom_url', prop: 'custom_url' },
+                    { name: 'youtube_created_at', prop: 'youtube_created_at' },
+                    { name: 'thumbnails', prop: 'thumbnails' },
+                    { name: 'statistics', prop: 'statistics' },
+                    { name: 'status', prop: 'status' },
+                ], { table: 'youtube_users' });
+                // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+                const query = this.pgp.helpers.insert(data, cs) + `ON CONFLICT DO NOTHING`;
+                const result = yield this.db.result(query);
+                return result.rowCount;
+            }
+            catch (e) {
+                console.error(e);
+                throw e;
             }
         });
         this.db = db;

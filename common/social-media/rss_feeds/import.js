@@ -8,18 +8,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.importSubstackUsers = exports.lambdaImportRSSFeeds = void 0;
 const substack_1 = require("./substack");
-function lambdaImportRSSFeeds(pgClient, pgp, substackConfiguration) {
+const repository_1 = __importDefault(require("../repository"));
+function lambdaImportRSSFeeds(pgClient, pgp) {
     return __awaiter(this, void 0, void 0, function* () {
-        let query = `SELECT substack_user_id
-                 FROM substack_users`;
-        //TODO: I could do this a lot better.. making getting the substack Ids apart of the class
-        //      and adding a function to set your own list of substackIds.. similar to start date.
-        //      but its fine for now
-        const substackIds = yield pgClient.query(query);
-        const ssArticles = new substack_1.Substack(pgClient, pgp);
+        const repository = new repository_1.default(pgClient, pgp);
+        const substackIds = yield repository.getSubstackUsers();
+        const ssArticles = new substack_1.Substack(repository);
         let result;
         let articlesImported = 0;
         for (let i = 0; i < substackIds.length; i++) {
@@ -30,9 +30,10 @@ function lambdaImportRSSFeeds(pgClient, pgp, substackConfiguration) {
     });
 }
 exports.lambdaImportRSSFeeds = lambdaImportRSSFeeds;
-function importSubstackUsers(username, pgClient, pgp, substackConfiguration) {
+function importSubstackUsers(username, pgClient, pgp) {
     return __awaiter(this, void 0, void 0, function* () {
-        const ssUsers = new substack_1.Substack(pgClient, pgp);
+        const repository = new repository_1.default(pgClient, pgp);
+        const ssUsers = new substack_1.Substack(repository);
         const result = yield ssUsers.importUsers(username);
         let length;
         if (typeof username === 'string') {

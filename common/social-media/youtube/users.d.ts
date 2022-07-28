@@ -1,17 +1,22 @@
 import { channelInfo, formatedChannelInfo } from '../interfaces/youtube';
 import { youtubeConfig } from '../interfaces/utils';
-import { IDatabase, IMain } from "pg-promise";
+import Repository from '../repository';
 export declare class YoutubeUsers {
     private youtubeConfig;
-    private pg_client;
-    private pgp;
+    private repository;
     private youtubeUrl;
     private standardYtUrl;
     private customYtUrl;
     private params;
-    constructor(youtubeConfig: youtubeConfig, pg_client: IDatabase<any>, pgp: IMain);
-    importYoutubeUsers: (userChannelUrl: string | string[]) => Promise<[formatedChannelInfo[], number]>;
+    constructor(repository: Repository, youtubeConfig: youtubeConfig);
+    importYoutubeUsersById: (userChannelUrl: string[]) => Promise<[formatedChannelInfo[], number]>;
+    importYoutubeUsersbyToken: (youtubeUsers: {
+        userId: string;
+        accessToken: string;
+        refreshToken: string;
+        expiration: string;
+    }[]) => Promise<[formatedChannelInfo[], number]>;
+    getChannelInfobyToken: (token: string) => Promise<channelInfo[]>;
     getChannelInfobyUrl: (userChannelUrl: string) => Promise<channelInfo | undefined>;
-    formatChannelInfo: (data: channelInfo) => formatedChannelInfo;
-    appendChannelInfo: (data: formatedChannelInfo) => Promise<number>;
+    formatChannelInfo: (data: channelInfo[]) => formatedChannelInfo[];
 }

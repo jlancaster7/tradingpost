@@ -20,10 +20,8 @@ const run = async () => {
         await pgClient.connect()
     }
 
-    const substackConfiguration = await DefaultConfig.fromCacheOrSSM("substack");
-
     try {
-        await lambdaImportRSSFeeds(pgClient, pgp, substackConfiguration);
+        await lambdaImportRSSFeeds(pgClient, pgp);
     } catch (e) {
         console.error(e)
         throw e

@@ -1,6 +1,9 @@
 
 import { DateTime } from "luxon";
-import {rawTweet, formatedTweet, formatedTwitterUser, twitterParams, PlatformToken} from './interfaces/twitter';
+import { formatedTweet, formatedTwitterUser, PlatformToken } from './interfaces/twitter';
+import { SubstackArticles, SubstackUser } from './interfaces/rss_feeds';
+import { spotifyShow, spotifyEpisode } from './interfaces/podcasts';
+import { formatedYoutubeVideo, formatedChannelInfo } from './interfaces/youtube';
 import { IDatabase, IMain } from "pg-promise";
 
 export default class Repository {
@@ -13,18 +16,83 @@ export default class Repository {
         this.pgp = pgp;
         this.defaultStartDateDays = 90;
     }
+
+    getSpotifyUsers = async (): Promise<{spotify_show_id: string}[]> => {
+        let query = `SELECT spotify_show_id 
+                     FROM spotify_users
+                     `;
+
+        const spotifyShowIds = await this.db.query(query);
+        return spotifyShowIds;
+    }
+    getTwitterUsers = async (): Promise<{twitter_user_id: string, access_token: string, refresh_token: string}[]>  => {
+        let query = `SELECT twitter_user_id, a.access_token, a.refresh_token
+                     FROM twitter_users
+                     LEFT JOIN (SELECT platform_user_id, access_token, refresh_token FROM data_platform_claim WHERE platform = 'twitter') as a
+                     ON twitter_users.twitter_user_id = a.platform_user_id
+                     `;
+
+        const twitterIds = await this.db.query(query);
+        return twitterIds;
+    }
+
+    getSubstackUsers = async (): Promise<{substack_user_id: string}[]> => {
+        let query = `SELECT substack_user_id
+                     FROM substack_users
+                     `;
+
+        const substackIds = await this.db.query(query);
+        return substackIds;
+    }
+    getYoutubeUsers = async (): Promise<{youtube_channel_id: string}[]> => {
+        let query = `SELECT youtube_channel_id 
+                     FROM youtube_users
+                     `;
+
+        const channelIds = await this.db.query(query);
+        return channelIds;
+    }
+
     getTweetsLastUpdate = async (twitterUserId: string): Promise<Date> => {
         let query = `SELECT twitter_user_id, MAX(created_at) 
                      FROM tweets 
                      WHERE twitter_user_id = $1 
                      GROUP BY twitter_user_id`;
         let result = await this.db.any(query, [twitterUserId]);
+
         if (result.length === 0) {
             let defaultDate = new Date();
             defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
             return defaultDate;
         } else {
             return result[0].max
+        }
+    }
+    getYoutubeLastUpdate = async (youtubeChannelId: string): Promise<Date> => {
+        let query = `SELECT youtube_channel_id, MAX(created_at) 
+                     FROM youtube_videos WHERE youtube_channel_id = $1 
+                     GROUP BY youtube_channel_id`;
+        let result = await this.db.result(query, [youtubeChannelId]);
+
+        if (!result.rows) {
+            return new Date ('1/1/2018');
+        } 
+        else {
+            return result.rows[0].max;
+        }
+    }
+
+    getSpotifyLastUpdate = async (spotify_show_id: string): Promise<Date> => {
+        let query = `SELECT spotify_show_id, MAX(release_date) 
+                        FROM spotify_episodes WHERE spotify_show_id = $1 
+                        GROUP BY spotify_show_id`;
+        let result = await this.db.result(query, [spotify_show_id]);
+
+        if (!result.rows) {
+            return new Date ('1/1/2018');
+        } 
+        else {
+            return result.rows[0].max;
         }
     }
 
@@ -132,9 +200,169 @@ export default class Repository {
             const result = await this.db.result(query);
             return result.rowCount
         } catch (err) {
-            console.log(err);
+            console.error(err);
             throw err
         }
     }
 
+    insertSubstackArticles = async (formattedArticles: SubstackArticles[]): Promise<number> => {
+        try {
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'substack_user_id', prop: 'substack_user_id'},
+                {name: 'creator', prop: 'creator'},
+                {name: 'title', prop: 'title'},
+                {name: 'link', prop: 'link'},
+                {name: 'substack_created_at', prop: 'substack_created_at'},
+                {name: 'content_encoded', prop: 'content_encoded'},
+                {name: 'content_encoded_snippet', prop: 'content_encoded_snippet'},
+                {name: 'enclosure', prop: 'enclosure'},
+                {name: 'dc_creator', prop: 'dc_creator'},
+                {name: 'content', prop: 'content'},
+                {name: 'content_snippet', prop: 'content_snippet'},
+                {name: 'article_id', prop: 'article_id'},
+                {name: 'itunes', prop: 'itunes'},
+            ], {table: 'substack_articles'});
+
+            const query = this.pgp.helpers.insert(formattedArticles, cs) + ' ON CONFLICT DO NOTHING';
+            
+            const result = await this.db.result(query); 
+            return result.rowCount;
+        } catch (err) {
+            console.error(err)
+            throw err;
+        }
+    }
+
+    insertSubstackUser = async (data: SubstackUser): Promise<number> => {
+        try {
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'substack_user_id', prop: 'substack_user_id'},
+                {name: 'title', prop: 'title'},
+                {name: 'description', prop: 'description'},
+                {name: 'link', prop: 'link'},
+                {name: 'language', prop: 'language'},
+                {name: 'email', prop: 'email'},
+                {name: 'image', prop: 'image'},
+                {name: 'itunes', prop: 'itunes'},
+                {name: 'last_build_date', prop: 'last_build_date'},
+            ], {table: 'substack_users'});
+            const query = this.pgp.helpers.insert(data, cs) + ' ON CONFLICT (substack_user_id) DO NOTHING';
+            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+            const result = await this.db.result(query); 
+            return result.rowCount;;
+        } catch (err) {
+            console.error(err)
+            throw err;
+        }
+    }
+    insertSpotifyEpisodes = async (episodes: spotifyEpisode[]): Promise<number> => {
+        try {
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'spotify_episode_id', prop: 'spotify_episode_id'},
+                {name: 'spotify_show_id', prop: 'spotify_show_id'},
+                {name: 'audio_preview_url', prop: 'audio_preview_url'},
+                {name: 'name', prop: 'name'},
+                {name: 'description', prop: 'description'},
+                {name: 'duration_ms', prop: 'duration_ms'},
+                {name: 'explicit', prop: 'explicit'},
+                {name: 'html_description', prop: 'html_description'},
+                {name: 'is_externally_hosted', prop: 'is_externally_hosted'},
+                {name: 'is_playable', prop: 'is_playable'},
+                {name: 'language', prop: 'language'},
+                {name: 'languages', prop: 'languages'},
+                {name: 'embed', prop: 'embed'},
+                {name: 'external_urls', prop: 'external_urls'},
+                {name: 'images', prop: 'images'},
+                {name: 'release_date', prop: 'release_date'},
+            ], {table: 'spotify_episodes'});
+            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+            const query = this.pgp.helpers.insert(episodes, cs) + ' ON CONFLICT DO NOTHING';
+            const results = await this.db.result(query);
+            if (!results) return 0;
+            return results.rowCount;
+        } catch (err) {
+            console.log(err);
+            throw err;
+        }
+    }
+
+    upsertSpotifyShow = async (formattedShows: spotifyShow[]): Promise<number> => {
+        try {
+            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'spotify_show_id', prop: 'spotify_show_id'},
+                {name: 'name', prop: 'name'},
+                {name: 'description', prop: 'description'},
+                {name: 'explicit', prop: 'explicit'},
+                {name: 'html_description', prop: 'html_description'},
+                {name: 'is_externally_hosted', prop: 'is_externally_hosted'},
+                {name: 'media_type', prop: 'media_type'},
+                {name: 'publisher', prop: 'publisher'},
+                {name: 'copyrights', prop: 'copyrights'},
+                {name: 'total_episodes', prop: 'total_episodes'},
+                {name: 'languages', prop: 'languages'},
+                {name: 'external_urls', prop: 'external_urls'},
+                {name: 'images', prop: 'images'},
+            ], {table: 'spotify_users'});
+            const query = this.pgp.helpers.insert(formattedShows, cs) + ` ON CONFLICT ON CONSTRAINT spotify_users_spotify_show_id_key DO UPDATE SET
+                                                                          name = EXCLUDED.name,
+                                                                          description = EXCLUDED.description,
+                                                                          html_description = EXCLUDED.html_description,
+                                                                          total_episodes = EXCLUDED.total_episodes,
+                                                                          external_urls = EXCLUDED.external_urls,
+                                                                          images - EXCLUDED.images
+                                                                          `;
+            const results = await this.db.result(query);
+            if (!results) return 0;
+            return results.rowCount;
+        } catch (err) {
+            console.log(err);
+            throw err;
+        }
+    }
+    insertYoutubeVideos = async (formattedVideos: formatedYoutubeVideo[]): Promise<number> => {
+        try {
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'video_id', prop: 'video_id'},
+                {name: 'youtube_channel_id', prop: 'youtube_channel_id'},
+                {name: 'youtube_created_at', prop: 'youtube_created_at'},
+                {name: 'title', prop: 'title'},
+                {name: 'description', prop: 'description'},
+                {name: 'thumbnails', prop: 'thumbnails'},
+                {name: 'video_url', prop: 'video_url'},
+                {name: 'video_embed', prop: 'video_embed'},
+            ], {table: 'youtube_videos'});
+            const query = this.pgp.helpers.insert(formattedVideos, cs) + ' ON CONFLICT DO NOTHING;'
+            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+            const result = await this.db.result(query)
+            return result.rowCount;
+        } catch (err) {
+            console.log(err);
+            throw err;
+        }
+    }
+    insertChannelInfo = async (data: formatedChannelInfo[]): Promise<number> => {
+        try {
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'youtube_channel_id', prop: 'youtube_channel_id'},
+                {name: 'title', prop: 'title'},
+                {name: 'description', prop: 'description'},
+                {name: 'country', prop: 'country'},
+                {name: 'custom_url', prop: 'custom_url'},
+                {name: 'youtube_created_at', prop: 'youtube_created_at'},
+                {name: 'thumbnails', prop: 'thumbnails'},
+                {name: 'statistics', prop: 'statistics'},
+                {name: 'status', prop: 'status'},
+            ], {table: 'youtube_users'})
+
+            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
+            const query = this.pgp.helpers.insert(data, cs) + `ON CONFLICT DO NOTHING`;
+            const result = await this.db.result(query)
+            return result.rowCount;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    }
 }
+
