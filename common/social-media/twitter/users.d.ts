@@ -12,7 +12,7 @@ export declare class TwitterUsers {
         userId: string;
         accessToken: string;
         refreshToken: string;
-        expiration: string;
+        expiration: Date;
     }[]) => Promise<[formatedTwitterUser[], number]>;
     importUserByHandle: (handles: string | string[]) => Promise<formatedTwitterUser[]>;
     getUserInfo: (handles: string[]) => Promise<rawTwitterUser[]>;

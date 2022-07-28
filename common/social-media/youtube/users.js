@@ -64,8 +64,8 @@ class YoutubeUsers {
                     maxResults: '10'
                 });
                 fetchUrl = this.youtubeUrl + channelEndpoint + channelParams;
-                response = (yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json()).items;
-                for (let i = 0; i < response.length; i++) {
+                response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                for (let i = 0; i < response.items.length; i++) {
                     result.push({
                         id: response.items[0].id,
                         title: response.items[0].snippet.title,

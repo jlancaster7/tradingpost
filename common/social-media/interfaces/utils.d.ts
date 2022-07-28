@@ -22,5 +22,5 @@ export declare type PlatformToken = {
     platformUserId: string;
     accessToken: string;
     refreshToken: string;
-    expiration: string;
+    expiration: Date;
 };

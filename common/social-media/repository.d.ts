@@ -1,4 +1,5 @@
-import { formatedTweet, formatedTwitterUser, PlatformToken } from './interfaces/twitter';
+import { formatedTweet, formatedTwitterUser } from './interfaces/twitter';
+import { PlatformToken } from './interfaces/utils';
 import { SubstackArticles, SubstackUser } from './interfaces/rss_feeds';
 import { spotifyShow, spotifyEpisode } from './interfaces/podcasts';
 import { formatedYoutubeVideo, formatedChannelInfo } from './interfaces/youtube';
@@ -6,7 +7,6 @@ import { IDatabase, IMain } from "pg-promise";
 export default class Repository {
     private db;
     private readonly pgp;
-    defaultStartDateDays: number;
     constructor(db: IDatabase<any>, pgp: IMain);
     getSpotifyUsers: () => Promise<{
         spotify_show_id: string;

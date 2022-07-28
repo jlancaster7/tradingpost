@@ -14,7 +14,7 @@ export declare class YoutubeUsers {
         userId: string;
         accessToken: string;
         refreshToken: string;
-        expiration: string;
+        expiration: Date;
     }[]) => Promise<[formatedChannelInfo[], number]>;
     getChannelInfobyToken: (token: string) => Promise<channelInfo[]>;
     getChannelInfobyUrl: (userChannelUrl: string) => Promise<channelInfo | undefined>;

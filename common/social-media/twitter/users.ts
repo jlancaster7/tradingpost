@@ -1,13 +1,12 @@
 import fetch from 'node-fetch';
-import {twitterConfig} from '../interfaces/utils';
-import {rawTwitterUser, formatedTwitterUser, PlatformToken, twitterParams} from '../interfaces/twitter';
+import { twitterConfig, PlatformToken } from '../interfaces/utils';
+import {rawTwitterUser, formatedTwitterUser, twitterParams} from '../interfaces/twitter';
 import Repository from '../repository'
-import {IDatabase, IMain} from "pg-promise";
+
 
 export class TwitterUsers {
     private twitterConfig: twitterConfig;
-    //private pg_client: IDatabase<any>;
-    //private pgp: IMain
+
     private repository: Repository;
     private twitterUrl: string;
     private params: twitterParams;
@@ -15,8 +14,7 @@ export class TwitterUsers {
     constructor(twitterConfig: twitterConfig, repository: Repository) {
         this.twitterConfig = twitterConfig;
         this.repository = repository;
-        //this.pg_client = pg_client;
-        //this.pgp = pgp;
+
         this.twitterUrl = "https://api.twitter.com/2";
         this.params = {
             method: 'GET',
@@ -54,7 +52,7 @@ export class TwitterUsers {
     }
    
 
-    importUserByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: string}[]): Promise<[formatedTwitterUser[], number]> => {
+    importUserByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: Date}[]): Promise<[formatedTwitterUser[], number]> => {
 
         let data: rawTwitterUser[] = [];
         let out: PlatformToken[] = []; 

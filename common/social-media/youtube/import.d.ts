@@ -9,7 +9,7 @@ declare function importYoutubeUsersByToken(youtubeUsers: {
     userId: string;
     accessToken: string;
     refreshToken: string;
-    expiration: string;
+    expiration: Date;
 }[], pgClient: IDatabase<any>, pgp: IMain, youtubeConfiguration: YoutubeConfiguration): Promise<[formatedChannelInfo[], number]>;
 declare function importVideos(pgClient: IDatabase<any>, pgp: IMain, youtubeConfiguration: YoutubeConfiguration, youtubeChannelId: string, startDate?: Date): Promise<[formatedYoutubeVideo[], number]>;
 export { lambdaImportYoutube, importYoutubeUsersById, importVideos, importYoutubeUsersByToken };

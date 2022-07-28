@@ -135,8 +135,6 @@ class TwitterUsers {
         };
         this.twitterConfig = twitterConfig;
         this.repository = repository;
-        //this.pg_client = pg_client;
-        //this.pgp = pgp;
         this.twitterUrl = "https://api.twitter.com/2";
         this.params = {
             method: 'GET',

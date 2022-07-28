@@ -46,14 +46,14 @@ class Repository {
                      FROM tweets 
                      WHERE twitter_user_id = $1 
                      GROUP BY twitter_user_id`;
-            let result = yield this.db.any(query, [twitterUserId]);
-            if (result.length === 0) {
+            let result = yield this.db.result(query, [twitterUserId]);
+            if (!result.rows.length) {
                 let defaultDate = new Date();
-                defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
+                defaultDate.setDate(defaultDate.getDate() - 90);
                 return defaultDate;
             }
             else {
-                return result[0].max;
+                return result.rows[0].max;
             }
         });
         this.getYoutubeLastUpdate = (youtubeChannelId) => __awaiter(this, void 0, void 0, function* () {
@@ -61,7 +61,7 @@ class Repository {
                      FROM youtube_videos WHERE youtube_channel_id = $1 
                      GROUP BY youtube_channel_id`;
             let result = yield this.db.result(query, [youtubeChannelId]);
-            if (!result.rows) {
+            if (!result.rows.length) {
                 return new Date('1/1/2018');
             }
             else {
@@ -73,7 +73,7 @@ class Repository {
                         FROM spotify_episodes WHERE spotify_show_id = $1 
                         GROUP BY spotify_show_id`;
             let result = yield this.db.result(query, [spotify_show_id]);
-            if (!result.rows) {
+            if (!result.rows.length) {
                 return new Date('1/1/2018');
             }
             else {
@@ -100,14 +100,14 @@ class Repository {
         this.upsertUserTokens = (twitterUsers) => __awaiter(this, void 0, void 0, function* () {
             // TODO: add query to upsert token into third-party claims table
             const cs = new this.pgp.helpers.ColumnSet([
-                { name: 'userId', prop: 'user_id' },
+                { name: 'user_id', prop: 'userId' },
                 { name: 'platform', prop: 'platform' },
-                { name: 'platformUserId', prop: 'platform_user_id' },
-                { name: 'accessToken', prop: 'access_token' },
-                { name: 'refreshToken', prop: 'refresh_token' },
-                { name: 'expiration', prop: 'expires_in' }
+                { name: 'platform_user_id', prop: 'platformUserId' },
+                { name: 'access_token', prop: 'accessToken' },
+                { name: 'refresh_token', prop: 'refreshToken' },
+                { name: 'expiration', prop: 'expiration' }
             ], { table: 'data_platform_claim' });
-            const query = this.pgp.helpers.insert(twitterUsers, cs) + ` ON CONFLICT platform_platform_user_id_key DO UPDATE SET
+            const query = this.pgp.helpers.insert(twitterUsers, cs) + ` ON CONFLICT ON CONSTRAINT platform_platform_user_id_key DO UPDATE SET
                                                                     access_token = EXCLUDED.access_token,
                                                                     refresh_token = EXCLUDED.refresh_token,
                                                                     expiration = EXCLUDED.expiration
@@ -347,7 +347,6 @@ class Repository {
         });
         this.db = db;
         this.pgp = pgp;
-        this.defaultStartDateDays = 90;
     }
 }
 exports.default = Repository;

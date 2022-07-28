@@ -40,7 +40,7 @@ async function importYoutubeUsersById(pgClient: IDatabase<any>, pgp: IMain, yout
     return result;
 }
 
-async function importYoutubeUsersByToken(youtubeUsers: {userId: string, accessToken: string, refreshToken: string, expiration: string}[], pgClient: IDatabase<any>, pgp: IMain, youtubeConfiguration: YoutubeConfiguration): Promise<[formatedChannelInfo[], number]> {
+async function importYoutubeUsersByToken(youtubeUsers: {userId: string, accessToken: string, refreshToken: string, expiration: Date}[], pgClient: IDatabase<any>, pgp: IMain, youtubeConfiguration: YoutubeConfiguration): Promise<[formatedChannelInfo[], number]> {
     const repository = new Repository(pgClient, pgp);
     const Users = new YoutubeUsers(repository, youtubeConfiguration);
 

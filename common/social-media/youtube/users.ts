@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
 import {channelInfo, formatedChannelInfo, youtubeParams} from '../interfaces/youtube';
-import { youtubeConfig } from '../interfaces/utils';
+import { youtubeConfig, PlatformToken } from '../interfaces/utils';
 import Repository from '../repository';
-import { PlatformToken } from '../interfaces/utils';
+
 
 
 export class YoutubeUsers {
@@ -45,7 +45,7 @@ export class YoutubeUsers {
 
         return [formatedData, count];
     }
-    importYoutubeUsersbyToken = async (youtubeUsers: {userId: string, accessToken: string, refreshToken: string, expiration: string}[]): Promise<[formatedChannelInfo[], number]> => {
+    importYoutubeUsersbyToken = async (youtubeUsers: {userId: string, accessToken: string, refreshToken: string, expiration: Date}[]): Promise<[formatedChannelInfo[], number]> => {
         let temp: channelInfo[];
         let data: channelInfo[] = [];
         let count: number = 0;
@@ -86,9 +86,9 @@ export class YoutubeUsers {
             });
 
             fetchUrl = this.youtubeUrl + channelEndpoint + channelParams;
-            response = (await (await fetch(fetchUrl, this.params)).json()).items;
-
-            for (let i = 0; i < response.length; i++) {
+            response = await (await fetch(fetchUrl, this.params)).json()
+            
+            for (let i = 0; i < response.items.length; i++) {
                 result.push({
                     id: response.items[0].id,
                     title: response.items[0].snippet.title,

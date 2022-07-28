@@ -1,6 +1,7 @@
 
 import { DateTime } from "luxon";
-import { formatedTweet, formatedTwitterUser, PlatformToken } from './interfaces/twitter';
+import { formatedTweet, formatedTwitterUser } from './interfaces/twitter';
+import { PlatformToken} from './interfaces/utils';
 import { SubstackArticles, SubstackUser } from './interfaces/rss_feeds';
 import { spotifyShow, spotifyEpisode } from './interfaces/podcasts';
 import { formatedYoutubeVideo, formatedChannelInfo } from './interfaces/youtube';
@@ -9,12 +10,12 @@ import { IDatabase, IMain } from "pg-promise";
 export default class Repository {
     private db: IDatabase<any>;
     private readonly pgp: IMain;
-    public defaultStartDateDays: number;
+
 
     constructor(db: IDatabase<any>, pgp: IMain) {
         this.db = db;
         this.pgp = pgp;
-        this.defaultStartDateDays = 90;
+
     }
 
     getSpotifyUsers = async (): Promise<{spotify_show_id: string}[]> => {
@@ -58,14 +59,14 @@ export default class Repository {
                      FROM tweets 
                      WHERE twitter_user_id = $1 
                      GROUP BY twitter_user_id`;
-        let result = await this.db.any(query, [twitterUserId]);
+        let result = await this.db.result(query, [twitterUserId]);
 
-        if (result.length === 0) {
+        if (!result.rows.length) {
             let defaultDate = new Date();
-            defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
+            defaultDate.setDate(defaultDate.getDate() - 90);
             return defaultDate;
         } else {
-            return result[0].max
+            return result.rows[0].max
         }
     }
     getYoutubeLastUpdate = async (youtubeChannelId: string): Promise<Date> => {
@@ -73,8 +74,8 @@ export default class Repository {
                      FROM youtube_videos WHERE youtube_channel_id = $1 
                      GROUP BY youtube_channel_id`;
         let result = await this.db.result(query, [youtubeChannelId]);
-
-        if (!result.rows) {
+        
+        if (!result.rows.length) {
             return new Date ('1/1/2018');
         } 
         else {
@@ -88,7 +89,7 @@ export default class Repository {
                         GROUP BY spotify_show_id`;
         let result = await this.db.result(query, [spotify_show_id]);
 
-        if (!result.rows) {
+        if (!result.rows.length) {
             return new Date ('1/1/2018');
         } 
         else {
@@ -118,14 +119,14 @@ export default class Repository {
     upsertUserTokens = async (twitterUsers: PlatformToken[]) => {
         // TODO: add query to upsert token into third-party claims table
         const cs = new this.pgp.helpers.ColumnSet([
-            {name: 'userId', prop: 'user_id'},
+            {name: 'user_id', prop: 'userId'},
             {name: 'platform', prop: 'platform'},
-            {name: 'platformUserId', prop: 'platform_user_id'},
-            {name: 'accessToken', prop: 'access_token'},
-            {name: 'refreshToken', prop: 'refresh_token'},
-            {name: 'expiration', prop: 'expires_in'}
+            {name: 'platform_user_id', prop: 'platformUserId'},
+            {name: 'access_token', prop: 'accessToken'},
+            {name: 'refresh_token', prop: 'refreshToken'},
+            {name: 'expiration', prop: 'expiration'}
         ], {table: 'data_platform_claim'})
-        const query = this.pgp.helpers.insert(twitterUsers, cs) + ` ON CONFLICT platform_platform_user_id_key DO UPDATE SET
+        const query = this.pgp.helpers.insert(twitterUsers, cs) + ` ON CONFLICT ON CONSTRAINT platform_platform_user_id_key DO UPDATE SET
                                                                     access_token = EXCLUDED.access_token,
                                                                     refresh_token = EXCLUDED.refresh_token,
                                                                     expiration = EXCLUDED.expiration
