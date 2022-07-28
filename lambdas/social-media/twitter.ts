@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import {Context} from "aws-lambda";
-import {lambdaImportTweets, addTwitterUsersByHandle} from "@tradingpost/common/social-media/twitter";
+import {lambdaImportTweets} from "@tradingpost/common/social-media/twitter";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
