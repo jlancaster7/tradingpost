@@ -33,16 +33,16 @@ functions:
     events:
       - schedule:
           rate: cron(20 20 ? * MON-FRI *) # 4:20 PM EDT
-          enabled: true
+          enabled: false
       - schedule:
           rate: cron(20 19 ? * MON-FRI *) # 4:20 PM EST
-          enabled: true
+          enabled: false
       - schedule:
           rate: cron(0 12 ? * MON-FRI *) # 8:00 AM EDT
-          enabled: true
+          enabled: false
       - schedule:
           rate: cron(0 11 ? * MON-FRI *) # 8:00 AM EST
-          enabled: true
+          enabled: false
   add-holidays:
     handler: market-data/add-holidays.run
     description: Ingests market holidays once a year
