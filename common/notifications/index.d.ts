@@ -7,7 +7,7 @@ export declare class Notifications {
     private androidMessenger;
     private repository;
     constructor(iosMessenger: messaging.Messaging, androidMessenger: messaging.Messaging, repository: INotificationsRepository);
-    sendMessageToUser: (userId: string, msg: Message, msgOpts?: MessageOptions) => Promise<MessagesResponse>;
-    sendMessageToUserDevice: (userId: string, deviceId: string, msg: Message, msgOpts?: MessageOptions) => Promise<MessagesResponse>;
-    sendMessageToAllUsers: (msg: Message, msgOptions?: MessageOptions) => Promise<void>;
+    sendMessageToUser: (userId: string, msg: Message, msgOpts?: MessageOptions | undefined) => Promise<MessagesResponse>;
+    sendMessageToUserDevice: (userId: string, deviceId: string, msg: Message, msgOpts?: MessageOptions | undefined) => Promise<MessagesResponse>;
+    sendMessageToAllUsers: (msg: Message, msgOptions?: MessageOptions | undefined) => Promise<void>;
 }

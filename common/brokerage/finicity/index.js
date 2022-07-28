@@ -16,7 +16,7 @@ class FinicityService {
             let finicityUser = yield this.repository.getFinicityUser(userId);
             if (!finicityUser)
                 finicityUser = yield this._createFinicityUser(userId);
-            const authPortal = yield this.finicity.generateConnectUrl(finicityUser.customerId, "https://webhook.tradingpost.life/brokerage/finicity");
+            const authPortal = yield this.finicity.generateConnectUrl(finicityUser.customerId, "https://tradingpost.life/webhook");
             return authPortal.link;
         });
         this._createFinicityUser = (userId) => __awaiter(this, void 0, void 0, function* () {

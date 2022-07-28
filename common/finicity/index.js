@@ -252,8 +252,8 @@ class Finicity {
                 body: JSON.stringify({
                     partnerId: this.partnerId,
                     customerId: customerId,
-                    // webhook: webhook,
-                    // webhookContentType: webhookContentType,
+                    webhook: webhook,
+                    webhookContentType: webhookContentType,
                     redirectUri: finicityCallbackUrl,
                 }),
                 headers,
