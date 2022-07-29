@@ -89,7 +89,7 @@ export default class Repository {
                  latest_pricing lp ON
                      lp.security_id = s.id
             WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
-                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC');`)
+                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC') AND enable_utp = FALSE;`)
         return data.map((row: any) => {
             let obj: getSecurityWithLatestPrice = {
                 id: row.id,

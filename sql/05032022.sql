@@ -578,3 +578,4 @@ ALTER TABLE security_price
 DROP INDEX security_price_idx;
 CREATE UNIQUE INDEX security_price_idx ON security_price (security_id, time DESC);
 CREATE INDEX security_price_idx_time ON security_price (time DESC);
+ALTER TABLE security ADD COLUMN enable_utp BOOLEAN DEFAULT FALSE;

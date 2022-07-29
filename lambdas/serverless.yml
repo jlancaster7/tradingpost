@@ -58,7 +58,7 @@ functions:
     handler: market-data/add-security-prices.run
     description: Ingests security prices
     logRetentionInDays: 14
-    timeout: 120 # TODO: Change to 1 min once I update function body
+    timeout: 180
     reservedConcurrency: 2
     memorySize: 1024
     events:
@@ -66,7 +66,7 @@ functions:
       # We run 8:00 -> 4 because of daylight savings -- shift would be 8->3
       # then we just validate within the function that it should ingest
       - schedule:
-          rate: cron(* 11-21 ? * MON-FRI *)
+          rate: cron(* 11-22 ? * MON-FRI *)
           enabled: true
   security-pruning:
     handler: market-data/security-pruning.run

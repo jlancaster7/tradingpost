@@ -12,10 +12,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const brokerage_1 = __importDefault(require("../brokerage"));
 const index_1 = require("../configuration/index");
 const pg_promise_1 = __importDefault(require("pg-promise"));
-const index_2 = __importDefault(require("../finicity/index"));
+const luxon_1 = require("luxon");
 (() => __awaiter(void 0, void 0, void 0, function* () {
     const pgCfg = yield index_1.DefaultConfig.fromCacheOrSSM("postgres");
     const pgp = (0, pg_promise_1.default)({});
@@ -26,10 +25,6 @@ const index_2 = __importDefault(require("../finicity/index"));
         database: pgCfg.database
     });
     yield pgClient.connect();
-    const finicityCfg = yield index_1.DefaultConfig.fromCacheOrSSM("finicity");
-    const finicity = new index_2.default(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-    yield finicity.init();
-    const brokerage = new brokerage_1.default(pgClient, pgp, finicity);
-    const response = yield brokerage.generateBrokerageAuthenticationLink("8e787902-f0e9-42aa-a8d8-18e5d7a1a34d", "finicity");
-    console.log(response);
+    const dt = luxon_1.DateTime.fromFormat("2022-07-28 15:43", "yyyy-LL-dd HH:mm").setZone("America/New_York");
+    console.log(dt);
 }))();

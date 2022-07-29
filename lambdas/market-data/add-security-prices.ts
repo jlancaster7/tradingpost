@@ -3,11 +3,9 @@ import {Context} from 'aws-lambda';
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import Repository from "@tradingpost/common/market-data/repository";
 import {
-    addSecurityPrice,
-    getSecurityBySymbol,
-    getSecurityWithLatestPrice
+    addSecurityPrice, getSecurityWithLatestPrice
 } from '@tradingpost/common/market-data/interfaces';
-import IEX, {GetQuote} from "@tradingpost/common/iex";
+import IEX, {GetIntraDayPrices} from "@tradingpost/common/iex";
 import {DateTime} from "luxon";
 import MarketTradingHours from "@tradingpost/common/market-data/market-trading-hours";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
@@ -44,65 +42,72 @@ const run = async () => {
 }
 
 const start = async (marketService: MarketTradingHours, repository: Repository, iex: IEX) => {
-    const marketIsOpen = await marketService.isOpen();
+    let currentTime = DateTime.now().setZone("America/New_York")
+
+    const marketIsOpen = await marketService.isTradingDay(currentTime);
     if (!marketIsOpen) return;
 
     const securities = await repository.getUsExchangedListSecuritiesWithPricing();
-    const securityGroups: getSecurityBySymbol[][] = buildGroups(securities);
+    const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
 
-    const securitiesMap: Record<string, getSecurityWithLatestPrice> = {};
-    securities.forEach((sec: getSecurityWithLatestPrice) => securitiesMap[sec.symbol] = sec)
-
-    const currentTime = DateTime.now().setZone("America/New_York").set({second: 0, millisecond: 0}).toJSDate();
+    let securityPrices: addSecurityPrice[] = [];
     for (let i = 0; i < securityGroups.length; i++) {
         let securityGroup = securityGroups[i];
         const symbols = securityGroup.map(sec => sec.symbol);
-        const response = await iex.bulk(symbols, ["quote"]);
 
-        let securityPrices: addSecurityPrice[] = [];
-        securityGroup.forEach(sec => {
-            const {symbol, id} = sec;
-            if (response[symbol] === undefined || response[symbol] === null) {
-                const s = securitiesMap[symbol]
-                if (s.latestPrice === undefined || s.latestPrice === null) return
-                securityPrices.push({
-                    price: s.latestPrice,
-                    high: s.latestHigh,
-                    low: s.latestLow,
-                    open: s.latestOpen,
-                    securityId: id,
-                    time: currentTime
-                });
-                return;
+        try {
+            const response = await iex.bulk(symbols, ["intraday-prices"], {
+                chartIEXWhenNull: true,
+                chartLast: 1
+            });
+            let prices = await perform(securityGroup, response, repository)
+            securityPrices = [...securityPrices, ...prices]
+        } catch (err) {
+            for (let i = 0; i < securityGroup.length; i++) {
+                const sec = securityGroup[i];
+                try {
+                    const response = await iex.bulk([sec.symbol], ["intraday-prices"], {
+                        chartIEXWhenNull: true,
+                        chartLast: 1
+                    });
+                    let prices = await perform([sec], response, repository)
+                    securityPrices = [...securityPrices, ...prices]
+                } catch (err) {
+                    console.log(sec.symbol)
+                    console.error(err)
+                }
             }
-
-            const quote = (response[symbol].quote as GetQuote)
-            if (quote.latestPrice === undefined || quote.latestPrice === null) {
-                const s = securitiesMap[symbol]
-                if (s.latestPrice === undefined || s.latestPrice === null) return
-                securityPrices.push({
-                    price: s.latestPrice,
-                    open: s.latestOpen,
-                    low: s.latestLow,
-                    high: s.latestHigh,
-                    securityId: id,
-                    time: currentTime
-                });
-                return;
-            }
-
-            securityPrices.push({
-                price: quote.latestPrice,
-                high: quote.high ? quote.high : quote.latestPrice,
-                low: quote.low ? quote.low : quote.latestPrice,
-                open: quote.open ? quote.open : quote.open,
-                securityId: id,
-                time: currentTime
-            })
-        });
-
-        await repository.addSecuritiesPrices(securityPrices);
+        }
     }
+
+    await repository.addSecuritiesPrices(securityPrices);
+}
+
+const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Record<string, any>, repository: Repository): Promise<addSecurityPrice[]> => {
+
+    let securityPrices: addSecurityPrice[] = [];
+    securityGroup.forEach(sec => {
+        const {symbol, id} = sec;
+        if (response[symbol] === undefined || response[symbol] === null) return;
+
+        const intradayPrices = (response[symbol]['intraday-prices'] as GetIntraDayPrices[])
+        if (intradayPrices.length <= 0) return;
+
+        const lp = intradayPrices[0];
+        const time = DateTime.fromFormat(`${lp.date} ${lp.minute}`, "yyyy-LL-dd HH:mm").setZone("America/New_York")
+
+        // If no avail price, default to what was previous available for this security
+        securityPrices.push({
+            price: lp.close ? lp.close : sec.latestPrice,
+            high: lp.high ? lp.high : sec.latestHigh,
+            low: lp.low ? lp.low : sec.latestLow,
+            open: lp.open ? lp.open : sec.latestOpen,
+            securityId: id,
+            time: time.toJSDate()
+        })
+    });
+
+    return securityPrices
 }
 
 // Pricing Charge

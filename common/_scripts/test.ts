@@ -2,7 +2,7 @@ import Brokerage from "../brokerage";
 import {DefaultConfig} from "../configuration/index";
 import pgPromise from 'pg-promise';
 import Finicity from "../finicity/index";
-
+import {DateTime} from 'luxon';
 (async () => {
     const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgp = pgPromise({});
@@ -14,10 +14,6 @@ import Finicity from "../finicity/index";
     });
     await pgClient.connect()
 
-    const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
-    const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-    await finicity.init()
-    const brokerage = new Brokerage(pgClient, pgp, finicity)
-    const response = await brokerage.generateBrokerageAuthenticationLink("8e787902-f0e9-42aa-a8d8-18e5d7a1a34d", "finicity")
-    console.log(response);
+    const dt = DateTime.fromFormat("2022-07-28 15:43", "yyyy-LL-dd HH:mm").setZone("America/New_York");
+    console.log(dt)
 })()
