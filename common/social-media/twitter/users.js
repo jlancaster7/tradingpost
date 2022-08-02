@@ -16,9 +16,9 @@ exports.TwitterUsers = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
 class TwitterUsers {
     constructor(twitterConfig, repository) {
-        this.refreshTokensbyId = (userIds) => __awaiter(this, void 0, void 0, function* () {
+        this.refreshTokensbyId = (idType, ids) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const response = yield this.repository.getTokens(userIds, 'twitter');
+                const response = yield this.repository.getTokens(idType, ids, 'twitter');
                 const authUrl = '/oauth2/token';
                 let data = [];
                 for (let d of response) {
@@ -35,12 +35,24 @@ class TwitterUsers {
                     };
                     const fetchUrl = this.twitterUrl + authUrl;
                     const response = (yield (yield (0, node_fetch_1.default)(fetchUrl, refreshParams)).json()).data;
-                    data.push({ userId: d.user_id, platform: d.platform, platformUserId: d.platform_user_id, accessToken: response.access_token, refreshToken: response.refresh_token, expiration: response.expires_in });
+                    if (!response) {
+                        continue;
+                    }
+                    data.push({
+                        userId: d.user_id,
+                        platform: d.platform,
+                        platformUserId: d.platform_user_id,
+                        accessToken: response.access_token,
+                        refreshToken: response.refresh_token,
+                        expiration: response.expires_in
+                    });
                 }
                 yield this.repository.upsertUserTokens(data);
+                return data;
             }
             catch (err) {
                 console.error(err);
+                return [];
             }
         });
         this.importUserByToken = (twitterUsers) => __awaiter(this, void 0, void 0, function* () {
@@ -50,7 +62,7 @@ class TwitterUsers {
             for (let d of twitterUsers) {
                 temp = yield this.getUserInfoByToken(d.accessToken);
                 if (!temp) {
-                    yield this.refreshTokensbyId([d.userId]);
+                    yield this.refreshTokensbyId('user_id', [d.userId]);
                     temp = yield this.getUserInfoByToken(d.accessToken);
                     if (!temp) {
                         continue;

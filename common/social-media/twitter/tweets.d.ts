@@ -1,6 +1,6 @@
 import { rawTweet, formatedTweet } from '../interfaces/twitter';
 import Repository from '../repository';
-import { twitterConfig } from '../interfaces/utils';
+import { twitterConfig, PlatformToken } from '../interfaces/utils';
 export declare class Tweets {
     private twitterConfig;
     private twitterUrl;
@@ -10,8 +10,8 @@ export declare class Tweets {
     private repository;
     constructor(twitterConfig: twitterConfig, repository: Repository);
     setStartDate: (twitterUserId: string, startDate?: Date | null) => Promise<void>;
-    refreshTokensbyId: (userIds: string[]) => Promise<void>;
+    refreshTokensbyId: (idType: string, ids: string[]) => Promise<PlatformToken[]>;
     importTweets: (twitterUserId: string, userToken?: string | null) => Promise<[formatedTweet[], number]>;
-    getUserTweets: (twitterUserId: string, userAccessToken: string | null) => Promise<rawTweet[]>;
+    getUserTweets: (twitterUserId: string, token?: string | null) => Promise<rawTweet[]>;
     formatTweets: (rawTweets: rawTweet[]) => formatedTweet[];
 }

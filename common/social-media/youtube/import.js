@@ -24,7 +24,7 @@ function lambdaImportYoutube(pgClient, pgp, youtubeConfiguration) {
         let result;
         let videosImported = 0;
         for (let i = 0; i < channelIds.length; i++) {
-            result = yield Videos.importVideos(channelIds[i].youtube_channel_id);
+            result = yield Videos.importVideos(channelIds[i].youtube_channel_id, channelIds[i].access_token, channelIds[i].refresh_token);
             videosImported += result[1];
         }
         console.log(`${videosImported} youtube videos were imported`);

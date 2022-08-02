@@ -21,11 +21,13 @@ export default class Repository {
     }[]>;
     getYoutubeUsers: () => Promise<{
         youtube_channel_id: string;
+        access_token: string;
+        refresh_token: string;
     }[]>;
     getTweetsLastUpdate: (twitterUserId: string) => Promise<Date>;
     getYoutubeLastUpdate: (youtubeChannelId: string) => Promise<Date>;
     getSpotifyLastUpdate: (spotify_show_id: string) => Promise<Date>;
-    getTokens: (userIds: string[], platform: string) => Promise<any>;
+    getTokens: (idType: string, ids: string[], platform: string) => Promise<any>;
     upsertUserTokens: (twitterUsers: PlatformToken[]) => Promise<import("pg-promise").IResultExt>;
     upsertTweets: (formatedTweets: formatedTweet[]) => Promise<number>;
     upsertTwitterUser: (users: formatedTwitterUser[]) => Promise<number>;

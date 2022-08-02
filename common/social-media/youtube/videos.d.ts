@@ -1,5 +1,5 @@
 import { rawYoutubeVideo, formatedYoutubeVideo } from '../interfaces/youtube';
-import { youtubeConfig } from '../interfaces/utils';
+import { youtubeConfig, PlatformToken } from '../interfaces/utils';
 import Repository from '../repository';
 export declare class YoutubeVideos {
     private youtubeConfig;
@@ -11,7 +11,8 @@ export declare class YoutubeVideos {
     constructor(repository: Repository, youtubeConfig: youtubeConfig);
     setStartDate: (startDate: Date) => Promise<void>;
     getStartDate: (youtubeChannelId: string) => Promise<void>;
-    importVideos: (youtubeChannelId: string) => Promise<[formatedYoutubeVideo[], number]>;
-    getVideos: (youtubeChannelId: string) => Promise<rawYoutubeVideo[]>;
+    refreshTokenById: (idType: string, ids: string[]) => Promise<PlatformToken[]>;
+    importVideos: (youtubeChannelId: string, accessToken?: string | null, refreshToken?: string | null) => Promise<[formatedYoutubeVideo[], number]>;
+    getVideos: (youtubeChannelId: string, accessToken?: string | null, refreshToken?: string | null) => Promise<rawYoutubeVideo[]>;
     formatVideos: (rawVideos: rawYoutubeVideo[]) => formatedYoutubeVideo[];
 }

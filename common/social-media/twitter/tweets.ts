@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import {rawTweet, formatedTweet, twitterParams} from '../interfaces/twitter';
 import Repository from '../repository'
-import {twitterConfig} from '../interfaces/utils';
+import {twitterConfig, PlatformToken} from '../interfaces/utils';
 
 export class Tweets {
     private twitterConfig: twitterConfig;
@@ -33,11 +33,11 @@ export class Tweets {
         }
 
     }
-    refreshTokensbyId = async (userIds: string[]) => {
+    refreshTokensbyId = async (idType: string, ids: string[]): Promise<PlatformToken[]> => {
         try {
-            const response = await this.repository.getTokens(userIds, 'twitter');
+            const response = await this.repository.getTokens(idType, ids, 'twitter');
             const authUrl = '/oauth2/token';
-            let data = [];
+            let data: PlatformToken[] = [];
             for (let d of response) {
                 const refreshParams = {
                     method: 'POST',
@@ -52,6 +52,7 @@ export class Tweets {
                 }
                 const fetchUrl = this.twitterUrl + authUrl;
                 const response = (await (await fetch(fetchUrl, refreshParams)).json()).data;
+                if (!response) {continue;}
                 data.push({
                     userId: d.user_id,
                     platform: d.platform,
@@ -62,8 +63,10 @@ export class Tweets {
                 });
             }
             await this.repository.upsertUserTokens(data);
+            return data;
         } catch (err) {
             console.error(err);
+            return [];
         }
     }
     importTweets = async (twitterUserId: string, userToken: string | null = null): Promise<[formatedTweet[], number]> => {
@@ -76,12 +79,12 @@ export class Tweets {
         return [formatedData, result];
     }
 
-    getUserTweets = async (twitterUserId: string, userAccessToken: string | null): Promise<rawTweet[]> => {
+    getUserTweets = async (twitterUserId: string, token: string | null = null): Promise<rawTweet[]> => {
         if (this.startDate === '') {
             await this.setStartDate(twitterUserId)
         }
-        if (userAccessToken) {
-            this.params.headers.authorization = 'BEARER ' + userAccessToken;
+        if (token) {
+            this.params.headers.authorization = 'BEARER ' + token;
         } else {
             this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'] as string
         }
@@ -89,7 +92,6 @@ export class Tweets {
 
         try {
             const tweetsEndpoints = `/users/${twitterUserId}/tweets?`;
-
             let nextToken = '';
             let fetchUrl: string;
             let tweetUrl: string;
@@ -105,6 +107,7 @@ export class Tweets {
                         start_time: this.startDate,
                         "tweet.fields": "id,lang,public_metrics,text,attachments,entities,created_at,possibly_sensitive",
                         "expansions": "author_id",
+                        "user.fields": "username"
                     });
                 } else {
                     fetchUrl = this.twitterUrl + tweetsEndpoints + new URLSearchParams({
@@ -119,14 +122,28 @@ export class Tweets {
                 }
 
                 response = await (await fetch(fetchUrl, this.params)).json();
-                // TODO: Add a catch to refresh the access token if this fails once and then default to the org bearer token
                 responseData = response.data;
-
-
-                if (responseData === undefined) {
-                    this.startDate = '';
-                    return data;
+                console.log(response);
+                if (token && !responseData) {
+                    const newToken = await this.refreshTokensbyId('platform_user_id', [twitterUserId]);
+                    this.params.headers.authorization = 'BEARER ' + newToken[0].accessToken;
+                    response = await (await fetch(fetchUrl, this.params)).json();
+                    responseData = response.data;
+                    if (!responseData){
+                        this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'] as string;
+                        response = await (await fetch(fetchUrl, this.params)).json();
+                        responseData = response.data;
+                        if (!responseData) {
+                            this.startDate = '';
+                            return [];
+                        }
+                    }
                 }
+                else if (!responseData) {
+                    this.startDate = '';
+                    return [];
+                }
+
                 username = response.includes.users[0].username;
 
                 for (let i = 0; i < responseData.length; i++) {
@@ -150,7 +167,6 @@ export class Tweets {
         } catch (err) {
             console.log(err);
         }
-
         this.startDate = '';
         return data;
     }

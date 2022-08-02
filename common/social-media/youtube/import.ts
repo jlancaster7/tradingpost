@@ -18,7 +18,7 @@ async function lambdaImportYoutube(pgClient: IDatabase<any>, pgp: IMain, youtube
     let videosImported = 0;
 
     for (let i = 0; i < channelIds.length; i++) {
-        result = await Videos.importVideos(channelIds[i].youtube_channel_id);
+        result = await Videos.importVideos(channelIds[i].youtube_channel_id, channelIds[i].access_token, channelIds[i].refresh_token);
         videosImported += result[1];
     }
 

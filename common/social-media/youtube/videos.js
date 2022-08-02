@@ -23,8 +23,48 @@ class YoutubeVideos {
             const result = yield this.repository.getYoutubeLastUpdate(youtubeChannelId);
             this.setStartDate(result);
         });
-        this.importVideos = (youtubeChannelId) => __awaiter(this, void 0, void 0, function* () {
-            let data = yield this.getVideos(youtubeChannelId);
+        this.refreshTokenById = (idType, ids) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const response = yield this.repository.getTokens(idType, ids, 'youtube');
+                const authUrl = '';
+                let data = [];
+                for (let d of response) {
+                    const refreshParams = {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        form: {
+                            client_id: this.youtubeConfig.client_id,
+                            client_secret: this.youtubeConfig.client_secret,
+                            refresh_token: d.refresh_token,
+                            grant_type: 'refresh_token'
+                        }
+                    };
+                    const fetchUrl = 'https://oauth2.googleapis.com/token';
+                    const response = (yield (yield (0, node_fetch_1.default)(fetchUrl, refreshParams)).json());
+                    if (!response) {
+                        continue;
+                    }
+                    data.push({
+                        userId: d.user_id,
+                        platform: d.platform,
+                        platformUserId: d.platform_user_id,
+                        accessToken: response.access_token,
+                        refreshToken: response.refresh_token,
+                        expiration: response.expires_in
+                    });
+                }
+                yield this.repository.upsertUserTokens(data);
+                return data;
+            }
+            catch (err) {
+                console.error(err);
+                return [];
+            }
+        });
+        this.importVideos = (youtubeChannelId, accessToken = null, refreshToken = null) => __awaiter(this, void 0, void 0, function* () {
+            let data = yield this.getVideos(youtubeChannelId, accessToken, refreshToken);
             if (!data[0]) {
                 return [[], 0];
             }
@@ -32,7 +72,7 @@ class YoutubeVideos {
             let result = yield this.repository.insertYoutubeVideos(formatedData);
             return [formatedData, result];
         });
-        this.getVideos = (youtubeChannelId) => __awaiter(this, void 0, void 0, function* () {
+        this.getVideos = (youtubeChannelId, accessToken = null, refreshToken = null) => __awaiter(this, void 0, void 0, function* () {
             if (this.startDate === '') {
                 yield this.getStartDate(youtubeChannelId);
             }
@@ -41,13 +81,13 @@ class YoutubeVideos {
             let response;
             const playlistEndpoint = '/activities?';
             let nextToken = '';
+            let key = (accessToken ? accessToken : this.youtubeConfig.api_key);
             let data = [];
             let items;
             try {
                 while (nextToken !== 'end') {
                     if (nextToken === '') {
                         channelParams = new URLSearchParams({
-                            key: this.youtubeConfig.api_key,
                             part: 'id,contentDetails,snippet',
                             channelId: youtubeChannelId,
                             publishedAfter: this.startDate,
@@ -56,7 +96,6 @@ class YoutubeVideos {
                     }
                     else {
                         channelParams = new URLSearchParams({
-                            key: this.youtubeConfig.api_key,
                             part: 'id,contentDetails,snippet',
                             channelId: youtubeChannelId,
                             pageToken: nextToken,
@@ -64,11 +103,29 @@ class YoutubeVideos {
                             maxResults: '50',
                         });
                     }
+                    if (accessToken) {
+                        channelParams.append('access_token', key);
+                    }
+                    else {
+                        channelParams.append('key', key);
+                    }
                     fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
                     response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
                     items = response.items;
-                    if (items === []) {
-                        return [];
+                    if (accessToken && !items.length) {
+                        const newTokens = yield this.refreshTokenById('platform_user_id', [youtubeChannelId]);
+                        channelParams.set('access_token', newTokens[0].accessToken);
+                        response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                        items = response.items;
+                        if (!items.length) {
+                            channelParams.delete('access_token');
+                            channelParams.append('key', this.youtubeConfig.api_key);
+                            response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                            items = response.items;
+                            if (!items.length) {
+                                return [];
+                            }
+                        }
                     }
                     items.forEach((element) => {
                         if (element.snippet.type === 'upload') {

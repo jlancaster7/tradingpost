@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 import { rawYoutubeVideo, youtubeParams, formatedYoutubeVideo } from '../interfaces/youtube';
-import { youtubeConfig } from '../interfaces/utils';
+import { youtubeConfig, PlatformToken } from '../interfaces/utils';
 import Repository from '../repository';
 
 
@@ -35,9 +35,46 @@ export class YoutubeVideos {
         const result = await this.repository.getYoutubeLastUpdate(youtubeChannelId);
         this.setStartDate(result);
     }
+    refreshTokenById = async (idType: string, ids: string[]): Promise<PlatformToken[]>  => {
+        try {
+            const response = await this.repository.getTokens(idType, ids, 'youtube');
+            const authUrl = '';
+            let data: PlatformToken[] = [];
+            
+            for (let d of response) {
+                const refreshParams = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    form: {
+                        client_id: this.youtubeConfig.client_id,
+                        client_secret: this.youtubeConfig.client_secret,
+                        refresh_token: d.refresh_token,
+                        grant_type: 'refresh_token'
+                    }
+                }
+                const fetchUrl = 'https://oauth2.googleapis.com/token';
+                const response = (await (await fetch(fetchUrl, refreshParams)).json())
+                if (!response) {continue;}
+                data.push({
+                    userId: d.user_id, 
+                    platform: d.platform, 
+                    platformUserId: d.platform_user_id, 
+                    accessToken: response.access_token, 
+                    refreshToken: response.refresh_token, 
+                    expiration: response.expires_in});
+            }
+            await this.repository.upsertUserTokens(data);
+            return data;
+        } catch (err) {
+            console.error(err);
+            return []
+        }
+    }
 
-    importVideos = async (youtubeChannelId: string): Promise<[formatedYoutubeVideo[], number]> => {
-        let data = await this.getVideos(youtubeChannelId);
+    importVideos = async (youtubeChannelId: string, accessToken: string | null = null, refreshToken: string | null = null): Promise<[formatedYoutubeVideo[], number]> => {
+        let data = await this.getVideos(youtubeChannelId, accessToken, refreshToken);
 
         if (!data[0]) {
             return [[], 0];
@@ -48,7 +85,7 @@ export class YoutubeVideos {
         return [formatedData, result];
     }
 
-    getVideos = async (youtubeChannelId: string): Promise<rawYoutubeVideo[]> => {
+    getVideos = async (youtubeChannelId: string, accessToken: string | null = null, refreshToken: string | null = null): Promise<rawYoutubeVideo[]> => {
         if (this.startDate === '') {
             await this.getStartDate(youtubeChannelId)
         }
@@ -58,13 +95,13 @@ export class YoutubeVideos {
         let response;
         const playlistEndpoint = '/activities?';
         let nextToken = '';
+        let key = (accessToken ? accessToken : this.youtubeConfig.api_key as string)
         let data: any[] = [];
         let items;
         try {
             while (nextToken !== 'end') {
                 if (nextToken === '') {
                     channelParams = new URLSearchParams({
-                        key: this.youtubeConfig.api_key as string,
                         part: 'id,contentDetails,snippet',
                         channelId: youtubeChannelId,
                         publishedAfter: this.startDate,
@@ -72,36 +109,51 @@ export class YoutubeVideos {
                     })
                 } else {
                     channelParams = new URLSearchParams({
-                        key: this.youtubeConfig.api_key as string,
                         part: 'id,contentDetails,snippet',
                         channelId: youtubeChannelId,
                         pageToken: nextToken,
                         publishedAfter: this.startDate,
                         maxResults: '50',
                     })
-                }
 
+                }
+                if (accessToken) {
+                    channelParams.append('access_token', key)
+                }
+                else {
+                    channelParams.append('key', key)
+                }
                 fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
+
                 response = await (await fetch(fetchUrl, this.params)).json();
                 items = response.items;
 
-                if (items === []) {
-                    return [];
+                if (accessToken && !items.length) {
+                    const newTokens = await this.refreshTokenById('platform_user_id', [youtubeChannelId]);
+                    channelParams.set('access_token', newTokens[0].accessToken)
+                    response = await (await fetch(fetchUrl, this.params)).json();
+                    items = response.items;
+                    if(!items.length) {
+                        channelParams.delete('access_token');
+                        channelParams.append('key', this.youtubeConfig.api_key as string);
+                        response = await (await fetch(fetchUrl, this.params)).json();
+                        items = response.items;
+                        if (!items.length) {
+                            return [];
+                        }
+                    }
                 }
-
                 items.forEach((element: any) => {
                     if (element.snippet.type === 'upload') {
                         data.push(element);
                     }
                 });
-
                 if (Object.keys(response).includes('nextPageToken')) {
                     nextToken = response.nextPageToken;
                 } else {
                     nextToken = 'end';
                 }
             }
-
         } catch (e) {
             console.log(e);
             throw e

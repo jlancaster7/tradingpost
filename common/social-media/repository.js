@@ -35,8 +35,10 @@ class Repository {
             return substackIds;
         });
         this.getYoutubeUsers = () => __awaiter(this, void 0, void 0, function* () {
-            let query = `SELECT youtube_channel_id 
-                     FROM youtube_users
+            let query = `SELECT a.youtube_channel_id, b.access_token, b.refresh_token
+                     FROM youtube_users as a
+                     LEFT JOIN (SELECT platform_user_id, access_token, refresh_token FROM data_platform_claim WHERE platform = 'youtube') as b
+                     ON a.youtube_channel_id = b.platform_user_id
                      `;
             const channelIds = yield this.db.query(query);
             return channelIds;
@@ -80,7 +82,7 @@ class Repository {
                 return result.rows[0].max;
             }
         });
-        this.getTokens = (userIds, platform) => __awaiter(this, void 0, void 0, function* () {
+        this.getTokens = (idType, ids, platform) => __awaiter(this, void 0, void 0, function* () {
             const query = `SELECT id,
                               platform,
                               platform_user_id,
@@ -92,9 +94,9 @@ class Repository {
                               created_at,
                               updated_at
                        FROM data_platform_claim
-                       WHERE user_id IN ($1) AND platform = '$2'
+                       WHERE $1 IN ($2) AND platform = '$3'
                        `;
-            const response = yield this.db.query(query, [userIds.join(', '), platform]);
+            const response = yield this.db.query(query, [idType, ids.join(', '), platform]);
             return response;
         });
         this.upsertUserTokens = (twitterUsers) => __awaiter(this, void 0, void 0, function* () {

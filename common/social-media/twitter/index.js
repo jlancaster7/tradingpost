@@ -40,7 +40,7 @@ const addTwitterUsersByHandle = (handles, pgClient, pgp, twitterConfiguration) =
     else {
         length = handles.length;
     }
-    console.log(`Successfully imported ${result[1]} of ${length} Twitter profiles.`);
+    console.log(`Successfully imported ${result.length} of ${length} Twitter profiles.`);
     return result;
 });
 exports.addTwitterUsersByHandle = addTwitterUsersByHandle;

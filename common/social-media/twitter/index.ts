@@ -42,7 +42,7 @@ export const addTwitterUsersByHandle = async (handles: string | string[], pgClie
     } else {
         length = handles.length
     }
-    console.log(`Successfully imported ${result[1]} of ${length} Twitter profiles.`);
+    console.log(`Successfully imported ${result.length} of ${length} Twitter profiles.`);
     return result
 }
 export const addTwitterUsersByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: Date}[], pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser[]> => {

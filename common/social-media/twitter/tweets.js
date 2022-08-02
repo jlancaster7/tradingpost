@@ -24,9 +24,9 @@ class Tweets {
                 this.startDate = (yield this.repository.getTweetsLastUpdate(twitterUserId)).toISOString();
             }
         });
-        this.refreshTokensbyId = (userIds) => __awaiter(this, void 0, void 0, function* () {
+        this.refreshTokensbyId = (idType, ids) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const response = yield this.repository.getTokens(userIds, 'twitter');
+                const response = yield this.repository.getTokens(idType, ids, 'twitter');
                 const authUrl = '/oauth2/token';
                 let data = [];
                 for (let d of response) {
@@ -43,6 +43,9 @@ class Tweets {
                     };
                     const fetchUrl = this.twitterUrl + authUrl;
                     const response = (yield (yield (0, node_fetch_1.default)(fetchUrl, refreshParams)).json()).data;
+                    if (!response) {
+                        continue;
+                    }
                     data.push({
                         userId: d.user_id,
                         platform: d.platform,
@@ -53,9 +56,11 @@ class Tweets {
                     });
                 }
                 yield this.repository.upsertUserTokens(data);
+                return data;
             }
             catch (err) {
                 console.error(err);
+                return [];
             }
         });
         this.importTweets = (twitterUserId, userToken = null) => __awaiter(this, void 0, void 0, function* () {
@@ -67,12 +72,12 @@ class Tweets {
             const result = yield this.repository.upsertTweets(formatedData);
             return [formatedData, result];
         });
-        this.getUserTweets = (twitterUserId, userAccessToken) => __awaiter(this, void 0, void 0, function* () {
+        this.getUserTweets = (twitterUserId, token = null) => __awaiter(this, void 0, void 0, function* () {
             if (this.startDate === '') {
                 yield this.setStartDate(twitterUserId);
             }
-            if (userAccessToken) {
-                this.params.headers.authorization = 'BEARER ' + userAccessToken;
+            if (token) {
+                this.params.headers.authorization = 'BEARER ' + token;
             }
             else {
                 this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'];
@@ -94,6 +99,7 @@ class Tweets {
                             start_time: this.startDate,
                             "tweet.fields": "id,lang,public_metrics,text,attachments,entities,created_at,possibly_sensitive",
                             "expansions": "author_id",
+                            "user.fields": "username"
                         });
                     }
                     else {
@@ -108,11 +114,26 @@ class Tweets {
                         });
                     }
                     response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
-                    // TODO: Add a catch to refresh the access token if this fails once and then default to the org bearer token
                     responseData = response.data;
-                    if (responseData === undefined) {
+                    console.log(response);
+                    if (token && !responseData) {
+                        const newToken = yield this.refreshTokensbyId('platform_user_id', [twitterUserId]);
+                        this.params.headers.authorization = 'BEARER ' + newToken[0].accessToken;
+                        response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                        responseData = response.data;
+                        if (!responseData) {
+                            this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'];
+                            response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                            responseData = response.data;
+                            if (!responseData) {
+                                this.startDate = '';
+                                return [];
+                            }
+                        }
+                    }
+                    else if (!responseData) {
                         this.startDate = '';
-                        return data;
+                        return [];
                     }
                     username = response.includes.users[0].username;
                     for (let i = 0; i < responseData.length; i++) {
