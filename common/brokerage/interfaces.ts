@@ -454,7 +454,7 @@ export enum InvestmentTransactionType {
     cancel = "cancel",
     fee = "fee",
     cash = "cash",
-    transfer = "transfer",
+    transfer = "transfer", // Transfers of security between brokerages
     dividendOrInterest = "dividendOrInterest"
 }
 

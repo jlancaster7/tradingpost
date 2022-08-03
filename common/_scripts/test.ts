@@ -32,7 +32,10 @@ import {DateTime} from "luxon";
 
     const finTransformer = new FinicityTransformer(repo);
     const finicityService = new FinicityService(finicity, repo, finTransformer);
-
+    const dt = DateTime.now();
+    const dt24Months = dt.minus({month: 24});
+    console.log("Cur: ", dt.toUnixInteger());
+    console.log("End: ", dt24Months.toUnixInteger())
     // console.log("Starting...")
     // const tpAccounts = await repo.getTradingPostBrokerageAccounts(tpUserId)
     //
