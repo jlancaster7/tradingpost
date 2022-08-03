@@ -153,8 +153,9 @@ export default class Repository {
                    last_updated,
                    created_at
             FROM security
-            WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
-                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC');`)
+            WHERE exchange IN('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
+                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
+              AND enable_utp = FALSE;`)
         return data.map((row: any) => {
             let obj: getSecurityBySymbol = {
                 id: row.id,
@@ -492,7 +493,7 @@ export default class Repository {
                    last_updated,
                    created_at
             FROM security
-            WHERE symbol IN ($1);`, [symbols])
+            WHERE symbol IN ($1:list);`, [symbols])
         return data.map((row: any) => {
             let obj: getSecurityBySymbol = {
                 id: row.id,

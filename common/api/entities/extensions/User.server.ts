@@ -1,13 +1,13 @@
-import User, { UploadProfilePicBody } from "./User"
-import { ensureServerExtensions } from "."
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import UserApi, { IUserUpdate } from '../apis/UserApi'
-import { FinicityService } from '../../../brokerage/finicity'
-import { DefaultConfig } from "../../../configuration";
+import User, {UploadProfilePicBody} from "./User"
+import {ensureServerExtensions} from "."
+import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import UserApi, {IUserUpdate} from '../apis/UserApi'
+import FinicityService from '../../../brokerage/finicity'
+import {DefaultConfig} from "../../../configuration";
 import pgPromise from "pg-promise";
 import Finicity from "../../../finicity";
 import Repository from '../../../brokerage/repository'
-import { FinicityTransformer } from '../../../brokerage/finicity/transformer'
+import FinicityTransformer from '../../../brokerage/finicity/transformer'
 
 const client = new S3Client({
     region: "us-east-1"
@@ -29,17 +29,8 @@ export default ensureServerExtensions<User>({
 
         const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
         const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-        const finicityService = new FinicityService(finicity, repository, new FinicityTransformer({
-            getFinicityInstitutions() {
-                throw new Error("Method Not Implemented");
-            },
-            getSecuritiesWithIssue() {
-                throw new Error("Method Not Implemented");
-            },
-            getTradingPostAccountsWithFinicityNumber(userId: any) {
-                throw new Error("Method Not Implemented");
-            },
-        }));
+        const repo = new Repository(pgClient, pgp);
+        const finicityService = new FinicityService(finicity, repository, new FinicityTransformer(repo));
         return {
             link: finicityService.generateBrokerageAuthenticationLink(req.extra.userId)
         }
@@ -56,8 +47,7 @@ export default ensureServerExtensions<User>({
             await UserApi.update(body.userId, {
                 has_profile_pic: true
             });
-        }
-        else
+        } else
             throw {
                 message: "Unathorized",
                 code: 401

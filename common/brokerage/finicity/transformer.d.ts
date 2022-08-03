@@ -4,8 +4,9 @@ interface TransformerRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>;
     getSecuritiesWithIssue(): Promise<SecurityIssue[]>;
     getTradingPostInstitutionsWithFinicityId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>;
+    getTradingPostInstitutionByFinicityId(finicityInstitutionId: number): Promise<TradingPostInstitutionWithFinicityInstitutionId | null>;
 }
-export declare class FinicityTransformer {
+export default class FinicityTransformer {
     private repository;
     constructor(repository: TransformerRepository);
     accounts: (userId: string, finAccounts: FinicityAccount[]) => Promise<TradingPostBrokerageAccounts[]>;

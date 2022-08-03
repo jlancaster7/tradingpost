@@ -1,11 +1,10 @@
-
-import { DateTime } from "luxon";
-import { formatedTweet, formatedTwitterUser } from './interfaces/twitter';
-import { PlatformToken} from './interfaces/utils';
-import { SubstackArticles, SubstackUser } from './interfaces/rss_feeds';
-import { spotifyShow, spotifyEpisode } from './interfaces/podcasts';
-import { formatedYoutubeVideo, formatedChannelInfo } from './interfaces/youtube';
-import { IDatabase, IMain } from "pg-promise";
+import {DateTime} from "luxon";
+import {formatedTweet, formatedTwitterUser} from './interfaces/twitter';
+import {PlatformToken} from './interfaces/utils';
+import {SubstackArticles, SubstackUser} from './interfaces/rss_feeds';
+import {spotifyShow, spotifyEpisode} from './interfaces/podcasts';
+import {formatedYoutubeVideo, formatedChannelInfo} from './interfaces/youtube';
+import {IDatabase, IMain} from "pg-promise";
 
 export default class Repository {
     private db: IDatabase<any>;
@@ -18,48 +17,52 @@ export default class Repository {
 
     }
 
-    getSpotifyUsers = async (): Promise<{spotify_show_id: string}[]> => {
-        let query = `SELECT spotify_show_id 
+    getSpotifyUsers = async (): Promise<{ spotify_show_id: string }[]> => {
+        let query = `SELECT spotify_show_id
                      FROM spotify_users
-                     `;
+        `;
 
         const spotifyShowIds = await this.db.query(query);
         return spotifyShowIds;
     }
-    getTwitterUsers = async (): Promise<{twitter_user_id: string, access_token: string, refresh_token: string}[]>  => {
+    getTwitterUsers = async (): Promise<{ twitter_user_id: string, access_token: string, refresh_token: string }[]> => {
         let query = `SELECT twitter_user_id, a.access_token, a.refresh_token
                      FROM twitter_users
-                     LEFT JOIN (SELECT platform_user_id, access_token, refresh_token FROM data_platform_claim WHERE platform = 'twitter') as a
-                     ON twitter_users.twitter_user_id = a.platform_user_id
-                     `;
+                              LEFT JOIN (SELECT platform_user_id, access_token, refresh_token
+                                         FROM data_platform_claim
+                                         WHERE platform = 'twitter') as a
+                                        ON twitter_users.twitter_user_id = a.platform_user_id
+        `;
 
         const twitterIds = await this.db.query(query);
         return twitterIds;
     }
 
-    getSubstackUsers = async (): Promise<{substack_user_id: string}[]> => {
+    getSubstackUsers = async (): Promise<{ substack_user_id: string }[]> => {
         let query = `SELECT substack_user_id
                      FROM substack_users
-                     `;
+        `;
 
         const substackIds = await this.db.query(query);
         return substackIds;
     }
-    getYoutubeUsers = async (): Promise<{youtube_channel_id: string, access_token: string, refresh_token: string}[]> => {
+    getYoutubeUsers = async (): Promise<{ youtube_channel_id: string, access_token: string, refresh_token: string }[]> => {
         let query = `SELECT a.youtube_channel_id, b.access_token, b.refresh_token
                      FROM youtube_users as a
-                     LEFT JOIN (SELECT platform_user_id, access_token, refresh_token FROM data_platform_claim WHERE platform = 'youtube') as b
-                     ON a.youtube_channel_id = b.platform_user_id
-                     `;
+                              LEFT JOIN (SELECT platform_user_id, access_token, refresh_token
+                                         FROM data_platform_claim
+                                         WHERE platform = 'youtube') as b
+                                        ON a.youtube_channel_id = b.platform_user_id
+        `;
 
         const channelIds = await this.db.query(query);
         return channelIds;
     }
 
     getTweetsLastUpdate = async (twitterUserId: string): Promise<Date> => {
-        let query = `SELECT twitter_user_id, MAX(created_at) 
-                     FROM tweets 
-                     WHERE twitter_user_id = $1 
+        let query = `SELECT twitter_user_id, MAX(created_at)
+                     FROM tweets
+                     WHERE twitter_user_id = $1
                      GROUP BY twitter_user_id`;
         let result = await this.db.result(query, [twitterUserId]);
 
@@ -72,29 +75,29 @@ export default class Repository {
         }
     }
     getYoutubeLastUpdate = async (youtubeChannelId: string): Promise<Date> => {
-        let query = `SELECT youtube_channel_id, MAX(created_at) 
-                     FROM youtube_videos WHERE youtube_channel_id = $1 
+        let query = `SELECT youtube_channel_id, MAX(created_at)
+                     FROM youtube_videos
+                     WHERE youtube_channel_id = $1
                      GROUP BY youtube_channel_id`;
         let result = await this.db.result(query, [youtubeChannelId]);
-        
+
         if (!result.rows.length) {
-            return new Date ('1/1/2018');
-        } 
-        else {
+            return new Date('1/1/2018');
+        } else {
             return result.rows[0].max;
         }
     }
 
     getSpotifyLastUpdate = async (spotify_show_id: string): Promise<Date> => {
-        let query = `SELECT spotify_show_id, MAX(release_date) 
-                        FROM spotify_episodes WHERE spotify_show_id = $1 
-                        GROUP BY spotify_show_id`;
+        let query = `SELECT spotify_show_id, MAX(release_date)
+                     FROM spotify_episodes
+                     WHERE spotify_show_id = $1
+                     GROUP BY spotify_show_id`;
         let result = await this.db.result(query, [spotify_show_id]);
 
         if (!result.rows.length) {
-            return new Date ('1/1/2018');
-        } 
-        else {
+            return new Date('1/1/2018');
+        } else {
             return result.rows[0].max;
         }
     }
@@ -111,10 +114,10 @@ export default class Repository {
                               created_at,
                               updated_at
                        FROM data_platform_claim
-                       WHERE $1 IN ($2) AND platform = '$3'
-                       `;
+                       WHERE $1 IN ($2:list)
+                         AND platform = '$3'`;
         const response = await this.db.query(query, [idType, ids.join(', '), platform]);
-        
+
         return response;
     }
 
@@ -143,24 +146,24 @@ export default class Repository {
         try {
 
             const cs = new this.pgp.helpers.ColumnSet([
-            {name: 'tweet_id', prop: 'tweet_id'},
-            {name: 'twitter_user_id', prop: 'twitter_user_id'},
-            {name: 'embed', prop: 'embed'}, 
-            {name: 'lang', prop: 'lang'},
-            {name: 'like_count', prop: 'like_count'},
-            {name: 'quote_count', prop: 'quote_count'},
-            {name: 'reply_count', prop: 'reply_count'},
-            {name: 'retweet_count', prop: 'retweet_count'},
-            {name: 'possibly_sensitive', prop: 'possibly_sensitive'},
-            {name: 'text', prop: 'text'},
-            {name: 'tweet_url', prop: 'tweet_url'},
-            {name: 'urls', prop: 'urls'},
-            {name: 'media_keys', prop: 'media_keys'},
-            {name: 'annotations', prop: 'annotations'},
-            {name: 'cashtags', prop: 'cashtags'},
-            {name: 'hashtags', prop: 'hashtags'},
-            {name: 'mentions', prop: 'mentions'},
-            {name: 'twitter_created_at', prop: 'twitter_created_at'}
+                {name: 'tweet_id', prop: 'tweet_id'},
+                {name: 'twitter_user_id', prop: 'twitter_user_id'},
+                {name: 'embed', prop: 'embed'},
+                {name: 'lang', prop: 'lang'},
+                {name: 'like_count', prop: 'like_count'},
+                {name: 'quote_count', prop: 'quote_count'},
+                {name: 'reply_count', prop: 'reply_count'},
+                {name: 'retweet_count', prop: 'retweet_count'},
+                {name: 'possibly_sensitive', prop: 'possibly_sensitive'},
+                {name: 'text', prop: 'text'},
+                {name: 'tweet_url', prop: 'tweet_url'},
+                {name: 'urls', prop: 'urls'},
+                {name: 'media_keys', prop: 'media_keys'},
+                {name: 'annotations', prop: 'annotations'},
+                {name: 'cashtags', prop: 'cashtags'},
+                {name: 'hashtags', prop: 'hashtags'},
+                {name: 'mentions', prop: 'mentions'},
+                {name: 'twitter_created_at', prop: 'twitter_created_at'}
             ], {table: 'tweets'})
             const query = this.pgp.helpers.insert(formatedTweets, cs) + ` ON CONFLICT ON CONSTRAINT tweets_tweet_id_key DO UPDATE SET
                                                                             like_count = EXCLUDED.like_count,
@@ -168,16 +171,16 @@ export default class Repository {
                                                                             reply_count = EXCLUDED.reply_count,
                                                                             retweet_count = EXCLUDED.retweet_count
                                                                             `;
-            
+
             const result = await this.db.result(query);
             return result.rowCount;
         } catch (err) {
             //console.log(err);
             return 0;
-        }   
+        }
     }
     upsertTwitterUser = async (users: formatedTwitterUser[]): Promise<number> => {
-        
+
         try {
             const cs = new this.pgp.helpers.ColumnSet([
                 {name: 'protected', prop: 'protected'},
@@ -227,8 +230,8 @@ export default class Repository {
             ], {table: 'substack_articles'});
 
             const query = this.pgp.helpers.insert(formattedArticles, cs) + ' ON CONFLICT DO NOTHING';
-            
-            const result = await this.db.result(query); 
+
+            const result = await this.db.result(query);
             return result.rowCount;
         } catch (err) {
             console.error(err)
@@ -251,8 +254,9 @@ export default class Repository {
             ], {table: 'substack_users'});
             const query = this.pgp.helpers.insert(data, cs) + ' ON CONFLICT (substack_user_id) DO NOTHING';
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            const result = await this.db.result(query); 
-            return result.rowCount;;
+            const result = await this.db.result(query);
+            return result.rowCount;
+            ;
         } catch (err) {
             console.error(err)
             throw err;
