@@ -3,6 +3,11 @@ app: tradingpost-app
 
 frameworkVersion: '3'
 
+plugins:
+  - serverless-bundle
+  - serverless-prune-plugin
+
+
 custom:
   bundle:
     tsConfig: 'tsconfig.json'
@@ -59,7 +64,7 @@ functions:
     events:
       - schedule:
           rate: cron(0 0 1 1 ? *)
-          enabled: true
+          enabled: false
   add-security-pricing:
     handler: market-data/add-security-prices.run
     description: Ingests security prices
@@ -67,13 +72,13 @@ functions:
     timeout: 180
     reservedConcurrency: 2
     memorySize: 1024
-    events:
+      #    events:
       # Run M-F every-day from 9:00AM ET -> 4:00 ET
       # We run 8:00 -> 4 because of daylight savings -- shift would be 8->3
-      # then we just validate within the function that it should ingest
-      - schedule:
-          rate: cron(* 11-22 ? * MON-FRI *)
-          enabled: true
+    # then we just validate within the function that it should ingest
+  #      - schedule:
+  #          rate: cron(* 11-22 ? * MON-FRI *)
+  #          enabled: false
   security-pruning:
     handler: market-data/security-pruning.run
     description: Prunes security data
@@ -84,7 +89,7 @@ functions:
     events:
       - schedule:
           rate: cron(0 7 ? * MON-FRI *)
-          enabled: true
+          enabled: false
 
   # ============== Social Media Lambdas ==============
   spotify:

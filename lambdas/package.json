@@ -16,6 +16,7 @@
     "@types/pg": "^8.6.5",
     "serverless": "^3.21.0",
     "serverless-bundle": "^5.4.0",
+    "serverless-prune-plugin": "^2.0.1",
     "serverless-webpack": "^5.7.1",
     "ts-loader": "^9.3.0",
     "webpack": "^5.73.0"

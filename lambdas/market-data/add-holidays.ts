@@ -10,7 +10,7 @@ import pgPromise, {IDatabase, IMain} from 'pg-promise'
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
-const run = async () => {
+const runLambda = async () => {
     if (!pgClient || !pgp) {
         const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -39,7 +39,7 @@ const start = async (repository: Repository, iex: IEX) => {
     const nextIexHolidays = await iex.getUSHolidayAndTradingDays("holiday", "next", 100000);
     const lastIexHolidays = await iex.getUSHolidayAndTradingDays("holiday", "last", 100000);
 
-    let holidays: addUSHoliday[] = [];
+    const holidays: addUSHoliday[] = [];
     const holidayFunc = (h: GetUSHolidayAndTradingDays) => {
         const isoDate = DateTime.fromISO(h.date);
         const settlementDate = h.settlementDate == null ? null : DateTime.fromISO(h.settlementDate);
@@ -57,5 +57,5 @@ const start = async (repository: Repository, iex: IEX) => {
 
 // Pricing Cost 1 / year = 1 credit
 module.exports.run = async (event: any, context: Context) => {
-    await run();
+    await runLambda();
 }

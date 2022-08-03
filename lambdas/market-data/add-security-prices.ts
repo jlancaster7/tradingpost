@@ -14,7 +14,7 @@ import {buildGroups} from "./utils";
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
-const run = async () => {
+const runLambda = async () => {
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -42,9 +42,8 @@ const run = async () => {
     }
 }
 
-
 const start = async (marketService: MarketTradingHours, repository: Repository, iex: IEX) => {
-    let currentTime = DateTime.now().setZone("America/New_York")
+    const currentTime = DateTime.now().setZone("America/New_York")
 
     const isTradingDay = await marketService.isTradingDay(currentTime);
     if (!isTradingDay) return;
@@ -56,7 +55,7 @@ const start = async (marketService: MarketTradingHours, repository: Repository, 
 
     let securityPrices: addSecurityPrice[] = [];
     for (let i = 0; i < securityGroups.length; i++) {
-        let securityGroup = securityGroups[i];
+        const securityGroup = securityGroups[i];
         const symbols = securityGroup.map(sec => sec.symbol);
 
         try {
@@ -64,7 +63,7 @@ const start = async (marketService: MarketTradingHours, repository: Repository, 
                 chartIEXWhenNull: true,
                 chartLast: 1
             });
-            let prices = await perform(securityGroup, response)
+            const prices = await perform(securityGroup, response)
             securityPrices = [...securityPrices, ...prices]
         } catch (err) {
             for (let i = 0; i < securityGroup.length; i++) {
@@ -74,7 +73,7 @@ const start = async (marketService: MarketTradingHours, repository: Repository, 
                         chartIEXWhenNull: true,
                         chartLast: 1
                     });
-                    let prices = await perform([sec], response)
+                    const prices = await perform([sec], response)
                     securityPrices = [...securityPrices, ...prices]
                 } catch (err) {
                     console.log(sec.symbol)
@@ -88,7 +87,7 @@ const start = async (marketService: MarketTradingHours, repository: Repository, 
 }
 
 const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Record<string, any>): Promise<addSecurityPrice[]> => {
-    let securityPrices: addSecurityPrice[] = [];
+    const securityPrices: addSecurityPrice[] = [];
     securityGroup.forEach(sec => {
         const {symbol, id} = sec;
         if (response[symbol] === undefined || response[symbol] === null) return;
@@ -122,5 +121,5 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
 // Per Month = 219,049,740
 // Per Month w/out OTC min-min = 11,847 * 390 = 4,620,330 * 21 = 97,026,930
 module.exports.run = async (event: any, context: Context) => {
-    await run();
+    await runLambda();
 };

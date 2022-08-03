@@ -21,6 +21,7 @@ import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Context} from "aws-lambda";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import {diff} from "deep-object-diff";
+import {buildGroups} from "./utils";
 
 
 // Pricing Charge
@@ -43,7 +44,7 @@ import {diff} from "deep-object-diff";
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
-const run = async () => {
+const runLambda = async () => {
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -85,28 +86,28 @@ const start = async (repository: Repository, iex: IEX) => {
 
 const updateSecurities = async (repository: Repository, iex: IEX) => {
     const securities = await repository.getIexSecurities();
-    let securitiesMap = buildSecuritiesMap(securities);
-    let securityGroups = buildGroups(securities, 100);
+    const securitiesMap = buildSecuritiesMap(securities);
+    const securityGroups = buildGroups(securities, 100);
 
-    let updateSymbols: string[] = [];
+    const updateSymbols: string[] = [];
 
     for (let i = 0; i < securityGroups.length; i++) {
         const securities = securityGroups[i];
         const symbols = securities.map(sec => sec.symbol);
         const iexResponse = await iex.bulk(symbols, ["company", "logo"]);
 
-        let newSecurities: addSecurity[] = [];
-        let newIexSecurities: addIexSecurity[] = [];
-        let updateIexSecurities: updateIexSecurity[] = [];
+        const newSecurities: addSecurity[] = [];
+        const newIexSecurities: addIexSecurity[] = [];
+        const updateIexSecurities: updateIexSecurity[] = [];
 
         symbols.forEach((symbol: string) => {
             const sec = iexResponse[symbol];
             if (sec === undefined || sec === null) return;
 
-            let logo = sec.logo as GetLogo
-            let company = sec.company as GetCompany
+            const logo = sec.logo as GetLogo
+            const company = sec.company as GetCompany
 
-            let newSec: addSecurity = {
+            const newSec: addSecurity = {
                 address: company.address || null,
                 address2: company.address2 || null,
                 ceo: company.CEO || null,
@@ -129,7 +130,7 @@ const updateSecurities = async (repository: Repository, iex: IEX) => {
                 zip: company.zip || null
             }
 
-            let newIexSecurity: addIexSecurity = {
+            const newIexSecurity: addIexSecurity = {
                 ...newSec,
                 validated: false
             }
@@ -165,15 +166,15 @@ const updateSecurities = async (repository: Repository, iex: IEX) => {
 
 const ingestEveningSecuritiesInformation = async (repository: Repository, iex: IEX) => {
     const securities = await repository.getSecurities();
-    let securitiesMap = buildSecuritiesMap(securities);
-    let securityGroups = buildGroups(securities, 100);
+    const securitiesMap = buildSecuritiesMap(securities);
+    const securityGroups = buildGroups(securities, 100);
     for (let i = 0; i < securityGroups.length; i++) {
         const securities = securityGroups[i];
         const symbols = securities.map(sec => sec.symbol);
         const iexResponse = await iex.bulk(symbols, ["previous", "stats", "quote"]);
 
-        let securitiesInformation: upsertSecuritiesInformation[] = [];
-        let securityPrices: addSecurityPrice[] = [];
+        const securitiesInformation: upsertSecuritiesInformation[] = [];
+        const securityPrices: addSecurityPrice[] = [];
         for (let i = 0; i < symbols.length; i++) {
             const symbol = symbols[i];
             if (iexResponse[symbol] === undefined || iexResponse === null) continue;
@@ -181,9 +182,9 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
             const existingSecurity = securitiesMap[symbol];
             if (existingSecurity === undefined || existingSecurity === null) continue;
 
-            let quote = (iexResponse[symbol].quote as GetQuote);
-            let stats = (iexResponse[symbol].stats as GetStatsBasic);
-            let previous = (iexResponse[symbol].previous as GetPreviousDayPrice) || {};
+            const quote = (iexResponse[symbol].quote as GetQuote);
+            const stats = (iexResponse[symbol].stats as GetStatsBasic);
+            const previous = (iexResponse[symbol].previous as GetPreviousDayPrice) || {};
 
             if (quote.latestPrice !== null)
                 // Ingest end of day price & all stats stuff....
@@ -275,7 +276,7 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
     const possiblyNewSecurities = await iex.getIexSymbols();
     const possiblyNewOTCSymbols = await iex.getOtcSymbols();
 
-    let newSymbols: string[] = [];
+    const newSymbols: string[] = [];
     possiblyNewSecurities.forEach((n: GetIexSymbols) => {
         const cs = currentSecuritiesMap[n.symbol]
         if (cs === undefined || cs === null) newSymbols.push(n.symbol)
@@ -288,12 +289,12 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
 
     // These are companies I need to ingest company info, logo, and as a new security
     const newSymbolsGroups = buildGroups(newSymbols);
-    let newSymbolsCollection: string[] = [];
+    const newSymbolsCollection: string[] = [];
     for (let i = 0; i < newSymbolsGroups.length; i++) {
-        let newSymbols = newSymbolsGroups[i];
+        const newSymbols = newSymbolsGroups[i];
         const response = await iex.bulk(newSymbols, ["company", "logo"]);
-        let newSecurities: addSecurity[] = [];
-        let newIexSecurities: addIexSecurity[] = [];
+        const newSecurities: addSecurity[] = [];
+        const newIexSecurities: addIexSecurity[] = [];
 
         newSymbols.forEach(symbol => {
             const res = response[symbol];
@@ -304,7 +305,7 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
 
             if (company.companyName === null) return;
 
-            let newSec: addSecurity = {
+            const newSec: addSecurity = {
                 address: company.address || null,
                 address2: company.address2 || null,
                 ceo: company.CEO || null,
@@ -326,7 +327,7 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
                 website: company.website || null,
                 zip: company.zip || null
             }
-            let newIexSec: addIexSecurity = {...newSec, validated: false}
+            const newIexSec: addIexSecurity = {...newSec, validated: false}
 
             newSecurities.push(newSec);
             newIexSecurities.push(newIexSec);
@@ -342,26 +343,11 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
 }
 
 const buildSecuritiesMap = <T extends { symbol: string }>(securities: T[]): Record<string, T> => {
-    let m: Record<string, T> = {};
+    const m: Record<string, T> = {};
     securities.forEach(sec => m[sec.symbol] = sec);
     return m
 }
 
-const buildGroups = (securities: any[], max: number = 100): any[][] => {
-    let groups: any[][] = [];
-    let group: any[] = [];
-    securities.forEach(sec => {
-        group.push(sec)
-        if (group.length === max) {
-            groups.push(group);
-            group = [];
-        }
-    });
-
-    if (group.length > 0) groups.push(group);
-    return groups;
-}
-
 module.exports.run = async (event: any, context: Context) => {
-    await run();
+    await runLambda();
 };
