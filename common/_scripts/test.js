@@ -14,7 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const index_1 = require("../configuration/index");
 const pg_promise_1 = __importDefault(require("pg-promise"));
-const luxon_1 = require("luxon");
 (() => __awaiter(void 0, void 0, void 0, function* () {
     const pgCfg = yield index_1.DefaultConfig.fromCacheOrSSM("postgres");
     const pgp = (0, pg_promise_1.default)({});
@@ -25,6 +24,4 @@ const luxon_1 = require("luxon");
         database: pgCfg.database
     });
     yield pgClient.connect();
-    const dt = luxon_1.DateTime.fromFormat("2022-07-28 15:43", "yyyy-LL-dd HH:mm").setZone("America/New_York");
-    console.log(dt);
 }))();

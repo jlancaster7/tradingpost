@@ -48,8 +48,10 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 const start = (marketService, repository, iex) => __awaiter(void 0, void 0, void 0, function* () {
     let currentTime = luxon_1.DateTime.now().setZone("America/New_York");
-    const marketIsOpen = yield marketService.isTradingDay(currentTime);
-    if (!marketIsOpen)
+    const isTradingDay = yield marketService.isTradingDay(currentTime);
+    if (!isTradingDay)
+        return;
+    if (currentTime.hour > 16 && currentTime.minute > 30)
         return;
     const securities = yield repository.getUsExchangedListSecuritiesWithPricing();
     const securityGroups = (0, utils_1.buildGroups)(securities, 100);
@@ -62,7 +64,7 @@ const start = (marketService, repository, iex) => __awaiter(void 0, void 0, void
                 chartIEXWhenNull: true,
                 chartLast: 1
             });
-            let prices = yield perform(securityGroup, response, repository);
+            let prices = yield perform(securityGroup, response);
             securityPrices = [...securityPrices, ...prices];
         }
         catch (err) {
@@ -73,7 +75,7 @@ const start = (marketService, repository, iex) => __awaiter(void 0, void 0, void
                         chartIEXWhenNull: true,
                         chartLast: 1
                     });
-                    let prices = yield perform([sec], response, repository);
+                    let prices = yield perform([sec], response);
                     securityPrices = [...securityPrices, ...prices];
                 }
                 catch (err) {
@@ -85,7 +87,7 @@ const start = (marketService, repository, iex) => __awaiter(void 0, void 0, void
     }
     yield repository.addSecuritiesPrices(securityPrices);
 });
-const perform = (securityGroup, response, repository) => __awaiter(void 0, void 0, void 0, function* () {
+const perform = (securityGroup, response) => __awaiter(void 0, void 0, void 0, function* () {
     let securityPrices = [];
     securityGroup.forEach(sec => {
         const { symbol, id } = sec;
@@ -95,7 +97,9 @@ const perform = (securityGroup, response, repository) => __awaiter(void 0, void 
         if (intradayPrices.length <= 0)
             return;
         const lp = intradayPrices[0];
-        const time = luxon_1.DateTime.fromFormat(`${lp.date} ${lp.minute}`, "yyyy-LL-dd HH:mm").setZone("America/New_York");
+        const time = luxon_1.DateTime.fromFormat(`${lp.date} ${lp.minute}`, "yyyy-LL-dd HH:mm", {
+            zone: "America/New_York"
+        });
         // If no avail price, default to what was previous available for this security
         securityPrices.push({
             price: lp.close ? lp.close : sec.latestPrice,

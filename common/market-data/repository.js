@@ -13,6 +13,8 @@ const luxon_1 = require("luxon");
 class Repository {
     constructor(db, pgp) {
         this.upsertSecuritiesPrices = (securityPrices) => __awaiter(this, void 0, void 0, function* () {
+            if (securityPrices.length <= 0)
+                return;
             const cs = new this.pgp.helpers.ColumnSet([
                 { name: 'security_id', prop: 'securityId' },
                 { name: 'high', prop: 'high' },
@@ -73,8 +75,9 @@ class Repository {
                      LEFT JOIN
                  latest_pricing lp ON
                      lp.security_id = s.id
-            WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
-                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC') AND enable_utp = FALSE;`);
+            WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
+                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
+              AND enable_utp = FALSE;`);
             return data.map((row) => {
                 let obj = {
                     id: row.id,
@@ -644,7 +647,7 @@ class Repository {
             const cs = new this.pgp.helpers.ColumnSet([
                 { name: 'date', prop: 'date' },
                 { name: 'settlement_date', prop: 'settlementDate' },
-            ], { table: 'us_exchange_holidays' });
+            ], { table: 'us_exchange_holiday' });
             const query = this.pgp.helpers.insert(holidays, cs) + ` ON CONFLICT DO NOTHING`;
             yield this.db.none(query);
         });
@@ -654,7 +657,7 @@ class Repository {
                    date,
                    settlement_date,
                    created_at
-            FROM us_exchange_holidays;`);
+            FROM us_exchange_holiday;`);
             return data.map((row) => {
                 let obj = {
                     id: row.id,
@@ -671,7 +674,7 @@ class Repository {
                    date,
                    settlement_date,
                    created_at
-            FROM us_exchange_holidays;`);
+            FROM us_exchange_holiday;`);
             return data.map((row) => {
                 let obj = {
                     id: row.id,

@@ -24,6 +24,7 @@ const run = async () => {
             password: postgresConfiguration['password'] as string,
             database: postgresConfiguration['database'] as string
         })
+
         await pgClient.connect();
     }
 
@@ -41,11 +42,14 @@ const run = async () => {
     }
 }
 
+
 const start = async (marketService: MarketTradingHours, repository: Repository, iex: IEX) => {
     let currentTime = DateTime.now().setZone("America/New_York")
 
-    const marketIsOpen = await marketService.isTradingDay(currentTime);
-    if (!marketIsOpen) return;
+    const isTradingDay = await marketService.isTradingDay(currentTime);
+    if (!isTradingDay) return;
+
+    if (currentTime.hour > 16 && currentTime.minute > 30) return
 
     const securities = await repository.getUsExchangedListSecuritiesWithPricing();
     const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
@@ -60,7 +64,7 @@ const start = async (marketService: MarketTradingHours, repository: Repository, 
                 chartIEXWhenNull: true,
                 chartLast: 1
             });
-            let prices = await perform(securityGroup, response, repository)
+            let prices = await perform(securityGroup, response)
             securityPrices = [...securityPrices, ...prices]
         } catch (err) {
             for (let i = 0; i < securityGroup.length; i++) {
@@ -70,7 +74,7 @@ const start = async (marketService: MarketTradingHours, repository: Repository, 
                         chartIEXWhenNull: true,
                         chartLast: 1
                     });
-                    let prices = await perform([sec], response, repository)
+                    let prices = await perform([sec], response)
                     securityPrices = [...securityPrices, ...prices]
                 } catch (err) {
                     console.log(sec.symbol)
@@ -83,8 +87,7 @@ const start = async (marketService: MarketTradingHours, repository: Repository, 
     await repository.addSecuritiesPrices(securityPrices);
 }
 
-const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Record<string, any>, repository: Repository): Promise<addSecurityPrice[]> => {
-
+const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Record<string, any>): Promise<addSecurityPrice[]> => {
     let securityPrices: addSecurityPrice[] = [];
     securityGroup.forEach(sec => {
         const {symbol, id} = sec;
@@ -94,7 +97,9 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
         if (intradayPrices.length <= 0) return;
 
         const lp = intradayPrices[0];
-        const time = DateTime.fromFormat(`${lp.date} ${lp.minute}`, "yyyy-LL-dd HH:mm").setZone("America/New_York")
+        const time = DateTime.fromFormat(`${lp.date} ${lp.minute}`, "yyyy-LL-dd HH:mm", {
+            zone: "America/New_York"
+        });
 
         // If no avail price, default to what was previous available for this security
         securityPrices.push({

@@ -7,6 +7,15 @@ export interface addSecurityPrice {
     price: number;
     time: Date;
 }
+export interface securityPrice {
+    id: number;
+    high: number;
+    low: number;
+    open: number;
+    price: number;
+    time: DateTime;
+    createdAt: DateTime;
+}
 export interface upsertSecuritiesInformation {
     securityId: number;
     calculationPrice: string | null;

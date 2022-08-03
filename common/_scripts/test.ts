@@ -3,6 +3,7 @@ import {DefaultConfig} from "../configuration/index";
 import pgPromise from 'pg-promise';
 import Finicity from "../finicity/index";
 import {DateTime} from 'luxon';
+
 (async () => {
     const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgp = pgPromise({});
@@ -14,6 +15,4 @@ import {DateTime} from 'luxon';
     });
     await pgClient.connect()
 
-    const dt = DateTime.fromFormat("2022-07-28 15:43", "yyyy-LL-dd HH:mm").setZone("America/New_York");
-    console.log(dt)
 })()

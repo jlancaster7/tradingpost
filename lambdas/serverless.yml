@@ -3,6 +3,12 @@ app: tradingpost-app
 
 frameworkVersion: '3'
 
+custom:
+  bundle:
+    tsConfig: 'tsconfig.json'
+    ignorePackages:
+      - pg-native
+
 provider:
   stage: production
   name: aws
