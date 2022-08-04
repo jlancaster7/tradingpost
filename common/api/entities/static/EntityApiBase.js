@@ -62,15 +62,14 @@ class EntityApiBase {
             return EntityApiBase.handleFetchResponse(resp);
         });
     }
-    list() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const resp = yield fetch(this.makeUrl("list"), {
-                method: "POST",
-                headers: EntityApiBase.makeHeaders()
-            });
-            return EntityApiBase.handleFetchResponse(resp);
-        });
-    }
+    // async list(ids?: (string | number)[]) {
+    //     const resp = await fetch(this.makeUrl("list"), {
+    //         method: "POST",
+    //         headers: EntityApiBase.makeHeaders(),
+    //         body: ids ? JSON.stringify({ ids }) : undefined
+    //     });
+    //     return EntityApiBase.handleFetchResponse<TList[]>(resp);
+    // }
     insert(item) {
         return __awaiter(this, void 0, void 0, function* () {
             const resp = yield fetch(this.makeUrl("insert"), {

@@ -1,7 +1,7 @@
 import { FinicityUser, IBrokerageService, TradingPostBrokerageAccounts, TradingPostCurrentHoldings, TradingPostTransactions, IFinicityRepository } from "../interfaces";
 import Finicity from "../../finicity";
 import { FinicityTransformer } from "./transformer";
-export declare class FinicityService implements IBrokerageService {
+export default class FinicityService implements IBrokerageService {
     private finicity;
     private repository;
     private transformer;

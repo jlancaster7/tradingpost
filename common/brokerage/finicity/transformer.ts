@@ -17,7 +17,7 @@ interface TransformerRepository {
 
     getSecuritiesWithIssue(): Promise<SecurityIssue[]>
 
-    getFinicityInstitutions(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>
+    getTradingPostInstitutionsWithFinicityId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>
 }
 
 export class FinicityTransformer {
@@ -32,7 +32,7 @@ export class FinicityTransformer {
         const finAccountMap: Record<string, TradingPostBrokerageAccountWithFinicity> = {};
         finicityAccounts.forEach((fam: TradingPostBrokerageAccountWithFinicity) => finAccountMap[fam.externalFinicityAccountId] = fam)
 
-        const institutions = await this.repository.getFinicityInstitutions();
+        const institutions = await this.repository.getTradingPostInstitutionsWithFinicityId();
         let institutionMap: Record<string, TradingPostInstitutionWithFinicityInstitutionId> = {};
         institutions.forEach(inst => institutionMap[inst.externalFinicityId] = inst)
 

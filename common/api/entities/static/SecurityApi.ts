@@ -1,10 +1,12 @@
 import { EntityApi } from "./EntityApi";
 import { ISecurityGet, ISecurityList } from '../static/interfaces'
+import SecExt from '../extensions/Security'
 export class SecurityApi extends EntityApi<ISecurityGet, ISecurityList, never, never> {
     protected updateFunction: string = "";
     protected insertFunction: string = "";
     protected getFunction: string = "tp.api_security_get";
     protected listFunction: string = "tp.api_security_list"
+    extensions = new SecExt(this)
 }
 
 export default new SecurityApi();

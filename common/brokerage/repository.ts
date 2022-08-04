@@ -22,7 +22,7 @@ import {
     TradingPostInstitution,
     TradingPostInstitutionTable,
     TradingPostInstitutionWithFinicityInstitutionId,
-    TradingPostTransactions
+    TradingPostTransactions, TradingPostBrokerageAccountWithFinicity, SecurityIssue
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -34,6 +34,18 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     constructor(db: IDatabase<any>, pgp: IMain) {
         this.db = db;
         this.pgp = pgp;
+    }
+
+    getTradingPostAccountsWithFinicityNumber = (userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]> => {
+        throw new Error("Method not implemented.");
+    }
+
+    getSecuritiesWithIssue = async (): Promise<SecurityIssue[]> => {
+        throw new Error("Method not implemented.");
+    }
+
+    getTradingPostInstitutionsWithFinicityId = async (): Promise<TradingPostInstitutionWithFinicityInstitutionId[]> => {
+        throw new Error("Method not implemented.");
     }
 
     addTradingPostBrokerageHoldings(holdings: TradingPostCurrentHoldings[]): Promise<void> {

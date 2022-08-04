@@ -2,7 +2,7 @@ import {IBrokerageRepository, IBrokerageService, TradingPostHistoricalHoldings} 
 import {PortfolioSummaryService} from "./portfolio-summary";
 import {DateTime} from 'luxon';
 
-export class BrokerageService {
+export default class BrokerageService {
     brokerageMap: Record<string, IBrokerageService>;
     portfolioSummaryService: PortfolioSummaryService;
     repository: IBrokerageRepository;

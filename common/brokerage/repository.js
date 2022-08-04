@@ -12,6 +12,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const luxon_1 = require("luxon");
 class Repository {
     constructor(db, pgp) {
+        this.getTradingPostAccountsWithFinicityNumber = (userId) => {
+            throw new Error("Method not implemented.");
+        };
+        this.getSecuritiesWithIssue = () => __awaiter(this, void 0, void 0, function* () {
+            throw new Error("Method not implemented.");
+        });
+        this.getTradingPostInstitutionsWithFinicityId = () => __awaiter(this, void 0, void 0, function* () {
+            throw new Error("Method not implemented.");
+        });
         this.upsertInstitutions = (institutions) => __awaiter(this, void 0, void 0, function* () {
             const cs = new this.pgp.helpers.ColumnSet([
                 { name: 'name', prop: 'name' },

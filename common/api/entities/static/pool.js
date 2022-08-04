@@ -15,24 +15,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.execProcOne = exports.execProc = exports.getHivePool = void 0;
 const configuration_1 = require("../../../configuration");
 const pg_1 = __importDefault(require("pg"));
-let hive;
 const debug = true;
-const getHivePool = () => __awaiter(void 0, void 0, void 0, function* () {
-    if (!hive) {
-        const config = yield configuration_1.DefaultConfig.fromCacheOrSSM("postgres");
-        hive = new pg_1.default.Pool({
-            host: process.env.API_DB_HOST || config.host,
-            user: process.env.API_DB_USER || config.user,
-            password: process.env.API_DB_PASS || config.password,
-            database: process.env.API_DB_NAME || config.database,
-            port: process.env.API_DB_PORT ? Number(process.env.API_DB_PORT) : config.port
-        });
-    }
+exports.getHivePool = (() => __awaiter(void 0, void 0, void 0, function* () {
+    let hive;
+    const config = yield configuration_1.DefaultConfig.fromCacheOrSSM("postgres");
+    hive = new pg_1.default.Pool({
+        host: process.env.API_DB_HOST || config.host,
+        user: process.env.API_DB_USER || config.user,
+        password: process.env.API_DB_PASS || config.password,
+        database: process.env.API_DB_NAME || config.database,
+        port: process.env.API_DB_PORT ? Number(process.env.API_DB_PORT) : config.port
+    });
     return hive;
-});
-exports.getHivePool = getHivePool;
+}))();
 const execProc = (proc, prms, ensureCount, ensureCountMessage) => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, exports.getHivePool)();
+    const hive = yield exports.getHivePool;
     const result = prms ? yield hive.query(`SELECT * FROM ${proc}($1)`, [JSON.stringify(prms)]) :
         yield hive.query(`SELECT * FROM ${proc}('{}')`);
     if (ensureCount && result.rowCount !== ensureCount) {

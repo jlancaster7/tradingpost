@@ -8,14 +8,14 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 function makeExtensions(name) {
     const path = (0, path_1.join)(__dirname, "../", "extensions", name.substring(0, name.length - 3) + ".server");
-    console.log(path);
+    //console.log(path);
     if ((0, fs_1.existsSync)(path + ".js")) {
         const returned = require(path).default;
-        console.log("##############################FOUND THE FILE" + Object.keys(returned));
+        //    console.log("##############################FOUND THE FILE" + Object.keys(returned));
         return returned;
     }
     else {
-        console.log("######################DID NOTTTTTTT FOUND THE FILE");
+        //  console.log("######################DID NOTTTTTTT FOUND THE FILE");
         return {};
     }
 }
@@ -24,13 +24,13 @@ class EntityApi extends EntityApiBase_1.EntityApiBase {
         super(...arguments);
         this.internal = new class {
             constructor(parent) {
-                this.list = () => {
+                this.list = (settings) => {
                     if (!this.list) {
                         throw {
                             message: "List is not implemented on this api"
                         };
                     }
-                    return (0, pool_1.execProc)(this.parent.listFunction);
+                    return (0, pool_1.execProc)(this.parent.listFunction, settings);
                 };
                 this.get = (settings) => {
                     if (!this.get) {

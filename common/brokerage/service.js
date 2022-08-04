@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BrokerageService = void 0;
 const luxon_1 = require("luxon");
 class BrokerageService {
     constructor(brokerageMap, repository, portfolioSummaryService) {
@@ -57,4 +56,4 @@ class BrokerageService {
         this.portfolioSummaryService = portfolioSummaryService;
     }
 }
-exports.BrokerageService = BrokerageService;
+exports.default = BrokerageService;

@@ -39,8 +39,9 @@ const UpvoteApi_1 = __importDefault(require("./entities/apis/UpvoteApi"));
 const UserApi_1 = __importDefault(require("./entities/apis/UserApi"));
 const WatchlistApi_1 = __importDefault(require("./entities/apis/WatchlistApi"));
 const WatchlistItemApi_1 = __importDefault(require("./entities/apis/WatchlistItemApi"));
+const WatchlistSavedApi_1 = __importDefault(require("./entities/apis/WatchlistSavedApi"));
 exports.Interface = __importStar(require("./entities/interfaces"));
 exports.Api = {
-    Alert: AlertApi_1.default, Bookmark: BookmarkApi_1.default, Comment: CommentApi_1.default, PlatformClaim: PlatformClaimApi_1.default, Post: PostApi_1.default, Subscriber: SubscriberApi_1.default, Upvote: UpvoteApi_1.default, User: UserApi_1.default, Watchlist: WatchlistApi_1.default, WatchlistItem: WatchlistItemApi_1.default,
+    Alert: AlertApi_1.default, Bookmark: BookmarkApi_1.default, Comment: CommentApi_1.default, PlatformClaim: PlatformClaimApi_1.default, Post: PostApi_1.default, Subscriber: SubscriberApi_1.default, Upvote: UpvoteApi_1.default, User: UserApi_1.default, Watchlist: WatchlistApi_1.default, WatchlistItem: WatchlistItemApi_1.default, WatchlistSaved: WatchlistSavedApi_1.default,
     Auth: AuthApi_1.default, Security: SecurityApi_1.default
 };

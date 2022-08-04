@@ -8,10 +8,13 @@ export interface IAlertList {
 export interface IAlertGet {
 }
 export interface IBookmarkList {
+    user_id: string;
+    post_id: string;
+    id: number;
 }
 export interface IBookmarkGet {
     id: number;
-    post_id: number;
+    post_id: string;
     user_id: string;
 }
 export interface ICommentList {
@@ -79,11 +82,14 @@ export interface ISubscriberGet {
     months_subscribed: string;
 }
 export interface IUpvoteList {
+    post_id: string;
+    user_id: string;
+    id: number;
 }
 export interface IUpvoteGet {
     id: number;
     user_id: string;
-    post_id: number;
+    post_id: string;
 }
 export interface IUserList {
     id: string;
@@ -117,9 +123,11 @@ export interface IWatchlistList {
     id: number;
     name: string;
     note?: string;
-    item_count: string;
     user: IUserList[];
     type: string;
+    user_id?: string;
+    item_count: number;
+    saved_by_count: number;
 }
 export interface IWatchlistGet {
     user: IUserList[];
@@ -128,13 +136,14 @@ export interface IWatchlistGet {
     name: string;
     id: number;
     type: string;
+    saved_by_count: number;
 }
 export interface IWatchlistInsert {
     name: string;
     note?: string;
     items: Omit<IWatchlistItemList, 'watchlist_id' | 'id'>[];
     type: string;
-    user_id: string;
+    user_id?: string;
 }
 export interface IWatchlistUpdate {
     id?: number;
@@ -155,5 +164,12 @@ export interface IWatchlistItemGet {
     symbol: string;
     watchlist_id: number;
     note?: string;
+}
+export interface IWatchlistSavedList {
+    id: number;
+    user_id: string;
+    watchlist_id: number;
+}
+export interface IWatchlistSavedGet {
 }
 export * from '../static/interfaces';

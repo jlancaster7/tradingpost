@@ -18,7 +18,7 @@ class FinicityTransformer {
             const finicityAccounts = yield this.repository.getTradingPostAccountsWithFinicityNumber(userId);
             const finAccountMap = {};
             finicityAccounts.forEach((fam) => finAccountMap[fam.externalFinicityAccountId] = fam);
-            const institutions = yield this.repository.getFinicityInstitutions();
+            const institutions = yield this.repository.getTradingPostInstitutionsWithFinicityId();
             let institutionMap = {};
             institutions.forEach(inst => institutionMap[inst.externalFinicityId] = inst);
             let tpAccounts = [];

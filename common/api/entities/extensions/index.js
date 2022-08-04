@@ -13,17 +13,17 @@ exports.ensureServerExtensions = exports.Extension = void 0;
 const EntityApiBase_1 = require("../static/EntityApiBase");
 class Extension {
     constructor(baseApi) {
+        this._defaultPostRequest = (s) => ({ method: "POST", body: s !== undefined ? JSON.stringify(s) : undefined });
         this._makeFetch = (methodName, requestInit) => {
-            return (settings) => __awaiter(this, void 0, void 0, function* () {
+            return ((settings) => __awaiter(this, void 0, void 0, function* () {
                 const resp = yield fetch(this.baseApi.makeUrl(methodName), Object.assign({ method: "POST", headers: EntityApiBase_1.EntityApiBase.makeHeaders() }, requestInit(settings)));
                 return EntityApiBase_1.EntityApiBase.handleFetchResponse(resp);
-            });
+            }));
         };
         this.baseApi = baseApi;
     }
 }
 exports.Extension = Extension;
 exports.default = Extension;
-//should be bound in the future
 const ensureServerExtensions = (defs) => defs;
 exports.ensureServerExtensions = ensureServerExtensions;

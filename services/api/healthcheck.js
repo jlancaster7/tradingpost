@@ -44,7 +44,7 @@ var healthCheck = function (req, res) { return __awaiter(void 0, void 0, void 0,
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 3, , 4]);
-                return [4 /*yield*/, (0, pool_1.getHivePool)()];
+                return [4 /*yield*/, pool_1.getHivePool];
             case 1:
                 hive = _a.sent();
                 return [4 /*yield*/, hive.query("SELECT 'SUCCESS' as \"Result\"")];

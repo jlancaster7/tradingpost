@@ -1,6 +1,6 @@
 import { IBrokerageRepository, IBrokerageService, TradingPostHistoricalHoldings } from "./interfaces";
 import { PortfolioSummaryService } from "./portfolio-summary";
-export declare class BrokerageService {
+export default class BrokerageService {
     brokerageMap: Record<string, IBrokerageService>;
     portfolioSummaryService: PortfolioSummaryService;
     repository: IBrokerageRepository;

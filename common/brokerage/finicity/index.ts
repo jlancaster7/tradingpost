@@ -19,7 +19,7 @@ import {DateTime} from "luxon";
 import {FinicityTransformer} from "./transformer";
 
 
-export class FinicityService implements IBrokerageService {
+export default class FinicityService implements IBrokerageService {
     private finicity: Finicity;
     private repository: IFinicityRepository;
     private transformer: FinicityTransformer;

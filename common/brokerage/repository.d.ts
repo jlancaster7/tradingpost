@@ -1,10 +1,13 @@
-import { AccountGroupHPRs, AccountGroupHPRsTable, FinicityAccount, FinicityHolding, FinicityInstitution, FinicityTransaction, FinicityUser, GetSecurityBySymbol, HistoricalHoldings, IBrokerageRepository, ISummaryRepository, SecurityHPRs, SecurityPrices, TradingPostAccountGroups, TradingPostAccountGroupStats, TradingPostBrokerageAccounts, TradingPostBrokerageAccountsTable, TradingPostAccountToAccountGroup, TradingPostCurrentHoldings, TradingPostCustomIndustry, TradingPostHistoricalHoldings, TradingPostInstitution, TradingPostInstitutionTable, TradingPostInstitutionWithFinicityInstitutionId, TradingPostTransactions } from "./interfaces";
+import { AccountGroupHPRs, AccountGroupHPRsTable, FinicityAccount, FinicityHolding, FinicityInstitution, FinicityTransaction, FinicityUser, GetSecurityBySymbol, HistoricalHoldings, IBrokerageRepository, ISummaryRepository, SecurityHPRs, SecurityPrices, TradingPostAccountGroups, TradingPostAccountGroupStats, TradingPostBrokerageAccounts, TradingPostBrokerageAccountsTable, TradingPostAccountToAccountGroup, TradingPostCurrentHoldings, TradingPostCustomIndustry, TradingPostHistoricalHoldings, TradingPostInstitution, TradingPostInstitutionTable, TradingPostInstitutionWithFinicityInstitutionId, TradingPostTransactions, TradingPostBrokerageAccountWithFinicity, SecurityIssue } from "./interfaces";
 import { IDatabase, IMain } from "pg-promise";
 import { DateTime } from "luxon";
 export default class Repository implements IBrokerageRepository, ISummaryRepository {
     private db;
     private readonly pgp;
     constructor(db: IDatabase<any>, pgp: IMain);
+    getTradingPostAccountsWithFinicityNumber: (userId: string) => Promise<TradingPostBrokerageAccountWithFinicity[]>;
+    getSecuritiesWithIssue: () => Promise<SecurityIssue[]>;
+    getTradingPostInstitutionsWithFinicityId: () => Promise<TradingPostInstitutionWithFinicityInstitutionId[]>;
     addTradingPostBrokerageHoldings(holdings: TradingPostCurrentHoldings[]): Promise<void>;
     addTradingPostBrokerageTransactions(transactions: TradingPostTransactions[]): Promise<void>;
     addTradingPostBrokerageHoldingsHistory(holdingsHistory: TradingPostHistoricalHoldings[]): Promise<void>;

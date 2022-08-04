@@ -15,46 +15,39 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _1 = require(".");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const UserApi_1 = __importDefault(require("../apis/UserApi"));
-const finicity_1 = require("../../../brokerage/finicity");
+const brokerage_1 = __importDefault(require("../../../brokerage"));
 const configuration_1 = require("../../../configuration");
 const pg_promise_1 = __importDefault(require("pg-promise"));
-const finicity_2 = __importDefault(require("../../../finicity"));
+const finicity_1 = __importDefault(require("../../../finicity"));
 const repository_1 = __importDefault(require("../../../brokerage/repository"));
-const transformer_1 = require("../../../brokerage/finicity/transformer");
+const pool_1 = require("../static/pool");
 const client = new client_s3_1.S3Client({
     region: "us-east-1"
 });
+let finicityService;
 exports.default = (0, _1.ensureServerExtensions)({
     generateBrokerageLink: (req) => __awaiter(void 0, void 0, void 0, function* () {
-        const pgCfg = yield configuration_1.DefaultConfig.fromCacheOrSSM("postgres");
-        const pgp = (0, pg_promise_1.default)({});
-        const pgClient = pgp({
-            host: pgCfg.host,
-            user: pgCfg.user,
-            password: pgCfg.password,
-            database: pgCfg.database
-        });
-        yield pgClient.connect();
-        const repository = new repository_1.default(pgClient, pgp);
-        const finicityCfg = yield configuration_1.DefaultConfig.fromCacheOrSSM("finicity");
-        const finicity = new finicity_2.default(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-        yield finicity.init();
-        const finicityService = new finicity_1.FinicityService(finicity, repository, new transformer_1.FinicityTransformer({
-            getFinicityInstitutions() {
-                throw new Error("Method Not Implemented");
-            },
-            getSecuritiesWithIssue() {
-                throw new Error("Method Not Implemented");
-            },
-            getTradingPostAccountsWithFinicityNumber(userId) {
-                throw new Error("Method Not Implemented");
-            },
-        }));
-        const test = finicityService.generateBrokerageAuthenticationLink(req.extra.userId);
-        console.log(typeof test);
-        console.log(JSON.stringify(test));
+        //TODO: make this use a better pardigm... is a pool being used? Alternatively Maybe we ensure this loads when the server gets up and running.
+        if (!finicityService) {
+            const pgCfg = yield configuration_1.DefaultConfig.fromCacheOrSSM("postgres");
+            const pgp = (0, pg_promise_1.default)({});
+            const pgClient = pgp({
+                host: pgCfg.host,
+                user: pgCfg.user,
+                password: pgCfg.password,
+                database: pgCfg.database
+            });
+            yield pgClient.connect();
+            const repository = new repository_1.default(pgClient, pgp);
+            const finicityCfg = yield configuration_1.DefaultConfig.fromCacheOrSSM("finicity");
+            const finicity = new finicity_1.default(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
+            yield finicity.init();
+            finicityService = new brokerage_1.default(pgClient, pgp, finicity);
+        }
+        //console.log(typeof test);
+        //console.log(JSON.stringify(test));
         return {
-            link: test
+            link: yield finicityService.generateBrokerageAuthenticationLink(req.extra.userId, "finicity")
         };
     }),
     uploadProfilePic: (req) => __awaiter(void 0, void 0, void 0, function* () {
@@ -74,5 +67,34 @@ exports.default = (0, _1.ensureServerExtensions)({
                 message: "Unathorized",
                 code: 401
             };
+    }),
+    getBrokerageAccounts: (r) => __awaiter(void 0, void 0, void 0, function* () {
+        return (0, pool_1.execProc)("public.api_brokerage_account", {
+            user_id: r.extra.userId,
+            data: {}
+        });
+    }),
+    initBrokerageAccounts: () => __awaiter(void 0, void 0, void 0, function* () {
+        return [];
+    }),
+    linkSocialAccount: (req) => __awaiter(void 0, void 0, void 0, function* () {
+        if (req.body.platform === "twitter") {
+            const info = yield fetch("https://api.twitter.com/2/oauth2/token", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    code: req.body.code,
+                    grant_type: "authorization_code",
+                    client_id: "cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ",
+                    redirect_uri: 'http://localhost:19006/auth/twitter',
+                    code_verifier: req.body.challenge
+                }),
+            });
+            return (yield info.json()).access_token;
+        }
+        else
+            return "";
     })
 });

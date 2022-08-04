@@ -23,7 +23,6 @@ export declare abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
     static handleFetchResponse<T>(resp: Response): Promise<T>;
     makeUrl: (method: string) => string;
     get(id: string | number): Promise<TGet>;
-    list(): Promise<TList[]>;
     insert(item: TInsert): Promise<TGet>;
     update(id: string | number, item: TUpdate): Promise<TGet>;
     validate(isInsert: boolean): (ValidationErrorData<TGet> | null);

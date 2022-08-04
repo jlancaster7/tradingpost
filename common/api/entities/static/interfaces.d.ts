@@ -1,3 +1,4 @@
+import { IUserList, IWatchlistList } from "../interfaces";
 export interface ISecurityGet {
     id: number;
     symbol: string;
@@ -27,6 +28,7 @@ export interface IElasticPost {
     _id: string;
     _score: number;
     _source: {
+        id: string;
         content: {
             body: string;
             description: string;
@@ -63,3 +65,15 @@ export interface IElasticPost {
         };
     };
 }
+export declare type IElasticPostExt = IElasticPost & {
+    ext: {
+        user?: IUserList;
+        is_bookmarked?: boolean;
+        is_upvoted?: boolean;
+    };
+};
+export declare type AllWatchlists = {
+    quick: IWatchlistList;
+    created: IWatchlistList[];
+    saved: IWatchlistList[];
+};

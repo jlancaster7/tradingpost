@@ -62,7 +62,7 @@ class AuthApi {
                 headers: EntityApiBase_1.EntityApiBase.makeHeaders()
             });
             const result = yield EntityApiBase_1.EntityApiBase.handleFetchResponse(resp);
-            console.log("MY TOKEN IS BEING SET AS" + result.token);
+            //console.log("MY TOKEN IS BEING SET AS" + result.token);
             EntityApiBase_1.EntityApiBase.token = result.token;
             return result;
         });

@@ -10,12 +10,13 @@ import Upvote from './entities/apis/UpvoteApi'
 import User from './entities/apis/UserApi'
 import Watchlist from './entities/apis/WatchlistApi'
 import WatchlistItem from './entities/apis/WatchlistItemApi'
+import WatchlistSaved from './entities/apis/WatchlistSavedApi'
 export * as Interface from './entities/interfaces'
 export const Api:{ 
-Alert: typeof Alert,Bookmark: typeof Bookmark,Comment: typeof Comment,PlatformClaim: typeof PlatformClaim,Post: typeof Post,Subscriber: typeof Subscriber,Upvote: typeof Upvote,User: typeof User,Watchlist: typeof Watchlist,WatchlistItem: typeof WatchlistItem,
+Alert: typeof Alert,Bookmark: typeof Bookmark,Comment: typeof Comment,PlatformClaim: typeof PlatformClaim,Post: typeof Post,Subscriber: typeof Subscriber,Upvote: typeof Upvote,User: typeof User,Watchlist: typeof Watchlist,WatchlistItem: typeof WatchlistItem,WatchlistSaved: typeof WatchlistSaved,
 Auth: typeof Auth,Security: typeof Security
 }
  = {
-Alert,Bookmark,Comment,PlatformClaim,Post,Subscriber,Upvote,User,Watchlist,WatchlistItem,
+Alert,Bookmark,Comment,PlatformClaim,Post,Subscriber,Upvote,User,Watchlist,WatchlistItem,WatchlistSaved,
 Auth,Security
 }

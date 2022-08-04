@@ -5,7 +5,7 @@ const extensions_1 = require("./extensions");
 class AlertApi extends EntityApi_1.EntityApi {
     constructor() {
         super(...arguments);
-        this.getFunction = "public.api_alert_get";
+        this.getFunction = '';
         this.listFunction = "public.api_alert_list";
         this.insertFunction = '';
         this.updateFunction = '';
