@@ -1,22 +1,21 @@
 import fetch from 'node-fetch';
-import {rawYoutubeVideo, youtubeParams, formatedYoutubeVideo} from '../interfaces/youtube';
-import {youtubeConfig} from '../interfaces/utils';
-import {IDatabase, IMain} from "pg-promise";
+import { rawYoutubeVideo, youtubeParams, formatedYoutubeVideo } from '../interfaces/youtube';
+import { youtubeConfig, PlatformToken } from '../interfaces/utils';
+import Repository from '../repository';
 
 
 export class YoutubeVideos {
     private youtubeConfig: youtubeConfig;
-    private pg_client: IDatabase<any>;
+    private repository: Repository;
     private youtubeUrl: string;
     public startDate: string;
     public defaultStartDateDays: number;
     private params: youtubeParams;
-    private pgp: IMain;
+    
 
-    constructor(youtubeConfig: youtubeConfig, pg_client: IDatabase<any>, pgp: IMain) {
+    constructor(repository: Repository, youtubeConfig: youtubeConfig) {
         this.youtubeConfig = youtubeConfig;
-        this.pg_client = pg_client;
-        this.pgp = pgp;
+        this.repository = repository;
         this.youtubeUrl = "https://www.googleapis.com/youtube/v3";
         this.startDate = '';
         this.defaultStartDateDays = 90;
@@ -33,31 +32,60 @@ export class YoutubeVideos {
     }
 
     getStartDate = async (youtubeChannelId: string) => {
-        let query = 'SELECT youtube_channel_id, MAX(created_at) FROM youtube_videos WHERE youtube_channel_id = $1 GROUP BY youtube_channel_id';
-        let result = await this.pg_client.result(query, [youtubeChannelId]);
-
-        if (result.rowCount === 0) {
-            let defaultDate = new Date();
-            defaultDate.setDate(defaultDate.getDate() - this.defaultStartDateDays);
-            await this.setStartDate(defaultDate);
-        } else {
-            await this.setStartDate(result.rows[0].max);
+        const result = await this.repository.getYoutubeLastUpdate(youtubeChannelId);
+        this.setStartDate(result);
+    }
+    refreshTokenById = async (idType: string, ids: string[]): Promise<PlatformToken[]>  => {
+        try {
+            const response = await this.repository.getTokens(idType, ids, 'youtube');
+            const authUrl = '';
+            let data: PlatformToken[] = [];
+            
+            for (let d of response) {
+                const refreshParams = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    form: {
+                        client_id: this.youtubeConfig.client_id,
+                        client_secret: this.youtubeConfig.client_secret,
+                        refresh_token: d.refresh_token,
+                        grant_type: 'refresh_token'
+                    }
+                }
+                const fetchUrl = 'https://oauth2.googleapis.com/token';
+                const response = (await (await fetch(fetchUrl, refreshParams)).json())
+                if (!response) {continue;}
+                data.push({
+                    userId: d.user_id, 
+                    platform: d.platform, 
+                    platformUserId: d.platform_user_id, 
+                    accessToken: response.access_token, 
+                    refreshToken: response.refresh_token, 
+                    expiration: response.expires_in});
+            }
+            await this.repository.upsertUserTokens(data);
+            return data;
+        } catch (err) {
+            console.error(err);
+            return []
         }
     }
 
-    importVideos = async (youtubeChannelId: string): Promise<[formatedYoutubeVideo[], number]> => {
-        let data = await this.getVideos(youtubeChannelId);
+    importVideos = async (youtubeChannelId: string, accessToken: string | null = null, refreshToken: string | null = null): Promise<[formatedYoutubeVideo[], number]> => {
+        let data = await this.getVideos(youtubeChannelId, accessToken, refreshToken);
 
         if (!data[0]) {
             return [[], 0];
         }
 
         let formatedData = this.formatVideos(data);
-        let result = await this.appendVideos(formatedData);
+        let result = await this.repository.insertYoutubeVideos(formatedData);
         return [formatedData, result];
     }
 
-    getVideos = async (youtubeChannelId: string): Promise<rawYoutubeVideo[]> => {
+    getVideos = async (youtubeChannelId: string, accessToken: string | null = null, refreshToken: string | null = null): Promise<rawYoutubeVideo[]> => {
         if (this.startDate === '') {
             await this.getStartDate(youtubeChannelId)
         }
@@ -67,13 +95,13 @@ export class YoutubeVideos {
         let response;
         const playlistEndpoint = '/activities?';
         let nextToken = '';
+        let key = (accessToken ? accessToken : this.youtubeConfig.api_key as string)
         let data: any[] = [];
         let items;
         try {
             while (nextToken !== 'end') {
                 if (nextToken === '') {
                     channelParams = new URLSearchParams({
-                        key: this.youtubeConfig.api_key as string,
                         part: 'id,contentDetails,snippet',
                         channelId: youtubeChannelId,
                         publishedAfter: this.startDate,
@@ -81,36 +109,51 @@ export class YoutubeVideos {
                     })
                 } else {
                     channelParams = new URLSearchParams({
-                        key: this.youtubeConfig.api_key as string,
                         part: 'id,contentDetails,snippet',
                         channelId: youtubeChannelId,
                         pageToken: nextToken,
                         publishedAfter: this.startDate,
                         maxResults: '50',
                     })
-                }
 
+                }
+                if (accessToken) {
+                    channelParams.append('access_token', key)
+                }
+                else {
+                    channelParams.append('key', key)
+                }
                 fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
+
                 response = await (await fetch(fetchUrl, this.params)).json();
                 items = response.items;
 
-                if (items === []) {
-                    return [];
+                if (accessToken && !items.length) {
+                    const newTokens = await this.refreshTokenById('platform_user_id', [youtubeChannelId]);
+                    channelParams.set('access_token', newTokens[0].accessToken)
+                    response = await (await fetch(fetchUrl, this.params)).json();
+                    items = response.items;
+                    if(!items.length) {
+                        channelParams.delete('access_token');
+                        channelParams.append('key', this.youtubeConfig.api_key as string);
+                        response = await (await fetch(fetchUrl, this.params)).json();
+                        items = response.items;
+                        if (!items.length) {
+                            return [];
+                        }
+                    }
                 }
-
                 items.forEach((element: any) => {
                     if (element.snippet.type === 'upload') {
                         data.push(element);
                     }
                 });
-
                 if (Object.keys(response).includes('nextPageToken')) {
                     nextToken = response.nextPageToken;
                 } else {
                     nextToken = 'end';
                 }
             }
-
         } catch (e) {
             console.log(e);
             throw e
@@ -139,27 +182,6 @@ export class YoutubeVideos {
             delete formatedVideos[i].id;
         }
         return formatedVideos;
-    }
-
-    appendVideos = async (formattedVideos: formatedYoutubeVideo[]): Promise<number> => {
-        try {
-            const cs = new this.pgp.helpers.ColumnSet([
-                {name: 'video_id', prop: 'video_id'},
-                {name: 'youtube_channel_id', prop: 'youtube_channel_id'},
-                {name: 'youtube_created_at', prop: 'youtube_created_at'},
-                {name: 'title', prop: 'title'},
-                {name: 'description', prop: 'description'},
-                {name: 'thumbnails', prop: 'thumbnails'},
-                {name: 'video_url', prop: 'video_url'},
-                {name: 'video_embed', prop: 'video_embed'},
-            ], {table: 'youtube_videos'});
-            const query = this.pgp.helpers.insert(formattedVideos, cs) + ' ON CONFLICT DO NOTHING;'
-            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            return (await this.pg_client.result(query)).rowCount
-        } catch (err) {
-            console.log(err);
-            throw err
-        }
     }
 }
 

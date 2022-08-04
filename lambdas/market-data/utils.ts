@@ -1,5 +1,5 @@
-export const buildGroups = (securities: any[], max: number = 100): any[][] => {
-    let groups: any[][] = [];
+export const buildGroups = (securities: any[], max = 100): any[][] => {
+    const groups: any[][] = [];
     let group: any[] = [];
     securities.forEach(sec => {
         group.push(sec)

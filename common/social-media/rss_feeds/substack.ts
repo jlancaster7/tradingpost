@@ -1,14 +1,13 @@
 import Parser from 'rss-parser';
 import {SubstackUser, SubstackFeed, SubstackArticles} from '../interfaces/rss_feeds';
-import {IDatabase, IMain} from "pg-promise";
+import Repository from '../repository'
+
 
 export class Substack {
-    private pg_client: IDatabase<any>;
-    private pgp: IMain
+    private repository: Repository;
 
-    constructor(pg_client: IDatabase<any>, pgp: IMain) {
-        this.pg_client = pg_client;
-        this.pgp = pgp;
+    constructor(repository: Repository) {
+        this.repository = repository
     }
 
     importUsers = async (username: string | string[]): Promise<[SubstackUser[], number]> => {
@@ -22,18 +21,14 @@ export class Substack {
         let formatedUser: SubstackUser;
         for (let i = 0; i < username.length; i++) {
             data = await this.getUserFeed(username[i]);
-
             if (!data) {
                 continue;
             }
-
             formatedUser = this.formatUser(data);
 
-            count += await this.appendUser(formatedUser);
+            count += await this.repository.insertSubstackUser(formatedUser);
             results.push(formatedUser);
         }
-
-
         return [results, count];
     }
 
@@ -45,7 +40,7 @@ export class Substack {
 
         const formatedArticles = this.formatArticles(results);
 
-        const success = await this.appendArticles(formatedArticles);
+        const success = await this.repository.insertSubstackArticles(formatedArticles);
 
         return [formatedArticles, success];
     }
@@ -104,58 +99,6 @@ export class Substack {
             formatedArticles.push(temp);
         }
         return formatedArticles;
-    }
-
-    appendUser = async (data: SubstackUser): Promise<number> => {
-        let keys: string;
-        let values: string[];
-        let value_index: string;
-        let query: string;
-        let result;
-        let success = 0;
-        try {
-            keys = Object.keys(data).join(' ,');
-            values = Object.values(data);
-            value_index = '';
-            values.map((obj, index) => {
-                value_index += `$${index + 1}, `;
-            });
-            value_index = value_index.substring(0, value_index.length - 2);
-            query = `INSERT INTO substack_users(${keys})
-                     VALUES (${value_index})
-                     ON CONFLICT (substack_user_id) DO NOTHING`;
-            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            result = await this.pg_client.result(query, values);
-            success += result.rowCount;
-            return success;
-        } catch (err) {
-            return success;
-        }
-    }
-
-    appendArticles = async (formattedArticles: SubstackArticles[]): Promise<number> => {
-        try {
-            const cs = new this.pgp.helpers.ColumnSet([
-                {name: 'substack_user_id', prop: 'substack_user_id'},
-                {name: 'creator', prop: 'creator'},
-                {name: 'title', prop: 'title'},
-                {name: 'link', prop: 'link'},
-                {name: 'substack_created_at', prop: 'substack_created_at'},
-                {name: 'content_encoded', prop: 'content_encoded'},
-                {name: 'content_encoded_snippet', prop: 'content_encoded_snippet'},
-                {name: 'enclosure', prop: 'enclosure'},
-                {name: 'dc_creator', prop: 'dc_creator'},
-                {name: 'content', prop: 'content'},
-                {name: 'content_snippet', prop: 'content_snippet'},
-                {name: 'article_id', prop: 'article_id'},
-                {name: 'itunes', prop: 'itunes'},
-            ], {table: 'substack_articles'});
-
-            const query = this.pgp.helpers.insert(formattedArticles, cs) + ' ON CONFLICT DO NOTHING';
-            return (await this.pg_client.result(query)).rowCount;
-        } catch (err) {
-            throw err;
-        }
     }
 }
 

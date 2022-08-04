@@ -1,15 +1,13 @@
 import 'dotenv/config';
-
-process.env.CONFIGURATION_ENV = "production";
 import {Context} from "aws-lambda";
-import {lambdaImportTweets, addTwitterUsersByHandle} from "@tradingpost/common/social-media/twitter";
+import {lambdaImportTweets} from "@tradingpost/common/social-media/twitter";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
-const run = async () => {
+const runLambda = async () => {
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -32,5 +30,5 @@ const run = async () => {
 }
 
 module.exports.run = async (event: any, context: Context) => {
-    await run();
+    await runLambda();
 }

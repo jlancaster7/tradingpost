@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Substack = void 0;
 const rss_parser_1 = __importDefault(require("rss-parser"));
 class Substack {
-    constructor(pg_client, pgp) {
+    constructor(repository) {
         this.importUsers = (username) => __awaiter(this, void 0, void 0, function* () {
             if (typeof username === 'string') {
                 username = [username];
@@ -30,7 +30,7 @@ class Substack {
                     continue;
                 }
                 formatedUser = this.formatUser(data);
-                count += yield this.appendUser(formatedUser);
+                count += yield this.repository.insertSubstackUser(formatedUser);
                 results.push(formatedUser);
             }
             return [results, count];
@@ -41,7 +41,7 @@ class Substack {
                 return [[], 0];
             }
             const formatedArticles = this.formatArticles(results);
-            const success = yield this.appendArticles(formatedArticles);
+            const success = yield this.repository.insertSubstackArticles(formatedArticles);
             return [formatedArticles, success];
         });
         this.getUserFeed = (username) => __awaiter(this, void 0, void 0, function* () {
@@ -97,59 +97,8 @@ class Substack {
             }
             return formatedArticles;
         };
-        this.appendUser = (data) => __awaiter(this, void 0, void 0, function* () {
-            let keys;
-            let values;
-            let value_index;
-            let query;
-            let result;
-            let success = 0;
-            try {
-                keys = Object.keys(data).join(' ,');
-                values = Object.values(data);
-                value_index = '';
-                values.map((obj, index) => {
-                    value_index += `$${index + 1}, `;
-                });
-                value_index = value_index.substring(0, value_index.length - 2);
-                query = `INSERT INTO substack_users(${keys})
-                     VALUES (${value_index})
-                     ON CONFLICT (substack_user_id) DO NOTHING`;
-                // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-                result = yield this.pg_client.result(query, values);
-                success += result.rowCount;
-                return success;
-            }
-            catch (err) {
-                return success;
-            }
-        });
-        this.appendArticles = (formattedArticles) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                const cs = new this.pgp.helpers.ColumnSet([
-                    { name: 'substack_user_id', prop: 'substack_user_id' },
-                    { name: 'creator', prop: 'creator' },
-                    { name: 'title', prop: 'title' },
-                    { name: 'link', prop: 'link' },
-                    { name: 'substack_created_at', prop: 'substack_created_at' },
-                    { name: 'content_encoded', prop: 'content_encoded' },
-                    { name: 'content_encoded_snippet', prop: 'content_encoded_snippet' },
-                    { name: 'enclosure', prop: 'enclosure' },
-                    { name: 'dc_creator', prop: 'dc_creator' },
-                    { name: 'content', prop: 'content' },
-                    { name: 'content_snippet', prop: 'content_snippet' },
-                    { name: 'article_id', prop: 'article_id' },
-                    { name: 'itunes', prop: 'itunes' },
-                ], { table: 'substack_articles' });
-                const query = this.pgp.helpers.insert(formattedArticles, cs) + ' ON CONFLICT DO NOTHING';
-                return (yield this.pg_client.result(query)).rowCount;
-            }
-            catch (err) {
-                throw err;
-            }
-        });
-        this.pg_client = pg_client;
-        this.pgp = pgp;
+        this.repository = repository;
     }
 }
 exports.Substack = Substack;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic3Vic3RhY2suanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJzdWJzdGFjay50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7QUFBQSw0REFBZ0M7QUFLaEMsTUFBYSxRQUFRO0lBR2pCLFlBQVksVUFBc0I7UUFJbEMsZ0JBQVcsR0FBRyxDQUFPLFFBQTJCLEVBQXFDLEVBQUU7WUFDbkYsSUFBSSxPQUFPLFFBQVEsS0FBSyxRQUFRLEVBQUU7Z0JBQzlCLFFBQVEsR0FBRyxDQUFDLFFBQVEsQ0FBQyxDQUFBO2FBQ3hCO1lBRUQsSUFBSSxPQUFPLEdBQUcsRUFBRSxDQUFDO1lBQ2pCLElBQUksSUFBOEIsQ0FBQztZQUNuQyxJQUFJLEtBQUssR0FBRyxDQUFDLENBQUM7WUFDZCxJQUFJLFlBQTBCLENBQUM7WUFDL0IsS0FBSyxJQUFJLENBQUMsR0FBRyxDQUFDLEVBQUUsQ0FBQyxHQUFHLFFBQVEsQ0FBQyxNQUFNLEVBQUUsQ0FBQyxFQUFFLEVBQUU7Z0JBQ3RDLElBQUksR0FBRyxNQUFNLElBQUksQ0FBQyxXQUFXLENBQUMsUUFBUSxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUM7Z0JBQzNDLElBQUksQ0FBQyxJQUFJLEVBQUU7b0JBQ1AsU0FBUztpQkFDWjtnQkFDRCxZQUFZLEdBQUcsSUFBSSxDQUFDLFVBQVUsQ0FBQyxJQUFJLENBQUMsQ0FBQztnQkFFckMsS0FBSyxJQUFJLE1BQU0sSUFBSSxDQUFDLFVBQVUsQ0FBQyxrQkFBa0IsQ0FBQyxZQUFZLENBQUMsQ0FBQztnQkFDaEUsT0FBTyxDQUFDLElBQUksQ0FBQyxZQUFZLENBQUMsQ0FBQzthQUM5QjtZQUNELE9BQU8sQ0FBQyxPQUFPLEVBQUUsS0FBSyxDQUFDLENBQUM7UUFDNUIsQ0FBQyxDQUFBLENBQUE7UUFFRCxtQkFBYyxHQUFHLENBQU8sUUFBZ0IsRUFBeUMsRUFBRTtZQUMvRSxNQUFNLE9BQU8sR0FBRyxNQUFNLElBQUksQ0FBQyxXQUFXLENBQUMsUUFBUSxDQUFD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

@@ -1,13 +1,12 @@
 import fetch from 'node-fetch';
-import {twitterConfig} from '../interfaces/utils';
-import {rawTwitterUser, formatedTwitterUser, PlatformToken, twitterParams} from '../interfaces/twitter';
+import { twitterConfig, PlatformToken } from '../interfaces/utils';
+import {rawTwitterUser, formatedTwitterUser, twitterParams} from '../interfaces/twitter';
 import Repository from '../repository'
-import {IDatabase, IMain} from "pg-promise";
+
 
 export class TwitterUsers {
     private twitterConfig: twitterConfig;
-    //private pg_client: IDatabase<any>;
-    //private pgp: IMain
+
     private repository: Repository;
     private twitterUrl: string;
     private params: twitterParams;
@@ -15,8 +14,7 @@ export class TwitterUsers {
     constructor(twitterConfig: twitterConfig, repository: Repository) {
         this.twitterConfig = twitterConfig;
         this.repository = repository;
-        //this.pg_client = pg_client;
-        //this.pgp = pgp;
+
         this.twitterUrl = "https://api.twitter.com/2";
         this.params = {
             method: 'GET',
@@ -26,9 +24,9 @@ export class TwitterUsers {
         }
     }
     
-    refreshTokensbyId = async (userIds: string[]) => {
+    refreshTokensbyId = async (idType: string, ids: string[]): Promise<PlatformToken[]> => {
         try {
-            const response = await this.repository.getTokens(userIds, 'twitter');
+            const response = await this.repository.getTokens(idType, ids, 'twitter');
             const authUrl = '/oauth2/token';
             let data = [];
             for (let d of response) {
@@ -45,16 +43,25 @@ export class TwitterUsers {
                 }
                 const fetchUrl = this.twitterUrl + authUrl;
                 const response = (await (await fetch(fetchUrl, refreshParams)).json()).data;
-                data.push({userId: d.user_id, platform: d.platform, platformUserId: d.platform_user_id, accessToken: response.access_token, refreshToken: response.refresh_token, expiration: response.expires_in});
+                if (!response) {continue;}
+                data.push({
+                    userId: d.user_id, 
+                    platform: d.platform, 
+                    platformUserId: d.platform_user_id, 
+                    accessToken: response.access_token, 
+                    refreshToken: response.refresh_token, 
+                    expiration: response.expires_in});
             }
             await this.repository.upsertUserTokens(data);
+            return data;
         } catch (err) {
             console.error(err);
+            return []
         }
     }
    
 
-    importUserByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: string}[]): Promise<[formatedTwitterUser[], number]> => {
+    importUserByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: Date}[]): Promise<[formatedTwitterUser[], number]> => {
 
         let data: rawTwitterUser[] = [];
         let out: PlatformToken[] = []; 
@@ -63,7 +70,7 @@ export class TwitterUsers {
         for (let d of twitterUsers) {
             temp = await this.getUserInfoByToken(d.accessToken);
             if (!temp) { 
-                await this.refreshTokensbyId([d.userId]);
+                await this.refreshTokensbyId('user_id', [d.userId]);
                 temp = await this.getUserInfoByToken(d.accessToken);
                 if (!temp) { continue; }
             }

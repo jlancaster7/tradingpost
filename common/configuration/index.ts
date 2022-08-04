@@ -15,7 +15,7 @@ type ConfigKeys =
     | "sendgrid"
     | "finicity"
 
-interface ConfigPaths extends Record<ConfigKeys, unknown> {
+export interface ConfigPaths extends Record<ConfigKeys, unknown> {
     elastic: {
         cloudId: string
         apiKey: string

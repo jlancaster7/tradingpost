@@ -1,4 +1,5 @@
 import {DateTime} from "luxon";
+import {getUSExchangeHoliday} from "../market-data/interfaces";
 
 export interface IBrokerageService {
     generateBrokerageAuthenticationLink(userId: string, brokerageAccount?: string): Promise<string>
@@ -19,11 +20,31 @@ export interface IBrokerageService {
 export interface IBrokerageRepository {
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>
 
-    addTradingPostBrokerageHoldings(holdings: TradingPostCurrentHoldings[]): Promise<void>
+    upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<void>
 
-    addTradingPostBrokerageTransactions(transactions: TradingPostTransactions[]): Promise<void>
+    addTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
 
-    addTradingPostBrokerageHoldingsHistory(holdingsHistory: TradingPostHistoricalHoldings[]): Promise<void>
+    upsertTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
+
+    addTradingPostTransactions(transactions: TradingPostTransactions[]): Promise<void>
+
+    upsertTradingPostTransactions(transactions: TradingPostTransactions[]): Promise<void>
+
+    addTradingPostHistoricalHoldings(historicalHoldings: TradingPostHistoricalHoldings[]): Promise<void>
+
+    upsertTradingPostHistoricalHoldings(historicalHoldings: TradingPostHistoricalHoldings[]): Promise<void>
+
+    getTradingPostBrokerageAccounts(userId: string): Promise<TradingPostBrokerageAccountsTable[]>
+
+    getTradingPostBrokerageAccount(accountId: number): Promise<TradingPostBrokerageAccountsTable>
+
+    getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(accountId: number): Promise<TradingPostCurrentHoldingsTableWithSecurity[]>
+
+    getTradingPostBrokerageAccountTransactions(accountId: number): Promise<TradingPostTransactionsTable[]>
+
+    getMarketHolidays(endDate: DateTime): Promise<getUSExchangeHoliday[]>
+
+    getSecurityPricesWithEndDateBySecurityIds(endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
 }
 
 export interface IFinicityRepository {
@@ -33,15 +54,23 @@ export interface IFinicityRepository {
 
     upsertFinicityInstitutions(institutions: FinicityInstitution[]): Promise<void>
 
+    upsertFinicityInstitution(institution: FinicityInstitution): Promise<number>
+
     upsertInstitutions(institutions: TradingPostInstitution[]): Promise<void>
+
+    upsertInstitution(institution: TradingPostInstitution): Promise<number>
 
     getTradingPostInstitutionsWithFinicityInstitutionId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>
 
-    addFinicityAccounts(accounts: FinicityAccount[]): Promise<void>
+    getTradingPostInstitutionByFinicityId(finicityInstitutionId: number): Promise<TradingPostInstitutionWithFinicityInstitutionId | null>
+
+    upsertFinicityAccounts(accounts: FinicityAccount[]): Promise<void>
 
     getFinicityAccounts(finicityUserId: number): Promise<FinicityAccount[]>
 
     upsertFinicityHoldings(holdings: FinicityHolding[]): Promise<void>
+
+    upsertFinicityTransactions(transactions: FinicityTransaction[]): Promise<void>
 
     getFinicityHoldings(finicityUserId: number): Promise<FinicityHolding[]>
 
@@ -96,6 +125,18 @@ export interface ISummaryService {
     computeExposure(holdings: HistoricalHoldings[]): TradingPostExposure
 
     computeAccountGroupSummary(accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats | null>
+}
+
+export type GetSecurityPrice = {
+    id: number
+    securityId: number
+    price: number
+    time: DateTime
+    high: number
+    open: number
+    low: number
+    updatedAt: DateTime
+    createdAt: DateTime
 }
 
 export type FinicityUser = {
@@ -241,49 +282,31 @@ export type FinicityHolding = {
 
 export type FinicityTransaction = {
     id: number
-    finicityAccountId: number
+    internalFinicityAccountId: number
     transactionId: number
-    amount: number
     accountId: string
     customerId: string
-    status: string
+    amount: number
     description: string
-    memo: string
-    type: string
-    buyType: string
-    interestAmount: number
-    principalAmount: number
-    feeAmount: number
-    escrowAmount: number
-    unitQuantity: number
     postedDate: number
     transactionDate: number
-    createdDate: number
-    categorizationNormalizedPayeeName: string
-    categorizationCategory: string
-    categorizationCity: string
-    categorizationState: string
-    categorizationPostalCode: string
-    categorizationCountry: string
-    categorizationBestRepresentation: string
-    runningBalanceAmount: number
-    checkNum: number
-    incomeType: string
-    subaccountSecurityType: string
-    commissionAmount: number
-    splitDenominator: number
-    splitNumerator: number
-    sharesPerContract: number
-    taxesAmount: number
-    unitPrice: number
-    currencySymbol: string
-    subAccountFund: string
-    ticker: string
-    securityId: string
-    securityIdType: string
     investmentTransactionType: string
-    effectiveDate: string
-    firstEffectiveDate: string
+
+    status: string | null
+    memo: string | null
+    type: string | null
+    unitQuantity: number | null
+    feeAmount: number | null
+    cusipNo: string | null
+    createdDate: number | null
+    categorizationNormalizedPayeeName: string | null
+    categorizationCategory: string | null
+    categorizationBestRepresentation: string | null
+    categorizationCountry: string | null
+    commissionAmount: number | null
+    ticker: string | null
+    unitPrice: number | null
+
     updatedAt: DateTime
     createdAt: DateTime
 }
@@ -345,6 +368,10 @@ export type TradingPostCurrentHoldings = {
 
 export type TradingPostCurrentHoldingsTable = TradingPostCurrentHoldings & TableInfo;
 
+export type TradingPostCurrentHoldingsTableWithSecurity = {
+    symbol: string
+} & TradingPostCurrentHoldingsTable
+
 
 export type TradingPostHistoricalHoldings = {
     accountId: number
@@ -400,10 +427,10 @@ export type TradingPostTransactions = {
     date: DateTime
     quantity: number
     price: number
-    amount: number
+    amount: number // (quantity * price) + fees
     fees: number | null
     type: InvestmentTransactionType
-    currency: string
+    currency: string | null
 }
 
 export type TradingPostTransactionsTable = TradingPostTransactions & TableInfo;
@@ -427,11 +454,12 @@ export enum InvestmentTransactionType {
     cancel = "cancel",
     fee = "fee",
     cash = "cash",
-    transfer = "transfer",
+    transfer = "transfer", // Transfers of security between brokerages
     dividendOrInterest = "dividendOrInterest"
 }
 
 export type TradingPostInstitution = {
+    externalId: string
     name: string
     accountTypeDescription: string
     phone: string

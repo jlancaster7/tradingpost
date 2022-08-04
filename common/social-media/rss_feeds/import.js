@@ -8,18 +8,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.importSubstackUsers = exports.lambdaImportRSSFeeds = void 0;
 const substack_1 = require("./substack");
-function lambdaImportRSSFeeds(pgClient, pgp, substackConfiguration) {
+const repository_1 = __importDefault(require("../repository"));
+function lambdaImportRSSFeeds(pgClient, pgp) {
     return __awaiter(this, void 0, void 0, function* () {
-        let query = `SELECT substack_user_id
-                 FROM substack_users`;
-        //TODO: I could do this a lot better.. making getting the substack Ids apart of the class
-        //      and adding a function to set your own list of substackIds.. similar to start date.
-        //      but its fine for now
-        const substackIds = yield pgClient.query(query);
-        const ssArticles = new substack_1.Substack(pgClient, pgp);
+        const repository = new repository_1.default(pgClient, pgp);
+        const substackIds = yield repository.getSubstackUsers();
+        const ssArticles = new substack_1.Substack(repository);
         let result;
         let articlesImported = 0;
         for (let i = 0; i < substackIds.length; i++) {
@@ -30,9 +30,10 @@ function lambdaImportRSSFeeds(pgClient, pgp, substackConfiguration) {
     });
 }
 exports.lambdaImportRSSFeeds = lambdaImportRSSFeeds;
-function importSubstackUsers(username, pgClient, pgp, substackConfiguration) {
+function importSubstackUsers(username, pgClient, pgp) {
     return __awaiter(this, void 0, void 0, function* () {
-        const ssUsers = new substack_1.Substack(pgClient, pgp);
+        const repository = new repository_1.default(pgClient, pgp);
+        const ssUsers = new substack_1.Substack(repository);
         const result = yield ssUsers.importUsers(username);
         let length;
         if (typeof username === 'string') {
@@ -45,3 +46,4 @@ function importSubstackUsers(username, pgClient, pgp, substackConfiguration) {
     });
 }
 exports.importSubstackUsers = importSubstackUsers;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW1wb3J0LmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiaW1wb3J0LnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7OztBQUNBLHlDQUFvQztBQUNwQywrREFBdUM7QUFLdkMsU0FBZSxvQkFBb0IsQ0FBQyxRQUF3QixFQUFFLEdBQVU7O1FBRXBFLE1BQU0sVUFBVSxHQUFHLElBQUksb0JBQVUsQ0FBQyxRQUFRLEVBQUUsR0FBRyxDQUFDLENBQUM7UUFDakQsTUFBTSxXQUFXLEdBQUcsTUFBTSxVQUFVLENBQUMsZ0JBQWdCLEVBQUUsQ0FBQztRQUN4RCxNQUFNLFVBQVUsR0FBRyxJQUFJLG1CQUFRLENBQUMsVUFBVSxDQUFDLENBQUM7UUFFNUMsSUFBSSxNQUFvQyxDQUFDO1FBQ3pDLElBQUksZ0JBQWdCLEdBQUcsQ0FBQyxDQUFDO1FBRXpCLEtBQUssSUFBSSxDQUFDLEdBQUcsQ0FBQyxFQUFFLENBQUMsR0FBRyxXQUFXLENBQUMsTUFBTSxFQUFFLENBQUMsRUFBRSxFQUFFO1lBQ3pDLE1BQU0sR0FBRyxNQUFNLFVBQVUsQ0FBQyxjQUFjLENBQUMsV0FBVyxDQUFDLENBQUMsQ0FBQyxDQUFDLGdCQUFnQixDQUFDLENBQUM7WUFDMUUsZ0JBQWdCLElBQUksTUFBTSxDQUFDLENBQUMsQ0FBQyxDQUFDO1NBQ2pDO1FBRUQsT0FBTyxDQUFDLEdBQUcsQ0FBQyxZQUFZLGdCQUFnQixxQkFBcUIsQ0FBQyxDQUFDO0lBQ25FLENBQUM7Q0FBQTtBQWlCTyxvREFBb0I7QUFmNUIsU0FBZSxtQkFBbUIsQ0FBQyxRQUEyQixFQUFFLFFBQXdCLEVBQUUsR0FBVTs7UUFDaEcsTUFBTSxVQUFVLEdBQUcsSUFBSSxvQkFBVSxDQUFDLFFBQVEsRUFBRSxHQUFHLENBQUMsQ0FBQztRQUNqRCxNQUFNLE9BQU8sR0FBRyxJQUFJLG1CQUFRLENBQUMsVUFBVSxDQUFDLENBQUM7UUFFekMsTUFBTSxNQUFNLEdBQTZCLE1BQU0sT0FBTyxDQUFDLFdBQVcsQ0FBQyxRQUFRLENBQUMsQ0FBQztRQUM3RSxJQUFJLE1BQWMsQ0FBQztRQUNuQixJQUFJLE9BQU8sUUFBUSxLQUFLLFFBQVEsRUFBRTtZQUM5QixNQUFNLEdBQUcsQ0FBQyxDQUFBO1NBQ2I7YUFBTTtZQUNILE1BQU0sR0FBRyxRQUFRLENBQUMsTUFBTSxDQUFBO1NBQzNCO1FBRUQsT0FBTyxDQUFDLEdBQUcsQ0FBQyx5QkFBeUIsTUFBTSxDQUFDLENBQUMsQ0FBQyxPQUFPLE1BQU0sa0JBQWtCLENBQUMsQ0FBQTtJQUNsRixDQUFDO0NBQUE7QUFFNkIsa0RBQW1CIn0=

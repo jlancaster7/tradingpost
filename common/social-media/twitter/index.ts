@@ -14,15 +14,9 @@ type TwitterConfiguration = {
 
 export const lambdaImportTweets = async (pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => {
     
-    let query = `SELECT twitter_user_id, a.access_token, a.refresh_token
-                 FROM twitter_users
-                 LEFT JOIN (SELECT platform_user_id, access_token, refresh_token FROM data_platform_claim WHERE platform = 'twitter') as a
-                 ON twitter_users.twitter_user_id = a.platform_user_id
-                 `;
-    
-    const twitterIds = await pgClient.query(query);
-    
+
     const repository = new Repository(pgClient, pgp);
+    const twitterIds = await repository.getTwitterUsers();
     const Tweet = new Tweets(twitterConfiguration, repository);
     let result: [formatedTweet[], number];
     let tweetsImported = 0;
@@ -48,10 +42,10 @@ export const addTwitterUsersByHandle = async (handles: string | string[], pgClie
     } else {
         length = handles.length
     }
-    console.log(`Successfully imported ${result[1]} of ${length} Twitter profiles.`);
+    console.log(`Successfully imported ${result.length} of ${length} Twitter profiles.`);
     return result
 }
-export const addTwitterUsersByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: string}[], pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser[]> => {
+export const addTwitterUsersByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: Date}[], pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser[]> => {
     
     const repository = new Repository(pgClient, pgp);
     const TwitterUser = new TwitterUsers(twitterConfiguration, repository);

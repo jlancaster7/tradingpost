@@ -1,21 +1,21 @@
 import fetch from 'node-fetch';
-import {spotifyConfig} from '../interfaces/utils';
-import {rawSpotifyShow, spotifyParams, spotifyShow, spotifyEpisode} from '../interfaces/podcasts';
-import {IDatabase, IMain} from "pg-promise";
+import { spotifyConfig } from '../interfaces/utils';
+import { spotifyParams, spotifyShow, spotifyEpisode } from '../interfaces/podcasts';
+import Repository from '../repository';
+import { start } from 'repl';
+
 
 export class SpotifyShows {
     private spotifyConfig: spotifyConfig;
-    private pg_client: IDatabase<any>;
-    private pgp: IMain;
+    private repository: Repository;
     private tokenUrl: string;
     private showUrl: string;
     private access_token: string;
     private params: spotifyParams;
 
-    constructor(spotifyConfig: spotifyConfig, pg_client: IDatabase<any>, pgp: IMain) {
+    constructor(repository: Repository, spotifyConfig: spotifyConfig) {
         this.spotifyConfig = spotifyConfig;
-        this.pg_client = pg_client;
-        this.pgp = pgp;
+        this.repository = repository;
         this.tokenUrl = 'https://accounts.spotify.com/api/token';
         this.showUrl = 'https://api.spotify.com/v1/shows/';
         this.access_token = '';
@@ -39,7 +39,6 @@ export class SpotifyShows {
                 },
                 body: new URLSearchParams({grant_type: 'client_credentials'})
             };
-
             const response = await (await fetch(this.tokenUrl, params)).json();
             this.access_token = response.access_token;
             this.params.headers.Authorization = this.params.headers.Authorization + this.access_token;
@@ -55,43 +54,35 @@ export class SpotifyShows {
         if (typeof showIds === 'string') {
             showIds = [showIds]
         }
-
-        const data = await this.getShowInfo(showIds);
-
-        if (data === []) {
+        const shows = await this.getShowInfo(showIds);
+        if (shows === []) {
             return [[], 0];
         }
-
-        const formatedData = this.formatShowInfo(data);
-
-        const result = await this.appendShow(formatedData);
-        return [formatedData, result];
+        const result = await this.repository.upsertSpotifyShow(shows);
+        return [shows, result];
     }
 
     importEpisodes = async (showId: string): Promise<[spotifyEpisode[], number]> => {
         const data = await this.getEpisodes(showId);
-
         if (data.length <= 0) {
             return [[], 0]
         }
-
-        const results = await this.appendEpisodes(data);
+        const results = await this.repository.insertSpotifyEpisodes(data);
         if (results) return [data, results]
 
         return [[], 0]
     }
 
-    getShowInfo = async (showIds: string[]): Promise<rawSpotifyShow[]> => {
+    getShowInfo = async (showIds: string[]): Promise<spotifyShow[]> => {
         try {
-
-
             if (this.access_token === '') {
                 await this.setAccessToken()
             }
 
-            let results = [];
             let fetchUrl: string;
             let showResponse;
+            let formatedShowInfo: spotifyShow;
+            let formatedShows = []
 
             for (let i = 0; i < showIds.length; i++) {
                 fetchUrl = this.showUrl + showIds[i] + '?market=US';
@@ -107,9 +98,24 @@ export class SpotifyShows {
                     }
                 }
                 showResponse.spotify_show_id = showIds[i];
-                results.push(showResponse);
+                formatedShowInfo = {
+                    spotify_show_id: showResponse[i].spotify_show_id,
+                    name: showResponse[i].name,
+                    description: showResponse[i].description,
+                    explicit: showResponse[i].explicit,
+                    html_description: showResponse[i].html_description,
+                    is_externally_hosted: showResponse[i].is_externally_hosted,
+                    media_type: showResponse[i].media_type,
+                    publisher: showResponse[i].publisher,
+                    copyrights: JSON.stringify(showResponse[i].copyrights),
+                    total_episodes: showResponse[i].total_episodes,
+                    languages: JSON.stringify(showResponse[i].languages),
+                    external_urls: JSON.stringify(showResponse[i].external_urls),
+                    images: JSON.stringify(showResponse[i].images)
+                }
+                formatedShows.push(formatedShowInfo);
             }
-            return results;
+            return formatedShows;
         } catch (err) {
             console.log(err);
             return [];
@@ -118,19 +124,25 @@ export class SpotifyShows {
 
     getEpisodes = async (showId: string): Promise<spotifyEpisode[]> => {
         try {
+            const startDate = await this.repository.getSpotifyLastUpdate(showId);
+            
             if (this.access_token === '') await this.setAccessToken()
             let results: spotifyEpisode[] = [];
-            let fetchUrl: string;
-            let next = null;
+            let fetchUrl: string | null;
+            let response;
+            let body;
             let embedResponse;
 
             fetchUrl = this.showUrl + showId + '/episodes?limit=50&market=US';
-            while (next === null) {
-                const response = await fetch(fetchUrl, this.params);
-                const body = await response.json();
+            while (fetchUrl !== null) {
+                response = await fetch(fetchUrl, this.params);
+                body = await response.json();
                 if (Object.hasOwnProperty("error")) throw new Error(body["error"]);
-                next = body.next;
+                
+                fetchUrl = body.next;
+                
                 for (let i = 0; i < body.items.length; i++) {
+                    if (startDate > new Date(body.items[i].release_date)) { fetchUrl = null }
                     const embeddedResponse = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${body.items[i].id}`);
                     const embeddedBody = await embeddedResponse.text();
                     try {
@@ -138,7 +150,7 @@ export class SpotifyShows {
                         body.items[i].embed = embedResponse;
                     } catch (err) {
                         console.error(err)
-                        console.log("body of json response from spotify: ", embeddedBody)
+                        console.log("body of json response from spotify: ", embeddedResponse)
                     }
                 }
 
@@ -173,90 +185,6 @@ export class SpotifyShows {
         } catch (e) {
             console.log(e);
             throw e
-        }
-
-    }
-
-    formatShowInfo = (data: rawSpotifyShow[]): spotifyShow[] => {
-        let formatedShowInfo: spotifyShow;
-        let formatedShows = []
-        for (let i = 0; i < data.length; i++) {
-            formatedShowInfo = {
-                spotify_show_id: data[i].spotify_show_id,
-                name: data[i].name,
-                description: data[i].description,
-                explicit: data[i].explicit,
-                html_description: data[i].html_description,
-                is_externally_hosted: data[i].is_externally_hosted,
-                media_type: data[i].media_type,
-                publisher: data[i].publisher,
-                copyrights: JSON.stringify(data[i].copyrights),
-                total_episodes: data[i].total_episodes,
-                languages: JSON.stringify(data[i].languages),
-                external_urls: JSON.stringify(data[i].external_urls),
-                images: JSON.stringify(data[i].images)
-            }
-            formatedShows.push(formatedShowInfo);
-        }
-        return formatedShows;
-    }
-
-    appendEpisodes = async (episodes: spotifyEpisode[]): Promise<number> => {
-        try {
-            const cs = new this.pgp.helpers.ColumnSet([
-                {name: 'spotify_episode_id', prop: 'spotify_episode_id'},
-                {name: 'spotify_show_id', prop: 'spotify_show_id'},
-                {name: 'audio_preview_url', prop: 'audio_preview_url'},
-                {name: 'name', prop: 'name'},
-                {name: 'description', prop: 'description'},
-                {name: 'duration_ms', prop: 'duration_ms'},
-                {name: 'explicit', prop: 'explicit'},
-                {name: 'html_description', prop: 'html_description'},
-                {name: 'is_externally_hosted', prop: 'is_externally_hosted'},
-                {name: 'is_playable', prop: 'is_playable'},
-                {name: 'language', prop: 'language'},
-                {name: 'languages', prop: 'languages'},
-                {name: 'embed', prop: 'embed'},
-                {name: 'external_urls', prop: 'external_urls'},
-                {name: 'images', prop: 'images'},
-                {name: 'release_date', prop: 'release_date'},
-            ], {table: 'spotify_episodes'});
-            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            const query = this.pgp.helpers.insert(episodes, cs) + ' ON CONFLICT DO NOTHING';
-            const results = await this.pg_client.result(query);
-            if (!results) return 0;
-            return results.rowCount;
-        } catch (err) {
-            console.log(err);
-            throw err;
-        }
-    }
-
-    appendShow = async (formattedShows: spotifyShow[]): Promise<number> => {
-        try {
-            // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            const cs = new this.pgp.helpers.ColumnSet([
-                {name: 'spotify_show_id', prop: 'spotify_show_id'},
-                {name: 'name', prop: 'name'},
-                {name: 'description', prop: 'description'},
-                {name: 'explicit', prop: 'explicit'},
-                {name: 'html_description', prop: 'html_description'},
-                {name: 'is_externally_hosted', prop: 'is_externally_hosted'},
-                {name: 'media_type', prop: 'media_type'},
-                {name: 'publisher', prop: 'publisher'},
-                {name: 'copyrights', prop: 'copyrights'},
-                {name: 'total_episodes', prop: 'total_episodes'},
-                {name: 'languages', prop: 'languages'},
-                {name: 'external_urls', prop: 'external_urls'},
-                {name: 'images', prop: 'images'},
-            ], {table: 'spotify_users'});
-            const query = this.pgp.helpers.insert(formattedShows, cs) + ' ON CONFLICT DO NOTHING';
-            const results = await this.pg_client.result(query);
-            if (!results) return 0;
-            return results.rowCount;
-        } catch (err) {
-            console.log(err);
-            throw err;
         }
     }
 }

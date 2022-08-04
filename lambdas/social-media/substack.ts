@@ -7,7 +7,7 @@ import pgPromise, {IDatabase, IMain} from "pg-promise";
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
-const run = async () => {
+const runLambda = async () => {
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -20,10 +20,8 @@ const run = async () => {
         await pgClient.connect()
     }
 
-    const substackConfiguration = await DefaultConfig.fromCacheOrSSM("substack");
-
     try {
-        await lambdaImportRSSFeeds(pgClient, pgp, substackConfiguration);
+        await lambdaImportRSSFeeds(pgClient, pgp);
     } catch (e) {
         console.error(e)
         throw e
@@ -31,5 +29,5 @@ const run = async () => {
 }
 
 module.exports.run = async (event: any, context: Context) => {
-    await run();
+    await runLambda();
 }

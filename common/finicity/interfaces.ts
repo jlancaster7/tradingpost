@@ -1,7 +1,65 @@
 import {bool} from "aws-sdk/clients/signer";
+import {DateTime} from "luxon";
 
 export interface PartnerAuthenticationResponse {
     token: string
+}
+
+export interface GetInstitution {
+    institution: {
+        id: number
+        name: string
+        voa: boolean
+        voi: boolean
+        stateAgg: boolean
+        ach: boolean
+        transAgg: boolean
+        aha: boolean
+        availBalance: boolean
+        accountOwner: boolean
+        loanPaymentDetails: boolean
+        studentLoanData: boolean
+        accountTypeDescription: string
+        phone: string
+        urlHomeApp: string
+        urlLogonApp: string
+        oauthEnabled: boolean
+        urlForgotPassword: string
+        urlOnlineRegistration: string
+        class: string
+        specialText: string
+        timeZone: string
+        specialInstructions: string
+        specialInstructionsTitle: string
+        address: {
+            city: string
+            state: string
+            country: string
+            postalCode: string
+            addressLine1: string
+            addressLine2: string
+        }
+        currency: string
+        email: string
+        status: string
+        newInstitutionId: number
+        branding: {
+            logo: string
+            alternateLogo: string
+            icon: string
+            primaryColor: string
+            title: string
+        }
+        oauthInstitutionId: string
+        productionStatus: {
+            overallStatus: string
+            transAgg: string
+            voa: string
+            stateAgg: string
+            ach: string
+            aha: string
+        }
+    }
 }
 
 export interface GetInstitutions {
@@ -255,6 +313,53 @@ export interface GetAccountOwner {
     asOfDate: number
 }
 
+export interface GetAccountAndHoldings {
+    id: string
+    number: string
+    accountNumberDisplay: string
+    name: string
+    balance: number
+    type: string
+    aggregationStatusCode: number
+    status: string
+    customerId: string
+    institutionId: string
+    balanceDate: number
+    aggregationSuccessDate: number
+    aggregationAttemptDate: number
+    createdDate: number
+    lastUpdatedDate: number
+    currency: string
+    lastTransactionDate: number
+    institutionLoginId: number
+    detail: {
+        description: string
+        availableCashBalance: number
+        currentBalance: number
+        dateAsOf: number
+    }
+    position: {
+        securityId: string
+        securityIdType: string
+        id: number
+        description: string
+        symbol: string
+        currentPrice: number
+        transactionType: string
+        marketValue: number
+        costBasis: number
+        units: number
+        status: string
+        securityType: string
+        securityName: string
+        securityCurrency: string
+    }[]
+    displayPosition: number
+    accountNickname: string
+    oldestTransactionDate: number
+    marketSegment: string
+}
+
 export interface GetAllCustomerTransactions {
     found: number
     displaying: number
@@ -265,14 +370,15 @@ export interface GetAllCustomerTransactions {
     transactions: {
         id: number
         amount: number
-        accountId: number
-        customerId: number
+        accountId: string
+        customerId: string
         status: string
         description: string
         memo: string
         type: string
-        cusipNo: string
         unitQuantity: number
+        feeAmount: number
+        cusipNo: string
         postedDate: number
         transactionDate: number
         createdDate: number
@@ -283,13 +389,8 @@ export interface GetAllCustomerTransactions {
             country: string
         }
         commissionAmount: number
-        currencySymbol: string
-        buyType: string
-        subaccountSecurityType: string
-        unitPrice: number
-        subAccountFund: string
         ticker: string
-        uniqueIdType: string
+        unitPrice: number
         investmentTransactionType: string
     }[]
 }

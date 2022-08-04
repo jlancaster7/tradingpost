@@ -2,7 +2,8 @@ import {
     FinicityAccount,
     FinicityHolding,
     FinicityTransaction,
-    InvestmentTransactionType, SecurityIssue,
+    InvestmentTransactionType,
+    SecurityIssue,
     SecurityType,
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountWithFinicity,
@@ -18,9 +19,67 @@ interface TransformerRepository {
     getSecuritiesWithIssue(): Promise<SecurityIssue[]>
 
     getTradingPostInstitutionsWithFinicityId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>
+
+    getTradingPostInstitutionByFinicityId(finicityInstitutionId: number): Promise<TradingPostInstitutionWithFinicityInstitutionId | null>
 }
 
-export class FinicityTransformer {
+// Finicity Types Found Here: https://api-reference.finicity.com/#/rest/models/enumerations/investment-transaction-types
+const transformTransactionType = (finicityTxType: string): InvestmentTransactionType => {
+    switch (finicityTxType) {
+        case "cancel":
+            return InvestmentTransactionType.cancel
+        case "purchaseToClose":
+            return InvestmentTransactionType.buy
+        case "purchaseToCover":
+            return InvestmentTransactionType.cover
+        case "contribution":
+            throw new Error("unknown investment transaction type 'contribution'")
+        case "optionExercise":
+            return InvestmentTransactionType.buy
+        case "optionExpiration":
+            return InvestmentTransactionType.cancel
+        case "fee":
+            return InvestmentTransactionType.fee
+        case "soldToClose":
+            return InvestmentTransactionType.sell
+        case "soldToOpen":
+            return InvestmentTransactionType.short
+        case "split":
+            throw new Error("unknown investment transaction type 'split'")
+        case "transfer":
+            return InvestmentTransactionType.transfer
+        case "returnOfCapital":
+            return InvestmentTransactionType.dividendOrInterest
+        case "income":
+            return InvestmentTransactionType.dividendOrInterest
+        case "purchased":
+            return InvestmentTransactionType.buy
+        case "sold":
+            return InvestmentTransactionType.sell
+        case "dividendReinvest":
+            return InvestmentTransactionType.dividendOrInterest
+        case "tax":
+            throw new Error("unknown investment transaction type 'tax'");
+        case "dividend":
+            return InvestmentTransactionType.dividendOrInterest
+        case "reinvestOfIncome":
+            return InvestmentTransactionType.dividendOrInterest
+        case "interest":
+            return InvestmentTransactionType.dividendOrInterest
+        case "deposit":
+            return InvestmentTransactionType.cash
+        case "otherInfo":
+            throw new Error("transaction action could not be translated")
+        default:
+            throw new Error(`unknown investment transaction type ${finicityTxType}`)
+    }
+}
+
+const transformSecurityType = (finSecType: string): SecurityType => {
+    return SecurityType.equity
+}
+
+export default class FinicityTransformer {
     private repository: TransformerRepository;
 
     constructor(repository: TransformerRepository) {
@@ -28,19 +87,10 @@ export class FinicityTransformer {
     }
 
     accounts = async (userId: string, finAccounts: FinicityAccount[]): Promise<TradingPostBrokerageAccounts[]> => {
-        const finicityAccounts = await this.repository.getTradingPostAccountsWithFinicityNumber(userId);
-        const finAccountMap: Record<string, TradingPostBrokerageAccountWithFinicity> = {};
-        finicityAccounts.forEach((fam: TradingPostBrokerageAccountWithFinicity) => finAccountMap[fam.externalFinicityAccountId] = fam)
-
-        const institutions = await this.repository.getTradingPostInstitutionsWithFinicityId();
-        let institutionMap: Record<string, TradingPostInstitutionWithFinicityInstitutionId> = {};
-        institutions.forEach(inst => institutionMap[inst.externalFinicityId] = inst)
-
         let tpAccounts: TradingPostBrokerageAccounts[] = [];
         for (let i = 0; i < finAccounts.length; i++) {
             const account = finAccounts[i];
-
-            let institution = institutionMap[account.institutionId];
+            const institution = await this.repository.getTradingPostInstitutionByFinicityId(parseInt(account.institutionId))
             if (institution === undefined || institution === null) throw new Error(`no institution found for external finicity institution id: ${account.institutionId}`);
 
             tpAccounts.push({
@@ -106,80 +156,49 @@ export class FinicityTransformer {
     }
 
     transactions = async (userId: string, finTransactions: FinicityTransaction[]): Promise<TradingPostTransactions[]> => {
-        const finicityAccounts = await this.repository.getTradingPostAccountsWithFinicityNumber(userId)
-        const finAccountMap: Record<string, TradingPostBrokerageAccountWithFinicity> = {};
-        finicityAccounts.forEach((fam: TradingPostBrokerageAccountWithFinicity) => finAccountMap[fam.externalFinicityAccountId] = fam)
-
         const securities = await this.repository.getSecuritiesWithIssue();
         const securitiesMap: Record<string, SecurityIssue> = {};
         securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+
+        const tpAccountsWithFinicityId = await this.repository.getTradingPostAccountsWithFinicityNumber(userId);
+        const finicityIdToTpAccountMap: Record<string, number> = {};
+        tpAccountsWithFinicityId.forEach(tpa => finicityIdToTpAccountMap[tpa.externalFinicityAccountId] = tpa.id);
 
         let tpTransactions: TradingPostTransactions[] = [];
         for (let i = 0; i < finTransactions.length; i++) {
             const transaction = finTransactions[i];
 
-            let internalAccount = finAccountMap[transaction.accountId]
-            if (internalAccount === undefined || internalAccount === null) throw new Error(`account id(${transaction.accountId}) does not exist for holding`)
+            const internalTpAccountId = finicityIdToTpAccountMap[transaction.accountId];
+            if (!internalTpAccountId) throw new Error(`could not get internal account id for transaction with id ${transaction.id} for user ${userId}`);
 
+            if (!transaction.ticker) throw new Error(`no ticker for transaction id ${transaction.id} on user ${userId}`)
             let security = securitiesMap[transaction.ticker]
             if (security === undefined || security === null) throw new Error(`could not find symbol(${transaction.ticker} for holding`)
 
-            let transactionType: InvestmentTransactionType = transformInvestmentTransactionType(transaction);
-            let securityType: SecurityType = transformSecurityType(security.issueType);
-            let price: number = transaction.unitPrice;
-            let amount: number | null = transformTransactionAmount(transaction.amount, transactionType);
-            let fees: number | null = transformFees(transaction.feeAmount);
+            if (!transaction.unitQuantity) throw new Error(`no quantity on transaction id ${transaction.id} on user ${userId}`)
 
-            let txType: string | null = null;
-            if (transaction.type) txType = transaction.type
-            if (transaction.buyType) txType = transaction.buyType
+            // TODO: Can we be sure that they didnt factor in fees, or if they did that we have an attribute that includes fees?
+            let price = 0
+            if (!transaction.unitPrice) price = transaction.amount / transaction.unitQuantity
+            else price = transaction.unitPrice
+
+            let securityType = transformSecurityType(transaction.investmentTransactionType)
+            let transactionType = transformTransactionType(transaction.investmentTransactionType);
 
             tpTransactions.push({
-                accountId: internalAccount.id,
+                accountId: internalTpAccountId,
                 securityId: security.id,
                 securityType: securityType,
                 date: DateTime.fromSeconds(transaction.postedDate),
                 quantity: transaction.unitQuantity,
                 price: price,
-                amount: amount,
-                fees: fees,
+                amount: transaction.amount,
+                fees: transaction.feeAmount,
                 type: transactionType,
-                currency: transaction.currencySymbol
+                currency: null
             })
         }
+
         return tpTransactions
     }
-}
-
-const transformTransactionAmount = (amount: number, type: InvestmentTransactionType): number => {
-    if (type === InvestmentTransactionType.buy) return amount > 0 ? amount : amount * -1
-    if (type === InvestmentTransactionType.cover) return amount > 0 ? amount : amount * -1
-
-    if (type === InvestmentTransactionType.sell) return amount < 0 ? amount : amount * -1
-    if (type === InvestmentTransactionType.short) return amount < 0 ? amount : amount * -1
-
-    if (type === InvestmentTransactionType.cancel) return amount < 0 ? amount : amount * -1
-
-    if (type === InvestmentTransactionType.fee) return amount > 0 ? amount : amount * -1
-
-    if (type === InvestmentTransactionType.cash) return amount < 0 ? amount : amount * -1
-
-    if (type === InvestmentTransactionType.dividendOrInterest) return amount < 0 ? amount : amount * -1
-
-    throw new Error(`investment transaction type :::: ${type} :::: has not be declared yet`);
-}
-
-const transformFees = (fee: number): number => {
-    if (fee > 0) return fee;
-    return (fee * -1)
-}
-
-// TODO: Custom logic for Finicity here...
-const transformInvestmentTransactionType = (tx: FinicityTransaction): InvestmentTransactionType => {
-    return InvestmentTransactionType.buy
-}
-
-// TODO: Custom Logic for Finicity here...
-const transformSecurityType = (type: string): SecurityType => {
-    return SecurityType.equity
 }

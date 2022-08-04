@@ -1,4 +1,4 @@
-import { twitterConfig } from '../interfaces/utils';
+import { twitterConfig, PlatformToken } from '../interfaces/utils';
 import { rawTwitterUser, formatedTwitterUser } from '../interfaces/twitter';
 import Repository from '../repository';
 export declare class TwitterUsers {
@@ -7,12 +7,12 @@ export declare class TwitterUsers {
     private twitterUrl;
     private params;
     constructor(twitterConfig: twitterConfig, repository: Repository);
-    refreshTokensbyId: (userIds: string[]) => Promise<void>;
+    refreshTokensbyId: (idType: string, ids: string[]) => Promise<PlatformToken[]>;
     importUserByToken: (twitterUsers: {
         userId: string;
         accessToken: string;
         refreshToken: string;
-        expiration: string;
+        expiration: Date;
     }[]) => Promise<[formatedTwitterUser[], number]>;
     importUserByHandle: (handles: string | string[]) => Promise<formatedTwitterUser[]>;
     getUserInfo: (handles: string[]) => Promise<rawTwitterUser[]>;

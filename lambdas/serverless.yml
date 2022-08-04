@@ -3,6 +3,17 @@ app: tradingpost-app
 
 frameworkVersion: '3'
 
+plugins:
+  - serverless-bundle
+  - serverless-prune-plugin
+
+
+custom:
+  bundle:
+    tsConfig: 'tsconfig.json'
+    ignorePackages:
+      - pg-native
+
 provider:
   stage: production
   name: aws
@@ -33,16 +44,16 @@ functions:
     events:
       - schedule:
           rate: cron(20 20 ? * MON-FRI *) # 4:20 PM EDT
-          enabled: true
+          enabled: false
       - schedule:
           rate: cron(20 19 ? * MON-FRI *) # 4:20 PM EST
-          enabled: true
+          enabled: false
       - schedule:
           rate: cron(0 12 ? * MON-FRI *) # 8:00 AM EDT
-          enabled: true
+          enabled: false
       - schedule:
           rate: cron(0 11 ? * MON-FRI *) # 8:00 AM EST
-          enabled: true
+          enabled: false
   add-holidays:
     handler: market-data/add-holidays.run
     description: Ingests market holidays once a year
@@ -53,21 +64,21 @@ functions:
     events:
       - schedule:
           rate: cron(0 0 1 1 ? *)
-          enabled: true
+          enabled: false
   add-security-pricing:
     handler: market-data/add-security-prices.run
     description: Ingests security prices
     logRetentionInDays: 14
-    timeout: 120 # TODO: Change to 1 min once I update function body
+    timeout: 180
     reservedConcurrency: 2
     memorySize: 1024
-    events:
+      #    events:
       # Run M-F every-day from 9:00AM ET -> 4:00 ET
       # We run 8:00 -> 4 because of daylight savings -- shift would be 8->3
-      # then we just validate within the function that it should ingest
-      - schedule:
-          rate: cron(* 11-21 ? * MON-FRI *)
-          enabled: true
+    # then we just validate within the function that it should ingest
+  #      - schedule:
+  #          rate: cron(* 11-22 ? * MON-FRI *)
+  #          enabled: false
   security-pruning:
     handler: market-data/security-pruning.run
     description: Prunes security data
@@ -78,7 +89,7 @@ functions:
     events:
       - schedule:
           rate: cron(0 7 ? * MON-FRI *)
-          enabled: true
+          enabled: false
 
   # ============== Social Media Lambdas ==============
   spotify:

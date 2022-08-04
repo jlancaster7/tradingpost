@@ -1,19 +1,18 @@
 import { rawYoutubeVideo, formatedYoutubeVideo } from '../interfaces/youtube';
-import { youtubeConfig } from '../interfaces/utils';
-import { IDatabase, IMain } from "pg-promise";
+import { youtubeConfig, PlatformToken } from '../interfaces/utils';
+import Repository from '../repository';
 export declare class YoutubeVideos {
     private youtubeConfig;
-    private pg_client;
+    private repository;
     private youtubeUrl;
     startDate: string;
     defaultStartDateDays: number;
     private params;
-    private pgp;
-    constructor(youtubeConfig: youtubeConfig, pg_client: IDatabase<any>, pgp: IMain);
+    constructor(repository: Repository, youtubeConfig: youtubeConfig);
     setStartDate: (startDate: Date) => Promise<void>;
     getStartDate: (youtubeChannelId: string) => Promise<void>;
-    importVideos: (youtubeChannelId: string) => Promise<[formatedYoutubeVideo[], number]>;
-    getVideos: (youtubeChannelId: string) => Promise<rawYoutubeVideo[]>;
+    refreshTokenById: (idType: string, ids: string[]) => Promise<PlatformToken[]>;
+    importVideos: (youtubeChannelId: string, accessToken?: string | null, refreshToken?: string | null) => Promise<[formatedYoutubeVideo[], number]>;
+    getVideos: (youtubeChannelId: string, accessToken?: string | null, refreshToken?: string | null) => Promise<rawYoutubeVideo[]>;
     formatVideos: (rawVideos: rawYoutubeVideo[]) => formatedYoutubeVideo[];
-    appendVideos: (formattedVideos: formatedYoutubeVideo[]) => Promise<number>;
 }

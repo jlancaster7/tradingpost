@@ -1,13 +1,13 @@
 import 'dotenv/config';
 import {Context} from "aws-lambda";
-import {lambdaImportYoutube} from "@tradingpost/common/social-media/youtube/import";
+import { lambdaImportYoutube } from "@tradingpost/common/social-media/youtube/import";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
-const run = async () => {
+const runLambda = async () => {
     const youtubeConfiguration = await DefaultConfig.fromCacheOrSSM("youtube");
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
@@ -30,5 +30,5 @@ const run = async () => {
 }
 
 module.exports.run = async (event: any, context: Context) => {
-    await run();
+    await runLambda();
 }

@@ -1,5 +1,11 @@
-import { IBrokerageRepository, IBrokerageService, TradingPostHistoricalHoldings } from "./interfaces";
+import { GetSecurityPrice, IBrokerageRepository, IBrokerageService, TradingPostHistoricalHoldings, TradingPostTransactionsTable } from "./interfaces";
 import { PortfolioSummaryService } from "./portfolio-summary";
+import { DateTime } from 'luxon';
+declare type historicalAccount = {
+    date: DateTime;
+    cash: number;
+    holdings: TradingPostHistoricalHoldings[];
+};
 export default class BrokerageService {
     brokerageMap: Record<string, IBrokerageService>;
     portfolioSummaryService: PortfolioSummaryService;
@@ -8,5 +14,10 @@ export default class BrokerageService {
     generateBrokerageAuthenticationLink: (userId: string, brokerageId: string) => Promise<string>;
     newlyAuthenticatedBrokerage: (userId: string, brokerageId: string) => Promise<void>;
     pullNewData: (userId: string, brokerageId: string) => Promise<void>;
-    computeHoldingsHistory: (userId: string) => Promise<TradingPostHistoricalHoldings[]>;
+    computeHoldingsHistory: (tpAccountId: number) => Promise<TradingPostHistoricalHoldings[]>;
+    undoTransactions: (historicalAccount: historicalAccount, transactions: TradingPostTransactionsTable[]) => historicalAccount;
+    getSecurityPrices: (securityIds: number[], endDate: DateTime) => Promise<Record<number, GetSecurityPrice[]>>;
+    getTradingDays: (end: DateTime) => Promise<DateTime[]>;
+    getClosestPrice: (securityPricesMap: Record<number, GetSecurityPrice[]>, securityId: number, postingDate: DateTime) => number | null;
 }
+export {};

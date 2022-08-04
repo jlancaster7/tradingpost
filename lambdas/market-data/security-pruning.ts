@@ -7,7 +7,7 @@ import pgPromise, {IDatabase, IMain} from "pg-promise";
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
-const run = async () => {
+const runLambda = async () => {
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -35,5 +35,5 @@ const start = async (repository: Repository) => {
 }
 
 module.exports.run = async (event: any, context: Context) => {
-    await run();
+    await runLambda();
 };

@@ -7,7 +7,7 @@ import { DefaultConfig } from "../../../configuration";
 import pgPromise from "pg-promise";
 import Finicity from "../../../finicity";
 import Repository from '../../../brokerage/repository'
-import { FinicityTransformer } from '../../../brokerage/finicity/transformer'
+//import FinicityTransformer from '../../../brokerage/finicity/transformer'
 import { execProc } from "../static/pool";
 import { platform } from "os";
 
