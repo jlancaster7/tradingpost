@@ -1,25 +1,39 @@
 import { EntityApiBase } from "../static/EntityApiBase"
 
+
 export class Extension {
-    protected baseApi: EntityApiBase<any, any, any, any>;
 
     constructor(baseApi: EntityApiBase<any, any, any, any>) {
         this.baseApi = baseApi;
     }
-    protected _makeFetch = <S, T = any>(methodName: keyof typeof this, requestInit: (settings: S) => RequestInit) => {
-        return async (settings: S) => {
+    protected baseApi: EntityApiBase<any, any, any, any>
+    protected _defaultPostRequest = <S>(s: S) => ({ method: "POST", body: s !== undefined ? JSON.stringify(s) : undefined }) as RequestInit
+    protected _makeFetch = <S, T = S>(methodName: keyof typeof this, requestInit: S extends undefined ? (settings?: S) => RequestInit : (settings: S) => RequestInit) => {
+        return (async (settings: S) => {
             const resp = await fetch(this.baseApi.makeUrl(methodName as string), { method: "POST", headers: EntityApiBase.makeHeaders(), ...requestInit(settings) });
             return EntityApiBase.handleFetchResponse<T>(resp);
-        }
+        }) as (S extends undefined ? (settings?: S) => Promise<T> : (settings: S) => Promise<T>)
     }
 }
+
+
 export default Extension;
+
 //should be bound in the future
-export const ensureServerExtensions = <T>(defs: Record<keyof T, (req: {
-    body: any, extra: {
-        userId: string
-    }
-}) => Promise<any>>) => defs
+type EnsuredServerType<T, ExplictBody = void> = {
+    [P in keyof T]:
+    T[P] extends (s: infer InferredBody) => Promise<infer R> ?
+    (req: {
+        //May change in the future 
+        body: ExplictBody extends void ? InferredBody : ExplictBody,
+        extra: {
+            userId: string
+        }
+    }) => Promise<R> :
+    never
+}
+
+export const ensureServerExtensions = <T>(defs: EnsuredServerType<T>) => defs
 
 //Gave up on this idea
 interface IRequest<

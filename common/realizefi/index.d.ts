@@ -18,14 +18,14 @@ export default class Realizefi {
     disconnectUsersInstitutionLink: (userId: string, institutionLinkId: string) => Promise<boolean>;
     getUser: (userId: string) => Promise<GetUser>;
     deleteUser: (userId: string) => Promise<boolean>;
-    createAuthPortal: (userId: string, successRedirect: string, failureRedirect: string, scopes?: AuthPortalScopes[] | undefined, brokerages?: SupportedBrokerages[] | undefined) => Promise<AuthPortalResponse>;
+    createAuthPortal: (userId: string, successRedirect: string, failureRedirect: string, scopes?: AuthPortalScopes[], brokerages?: SupportedBrokerages[]) => Promise<AuthPortalResponse>;
     placeOrder: () => Promise<never>;
-    listOrders: (institutionLinkId: string, status?: ListOrdersStatus, cursor?: string | undefined, take?: string | undefined) => Promise<ListOrdersResponse>;
+    listOrders: (institutionLinkId: string, status?: ListOrdersStatus, cursor?: string, take?: string) => Promise<ListOrdersResponse>;
     getOrder: (institutionLinkId: string, orderId: string) => Promise<GetOrderResponse>;
-    listUsersOrders: (userId: string, status?: ListOrdersStatus, cursor?: string | undefined, take?: string | undefined) => Promise<ListUsersOrdersResponse>;
+    listUsersOrders: (userId: string, status?: ListOrdersStatus, cursor?: string, take?: string) => Promise<ListUsersOrdersResponse>;
     listPositions: (institutionLinkId: string) => Promise<ListPositionsResponse>;
     createClientSession: () => Promise<never>;
-    getApproximateHistoricalHoldings: (institutionLinkId: string, timeSpan?: TimeSpan | undefined) => Promise<GetApproximateHistoricalHoldingsResponse>;
+    getApproximateHistoricalHoldings: (institutionLinkId: string, timeSpan?: TimeSpan) => Promise<GetApproximateHistoricalHoldingsResponse>;
     /**
      * from: yyyy-MM-dd format
      * to: yyyy-MM-dd format
@@ -34,10 +34,10 @@ export default class Realizefi {
      * @param from
      * @param to
      */
-    getApproximateHistoricalPerformance: (institutionLinkId: string, interval?: PerformanceInterval | undefined, from?: string | undefined, to?: string | undefined) => Promise<GetApproximateHistoricalPerformanceResponse>;
+    getApproximateHistoricalPerformance: (institutionLinkId: string, interval?: PerformanceInterval, from?: string, to?: string) => Promise<GetApproximateHistoricalPerformanceResponse>;
     getInstitutionAsset: (institutionLinkId: string, symbol: string) => Promise<GetInstitutionAssetResponse>;
     listInstitutionAssets: (institutionLinkId: string, symbols: string[]) => Promise<ListInstitutionAssetsResponse>;
     listWebhooks: () => Promise<ListWebhooksResponse>;
-    listTransactions: (institutionLinkId: string, cursor?: string | undefined, take?: string | undefined) => Promise<ListTransactionsResponse>;
+    listTransactions: (institutionLinkId: string, cursor?: string, take?: string) => Promise<ListTransactionsResponse>;
     getBalances: (institutionLinkId: string) => Promise<GetBalancesResponse>;
 }

@@ -1,12 +1,17 @@
-import {DefaultConfig} from "../configuration/index";
+process.env.CONFIGURATION_ENV = "production"
+process.env.FINICITY_CALLBACK_URL = "ndad"
+//import {BrokerageService} from "../brokerage/service";
+import BrokerageRepository from "../brokerage/repository";
+import Brokerage from "../brokerage";
+import { DefaultConfig } from "../configuration/index";
 import pgPromise from 'pg-promise';
 import Finicity from "../finicity/index";
 import FinicityService from "../brokerage/finicity";
 import Repository from "../brokerage/repository"
-import FinicityTransformer from "../brokerage/finicity/transformer";
+import FinicityTransformer  from "../brokerage/finicity/transformer";
 import BrokerageService from "../brokerage/service";
-import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
-import {DateTime} from "luxon";
+import { PortfolioSummaryService } from "../brokerage/portfolio-summary";
+import { DateTime } from "luxon";
 
 (async () => {
     const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
@@ -33,7 +38,7 @@ import {DateTime} from "luxon";
     const finTransformer = new FinicityTransformer(repo);
     const finicityService = new FinicityService(finicity, repo, finTransformer);
     const dt = DateTime.now();
-    const dt24Months = dt.minus({month: 24});
+    const dt24Months = dt.minus({ month: 24 });
     console.log("Cur: ", dt.toUnixInteger());
     console.log("End: ", dt24Months.toUnixInteger())
     // console.log("Starting...")

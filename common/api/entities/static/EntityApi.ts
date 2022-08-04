@@ -12,13 +12,13 @@ export type RequestSettings<T = any> = {
 
 function makeExtensions(name: string) {
     const path = join(__dirname, "../", "extensions", name.substring(0, name.length - 3) + ".server");
-    console.log(path);
+    //console.log(path);
     if (existsSync(path + ".js")) {
         const returned = require(path).default;
-        console.log("##############################FOUND THE FILE" + Object.keys(returned));
+    //    console.log("##############################FOUND THE FILE" + Object.keys(returned));
         return returned;
     } else {
-        console.log("######################DID NOTTTTTTT FOUND THE FILE");
+      //  console.log("######################DID NOTTTTTTT FOUND THE FILE");
         return {};
     }
 }
@@ -32,13 +32,15 @@ export abstract class EntityApi<TGet, TList, TInsert, TUpdate> extends EntityApi
             this.parent = parent;
             this.extensions = makeExtensions(this.parent.constructor.name)
         }
-        list = () => {
+        list = (settings?: RequestSettings<{
+            ids?: (string | number)[]
+        }>) => {
             if (!this.list) {
                 throw {
                     message: "List is not implemented on this api"
                 }
             }
-            return execProc<TList>(this.parent.listFunction);
+            return execProc<TList>(this.parent.listFunction, settings);
         }
 
         get = (settings?: RequestSettings) => {

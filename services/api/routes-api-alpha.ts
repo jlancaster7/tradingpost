@@ -5,7 +5,8 @@ import { createLogin, createUser, loginPass, loginToken, } from '@tradingpost/co
 import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 import { DefaultConfig } from "@tradingpost/common/configuration";
 import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
-
+import { cacheMonitor } from '@tradingpost/common/api/cache'
+import UserApi from "@tradingpost/common/api/entities/apis/UserApi";
 const router = Express.Router();
 const baseFormat = '/:entity/:action';
 
@@ -106,15 +107,18 @@ makeRoute("/authapi/init", async (req) => {
     if (!info.claims.email)
         throw new Error("Invalid Request");
 
-    return await createUser({
+    const login = await createUser({
         email: info.claims.email,
         first_name: req.body.first_name,
         last_name: req.body.last_name,
         handle: req.body.handle
     });
+    cacheMonitor(UserApi, "insert", login.user_id, {});
+    return login;
+
 });
 
-//ALL RUOTES
+//ALL ROUTES
 makeRoute(baseFormat, (req) => {
     return sharedHandler(req, async (entity) => {
         const info = await decodeToken(req);
@@ -127,10 +131,16 @@ makeRoute(baseFormat, (req) => {
                 user_id: info.sub,
                 data: req.body
             }
-            return await (internalHandler as any)(settings);
+            const responseData = await (internalHandler as any)(settings)
+            //will type better in the future by should not be needed right now
+            await cacheMonitor(entity as any,  req.params.action  , info.sub as string, responseData);
+            return responseData;
         }
         else if (entity.internal.extensions[req.params.action]) {
-            return await entity.internal.extensions[req.params.action](req);
+            //will make this well redundant
+            const responseData =  await entity.internal.extensions[req.params.action](req);
+            await cacheMonitor(entity as any, req.params.action, info.sub as string, responseData);
+            return responseData
         }
         else {
             throw new PublicError("Unknown Action", 400);

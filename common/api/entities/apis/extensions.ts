@@ -7,5 +7,6 @@ export * as Post from '../extensions/Post'
 export const Subscriber = Dummy
 export const Upvote = Dummy
 export * as User from '../extensions/User'
-export const Watchlist = Dummy
+export * as Watchlist from '../extensions/Watchlist'
 export const WatchlistItem = Dummy
+export const WatchlistSaved = Dummy

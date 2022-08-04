@@ -48,7 +48,7 @@ let jobs: Promise<{ batch: any[], sizes: Record<string, string> }>[] = [];
                     exists: {
                         field: "size"
                     }
-                }                
+                }
             }
         }
 
@@ -125,7 +125,7 @@ let jobs: Promise<{ batch: any[], sizes: Record<string, string> }>[] = [];
                         const checkCompletion = async () => {
                             tryCount--;
                             const doneCount = await page.evaluate(() => {
-                                
+
                                 let doneCount: Record<string, string> = {};
                                 document.querySelectorAll(".tracker").forEach((tracker) => {
                                     const trackerId = (tracker as HTMLDivElement).dataset.trackerId as string;

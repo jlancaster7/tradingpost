@@ -10,6 +10,7 @@ import Upvote from './entities/apis/UpvoteApi';
 import User from './entities/apis/UserApi';
 import Watchlist from './entities/apis/WatchlistApi';
 import WatchlistItem from './entities/apis/WatchlistItemApi';
+import WatchlistSaved from './entities/apis/WatchlistSavedApi';
 export * as Interface from './entities/interfaces';
 export declare const Api: {
     Alert: typeof Alert;
@@ -22,6 +23,7 @@ export declare const Api: {
     User: typeof User;
     Watchlist: typeof Watchlist;
     WatchlistItem: typeof WatchlistItem;
+    WatchlistSaved: typeof WatchlistSaved;
     Auth: typeof Auth;
     Security: typeof Security;
 };
