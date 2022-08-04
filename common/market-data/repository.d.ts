@@ -5,7 +5,7 @@ export default class Repository {
     private readonly pgp;
     constructor(db: IDatabase<any>, pgp: IMain);
     upsertSecuritiesPrices: (securityPrices: addSecurityPrice[]) => Promise<void>;
-    getUsExchangedListSecuritiesWithPricing: () => Promise<getSecurityWithLatestPrice[]>;
+    getUsExchangeListedSecuritiesWithPricing: () => Promise<getSecurityWithLatestPrice[]>;
     getUSExchangeListedSecurities: () => Promise<getSecurityBySymbol[]>;
     getSecurities: () => Promise<getSecurityBySymbol[]>;
     addSecurities: (securities: addSecurity[]) => Promise<void>;

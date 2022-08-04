@@ -10,6 +10,7 @@ export interface IBrokerageService {
     exportHoldings(userId: string): Promise<TradingPostCurrentHoldings[]>;
 }
 export interface IBrokerageRepository {
+    getCashSecurityId(): Promise<GetSecurityBySymbol>;
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>;
     upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<void>;
     addTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>;
@@ -22,8 +23,8 @@ export interface IBrokerageRepository {
     getTradingPostBrokerageAccount(accountId: number): Promise<TradingPostBrokerageAccountsTable>;
     getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(accountId: number): Promise<TradingPostCurrentHoldingsTableWithSecurity[]>;
     getTradingPostBrokerageAccountTransactions(accountId: number): Promise<TradingPostTransactionsTable[]>;
-    getMarketHolidays(endDate: DateTime): Promise<getUSExchangeHoliday[]>;
-    getSecurityPricesWithEndDateBySecurityIds(endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>;
+    getMarketHolidays(start: DateTime, end: DateTime): Promise<getUSExchangeHoliday[]>;
+    getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>;
 }
 export interface IFinicityRepository {
     getFinicityUser(userId: string): Promise<FinicityUser | null>;

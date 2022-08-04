@@ -40,7 +40,7 @@ export default class Repository {
         await this.db.none(query);
     }
 
-    getUsExchangedListSecuritiesWithPricing = async (): Promise<getSecurityWithLatestPrice[]> => {
+    getUsExchangeListedSecuritiesWithPricing = async (): Promise<getSecurityWithLatestPrice[]> => {
         const data = await this.db.query(`
             WITH latest_pricing AS (SELECT sp.security_id,
                                            sp.high,
@@ -59,27 +59,6 @@ export default class Repository {
                                                                 AND max_prices.time = sp.time)
             SELECT id,
                    symbol,
-                   company_name,
-                   exchange,
-                   industry,
-                   website,
-                   description,
-                   ceo,
-                   security_name,
-                   issue_type,
-                   sector,
-                   primary_sic_code,
-                   employees,
-                   tags,
-                   address,
-                   address2,
-                   state,
-                   zip,
-                   country,
-                   phone,
-                   logo_url,
-                   last_updated,
-                   created_at,
                    lp.time  latest_time,
                    lp.price latest_price,
                    lp.high  latest_high_price,
@@ -96,27 +75,6 @@ export default class Repository {
             let obj: getSecurityWithLatestPrice = {
                 id: row.id,
                 symbol: row.symbol,
-                companyName: row.company_name,
-                exchange: row.exchange,
-                industry: row.industry,
-                website: row.website,
-                description: row.description,
-                ceo: row.ceo,
-                securityName: row.security_name,
-                issueType: row.issue_type,
-                sector: row.sector,
-                primarySicCode: row.primary_sic_code,
-                employees: row.employees,
-                tags: row.tags,
-                address: row.address,
-                address2: row.address2,
-                state: row.state,
-                zip: row.zip,
-                country: row.country,
-                phone: row.phone,
-                logoUrl: row.logoUrl,
-                lastUpdated: DateTime.fromJSDate(row.last_updated),
-                createdAt: DateTime.fromJSDate(row.created_at),
                 latestTime: DateTime.fromJSDate(row.latest_time),
                 latestPrice: row.latest_price,
                 latestHigh: row.latest_high,
@@ -153,7 +111,7 @@ export default class Repository {
                    last_updated,
                    created_at
             FROM security
-            WHERE exchange IN('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
+            WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
               AND enable_utp = FALSE;`)
         return data.map((row: any) => {

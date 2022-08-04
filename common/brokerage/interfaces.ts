@@ -18,6 +18,8 @@ export interface IBrokerageService {
 }
 
 export interface IBrokerageRepository {
+    getCashSecurityId(): Promise<GetSecurityBySymbol>
+
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>
 
     upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<void>
@@ -42,9 +44,9 @@ export interface IBrokerageRepository {
 
     getTradingPostBrokerageAccountTransactions(accountId: number): Promise<TradingPostTransactionsTable[]>
 
-    getMarketHolidays(endDate: DateTime): Promise<getUSExchangeHoliday[]>
+    getMarketHolidays(start: DateTime, end: DateTime): Promise<getUSExchangeHoliday[]>
 
-    getSecurityPricesWithEndDateBySecurityIds(endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
+    getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
 }
 
 export interface IFinicityRepository {

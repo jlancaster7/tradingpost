@@ -14,10 +14,10 @@ export default class BrokerageService {
     generateBrokerageAuthenticationLink: (userId: string, brokerageId: string) => Promise<string>;
     newlyAuthenticatedBrokerage: (userId: string, brokerageId: string) => Promise<void>;
     pullNewData: (userId: string, brokerageId: string) => Promise<void>;
-    computeHoldingsHistory: (tpAccountId: number) => Promise<TradingPostHistoricalHoldings[]>;
+    computeHoldingsHistory: (tpAccountId: number, startDate: DateTime, endDate: DateTime) => Promise<TradingPostHistoricalHoldings[]>;
     undoTransactions: (historicalAccount: historicalAccount, transactions: TradingPostTransactionsTable[]) => historicalAccount;
-    getSecurityPrices: (securityIds: number[], endDate: DateTime) => Promise<Record<number, GetSecurityPrice[]>>;
-    getTradingDays: (end: DateTime) => Promise<DateTime[]>;
+    getSecurityPrices: (securityIds: number[], startDate: DateTime, endDate: DateTime) => Promise<Record<number, GetSecurityPrice[]>>;
+    getTradingDays: (start: DateTime, end: DateTime) => Promise<DateTime[]>;
     getClosestPrice: (securityPricesMap: Record<number, GetSecurityPrice[]>, securityId: number, postingDate: DateTime) => number | null;
 }
 export {};
