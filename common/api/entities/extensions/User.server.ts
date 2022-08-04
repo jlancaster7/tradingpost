@@ -9,11 +9,39 @@ import Finicity from "../../../finicity";
 import Repository from '../../../brokerage/repository'
 //import FinicityTransformer from '../../../brokerage/finicity/transformer'
 import { execProc } from "../static/pool";
-import { platform } from "os";
+import { addTwitterUsersByToken } from '../../../social-media/twitter/index'
+
+export interface ITokenResponse {
+    "token_type": "bearer",
+    "expires_in": number,
+    "access_token": string,
+    "scope": string,
+    "refresh_token": string,
+}
 
 const client = new S3Client({
     region: "us-east-1"
 });
+
+//Really should think about how to default this... we dont need to pass this everywhere all the time... 
+//it just makes it harder to manage .. we should just have settings based on prod vs. dev etc.
+
+const dbStuff = (async () => {
+    const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
+    const pgp = pgPromise({});
+    const pgClient = pgp({
+        host: pgCfg.host,
+        user: pgCfg.user,
+        password: pgCfg.password,
+        database: pgCfg.database
+    });
+
+    await pgClient.connect();
+    return {
+        pgp,
+        pgClient
+    }
+})()
 
 
 let finicityService: Brokerage;
@@ -21,18 +49,7 @@ export default ensureServerExtensions<User>({
     generateBrokerageLink: async (req) => {
         //TODO: make this use a better pardigm... is a pool being used? Alternatively Maybe we ensure this loads when the server gets up and running.
         if (!finicityService) {
-            const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
-            const pgp = pgPromise({});
-            const pgClient = pgp({
-                host: pgCfg.host,
-                user: pgCfg.user,
-                password: pgCfg.password,
-                database: pgCfg.database
-            });
-
-            await pgClient.connect();
-            const repository = new Repository(pgClient, pgp);
-
+            const { pgClient, pgp } = await dbStuff;
             const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
             const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
             await finicity.init();
@@ -89,7 +106,16 @@ export default ensureServerExtensions<User>({
                 }),
 
             })
-            return (await info.json()).access_token
+            const authResp = (await info.json()) as ITokenResponse;
+            const { pgClient, pgp } = await dbStuff;
+            const config = await DefaultConfig.fromCacheOrSSM("twitter");
+            const handle = await addTwitterUsersByToken([{
+                accessToken: authResp.access_token,
+                expiration: new Date(authResp.expires_in),
+                refreshToken: authResp.refresh_token,
+                userId: req.extra.userId
+            }], pgClient, pgp, config)
+            return handle[0].username;
         }
         else return "";
     }

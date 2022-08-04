@@ -1,4 +1,11 @@
 import { UploadProfilePicBody } from "./User";
+export interface ITokenResponse {
+    "token_type": "bearer";
+    "expires_in": number;
+    "access_token": string;
+    "scope": string;
+    "refresh_token": string;
+}
 declare const _default: {
     uploadProfilePic: (req: {
         body: UploadProfilePicBody;
