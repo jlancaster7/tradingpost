@@ -43,20 +43,17 @@ export const addTwitterUsersByHandle = async (handles: string | string[], pgClie
     console.log(`Successfully imported ${result.length} of ${length} Twitter profiles.`);
     return result
 }
-export const addTwitterUsersByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: number}, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser | null> => {
+export const addTwitterUsersByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: number}, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser> => {
     
     const repository = new Repository(pgClient, pgp);
     const TwitterUser = new TwitterUsers(twitterConfiguration, repository);
     const Tweet = new Tweets(twitterConfiguration, repository);
-    try {
-        const result = await TwitterUser.importUserByToken(twitterUsers);
-        const tweetResults = await Tweet.importTweets(result[0].twitter_user_id, twitterUsers.accessToken)
-        console.log(`Successfully imported ${result[0].username} Twitter profile.`);
-        return result[0];
-    } catch (err) {
-        console.error(err);
-        return null;
-    }
+
+    const result = await TwitterUser.importUserByToken(twitterUsers);
+    const tweetResults = await Tweet.importTweets(result[0].twitter_user_id, twitterUsers.accessToken)
+    console.log(`Successfully imported ${result[0].username} Twitter profile.`);
+    return result[0];
+
     
 }
 export const addTweets = async (twitterUserId: string, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration, startDate?: Date): Promise<[formatedTweet[], number]> => {

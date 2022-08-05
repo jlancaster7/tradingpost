@@ -109,13 +109,13 @@ export default ensureServerExtensions<User>({
             const authResp = (await info.json()) as ITokenResponse;
             const { pgClient, pgp } = await dbStuff;
             const config = await DefaultConfig.fromCacheOrSSM("twitter");
-            const handle = await addTwitterUsersByToken([{
+            const handle = await addTwitterUsersByToken({
                 accessToken: authResp.access_token,
-                expiration: new Date(authResp.expires_in),
+                expiration: authResp.expires_in,
                 refreshToken: authResp.refresh_token,
                 userId: req.extra.userId
-            }], pgClient, pgp, config)
-            return handle[0].username;
+            }, pgClient, pgp, config)
+            return handle.username;
         }
         else return "";
     }
