@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { SSM } from '@aws-sdk/client-ssm';
 declare type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid" | "finicity";
 export interface ConfigPaths extends Record<ConfigKeys, unknown> {
@@ -85,6 +86,8 @@ export declare const AutomationConfig: Configuration<{
 }>;
 export {};
 =======
+=======
+>>>>>>> e5e89424657ca800da44b808fd90b16b6ade0be7
 import { SSM } from '@aws-sdk/client-ssm';
 declare type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid" | "finicity";
 export interface ConfigPaths extends Record<ConfigKeys, unknown> {
@@ -160,7 +163,11 @@ export declare class Configuration<K extends Record<string, any>> {
     private cache;
     private defaultOptions;
     constructor(ssmClient: SSM, defaultOptions?: Configuration<K>["defaultOptions"], environment?: ConfigurationEnv, enableCache?: any);
+<<<<<<< HEAD
     fromSSM: <T extends keyof K>(path: T, options?: ConfigOptions) => Promise<K[T]>;
+=======
+    fromSSM: <T extends keyof K>(path: T, options?: ConfigOptions | undefined) => Promise<K[T]>;
+>>>>>>> e5e89424657ca800da44b808fd90b16b6ade0be7
     fromCacheOrSSM: <T extends keyof K>(path: T) => Promise<K[T]>;
 }
 export declare const DefaultConfig: Configuration<ConfigPaths>;
@@ -168,4 +175,7 @@ export declare const AutomationConfig: Configuration<{
     npm_key: string;
 }>;
 export {};
+<<<<<<< HEAD
 >>>>>>> bb6d1a32694047823b9299de87e419c4c51c228c
+=======
+>>>>>>> e5e89424657ca800da44b808fd90b16b6ade0be7

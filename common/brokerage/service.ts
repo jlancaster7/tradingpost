@@ -127,22 +127,32 @@ export default class BrokerageService {
         return await brokerage.generateBrokerageAuthenticationLink(userId);
     }
 
-    newlyAuthenticatedBrokerage = async (userId: string, brokerageId: string) => {
+    removeAccounts = async (brokerageCustomerId: string, accountIds: string[], brokerageId: string) => {
         const brokerage = this.brokerageMap[brokerageId];
+        const tpAccountIds = await brokerage.removeAccounts(brokerageCustomerId, accountIds)
+        await this.repository.deleteTradingPostBrokerageTransactions(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageHoldings(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds)
+    }
 
-        const accounts = await brokerage.importAccounts(userId);
+    newlyAuthenticatedBrokerage = async (brokerageUserId: string, brokerageId: string) => {
+        const brokerage = this.brokerageMap[brokerageId];
+        const tradingPostUser = await brokerage.getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId);
+
+        const accounts = await brokerage.importAccounts(brokerageUserId);
         await this.repository.upsertTradingPostBrokerageAccounts(accounts)
 
-        const holdings = await brokerage.importHoldings(userId);
+        const holdings = await brokerage.importHoldings(brokerageUserId);
         await this.repository.upsertTradingPostCurrentHoldings(holdings);
 
-        const transactions = await brokerage.importTransactions(userId);
+        const transactions = await brokerage.importTransactions(brokerageUserId);
         await this.repository.upsertTradingPostTransactions(transactions);
 
         const start = DateTime.now().setZone("America/New_York");
         const end = start.minus({month: 24})
 
-        const tpAccounts = await this.repository.getTradingPostBrokerageAccounts(userId);
+        const tpAccounts = await this.repository.getTradingPostBrokerageAccounts(tradingPostUser.id);
         for (let i = 0; i < tpAccounts.length; i++) {
             const account = tpAccounts[i];
             const holdingHistory = await this.computeHoldingsHistory(account.id, start, end);
@@ -316,18 +326,18 @@ export default class BrokerageService {
     }
 
     getSecurityPrices = async (securityIds: number[], startDate: DateTime, endDate: DateTime): Promise<Record<number, GetSecurityPrice[]>> => {
-        const securityPrices = await this.repository.getSecurityPricesWithEndDateBySecurityIds(startDate.set({
-            minute: 0,
-            second: 0,
-            hour: 0,
-            millisecond: 0,
-        }), endDate.set({
-            minute: 0,
-            second: 0,
-            hour: 0,
-            millisecond: 0
-        }), securityIds)
-
+        const securityPrices = await this.repository.getSecurityPricesWithEndDateBySecurityIds(
+            endDate.set({
+                minute: 0,
+                second: 0,
+                hour: 0,
+                millisecond: 0
+            }), startDate.set({
+                minute: 0,
+                second: 0,
+                hour: 0,
+                millisecond: 0,
+            }), securityIds)
         let securityPricesMap: Record<number, GetSecurityPrice[]> = {}
         for (const sp of securityPrices) {
             let sps = securityPricesMap[sp.securityId];
@@ -365,9 +375,8 @@ export default class BrokerageService {
     }
 
     getClosestPrice = (securityPricesMap: Record<number, GetSecurityPrice[]>, securityId: number, postingDate: DateTime): number | null => {
-        // TODO: How should we handle private security?
         const securityPrices = securityPricesMap[securityId];
-        if (!securityPricesMap) throw new Error("no prices found for security")
+        if (!securityPrices) return null
 
         const postingDateUnix = postingDate.startOf('day').toUnixInteger()
         for (let sp of securityPrices) {

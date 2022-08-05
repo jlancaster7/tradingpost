@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e5e89424657ca800da44b808fd90b16b6ade0be7
 import { Response } from 'node-fetch';
 export declare class IEXError extends Error {
     iexMessage: string;
@@ -359,7 +362,11 @@ export default class IEX {
     private readonly token;
     private readonly retryMax;
     constructor(token: string, baseURL?: string, retryMax?: number);
+<<<<<<< HEAD
     fetch: (endpoint: string, httpConfiguration: HTTPConfiguration, queryParameters?: Record<string, any>) => Promise<any>;
+=======
+    fetch: (endpoint: string, httpConfiguration: HTTPConfiguration, queryParameters?: Record<string, any> | undefined) => Promise<any>;
+>>>>>>> e5e89424657ca800da44b808fd90b16b6ade0be7
     retry: (fn: () => Promise<Response>, retryNum: number) => Promise<Response>;
     getCompany: (symbol: string) => Promise<GetCompany>;
     getStatus: () => Promise<GetStatus>;
@@ -447,6 +454,7 @@ export default class IEX {
      * @param last
      * @param startDate
      */
+<<<<<<< HEAD
     getUSHolidayAndTradingDays: (type: "trade" | "holiday", direction?: "next" | "last", last?: number, startDate?: string) => Promise<GetUSHolidayAndTradingDays[]>;
     bulk: (symbols: string[], types: BulkTypes[], queryParams?: object) => Promise<Record<string, any>>;
 }
@@ -903,3 +911,8 @@ export default class IEX {
     bulk: (symbols: string[], types: BulkTypes[], queryParams?: object) => Promise<Record<string, any>>;
 }
 >>>>>>> bb6d1a32694047823b9299de87e419c4c51c228c
+=======
+    getUSHolidayAndTradingDays: (type: "trade" | "holiday", direction?: "next" | "last", last?: number, startDate?: string | undefined) => Promise<GetUSHolidayAndTradingDays[]>;
+    bulk: (symbols: string[], types: BulkTypes[], queryParams?: object | undefined) => Promise<Record<string, any>>;
+}
+>>>>>>> e5e89424657ca800da44b808fd90b16b6ade0be7

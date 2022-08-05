@@ -139,7 +139,6 @@ class MockRepo implements IBrokerageRepository {
                     open: 1,
                     high: 1,
                     time: tradingDay,
-                    updatedAt: DateTime.now(),
                     createdAt: DateTime.now()
                 })
             }
@@ -1357,6 +1356,18 @@ class MockRepo implements IBrokerageRepository {
     }
 
     upsertTradingPostTransactions(transactions: TradingPostTransactions[]): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    deleteTradingPostBrokerageHoldings(accountIds: number[]): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    deleteTradingPostBrokerageTransactions(accountIds: number[]): Promise<void> {
         return Promise.resolve(undefined);
     }
 }

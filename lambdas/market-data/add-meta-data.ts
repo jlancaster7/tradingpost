@@ -23,24 +23,6 @@ import pgPromise, {IDatabase, IMain} from "pg-promise";
 import {diff} from "deep-object-diff";
 import {buildGroups} from "./utils";
 
-
-// Pricing Charge
-// AM
-// OTC Symbols = 100
-// Stock Symbols = 1
-// Company(10) & Logo(1) = N/A
-// 1 Per Request = 3 credits
-// Per Day = 100 + 1 + 3 + Variable = 104 Credits / Day
-//
-// PM
-// Previous =  2 / symbol
-// Stats = 5 / symbol
-// Quote = 1 / symbol
-// Total For All Securities = 26747 * 8
-// 1 Per Request = 268
-// Per Day = (26748 * 8) + 268 = 214,244 / Day * 21
-// Per Month = 4,501,308
-
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
@@ -348,6 +330,6 @@ const buildSecuritiesMap = <T extends { symbol: string }>(securities: T[]): Reco
     return m
 }
 
-module.exports.run = async (event: any, context: Context) => {
+export const run = async (event: any, context: Context) => {
     await runLambda();
 };

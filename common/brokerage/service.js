@@ -107,17 +107,26 @@ class BrokerageService {
             const brokerage = this.brokerageMap[brokerageId];
             return yield brokerage.generateBrokerageAuthenticationLink(userId);
         });
-        this.newlyAuthenticatedBrokerage = (userId, brokerageId) => __awaiter(this, void 0, void 0, function* () {
+        this.removeAccounts = (brokerageCustomerId, accountIds, brokerageId) => __awaiter(this, void 0, void 0, function* () {
             const brokerage = this.brokerageMap[brokerageId];
-            const accounts = yield brokerage.importAccounts(userId);
+            const tpAccountIds = yield brokerage.removeAccounts(brokerageCustomerId, accountIds);
+            yield this.repository.deleteTradingPostBrokerageTransactions(tpAccountIds);
+            yield this.repository.deleteTradingPostBrokerageHoldings(tpAccountIds);
+            yield this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds);
+            yield this.repository.deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds);
+        });
+        this.newlyAuthenticatedBrokerage = (brokerageUserId, brokerageId) => __awaiter(this, void 0, void 0, function* () {
+            const brokerage = this.brokerageMap[brokerageId];
+            const tradingPostUser = yield brokerage.getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId);
+            const accounts = yield brokerage.importAccounts(brokerageUserId);
             yield this.repository.upsertTradingPostBrokerageAccounts(accounts);
-            const holdings = yield brokerage.importHoldings(userId);
+            const holdings = yield brokerage.importHoldings(brokerageUserId);
             yield this.repository.upsertTradingPostCurrentHoldings(holdings);
-            const transactions = yield brokerage.importTransactions(userId);
+            const transactions = yield brokerage.importTransactions(brokerageUserId);
             yield this.repository.upsertTradingPostTransactions(transactions);
             const start = luxon_1.DateTime.now().setZone("America/New_York");
             const end = start.minus({ month: 24 });
-            const tpAccounts = yield this.repository.getTradingPostBrokerageAccounts(userId);
+            const tpAccounts = yield this.repository.getTradingPostBrokerageAccounts(tradingPostUser.id);
             for (let i = 0; i < tpAccounts.length; i++) {
                 const account = tpAccounts[i];
                 const holdingHistory = yield this.computeHoldingsHistory(account.id, start, end);
@@ -273,16 +282,16 @@ class BrokerageService {
             return historicalAccount;
         };
         this.getSecurityPrices = (securityIds, startDate, endDate) => __awaiter(this, void 0, void 0, function* () {
-            const securityPrices = yield this.repository.getSecurityPricesWithEndDateBySecurityIds(startDate.set({
-                minute: 0,
-                second: 0,
-                hour: 0,
-                millisecond: 0,
-            }), endDate.set({
+            const securityPrices = yield this.repository.getSecurityPricesWithEndDateBySecurityIds(endDate.set({
                 minute: 0,
                 second: 0,
                 hour: 0,
                 millisecond: 0
+            }), startDate.set({
+                minute: 0,
+                second: 0,
+                hour: 0,
+                millisecond: 0,
             }), securityIds);
             let securityPricesMap = {};
             for (const sp of securityPrices) {

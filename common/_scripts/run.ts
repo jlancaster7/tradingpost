@@ -1,22 +1,37 @@
-process.env.CONFIGURATION_ENV = "production"
-process.env.FINICITY_CALLBACK_URL = "ndad"
-//import {BrokerageService} from "../brokerage/service";
-import BrokerageRepository from "../brokerage/repository";
-import Brokerage from "../brokerage";
-import { DefaultConfig } from "../configuration/index";
+import {DefaultConfig} from "../configuration/index";
 import pgPromise from 'pg-promise';
 import Finicity from "../finicity/index";
 import FinicityService from "../brokerage/finicity";
 import Repository from "../brokerage/repository"
-import FinicityTransformer  from "../brokerage/finicity/transformer";
+import FinicityTransformer from "../brokerage/finicity/transformer";
 import BrokerageService from "../brokerage/service";
-import { PortfolioSummaryService } from "../brokerage/portfolio-summary";
-import { DateTime } from "luxon";
+import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
+import pg from "pg";
+
+pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
+    return parseInt(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
+    return parseFloat(value);
+});
 
 (async () => {
     const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
 
-    const pgp = pgPromise({});
+    const pgp = pgPromise({
+        // query(e: any) {
+        //     console.log(e.query)
+        // }
+    });
     const pgClient = pgp({
         host: pgCfg.host,
         user: pgCfg.user,
@@ -37,19 +52,9 @@ import { DateTime } from "luxon";
 
     const finTransformer = new FinicityTransformer(repo);
     const finicityService = new FinicityService(finicity, repo, finTransformer);
-    const dt = DateTime.now();
-    const dt24Months = dt.minus({ month: 24 });
-    console.log("Cur: ", dt.toUnixInteger());
-    console.log("End: ", dt24Months.toUnixInteger())
-    // console.log("Starting...")
-    // const tpAccounts = await repo.getTradingPostBrokerageAccounts(tpUserId)
-    //
-    // const brokerageService = new BrokerageService({"finicity": finicityService}, repo, portfolioSummaryService);
-    // for (let i = 0; i < tpAccounts.length; i++) {
-    //     const acc = tpAccounts[i];
-    //     const acctHoldingHistory = await brokerageService.computeHoldingsHistory(acc.id);
-    //     await repo.upsertTradingPostHistoricalHoldings(acctHoldingHistory);
-    // }
-    //
-    // console.log("finished")
+
+    console.log("Starting...")
+    const brokerageService = new BrokerageService({"finicity": finicityService}, repo, portfolioSummaryService);
+    await brokerageService.newlyAuthenticatedBrokerage(tpUserId, 'finicity')
+    console.log("Finished")
 })()

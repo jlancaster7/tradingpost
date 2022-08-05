@@ -1,7 +1,10 @@
 import {DateTime} from "luxon";
 import {getUSExchangeHoliday} from "../market-data/interfaces";
+import {policyOwnerEntityType} from "aws-sdk/clients/iam";
 
 export interface IBrokerageService {
+    getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
+
     generateBrokerageAuthenticationLink(userId: string, brokerageAccount?: string): Promise<string>
 
     importAccounts(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostBrokerageAccounts[]>
@@ -15,6 +18,8 @@ export interface IBrokerageService {
     exportTransactions(userId: string): Promise<TradingPostTransactions[]>
 
     exportHoldings(userId: string): Promise<TradingPostCurrentHoldings[]>
+
+    removeAccounts(brokerageCustomerId: string, accountIds: string[]): Promise<number[]>
 }
 
 export interface IBrokerageRepository {
@@ -47,9 +52,21 @@ export interface IBrokerageRepository {
     getMarketHolidays(start: DateTime, end: DateTime): Promise<getUSExchangeHoliday[]>
 
     getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
+
+    deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
+
+    deleteTradingPostBrokerageTransactions(accountIds: number[]): Promise<void>
+
+    deleteTradingPostBrokerageHoldings(accountIds: number[]): Promise<void>
+
+    deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds: number[]): Promise<void>
 }
 
 export interface IFinicityRepository {
+    getTradingPostUserByFinicityCustomerId(finicityCustomerId: string): Promise<TradingPostUser | null>
+
+    getFinicityUserByFinicityCustomerId(customerId: string): Promise<FinicityUser | null>
+
     getFinicityUser(userId: string): Promise<FinicityUser | null>
 
     addFinicityUser(userId: string, customerId: string, type: string): Promise<FinicityUser>
@@ -66,6 +83,8 @@ export interface IFinicityRepository {
 
     getTradingPostInstitutionByFinicityId(finicityInstitutionId: number): Promise<TradingPostInstitutionWithFinicityInstitutionId | null>
 
+    getTradingPostBrokerageAccounts(userId: string): Promise<TradingPostBrokerageAccountsTable[]>
+
     upsertFinicityAccounts(accounts: FinicityAccount[]): Promise<void>
 
     getFinicityAccounts(finicityUserId: number): Promise<FinicityAccount[]>
@@ -77,6 +96,12 @@ export interface IFinicityRepository {
     getFinicityHoldings(finicityUserId: number): Promise<FinicityHolding[]>
 
     getFinicityTransactions(finicityUserId: number): Promise<FinicityTransaction[]>
+
+    deleteFinicityHoldings(accountIds: number[]): Promise<void>
+
+    deleteFinicityTransactions(accountIds: number[]): Promise<void>
+
+    deleteFinicityAccounts(accountIds: number[]): Promise<void>
 }
 
 export interface ISummaryRepository {
@@ -129,6 +154,24 @@ export interface ISummaryService {
     computeAccountGroupSummary(accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats | null>
 }
 
+export type TradingPostUser = {
+    id: string
+    firstName: string
+    lastName: string
+    handle: string
+    email: string
+    profileUrl: string
+    settings: Record<string, any>
+    bio: string
+    bannerUrl: string
+    tags: any
+    createdAt: DateTime
+    updatedAt: DateTime
+    analystProfile: any
+    hasProfilePic: boolean
+    dummy: boolean
+}
+
 export type GetSecurityPrice = {
     id: number
     securityId: number
@@ -137,7 +180,6 @@ export type GetSecurityPrice = {
     high: number
     open: number
     low: number
-    updatedAt: DateTime
     createdAt: DateTime
 }
 
