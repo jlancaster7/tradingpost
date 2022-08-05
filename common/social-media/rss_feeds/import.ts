@@ -22,19 +22,13 @@ async function lambdaImportRSSFeeds(pgClient: IDatabase<any>, pgp: IMain) {
     console.log(`Imported ${articlesImported} substack articles.`);
 }
 
-async function importSubstackUsers(username: string | string[], pgClient: IDatabase<any>, pgp: IMain) {
+async function importSubstackUsers(substackUsers: {userId: string, username: string}, pgClient: IDatabase<any>, pgp: IMain) {
     const repository = new Repository(pgClient, pgp);
     const ssUsers = new Substack(repository);
 
-    const result: [SubstackUser[], number] = await ssUsers.importUsers(username);
-    let length: number;
-    if (typeof username === 'string') {
-        length = 1
-    } else {
-        length = username.length
-    }
+    const result = await ssUsers.importUsers(substackUsers);
 
-    console.log(`Successfully imported ${result[1]} of ${length} Substack users.`)
+    console.log(`Successfully imported ${substackUsers.username}Substack user for userId: ${substackUsers.username}.`)
 }
 
 export {lambdaImportRSSFeeds, importSubstackUsers};

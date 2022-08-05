@@ -30,19 +30,12 @@ function lambdaImportRSSFeeds(pgClient, pgp) {
     });
 }
 exports.lambdaImportRSSFeeds = lambdaImportRSSFeeds;
-function importSubstackUsers(username, pgClient, pgp) {
+function importSubstackUsers(substackUsers, pgClient, pgp) {
     return __awaiter(this, void 0, void 0, function* () {
         const repository = new repository_1.default(pgClient, pgp);
         const ssUsers = new substack_1.Substack(repository);
-        const result = yield ssUsers.importUsers(username);
-        let length;
-        if (typeof username === 'string') {
-            length = 1;
-        }
-        else {
-            length = username.length;
-        }
-        console.log(`Successfully imported ${result[1]} of ${length} Substack users.`);
+        const result = yield ssUsers.importUsers(substackUsers);
+        console.log(`Successfully imported ${substackUsers.username}Substack user for userId: ${substackUsers.username}.`);
     });
 }
 exports.importSubstackUsers = importSubstackUsers;

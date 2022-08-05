@@ -3,7 +3,10 @@ import Repository from '../repository';
 export declare class Substack {
     private repository;
     constructor(repository: Repository);
-    importUsers: (username: string | string[]) => Promise<[SubstackUser[], number]>;
+    importUsers: (substackUser: {
+        userId: string;
+        username: string;
+    }) => Promise<[SubstackUser, number]>;
     importArticles: (username: string) => Promise<[SubstackArticles[], number]>;
     getUserFeed: (username: string) => Promise<SubstackFeed | undefined>;
     formatUser: (userFeed: SubstackFeed) => SubstackUser;

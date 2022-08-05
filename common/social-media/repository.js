@@ -83,39 +83,96 @@ class Repository {
             }
         });
         this.getTokens = (idType, ids, platform) => __awaiter(this, void 0, void 0, function* () {
-            const query = `SELECT id,
-                              platform,
-                              platform_user_id,
-                              access_token,
-                              refresh_token,
-                              epxiration,
-                              claims,
-                              user_id,
-                              created_at,
-                              updated_at
-                       FROM data_platform_claim
-                       WHERE $1 IN ($2) AND platform = '$3'
-                       `;
-            const response = yield this.db.query(query, [idType, ids.join(', '), platform]);
-            return response;
+            try {
+                const query = `SELECT id,
+                                  platform,
+                                  platform_user_id,
+                                  access_token,
+                                  refresh_token,
+                                  expiration,
+                                  claims,
+                                  user_id,
+                                  created_at,
+                                  updated_at
+                            FROM data_platform_claim
+                            WHERE ${idType} IN ($1) AND platform = $2
+                `;
+                const response = yield this.db.many(query, [ids.join(', '), platform]);
+                let result = [];
+                for (let i = 0; i < response.length; i++) {
+                    result.push({
+                        userId: response[i].user_id,
+                        platform: response[i].platform,
+                        platformUserId: response[i].platform_user_id,
+                        accessToken: response[i].access_token,
+                        refreshToken: response[i].refresh_token,
+                        expiration: response[i].expiration,
+                        updatedAt: response[i].updated_at
+                    });
+                }
+                return result;
+            }
+            catch (error) {
+                return [];
+            }
         });
-        this.upsertUserTokens = (twitterUsers) => __awaiter(this, void 0, void 0, function* () {
-            // TODO: add query to upsert token into third-party claims table
+        this.upsertUserTokens = (userTokens) => __awaiter(this, void 0, void 0, function* () {
             const cs = new this.pgp.helpers.ColumnSet([
                 { name: 'user_id', prop: 'userId' },
                 { name: 'platform', prop: 'platform' },
                 { name: 'platform_user_id', prop: 'platformUserId' },
                 { name: 'access_token', prop: 'accessToken' },
                 { name: 'refresh_token', prop: 'refreshToken' },
-                { name: 'expiration', prop: 'expiration' }
+                { name: 'expiration', prop: 'expiration' },
+                { name: 'updated_at', prop: 'updatedAt' }
             ], { table: 'data_platform_claim' });
-            const query = this.pgp.helpers.insert(twitterUsers, cs) + ` ON CONFLICT ON CONSTRAINT platform_platform_user_id_key DO UPDATE SET
+            const query = this.pgp.helpers.insert(userTokens, cs) + ` ON CONFLICT ON CONSTRAINT platform_platform_user_id_key DO UPDATE SET
                                                                     access_token = EXCLUDED.access_token,
                                                                     refresh_token = EXCLUDED.refresh_token,
-                                                                    expiration = EXCLUDED.expiration
+                                                                    expiration = EXCLUDED.expiration,
+                                                                    updated_at = EXCLUDED.updated_at
                                                                     `;
             const result = yield this.db.result(query);
             return result;
+        });
+        this.isUserIdDummy = (userId) => __awaiter(this, void 0, void 0, function* () {
+            const query = `SELECT dummy FROM data_user WHERE id = $1`;
+            return (yield this.db.one(query, [userId])).dummy;
+        });
+        this.mergeDummyAccounts = (userId) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                let tableQuery = `SELECT c.conrelid::regclass AS table_from
+                                  FROM pg_constraint c
+                                      INNER JOIN pg_namespace n
+                                                 ON n.oid = c.connamespace
+                                      CROSS JOIN LATERAL unnest(c.conkey) ak(k)
+                                      INNER JOIN pg_attribute a
+                                                 ON a.attrelid = c.conrelid
+                                                 AND a.attnum = ak.k
+                                  WHERE c.confrelid::regclass::text = 'data_user'
+                                  and a.attname = 'user_id'
+                                  and c.contype = 'f'
+                                  `;
+                const tableResponse = yield this.db.query(tableQuery);
+                console.log(userId);
+                yield this.db.tx((t) => __awaiter(this, void 0, void 0, function* () {
+                    let updateQueries = [];
+                    for (let d of tableResponse) {
+                        updateQueries.push(this.db.oneOrNone(`UPDATE ${d.table_from}
+                                    SET user_id = '${userId.newUserId}'
+                                    WHERE user_id = '${userId.dummyUserId}'
+                                    `));
+                    }
+                    updateQueries.push(this.db.none(`DELETE FROM data_user
+                                                WHERE id = '${userId.dummyUserId}'
+                                                AND dummy = true`));
+                    return t.batch(updateQueries);
+                }));
+            }
+            catch (err) {
+                console.error(err);
+                throw new Error(`Merge for newUserId: ${userId.newUserId} dummyUserId: ${userId.dummyUserId} failed`);
+            }
         });
         this.upsertTweets = (formatedTweets) => __awaiter(this, void 0, void 0, function* () {
             try {

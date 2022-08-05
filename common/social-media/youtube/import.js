@@ -24,8 +24,13 @@ function lambdaImportYoutube(pgClient, pgp, youtubeConfiguration) {
         let result;
         let videosImported = 0;
         for (let i = 0; i < channelIds.length; i++) {
-            result = yield Videos.importVideos(channelIds[i].youtube_channel_id, channelIds[i].access_token, channelIds[i].refresh_token);
-            videosImported += result[1];
+            try {
+                result = yield Videos.importVideos(channelIds[i].youtube_channel_id, channelIds[i].access_token, channelIds[i].refresh_token);
+                videosImported += result[1];
+            }
+            catch (err) {
+                console.error(err);
+            }
         }
         console.log(`${videosImported} youtube videos were imported`);
     });
@@ -43,7 +48,7 @@ function importYoutubeUsersById(pgClient, pgp, youtubeConfiguration, userChannel
         else {
             length = userChannelUrl.length;
         }
-        console.log(`Successfully imported ${result[1]} of ${length} Twitter profiles.`);
+        console.log(`Successfully imported ${result[1]} of ${length} Youtube profiles.`);
         return result;
     });
 }
@@ -53,7 +58,7 @@ function importYoutubeUsersByToken(youtubeUsers, pgClient, pgp, youtubeConfigura
         const repository = new repository_1.default(pgClient, pgp);
         const Users = new users_1.YoutubeUsers(repository, youtubeConfiguration);
         const result = yield Users.importYoutubeUsersbyToken(youtubeUsers);
-        console.log(`Successfully imported ${result[1]} of ${youtubeUsers.length} Twitter profiles.`);
+        console.log(`Successfully imported ${result[0][0].title} Youtube profile.`);
         return result;
     });
 }

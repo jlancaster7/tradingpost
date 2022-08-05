@@ -5,6 +5,9 @@ declare type SpotifyConfiguration = {
     client_secret: string;
 };
 declare function lambdaImportEpisodes(pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration): Promise<void>;
-declare function importSpotifyShows(showIds: string | string[], pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration): Promise<[spotifyShow[], number]>;
+declare function importSpotifyShows(spotifyUsers: {
+    userId: string;
+    showId: string;
+}, pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration): Promise<[spotifyShow, number]>;
 declare function importSpotifyEpisodes(showId: string, pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration): Promise<[spotifyEpisode[], number]>;
 export { lambdaImportEpisodes, importSpotifyShows, importSpotifyEpisodes };

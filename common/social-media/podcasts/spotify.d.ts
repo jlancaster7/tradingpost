@@ -10,8 +10,11 @@ export declare class SpotifyShows {
     private params;
     constructor(repository: Repository, spotifyConfig: spotifyConfig);
     setAccessToken: () => Promise<0 | 1>;
-    importShows: (showIds: string | string[]) => Promise<[spotifyShow[], number]>;
+    importShows: (spotifyUsers: {
+        userId: string;
+        showId: string;
+    }) => Promise<[spotifyShow, number]>;
     importEpisodes: (showId: string) => Promise<[spotifyEpisode[], number]>;
-    getShowInfo: (showIds: string[]) => Promise<spotifyShow[]>;
+    getShowInfo: (showIds: string) => Promise<spotifyShow>;
     getEpisodes: (showId: string) => Promise<spotifyEpisode[]>;
 }

@@ -37,15 +37,29 @@ class SpotifyShows {
                 return 0;
             }
         });
-        this.importShows = (showIds) => __awaiter(this, void 0, void 0, function* () {
-            if (typeof showIds === 'string') {
-                showIds = [showIds];
+        this.importShows = (spotifyUsers) => __awaiter(this, void 0, void 0, function* () {
+            let shows = yield this.getShowInfo(spotifyUsers.showId);
+            const out = {
+                userId: spotifyUsers.userId,
+                platform: 'substack',
+                platformUserId: spotifyUsers.showId,
+                accessToken: null,
+                refreshToken: null,
+                expiration: null,
+                updatedAt: new Date()
+            };
+            const dummyTokens = yield this.repository.getTokens('platform_user_id', [out.platformUserId], 'spotify');
+            if (dummyTokens.length && spotifyUsers.userId !== dummyTokens[0].userId) {
+                const dummyCheck = yield this.repository.isUserIdDummy(dummyTokens[0].userId);
+                if (dummyCheck) {
+                    yield this.repository.mergeDummyAccounts({ newUserId: spotifyUsers.userId, dummyUserId: dummyTokens[0].userId });
+                }
+                else {
+                    throw new Error("This account is claimed by another non-dummy user.");
+                }
             }
-            const shows = yield this.getShowInfo(showIds);
-            if (shows === []) {
-                return [[], 0];
-            }
-            const result = yield this.repository.upsertSpotifyShow(shows);
+            yield this.repository.upsertUserTokens(out);
+            const result = yield this.repository.upsertSpotifyShow([shows]);
             return [shows, result];
         });
         this.importEpisodes = (showId) => __awaiter(this, void 0, void 0, function* () {
@@ -54,55 +68,46 @@ class SpotifyShows {
                 return [[], 0];
             }
             const results = yield this.repository.insertSpotifyEpisodes(data);
-            if (results)
-                return [data, results];
-            return [[], 0];
+            return [data, results];
         });
         this.getShowInfo = (showIds) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                if (this.access_token === '') {
+            if (this.access_token === '') {
+                yield this.setAccessToken();
+            }
+            let fetchUrl;
+            let showResponse;
+            let formatedShowInfo;
+            fetchUrl = this.showUrl + showIds + '?market=US';
+            showResponse = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+            if (Object.keys(showResponse).includes('error')) {
+                if (showResponse.error.status === 401) {
                     yield this.setAccessToken();
-                }
-                let fetchUrl;
-                let showResponse;
-                let formatedShowInfo;
-                let formatedShows = [];
-                for (let i = 0; i < showIds.length; i++) {
-                    fetchUrl = this.showUrl + showIds[i] + '?market=US';
                     showResponse = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
                     if (Object.keys(showResponse).includes('error')) {
-                        if (showResponse.error.status === 401) {
-                            yield this.setAccessToken();
-                            showResponse = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
-                        }
-                        else {
-                            continue;
-                        }
+                        throw showResponse.error;
                     }
-                    showResponse.spotify_show_id = showIds[i];
-                    formatedShowInfo = {
-                        spotify_show_id: showResponse[i].spotify_show_id,
-                        name: showResponse[i].name,
-                        description: showResponse[i].description,
-                        explicit: showResponse[i].explicit,
-                        html_description: showResponse[i].html_description,
-                        is_externally_hosted: showResponse[i].is_externally_hosted,
-                        media_type: showResponse[i].media_type,
-                        publisher: showResponse[i].publisher,
-                        copyrights: JSON.stringify(showResponse[i].copyrights),
-                        total_episodes: showResponse[i].total_episodes,
-                        languages: JSON.stringify(showResponse[i].languages),
-                        external_urls: JSON.stringify(showResponse[i].external_urls),
-                        images: JSON.stringify(showResponse[i].images)
-                    };
-                    formatedShows.push(formatedShowInfo);
                 }
-                return formatedShows;
+                else {
+                    throw showResponse.error;
+                }
             }
-            catch (err) {
-                console.log(err);
-                return [];
-            }
+            showResponse.spotify_show_id = showIds;
+            formatedShowInfo = {
+                spotify_show_id: showResponse.spotify_show_id,
+                name: showResponse.name,
+                description: showResponse.description,
+                explicit: showResponse.explicit,
+                html_description: showResponse.html_description,
+                is_externally_hosted: showResponse.is_externally_hosted,
+                media_type: showResponse.media_type,
+                publisher: showResponse.publisher,
+                copyrights: JSON.stringify(showResponse.copyrights),
+                total_episodes: showResponse.total_episodes,
+                languages: JSON.stringify(showResponse.languages),
+                external_urls: JSON.stringify(showResponse.external_urls),
+                images: JSON.stringify(showResponse.images)
+            };
+            return formatedShowInfo;
         });
         this.getEpisodes = (showId) => __awaiter(this, void 0, void 0, function* () {
             try {

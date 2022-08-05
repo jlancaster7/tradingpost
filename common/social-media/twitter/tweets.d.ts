@@ -10,7 +10,7 @@ export declare class Tweets {
     private repository;
     constructor(twitterConfig: twitterConfig, repository: Repository);
     setStartDate: (twitterUserId: string, startDate?: Date | null) => Promise<void>;
-    refreshTokensbyId: (idType: string, ids: string[]) => Promise<PlatformToken[]>;
+    refreshTokensbyId: (idType: string, id: string) => Promise<PlatformToken | null>;
     importTweets: (twitterUserId: string, userToken?: string | null) => Promise<[formatedTweet[], number]>;
     getUserTweets: (twitterUserId: string, token?: string | null) => Promise<rawTweet[]>;
     formatTweets: (rawTweets: rawTweet[]) => formatedTweet[];

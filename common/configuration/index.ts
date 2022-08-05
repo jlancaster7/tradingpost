@@ -63,6 +63,8 @@ export interface ConfigPaths extends Record<ConfigKeys, unknown> {
     }
     youtube: {
         api_key: string
+        client_id: string
+        client_secret: string
     }
     discord_bot: {
         token: string

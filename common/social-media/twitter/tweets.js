@@ -24,43 +24,43 @@ class Tweets {
                 this.startDate = (yield this.repository.getTweetsLastUpdate(twitterUserId)).toISOString();
             }
         });
-        this.refreshTokensbyId = (idType, ids) => __awaiter(this, void 0, void 0, function* () {
+        this.refreshTokensbyId = (idType, id) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const response = yield this.repository.getTokens(idType, ids, 'twitter');
+                const response = yield this.repository.getTokens(idType, [id], 'twitter');
                 const authUrl = '/oauth2/token';
-                let data = [];
-                for (let d of response) {
-                    const refreshParams = {
-                        method: 'POST',
-                        headers: {
-                            "content-type": 'application/x-www-form-urlencoded'
-                        },
-                        form: {
-                            refresh_token: d.claims.refresh_token,
-                            grant_type: 'refresh_token',
-                            client_id: this.twitterConfig.clientId
-                        }
-                    };
-                    const fetchUrl = this.twitterUrl + authUrl;
-                    const response = (yield (yield (0, node_fetch_1.default)(fetchUrl, refreshParams)).json()).data;
-                    if (!response) {
-                        continue;
-                    }
-                    data.push({
-                        userId: d.user_id,
-                        platform: d.platform,
-                        platformUserId: d.platform_user_id,
-                        accessToken: response.access_token,
-                        refreshToken: response.refresh_token,
-                        expiration: response.expires_in
-                    });
+                let data;
+                if (!response.length) {
+                    throw new Error("No token was found for this ID");
                 }
+                const refreshParams = {
+                    method: 'POST',
+                    headers: {
+                        "content-type": 'application/json'
+                    },
+                    body: JSON.stringify({
+                        refresh_token: response[0].refreshToken,
+                        grant_type: 'refresh_token',
+                        client_id: this.twitterConfig.client_id
+                    })
+                };
+                const fetchUrl = this.twitterUrl + authUrl;
+                const result = yield (yield (0, node_fetch_1.default)(fetchUrl, refreshParams)).json();
+                const expiration = new Date();
+                data = {
+                    userId: response[0].userId,
+                    platform: response[0].platform,
+                    platformUserId: response[0].platformUserId,
+                    accessToken: result.access_token,
+                    refreshToken: result.refresh_token,
+                    expiration: new Date(expiration.getTime() + result.expires_in),
+                    updatedAt: new Date()
+                };
                 yield this.repository.upsertUserTokens(data);
                 return data;
             }
             catch (err) {
                 console.error(err);
-                return [];
+                return null;
             }
         });
         this.importTweets = (twitterUserId, userToken = null) => __awaiter(this, void 0, void 0, function* () {
@@ -114,26 +114,40 @@ class Tweets {
                         });
                     }
                     response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                    if (response.meta && !response.meta.result_count) {
+                        this.startDate = '';
+                        return [];
+                    }
                     responseData = response.data;
-                    console.log(response);
                     if (token && !responseData) {
-                        const newToken = yield this.refreshTokensbyId('platform_user_id', [twitterUserId]);
-                        this.params.headers.authorization = 'BEARER ' + newToken[0].accessToken;
-                        response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
-                        responseData = response.data;
-                        if (!responseData) {
+                        const newToken = yield this.refreshTokensbyId('platform_user_id', twitterUserId);
+                        if (newToken) {
+                            this.params.headers.authorization = 'BEARER ' + newToken.accessToken;
+                            response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                            responseData = response.data;
+                            if (!responseData) {
+                                this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'];
+                                response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
+                                responseData = response.data;
+                                if (!responseData) {
+                                    this.startDate = '';
+                                    throw new Error(`Tried auth and api key, both failed for twitter user id: ${twitterUserId}`);
+                                }
+                            }
+                        }
+                        else {
                             this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'];
                             response = yield (yield (0, node_fetch_1.default)(fetchUrl, this.params)).json();
                             responseData = response.data;
                             if (!responseData) {
                                 this.startDate = '';
-                                return [];
+                                throw new Error(`Tried auth and api key, both failed for twitter user id: ${twitterUserId}`);
                             }
                         }
                     }
-                    else if (!responseData) {
+                    if (!responseData) {
                         this.startDate = '';
-                        return [];
+                        throw new Error(`Tried api key, failed for twitter user id: ${twitterUserId}`);
                     }
                     username = response.includes.users[0].username;
                     for (let i = 0; i < responseData.length; i++) {
@@ -154,7 +168,9 @@ class Tweets {
                 }
             }
             catch (err) {
+                this.startDate = '';
                 console.log(err);
+                return [];
             }
             this.startDate = '';
             return data;

@@ -16,67 +16,81 @@ exports.TwitterUsers = void 0;
 const node_fetch_1 = __importDefault(require("node-fetch"));
 class TwitterUsers {
     constructor(twitterConfig, repository) {
-        this.refreshTokensbyId = (idType, ids) => __awaiter(this, void 0, void 0, function* () {
+        this.refreshTokensbyId = (idType, id) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const response = yield this.repository.getTokens(idType, ids, 'twitter');
+                const response = yield this.repository.getTokens(idType, [id], 'twitter');
                 const authUrl = '/oauth2/token';
-                let data = [];
-                for (let d of response) {
-                    const refreshParams = {
-                        method: 'POST',
-                        headers: {
-                            "content-type": 'application/x-www-form-urlencoded'
-                        },
-                        form: {
-                            refresh_token: d.claims.refresh_token,
-                            grant_type: 'refresh_token',
-                            client_id: this.twitterConfig.clientId
-                        }
-                    };
-                    const fetchUrl = this.twitterUrl + authUrl;
-                    const response = (yield (yield (0, node_fetch_1.default)(fetchUrl, refreshParams)).json()).data;
-                    if (!response) {
-                        continue;
+                let data;
+                const refreshParams = {
+                    method: 'POST',
+                    headers: {
+                        "content-type": 'application/x-www-form-urlencoded'
+                    },
+                    form: {
+                        refresh_token: response[0].refreshToken,
+                        grant_type: 'refresh_token',
+                        client_id: this.twitterConfig.clientId
                     }
-                    data.push({
-                        userId: d.user_id,
-                        platform: d.platform,
-                        platformUserId: d.platform_user_id,
-                        accessToken: response.access_token,
-                        refreshToken: response.refresh_token,
-                        expiration: response.expires_in
-                    });
+                };
+                const fetchUrl = this.twitterUrl + authUrl;
+                const result = (yield (yield (0, node_fetch_1.default)(fetchUrl, refreshParams)).json()).data;
+                const expiration = new Date();
+                if (!result) {
+                    null;
                 }
+                data = {
+                    userId: response[0].userId,
+                    platform: response[0].platform,
+                    platformUserId: response[0].platformUserId,
+                    accessToken: result.access_token,
+                    refreshToken: result.refresh_token,
+                    expiration: new Date(expiration.getTime() + result.expires_in),
+                    updatedAt: new Date()
+                };
                 yield this.repository.upsertUserTokens(data);
                 return data;
             }
             catch (err) {
                 console.error(err);
-                return [];
+                return null;
             }
         });
-        this.importUserByToken = (twitterUsers) => __awaiter(this, void 0, void 0, function* () {
-            let data = [];
-            let out = [];
-            let temp;
-            for (let d of twitterUsers) {
-                temp = yield this.getUserInfoByToken(d.accessToken);
-                if (!temp) {
-                    yield this.refreshTokensbyId('user_id', [d.userId]);
-                    temp = yield this.getUserInfoByToken(d.accessToken);
-                    if (!temp) {
-                        continue;
-                    }
+        this.importUserByToken = (twitterUser) => __awaiter(this, void 0, void 0, function* () {
+            let data;
+            let token;
+            data = yield this.getUserInfoByToken(twitterUser.accessToken);
+            if (!data) {
+                const newToken = yield this.refreshTokensbyId('user_id', twitterUser.userId);
+                if (!newToken) {
+                    throw new Error(`Failed to import user for user id: ${twitterUser.userId}`);
                 }
-                out.push({ userId: d.userId, platform: 'twitter', platformUserId: temp.id, accessToken: d.accessToken, refreshToken: d.refreshToken, expiration: d.expiration });
-                data.push(temp);
+                data = yield this.getUserInfoByToken(twitterUser.accessToken);
+                if (!data) {
+                    throw new Error("Twitter API failed");
+                }
             }
-            if (data === []) {
-                return [[], 0];
+            const expiration = new Date();
+            token = { userId: twitterUser.userId,
+                platform: 'twitter',
+                platformUserId: data.id,
+                accessToken: twitterUser.accessToken,
+                refreshToken: twitterUser.refreshToken,
+                expiration: new Date(expiration.getTime() + twitterUser.expiration),
+                updatedAt: new Date()
+            };
+            const formatedData = this.formatUser([data])[0];
+            let dummyTokens = (yield this.repository.getTokens('platform_user_id', [token.platformUserId], 'twitter'));
+            if (dummyTokens.length && twitterUser.userId !== dummyTokens[0].userId) {
+                const dummyCheck = yield this.repository.isUserIdDummy(dummyTokens[0].userId);
+                if (dummyCheck) {
+                    yield this.repository.mergeDummyAccounts({ newUserId: twitterUser.userId, dummyUserId: dummyTokens[0].userId });
+                }
+                else {
+                    throw new Error("This account is claimed by another non-dummy user.");
+                }
             }
-            const formatedData = this.formatUser(data);
-            yield this.repository.upsertUserTokens(out);
-            const result = yield this.repository.upsertTwitterUser(formatedData);
+            yield this.repository.upsertUserTokens(token);
+            const result = yield this.repository.upsertTwitterUser([formatedData]);
             return [formatedData, result];
         });
         this.importUserByHandle = (handles) => __awaiter(this, void 0, void 0, function* () {
@@ -115,7 +129,7 @@ class TwitterUsers {
                 this.params.headers.authorization = 'BEARER ' + token;
                 const userInfoEndpoint = "/users/me?";
                 const fetchUrl = this.twitterUrl + userInfoEndpoint + new URLSearchParams({
-                    "user.fields": "created_at,description,id,location,name,profile_image_url,protected,public_metrics,username",
+                    "user.fields": "created_at,description,id,location,name,profile_image_url,protected,public_metrics,username"
                 });
                 const response = yield (0, node_fetch_1.default)(fetchUrl, this.params);
                 data = (yield response.json()).data;

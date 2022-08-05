@@ -26,13 +26,13 @@ async function lambdaImportEpisodes(pgClient: IDatabase<any>, pgp: IMain, spotif
     console.log(`${episodeImported} episodes were imported!`);
 }
 
-async function importSpotifyShows(showIds: string | string[], pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration): Promise<[spotifyShow[], number]> {
+async function importSpotifyShows(spotifyUsers: {userId: string, showId: string}, pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration): Promise<[spotifyShow, number]> {
     const repository = new Repository(pgClient, pgp);
     const Spotify = new SpotifyShows(repository, spotifyConfiguration);
 
-    const result = await Spotify.importShows(showIds);
+    const result = await Spotify.importShows(spotifyUsers);
 
-    console.log(`${result[1]} shows were imported!`);
+    console.log(`${result[1]} shows were imported for ${spotifyUsers.userId} with showId: ${spotifyUsers.showId}!`);
     return result;
 }
 

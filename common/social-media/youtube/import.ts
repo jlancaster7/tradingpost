@@ -18,8 +18,13 @@ async function lambdaImportYoutube(pgClient: IDatabase<any>, pgp: IMain, youtube
     let videosImported = 0;
 
     for (let i = 0; i < channelIds.length; i++) {
-        result = await Videos.importVideos(channelIds[i].youtube_channel_id, channelIds[i].access_token, channelIds[i].refresh_token);
-        videosImported += result[1];
+        try {
+            result = await Videos.importVideos(channelIds[i].youtube_channel_id, channelIds[i].access_token, channelIds[i].refresh_token);
+            videosImported += result[1];
+        } catch (err) {
+            console.error(err);
+        }
+
     }
 
     console.log(`${videosImported} youtube videos were imported`);
@@ -36,17 +41,17 @@ async function importYoutubeUsersById(pgClient: IDatabase<any>, pgp: IMain, yout
     } else {
         length = userChannelUrl.length
     }
-    console.log(`Successfully imported ${result[1]} of ${length} Twitter profiles.`);
+    console.log(`Successfully imported ${result[1]} of ${length} Youtube profiles.`);
     return result;
 }
 
-async function importYoutubeUsersByToken(youtubeUsers: {userId: string, accessToken: string, refreshToken: string, expiration: Date}[], pgClient: IDatabase<any>, pgp: IMain, youtubeConfiguration: YoutubeConfiguration): Promise<[formatedChannelInfo[], number]> {
+async function importYoutubeUsersByToken(youtubeUsers: {userId: string, accessToken: string, refreshToken: string, expiration: number}, pgClient: IDatabase<any>, pgp: IMain, youtubeConfiguration: YoutubeConfiguration): Promise<[formatedChannelInfo[], number]> {
     const repository = new Repository(pgClient, pgp);
     const Users = new YoutubeUsers(repository, youtubeConfiguration);
 
     const result = await Users.importYoutubeUsersbyToken(youtubeUsers);
 
-    console.log(`Successfully imported ${result[1]} of ${youtubeUsers.length} Twitter profiles.`);
+    console.log(`Successfully imported ${result[0][0].title} Youtube profile.`);
     return result;
 }
 

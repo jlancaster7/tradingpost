@@ -16,24 +16,38 @@ exports.Substack = void 0;
 const rss_parser_1 = __importDefault(require("rss-parser"));
 class Substack {
     constructor(repository) {
-        this.importUsers = (username) => __awaiter(this, void 0, void 0, function* () {
-            if (typeof username === 'string') {
-                username = [username];
-            }
+        this.importUsers = (substackUser) => __awaiter(this, void 0, void 0, function* () {
             let results = [];
             let data;
             let count = 0;
             let formatedUser;
-            for (let i = 0; i < username.length; i++) {
-                data = yield this.getUserFeed(username[i]);
-                if (!data) {
-                    continue;
-                }
-                formatedUser = this.formatUser(data);
-                count += yield this.repository.insertSubstackUser(formatedUser);
-                results.push(formatedUser);
+            data = yield this.getUserFeed(substackUser.username);
+            if (!data) {
+                throw new Error(`Substack user: ${substackUser.username} for userId: ${substackUser.userId} was not found`);
             }
-            return [results, count];
+            const token = {
+                userId: substackUser.userId,
+                platform: 'substack',
+                platformUserId: substackUser.username,
+                accessToken: null,
+                refreshToken: null,
+                expiration: null,
+                updatedAt: new Date()
+            };
+            formatedUser = this.formatUser(data);
+            let dummyTokens = (yield this.repository.getTokens('platform_user_id', [token.platformUserId], 'substack'));
+            if (dummyTokens.length && substackUser.userId !== dummyTokens[0].userId) {
+                const dummyCheck = yield this.repository.isUserIdDummy(dummyTokens[0].userId);
+                if (dummyCheck) {
+                    yield this.repository.mergeDummyAccounts({ newUserId: substackUser.userId, dummyUserId: dummyTokens[0].userId });
+                }
+                else {
+                    throw new Error("This account is claimed by another non-dummy user.");
+                }
+            }
+            yield this.repository.upsertUserTokens(token);
+            count = yield this.repository.insertSubstackUser(formatedUser);
+            return [formatedUser, count];
         });
         this.importArticles = (username) => __awaiter(this, void 0, void 0, function* () {
             const results = yield this.getUserFeed(username);

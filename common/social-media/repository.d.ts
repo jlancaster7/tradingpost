@@ -13,22 +13,27 @@ export default class Repository {
     }[]>;
     getTwitterUsers: () => Promise<{
         twitter_user_id: string;
-        access_token: string;
-        refresh_token: string;
+        access_token: string | null;
+        refresh_token: string | null;
     }[]>;
     getSubstackUsers: () => Promise<{
         substack_user_id: string;
     }[]>;
     getYoutubeUsers: () => Promise<{
         youtube_channel_id: string;
-        access_token: string;
-        refresh_token: string;
+        access_token: string | null;
+        refresh_token: string | null;
     }[]>;
     getTweetsLastUpdate: (twitterUserId: string) => Promise<Date>;
     getYoutubeLastUpdate: (youtubeChannelId: string) => Promise<Date>;
     getSpotifyLastUpdate: (spotify_show_id: string) => Promise<Date>;
-    getTokens: (idType: string, ids: string[], platform: string) => Promise<any>;
-    upsertUserTokens: (twitterUsers: PlatformToken[]) => Promise<import("pg-promise").IResultExt>;
+    getTokens: (idType: string, ids: string[], platform: string) => Promise<PlatformToken[]>;
+    upsertUserTokens: (userTokens: PlatformToken) => Promise<import("pg-promise").IResultExt>;
+    isUserIdDummy: (userId: string) => Promise<boolean>;
+    mergeDummyAccounts: (userId: {
+        newUserId: string;
+        dummyUserId: string;
+    }) => Promise<void>;
     upsertTweets: (formatedTweets: formatedTweet[]) => Promise<number>;
     upsertTwitterUser: (users: formatedTwitterUser[]) => Promise<number>;
     insertSubstackArticles: (formattedArticles: SubstackArticles[]) => Promise<number>;

@@ -7,13 +7,13 @@ export declare class TwitterUsers {
     private twitterUrl;
     private params;
     constructor(twitterConfig: twitterConfig, repository: Repository);
-    refreshTokensbyId: (idType: string, ids: string[]) => Promise<PlatformToken[]>;
-    importUserByToken: (twitterUsers: {
+    refreshTokensbyId: (idType: string, id: string) => Promise<PlatformToken | null>;
+    importUserByToken: (twitterUser: {
         userId: string;
         accessToken: string;
         refreshToken: string;
-        expiration: Date;
-    }[]) => Promise<[formatedTwitterUser[], number]>;
+        expiration: number;
+    }) => Promise<[formatedTwitterUser, number]>;
     importUserByHandle: (handles: string | string[]) => Promise<formatedTwitterUser[]>;
     getUserInfo: (handles: string[]) => Promise<rawTwitterUser[]>;
     getUserInfoByToken: (token: string) => Promise<rawTwitterUser | null>;

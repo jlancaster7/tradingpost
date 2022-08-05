@@ -1,4 +1,5 @@
 import Parser from 'rss-parser';
+import { PlatformToken } from '../interfaces/utils';
 import {SubstackUser, SubstackFeed, SubstackArticles} from '../interfaces/rss_feeds';
 import Repository from '../repository'
 
@@ -10,26 +11,42 @@ export class Substack {
         this.repository = repository
     }
 
-    importUsers = async (username: string | string[]): Promise<[SubstackUser[], number]> => {
-        if (typeof username === 'string') {
-            username = [username]
-        }
-
+    importUsers = async (substackUser: {userId: string, username: string}): Promise<[SubstackUser, number]> => {
+        
         let results = [];
         let data: SubstackFeed | undefined;
         let count = 0;
+        
         let formatedUser: SubstackUser;
-        for (let i = 0; i < username.length; i++) {
-            data = await this.getUserFeed(username[i]);
-            if (!data) {
-                continue;
-            }
-            formatedUser = this.formatUser(data);
+        
+        data = await this.getUserFeed(substackUser.username);
+        if (!data) {
+            throw new Error(`Substack user: ${substackUser.username} for userId: ${substackUser.userId} was not found`);
 
-            count += await this.repository.insertSubstackUser(formatedUser);
-            results.push(formatedUser);
         }
-        return [results, count];
+        const token = {
+            userId: substackUser.userId, 
+            platform: 'substack', 
+            platformUserId: substackUser.username, 
+            accessToken: null, 
+            refreshToken: null, 
+            expiration: null,
+            updatedAt: new Date()
+        }
+        formatedUser = this.formatUser(data);
+        let dummyTokens = (await this.repository.getTokens('platform_user_id', [token.platformUserId], 'substack'));
+        if (dummyTokens.length && substackUser.userId !== dummyTokens[0].userId) {
+            const dummyCheck = await this.repository.isUserIdDummy(dummyTokens[0].userId);
+            if (dummyCheck) {
+                await this.repository.mergeDummyAccounts({newUserId: substackUser.userId, dummyUserId: dummyTokens[0].userId});
+            } else {
+                throw new Error("This account is claimed by another non-dummy user.");
+            }
+        }
+        await this.repository.upsertUserTokens(token);
+        count = await this.repository.insertSubstackUser(formatedUser);
+    
+        return [formatedUser, count];
     }
 
     importArticles = async (username: string): Promise<[SubstackArticles[], number]> => {

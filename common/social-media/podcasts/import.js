@@ -30,12 +30,12 @@ function lambdaImportEpisodes(pgClient, pgp, spotifyConfiguration) {
     });
 }
 exports.lambdaImportEpisodes = lambdaImportEpisodes;
-function importSpotifyShows(showIds, pgClient, pgp, spotifyConfiguration) {
+function importSpotifyShows(spotifyUsers, pgClient, pgp, spotifyConfiguration) {
     return __awaiter(this, void 0, void 0, function* () {
         const repository = new repository_1.default(pgClient, pgp);
         const Spotify = new spotify_1.SpotifyShows(repository, spotifyConfiguration);
-        const result = yield Spotify.importShows(showIds);
-        console.log(`${result[1]} shows were imported!`);
+        const result = yield Spotify.importShows(spotifyUsers);
+        console.log(`${result[1]} shows were imported for ${spotifyUsers.userId} with showId: ${spotifyUsers.showId}!`);
         return result;
     });
 }

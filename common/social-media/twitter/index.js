@@ -47,18 +47,27 @@ exports.addTwitterUsersByHandle = addTwitterUsersByHandle;
 const addTwitterUsersByToken = (twitterUsers, pgClient, pgp, twitterConfiguration) => __awaiter(void 0, void 0, void 0, function* () {
     const repository = new repository_1.default(pgClient, pgp);
     const TwitterUser = new users_1.TwitterUsers(twitterConfiguration, repository);
-    const result = yield TwitterUser.importUserByToken(twitterUsers);
-    console.log(`Successfully imported ${result[1]} of ${twitterUsers.length} Twitter profiles.`);
-    return result[0];
+    const Tweet = new tweets_1.Tweets(twitterConfiguration, repository);
+    try {
+        const result = yield TwitterUser.importUserByToken(twitterUsers);
+        const tweetResults = yield Tweet.importTweets(result[0].twitter_user_id, twitterUsers.accessToken);
+        console.log(`Successfully imported ${result[0].username} Twitter profile.`);
+        return result[0];
+    }
+    catch (err) {
+        console.error(err);
+        return null;
+    }
 });
 exports.addTwitterUsersByToken = addTwitterUsersByToken;
 const addTweets = (twitterUserId, pgClient, pgp, twitterConfiguration, startDate) => __awaiter(void 0, void 0, void 0, function* () {
     const repository = new repository_1.default(pgClient, pgp);
     const Tweet = new tweets_1.Tweets(twitterConfiguration, repository);
+    const token = yield repository.getTokens('platform_user_id', [twitterUserId], 'twitter');
     if (startDate !== undefined) {
         yield Tweet.setStartDate(twitterUserId, startDate);
     }
-    const result = yield Tweet.importTweets(twitterUserId);
+    const result = yield Tweet.importTweets(twitterUserId, (token.length ? null : token[0].accessToken));
     console.log(`${result[1]} tweets were imported!`);
     return result;
 });

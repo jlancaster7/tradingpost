@@ -11,7 +11,7 @@ export declare class YoutubeVideos {
     constructor(repository: Repository, youtubeConfig: youtubeConfig);
     setStartDate: (startDate: Date) => Promise<void>;
     getStartDate: (youtubeChannelId: string) => Promise<void>;
-    refreshTokenById: (idType: string, ids: string[]) => Promise<PlatformToken[]>;
+    refreshTokenById: (idType: string, id: string) => Promise<PlatformToken | null>;
     importVideos: (youtubeChannelId: string, accessToken?: string | null, refreshToken?: string | null) => Promise<[formatedYoutubeVideo[], number]>;
     getVideos: (youtubeChannelId: string, accessToken?: string | null, refreshToken?: string | null) => Promise<rawYoutubeVideo[]>;
     formatVideos: (rawVideos: rawYoutubeVideo[]) => formatedYoutubeVideo[];

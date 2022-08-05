@@ -50,6 +50,8 @@ export interface ConfigPaths extends Record<ConfigKeys, unknown> {
     };
     youtube: {
         api_key: string;
+        client_id: string;
+        client_secret: string;
     };
     discord_bot: {
         token: string;
@@ -73,7 +75,7 @@ export declare class Configuration<K extends Record<string, any>> {
     private cache;
     private defaultOptions;
     constructor(ssmClient: SSM, defaultOptions?: Configuration<K>["defaultOptions"], environment?: ConfigurationEnv, enableCache?: any);
-    fromSSM: <T extends keyof K>(path: T, options?: ConfigOptions | undefined) => Promise<K[T]>;
+    fromSSM: <T extends keyof K>(path: T, options?: ConfigOptions) => Promise<K[T]>;
     fromCacheOrSSM: <T extends keyof K>(path: T) => Promise<K[T]>;
 }
 export declare const DefaultConfig: Configuration<ConfigPaths>;
