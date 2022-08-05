@@ -48,5 +48,19 @@ declare const _default: {
             userId: string;
         };
     }) => Promise<string>;
+    getTrades: (req: {
+        body: undefined;
+        extra: {
+            userId: string;
+        };
+    }) => Promise<{
+        date: Date;
+        type: string;
+        quantity: number;
+        price: number;
+        fees: number;
+        currency: string;
+        security_id: number;
+    }[]>;
 };
 export default _default;

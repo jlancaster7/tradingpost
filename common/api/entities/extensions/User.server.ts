@@ -81,7 +81,7 @@ export default ensureServerExtensions<User>({
                 code: 401
             }
     },
-    getBrokerageAccounts: async (r) => {
+    getBrokerageAccounts: (r) => {
         return execProc("public.api_brokerage_account", {
             user_id: r.extra.userId,
             data: {}
@@ -118,5 +118,11 @@ export default ensureServerExtensions<User>({
             return handle[0].username;
         }
         else return "";
+    },
+    getTrades: (r) => {
+        return execProc("public.api_trade_list", {
+            user_id: r.extra.userId,
+            data: {}
+        })
     }
 })

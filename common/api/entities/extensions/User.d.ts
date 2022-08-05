@@ -20,4 +20,13 @@ export default class User extends Extension {
         code: string;
         challenge: string;
     }) => Promise<string>;
+    getTrades: (settings?: undefined) => Promise<{
+        date: Date;
+        type: string;
+        quantity: number;
+        price: number;
+        fees: number;
+        currency: string;
+        security_id: number;
+    }[]>;
 }

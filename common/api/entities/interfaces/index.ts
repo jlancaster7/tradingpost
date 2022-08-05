@@ -41,7 +41,8 @@ export interface IPlatformClaimList {
         platform: string,
     claims?: any,
     id: number,
-    user_id: string
+    user_id: string,
+    platform_user_id: string
     };
 
 export interface IPlatformClaimGet {
