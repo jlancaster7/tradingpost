@@ -55,7 +55,6 @@ const start = async (repository: Repository, iex: IEX) => {
     }
 }
 
-// Pricing Cost 1 / year = 1 credit
-module.exports.run = async (event: any, context: Context) => {
+export const run = async (event: any, context: Context) => {
     await runLambda();
 }

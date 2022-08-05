@@ -134,7 +134,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1659539295031-2022-08-03T15:08:15.031Z/tradingpost-job.zip"
+          "S3Key": "serverless/tradingpost-job/production/1659704434227-2022-08-05T13:00:34.227Z/tradingpost-job.zip"
         },
         "Handler": "market-data/add-meta-data.run",
         "Runtime": "nodejs16.x",
@@ -178,7 +178,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1659539295031-2022-08-03T15:08:15.031Z/tradingpost-job.zip"
+          "S3Key": "serverless/tradingpost-job/production/1659704434227-2022-08-05T13:00:34.227Z/tradingpost-job.zip"
         },
         "Handler": "market-data/add-holidays.run",
         "Runtime": "nodejs16.x",
@@ -222,7 +222,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1659539295031-2022-08-03T15:08:15.031Z/tradingpost-job.zip"
+          "S3Key": "serverless/tradingpost-job/production/1659704434227-2022-08-05T13:00:34.227Z/tradingpost-job.zip"
         },
         "Handler": "market-data/add-security-prices.run",
         "Runtime": "nodejs16.x",
@@ -266,7 +266,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1659539295031-2022-08-03T15:08:15.031Z/tradingpost-job.zip"
+          "S3Key": "serverless/tradingpost-job/production/1659704434227-2022-08-05T13:00:34.227Z/tradingpost-job.zip"
         },
         "Handler": "market-data/security-pruning.run",
         "Runtime": "nodejs16.x",
@@ -310,7 +310,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1659539295031-2022-08-03T15:08:15.031Z/tradingpost-job.zip"
+          "S3Key": "serverless/tradingpost-job/production/1659704434227-2022-08-05T13:00:34.227Z/tradingpost-job.zip"
         },
         "Handler": "social-media/spotify.run",
         "Runtime": "nodejs16.x",
@@ -354,7 +354,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1659539295031-2022-08-03T15:08:15.031Z/tradingpost-job.zip"
+          "S3Key": "serverless/tradingpost-job/production/1659704434227-2022-08-05T13:00:34.227Z/tradingpost-job.zip"
         },
         "Handler": "social-media/substack.run",
         "Runtime": "nodejs16.x",
@@ -398,7 +398,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1659539295031-2022-08-03T15:08:15.031Z/tradingpost-job.zip"
+          "S3Key": "serverless/tradingpost-job/production/1659704434227-2022-08-05T13:00:34.227Z/tradingpost-job.zip"
         },
         "Handler": "social-media/twitter.run",
         "Runtime": "nodejs16.x",
@@ -442,7 +442,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1659539295031-2022-08-03T15:08:15.031Z/tradingpost-job.zip"
+          "S3Key": "serverless/tradingpost-job/production/1659704434227-2022-08-05T13:00:34.227Z/tradingpost-job.zip"
         },
         "Handler": "social-media/youtube.run",
         "Runtime": "nodejs16.x",
@@ -479,91 +479,91 @@
         "YoutubeLogGroup"
       ]
     },
-    "AddDashmetaDashdataLambdaVersionJt3PSEAZObIlxCYY8o62lrkRSBw7y8jeHbYIozO2c": {
+    "AddDashmetaDashdataLambdaVersionJRMYXeP6HdFBWnNNJKAh1E9TC3dowmhSeICsr2pUajY": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AddDashmetaDashdataLambdaFunction"
         },
-        "CodeSha256": "kcBg3mFtdalU3jnjai2CFo7j9YX8xVcWmHjWYCjNpsA=",
+        "CodeSha256": "1LXkHp0rxAVGlfoGxY9xvs5EwdyPRATpg2sJfpgL+tA=",
         "Description": "Ingests securities, exchanges, in the morning, in the evening it ingests stats, quotes, and closing pricing"
       }
     },
-    "AddDashholidaysLambdaVersionmTs58FUaeMei6EyssifMiPHDKQMon61ncfzs2v0QBc": {
+    "AddDashholidaysLambdaVersionsptf6iQ28SOpkXQFDE4P4p0S2POo7z7jlgMDjP1Zve0": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AddDashholidaysLambdaFunction"
         },
-        "CodeSha256": "kcBg3mFtdalU3jnjai2CFo7j9YX8xVcWmHjWYCjNpsA=",
+        "CodeSha256": "1LXkHp0rxAVGlfoGxY9xvs5EwdyPRATpg2sJfpgL+tA=",
         "Description": "Ingests market holidays once a year"
       }
     },
-    "AddDashsecurityDashpricingLambdaVersionEjZcaqniw8HEScZIrkwwAKjoBijLhXo6yEuMbGc1gec": {
+    "AddDashsecurityDashpricingLambdaVersionz8LwENrv33tkbHo1ipSv4s4NBA0rm8Dnbvnxlt0qI": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AddDashsecurityDashpricingLambdaFunction"
         },
-        "CodeSha256": "kcBg3mFtdalU3jnjai2CFo7j9YX8xVcWmHjWYCjNpsA=",
+        "CodeSha256": "1LXkHp0rxAVGlfoGxY9xvs5EwdyPRATpg2sJfpgL+tA=",
         "Description": "Ingests security prices"
       }
     },
-    "SecurityDashpruningLambdaVersionSxqP7uRVT0nhpCaWjiunIajefmvCaXCmwwJnvYs": {
+    "SecurityDashpruningLambdaVersionPNt0jn6CMbrIAj1DEDAAaRuDuDNitJ8BL3KzgerM": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SecurityDashpruningLambdaFunction"
         },
-        "CodeSha256": "kcBg3mFtdalU3jnjai2CFo7j9YX8xVcWmHjWYCjNpsA=",
+        "CodeSha256": "1LXkHp0rxAVGlfoGxY9xvs5EwdyPRATpg2sJfpgL+tA=",
         "Description": "Prunes security data"
       }
     },
-    "SpotifyLambdaVersion0CzvdPjwDAm2e2Jtnn6WDXYkEytTgK96yFumHkNAY": {
+    "SpotifyLambdaVersion5dV9wlaMMq8PqkCdtEBuopeTVHVjimBqbqKdkbCbsXs": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SpotifyLambdaFunction"
         },
-        "CodeSha256": "kcBg3mFtdalU3jnjai2CFo7j9YX8xVcWmHjWYCjNpsA=",
+        "CodeSha256": "1LXkHp0rxAVGlfoGxY9xvs5EwdyPRATpg2sJfpgL+tA=",
         "Description": "Ingests Spotify User Data"
       }
     },
-    "SubstackLambdaVersionIbAQOVfmqzXvn4Hc0vXChQo041Llu0ImwGOUaV8c": {
+    "SubstackLambdaVersionNFy4AST7D3ay2c8dEeRLG5FlM4GOvkM9l7Br8AJxXfA": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SubstackLambdaFunction"
         },
-        "CodeSha256": "kcBg3mFtdalU3jnjai2CFo7j9YX8xVcWmHjWYCjNpsA=",
+        "CodeSha256": "1LXkHp0rxAVGlfoGxY9xvs5EwdyPRATpg2sJfpgL+tA=",
         "Description": "Ingests Substack Data"
       }
     },
-    "TwitterLambdaVersiondqOpugqROIifAfaZ1dudNIA3ZZVhZVxeBZv0Vhdacw": {
+    "TwitterLambdaVersionT9qXE6mxk8fdzDJ9lllQkBsjlZ9x7t2yWyPNTRbWYKE": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "TwitterLambdaFunction"
         },
-        "CodeSha256": "kcBg3mFtdalU3jnjai2CFo7j9YX8xVcWmHjWYCjNpsA=",
+        "CodeSha256": "1LXkHp0rxAVGlfoGxY9xvs5EwdyPRATpg2sJfpgL+tA=",
         "Description": "Ingests Twitter Data"
       }
     },
-    "YoutubeLambdaVersion9q4XJhr1UoetBV4moVLJVBIWBfxg02E1o1POaTFTag": {
+    "YoutubeLambdaVersionbqCsSd4zENXjnu0juCJwcxgDBf2NC9Nk72y0NGOic": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "YoutubeLambdaFunction"
         },
-        "CodeSha256": "kcBg3mFtdalU3jnjai2CFo7j9YX8xVcWmHjWYCjNpsA=",
+        "CodeSha256": "1LXkHp0rxAVGlfoGxY9xvs5EwdyPRATpg2sJfpgL+tA=",
         "Description": "Ingests YouTube User Data"
       }
     },
@@ -571,7 +571,7 @@
       "Type": "AWS::Events::Rule",
       "Properties": {
         "ScheduleExpression": "cron(20 20 ? * MON-FRI *)",
-        "State": "DISABLED",
+        "State": "ENABLED",
         "Targets": [
           {
             "Arn": {
@@ -608,7 +608,7 @@
       "Type": "AWS::Events::Rule",
       "Properties": {
         "ScheduleExpression": "cron(20 19 ? * MON-FRI *)",
-        "State": "DISABLED",
+        "State": "ENABLED",
         "Targets": [
           {
             "Arn": {
@@ -645,7 +645,7 @@
       "Type": "AWS::Events::Rule",
       "Properties": {
         "ScheduleExpression": "cron(0 12 ? * MON-FRI *)",
-        "State": "DISABLED",
+        "State": "ENABLED",
         "Targets": [
           {
             "Arn": {
@@ -682,7 +682,7 @@
       "Type": "AWS::Events::Rule",
       "Properties": {
         "ScheduleExpression": "cron(0 11 ? * MON-FRI *)",
-        "State": "DISABLED",
+        "State": "ENABLED",
         "Targets": [
           {
             "Arn": {
@@ -719,7 +719,7 @@
       "Type": "AWS::Events::Rule",
       "Properties": {
         "ScheduleExpression": "cron(0 0 1 1 ? *)",
-        "State": "DISABLED",
+        "State": "ENABLED",
         "Targets": [
           {
             "Arn": {
@@ -752,11 +752,48 @@
         }
       }
     },
+    "AddDashsecurityDashpricingEventsRuleSchedule1": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(* 11-22 ? * MON-FRI *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "AddDashsecurityDashpricingLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "add-security-pricingSchedule"
+          }
+        ]
+      }
+    },
+    "AddDashsecurityDashpricingLambdaPermissionEventsRuleSchedule1": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "AddDashsecurityDashpricingLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "AddDashsecurityDashpricingEventsRuleSchedule1",
+            "Arn"
+          ]
+        }
+      }
+    },
     "SecurityDashpruningEventsRuleSchedule1": {
       "Type": "AWS::Events::Rule",
       "Properties": {
         "ScheduleExpression": "cron(0 7 ? * MON-FRI *)",
-        "State": "DISABLED",
+        "State": "ENABLED",
         "Targets": [
           {
             "Arn": {
@@ -1024,7 +1061,7 @@
     "AddDashmetaDashdataLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AddDashmetaDashdataLambdaVersionJt3PSEAZObIlxCYY8o62lrkRSBw7y8jeHbYIozO2c"
+        "Ref": "AddDashmetaDashdataLambdaVersionJRMYXeP6HdFBWnNNJKAh1E9TC3dowmhSeICsr2pUajY"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-AddDashmetaDashdataLambdaFunctionQualifiedArn"
@@ -1033,7 +1070,7 @@
     "AddDashholidaysLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AddDashholidaysLambdaVersionmTs58FUaeMei6EyssifMiPHDKQMon61ncfzs2v0QBc"
+        "Ref": "AddDashholidaysLambdaVersionsptf6iQ28SOpkXQFDE4P4p0S2POo7z7jlgMDjP1Zve0"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-AddDashholidaysLambdaFunctionQualifiedArn"
@@ -1042,7 +1079,7 @@
     "AddDashsecurityDashpricingLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AddDashsecurityDashpricingLambdaVersionEjZcaqniw8HEScZIrkwwAKjoBijLhXo6yEuMbGc1gec"
+        "Ref": "AddDashsecurityDashpricingLambdaVersionz8LwENrv33tkbHo1ipSv4s4NBA0rm8Dnbvnxlt0qI"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-AddDashsecurityDashpricingLambdaFunctionQualifiedArn"
@@ -1051,7 +1088,7 @@
     "SecurityDashpruningLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SecurityDashpruningLambdaVersionSxqP7uRVT0nhpCaWjiunIajefmvCaXCmwwJnvYs"
+        "Ref": "SecurityDashpruningLambdaVersionPNt0jn6CMbrIAj1DEDAAaRuDuDNitJ8BL3KzgerM"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-SecurityDashpruningLambdaFunctionQualifiedArn"
@@ -1060,7 +1097,7 @@
     "SpotifyLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SpotifyLambdaVersion0CzvdPjwDAm2e2Jtnn6WDXYkEytTgK96yFumHkNAY"
+        "Ref": "SpotifyLambdaVersion5dV9wlaMMq8PqkCdtEBuopeTVHVjimBqbqKdkbCbsXs"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-SpotifyLambdaFunctionQualifiedArn"
@@ -1069,7 +1106,7 @@
     "SubstackLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SubstackLambdaVersionIbAQOVfmqzXvn4Hc0vXChQo041Llu0ImwGOUaV8c"
+        "Ref": "SubstackLambdaVersionNFy4AST7D3ay2c8dEeRLG5FlM4GOvkM9l7Br8AJxXfA"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-SubstackLambdaFunctionQualifiedArn"
@@ -1078,7 +1115,7 @@
     "TwitterLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "TwitterLambdaVersiondqOpugqROIifAfaZ1dudNIA3ZZVhZVxeBZv0Vhdacw"
+        "Ref": "TwitterLambdaVersionT9qXE6mxk8fdzDJ9lllQkBsjlZ9x7t2yWyPNTRbWYKE"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-TwitterLambdaFunctionQualifiedArn"
@@ -1087,7 +1124,7 @@
     "YoutubeLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "YoutubeLambdaVersion9q4XJhr1UoetBV4moVLJVBIWBfxg02E1o1POaTFTag"
+        "Ref": "YoutubeLambdaVersionbqCsSd4zENXjnu0juCJwcxgDBf2NC9Nk72y0NGOic"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-YoutubeLambdaFunctionQualifiedArn"
