@@ -7,6 +7,7 @@ import Brokerage from "@tradingpost/common/brokerage/index";
 import bodyParser from "body-parser";
 
 const run = async () => {
+    console.log("Starting :D ")
     const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgp = pgPromise({});
     const pgClient = pgp({

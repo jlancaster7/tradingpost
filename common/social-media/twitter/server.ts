@@ -9,9 +9,6 @@ import { addTwitterUsersByToken } from ".";
 import {DefaultConfig} from "../../configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
-
-
-
 const redirectUri = 'http://localhost:19006/auth/twitter';
 
 (async () => {

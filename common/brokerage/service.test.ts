@@ -1370,6 +1370,10 @@ class MockRepo implements IBrokerageRepository {
     deleteTradingPostBrokerageTransactions(accountIds: number[]): Promise<void> {
         return Promise.resolve(undefined);
     }
+
+    deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds: number[]): Promise<void> {
+        return Promise.resolve(undefined);
+    }
 }
 
 test('holding history buy & sell', async () => {
