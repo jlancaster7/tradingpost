@@ -1,12 +1,13 @@
 import { AccountGroupHPRs, AccountGroupHPRsTable, FinicityAccount, FinicityHolding, FinicityInstitution, FinicityTransaction, FinicityUser, GetSecurityBySymbol, GetSecurityPrice, HistoricalHoldings, IBrokerageRepository, ISummaryRepository, SecurityHPRs, SecurityIssue, SecurityPrices, TradingPostAccountGroups, TradingPostAccountGroupStats, TradingPostAccountToAccountGroup, TradingPostBrokerageAccounts, TradingPostBrokerageAccountsTable, TradingPostBrokerageAccountWithFinicity, TradingPostCurrentHoldings, TradingPostCurrentHoldingsTable, TradingPostCurrentHoldingsTableWithSecurity, TradingPostCustomIndustry, TradingPostHistoricalHoldings, TradingPostInstitution, TradingPostInstitutionTable, TradingPostInstitutionWithFinicityInstitutionId, TradingPostTransactions, TradingPostTransactionsTable } from "./interfaces";
 import { IDatabase, IMain } from "pg-promise";
 import { DateTime } from "luxon";
-import { getUSExchangeHoliday } from "../market-data/interfaces";
+import { addSecurity, getUSExchangeHoliday } from "../market-data/interfaces";
 export default class Repository implements IBrokerageRepository, ISummaryRepository {
     private db;
     private readonly pgp;
     constructor(db: IDatabase<any>, pgp: IMain);
-    getSecurityPricesWithEndDateBySecurityIds: (endDate: DateTime, securityIds: number[]) => Promise<GetSecurityPrice[]>;
+    getCashSecurityId: () => Promise<GetSecurityBySymbol>;
+    getSecurityPricesWithEndDateBySecurityIds: (startDate: DateTime, endDate: DateTime, securityIds: number[]) => Promise<GetSecurityPrice[]>;
     getMarketHolidays: (endDate: DateTime) => Promise<getUSExchangeHoliday[]>;
     getTradingPostBrokerageAccount: (accountId: number) => Promise<TradingPostBrokerageAccountsTable>;
     getTradingPostBrokerageAccountCurrentHoldingsWithSecurity: (accountId: number) => Promise<TradingPostCurrentHoldingsTableWithSecurity[]>;
@@ -20,6 +21,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getInstitutions: () => Promise<TradingPostInstitutionTable[]>;
     getTradingPostInstitutionsWithFinicityInstitutionId: () => Promise<TradingPostInstitutionWithFinicityInstitutionId[]>;
     getTradingPostInstitutionByFinicityId: (finicityInstitutionId: number) => Promise<TradingPostInstitutionWithFinicityInstitutionId | null>;
+    addSecurity: (sec: addSecurity) => Promise<any>;
     upsertFinicityInstitution: (institution: FinicityInstitution) => Promise<number>;
     upsertFinicityInstitutions: (institutions: FinicityInstitution[]) => Promise<void>;
     getFinicityInstitutions: () => Promise<FinicityInstitution[]>;
@@ -58,4 +60,10 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     addAccountGroupReturns: (accountGroupReturns: AccountGroupHPRs[]) => Promise<number>;
     addBenchmarkReturns: (benchmarkReturns: SecurityHPRs[]) => Promise<number>;
     addAccountGroupSummary: (accountGroupSummary: TradingPostAccountGroupStats) => Promise<number>;
+    deleteFinicityHoldings: (accountIds: number[]) => Promise<void>;
+    deleteFinicityTransactions: (accountIds: number[]) => Promise<void>;
+    deleteFinicityAccounts: (accountIds: number[]) => Promise<void>;
+    deleteTradingPostBrokerageAccounts: (accountIds: number[]) => Promise<void>;
+    deleteTradingPostBrokerageTransactions: (accountIds: number[]) => Promise<void>;
+    deleteTradingPostBrokerageHoldings: (accountIds: number[]) => Promise<void>;
 }

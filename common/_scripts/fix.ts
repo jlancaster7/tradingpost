@@ -7,8 +7,6 @@ import {buildGroups} from '../../lambdas/market-data/utils'
 import {addSecurityPrice, getSecurityBySymbol} from "../market-data/interfaces";
 import IEX, {GetIntraDayPrices} from "../iex/index";
 
-;
-
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
 });

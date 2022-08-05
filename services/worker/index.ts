@@ -30,13 +30,22 @@ const run = async () => {
 
     app.get("/", (req: Request, res: Response) => {
         console.log("Request Made")
+        res.send({Hello: "World"})
     });
 
     app.post("/finicity/webhook", async (req: Request, res: Response) => {
-        if (req.body.eventType !== 'added') return res.send();
-        const {accounts, customerId} = req.body;
-        // const accountIds = accounts.map(acc => acc.id);
-        await brokerageService.newlyAuthenticatedBrokerage(customerId, 'finicity');
+        if (req.body.eventType === 'added') {
+            const {accounts, customerId} = req.body;
+            await brokerageService.newlyAuthenticatedBrokerage(customerId, 'finicity');
+        }
+
+        if (req.body.eventType === 'accountsDeleted') {
+            const {customerId, eventId, payload} = req.body
+            const {accounts} = payload;
+            await brokerageService.removeAccounts(customerId, accounts, 'finicity');
+        }
+
+        return res.send()
     });
 
     app.listen(port, function () {

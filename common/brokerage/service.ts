@@ -127,6 +127,14 @@ export default class BrokerageService {
         return await brokerage.generateBrokerageAuthenticationLink(userId);
     }
 
+    removeAccounts = async (brokerageCustomerId: string, accountIds: string[], brokerageId: string) => {
+        const brokerage = this.brokerageMap[brokerageId];
+        const tpAccountIds = await brokerage.removeAccounts(brokerageCustomerId, accountIds)
+        await this.repository.deleteTradingPostBrokerageTransactions(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageHoldings(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds)
+    }
+
     newlyAuthenticatedBrokerage = async (userId: string, brokerageId: string) => {
         const brokerage = this.brokerageMap[brokerageId];
 
@@ -316,18 +324,18 @@ export default class BrokerageService {
     }
 
     getSecurityPrices = async (securityIds: number[], startDate: DateTime, endDate: DateTime): Promise<Record<number, GetSecurityPrice[]>> => {
-        const securityPrices = await this.repository.getSecurityPricesWithEndDateBySecurityIds(startDate.set({
-            minute: 0,
-            second: 0,
-            hour: 0,
-            millisecond: 0,
-        }), endDate.set({
-            minute: 0,
-            second: 0,
-            hour: 0,
-            millisecond: 0
-        }), securityIds)
-
+        const securityPrices = await this.repository.getSecurityPricesWithEndDateBySecurityIds(
+            endDate.set({
+                minute: 0,
+                second: 0,
+                hour: 0,
+                millisecond: 0
+            }), startDate.set({
+                minute: 0,
+                second: 0,
+                hour: 0,
+                millisecond: 0,
+            }), securityIds)
         let securityPricesMap: Record<number, GetSecurityPrice[]> = {}
         for (const sp of securityPrices) {
             let sps = securityPricesMap[sp.securityId];
@@ -365,9 +373,8 @@ export default class BrokerageService {
     }
 
     getClosestPrice = (securityPricesMap: Record<number, GetSecurityPrice[]>, securityId: number, postingDate: DateTime): number | null => {
-        // TODO: How should we handle private security?
         const securityPrices = securityPricesMap[securityId];
-        if (!securityPricesMap) throw new Error("no prices found for security")
+        if (!securityPrices) return null
 
         const postingDateUnix = postingDate.startOf('day').toUnixInteger()
         for (let sp of securityPrices) {
