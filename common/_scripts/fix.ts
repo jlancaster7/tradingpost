@@ -18,7 +18,7 @@ pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
 });
 
 // const getTradingMap = async (client: Knex) => {
-//     const response = await client('us_exchange_holidays')
+//     const response = await client('us_exchange_holiday')
 //         .orderBy('date').select('date');
 //
 //     let holidayMap: Record<string, unknown> = {};

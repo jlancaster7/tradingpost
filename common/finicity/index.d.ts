@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { PartnerAuthenticationResponse, AddCustomerResponse, GetCustomersResponse, AddConsumerRequest, GenerateLinkResponse, GetInstitutions, GetConsumerResponse, AddConsumerResponse, GetCustomerAccountsResponse, GetCustomerAccountByIdResponse, GetAccountOwner, GetAllCustomerTransactions } from "./interfaces";
+import { PartnerAuthenticationResponse, AddCustomerResponse, GetCustomersResponse, AddConsumerRequest, GenerateLinkResponse, GetInstitutions, GetConsumerResponse, AddConsumerResponse, GetCustomerAccountsResponse, GetCustomerAccountByIdResponse, GetAccountOwner, GetAllCustomerTransactions, GetInstitution, GetAccountAndHoldings } from "./interfaces";
 export default class Finicity {
     partnerId: string;
     partnerSecret: string;
@@ -15,6 +15,7 @@ export default class Finicity {
      * works for 2hrs, if exceeds 90 mins then re-authenticate
      */
     partnerAuthentication: () => Promise<PartnerAuthenticationResponse>;
+    getInstitution: (institutionId: number) => Promise<GetInstitution>;
     getInstitutions: (start: number, limit: number) => Promise<GetInstitutions>;
     addTestCustomer: (username: string) => Promise<AddCustomerResponse>;
     getConsumer: (customerId: string) => Promise<GetConsumerResponse>;
@@ -27,6 +28,7 @@ export default class Finicity {
     refreshCustomerAccounts: (customerId: string) => Promise<GetCustomerAccountsResponse[]>;
     loadHistoricTransactionsForCustomerAccount: (customerId: string, accountId: string) => Promise<void>;
     getAccountOwner: (customerId: string, accountId: string) => Promise<GetAccountOwner>;
+    getAccountAndHoldings: (customerId: string, accountId: string) => Promise<GetAccountAndHoldings>;
     getAllCustomerTransactions: (customerId: string, params: {
         fromDate: number;
         toDate: number;

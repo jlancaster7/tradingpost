@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WatchlistItem = exports.Watchlist = exports.User = exports.Upvote = exports.Subscriber = exports.Post = exports.PlatformClaim = exports.Comment = exports.Bookmark = exports.Alert = void 0;
+exports.WatchlistSaved = exports.WatchlistItem = exports.Watchlist = exports.User = exports.Upvote = exports.Subscriber = exports.Post = exports.PlatformClaim = exports.Comment = exports.Bookmark = exports.Alert = void 0;
 const Dummy = __importStar(require("../extensions"));
 exports.Alert = Dummy;
 exports.Bookmark = Dummy;
@@ -33,5 +33,7 @@ exports.Post = __importStar(require("../extensions/Post"));
 exports.Subscriber = Dummy;
 exports.Upvote = Dummy;
 exports.User = __importStar(require("../extensions/User"));
-exports.Watchlist = Dummy;
+exports.Watchlist = __importStar(require("../extensions/Watchlist"));
 exports.WatchlistItem = Dummy;
+exports.WatchlistSaved = Dummy;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiZXh0ZW5zaW9ucy5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbImV4dGVuc2lvbnMudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFBQSxxREFBdUM7QUFDMUIsUUFBQSxLQUFLLEdBQUcsS0FBSyxDQUFBO0FBQ2IsUUFBQSxRQUFRLEdBQUcsS0FBSyxDQUFBO0FBQ2hCLFFBQUEsT0FBTyxHQUFHLEtBQUssQ0FBQTtBQUNmLFFBQUEsYUFBYSxHQUFHLEtBQUssQ0FBQTtBQUNsQywyREFBMEM7QUFDN0IsUUFBQSxVQUFVLEdBQUcsS0FBSyxDQUFBO0FBQ2xCLFFBQUEsTUFBTSxHQUFHLEtBQUssQ0FBQTtBQUMzQiwyREFBMEM7QUFDMUMscUVBQW9EO0FBQ3ZDLFFBQUEsYUFBYSxHQUFHLEtBQUssQ0FBQTtBQUNyQixRQUFBLGNBQWMsR0FBRyxLQUFLLENBQUEifQ==

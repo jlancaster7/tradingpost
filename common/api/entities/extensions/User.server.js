@@ -15,42 +15,48 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const _1 = require(".");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const UserApi_1 = __importDefault(require("../apis/UserApi"));
-const finicity_1 = require("../../../brokerage/finicity");
+const brokerage_1 = __importDefault(require("../../../brokerage"));
 const configuration_1 = require("../../../configuration");
 const pg_promise_1 = __importDefault(require("pg-promise"));
-const finicity_2 = __importDefault(require("../../../finicity"));
-const repository_1 = __importDefault(require("../../../brokerage/repository"));
-const transformer_1 = require("../../../brokerage/finicity/transformer");
+const finicity_1 = __importDefault(require("../../../finicity"));
+//import FinicityTransformer from '../../../brokerage/finicity/transformer'
+const pool_1 = require("../static/pool");
+const index_1 = require("../../../social-media/twitter/index");
 const client = new client_s3_1.S3Client({
     region: "us-east-1"
 });
+//Really should think about how to default this... we dont need to pass this everywhere all the time... 
+//it just makes it harder to manage .. we should just have settings based on prod vs. dev etc.
+const dbStuff = (() => __awaiter(void 0, void 0, void 0, function* () {
+    const pgCfg = yield configuration_1.DefaultConfig.fromCacheOrSSM("postgres");
+    const pgp = (0, pg_promise_1.default)({});
+    const pgClient = pgp({
+        host: pgCfg.host,
+        user: pgCfg.user,
+        password: pgCfg.password,
+        database: pgCfg.database
+    });
+    yield pgClient.connect();
+    return {
+        pgp,
+        pgClient
+    };
+}))();
+let finicityService;
 exports.default = (0, _1.ensureServerExtensions)({
     generateBrokerageLink: (req) => __awaiter(void 0, void 0, void 0, function* () {
-        const pgCfg = yield configuration_1.DefaultConfig.fromCacheOrSSM("postgres");
-        const pgp = (0, pg_promise_1.default)({});
-        const pgClient = pgp({
-            host: pgCfg.host,
-            user: pgCfg.user,
-            password: pgCfg.password,
-            database: pgCfg.database
-        });
-        yield pgClient.connect();
-        const repository = new repository_1.default(pgClient, pgp);
-        const finicityCfg = yield configuration_1.DefaultConfig.fromCacheOrSSM("finicity");
-        const finicity = new finicity_2.default(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-        const finicityService = new finicity_1.FinicityService(finicity, repository, new transformer_1.FinicityTransformer({
-            getFinicityInstitutions() {
-                throw new Error("Method Not Implemented");
-            },
-            getSecuritiesWithIssue() {
-                throw new Error("Method Not Implemented");
-            },
-            getTradingPostAccountsWithFinicityNumber(userId) {
-                throw new Error("Method Not Implemented");
-            },
-        }));
+        //TODO: make this use a better pardigm... is a pool being used? Alternatively Maybe we ensure this loads when the server gets up and running.
+        if (!finicityService) {
+            const { pgClient, pgp } = yield dbStuff;
+            const finicityCfg = yield configuration_1.DefaultConfig.fromCacheOrSSM("finicity");
+            const finicity = new finicity_1.default(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
+            yield finicity.init();
+            finicityService = new brokerage_1.default(pgClient, pgp, finicity);
+        }
+        //console.log(typeof test);
+        //console.log(JSON.stringify(test));
         return {
-            link: finicityService.generateBrokerageAuthenticationLink(req.extra.userId)
+            link: yield finicityService.generateBrokerageAuthenticationLink(req.extra.userId, "finicity")
         };
     }),
     uploadProfilePic: (req) => __awaiter(void 0, void 0, void 0, function* () {
@@ -70,5 +76,44 @@ exports.default = (0, _1.ensureServerExtensions)({
                 message: "Unathorized",
                 code: 401
             };
+    }),
+    getBrokerageAccounts: (r) => __awaiter(void 0, void 0, void 0, function* () {
+        return (0, pool_1.execProc)("public.api_brokerage_account", {
+            user_id: r.extra.userId,
+            data: {}
+        });
+    }),
+    initBrokerageAccounts: () => __awaiter(void 0, void 0, void 0, function* () {
+        return [];
+    }),
+    linkSocialAccount: (req) => __awaiter(void 0, void 0, void 0, function* () {
+        if (req.body.platform === "twitter") {
+            const info = yield fetch("https://api.twitter.com/2/oauth2/token", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    code: req.body.code,
+                    grant_type: "authorization_code",
+                    client_id: "cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ",
+                    redirect_uri: 'http://localhost:19006/auth/twitter',
+                    code_verifier: req.body.challenge
+                }),
+            });
+            const authResp = (yield info.json());
+            const { pgClient, pgp } = yield dbStuff;
+            const config = yield configuration_1.DefaultConfig.fromCacheOrSSM("twitter");
+            const handle = yield (0, index_1.addTwitterUsersByToken)([{
+                    accessToken: authResp.access_token,
+                    expiration: new Date(authResp.expires_in),
+                    refreshToken: authResp.refresh_token,
+                    userId: req.extra.userId
+                }], pgClient, pgp, config);
+            return handle[0].username;
+        }
+        else
+            return "";
     })
 });
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiVXNlci5zZXJ2ZXIuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJVc2VyLnNlcnZlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7OztBQUNBLHdCQUEwQztBQUMxQyxrREFBZ0U7QUFDaEUsOERBQXNEO0FBQ3RELG1FQUEwQztBQUMxQywwREFBdUQ7QUFDdkQsNERBQW1DO0FBQ25DLGlFQUF5QztBQUV6QywyRUFBMkU7QUFDM0UseUNBQTBDO0FBQzFDLCtEQUE0RTtBQVU1RSxNQUFNLE1BQU0sR0FBRyxJQUFJLG9CQUFRLENBQUM7SUFDeEIsTUFBTSxFQUFFLFdBQVc7Q0FDdEIsQ0FBQyxDQUFDO0FBRUgsd0dBQXdHO0FBQ3hHLDhGQUE4RjtBQUU5RixNQUFNLE9BQU8sR0FBRyxDQUFDLEdBQVMsRUFBRTtJQUN4QixNQUFNLEtBQUssR0FBRyxNQUFNLDZCQUFhLENBQUMsY0FBYyxDQUFDLFVBQVUsQ0FBQyxDQUFDO0lBQzdELE1BQU0sR0FBRyxHQUFHLElBQUEsb0JBQVMsRUFBQyxFQUFFLENBQUMsQ0FBQztJQUMxQixNQUFNLFFBQVEsR0FBRyxHQUFHLENBQUM7UUFDakIsSUFBSSxFQUFFLEtBQUssQ0FBQyxJQUFJO1FBQ2hCLElBQUksRUFBRSxLQUFLLENBQUMsSUFBSTtRQUNoQixRQUFRLEVBQUUsS0FBSyxDQUFDLFFBQVE7UUFDeEIsUUFBUSxFQUFFLEtBQUssQ0FBQyxRQUFRO0tBQzNCLENBQUMsQ0FBQztJQUVILE1BQU0sUUFBUSxDQUFDLE9BQU8sRUFBRSxDQUFDO0lBQ3pCLE9BQU87UUFDSCxHQUFHO1FBQ0gsUUFBUTtLQUNYLENBQUE7QUFDTCxDQUFDLENBQUEsQ0FBQyxFQUFFLENBQUE7QUFHSixJQUFJLGVBQTBCLENBQUM7QUFDL0Isa0JBQWUsSUFBQSx5QkFBc0IsRUFBTztJQUN4QyxxQkFBcUIsRUFBRSxDQUFPLEdBQUcsRUFBRSxFQUFFO1FBQ2pDLDZJQUE2STtRQUM3SSxJQUFJLENBQUMsZUFBZSxFQUFF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

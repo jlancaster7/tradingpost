@@ -45,6 +45,8 @@ var auth_1 = require("@tradingpost/common/api/auth");
 var jsonwebtoken_1 = require("jsonwebtoken");
 var configuration_1 = require("@tradingpost/common/configuration");
 var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
+var cache_1 = require("@tradingpost/common/api/cache");
+var UserApi_1 = __importDefault(require("@tradingpost/common/api/entities/apis/UserApi"));
 var router = express_1.default.Router();
 var baseFormat = '/:entity/:action';
 //TODO: need to throw errros that will set the status number. (401 in this case)
@@ -164,7 +166,7 @@ makeRoute("/authapi/create", function (req) { return __awaiter(void 0, void 0, v
     });
 }); });
 makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, void 0, function () {
-    var info;
+    var info, login;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, decodeToken(req, true)];
@@ -178,14 +180,17 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
                         last_name: req.body.last_name,
                         handle: req.body.handle
                     })];
-            case 2: return [2 /*return*/, _a.sent()];
+            case 2:
+                login = _a.sent();
+                (0, cache_1.cacheMonitor)(UserApi_1.default, "insert", login.user_id, {});
+                return [2 /*return*/, login];
         }
     });
 }); });
-//ALL RUOTES
+//ALL ROUTES
 makeRoute(baseFormat, function (req) {
     return sharedHandler(req, function (entity) { return __awaiter(void 0, void 0, void 0, function () {
-        var info, internalHandler, settings;
+        var info, internalHandler, settings, responseData, responseData;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, decodeToken(req)];
@@ -194,18 +199,32 @@ makeRoute(baseFormat, function (req) {
                     //need to add to info about requests;
                     req.extra = { userId: info.sub };
                     internalHandler = entity.internal[req.params.action];
-                    if (!(req.params.action !== "extensions" && internalHandler)) return [3 /*break*/, 3];
+                    if (!(req.params.action !== "extensions" && internalHandler)) return [3 /*break*/, 4];
                     settings = {
                         user_id: info.sub,
                         data: req.body
                     };
-                    return [4 /*yield*/, internalHandler(settings)];
-                case 2: return [2 /*return*/, _a.sent()];
+                    return [4 /*yield*/, internalHandler(settings)
+                        //will type better in the future by should not be needed right now
+                    ];
+                case 2:
+                    responseData = _a.sent();
+                    //will type better in the future by should not be needed right now
+                    return [4 /*yield*/, (0, cache_1.cacheMonitor)(entity, req.params.action, info.sub, responseData)];
                 case 3:
-                    if (!entity.internal.extensions[req.params.action]) return [3 /*break*/, 5];
+                    //will type better in the future by should not be needed right now
+                    _a.sent();
+                    return [2 /*return*/, responseData];
+                case 4:
+                    if (!entity.internal.extensions[req.params.action]) return [3 /*break*/, 7];
                     return [4 /*yield*/, entity.internal.extensions[req.params.action](req)];
-                case 4: return [2 /*return*/, _a.sent()];
-                case 5: throw new EntityApiBase_1.PublicError("Unknown Action", 400);
+                case 5:
+                    responseData = _a.sent();
+                    return [4 /*yield*/, (0, cache_1.cacheMonitor)(entity, req.params.action, info.sub, responseData)];
+                case 6:
+                    _a.sent();
+                    return [2 /*return*/, responseData];
+                case 7: throw new EntityApiBase_1.PublicError("Unknown Action", 400);
             }
         });
     }); });

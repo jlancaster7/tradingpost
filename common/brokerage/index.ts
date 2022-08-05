@@ -3,7 +3,7 @@ import Repository from "./repository";
 import BrokerageService from "./service";
 import FinicityService from "./finicity"
 import Finicity from "../finicity";
-import {FinicityTransformer} from "./finicity/transformer";
+import FinicityTransformer from "./finicity/transformer";
 import {PortfolioSummaryService} from "./portfolio-summary";
 
 export default class Brokerage extends BrokerageService {

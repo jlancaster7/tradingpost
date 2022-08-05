@@ -1,3 +1,5 @@
+import { IUserList, IWatchlistList } from "../interfaces"
+
 export interface ISecurityGet {
     id: number,
     symbol: string,
@@ -12,6 +14,7 @@ export interface ISecurityList {
     security_name: string
     company_name: string
     logo_url: string
+    is_benchmark: boolean
 }
 
 export interface IAnalystProfile {
@@ -30,6 +33,7 @@ export interface IElasticPost {
     _id: string,
     _score: number,
     _source: {
+        id: string,
         content: {
             body: string,
             description: string,
@@ -48,7 +52,7 @@ export interface IElasticPost {
         ,
         platformCreatedAt: string,
         platformUpdatedAt: null,
-        postType: 'tweet'|'spotify'|'substack'|'youtube',
+        postType: 'tweet' | 'spotify' | 'substack' | 'youtube',
         postTypeValue: number,
         postUrl: string,
         ratingsCount: 0,
@@ -67,3 +71,13 @@ export interface IElasticPost {
         }
     }
 }
+
+export type IElasticPostExt = IElasticPost & {
+    ext: {
+        user?: IUserList,
+        is_bookmarked?: boolean,
+        is_upvoted?: boolean
+    }
+}
+
+export type AllWatchlists = { quick: IWatchlistList, created: IWatchlistList[], saved: IWatchlistList[] }

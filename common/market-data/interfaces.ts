@@ -9,6 +9,16 @@ export interface addSecurityPrice {
     time: Date
 }
 
+export interface securityPrice {
+    id: number
+    high: number
+    low: number
+    open: number
+    price: number
+    time: DateTime
+    createdAt: DateTime
+}
+
 export interface upsertSecuritiesInformation {
     securityId: number
     calculationPrice: string | null
@@ -126,27 +136,6 @@ export interface getUSExchangeHoliday {
 export interface getSecurityWithLatestPrice {
     id: number
     symbol: string
-    companyName: string
-    exchange: string
-    industry: string
-    website: string
-    description: string
-    ceo: string
-    securityName: string
-    issueType: string
-    sector: string
-    primarySicCode: string
-    employees: string
-    tags: string[]
-    address: string
-    address2: string
-    state: string
-    zip: string
-    country: string
-    phone: string
-    logoUrl: string
-    lastUpdated: DateTime
-    createdAt: DateTime
     latestTime: DateTime
     latestPrice: number
     latestHigh: number

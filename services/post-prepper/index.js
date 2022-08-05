@@ -108,8 +108,6 @@ let jobs = [];
                     const checkCompletion = () => __awaiter(void 0, void 0, void 0, function* () {
                         tryCount--;
                         const doneCount = yield page.evaluate(() => {
-                            //const isDone = document.querySelectorAll("div.twitter-tweet-rendered").length === ;
-                            //console.log("IS DONE IS " + isDone);
                             let doneCount = {};
                             document.querySelectorAll(".tracker").forEach((tracker) => {
                                 const trackerId = tracker.dataset.trackerId;

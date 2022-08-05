@@ -27,6 +27,7 @@ export default class Repository {
     }
 
     upsertSecuritiesPrices = async (securityPrices: addSecurityPrice[]) => {
+        if (securityPrices.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'security_id', prop: 'securityId'},
             {name: 'high', prop: 'high'},
@@ -39,7 +40,7 @@ export default class Repository {
         await this.db.none(query);
     }
 
-    getUsExchangedListSecuritiesWithPricing = async (): Promise<getSecurityWithLatestPrice[]> => {
+    getUsExchangeListedSecuritiesWithPricing = async (): Promise<getSecurityWithLatestPrice[]> => {
         const data = await this.db.query(`
             WITH latest_pricing AS (SELECT sp.security_id,
                                            sp.high,
@@ -58,27 +59,6 @@ export default class Repository {
                                                                 AND max_prices.time = sp.time)
             SELECT id,
                    symbol,
-                   company_name,
-                   exchange,
-                   industry,
-                   website,
-                   description,
-                   ceo,
-                   security_name,
-                   issue_type,
-                   sector,
-                   primary_sic_code,
-                   employees,
-                   tags,
-                   address,
-                   address2,
-                   state,
-                   zip,
-                   country,
-                   phone,
-                   logo_url,
-                   last_updated,
-                   created_at,
                    lp.time  latest_time,
                    lp.price latest_price,
                    lp.high  latest_high_price,
@@ -88,33 +68,13 @@ export default class Repository {
                      LEFT JOIN
                  latest_pricing lp ON
                      lp.security_id = s.id
-            WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
-                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC') AND enable_utp = FALSE;`)
+            WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
+                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
+              AND enable_utp = FALSE;`)
         return data.map((row: any) => {
             let obj: getSecurityWithLatestPrice = {
                 id: row.id,
                 symbol: row.symbol,
-                companyName: row.company_name,
-                exchange: row.exchange,
-                industry: row.industry,
-                website: row.website,
-                description: row.description,
-                ceo: row.ceo,
-                securityName: row.security_name,
-                issueType: row.issue_type,
-                sector: row.sector,
-                primarySicCode: row.primary_sic_code,
-                employees: row.employees,
-                tags: row.tags,
-                address: row.address,
-                address2: row.address2,
-                state: row.state,
-                zip: row.zip,
-                country: row.country,
-                phone: row.phone,
-                logoUrl: row.logoUrl,
-                lastUpdated: DateTime.fromJSDate(row.last_updated),
-                createdAt: DateTime.fromJSDate(row.created_at),
                 latestTime: DateTime.fromJSDate(row.latest_time),
                 latestPrice: row.latest_price,
                 latestHigh: row.latest_high,
@@ -151,8 +111,9 @@ export default class Repository {
                    last_updated,
                    created_at
             FROM security
-            WHERE exchange IN ('Cash', 'CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
-                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC');`)
+            WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
+                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
+              AND enable_utp = FALSE;`)
         return data.map((row: any) => {
             let obj: getSecurityBySymbol = {
                 id: row.id,
@@ -490,7 +451,7 @@ export default class Repository {
                    last_updated,
                    created_at
             FROM security
-            WHERE symbol IN ($1);`, [symbols])
+            WHERE symbol IN ($1:list);`, [symbols])
         return data.map((row: any) => {
             let obj: getSecurityBySymbol = {
                 id: row.id,
@@ -673,7 +634,7 @@ export default class Repository {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'date', prop: 'date'},
             {name: 'settlement_date', prop: 'settlementDate'},
-        ], {table: 'us_exchange_holidays'})
+        ], {table: 'us_exchange_holiday'})
         const query = this.pgp.helpers.insert(holidays, cs) + ` ON CONFLICT DO NOTHING`;
         await this.db.none(query)
     }
@@ -684,7 +645,7 @@ export default class Repository {
                    date,
                    settlement_date,
                    created_at
-            FROM us_exchange_holidays;`)
+            FROM us_exchange_holiday;`)
         return data.map((row: any) => {
             let obj: getUSExchangeHoliday = {
                 id: row.id,
@@ -702,7 +663,7 @@ export default class Repository {
                    date,
                    settlement_date,
                    created_at
-            FROM us_exchange_holidays;`)
+            FROM us_exchange_holiday;`)
         return data.map((row: any) => {
             let obj: getUSExchangeHoliday = {
                 id: row.id,

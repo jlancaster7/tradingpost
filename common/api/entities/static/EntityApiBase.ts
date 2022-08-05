@@ -59,13 +59,14 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
         });
         return EntityApiBase.handleFetchResponse<TGet>(resp);
     }
-    async list() {
-        const resp = await fetch(this.makeUrl("list"), {
-            method: "POST",
-            headers: EntityApiBase.makeHeaders()
-        });
-        return EntityApiBase.handleFetchResponse<TList[]>(resp);
-    }
+    // async list(ids?: (string | number)[]) {
+    //     const resp = await fetch(this.makeUrl("list"), {
+    //         method: "POST",
+    //         headers: EntityApiBase.makeHeaders(),
+    //         body: ids ? JSON.stringify({ ids }) : undefined
+    //     });
+    //     return EntityApiBase.handleFetchResponse<TList[]>(resp);
+    // }
 
     async insert(item: TInsert) {
         const resp = await fetch(this.makeUrl("insert"), {

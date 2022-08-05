@@ -190,7 +190,8 @@ CREATE UNIQUE INDEX user_devices_user_id_device_id_idx ON user_device (user_id, 
 CREATE TABLE tradingpost_institution
 (
     id                       BIGSERIAL                 NOT NULL,
-    name                     TEXT UNIQUE               NOT NULL,
+    external_id              TEXT UNIQUE               NOT NULL,
+    name                     TEXT                      NOT NULL,
     account_type_description TEXT,
     phone                    TEXT,
     url_home_app             TEXT,
@@ -222,10 +223,12 @@ CREATE TABLE finicity_institution
     state_agg                   BOOLEAN,
     ach                         BOOLEAN,
     trans_agg                   BOOLEAN,
+    aha                         BOOLEAN,
     available_balance           BOOLEAN,
     account_owner               BOOLEAN,
     loan_payment_details        BOOLEAN,
     student_loan_data           BOOLEAN,
+    account_type_description    TEXT,
     phone                       TEXT,
     url_home_app                TEXT,
     url_logon_app               TEXT,
@@ -361,7 +364,7 @@ CREATE TABLE finicity_holding
 CREATE TABLE finicity_transaction
 (
     id                                   BIGSERIAL                               NOT NULL,
-    finicity_account_id                  BIGINT REFERENCES finicity_account (id) NOT NULL,
+    internal_finicity_account_id         BIGINT REFERENCES finicity_account (id) NOT NULL,
     transaction_id                       BIGINT                                  NOT NULL UNIQUE,
     amount                               DECIMAL(24, 4),
     account_id                           TEXT,
@@ -369,45 +372,21 @@ CREATE TABLE finicity_transaction
     status                               TEXT,
     description                          TEXT,
     memo                                 TEXT,
-    -- atm, cash, check, credit, debit, deposit, directDebit, directDeposit, dividend, fee, interest, other, payment,
-    -- pointOfSale,repeatPayment,serviceCharge,transfer
     type                                 TEXT,
-    interest_amount                      DECIMAL(24, 4),
-    principal_amount                     DECIMAL(24, 4),
-    fee_amount                           DECIMAL(24, 4),
-    escrow_amount                        DECIMAL(24, 4),
     unit_quantity                        DECIMAL(24, 4),
+    fee_amount                           DECIMAL(24, 4),
+    cusip_no                             TEXT,
     posted_date                          BIGINT,
     transaction_date                     BIGINT,
     created_date                         BIGINT,
     categorization_normalized_payee_name TEXT,
     categorization_category              TEXT,
-    categorization_city                  TEXT,
-    categorization_state                 TEXT,
-    categorization_postal_code           TEXT,
     categorization_country               TEXT,
     categorization_best_representation   TEXT,
-    running_balance_amount               DECIMAL(24, 4),
-    check_num                            BIGINT,
-    income_type                          TEXT,
-    subaccount_security_type             TEXT,
     commission_amount                    DECIMAL(24, 4),
-    split_denominator                    DECIMAL(24, 4),
-    split_numerator                      DECIMAL(24, 4),
-    shares_per_contract                  DECIMAL(24, 4),
-    taxes_amount                         DECIMAL(24, 4),
-    unit_price                           DECIMAL(24, 4),
-    currency_symbol                      TEXT,
-    sub_account_fund                     TEXT,
     ticker                               TEXT,
-    security_id                          TEXT,
-    security_id_type                     TEXT,
-    -- Investment Types: cancel, purchaseToClose, purchaseToCover, contribution, optionExercise, optionExpiration,
-    -- fee, soldToClose, soldToOpen, split, transfer, returnOfCapital, income, purchase, sold, dividendReinvest, tax,
-    -- dividend, reinvestOfIncome, interest, deposit, otherInfo
-    investment_transaction_type          TEXT,
-    effective_date                       TEXT,
-    first_effective_date                 TEXT,
+    unit_price                           DECIMAL(24, 4),
+    investment_transaction_type          TEXT                                    NOT NULL,
     updated_at                           TIMESTAMPTZ DEFAULT NOW()               NOT NULL,
     created_at                           TIMESTAMPTZ DEFAULT NOW()               NOT NULL,
     PRIMARY KEY (id)
@@ -575,7 +554,10 @@ ALTER TABLE security_price
     ADD COLUMN high DECIMAL(24, 4);
 ALTER TABLE security_price
     ADD COLUMN low DECIMAL(24, 4);
+
 DROP INDEX security_price_idx;
+
 CREATE UNIQUE INDEX security_price_idx ON security_price (security_id, time DESC);
 CREATE INDEX security_price_idx_time ON security_price (time DESC);
-ALTER TABLE security ADD COLUMN enable_utp BOOLEAN DEFAULT FALSE;
+ALTER TABLE security
+    ADD COLUMN enable_utp BOOLEAN DEFAULT FALSE;

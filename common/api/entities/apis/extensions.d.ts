@@ -7,5 +7,6 @@ export * as Post from '../extensions/Post';
 export declare const Subscriber: typeof Dummy;
 export declare const Upvote: typeof Dummy;
 export * as User from '../extensions/User';
-export declare const Watchlist: typeof Dummy;
+export * as Watchlist from '../extensions/Watchlist';
 export declare const WatchlistItem: typeof Dummy;
+export declare const WatchlistSaved: typeof Dummy;
