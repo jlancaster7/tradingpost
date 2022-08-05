@@ -27,7 +27,7 @@ import {
     TradingPostInstitutionTable,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
-    TradingPostTransactionsTable
+    TradingPostTransactionsTable, TradingPostUser
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -942,6 +942,70 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    created_at
             FROM finicity_user
             WHERE tp_user_id = $1`, [userId]);
+        if (!response) return null;
+        return {
+            id: response.id,
+            tpUserId: response.tp_user_id,
+            customerId: response.customer_id,
+            type: response.type,
+            updatedAt: DateTime.fromJSDate(response.updated_at),
+            createdAt: DateTime.fromJSDate(response.created_at)
+        }
+    }
+
+    getTradingPostUserByFinicityCustomerId = async (finicityCustomerId: string): Promise<TradingPostUser | null> => {
+        const query = `
+            SELECT du.id,
+                   du.first_name,
+                   du.last_name,
+                   du.handle,
+                   du.email,
+                   du.profile_url,
+                   du.settings,
+                   du.bio,
+                   du.banner_url,
+                   du.tags,
+                   du.created_at,
+                   du.updated_at,
+                   du.analyst_profile,
+                   du.has_profile_pic,
+                   du.dummy
+            FROM data_user du
+                     INNER JOIN
+                 finicity_user fu
+                 ON fu.tp_user_id = du.id
+            WHERE fu.customer_id = $1;`
+        const row: any = this.db.oneOrNone(query, [finicityCustomerId]);
+        if (!row) return null;
+        return {
+            id: row.id,
+            bio: row.bio,
+            analystProfile: row.analyst_profile,
+            bannerUrl: row.banner_url,
+            createdAt: DateTime.fromJSDate(row.created_at),
+            updatedAt: DateTime.fromJSDate(row.updated_at),
+            dummy: row.dummy,
+            email: row.email,
+            firstName: row.first_name,
+            handle: row.handle,
+            hasProfilePic: row.has_profile_pic,
+            lastName: row.last_name,
+            profileUrl: row.profile_url,
+            tags: row.tags,
+            settings: row.settings
+        }
+    }
+
+    getFinicityUserByFinicityCustomerId = async (customerId: string): Promise<FinicityUser | null> => {
+        const response = await this.db.oneOrNone(`
+            SELECT id,
+                   tp_user_id,
+                   customer_id,
+                   type,
+                   updated_at,
+                   created_at
+            FROM finicity_user
+            WHERE customer_id = $1`, [customerId]);
         if (!response) return null;
         return {
             id: response.id,
@@ -1950,7 +2014,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     deleteFinicityTransactions = async (accountIds: number[]): Promise<void> => {
         const query = `DELETE
                        FROM FINICITY_TRANSACTION
-                       WHERE account_id IN ($1:list);`;
+                       WHERE internal_finicity_account_id IN ($1:list);`;
         await this.db.none(query, [accountIds])
     }
 
@@ -1970,14 +2034,21 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     deleteTradingPostBrokerageTransactions = async (accountIds: number[]): Promise<void> => {
         const query = `DELETE
-                       FROM tradingpost_transactions
+                       FROM tradingpost_transaction
                        WHERE account_id IN ($1:list)`
         await this.db.none(query, [accountIds]);
     }
 
     deleteTradingPostBrokerageHoldings = async (accountIds: number[]): Promise<void> => {
         const query = `DELETE
-                       FROM tradingpost_holdings
+                       FROM TRADINGPOST_CURRENT_HOLDING
+                       WHERE account_id IN ($1:list)`
+        await this.db.none(query, [accountIds]);
+    }
+
+    deleteTradingPostBrokerageHistoricalHoldings = async (accountIds: number[]): Promise<void> => {
+        const query = `DELETE
+                       FROM TRADINGPOST_HISTORICAL_HOLDING
                        WHERE account_id IN ($1:list)`
         await this.db.none(query, [accountIds]);
     }

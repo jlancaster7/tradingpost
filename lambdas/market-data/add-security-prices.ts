@@ -126,7 +126,10 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
         }
 
         const intradayPrices = (response[symbol]['intraday-prices'] as GetIntraDayPrices[])
-        if (intradayPrices.length <= 0) continue
+        if (intradayPrices.length <= 0) {
+            console.error(`no intraday prices available for symbol ${symbol}`)
+            continue
+        }
 
         const mostRecentPriceAvail = intradayPrices[intradayPrices.length - 1];
         const mostRecentPriceTimeAvail = DateTime.fromFormat(`${mostRecentPriceAvail.date} ${mostRecentPriceAvail.minute}`, "yyyy-LL-dd HH:mm", {

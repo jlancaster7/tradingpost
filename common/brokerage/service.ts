@@ -133,24 +133,26 @@ export default class BrokerageService {
         await this.repository.deleteTradingPostBrokerageTransactions(tpAccountIds)
         await this.repository.deleteTradingPostBrokerageHoldings(tpAccountIds)
         await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds)
     }
 
-    newlyAuthenticatedBrokerage = async (userId: string, brokerageId: string) => {
+    newlyAuthenticatedBrokerage = async (brokerageUserId: string, brokerageId: string) => {
         const brokerage = this.brokerageMap[brokerageId];
+        const tradingPostUser = await brokerage.getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId);
 
-        const accounts = await brokerage.importAccounts(userId);
+        const accounts = await brokerage.importAccounts(brokerageUserId);
         await this.repository.upsertTradingPostBrokerageAccounts(accounts)
 
-        const holdings = await brokerage.importHoldings(userId);
+        const holdings = await brokerage.importHoldings(brokerageUserId);
         await this.repository.upsertTradingPostCurrentHoldings(holdings);
 
-        const transactions = await brokerage.importTransactions(userId);
+        const transactions = await brokerage.importTransactions(brokerageUserId);
         await this.repository.upsertTradingPostTransactions(transactions);
 
         const start = DateTime.now().setZone("America/New_York");
         const end = start.minus({month: 24})
 
-        const tpAccounts = await this.repository.getTradingPostBrokerageAccounts(userId);
+        const tpAccounts = await this.repository.getTradingPostBrokerageAccounts(tradingPostUser.id);
         for (let i = 0; i < tpAccounts.length; i++) {
             const account = tpAccounts[i];
             const holdingHistory = await this.computeHoldingsHistory(account.id, start, end);

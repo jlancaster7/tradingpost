@@ -20,6 +20,7 @@ const run = async () => {
 
     const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
     const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
+    await finicity.init()
     const brokerageService = new Brokerage(pgClient, pgp, finicity);
 
     const app = express();
@@ -35,13 +36,14 @@ const run = async () => {
 
     app.post("/finicity/webhook", async (req: Request, res: Response) => {
         if (req.body.eventType === 'added') {
-            const {accounts, customerId} = req.body;
+            const {customerId} = req.body;
             await brokerageService.newlyAuthenticatedBrokerage(customerId, 'finicity');
         }
 
         if (req.body.eventType === 'accountsDeleted') {
             const {customerId, eventId, payload} = req.body
             const {accounts} = payload;
+            console.log(`Removing accounts for ${customerId}`)
             await brokerageService.removeAccounts(customerId, accounts, 'finicity');
         }
 

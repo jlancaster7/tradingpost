@@ -1,4 +1,4 @@
-import { AccountGroupHPRs, AccountGroupHPRsTable, FinicityAccount, FinicityHolding, FinicityInstitution, FinicityTransaction, FinicityUser, GetSecurityBySymbol, GetSecurityPrice, HistoricalHoldings, IBrokerageRepository, ISummaryRepository, SecurityHPRs, SecurityIssue, SecurityPrices, TradingPostAccountGroups, TradingPostAccountGroupStats, TradingPostAccountToAccountGroup, TradingPostBrokerageAccounts, TradingPostBrokerageAccountsTable, TradingPostBrokerageAccountWithFinicity, TradingPostCurrentHoldings, TradingPostCurrentHoldingsTable, TradingPostCurrentHoldingsTableWithSecurity, TradingPostCustomIndustry, TradingPostHistoricalHoldings, TradingPostInstitution, TradingPostInstitutionTable, TradingPostInstitutionWithFinicityInstitutionId, TradingPostTransactions, TradingPostTransactionsTable } from "./interfaces";
+import { AccountGroupHPRs, AccountGroupHPRsTable, FinicityAccount, FinicityHolding, FinicityInstitution, FinicityTransaction, FinicityUser, GetSecurityBySymbol, GetSecurityPrice, HistoricalHoldings, IBrokerageRepository, ISummaryRepository, SecurityHPRs, SecurityIssue, SecurityPrices, TradingPostAccountGroups, TradingPostAccountGroupStats, TradingPostAccountToAccountGroup, TradingPostBrokerageAccounts, TradingPostBrokerageAccountsTable, TradingPostBrokerageAccountWithFinicity, TradingPostCurrentHoldings, TradingPostCurrentHoldingsTable, TradingPostCurrentHoldingsTableWithSecurity, TradingPostCustomIndustry, TradingPostHistoricalHoldings, TradingPostInstitution, TradingPostInstitutionTable, TradingPostInstitutionWithFinicityInstitutionId, TradingPostTransactions, TradingPostTransactionsTable, TradingPostUser } from "./interfaces";
 import { IDatabase, IMain } from "pg-promise";
 import { DateTime } from "luxon";
 import { addSecurity, getUSExchangeHoliday } from "../market-data/interfaces";
@@ -27,6 +27,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getFinicityInstitutions: () => Promise<FinicityInstitution[]>;
     getFinicityInstitutionsById: (finicityInstitutionIds: number[]) => Promise<FinicityInstitution[]>;
     getFinicityUser: (userId: string) => Promise<FinicityUser | null>;
+    getTradingPostUserByFinicityCustomerId: (finicityCustomerId: string) => Promise<TradingPostUser | null>;
+    getFinicityUserByFinicityCustomerId: (customerId: string) => Promise<FinicityUser | null>;
     addFinicityUser: (userId: string, customerId: string, type: string) => Promise<FinicityUser>;
     addFinicityAccount: (account: FinicityAccount) => Promise<FinicityAccount>;
     upsertFinicityAccounts: (accounts: FinicityAccount[]) => Promise<void>;
@@ -66,4 +68,5 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     deleteTradingPostBrokerageAccounts: (accountIds: number[]) => Promise<void>;
     deleteTradingPostBrokerageTransactions: (accountIds: number[]) => Promise<void>;
     deleteTradingPostBrokerageHoldings: (accountIds: number[]) => Promise<void>;
+    deleteTradingPostBrokerageHistoricalHoldings: (accountIds: number[]) => Promise<void>;
 }

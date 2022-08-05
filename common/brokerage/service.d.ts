@@ -13,7 +13,7 @@ export default class BrokerageService {
     constructor(brokerageMap: Record<string, IBrokerageService>, repository: IBrokerageRepository, portfolioSummaryService: PortfolioSummaryService);
     generateBrokerageAuthenticationLink: (userId: string, brokerageId: string) => Promise<string>;
     removeAccounts: (brokerageCustomerId: string, accountIds: string[], brokerageId: string) => Promise<void>;
-    newlyAuthenticatedBrokerage: (userId: string, brokerageId: string) => Promise<void>;
+    newlyAuthenticatedBrokerage: (brokerageUserId: string, brokerageId: string) => Promise<void>;
     pullNewData: (userId: string, brokerageId: string) => Promise<void>;
     computeHoldingsHistory: (tpAccountId: number, startDate: DateTime, endDate: DateTime) => Promise<TradingPostHistoricalHoldings[]>;
     undoTransactions: (historicalAccount: historicalAccount, transactions: TradingPostTransactionsTable[]) => historicalAccount;
