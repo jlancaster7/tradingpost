@@ -157,6 +157,18 @@ export default class Repository {
 
         return result;
     }
+    removeUserToken = async (idType: string, id: string, platform: string) => {
+        try {
+            const query = `DELETE FROM data_platform_claim
+                           WHERE ${idType} IN ($1) AND platform = $2
+                           `;
+            await this.db.none(query, [id, platform]);
+        } catch (error) {
+            throw new Error(`Failed to delete Youtube claim for id: ${id}`);
+        }
+        
+    }
+
     isUserIdDummy = async (userId: string): Promise<boolean> => {
         const query = `SELECT dummy FROM data_user WHERE id = $1`
         return (await this.db.one(query, [userId])).dummy;

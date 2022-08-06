@@ -1,4 +1,5 @@
 import 'dotenv/config';
+process.env.CONFIGURATION_ENV = 'production';
 import {Context} from "aws-lambda";
 import {lambdaImportYoutube} from "@tradingpost/common/social-media/youtube/import";
 import {DefaultConfig} from "@tradingpost/common/configuration";
@@ -28,7 +29,7 @@ const runLambda = async () => {
         throw e;
     }
 }
-
+runLambda();
 export const run = async (event: any, context: Context) => {
     await runLambda();
 }

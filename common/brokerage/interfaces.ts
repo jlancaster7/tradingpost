@@ -123,6 +123,8 @@ export interface ISummaryRepository {
 
     getAccountGroupHPRsLatestDate(accountGroupId: number): Promise<any>
 
+    getAccountGroupSummary(accountGroupId: number): Promise<TradingPostAccountGroupStats>
+
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 
     addAccountGroupReturns(accountGroupReturns: AccountGroupHPRs[]): Promise<number>
@@ -149,9 +151,17 @@ export interface ISummaryService {
 
     computeSectorAllocations(holdings: HistoricalHoldings[]): Promise<TradingPostSectorAllocations[]>
 
+    getCurrentHoldings (userId: string): Promise<HistoricalHoldings[]>
+
+    getSummary(userId: string): Promise<TradingPostAccountGroupStats>
+
+    getReturns (userId: string, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
+
+    getAccountGroupByName (userId: string, accountGroupName: string): Promise<TradingPostAccountGroups>
+
     computeExposure(holdings: HistoricalHoldings[]): TradingPostExposure
 
-    computeAccountGroupSummary(accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats | null>
+    computeAccountGroupSummary(accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats>
 }
 
 export type TradingPostUser = {
@@ -440,6 +450,7 @@ export type HistoricalHoldings = {
     price: number
     value: number
     costBasis: number
+    pnl: number
     quantity: number
     date: DateTime
 }

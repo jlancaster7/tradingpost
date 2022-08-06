@@ -93,6 +93,27 @@ export class YoutubeUsers {
         return [formatedData, count];
     }
 
+    disconnectYoutubeUser = async (userId: string) => {
+        const platform = 'youtube';
+        const authUrl = 'https://oauth2.googleapis.com/revoke';
+        const tokens = await this.repository.getTokens('user_id', [userId], platform);
+        const params = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                token: tokens[0].refreshToken
+            })
+        }
+        const response = await fetch(authUrl, params);
+        
+        console.log(await response.json());
+
+        await this.repository.removeUserToken('user_id', userId, platform)
+        
+    }
+
     getChannelInfobyToken = async (userId: string, token: string): Promise<channelInfo[]> => {
         
         let fetchUrl: string;
@@ -125,7 +146,6 @@ export class YoutubeUsers {
             });   
         }
         return result;
-
     }
 
     getChannelInfobyUrl = async (userChannelUrl: string): Promise<channelInfo | undefined> => {
