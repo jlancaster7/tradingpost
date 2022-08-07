@@ -19,4 +19,5 @@ export default class FinicityService implements IBrokerageService {
     exportAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
     exportHoldings: (userId: string) => Promise<TradingPostCurrentHoldings[]>;
     exportTransactions: (userId: string) => Promise<TradingPostTransactions[]>;
+    removeAccounts: (brokerageCustomerId: string, accountIds: string[]) => Promise<number[]>;
 }

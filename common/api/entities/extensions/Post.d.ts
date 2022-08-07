@@ -3,6 +3,7 @@ import { IElasticPostExt } from "../interfaces";
 export default class extends Extension {
     feed: (settings: {
         page: number;
+        userId?: string | undefined;
         bookmarkedOnly?: boolean | undefined;
         data?: Record<string, string | number | (string | number)[]> | undefined;
     }) => Promise<IElasticPostExt[]>;

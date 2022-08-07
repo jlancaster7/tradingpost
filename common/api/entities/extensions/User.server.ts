@@ -10,6 +10,8 @@ import Repository from '../../../brokerage/repository'
 //import FinicityTransformer from '../../../brokerage/finicity/transformer'
 import { execProc } from "../static/pool";
 import { addTwitterUsersByToken } from '../../../social-media/twitter/index'
+import { getUserCache } from "../../cache";
+import WatchlistApi from "../apis/WatchlistApi";
 
 export interface ITokenResponse {
     "token_type": "bearer",
@@ -56,9 +58,11 @@ export default ensureServerExtensions<User>({
             finicityService = new Brokerage(pgClient, pgp, finicity);
         }
         //console.log(typeof test);
-        //console.log(JSON.stringify(test));
+        const test = await finicityService.generateBrokerageAuthenticationLink(req.extra.userId, "finicity");
+        console.log(JSON.stringify(test));
         return {
-            link: await finicityService.generateBrokerageAuthenticationLink(req.extra.userId, "finicity")
+            link: test
+
         }
 
     },
@@ -124,5 +128,21 @@ export default ensureServerExtensions<User>({
             user_id: r.extra.userId,
             data: {}
         })
+    },
+    getHoldings: r => execProc("public.api_holding_list", {
+        user_id: r.extra.userId,
+        data: {}
+    }),
+    getWatchlists: async r => {
+        const cache = await getUserCache();
+        //a tad inefficient but oh well
+        const watchlist = await WatchlistApi.internal.list({
+            user_id: r.extra.userId,
+            data: {
+                ids: cache[r.body.userId].watchlists
+            }
+        });
+        return watchlist.filter(w => w.user_id === r.body.userId && w.type === "public")
+        //make sure there are public or that you are a subscriber 
     }
 })

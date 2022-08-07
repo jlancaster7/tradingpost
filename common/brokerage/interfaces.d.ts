@@ -8,8 +8,10 @@ export interface IBrokerageService {
     exportAccounts(userId: string): Promise<TradingPostBrokerageAccounts[]>;
     exportTransactions(userId: string): Promise<TradingPostTransactions[]>;
     exportHoldings(userId: string): Promise<TradingPostCurrentHoldings[]>;
+    removeAccounts(brokerageCustomerId: string, accountIds: string[]): Promise<number[]>;
 }
 export interface IBrokerageRepository {
+    getCashSecurityId(): Promise<GetSecurityBySymbol>;
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>;
     upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<void>;
     addTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>;
@@ -22,8 +24,11 @@ export interface IBrokerageRepository {
     getTradingPostBrokerageAccount(accountId: number): Promise<TradingPostBrokerageAccountsTable>;
     getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(accountId: number): Promise<TradingPostCurrentHoldingsTableWithSecurity[]>;
     getTradingPostBrokerageAccountTransactions(accountId: number): Promise<TradingPostTransactionsTable[]>;
-    getMarketHolidays(endDate: DateTime): Promise<getUSExchangeHoliday[]>;
-    getSecurityPricesWithEndDateBySecurityIds(endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>;
+    getMarketHolidays(start: DateTime, end: DateTime): Promise<getUSExchangeHoliday[]>;
+    getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>;
+    deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>;
+    deleteTradingPostBrokerageTransactions(accountIds: number[]): Promise<void>;
+    deleteTradingPostBrokerageHoldings(accountIds: number[]): Promise<void>;
 }
 export interface IFinicityRepository {
     getFinicityUser(userId: string): Promise<FinicityUser | null>;
@@ -34,12 +39,16 @@ export interface IFinicityRepository {
     upsertInstitution(institution: TradingPostInstitution): Promise<number>;
     getTradingPostInstitutionsWithFinicityInstitutionId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>;
     getTradingPostInstitutionByFinicityId(finicityInstitutionId: number): Promise<TradingPostInstitutionWithFinicityInstitutionId | null>;
+    getTradingPostBrokerageAccounts(userId: string): Promise<TradingPostBrokerageAccountsTable[]>;
     upsertFinicityAccounts(accounts: FinicityAccount[]): Promise<void>;
     getFinicityAccounts(finicityUserId: number): Promise<FinicityAccount[]>;
     upsertFinicityHoldings(holdings: FinicityHolding[]): Promise<void>;
     upsertFinicityTransactions(transactions: FinicityTransaction[]): Promise<void>;
     getFinicityHoldings(finicityUserId: number): Promise<FinicityHolding[]>;
     getFinicityTransactions(finicityUserId: number): Promise<FinicityTransaction[]>;
+    deleteFinicityHoldings(accountIds: number[]): Promise<void>;
+    deleteFinicityTransactions(accountIds: number[]): Promise<void>;
+    deleteFinicityAccounts(accountIds: number[]): Promise<void>;
 }
 export interface ISummaryRepository {
     getTradingPostBrokerageAccounts(userId: string): Promise<TradingPostBrokerageAccountsTable[]>;
@@ -76,7 +85,6 @@ export declare type GetSecurityPrice = {
     high: number;
     open: number;
     low: number;
-    updatedAt: DateTime;
     createdAt: DateTime;
 };
 export declare type FinicityUser = {

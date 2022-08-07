@@ -21,7 +21,7 @@ const streamToString = (stream: any) =>
         stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     });
 
-    const s3Bucket = 'tradingpost-app-data'
+const s3Bucket = 'tradingpost-app-data'
 const feedQuery = (async () => JSON.parse(
     await streamToString((
         await client.send(new GetObjectCommand({
@@ -44,11 +44,6 @@ const bookmarkQuery = (bookmarkItems: string[]) => {
     return {
         bool: {
             must: [
-                //     {
-                //     terms: {
-                //         // postType: ["tweet"]
-                //     }
-                // }, 
                 {
                     terms: {
                         id: bookmarkItems
@@ -58,7 +53,19 @@ const bookmarkQuery = (bookmarkItems: string[]) => {
                     exists: {
                         "field": "size"
                     }
-                }].filter(f => f)
+                }]
+        }
+    }
+}
+const userQuery = (userId: string) => {
+    return {
+        bool: {
+            must: [
+                {
+                    term: {
+                        "user.id": userId
+                    }
+                }]
         }
     }
 }
@@ -127,7 +134,10 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             size: postsPerPage,
             from: page * postsPerPage,
             query: await (async () => {
-                if (req.body.bookmarkedOnly)
+                if (req.body.userId) {
+                    return userQuery(req.body.userId)
+                }
+                else if (req.body.bookmarkedOnly)
                     return bookmarkQuery(bookmarkItems)
                 else if (req.body.data)
                     return await searchQuery(req.body.data);

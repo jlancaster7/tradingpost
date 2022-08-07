@@ -1,3 +1,4 @@
+import { IWatchlistList } from "../interfaces";
 import { Extension } from "./index";
 export declare type UploadProfilePicBody = {
     userId: string;
@@ -29,4 +30,16 @@ export default class User extends Extension {
         currency: string;
         security_id: number;
     }[]>;
+    getHoldings: (settings?: undefined) => Promise<{
+        id: number;
+        price_as_of: Date;
+        quantity: number;
+        price: number;
+        value: number;
+        cost_basis: number;
+        security_id: number;
+    }[]>;
+    getWatchlists: (settings: {
+        userId: string;
+    }) => Promise<IWatchlistList[]>;
 }

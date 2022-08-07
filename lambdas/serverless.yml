@@ -10,6 +10,7 @@ plugins:
 
 custom:
   bundle:
+    sourcemaps: true
     tsConfig: 'tsconfig.json'
     ignorePackages:
       - pg-native

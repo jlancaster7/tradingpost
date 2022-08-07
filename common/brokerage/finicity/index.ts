@@ -10,7 +10,7 @@ import {
     TradingPostInstitution,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
-    IFinicityRepository,
+    IFinicityRepository, TradingPostBrokerageAccountsTable,
 } from "../interfaces";
 import Finicity from "../../finicity";
 import {GetInstitutionsInstitution} from "../../finicity/interfaces";
@@ -33,7 +33,7 @@ export default class FinicityService implements IBrokerageService {
         let finicityUser = await this.repository.getFinicityUser(userId);
         if (!finicityUser) finicityUser = await this._createFinicityUser(userId);
         const authPortal = await this.finicity.generateConnectUrl(finicityUser.customerId,
-            "https://tradingpost.life/webhook")
+            "https://tradingpost.life/finicity/webhook")
         return authPortal.link
     }
 
@@ -147,7 +147,7 @@ export default class FinicityService implements IBrokerageService {
 
     getAddInstitution = async (finicityInstitutionId: number): Promise<{ tradingPostInstitutionId: number, finicityInstitutionId: number }> => {
         const institution = await this.repository.getTradingPostInstitutionByFinicityId(finicityInstitutionId)
-        if (institution) return {
+        if (institution !== null) return {
             tradingPostInstitutionId: institution.id,
             finicityInstitutionId: institution.internalFinicityId
         };
@@ -229,6 +229,8 @@ export default class FinicityService implements IBrokerageService {
             email: ins.email
         });
 
+        console.log("Added New TP Institution: ", tpInId)
+        console.log("Adding New Finicity Institution: ", finInternalInstitutionId)
         return {tradingPostInstitutionId: tpInId, finicityInstitutionId: finInternalInstitutionId}
     }
 
@@ -240,6 +242,8 @@ export default class FinicityService implements IBrokerageService {
         const newFinicityAccounts: FinicityAccount[] = [];
         for (let i = 0; i < finicityAccounts.accounts.length; i++) {
             const fa = finicityAccounts.accounts[i];
+            console.log("ACCOUNT ID: ", fa.id)
+
             const {
                 tradingPostInstitutionId,
                 finicityInstitutionId
@@ -417,7 +421,6 @@ export default class FinicityService implements IBrokerageService {
             })
         }
 
-
         await this.repository.upsertFinicityTransactions(finTxs);
         return await this.transformer.transactions(userId, finTxs);
     }
@@ -446,6 +449,39 @@ export default class FinicityService implements IBrokerageService {
         if (finicityUser === undefined || finicityUser === null) throw new Error(`no finicity account exists for user id ${userId}`);
         const transactions = await this.repository.getFinicityTransactions(finicityUser.id)
         return this.transformer.transactions(userId, transactions);
+    }
+
+    removeAccounts = async (brokerageCustomerId: string, accountIds: string[]): Promise<number[]> => {
+        const finicityUser = await this.repository.getFinicityUser(brokerageCustomerId);
+        if (!finicityUser) return [];
+
+        const finicityAccounts = await this.repository.getFinicityAccounts(finicityUser.id)
+
+        const removalAccounts = [];
+        for (let i = 0; i < finicityAccounts.length; i++) {
+            const fa = finicityAccounts[i];
+            for (let j = 0; j < accountIds.length; j++) {
+                const aid = accountIds[j];
+                if (fa.accountId === aid) removalAccounts.push(fa);
+            }
+        }
+
+        const ids = removalAccounts.map(ra => ra.id);
+        await this.repository.deleteFinicityHoldings(ids);
+        await this.repository.deleteFinicityTransactions(ids);
+        await this.repository.deleteFinicityAccounts(ids)
+
+        const tradingpostAccounts = await this.repository.getTradingPostBrokerageAccounts(finicityUser.tpUserId);
+        let tpAccountIds: number[] = [];
+        for (let i = 0; i < finicityAccounts.length; i++) {
+            const fa = finicityAccounts[i];
+            for (let j = 0; j < tradingpostAccounts.length; j++) {
+                const aid: TradingPostBrokerageAccountsTable = tradingpostAccounts[j];
+                if (aid.accountNumber === fa.number)
+                    tpAccountIds.push(aid.id)
+            }
+        }
+        return tpAccountIds
     }
 }
 

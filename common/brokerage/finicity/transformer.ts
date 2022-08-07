@@ -12,6 +12,7 @@ import {
     TradingPostTransactions,
 } from "../interfaces";
 import {DateTime} from "luxon";
+import {addSecurity} from "../../market-data/interfaces";
 
 interface TransformerRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>
@@ -21,6 +22,8 @@ interface TransformerRepository {
     getTradingPostInstitutionsWithFinicityId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>
 
     getTradingPostInstitutionByFinicityId(finicityInstitutionId: number): Promise<TradingPostInstitutionWithFinicityInstitutionId | null>
+
+    addSecurity(sec: addSecurity): Promise<number>
 }
 
 // Finicity Types Found Here: https://api-reference.finicity.com/#/rest/models/enumerations/investment-transaction-types
@@ -33,7 +36,7 @@ const transformTransactionType = (finicityTxType: string): InvestmentTransaction
         case "purchaseToCover":
             return InvestmentTransactionType.cover
         case "contribution":
-            throw new Error("unknown investment transaction type 'contribution'")
+            return InvestmentTransactionType.cash
         case "optionExercise":
             return InvestmentTransactionType.buy
         case "optionExpiration":
@@ -59,7 +62,7 @@ const transformTransactionType = (finicityTxType: string): InvestmentTransaction
         case "dividendReinvest":
             return InvestmentTransactionType.dividendOrInterest
         case "tax":
-            throw new Error("unknown investment transaction type 'tax'");
+            return InvestmentTransactionType.cash
         case "dividend":
             return InvestmentTransactionType.dividendOrInterest
         case "reinvestOfIncome":
@@ -129,7 +132,38 @@ export default class FinicityTransformer {
             let holding = finHoldings[i];
 
             let security = securitiesMap[holding.symbol]
-            if (security === undefined || security === null) throw new Error(`could not find symbol(${holding.symbol} for holding`)
+            if (security === undefined || security === null) {
+                const sec: addSecurity = {
+                    companyName: holding.securityName,
+                    securityName: holding.securityName,
+                    issueType: holding.securityType,
+                    description: holding.description,
+                    symbol: holding.symbol,
+                    logoUrl: null,
+                    phone: null,
+                    country: null,
+                    state: null,
+                    address2: null,
+                    tags: [],
+                    employees: null,
+                    industry: null,
+                    exchange: null,
+                    primarySicCode: null,
+                    ceo: null,
+                    zip: null,
+                    address: null,
+                    website: null,
+                    sector: null
+                };
+
+                const securityId = await this.repository.addSecurity(sec)
+                security = {
+                    id: securityId,
+                    symbol: sec.symbol,
+                    name: sec.securityName ? sec.securityName : '',
+                    issueType: sec.issueType ? sec.issueType : ''
+                }
+            }
 
             let priceAsOf = holdingDate;
             if (holding.currentPriceDate) priceAsOf = DateTime.fromSeconds(holding.currentPriceDate)
@@ -171,12 +205,23 @@ export default class FinicityTransformer {
             const internalTpAccountId = finicityIdToTpAccountMap[transaction.accountId];
             if (!internalTpAccountId) throw new Error(`could not get internal account id for transaction with id ${transaction.id} for user ${userId}`);
 
-            if (!transaction.ticker) throw new Error(`no ticker for transaction id ${transaction.id} on user ${userId}`)
+            if (!transaction.ticker) {
+                switch (transaction.investmentTransactionType) {
+                    case "fee":
+                    case "interest":
+                    case "deposit":
+                    case "transfer":
+                    case "contribution":
+                        transaction.ticker = "USD:CUR"
+                        break
+                    default:
+                        throw new Error(`no symbol available for transaction type ${transaction.investmentTransactionType}`)
+                }
+            }
             let security = securitiesMap[transaction.ticker]
             if (security === undefined || security === null) throw new Error(`could not find symbol(${transaction.ticker} for holding`)
 
-            if (!transaction.unitQuantity) throw new Error(`no quantity on transaction id ${transaction.id} on user ${userId}`)
-
+            if (!transaction.unitQuantity) transaction.unitQuantity = 1
             // TODO: Can we be sure that they didnt factor in fees, or if they did that we have an attribute that includes fees?
             let price = 0
             if (!transaction.unitPrice) price = transaction.amount / transaction.unitQuantity

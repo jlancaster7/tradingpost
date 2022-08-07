@@ -62,5 +62,27 @@ declare const _default: {
         currency: string;
         security_id: number;
     }[]>;
+    getHoldings: (req: {
+        body: undefined;
+        extra: {
+            userId: string;
+        };
+    }) => Promise<{
+        id: number;
+        price_as_of: Date;
+        quantity: number;
+        price: number;
+        value: number;
+        cost_basis: number;
+        security_id: number;
+    }[]>;
+    getWatchlists: (req: {
+        body: {
+            userId: string;
+        };
+        extra: {
+            userId: string;
+        };
+    }) => Promise<import("../interfaces").IWatchlistList[]>;
 };
 export default _default;

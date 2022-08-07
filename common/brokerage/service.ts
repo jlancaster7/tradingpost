@@ -31,7 +31,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         // Roll back buy,
         // get transaction from holding
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
-        if (!hIdx) throw new Error("no prior holding found for a buy :::: position should exist")
+        if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for buy transaction`)
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
         holdings.holdings[hIdx] = h
@@ -41,12 +41,12 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         // sell amount is going to be negative, hence why we can "add" it back
         holdings.cash = holdings.cash + tx.amount
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
-        if (!hIdx) {
+        if (hIdx === -1) {
             holdings.holdings.push({
                 priceAsOf: tx.date,
                 price: tx.price,
                 securityId: tx.securityId,
-                quantity: tx.quantity,
+                quantity: (-1 * tx.quantity),
                 accountId: tx.accountId,
                 date: tx.date,
                 costBasis: 0,
@@ -69,7 +69,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
 
         // TODO: .... this is possible for a short?
         // TODO: Discuss pricing with short/cover
-        if (!hIdx) throw new Error("no prior holding found for a short :::: position should exist")
+        if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for short transaction`)
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
         holdings.holdings[hIdx] = h
@@ -81,7 +81,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
 
         // TODO:.... I think this is possible in a cover...?
         // TODO: Discuss pricing with short/cover
-        if (!hIdx) throw new Error("no prior holding found for a cover :::: position should exist")
+        if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for cover transaction`)
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
         holdings.holdings[hIdx] = h
@@ -127,6 +127,14 @@ export default class BrokerageService {
         return await brokerage.generateBrokerageAuthenticationLink(userId);
     }
 
+    removeAccounts = async (brokerageCustomerId: string, accountIds: string[], brokerageId: string) => {
+        const brokerage = this.brokerageMap[brokerageId];
+        const tpAccountIds = await brokerage.removeAccounts(brokerageCustomerId, accountIds)
+        await this.repository.deleteTradingPostBrokerageTransactions(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageHoldings(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds)
+    }
+
     newlyAuthenticatedBrokerage = async (userId: string, brokerageId: string) => {
         const brokerage = this.brokerageMap[brokerageId];
 
@@ -139,10 +147,13 @@ export default class BrokerageService {
         const transactions = await brokerage.importTransactions(userId);
         await this.repository.upsertTradingPostTransactions(transactions);
 
+        const start = DateTime.now().setZone("America/New_York");
+        const end = start.minus({month: 24})
+
         const tpAccounts = await this.repository.getTradingPostBrokerageAccounts(userId);
         for (let i = 0; i < tpAccounts.length; i++) {
             const account = tpAccounts[i];
-            const holdingHistory = await this.computeHoldingsHistory(account.id);
+            const holdingHistory = await this.computeHoldingsHistory(account.id, start, end);
             await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
         }
     }
@@ -173,11 +184,11 @@ export default class BrokerageService {
         await this.repository.upsertTradingPostTransactions(transactions);
     }
 
-    computeHoldingsHistory = async (tpAccountId: number): Promise<TradingPostHistoricalHoldings[]> => {
-        // Get Trading Post Account
-        const tpAccount = await this.repository.getTradingPostBrokerageAccount(tpAccountId)
+    computeHoldingsHistory = async (tpAccountId: number, startDate: DateTime, endDate: DateTime): Promise<TradingPostHistoricalHoldings[]> => {
+        const cashSecurity = await this.repository.getCashSecurityId();
 
         let allSecurityIds: Record<number, unknown> = {}
+
         // Get Current Holdings
         const currentHoldings = await this.repository.getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(tpAccountId);
         if (currentHoldings.length <= 0) throw new Error("no holdings available for account " + tpAccountId);
@@ -186,6 +197,7 @@ export default class BrokerageService {
         // Get Current Transactions Sorted in DESC order
         const transactions = await this.repository.getTradingPostBrokerageAccountTransactions(tpAccountId);
         if (transactions.length <= 0) throw new Error("no transactions available for account " + tpAccountId);
+
         const transactionsPerDate: Record<number, TradingPostTransactionsTable[]> = {}
         transactions.forEach(tx => {
             allSecurityIds[tx.securityId] = {}
@@ -196,21 +208,14 @@ export default class BrokerageService {
             transactionsPerDate[txDateUnix] = txs
         });
 
-        const endDate = DateTime.now().minus({year: 5}).setZone("America/New_York").set({
-            hour: 16,
-            second: 0,
-            millisecond: 0,
-            minute: 0
-        });
-
-        const allSecurityPricesMap: Record<number, GetSecurityPrice[]> = await this.getSecurityPrices(Object.keys(allSecurityIds).map(id => parseInt(id)), endDate.set({hour: 0}));
+        const allSecurityPricesMap: Record<number, GetSecurityPrice[]> = await this.getSecurityPrices(Object.keys(allSecurityIds).map(id => parseInt(id)), startDate, endDate);
 
         // Get Trading Days we will compute history for
         // In our db we will have a single row for each security on each day, so with 2 securities we'll have two rows for today
-        let tradingDays = await this.getTradingDays(endDate.set({hour: 0}))
+        let tradingDays = await this.getTradingDays(startDate, endDate)
 
         const initialHistoricalHolding: historicalAccount = {
-            date: DateTime.now(),
+            date: startDate,
             cash: 0,
             holdings: [],
         }
@@ -238,12 +243,16 @@ export default class BrokerageService {
         }
 
         let historicalHoldingCollection = [initialHistoricalHolding]
+
         for (let i = 0; i < tradingDays.length - 1; i++) {
+            // Each Trading Day, we are computing for the prior historical day
             const tradingDay = tradingDays[i];
-            let holdingsToday = deepCopy(historicalHoldingCollection[historicalHoldingCollection.length - 1]);
+            const curHold = historicalHoldingCollection[historicalHoldingCollection.length - 1];
+            let holdingsToday = deepCopy(curHold);
+
             if (tradingDay.startOf('day').toUnixInteger() in transactionsPerDate) {
                 let txs = transactionsPerDate[tradingDay.startOf('day').toUnixInteger()];
-                holdingsToday = this.undoTransactions(holdingsToday, transactions)
+                holdingsToday = this.undoTransactions(holdingsToday, txs)
             }
 
             let priorMarketDay = tradingDays[i + 1]
@@ -259,8 +268,9 @@ export default class BrokerageService {
                 if (closestPrice !== null) price = closestPrice
                 holdingToday.price = price
                 holdingToday.date = priorMarketDay
-                priorHoldings.holdings.push(holdingsToday)
+                priorHoldings.holdings.push(holdingToday)
             }
+
             historicalHoldingCollection.push(priorHoldings)
         }
 
@@ -274,7 +284,7 @@ export default class BrokerageService {
                 price: 1,
                 securityType: SecurityType.cashEquivalent,
                 value: h.cash,
-                securityId: 0,
+                securityId: cashSecurity.id,
                 priceSource: '',
                 quantity: h.cash,
                 priceAsOf: h.date,
@@ -313,14 +323,19 @@ export default class BrokerageService {
         return historicalAccount
     }
 
-    getSecurityPrices = async (securityIds: number[], endDate: DateTime): Promise<Record<number, GetSecurityPrice[]>> => {
-        const securityPrices = await this.repository.getSecurityPricesWithEndDateBySecurityIds(endDate.set({
-            minute: 0,
-            second: 0,
-            hour: 0,
-            millisecond: 0
-        }), securityIds)
-
+    getSecurityPrices = async (securityIds: number[], startDate: DateTime, endDate: DateTime): Promise<Record<number, GetSecurityPrice[]>> => {
+        const securityPrices = await this.repository.getSecurityPricesWithEndDateBySecurityIds(
+            endDate.set({
+                minute: 0,
+                second: 0,
+                hour: 0,
+                millisecond: 0
+            }), startDate.set({
+                minute: 0,
+                second: 0,
+                hour: 0,
+                millisecond: 0,
+            }), securityIds)
         let securityPricesMap: Record<number, GetSecurityPrice[]> = {}
         for (const sp of securityPrices) {
             let sps = securityPricesMap[sp.securityId];
@@ -332,8 +347,8 @@ export default class BrokerageService {
         return securityPricesMap
     }
 
-    getTradingDays = async (end: DateTime): Promise<DateTime[]> => {
-        const marketHolidays = await this.repository.getMarketHolidays(end);
+    getTradingDays = async (start: DateTime, end: DateTime): Promise<DateTime[]> => {
+        const marketHolidays = await this.repository.getMarketHolidays(start, end);
 
         let holidayMap: Record<string, unknown> = {};
         marketHolidays.forEach((row: getUSExchangeHoliday) => {
@@ -341,28 +356,25 @@ export default class BrokerageService {
             holidayMap[dt.toUnixInteger()] = {}
         });
 
-        let startDate = DateTime.now().setZone("America/New_York").set({
-            hour: 16,
-            minute: 0,
-            second: 0,
-            millisecond: 0
-        });
-
-        let endDate = end.set({hour: 16, minute: 0, second: 0, millisecond: 0});
+        let startDate = start.set({hour: 16, minute: 0, second: 0, millisecond: 0});
+        let endDate = end.set({hour: 16, minute: 0, second: 0, millisecond: 0}).minus({day: 1});
         let tradingDays: DateTime[] = []
-        for (; startDate.toUnixInteger() <= endDate.toUnixInteger(); startDate = startDate.minus({day: 1})) {
+        for (; startDate.toUnixInteger() >= endDate.toUnixInteger(); startDate = startDate.minus({day: 1})) {
             if (startDate.weekday === 6 || startDate.weekday === 7) continue
             if (startDate.toUnixInteger() in holidayMap) continue
             tradingDays.push(startDate)
         }
 
-        return tradingDays
+        return tradingDays.sort((a, b) => {
+            if (a.toUnixInteger() < b.toUnixInteger()) return 1;
+            if (a.toUnixInteger() > b.toUnixInteger()) return -1;
+            return 0;
+        })
     }
 
     getClosestPrice = (securityPricesMap: Record<number, GetSecurityPrice[]>, securityId: number, postingDate: DateTime): number | null => {
-        // TODO: How should we handle private security?
         const securityPrices = securityPricesMap[securityId];
-        if (!securityPricesMap) throw new Error("no prices found for security")
+        if (!securityPrices) return null
 
         const postingDateUnix = postingDate.startOf('day').toUnixInteger()
         for (let sp of securityPrices) {
