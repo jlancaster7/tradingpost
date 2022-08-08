@@ -9,7 +9,7 @@ import {PortfolioSummaryService} from "./portfolio-summary";
 import {
     HistoricalHoldings,
     TradingPostAccountGroupStats,
-    AccountGroupHPRsTable
+    AccountGroupHPRsTable, TradingPostBrokerageAccounts, TradingPostBrokerageAccountsTable
 } from './interfaces';
 
 export default class Brokerage extends BrokerageService {
@@ -37,6 +37,7 @@ export default class Brokerage extends BrokerageService {
     addNewAccounts = async (brokerageUserId: string, brokerageId: string, accountIds?: string[]) => {
         const brokerage = this.brokerageMap[brokerageId];
         const tradingPostUser = await brokerage.getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId);
+        const currentAccounts = await this.repository.getTradingPostBrokerageAccounts(tradingPostUser.id)
 
         const accounts = await brokerage.importAccounts(brokerageUserId);
         await this.repository.upsertTradingPostBrokerageAccounts(accounts)
@@ -50,14 +51,31 @@ export default class Brokerage extends BrokerageService {
         const start = DateTime.now().setZone("America/New_York");
         const end = start.minus({month: 24})
 
-        const tpAccounts = await this.repository.getTradingPostBrokerageAccounts(tradingPostUser.id);
-        for (let i = 0; i < tpAccounts.length; i++) {
-            const account = tpAccounts[i];
+        // Takes old accounts avail
+        // takes new accounts avail
+        // Sees where missing and adds to array
+        const newAccounts = await this.repository.getTradingPostBrokerageAccounts(tradingPostUser.id);
+        let accountsToProcess: TradingPostBrokerageAccountsTable[] = [];
+
+        newAccounts.forEach(newAcc => {
+            let hasAccount = false
+            currentAccounts.forEach((curAcc => {
+                if (curAcc.institutionId === newAcc.institutionId && curAcc.accountNumber === newAcc.accountNumber) {
+                    hasAccount = true
+                    return
+                }
+            }));
+            if (hasAccount) return
+            accountsToProcess.push(newAcc)
+        });
+
+        for (let i = 0; i < accountsToProcess.length; i++) {
+            const account = accountsToProcess[i];
             const holdingHistory = await this.computeHoldingsHistory(account.id, start, end);
             await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
         }
 
-        const tpAccountIds = tpAccounts.map(tp => tp.id)
+        const tpAccountIds = accountsToProcess.map(tp => tp.id)
         await this.repository.addTradingPostAccountGroup(tradingPostUser.id, 'default', tpAccountIds, 10117)
         await this.portfolioSummaryService.computeAccountGroupSummary(tradingPostUser.id)
     }

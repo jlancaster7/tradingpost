@@ -975,8 +975,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                  finicity_user fu
                  ON fu.tp_user_id = du.id
             WHERE fu.customer_id = $1;`
-        const row: any = this.db.oneOrNone(query, [finicityCustomerId]);
+        const row: any = await this.db.oneOrNone(query, [finicityCustomerId]);
         if (!row) return null;
+
         return {
             id: row.id,
             bio: row.bio,
@@ -1549,8 +1550,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               ag.created_at,
                               ag.updated_at
                        FROM tradingpost_account_group ag
-                       RIGHT JOIN _tradingpost_account_to_group atg
-                       ON atg.account_group_id = ag.id
+                                RIGHT JOIN _tradingpost_account_to_group atg
+                                           ON atg.account_group_id = ag.id
                        WHERE user_id = $1
         `;
         const response = await this.db.any(query, [userId]);
@@ -1576,8 +1577,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     addTradingPostAccountGroup = async (userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number> => {
         let query = `INSERT INTO tradingpost_account_group(user_id, name, default_benchmark_id)
                      VALUES ($1, $2, $3)
-                     ON CONFLICT ON CONSTRAINT name_userid_unique DO UPDATE SET
-                     name = EXCLUDED.name
+                     ON CONFLICT ON CONSTRAINT name_userid_unique DO UPDATE SET name = EXCLUDED.name
                      RETURNING id;`;
 
         const accountGroupIdResults = await this.db.any(query, [userId, name, defaultBenchmarkId]);
@@ -1594,7 +1594,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'account_id', prop: 'account_id'},
             {name: 'account_group_id', prop: 'account_group_id'},
         ], {table: '_tradingpost_account_to_group'});
-        const accountGroupsQuery = this.pgp.helpers.insert(values, cs);
+        const accountGroupsQuery = this.pgp.helpers.insert(values, cs) + ' ON CONFLICT DO NOTHING';
         const result = await this.db.result(accountGroupsQuery);
         return result.rowCount > 0 ? 1 : 0;
     }
@@ -1652,6 +1652,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertTradingPostHistoricalHoldings = async (historicalHoldings: TradingPostHistoricalHoldings[]) => {
+        if (historicalHoldings.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_id', prop: 'accountId'},
             {name: 'security_id', prop: 'securityId'},
@@ -1709,7 +1710,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'type', prop: 'type'},
             {name: 'currency', prop: 'currency'}
         ], {table: 'tradingpost_transaction'});
-        const query = upsertReplaceQuery(transactions, cs, this.pgp);
+        const query = upsertReplaceQuery(transactions, cs, this.pgp, 'account_id, security_id, date, quantity');
         await this.db.none(query)
     }
 
@@ -1748,12 +1749,13 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                      FROM tradingpost_historical_holding
                      WHERE account_id = $1
                        AND date BETWEEN $2 AND $3
-                     `;
+        `;
 
         const response = await this.db.any(query, [accountId, startDate, endDate]);
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get current holdings for userId: ${userId} and  accountId: ${accountId}`);
-        };
+        }
+        ;
         let holdings: HistoricalHoldings[] = [];
 
         for (let d of response) {
@@ -1773,26 +1775,27 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostHoldingsByAccountGroup = async (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id                                AS account_group_id,
-                            ht.security_id                                      AS security_id,
-                            AVG(ht.price)                                       AS price,
-                            SUM(ht.value)                                       AS value,
-                            SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity) AS cost_basis,
-                            (AVG(ch.price) - (SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity))) / (SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)) AS pnl,
-                            SUM(ht.quantity)                                    AS quantity,
-                            ht.date                                             AS date
+        let query = `SELECT atg.account_group_id                                  AS account_group_id,
+                            ht.security_id                                        AS security_id,
+                            AVG(ht.price)                                         AS price,
+                            SUM(ht.value)                                         AS value,
+                            SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)   AS cost_basis,
+                            (AVG(ht.price) - (SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity))) /
+                            (SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)) AS pnl,
+                            SUM(ht.quantity)                                      AS quantity,
+                            ht.date                                               AS date
                      FROM tradingpost_historical_holding ht
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ht.account_id = atg.account_id
                      WHERE atg.account_group_id = $1
                        AND ht.date BETWEEN $2 AND $3
-                     GROUP BY atg.account_group_id, ht.security_id, ht.date
-        `;
+                     GROUP BY atg.account_group_id, ht.security_id, ht.date`;
         const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
 
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get historical holdings for accountGroupId: ${accountGroupId}`);
-        };
+        }
+
         let holdings: HistoricalHoldings[] = [];
 
         for (let d of response) {
@@ -1812,25 +1815,25 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostCurrentHoldingsByAccountGroup = async (accountGroupId: number): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id                                AS account_group_id,
-                            ch.security_id                                      AS security_id,
-                            AVG(ch.price)                                       AS price,
-                            SUM(ch.value)                                       AS value,
-                            SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity) AS cost_basis,
-                            (AVG(ch.price) - (SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity))) / (SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)) AS pnl,
-                            SUM(ch.quantity)                                    AS quantity,
-                            ch.updated_at                                       AS updated_at
+        let query = `SELECT atg.account_group_id                                  AS account_group_id,
+                            ch.security_id                                        AS security_id,
+                            AVG(ch.price)                                         AS price,
+                            SUM(ch.value)                                         AS value,
+                            SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)   AS cost_basis,
+                            (AVG(ch.price) - (SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity))) /
+                            (SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)) AS pnl,
+                            SUM(ch.quantity)                                      AS quantity,
+                            ch.updated_at                                         AS updated_at
                      FROM tradingpost_current_holding ch
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ch.account_id = atg.account_id
                      WHERE atg.account_group_id = $1
-                     GROUP BY atg.account_group_id, ch.security_id, ch.updated_at
-        `;
+                     GROUP BY atg.account_group_id, ch.security_id, ch.updated_at`;
         const response = await this.db.any(query, [accountGroupId]);
 
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get current holdings for accountGroupId: ${accountGroupId}`);
-        };
+        }
 
         let holdings: HistoricalHoldings[] = [];
 
@@ -1865,7 +1868,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get returns for accountGroupId: ${accountGroupId}`);
-        };
+        }
+        ;
         let holdingPeriodReturns: AccountGroupHPRsTable[] = []
         for (let d of response) {
             holdingPeriodReturns.push({
@@ -1895,7 +1899,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get prices for securityId: ${securityId}`);
-        };
+        }
+        ;
         let prices: SecurityPrices[] = [];
 
         for (let d of response) {
@@ -1938,7 +1943,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         const response = await this.db.query(query, [securityIds])
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get security info for securityIds: ${securityIds}`);
-        };
+        }
+        ;
 
         let sec: GetSecurityBySymbol[] = []
         for (let d of response) {
@@ -2024,7 +2030,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         return result.rowCount > 0 ? 1 : 0
     }
 
-    getAccountGroupSummary = async(accountGroupId: number): Promise<TradingPostAccountGroupStats> => {
+    getAccountGroupSummary = async (accountGroupId: number): Promise<TradingPostAccountGroupStats> => {
         let query = `SELECT id,
                             account_group_id,
                             beta,
@@ -2039,9 +2045,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                      WHERE account_group_id = $1
                      ORDER BY date DESC
                      LIMIT 1
-                     `;
+        `;
         const result = await this.db.one(query, [accountGroupId]);
-        
+
         const summary: TradingPostAccountGroupStats = {
             accountGroupId: result.account_group_id,
             beta: result.beta,

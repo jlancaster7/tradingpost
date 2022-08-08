@@ -590,3 +590,9 @@ ALTER TABLE YOUTUBE_VIDEOS
 ALTER TABLE YOUTUBE_VIDEOS
     ADD COLUMN max_width FLOAT;
 
+CREATE UNIQUE INDEX historical_holding_acc_sec_date_quantity ON tradingpost_historical_holding (account_id, security_id, date, quantity);
+
+CREATE UNIQUE INDEX tradingpost_transaction_idx ON tradingpost_transaction (account_id, security_id, date, quantity);
+
+CREATE UNIQUE INDEX tradingpost_curernt_holding_idx ON tradingpost_current_holding (account_id, security_id, security_type);
+
