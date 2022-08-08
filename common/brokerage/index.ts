@@ -21,6 +21,7 @@ export default class Brokerage extends BrokerageService {
         }
         super(brokerageMap, repo, portSummary)
     }
+
 }
 
 export async function getUserHoldings(userId: string, pgClient: IDatabase<any>, pgp: IMain): Promise<HistoricalHoldings[]> {

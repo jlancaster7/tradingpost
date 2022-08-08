@@ -1,8 +1,7 @@
 import 'dotenv/config';
-process.env.CONFIGURATION_ENV="production";
-import { Client as PostgresClient } from 'pg';
-import { Client as ElasticClient } from '@elastic/elasticsearch';
-import { DefaultConfig } from '../..//configuration';
+import {Client as PostgresClient} from 'pg';
+import {Client as ElasticClient} from '@elastic/elasticsearch';
+import {DefaultConfig} from '../../configuration';
 import {
     TweetsAndUser,
     ElasticSearchBody,
@@ -10,23 +9,24 @@ import {
     SubstackAndNewsletter,
     SpotifyEpisodeAndUser
 } from "./interfaces";
-import { DateTime } from 'luxon';
-import { LastID, Provider } from "./interfaces";
+import {DateTime} from 'luxon';
+import {LastID, Provider} from "./interfaces";
 import yargs from "yargs";
 import fs from "fs";
 
 class Twitter {
     private dbClient: PostgresClient;
+    public name: string;
 
     constructor(dbClient: PostgresClient) {
         this.dbClient = dbClient
+        this.name = "Twitter";
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
         if (lastId === null) lastId = 0
         let query = `SELECT t.id                  AS id,
                             t.tweet_id            AS tweet_id,
-                            t.user_id             AS trading_post_user_id,
                             t.twitter_user_id,
                             t.embed,
                             t.lang,
@@ -55,16 +55,32 @@ class Twitter {
                             tu.profile_url,
                             tu.protected,
                             tu.twitter_created_at AS user_twitter_created_at,
-                            tu.created_at         AS trading_post_twitter_created_at
+                            tu.created_at         AS trading_post_twitter_created_at,
+                            t.max_width           AS max_width,
+                            t.aspect_ratio        AS aspect_ratio,
+                            du.id                 AS trading_post_user_id,
+                            du.handle             AS trading_post_user_handle,
+                            du.email              AS trading_post_user_email,
+                            du.profile_url        AS trading_post_user_profile_url
                      FROM tweets t
-                              INNER JOIN twitter_users tu ON
-                         tu.twitter_user_id = t.twitter_user_id
+                              INNER JOIN
+                          twitter_users tu
+                          ON
+                              tu.twitter_user_id = t.twitter_user_id
+                              INNER JOIN
+                          DATA_PLATFORM_CLAIM dpc ON
+                              dpc.PLATFORM_USER_ID = t.TWITTER_USER_ID
+                              INNER JOIN
+                          data_user du ON
+                              dpc.user_id = du.ID
                      WHERE t.id > ${lastId}
-                     ORDER BY t.id ASC
+                       AND t.aspect_ratio != 0
+                       AND t.aspect_ratio IS NOT NULL
+                     ORDER BY t.id
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
 
-        if (response.rows.length <= 0) return { items: [], lastId: null };
+        if (response.rows.length <= 0) return {items: [], lastId: null};
 
         const tweetsAndUsers = response.rows.map((row: any) => {
             let obj: TweetsAndUser = {
@@ -97,12 +113,17 @@ class Twitter {
                 tweetURL: row.tweet_url,
                 twitterUserID: row.twitter_user_id,
                 URLs: row.urls,
-                userID: row.trading_post_user_id,
-                userTwitterCreatedAt: DateTime.fromJSDate(row.user_twitter_created_at)
+                userTwitterCreatedAt: DateTime.fromJSDate(row.user_twitter_created_at),
+                aspectRatio: 400 / (row.aspect_ratio as number),
+                maxWidth: row.max_width,
+                tradingpostUserId: row.trading_post_user_id,
+                tradingpostUserEmail: row.trading_post_user_email,
+                tradingpostUserHandle: row.trading_post_user_handle,
+                tradingpostUserProfileUrl: row.trading_post_user_profile_url,
             }
             return obj;
         });
-        return { items: this.map(tweetsAndUsers), lastId: response.rows[response.rows.length - 1].id }
+        return {items: this.map(tweetsAndUsers), lastId: response.rows[response.rows.length - 1].id}
     }
 
     map = (items: TweetsAndUser[]): ElasticSearchBody[] => {
@@ -132,12 +153,16 @@ class Twitter {
                 ratingsCount: 0,
                 tradingpostCreatedAt: tw.tradingPostTweetCreatedAt.toISO(),
                 tradingpostUpdatedAt: null,
+                size: {
+                    maxWidth: tw.maxWidth,
+                    aspectRatio: tw.aspectRatio
+                },
                 user: {
-                    id: tw.userID.toString(),
-                    imageUrl: "",
+                    id: tw.tradingpostUserId,
+                    imageUrl: tw.tradingpostUserProfileUrl,
                     name: "",
-                    type: "husk",
-                    username: ""
+                    type: "",
+                    username: tw.tradingpostUserHandle
                 }
 
             };
@@ -148,9 +173,11 @@ class Twitter {
 
 class SubStack {
     private dbClient: PostgresClient
+    public name: string
 
     constructor(dbClient: PostgresClient) {
         this.dbClient = dbClient
+        this.name = "Substack"
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
@@ -170,7 +197,6 @@ class SubStack {
                             sa.content_snippet,
                             sa.substack_created_at as substack_article_created_at,
                             sa.created_at          as tradingpost_substack_article_created_at,
-                            su.user_id             as tradingpost_user_id,
                             su.title               as newsletter_title,
                             su.description         as newsletter_description,
                             su.link                as newsletter_link,
@@ -179,15 +205,27 @@ class SubStack {
                             su.image               as newsletter_image,
                             su.itunes              as newsletter_itunes,
                             su.last_build_date     as last_newsletter_build_date,
-                            su.created_at          as substack_added_to_tradingpost_date
+                            su.created_at          as substack_added_to_tradingpost_date,
+                            sa.max_width           as max_width,
+                            sa.aspect_ratio        as aspect_ratio,
+                            du.id                  AS tradingpost_user_id,
+                            du.handle              AS tradingpost_user_handle,
+                            du.email               AS tradingpost_user_email,
+                            du.profile_url         AS tradingpost_user_profile_url
                      FROM substack_articles sa
                               INNER JOIN substack_users su
                                          ON su.substack_user_id = sa.substack_user_id
+                              INNER JOIN data_platform_claim dpc
+                                         ON dpc.platform_user_id = su.substack_user_id
+                              INNER JOIN data_user du
+                                         ON dpc.user_id = du.id
                      WHERE sa.id > ${lastId}
-                     ORDER BY sa.id ASC;`
+                       AND sa.aspect_ratio != 0
+                       AND sa.aspect_ratio IS NOT NULL
+                     ORDER BY sa.id;`
         const response = await this.dbClient.query(query);
 
-        if (!response.rows || response.rows.length <= 0) return { items: [], lastId: null };
+        if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const substackAndNewsletters = response.rows.map((row: any) => {
             let obj: SubstackAndNewsletter = {
                 article_id: row.article_id,
@@ -213,12 +251,17 @@ class SubStack {
                 substack_user_id: row.substack_user_id,
                 title: row.title,
                 tradingpost_substack_article_created_at: DateTime.fromJSDate(row.tradingpost_substack_article_created_at),
-                tradingpost_user_id: row.tradingpost_user_id
+                aspectRatio: 400 / (row.aspect_ratio as number),
+                maxWidth: row.max_width,
+                tradingpostUserId: row.tradingpost_user_id,
+                tradingpostUserHandle: row.tradingpost_user_handle,
+                tradingpostUserEmail: row.tradingpost_user_email,
+                tradingpostProfileUrl: row.tradingpost_profile_url
             }
             return obj;
         });
 
-        return { items: this.map(substackAndNewsletters), lastId: response.rows[response.rows.length - 1].id }
+        return {items: this.map(substackAndNewsletters), lastId: response.rows[response.rows.length - 1].id}
     }
 
     map = (items: SubstackAndNewsletter[]): ElasticSearchBody[] => {
@@ -248,12 +291,16 @@ class SubStack {
                 ratingsCount: 0,
                 tradingpostCreatedAt: n.tradingpost_substack_article_created_at.toISO(),
                 tradingpostUpdatedAt: n.tradingpost_substack_article_created_at.toISO(),
+                size: {
+                    maxWidth: n.maxWidth,
+                    aspectRatio: n.aspectRatio,
+                },
                 user: {
-                    id: n.tradingpost_user_id.toString(),
-                    imageUrl: "",
+                    id: n.tradingpostUserId,
+                    imageUrl: n.tradingpostProfileUrl,
                     name: "",
-                    type: "husk",
-                    username: ""
+                    type: "",
+                    username: n.tradingpostUserHandle
                 }
             };
             return obj;
@@ -263,9 +310,11 @@ class SubStack {
 
 class Spotify {
     private dbClient: PostgresClient
+    public name: string;
 
     constructor(dbClient: PostgresClient) {
         this.dbClient = dbClient
+        this.name = 'Spotify'
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
@@ -274,43 +323,60 @@ class Spotify {
                             se.spotify_episode_id,
                             se.spotify_show_id,
                             se.audio_preview_url,
-                            se.name                 as episode_name,
-                            se.description          as episode_description,
-                            se.duration_ms          as episode_duration_ms,
-                            se.explicit             as is_episode_explicit,
-                            se.html_description     as episode_html_description,
-                            se.is_externally_hosted as is_episode_externally_hosted,
-                            se.is_playable          as is_episode_playable,
-                            se.language             as episode_language,
-                            se.languages            as episode_languages,
-                            se.embed                as episode_embed,
-                            se.external_urls        as episode_external_urls,
-                            se.images               as episode_images,
-                            se.release_date         as episode_release_date,
-                            se.created_at           as tradingpost_episode_created_at,
-                            su.user_id              as tradingpost_user_id,
-                            su.name                 as podcast_name,
-                            su.description          as podcast_description,
-                            su.explicit             as is_podcast_explicit,
-                            su.html_description     as podcast_html_description,
-                            su.is_externally_hosted as is_podcast_externally_hosted,
-                            su.media_type           as podcast_media_type,
-                            su.publisher            as podcast_publisher,
-                            su.total_episodes       as podcast_total_episodes,
-                            su.languages            as podcast_languages,
-                            su.external_urls        as podcast_external_urls,
-                            su.images               as podcast_images,
-                            su.copyrights           as podcast_copyrights,
-                            su.created_at           as tradingpost_podcast_created_at
+                            se.name                 AS episode_name,
+                            se.description          AS episode_description,
+                            se.duration_ms          AS episode_duration_ms,
+                            se.explicit             AS is_episode_explicit,
+                            se.html_description     AS episode_html_description,
+                            se.is_externally_hosted AS is_episode_externally_hosted,
+                            se.is_playable          AS is_episode_playable,
+                            se.language             AS episode_language,
+                            se.languages            AS episode_languages,
+                            se.embed                AS episode_embed,
+                            se.external_urls        AS episode_external_urls,
+                            se.images               AS episode_images,
+                            se.release_date         AS episode_release_date,
+                            se.created_at           AS tradingpost_episode_created_at,
+                            dpc.user_id             AS tradingpost_user_id,
+                            su.name                 AS podcast_name,
+                            su.description          AS podcast_description,
+                            su.explicit             AS is_podcast_explicit,
+                            su.html_description     AS podcast_html_description,
+                            su.is_externally_hosted AS is_podcast_externally_hosted,
+                            su.media_type           AS podcast_media_type,
+                            su.publisher            AS podcast_publisher,
+                            su.total_episodes       AS podcast_total_episodes,
+                            su.languages            AS podcast_languages,
+                            su.external_urls        AS podcast_external_urls,
+                            su.images               AS podcast_images,
+                            su.copyrights           AS podcast_copyrights,
+                            su.created_at           AS tradingpost_podcast_created_at,
+                            se.max_width            AS max_width,
+                            se.aspect_ratio         AS aspect_ratio,
+                            du.id                   AS tradingpost_user_id,
+                            du.handle               AS tradingpost_user_handle,
+                            du.email                AS tradingpost_user_email,
+                            du.profile_url          AS tradingpost_user_profile_url
                      FROM spotify_episodes se
-                              INNER JOIN spotify_users su
-                                         ON su.spotify_show_id = se.spotify_show_id
+                              INNER JOIN
+                          spotify_users su
+                          ON
+                              su.spotify_show_id = se.spotify_show_id
+                              INNER JOIN
+                          DATA_PLATFORM_CLAIM dpc
+                          ON
+                              dpc.PLATFORM_USER_ID = su.SPOTIFY_SHOW_ID
+                              INNER JOIN data_user du
+                                         ON
+                                             dpc.user_id = du.id
                      WHERE se.id > ${lastId}
-                     ORDER BY se.id ASC
+                       AND se.aspect_ratio != 0
+                       AND se.aspect_ratio IS NOT NULL
+                     ORDER BY se.id
                      LIMIT 5000;`;
         const response = await this.dbClient.query(query);
 
-        if (!response.rows || response.rows.length <= 0) return { items: [], lastId: null };
+        if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const spotifyItems = response.rows.map((row: any) => {
             let obj: SpotifyEpisodeAndUser = {
                 audio_preview_url: row.audio_preview_url,
@@ -343,12 +409,17 @@ class Spotify {
                 spotify_show_id: row.spotify_show_id,
                 tradingpost_episode_created_at: DateTime.fromJSDate(row.tradingpost_episode_created_at),
                 tradingpost_podcast_created_at: DateTime.fromJSDate(row.tradingpost_podcast_created_at),
-                tradingpost_user_id: row.tradingpost_user_id
+                aspectRatio: row.aspect_ratio,
+                maxWidth: row.max_width,
+                tradingpostUserId: row.tradingpost_user_id,
+                tradingpostUserProfileUrl: row.tradingpost_user_profile_url,
+                tradingpostUserEmail: row.tradingpost_user_email,
+                tradingpostUserHandle: row.tradingpost_user_handle
             };
             return obj;
         });
 
-        return { items: this.map(spotifyItems), lastId: response.rows[response.rows.length - 1].id }
+        return {items: this.map(spotifyItems), lastId: response.rows[response.rows.length - 1].id}
     }
 
     map = (items: SpotifyEpisodeAndUser[]): ElasticSearchBody[] => {
@@ -379,11 +450,15 @@ class Spotify {
                 tradingpostCreatedAt: si.tradingpost_episode_created_at.toISO(),
                 tradingpostUpdatedAt: si.tradingpost_episode_created_at.toISO(),
                 user: {
-                    id: si.tradingpost_user_id.toString(),
-                    imageUrl: null,
+                    id: si.tradingpostUserId,
+                    imageUrl: si.tradingpostUserProfileUrl,
                     name: "",
-                    type: "husk",
-                    username: ""
+                    type: "",
+                    username: si.tradingpostUserHandle
+                },
+                size: {
+                    maxWidth: si.maxWidth,
+                    aspectRatio: si.aspectRatio
                 }
             };
             return obj;
@@ -393,44 +468,59 @@ class Spotify {
 
 class YouTube {
     private dbClient: PostgresClient
+    public name: string
 
     constructor(dbClient: PostgresClient) {
         this.dbClient = dbClient
+        this.name = 'YouTube'
     }
 
     getItems = async (lastId: LastID): Promise<{ items: ElasticSearchBody[], lastId: LastID }> => {
         if (lastId === null) lastId = 0
-        let query = `select yv.id                 AS id,
+        let query = `SELECT yv.id                 AS id,
                             yv.video_id,
                             yv.youtube_channel_id,
-                            yv.user_id,
+                            dpc.USER_ID           AS tradingpost_user_id,
                             yv.title,
                             yv.description,
                             yv.video_url,
                             yv.video_embed,
                             yv.thumbnails,
                             yv.youtube_created_at,
-                            yv.created_at         as trading_post_youtube_video_created_at,
-                            yu.title              as channel_title,
-                            yu.description        as channel_description,
+                            yv.created_at         AS trading_post_youtube_video_created_at,
+                            yu.title              AS channel_title,
+                            yu.description        AS channel_description,
                             yu.country,
-                            yu.custom_url         as custom_channel_url,
-                            yu.thumbnails         as channel_thumbails,
-                            yu.statistics         as channel_statistics,
-                            yu.status             as channel_status,
-                            yu.youtube_created_at as channel_created_at,
-                            yu.created_at         as trading_post_channel_created_at
+                            yu.custom_url         AS custom_channel_url,
+                            yu.thumbnails         AS channel_thumbails,
+                            yu.statistics         AS channel_statistics,
+                            yu.status             AS channel_status,
+                            yu.youtube_created_at AS channel_created_at,
+                            yu.created_at         AS trading_post_channel_created_at,
+                            yv.max_width          as max_width,
+                            yv.aspect_ratio       as aspect_ratio,
+                            du.id                 AS tradingpost_user_id,
+                            du.handle             AS tradingpost_user_handle,
+                            du.email              AS tradingpost_user_email,
+                            du.profile_url        AS tradingpost_user_profile_url
                      FROM youtube_videos yv
                               INNER JOIN
                           youtube_users yu
                           ON
                               yu.youtube_channel_id = yv.youtube_channel_id
+                              INNER JOIN DATA_PLATFORM_CLAIM dpc
+                                         ON
+                                             yu.YOUTUBE_CHANNEL_ID = dpc.PLATFORM_USER_ID
+                              INNER JOIN data_user du
+                                         ON dpc.user_id = du.id
                      WHERE yv.id > ${lastId}
-                     ORDER BY yv.id ASC
+                       AND yv.aspect_ratio != 0
+                       AND yv.aspect_ratio IS NOT NULL
+                     ORDER BY yv.id
                      LIMIT 5000;`
         const response = await this.dbClient.query(query);
 
-        if (!response.rows || response.rows.length <= 0) return { items: [], lastId: null };
+        if (!response.rows || response.rows.length <= 0) return {items: [], lastId: null};
         const youtubeVideosAndChannel: YouTubeVideoAndChannel[] = response.rows.map((row: any) => {
             let obj: YouTubeVideoAndChannel = {
                 channel_created_at: row.channel_created_at,
@@ -446,17 +536,22 @@ class YouTube {
                 title: row.title,
                 trading_post_channel_created_at: DateTime.fromJSDate(row.trading_post_channel_created_at),
                 trading_post_youtube_video_created_at: DateTime.fromJSDate(row.trading_post_youtube_video_created_at),
-                user_id: row.user_id,
                 video_embed: row.video_embed,
                 video_id: row.video_id,
                 video_url: row.video_url,
                 youtube_channel_id: row.youtube_channel_id,
-                youtube_created_at: DateTime.fromJSDate(row.youtube_created_at)
+                youtube_created_at: DateTime.fromJSDate(row.youtube_created_at),
+                maxWidth: row.max_width,
+                aspectRatio: row.aspect_ratio,
+                tradingpostUserId: row.tradingpost_user_id,
+                tradingpostUserEmail: row.tradingpost_user_email,
+                tradingpostUserHandle: row.tradingpost_user_handle,
+                tradingpostUserProfileUrl: row.tradingpost_user_profile_url
             }
             return obj;
         });
 
-        return { items: this.map(youtubeVideosAndChannel), lastId: response.rows[response.rows.length - 1].id }
+        return {items: this.map(youtubeVideosAndChannel), lastId: response.rows[response.rows.length - 1].id}
     }
 
     map = (items: YouTubeVideoAndChannel[]): ElasticSearchBody[] => {
@@ -487,13 +582,16 @@ class YouTube {
                 tradingpostCreatedAt: yv.trading_post_youtube_video_created_at.toISO(),
                 tradingpostUpdatedAt: yv.trading_post_youtube_video_created_at.toISO(),
                 user: {
-                    id: yv.user_id.toString(),
-                    imageUrl: null,
+                    id: yv.tradingpostUserId,
+                    imageUrl: yv.tradingpostUserProfileUrl,
                     name: "",
-                    type: "husk",
-                    username: ""
+                    type: "",
+                    username: yv.tradingpostUserHandle
+                },
+                size: {
+                    maxWidth: yv.maxWidth,
+                    aspectRatio: yv.aspectRatio
                 }
-
             };
             return obj;
         })
@@ -506,10 +604,10 @@ const run = async () => {
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
 
     const pgClient = new PostgresClient({
-        host: postgresConfiguration['host'] as string,
-        user: postgresConfiguration['user'] as string,
-        password: postgresConfiguration['password'] as string,
-        database: postgresConfiguration['database'] as string
+        host: postgresConfiguration.host,
+        user: postgresConfiguration.user,
+        password: postgresConfiguration.password,
+        database: postgresConfiguration.database
     });
 
     await pgClient.connect()
@@ -532,22 +630,27 @@ const run = async () => {
     for (let i = 0; i < providers.length; i++) {
         const provider = providers[i];
         let id: LastID = null;
+        console.log("Ingesting: ", provider.name)
+        let count = 0
         while (true) {
             let items: ElasticSearchBody[], lastId: string | number | null;
-            ({ items, lastId: lastId } = await provider.getItems(id));
+            ({items, lastId: lastId} = await provider.getItems(id));
 
             if (items.length <= 0) break;
             await ingestToElastic(elasticClient, items, indexName)
             id = lastId
+            count = items.length + count
+            console.log("\t Ingest Count: ", count)
         }
     }
 
     await pgClient.end()
+    console.log("Finished")
 }
 
 const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: string) => {
     try {
-        await elasticClient.indices.delete({ index: indexName });
+        await elasticClient.indices.delete({index: indexName});
     } catch (e) {
         console.error()
     }
@@ -555,7 +658,7 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
     const esIndexSchema = JSON.parse(fs.readFileSync('../../../elastic/schema.json', 'utf8'));
     let synonymList = fs.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
     synonymList = synonymList.map(a => a.slice(0, -1));
-    
+
     // @ts-ignore
     await elasticClient.indices.create({
         index: indexName,
@@ -607,8 +710,8 @@ const ingestToElastic = async (elasticClient: ElasticClient, items: ElasticSearc
         const item = items[i];
         group.push(item)
         if (group.length === 100 || i === items.length - 1) {
-            const operations = group.flatMap(doc => [{ index: { _index: indexName, _id: doc.id } }, doc]);
-            const bulkResponse = await elasticClient.bulk({ refresh: false, operations });
+            const operations = group.flatMap(doc => [{index: {_index: indexName, _id: doc.id}}, doc]);
+            const bulkResponse = await elasticClient.bulk({refresh: false, operations});
             if (bulkResponse.errors) {
                 const erroredDocs: {
                     // @ts-ignore
@@ -627,7 +730,7 @@ const ingestToElastic = async (elasticClient: ElasticClient, items: ElasticSearc
                             error: action[operation].error,
                         })
                     }
-                })
+                });
                 console.log(erroredDocs)
             }
         }
