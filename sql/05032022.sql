@@ -561,3 +561,5 @@ CREATE UNIQUE INDEX security_price_idx ON security_price (security_id, time DESC
 CREATE INDEX security_price_idx_time ON security_price (time DESC);
 ALTER TABLE security
     ADD COLUMN enable_utp BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE tradingpost_account_group ADD CONSTRAINT name_userid_unique UNIQUE (name, user_id);
