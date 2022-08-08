@@ -1576,7 +1576,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     addTradingPostAccountGroup = async (userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number> => {
         let query = `INSERT INTO tradingpost_account_group(user_id, name, default_benchmark_id)
                      VALUES ($1, $2, $3)
-                     ON CONFLICT ON CONSTRAINT name_userid_unique DO NOTHING
+                     ON CONFLICT ON CONSTRAINT name_userid_unique DO UPDATE SET
+                     name = EXCLUDED.name
                      RETURNING id;`;
 
         const accountGroupIdResults = await this.db.any(query, [userId, name, defaultBenchmarkId]);
