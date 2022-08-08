@@ -1,6 +1,5 @@
 import {DateTime} from "luxon";
 import {getUSExchangeHoliday} from "../market-data/interfaces";
-import {policyOwnerEntityType} from "aws-sdk/clients/iam";
 
 export interface IBrokerageService {
     getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
@@ -23,6 +22,8 @@ export interface IBrokerageService {
 }
 
 export interface IBrokerageRepository {
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
+
     getCashSecurityId(): Promise<GetSecurityBySymbol>
 
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>
@@ -151,13 +152,13 @@ export interface ISummaryService {
 
     computeSectorAllocations(holdings: HistoricalHoldings[]): Promise<TradingPostSectorAllocations[]>
 
-    getCurrentHoldings (userId: string): Promise<HistoricalHoldings[]>
+    getCurrentHoldings(userId: string): Promise<HistoricalHoldings[]>
 
     getSummary(userId: string): Promise<TradingPostAccountGroupStats>
 
-    getReturns (userId: string, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
+    getReturns(userId: string, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
 
-    getAccountGroupByName (userId: string, accountGroupName: string): Promise<TradingPostAccountGroups>
+    getAccountGroupByName(userId: string, accountGroupName: string): Promise<TradingPostAccountGroups>
 
     computeExposure(holdings: HistoricalHoldings[]): TradingPostExposure
 

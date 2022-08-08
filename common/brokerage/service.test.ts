@@ -17,8 +17,8 @@ import {
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountsTable,
     TradingPostCurrentHoldings,
-    TradingPostCurrentHoldingsTableWithSecurity,
-    TradingPostHistoricalHoldings,
+    TradingPostCurrentHoldingsTableWithSecurity, TradingPostExposure,
+    TradingPostHistoricalHoldings, TradingPostSectorAllocations,
     TradingPostTransactions,
     TradingPostTransactionsTable
 } from "./interfaces";
@@ -50,6 +50,10 @@ const Securities: Security[] = [
 
 class MockRepo implements IBrokerageRepository {
     constructor() {
+    }
+
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number> {
+        throw new Error('Method not implemented.');
     }
 
     getCashSecurityId = async (): Promise<GetSecurityBySymbol> => {
@@ -1416,6 +1420,21 @@ test('holding history buy & sell', async () => {
         },
         getTradingPostHoldingsByAccountGroup(userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]> {
             return Promise.resolve([]);
+        }, getAccountGroupSummary(accountGroupId: number): Promise<TradingPostAccountGroupStats> {
+            return Promise.resolve({
+                accountGroupId: 0,
+                beta: 0,
+                sharpe: 0,
+                industryAllocations: [],
+                exposure: {
+                  gross: 0,
+                  long: 0,
+                  net: 0,
+                  short: 0
+                },
+                date: DateTime.now(),
+                benchmarkId: 0
+            });
         }
     })
 

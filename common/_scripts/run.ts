@@ -4,7 +4,7 @@ import Finicity from "../finicity/index";
 import FinicityService from "../brokerage/finicity";
 import Repository from "../brokerage/repository"
 import FinicityTransformer from "../brokerage/finicity/transformer";
-import BrokerageService from "../brokerage/service";
+import Brokerage from "../brokerage/index";
 import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
 import pg from "pg";
 
@@ -27,11 +27,7 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
 (async () => {
     const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
 
-    const pgp = pgPromise({
-        // query(e: any) {
-        //     console.log(e.query)
-        // }
-    });
+    const pgp = pgPromise({});
     const pgClient = pgp({
         host: pgCfg.host,
         user: pgCfg.user,
@@ -46,15 +42,10 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     await finicity.init()
 
     const tpUserId = "8e787902-f0e9-42aa-a8d8-18e5d7a1a34d";
-    const repo = new Repository(pgClient, pgp);
-
-    const portfolioSummaryService = new PortfolioSummaryService(repo);
-
-    const finTransformer = new FinicityTransformer(repo);
-    const finicityService = new FinicityService(finicity, repo, finTransformer);
 
     console.log("Starting...")
-    const brokerageService = new BrokerageService({"finicity": finicityService}, repo, portfolioSummaryService);
-    await brokerageService.newlyAuthenticatedBrokerage(tpUserId, 'finicity')
+    const brokerageService = new Brokerage(pgClient, pgp, finicity);
+    await brokerageService.addNewAccounts("6007115349", "finicity")
+    // await brokerageService.newlyAuthenticatedBrokerage(tpUserId, 'finicity')
     console.log("Finished")
 })()

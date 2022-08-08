@@ -108,6 +108,7 @@ export class PortfolioSummaryService implements ISummaryService {
             }
             return 0;
         }
+
         if (securityReturns.length > benchmarkReturns.length) {
 
             securityReturns = securityReturns.slice(securityReturns.length - benchmarkReturns.length, securityReturns.length);
@@ -227,9 +228,9 @@ export class PortfolioSummaryService implements ISummaryService {
         const account_group = await this.getAccountGroupByName(userId, 'default');
 
         const currentHoldings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId);
-        
+
         const historicalHoldings = await this.repository.getTradingPostHoldingsByAccountGroup(userId, account_group.accountGroupId, startDate, endDate);
-        
+
         const returns = await this.computeAccountGroupHPRs(historicalHoldings);
 
         await this.addAccountGroupHPRs(returns);
@@ -255,20 +256,17 @@ export class PortfolioSummaryService implements ISummaryService {
 
     getCurrentHoldings = async (userId: string): Promise<HistoricalHoldings[]> => {
         const account_group = await this.getAccountGroupByName(userId, 'default');
-        const holdings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId)
-        return holdings;
+        return await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId)
     }
 
     getReturns = async (userId: string, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]> => {
         const account_group = await this.getAccountGroupByName(userId, 'default');
-        const returns = await this.repository.getTradingPostAccountGroupReturns(account_group.accountGroupId, startDate, endDate)
-        return returns;
+        return await this.repository.getTradingPostAccountGroupReturns(account_group.accountGroupId, startDate, endDate)
     }
 
     getSummary = async (userId: string): Promise<TradingPostAccountGroupStats> => {
         const account_group = await this.getAccountGroupByName(userId, 'default');
-        const summary = await this.repository.getAccountGroupSummary(account_group.accountGroupId)
-        return summary;
+        return await this.repository.getAccountGroupSummary(account_group.accountGroupId)
     }
 
     getAccountGroupByName = async (userId: string, accountGroupName: string): Promise<TradingPostAccountGroups> => {

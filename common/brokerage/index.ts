@@ -7,9 +7,9 @@ import Finicity from "../finicity";
 import FinicityTransformer from "./finicity/transformer";
 import {PortfolioSummaryService} from "./portfolio-summary";
 import {
-    HistoricalHoldings, 
+    HistoricalHoldings,
     TradingPostAccountGroupStats,
-    AccountGroupHPRsTable
+    AccountGroupHPRsTable, TradingPostBrokerageAccounts, TradingPostBrokerageAccountsTable
 } from './interfaces';
 
 export default class Brokerage extends BrokerageService {
@@ -21,21 +21,79 @@ export default class Brokerage extends BrokerageService {
         }
         super(brokerageMap, repo, portSummary)
     }
-    getUserHoldings = async(userId: string, pgClient: IDatabase<any>, pgp: IMain): Promise<HistoricalHoldings[]> => {
-        //const repo = new Repository(pgClient, pgp);
-        //const portSummary = new PortfolioSummaryService(repo);
-        const holdings = await this.portfolioSummaryService.getCurrentHoldings(userId);
-        return holdings;
-    }
-    getUserAccountGroupSummary = async (userId: string, pgClient: IDatabase<any>, pgp: IMain): Promise<TradingPostAccountGroupStats> => {
 
-        const summary = await this.portfolioSummaryService.getSummary(userId);
-        return summary;
+    getUserHoldings = async (tpUserId: string): Promise<HistoricalHoldings[]> => {
+        return await this.portfolioSummaryService.getCurrentHoldings(tpUserId);
     }
-    getUserReturns = async (userId: string, startDate: DateTime, endDate: DateTime = DateTime.now(), pgClient: IDatabase<any>, pgp: IMain): Promise<AccountGroupHPRsTable[]> => {
-        const repo = new Repository(pgClient, pgp);
-        const portSummary = new PortfolioSummaryService(repo);
-        const returns = await this.portfolioSummaryService.getReturns(userId, startDate, endDate);
-        return returns;
+
+    getUserAccountGroupSummary = async (tpUserId: string): Promise<TradingPostAccountGroupStats> => {
+        return await this.portfolioSummaryService.getSummary(tpUserId);
+    }
+
+    getUserReturns = async (tpUserId: string, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<AccountGroupHPRsTable[]> => {
+        return await this.portfolioSummaryService.getReturns(tpUserId, startDate, endDate);
+    }
+
+    addNewAccounts = async (brokerageUserId: string, brokerageId: string, accountIds?: string[]) => {
+        const brokerage = this.brokerageMap[brokerageId];
+        const tradingPostUser = await brokerage.getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId);
+        const currentAccounts = await this.repository.getTradingPostBrokerageAccounts(tradingPostUser.id)
+
+        const accounts = await brokerage.importAccounts(brokerageUserId);
+        await this.repository.upsertTradingPostBrokerageAccounts(accounts)
+
+        const holdings = await brokerage.importHoldings(brokerageUserId);
+        await this.repository.upsertTradingPostCurrentHoldings(holdings);
+
+        const transactions = await brokerage.importTransactions(brokerageUserId);
+        await this.repository.upsertTradingPostTransactions(transactions);
+
+        const start = DateTime.now().setZone("America/New_York");
+        const end = start.minus({month: 24})
+
+        // Takes old accounts avail
+        // takes new accounts avail
+        // Sees where missing and adds to array
+        const newAccounts = await this.repository.getTradingPostBrokerageAccounts(tradingPostUser.id);
+        let accountsToProcess: TradingPostBrokerageAccountsTable[] = [];
+
+        newAccounts.forEach(newAcc => {
+            let hasAccount = false
+            currentAccounts.forEach((curAcc => {
+                if (curAcc.institutionId === newAcc.institutionId && curAcc.accountNumber === newAcc.accountNumber) {
+                    hasAccount = true
+                    return
+                }
+            }));
+            if (hasAccount) return
+            accountsToProcess.push(newAcc)
+        });
+
+        for (let i = 0; i < accountsToProcess.length; i++) {
+            const account = accountsToProcess[i];
+            const holdingHistory = await this.computeHoldingsHistory(account.id, start, end);
+            await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
+        }
+
+        const tpAccountIds = accountsToProcess.map(tp => tp.id)
+        await this.repository.addTradingPostAccountGroup(tradingPostUser.id, 'default', tpAccountIds, 10117)
+        await this.portfolioSummaryService.computeAccountGroupSummary(tradingPostUser.id)
+    }
+
+    addNewTransactions = async (userId: string, brokerageId: string, accountIds?: string[]) => {
+    }
+
+    removeAccounts = async (brokerageCustomerId: string, accountIds: string[], brokerageId: string) => {
+        const brokerage = this.brokerageMap[brokerageId];
+        const tpAccountIds = await brokerage.removeAccounts(brokerageCustomerId, accountIds)
+        await this.repository.deleteTradingPostBrokerageTransactions(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageHoldings(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds)
+        await this.repository.deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds)
+    }
+
+    generateBrokerageAuthenticationLink = async (userId: string, brokerageId: string): Promise<string> => {
+        const brokerage = this.brokerageMap[brokerageId];
+        return await brokerage.generateBrokerageAuthenticationLink(userId);
     }
 }
