@@ -4,7 +4,7 @@ import Finicity from "../finicity/index";
 import FinicityService from "../brokerage/finicity";
 import Repository from "../brokerage/repository"
 import FinicityTransformer from "../brokerage/finicity/transformer";
-import BrokerageService from "../brokerage/service";
+import Brokerage from "../brokerage/index";
 import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
 import pg from "pg";
 
@@ -54,7 +54,7 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     const finicityService = new FinicityService(finicity, repo, finTransformer);
 
     console.log("Starting...")
-    const brokerageService = new BrokerageService({"finicity": finicityService}, repo, portfolioSummaryService);
-    await brokerageService.newlyAuthenticatedBrokerage(tpUserId, 'finicity')
+    const brokerageService = new Brokerage(pgClient, pgp, finicity);
+    // await brokerageService.newlyAuthenticatedBrokerage(tpUserId, 'finicity')
     console.log("Finished")
 })()
