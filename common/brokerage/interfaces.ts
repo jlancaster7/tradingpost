@@ -23,6 +23,8 @@ export interface IBrokerageService {
 }
 
 export interface IBrokerageRepository {
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
+
     getCashSecurityId(): Promise<GetSecurityBySymbol>
 
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>

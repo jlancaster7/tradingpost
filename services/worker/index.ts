@@ -3,7 +3,7 @@ import cors from 'cors';
 import {DefaultConfig} from '@tradingpost/common/configuration';
 import pgPromise from 'pg-promise';
 import Finicity from "@tradingpost/common/finicity/index";
-import Brokerage from "@tradingpost/common/brokerage/index";
+import Brokerage from "@tradingpost/common/brokerage";
 import bodyParser from "body-parser";
 
 const run = async () => {
