@@ -223,6 +223,36 @@ export class PortfolioSummaryService implements ISummaryService {
         return {long: long / total, short: short / total, gross: gross / total, net: net / total};
     }
 
+    computeAccountGroupSummary = async (userId: string, startDate: DateTime = DateTime.fromJSDate(new Date('1/1/2010')), endDate: DateTime = DateTime.now()): Promise<TradingPostAccountGroupStats> => {
+        const account_group = await this.getAccountGroupByName(userId, 'default');
+
+        const currentHoldings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId);
+        
+        const historicalHoldings = await this.repository.getTradingPostHoldingsByAccountGroup(userId, account_group.accountGroupId, startDate, endDate);
+        
+        const returns = await this.computeAccountGroupHPRs(historicalHoldings);
+
+        await this.addAccountGroupHPRs(returns);
+
+        const beta = await this.computeAccountGroupBeta(currentHoldings, account_group.defaultBenchmarkId);
+
+        const sharpe = this.computeSharpe(returns);
+
+        const allocations = await this.computeSectorAllocations(currentHoldings);
+
+        const exposure = this.computeExposure(currentHoldings);
+
+        return {
+            accountGroupId: account_group.accountGroupId,
+            beta: beta,
+            sharpe: sharpe,
+            industryAllocations: allocations,
+            exposure: exposure,
+            date: returns[returns.length - 1].date,
+            benchmarkId: account_group.defaultBenchmarkId
+        };
+    }
+
     getCurrentHoldings = async (userId: string): Promise<HistoricalHoldings[]> => {
         const account_group = await this.getAccountGroupByName(userId, 'default');
         const holdings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId)
@@ -247,31 +277,5 @@ export class PortfolioSummaryService implements ISummaryService {
             throw new Error(`Couldn't find the default account group for userId: ${userId}`);
         }
         return account_group;
-    }
-
-    computeAccountGroupSummary = async (userId: string, startDate: DateTime = DateTime.fromJSDate(new Date('1/1/2010')), endDate: DateTime = DateTime.now()): Promise<TradingPostAccountGroupStats> => {
-        const account_group = await this.getAccountGroupByName(userId, 'default');
-
-        const currentHoldings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId);
-
-        const returns = await this.repository.getTradingPostAccountGroupReturns(account_group.accountGroupId, startDate, endDate);
-
-        const beta = await this.computeAccountGroupBeta(currentHoldings, account_group.defaultBenchmarkId);
-
-        const sharpe = this.computeSharpe(returns);
-
-        const allocations = await this.computeSectorAllocations(currentHoldings);
-
-        const exposure = this.computeExposure(currentHoldings);
-
-        return {
-            accountGroupId: account_group.accountGroupId,
-            beta: beta,
-            sharpe: sharpe,
-            industryAllocations: allocations,
-            exposure: exposure,
-            date: returns[returns.length - 1].date,
-            benchmarkId: account_group.defaultBenchmarkId
-        };
     }
 }

@@ -21,24 +21,21 @@ export default class Brokerage extends BrokerageService {
         }
         super(brokerageMap, repo, portSummary)
     }
-}
+    getUserHoldings = async(userId: string, pgClient: IDatabase<any>, pgp: IMain): Promise<HistoricalHoldings[]> => {
+        //const repo = new Repository(pgClient, pgp);
+        //const portSummary = new PortfolioSummaryService(repo);
+        const holdings = await this.portfolioSummaryService.getCurrentHoldings(userId);
+        return holdings;
+    }
+    getUserAccountGroupSummary = async (userId: string, pgClient: IDatabase<any>, pgp: IMain): Promise<TradingPostAccountGroupStats> => {
 
-export async function getUserHoldings(userId: string, pgClient: IDatabase<any>, pgp: IMain): Promise<HistoricalHoldings[]> {
-    const repo = new Repository(pgClient, pgp);
-    const portSummary = new PortfolioSummaryService(repo);
-    const holdings = await portSummary.getCurrentHoldings(userId);
-    return holdings;
-}
-
-export async function getUserAccountGroupSummary(userId: string, pgClient: IDatabase<any>, pgp: IMain): Promise<TradingPostAccountGroupStats> {
-    const repo = new Repository(pgClient, pgp);
-    const portSummary = new PortfolioSummaryService(repo);
-    const summary = await portSummary.getSummary(userId);
-    return summary;
-}
-export async function getUserReturns (userId: string, startDate: DateTime, endDate: DateTime = DateTime.now(), pgClient: IDatabase<any>, pgp: IMain): Promise<AccountGroupHPRsTable[]> {
-    const repo = new Repository(pgClient, pgp);
-    const portSummary = new PortfolioSummaryService(repo);
-    const returns = await portSummary.getReturns(userId, startDate, endDate);
-    return returns;
+        const summary = await this.portfolioSummaryService.getSummary(userId);
+        return summary;
+    }
+    getUserReturns = async (userId: string, startDate: DateTime, endDate: DateTime = DateTime.now(), pgClient: IDatabase<any>, pgp: IMain): Promise<AccountGroupHPRsTable[]> => {
+        const repo = new Repository(pgClient, pgp);
+        const portSummary = new PortfolioSummaryService(repo);
+        const returns = await this.portfolioSummaryService.getReturns(userId, startDate, endDate);
+        return returns;
+    }
 }
