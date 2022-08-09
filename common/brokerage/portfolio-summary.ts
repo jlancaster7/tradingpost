@@ -108,7 +108,6 @@ export class PortfolioSummaryService implements ISummaryService {
             }
             return 0;
         }
-
         if (securityReturns.length > benchmarkReturns.length) {
 
             securityReturns = securityReturns.slice(securityReturns.length - benchmarkReturns.length, securityReturns.length);

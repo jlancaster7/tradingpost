@@ -155,6 +155,7 @@ export default class BrokerageService {
 
         // Get Current Holdings
         const currentHoldings = await this.repository.getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(tpAccountId);
+        // TODO: We could recomptue old holdings history...
         if (currentHoldings.length <= 0) throw new Error("no holdings available for account " + tpAccountId);
         currentHoldings.forEach(h => allSecurityIds[h.securityId] = {});
 

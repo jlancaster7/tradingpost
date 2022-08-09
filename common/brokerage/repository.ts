@@ -1743,18 +1743,13 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             price,
                             value,
                             cost_basis,
-                            CASE 
-                                WHEN quantity = 0 THEN 0
-                                WHEN cost_basis IS NULL THEN 0
-                                ELSE (value - (cost_basis * quantity)) 
-                            END
-                            as pnl,
+                            (price - cost_basis) / cost_basis as pnl,
                             quantity,
                             date
                      FROM tradingpost_historical_holding
                      WHERE account_id = $1
-                     AND date BETWEEN $2 AND $3
-                     `;
+                       AND date BETWEEN $2 AND $3
+        `;
 
         const response = await this.db.any(query, [accountId, startDate, endDate]);
         if (!response || response.length <= 0) {
@@ -1780,29 +1775,21 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostHoldingsByAccountGroup = async (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id                                AS account_group_id,
-                            ht.security_id                                      AS security_id,
-                            AVG(ht.price)                                       AS price,
-                            SUM(ht.value)                                       AS value,
-                            CASE
-                                WHEN SUM(ht.quantity) = 0 THEN 0
-                                WHEN SUM(ch.cost_basis) IS NULL THEN 0
-                                ELSE SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)
-                            END                                                 AS cost_basis,
-                            CASE 
-                                WHEN SUM(ht.quantity) = 0 THEN 0
-                                WHEN SUM(ch.cost_basis) IS NULL THEN 0
-                                ELSE (SUM(ht.value) - (SUM(ht.cost_basis * ht.quantity))) 
-                            END                                                 AS pnl,
-                            SUM(ht.quantity)                                    AS quantity,
-                            ht.date                                             AS date
+        let query = `SELECT atg.account_group_id                                  AS account_group_id,
+                            ht.security_id                                        AS security_id,
+                            AVG(ht.price)                                         AS price,
+                            SUM(ht.value)                                         AS value,
+                            SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)   AS cost_basis,
+                            (AVG(ht.price) - (SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity))) /
+                            (SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)) AS pnl,
+                            SUM(ht.quantity)                                      AS quantity,
+                            ht.date                                               AS date
                      FROM tradingpost_historical_holding ht
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ht.account_id = atg.account_id
                      WHERE atg.account_group_id = $1
-                     AND ht.date BETWEEN $2 AND $3
-                     GROUP BY atg.account_group_id, ht.security_id, ht.date
-                    `;
+                       AND ht.date BETWEEN $2 AND $3
+                     GROUP BY atg.account_group_id, ht.security_id, ht.date`;
         const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
 
         if (!response || response.length <= 0) {
@@ -1823,32 +1810,37 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 date: d.date
             })
         }
+
         return holdings;
     }
 
     getTradingPostCurrentHoldingsByAccountGroup = async (accountGroupId: number): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id                                AS account_group_id,
-                            ch.security_id                                      AS security_id,
-                            AVG(ch.price)                                       AS price,
-                            SUM(ch.value)                                       AS value,
+        let query = `SELECT atg.account_group_id AS account_group_id,
+                            ch.security_id       AS security_id,
+                            AVG(ch.price)        AS price,
+                            SUM(ch.value)        AS value,
                             CASE
-                                WHEN SUM(ch.quantity) = 0 THEN 0
-                                WHEN SUM(ch.cost_basis) IS NULL THEN 0
-                                ELSE SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity) 
-                            END                                                 AS cost_basis,
-                            CASE 
-                                WHEN SUM(ch.quantity) = 0 THEN 0
-                                WHEN SUM(ch.cost_basis) IS NULL THEN 0
-                                ELSE (SUM(ch.value) - (SUM(ch.cost_basis * ch.quantity)))
-                            END                                                 AS pnl,
-                            SUM(ch.quantity)                                    AS quantity,
-                            ch.updated_at                                       AS updated_at
+                                SUM(ch.quantity)
+                                WHEN 0 THEN 0
+                                ELSE (SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity))
+                                END              AS cost_basis,
+                            CASE SUM(ch.quantity)
+                                WHEN 0 THEN 0
+                                ELSE (AVG(ch.value) - (SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity))
+                                         ) / (
+                                         SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)
+                                         )
+                                END              AS pnl,
+                            SUM(ch.quantity)     AS quantity,
+                            ch.updated_at        AS updated_at
                      FROM tradingpost_current_holding ch
                               LEFT JOIN _tradingpost_account_to_group atg
-                                        ON ch.account_id = atg.account_id
+                                        ON
+                                            ch.account_id = atg.account_id
                      WHERE atg.account_group_id = $1
-                     GROUP BY atg.account_group_id, ch.security_id, ch.updated_at
-                    `;
+                     GROUP BY atg.account_group_id,
+                              ch.security_id,
+                              ch.updated_at;`;
         const response = await this.db.any(query, [accountGroupId]);
 
         if (!response || response.length <= 0) {
@@ -1882,7 +1874,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             updated_at
                      FROM account_group_hpr
                      WHERE account_group_id = $1
-                     AND date BETWEEN $2 AND $3
+                       AND date BETWEEN $2 AND $3
                      ORDER BY date;`;
         const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
 
