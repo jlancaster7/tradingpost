@@ -35,51 +35,49 @@ export class YoutubeVideos {
         const result = await this.repository.getYoutubeLastUpdate(youtubeChannelId);
         this.setStartDate(result);
     }
-    refreshTokenById = async (idType: string, ids: string[]): Promise<PlatformToken[]>  => {
-        try {
-            const response = await this.repository.getTokens(idType, ids, 'youtube');
-            const authUrl = '';
-            let data: PlatformToken[] = [];
-            
-            for (let d of response) {
-                const refreshParams = {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    form: {
-                        client_id: this.youtubeConfig.client_id,
-                        client_secret: this.youtubeConfig.client_secret,
-                        refresh_token: d.refresh_token,
-                        grant_type: 'refresh_token'
-                    }
-                }
-                const fetchUrl = 'https://oauth2.googleapis.com/token';
-                const response = (await (await fetch(fetchUrl, refreshParams)).json())
-                if (!response) {continue;}
-                data.push({
-                    userId: d.user_id, 
-                    platform: d.platform, 
-                    platformUserId: d.platform_user_id, 
-                    accessToken: response.access_token, 
-                    refreshToken: response.refresh_token, 
-                    expiration: response.expires_in});
-            }
-            await this.repository.upsertUserTokens(data);
-            return data;
-        } catch (err) {
-            console.error(err);
-            return []
+    refreshTokenById = async (idType: string, id: string): Promise<PlatformToken | null>  => {
+
+        const response = await this.repository.getTokens(idType, [id], 'youtube');
+        let data: PlatformToken;
+        
+        const refreshParams = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                client_id: this.youtubeConfig.client_id,
+                client_secret: this.youtubeConfig.client_secret,
+                refresh_token: response[0].refreshToken,
+                grant_type: 'refresh_token'
+            })
         }
+        const fetchUrl = 'https://oauth2.googleapis.com/token';
+        const result = (await (await fetch(fetchUrl, refreshParams)).json())
+        const today = new Date();
+        if (result.error) {
+            console.error(`Youtube Token Referesh for idType: ${idType} and id: ${id} failed to refresh`)
+            return null;
+        }
+        data = {
+            userId: response[0].userId, 
+            platform: response[0].platform, 
+            platformUserId: response[0].platformUserId, 
+            accessToken: result.access_token, 
+            refreshToken: result.refresh_token, 
+            expiration: new Date(today.getTime() + result.expires_in),
+            updatedAt: new Date()
+        };
+        
+        await this.repository.upsertUserTokens(data);
+        return data;
     }
 
     importVideos = async (youtubeChannelId: string, accessToken: string | null = null, refreshToken: string | null = null): Promise<[formatedYoutubeVideo[], number]> => {
         let data = await this.getVideos(youtubeChannelId, accessToken, refreshToken);
-
         if (!data[0]) {
             return [[], 0];
         }
-
         let formatedData = this.formatVideos(data);
         let result = await this.repository.insertYoutubeVideos(formatedData);
         return [formatedData, result];
@@ -98,68 +96,83 @@ export class YoutubeVideos {
         let key = (accessToken ? accessToken : this.youtubeConfig.api_key as string)
         let data: any[] = [];
         let items;
-        try {
-            while (nextToken !== 'end') {
-                if (nextToken === '') {
-                    channelParams = new URLSearchParams({
-                        part: 'id,contentDetails,snippet',
-                        channelId: youtubeChannelId,
-                        publishedAfter: this.startDate,
-                        maxResults: '50',
-                    })
-                } else {
-                    channelParams = new URLSearchParams({
-                        part: 'id,contentDetails,snippet',
-                        channelId: youtubeChannelId,
-                        pageToken: nextToken,
-                        publishedAfter: this.startDate,
-                        maxResults: '50',
-                    })
 
-                }
-                if (accessToken) {
-                    channelParams.append('access_token', key)
-                }
-                else {
-                    channelParams.append('key', key)
-                }
-                fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
-
-                response = await (await fetch(fetchUrl, this.params)).json();
-                items = response.items;
-
-                if (accessToken && !items.length) {
-                    const newTokens = await this.refreshTokenById('platform_user_id', [youtubeChannelId]);
-                    channelParams.set('access_token', newTokens[0].accessToken)
+        while (nextToken !== 'end') {
+            if (nextToken === '') {
+                channelParams = new URLSearchParams({
+                    part: 'id,contentDetails,snippet',
+                    channelId: youtubeChannelId,
+                    publishedAfter: this.startDate,
+                    maxResults: '50',
+                })
+            } else {
+                channelParams = new URLSearchParams({
+                    part: 'id,contentDetails,snippet',
+                    channelId: youtubeChannelId,
+                    pageToken: nextToken,
+                    publishedAfter: this.startDate,
+                    maxResults: '50',
+                })
+            }
+            if (accessToken) {
+                channelParams.append('access_token', key)
+            }
+            else {
+                channelParams.append('key', key)
+            }
+            fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
+            response = await (await fetch(fetchUrl, this.params)).json();
+            items = response.items;
+            if (response.pageInfo && !response.pageInfo.totalResults) {
+                throw new Error(`No videos were return for ${youtubeChannelId}`);
+            }
+            if (accessToken && !items) {
+                const newTokens = await this.refreshTokenById('platform_user_id', youtubeChannelId);
+                if (newTokens) {
+                    channelParams.set('access_token', newTokens.accessToken!)
+                    fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
                     response = await (await fetch(fetchUrl, this.params)).json();
                     items = response.items;
-                    if(!items.length) {
+                    if(!items) {
                         channelParams.delete('access_token');
                         channelParams.append('key', this.youtubeConfig.api_key as string);
-                        response = await (await fetch(fetchUrl, this.params)).json();
+                        fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
+                        response = await (await fetch(fetchUrl, this.params)).json();         
                         items = response.items;
-                        if (!items.length) {
-                            return [];
+                        if (!items) {
+                            throw new Error(`Was unable to get videos using API key or accessToken ${youtubeChannelId}`);
                         }
                     }
                 }
-                items.forEach((element: any) => {
-                    if (element.snippet.type === 'upload') {
-                        data.push(element);
+                else {
+                    channelParams.delete('access_token');
+                    channelParams.append('key', this.youtubeConfig.api_key as string);
+                    fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
+                    response = await (await fetch(fetchUrl, this.params)).json();
+                    items = response.items;
+                    if (!items) {
+                        throw new Error(`Was unable to get videos using API key or accessToken ${youtubeChannelId}`);
                     }
-                });
-                if (Object.keys(response).includes('nextPageToken')) {
-                    nextToken = response.nextPageToken;
-                } else {
-                    nextToken = 'end';
+                    if (response.pageInfo && !response.pageInfo.totalResults) {
+                        throw new Error(`No videos were return for ${youtubeChannelId}`);
+                    }
                 }
             }
-        } catch (e) {
-            console.log(e);
-            throw e
+            else if (!items) {
+                throw new Error(`No videos were return for ${youtubeChannelId}`);
+            }
+            items.forEach((element: any) => {
+                if (element.snippet.type === 'upload') {
+                    data.push(element);
+                }
+            });
+            if (Object.keys(response).includes('nextPageToken')) {
+                nextToken = response.nextPageToken;
+            } else {
+                nextToken = 'end';
+            }
         }
         this.startDate = '';
-
         return data;
     }
 

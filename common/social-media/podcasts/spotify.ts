@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { spotifyConfig } from '../interfaces/utils';
+import { spotifyConfig, PlatformToken } from '../interfaces/utils';
 import { spotifyParams, spotifyShow, spotifyEpisode } from '../interfaces/podcasts';
 import Repository from '../repository';
 import { start } from 'repl';
@@ -50,15 +50,31 @@ export class SpotifyShows {
         }
     }
 
-    importShows = async (showIds: string | string[]): Promise<[spotifyShow[], number]> => {
-        if (typeof showIds === 'string') {
-            showIds = [showIds]
+    importShows = async (spotifyUsers: {userId: string, showId: string}): Promise<[spotifyShow, number]> => {
+        let shows = await this.getShowInfo(spotifyUsers.showId);
+
+        const out = {
+            userId: spotifyUsers.userId, 
+            platform: 'substack', 
+            platformUserId: spotifyUsers.showId, 
+            accessToken: null, 
+            refreshToken: null, 
+            expiration: null,
+            updatedAt: new Date()
         }
-        const shows = await this.getShowInfo(showIds);
-        if (shows === []) {
-            return [[], 0];
+        
+        const dummyTokens = await this.repository.getTokens('platform_user_id', [out.platformUserId], 'spotify');
+        if (dummyTokens.length && spotifyUsers.userId !== dummyTokens[0].userId) {
+            const dummyCheck = await this.repository.isUserIdDummy(dummyTokens[0].userId);
+            if (dummyCheck) {
+                await this.repository.mergeDummyAccounts({newUserId: spotifyUsers.userId, dummyUserId: dummyTokens[0].userId});
+            } else {
+                throw new Error("This account is claimed by another non-dummy user.");
+            }
         }
-        const result = await this.repository.upsertSpotifyShow(shows);
+        await this.repository.upsertUserTokens(out);
+
+        const result = await this.repository.upsertSpotifyShow([shows]);
         return [shows, result];
     }
 
@@ -68,58 +84,49 @@ export class SpotifyShows {
             return [[], 0]
         }
         const results = await this.repository.insertSpotifyEpisodes(data);
-        if (results) return [data, results]
-
-        return [[], 0]
+    
+        return [data, results]
     }
 
-    getShowInfo = async (showIds: string[]): Promise<spotifyShow[]> => {
-        try {
-            if (this.access_token === '') {
-                await this.setAccessToken()
-            }
-
-            let fetchUrl: string;
-            let showResponse;
-            let formatedShowInfo: spotifyShow;
-            let formatedShows = []
-
-            for (let i = 0; i < showIds.length; i++) {
-                fetchUrl = this.showUrl + showIds[i] + '?market=US';
-
-                showResponse = await (await fetch(fetchUrl, this.params)).json();
-
-                if (Object.keys(showResponse).includes('error')) {
-                    if (showResponse.error.status === 401) {
-                        await this.setAccessToken();
-                        showResponse = await (await fetch(fetchUrl, this.params)).json();
-                    } else {
-                        continue;
-                    }
-                }
-                showResponse.spotify_show_id = showIds[i];
-                formatedShowInfo = {
-                    spotify_show_id: showResponse[i].spotify_show_id,
-                    name: showResponse[i].name,
-                    description: showResponse[i].description,
-                    explicit: showResponse[i].explicit,
-                    html_description: showResponse[i].html_description,
-                    is_externally_hosted: showResponse[i].is_externally_hosted,
-                    media_type: showResponse[i].media_type,
-                    publisher: showResponse[i].publisher,
-                    copyrights: JSON.stringify(showResponse[i].copyrights),
-                    total_episodes: showResponse[i].total_episodes,
-                    languages: JSON.stringify(showResponse[i].languages),
-                    external_urls: JSON.stringify(showResponse[i].external_urls),
-                    images: JSON.stringify(showResponse[i].images)
-                }
-                formatedShows.push(formatedShowInfo);
-            }
-            return formatedShows;
-        } catch (err) {
-            console.log(err);
-            return [];
+    getShowInfo = async (showIds: string): Promise<spotifyShow> => {
+        if (this.access_token === '') {
+            await this.setAccessToken()
         }
+        let fetchUrl: string;
+        let showResponse;
+        let formatedShowInfo: spotifyShow;
+        fetchUrl = this.showUrl + showIds+ '?market=US';
+
+        showResponse = await (await fetch(fetchUrl, this.params)).json();
+
+        if (Object.keys(showResponse).includes('error')) {
+            if (showResponse.error.status === 401) {
+                await this.setAccessToken();
+                showResponse = await (await fetch(fetchUrl, this.params)).json();
+                if (Object.keys(showResponse).includes('error')) {
+                    throw showResponse.error;
+                }
+            } else {
+                throw showResponse.error;
+            }
+        }
+        showResponse.spotify_show_id = showIds;
+        formatedShowInfo = {
+            spotify_show_id: showResponse.spotify_show_id,
+            name: showResponse.name,
+            description: showResponse.description,
+            explicit: showResponse.explicit,
+            html_description: showResponse.html_description,
+            is_externally_hosted: showResponse.is_externally_hosted,
+            media_type: showResponse.media_type,
+            publisher: showResponse.publisher,
+            copyrights: JSON.stringify(showResponse.copyrights),
+            total_episodes: showResponse.total_episodes,
+            languages: JSON.stringify(showResponse.languages),
+            external_urls: JSON.stringify(showResponse.external_urls),
+            images: JSON.stringify(showResponse.images)
+        }        
+        return formatedShowInfo;
     }
 
     getEpisodes = async (showId: string): Promise<spotifyEpisode[]> => {

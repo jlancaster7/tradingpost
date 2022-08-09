@@ -30,6 +30,6 @@ const runLambda = async () => {
     }
 }
 
-module.exports.run = async (event: any, context: Context) => {
+export const run = async (event: any, context: Context) => {
     await runLambda();
 }

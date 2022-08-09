@@ -1,7 +1,10 @@
-import {DateTime} from "luxon";
-import {getUSExchangeHoliday} from "../market-data/interfaces";
+import { DateTime } from "luxon";
+import { getUSExchangeHoliday } from "../market-data/interfaces";
+import { policyOwnerEntityType } from "aws-sdk/clients/iam";
 
 export interface IBrokerageService {
+    getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
+
     generateBrokerageAuthenticationLink(userId: string, brokerageAccount?: string): Promise<string>
 
     importAccounts(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostBrokerageAccounts[]>
@@ -55,9 +58,15 @@ export interface IBrokerageRepository {
     deleteTradingPostBrokerageTransactions(accountIds: number[]): Promise<void>
 
     deleteTradingPostBrokerageHoldings(accountIds: number[]): Promise<void>
+
+    deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds: number[]): Promise<void>
 }
 
 export interface IFinicityRepository {
+    getTradingPostUserByFinicityCustomerId(finicityCustomerId: string): Promise<TradingPostUser | null>
+
+    getFinicityUserByFinicityCustomerId(customerId: string): Promise<FinicityUser | null>
+
     getFinicityUser(userId: string): Promise<FinicityUser | null>
 
     addFinicityUser(userId: string, customerId: string, type: string): Promise<FinicityUser>
@@ -114,6 +123,8 @@ export interface ISummaryRepository {
 
     getAccountGroupHPRsLatestDate(accountGroupId: number): Promise<any>
 
+    getAccountGroupSummary(accountGroupId: number): Promise<TradingPostAccountGroupStats>
+
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 
     addAccountGroupReturns(accountGroupReturns: AccountGroupHPRs[]): Promise<number>
@@ -140,9 +151,35 @@ export interface ISummaryService {
 
     computeSectorAllocations(holdings: HistoricalHoldings[]): Promise<TradingPostSectorAllocations[]>
 
+    getCurrentHoldings(userId: string): Promise<HistoricalHoldings[]>
+
+    getSummary(userId: string): Promise<TradingPostAccountGroupStats>
+
+    getReturns(userId: string, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
+
+    getAccountGroupByName(userId: string, accountGroupName: string): Promise<TradingPostAccountGroups>
+
     computeExposure(holdings: HistoricalHoldings[]): TradingPostExposure
 
-    computeAccountGroupSummary(accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats | null>
+    computeAccountGroupSummary(accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats>
+}
+
+export type TradingPostUser = {
+    id: string
+    firstName: string
+    lastName: string
+    handle: string
+    email: string
+    profileUrl: string
+    settings: Record<string, any>
+    bio: string
+    bannerUrl: string
+    tags: any
+    createdAt: DateTime
+    updatedAt: DateTime
+    analystProfile: any
+    hasProfilePic: boolean
+    dummy: boolean
 }
 
 export type GetSecurityPrice = {
@@ -413,6 +450,7 @@ export type HistoricalHoldings = {
     price: number
     value: number
     costBasis: number
+    pnl: number
     quantity: number
     date: DateTime
 }

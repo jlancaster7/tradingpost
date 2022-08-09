@@ -10,7 +10,7 @@ import {
     TradingPostInstitution,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
-    IFinicityRepository, TradingPostBrokerageAccountsTable,
+    IFinicityRepository, TradingPostBrokerageAccountsTable, TradingPostUser,
 } from "../interfaces";
 import Finicity from "../../finicity";
 import {GetInstitutionsInstitution} from "../../finicity/interfaces";
@@ -27,6 +27,12 @@ export default class FinicityService implements IBrokerageService {
         this.finicity = finicity;
         this.repository = repository;
         this.transformer = transformer;
+    }
+
+    getTradingPostUserAssociatedWithBrokerageUser = async (brokerageUserId: string): Promise<TradingPostUser> => {
+        const tpUser = await this.repository.getTradingPostUserByFinicityCustomerId(brokerageUserId)
+        if (!tpUser) throw new Error("finicity user does not exist")
+        return tpUser
     }
 
     generateBrokerageAuthenticationLink = async (userId: string, brokerageAccount?: string): Promise<string> => {
@@ -229,20 +235,20 @@ export default class FinicityService implements IBrokerageService {
             email: ins.email
         });
 
-        console.log("Added New TP Institution: ", tpInId)
-        console.log("Adding New Finicity Institution: ", finInternalInstitutionId)
         return {tradingPostInstitutionId: tpInId, finicityInstitutionId: finInternalInstitutionId}
     }
 
     importAccounts = async (userId: string): Promise<TradingPostBrokerageAccounts[]> => {
-        const finicityUser = await this.repository.getFinicityUser(userId);
+        const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(userId);
         if (finicityUser === null) throw new Error(`no user accounts exist for user id ${userId}`)
-        await this.finicity.refreshCustomerAccounts(finicityUser.customerId);
-        const finicityAccounts = await this.finicity.getCustomerAccounts(finicityUser.customerId)
+        await this.finicity.refreshCustomerAccounts(userId);
+
+        const finicityAccounts = await this.finicity.getCustomerAccounts(userId)
+        if (!finicityAccounts) throw new Error("NO ACCOUNTS AVAIL...")
+
         const newFinicityAccounts: FinicityAccount[] = [];
         for (let i = 0; i < finicityAccounts.accounts.length; i++) {
             const fa = finicityAccounts.accounts[i];
-            console.log("ACCOUNT ID: ", fa.id)
 
             const {
                 tradingPostInstitutionId,
@@ -292,12 +298,12 @@ export default class FinicityService implements IBrokerageService {
 
         await this.repository.upsertFinicityAccounts(newFinicityAccounts);
         const accountsWithIds = await this.repository.getFinicityAccounts(finicityUser.id);
-        return this.transformer.accounts(userId, accountsWithIds);
+        return this.transformer.accounts(finicityUser.tpUserId, accountsWithIds);
     }
 
     importHoldings = async (userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostCurrentHoldings[]> => {
-        const finicityUser = await this.repository.getFinicityUser(userId);
-        if (finicityUser === null) throw new Error(`no user accounts exist for user id ${userId}`);
+        const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(userId);
+        if (finicityUser === null) throw new Error(`no user accounts exist for user id ${userId} in holdings`);
 
         const finAccountsAndHoldings = await this.finicity.getCustomerAccounts(finicityUser.customerId);
 
@@ -350,7 +356,8 @@ export default class FinicityService implements IBrokerageService {
             });
 
             await this.repository.upsertFinicityHoldings(finicityHoldings);
-            const transformedHoldings = await this.transformer.holdings(userId, account.id, finicityHoldings,
+
+            const transformedHoldings = await this.transformer.holdings(finicityUser.tpUserId, account.id, finicityHoldings,
                 DateTime.fromSeconds(account.detail.dateAsOf), account.currency);
             tpHoldings.push(...transformedHoldings)
         }
@@ -359,8 +366,8 @@ export default class FinicityService implements IBrokerageService {
     }
 
     importTransactions = async (userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostTransactions[]> => {
-        const finicityUser = await this.repository.getFinicityUser(userId);
-        if (finicityUser === null) throw new Error(`no user accounts exist for user id ${userId}`);
+        const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(userId);
+        if (finicityUser === null) throw new Error(`no user accounts exist for user id ${userId} in transactions`);
         const accounts = await this.repository.getFinicityAccounts(finicityUser.id);
         const externalAccountIdToInternalMap: Record<string, number> = {}
         for (let i = 0; i < accounts.length; i++) {
@@ -422,18 +429,18 @@ export default class FinicityService implements IBrokerageService {
         }
 
         await this.repository.upsertFinicityTransactions(finTxs);
-        return await this.transformer.transactions(userId, finTxs);
+        return await this.transformer.transactions(finicityUser.tpUserId, finTxs);
     }
 
     exportAccounts = async (userId: string): Promise<TradingPostBrokerageAccounts[]> => {
-        const finicityUser = await this.repository.getFinicityUser(userId);
+        const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(userId);
         if (finicityUser === undefined || finicityUser === null) throw new Error(`no finicity account exists for user id ${userId}`);
         const accounts = await this.repository.getFinicityAccounts(finicityUser.id)
         return await this.transformer.accounts(userId, accounts);
     }
 
     exportHoldings = async (userId: string): Promise<TradingPostCurrentHoldings[]> => {
-        const finicityUser = await this.repository.getFinicityUser(userId);
+        const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(userId);
         if (finicityUser === undefined || finicityUser === null) throw new Error(`no finicity account exists for user id ${userId}`);
         const holdings = await this.repository.getFinicityHoldings(finicityUser.id);
         let tpHoldings: TradingPostCurrentHoldings[] = []
@@ -445,14 +452,14 @@ export default class FinicityService implements IBrokerageService {
     }
 
     exportTransactions = async (userId: string): Promise<TradingPostTransactions[]> => {
-        const finicityUser = await this.repository.getFinicityUser(userId);
+        const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(userId);
         if (finicityUser === undefined || finicityUser === null) throw new Error(`no finicity account exists for user id ${userId}`);
         const transactions = await this.repository.getFinicityTransactions(finicityUser.id)
         return this.transformer.transactions(userId, transactions);
     }
 
     removeAccounts = async (brokerageCustomerId: string, accountIds: string[]): Promise<number[]> => {
-        const finicityUser = await this.repository.getFinicityUser(brokerageCustomerId);
+        const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(brokerageCustomerId);
         if (!finicityUser) return [];
 
         const finicityAccounts = await this.repository.getFinicityAccounts(finicityUser.id)

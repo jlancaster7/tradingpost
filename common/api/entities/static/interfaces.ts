@@ -64,10 +64,6 @@ export interface IElasticPost {
         },
         user: {
             id: string,
-            imageUrl: string,
-            name: string,
-            type: "husk",
-            username: string
         }
     }
 }

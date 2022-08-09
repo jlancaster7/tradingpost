@@ -26,7 +26,8 @@ export type PlatformToken = {
     userId: string, 
     platform: string,
     platformUserId: string, 
-    accessToken: string, 
-    refreshToken: string, 
-    expiration: Date
+    accessToken: string | null, 
+    refreshToken: string | null, 
+    expiration: Date | null,
+    updatedAt: Date
 }

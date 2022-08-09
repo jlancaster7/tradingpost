@@ -3,7 +3,6 @@ import Extension from "./index";
 import { Client as ElasticClient } from '@elastic/elasticsearch';
 import { IElasticPost, IElasticPostExt } from "../interfaces";
 
-
 export default class extends Extension {
     // setPostsPerPage = (ppp: number) => {
     //     postsPerPage = ppp;

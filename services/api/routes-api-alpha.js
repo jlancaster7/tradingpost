@@ -190,23 +190,27 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
 //ALL ROUTES
 makeRoute(baseFormat, function (req) {
     return sharedHandler(req, function (entity) { return __awaiter(void 0, void 0, void 0, function () {
-        var info, internalHandler, settings, responseData, responseData;
+        var info, extra, internalHandler, settings, responseData, responseData;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, decodeToken(req)];
                 case 1:
                     info = _a.sent();
-                    //need to add to info about requests;
-                    req.extra = { userId: info.sub };
+                    extra = {
+                        userId: info.sub,
+                        page: req.query.page ? Number(req.query.page) : undefined,
+                        limit: req.query.limit ? Number(req.query.limit) : undefined
+                    };
+                    req.extra = extra;
                     internalHandler = entity.internal[req.params.action];
                     if (!(req.params.action !== "extensions" && internalHandler)) return [3 /*break*/, 4];
                     settings = {
                         user_id: info.sub,
-                        data: req.body
+                        data: req.body,
+                        page: extra.page,
+                        limit: extra.limit
                     };
-                    return [4 /*yield*/, internalHandler(settings)
-                        //will type better in the future by should not be needed right now
-                    ];
+                    return [4 /*yield*/, internalHandler(settings)];
                 case 2:
                     responseData = _a.sent();
                     //will type better in the future by should not be needed right now

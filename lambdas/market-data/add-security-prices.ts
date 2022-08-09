@@ -19,10 +19,10 @@ const runLambda = async () => {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
         pgClient = pgp({
-            host: postgresConfiguration['host'] as string,
-            user: postgresConfiguration['user'] as string,
-            password: postgresConfiguration['password'] as string,
-            database: postgresConfiguration['database'] as string
+            host: postgresConfiguration.host,
+            user: postgresConfiguration.user,
+            password: postgresConfiguration.password,
+            database: postgresConfiguration.database
         })
 
         await pgClient.connect();
@@ -56,24 +56,31 @@ const processClosePrice = async (repository: Repository, iex: IEX) => {
     const securities = await repository.getUsExchangeListedSecuritiesWithPricing();
     const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
 
-    let securityPrices: addSecurityPrice[] = [];
+    const dt = DateTime.now().setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0})
+    const securityPrices: addSecurityPrice[] = [];
     for (let i = 0; i < securityGroups.length; i++) {
         const securityGroup = securityGroups[i];
         const symbols = securityGroup.map(sec => sec.symbol);
 
         try {
             const response = await iex.bulk(symbols, ["quote"])
-
             for (let j = 0; j < securityGroup.length; j++) {
                 const sec = securityGroup[j];
-                const {symbol, latestPrice, latestHigh, latestLow, latestOpen, latestTime} = sec
+                const {symbol, latestPrice, latestHigh, latestLow, latestOpen} = sec
                 if (response[symbol] === undefined || response[symbol] === null) {
                     console.error(`could not find quote for symbol ${symbol}`);
                     continue
                 }
 
                 const quote = (response[symbol]['quote'] as GetQuote)
-
+                securityPrices.push({
+                    price: quote.latestPrice ? quote.latestPrice : latestPrice,
+                    low: latestLow,
+                    open: latestOpen,
+                    high: latestHigh,
+                    time: dt.toJSDate(),
+                    securityId: sec.id
+                })
             }
         } catch (err) {
             console.error(err)
@@ -93,7 +100,10 @@ const processIntradayPrices = async (repository: Repository, iex: IEX) => {
         const symbols = securityGroup.map(sec => sec.symbol);
 
         try {
-            const response = await iex.bulk(symbols, ["intraday-prices"]);
+            const response = await iex.bulk(symbols, ["intraday-prices"], {
+                chartIEXOnly: true,
+                chartIEXWhenNull: true
+            });
             const prices = await perform(securityGroup, response)
             securityPrices = [...securityPrices, ...prices]
         } catch (err) {
@@ -108,16 +118,20 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
     const securityPrices: addSecurityPrice[] = [];
     for (let i = 0; i < securityGroup.length; i++) {
         const sec = securityGroup[i];
-        let {symbol, id, latestTime, latestPrice, latestHigh, latestLow, latestOpen} = sec;
+        const {id, symbol, latestTime} = sec;
+        let {latestPrice, latestHigh, latestLow, latestOpen} = sec;
         if (response[symbol] === undefined || response[symbol] === null) {
             console.error(`could not find intraday-prices for symbol ${symbol}`);
             continue
         }
 
         const intradayPrices = (response[symbol]['intraday-prices'] as GetIntraDayPrices[])
-        if (intradayPrices.length <= 0) continue
+        if (intradayPrices.length <= 0) {
+            console.error(`no intraday prices available for symbol ${symbol}`)
+            continue
+        }
 
-        let mostRecentPriceAvail = intradayPrices[intradayPrices.length - 1];
+        const mostRecentPriceAvail = intradayPrices[intradayPrices.length - 1];
         const mostRecentPriceTimeAvail = DateTime.fromFormat(`${mostRecentPriceAvail.date} ${mostRecentPriceAvail.minute}`, "yyyy-LL-dd HH:mm", {
             zone: "America/New_York"
         });
@@ -151,6 +165,6 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
     return securityPrices
 }
 
-module.exports.run = async (event: any, context: Context) => {
+export const run = async (event: any, context: Context) => {
     await runLambda();
 };

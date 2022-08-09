@@ -1,5 +1,6 @@
-import { IWatchlistList } from "../interfaces";
+import { IUserList, IWatchlistList } from "../interfaces";
 import { Extension } from "./index";
+import { TradingPostAccountGroupStats } from '../../../brokerage/interfaces';
 export declare type UploadProfilePicBody = {
     userId: string;
     image: string;
@@ -21,7 +22,12 @@ export default class User extends Extension {
         code: string;
         challenge: string;
     }) => Promise<string>;
-    getTrades: (settings?: undefined) => Promise<{
+    getTrades: (req: {
+        $page: number;
+        settings: {
+            user_id?: string | undefined;
+        };
+    }) => Promise<{
         date: Date;
         type: string;
         quantity: number;
@@ -42,4 +48,10 @@ export default class User extends Extension {
     getWatchlists: (settings: {
         userId: string;
     }) => Promise<IWatchlistList[]>;
+    getPortfolio: (settings: {
+        userId?: string | undefined;
+    }) => Promise<TradingPostAccountGroupStats>;
+    search: (settings: {
+        term: string;
+    }) => Promise<IUserList[]>;
 }

@@ -1,6 +1,7 @@
 import 'dotenv/config';
+process.env.CONFIGURATION_ENV = 'production';
 import {Context} from "aws-lambda";
-import { lambdaImportYoutube } from "@tradingpost/common/social-media/youtube/import";
+import {lambdaImportYoutube} from "@tradingpost/common/social-media/youtube/import";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 
@@ -28,7 +29,7 @@ const runLambda = async () => {
         throw e;
     }
 }
-
-module.exports.run = async (event: any, context: Context) => {
+runLambda();
+export const run = async (event: any, context: Context) => {
     await runLambda();
 }

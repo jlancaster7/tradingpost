@@ -123,22 +123,33 @@ makeRoute(baseFormat, (req) => {
     return sharedHandler(req, async (entity) => {
         const info = await decodeToken(req);
         //need to add to info about requests;
-        (req as any).extra = { userId: info.sub };
+        const extra = {
+            userId: info.sub,
+            page: req.query.page ? Number(req.query.page) : undefined,
+            limit: req.query.limit ? Number(req.query.limit) : undefined
+        };
+        (req as any).extra = extra;
 
         const internalHandler = entity.internal[req.params.action as keyof (typeof entity)["internal"]];
         if (req.params.action !== "extensions" && internalHandler) {
+
             const settings: RequestSettings<any> = {
                 user_id: info.sub,
-                data: req.body
+                data: req.body,
+                page: extra.page,
+                limit: extra.limit
             }
-            const responseData = await (internalHandler as any)(settings)
+
+            const responseData = await (internalHandler as any)(settings);
+
             //will type better in the future by should not be needed right now
-            await cacheMonitor(entity as any,  req.params.action  , info.sub as string, responseData);
+            await cacheMonitor(entity as any, req.params.action, info.sub as string, responseData);
+
             return responseData;
         }
         else if (entity.internal.extensions[req.params.action]) {
             //will make this well redundant
-            const responseData =  await entity.internal.extensions[req.params.action](req);
+            const responseData = await entity.internal.extensions[req.params.action](req);
             await cacheMonitor(entity as any, req.params.action, info.sub as string, responseData);
             return responseData
         }

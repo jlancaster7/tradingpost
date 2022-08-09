@@ -34,6 +34,6 @@ const start = async (repository: Repository) => {
     await repository.removeSecurityPricesAfter7Days()
 }
 
-module.exports.run = async (event: any, context: Context) => {
+export const run = async (event: any, context: Context) => {
     await runLambda();
 };

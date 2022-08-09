@@ -9,6 +9,8 @@ declare const _default: {
         };
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<IElasticPostExt[]>;
     setBookmarked: (req: {
@@ -18,6 +20,8 @@ declare const _default: {
         };
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<{
         id: string;
@@ -30,6 +34,8 @@ declare const _default: {
         };
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<{
         id: string;

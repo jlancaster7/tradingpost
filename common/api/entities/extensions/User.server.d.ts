@@ -1,4 +1,5 @@
 import { UploadProfilePicBody } from "./User";
+import { IUserList } from '../apis/UserApi';
 export interface ITokenResponse {
     "token_type": "bearer";
     "expires_in": number;
@@ -11,12 +12,16 @@ declare const _default: {
         body: UploadProfilePicBody;
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<void>;
     generateBrokerageLink: (req: {
         body: undefined;
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<{
         link: string;
@@ -25,6 +30,8 @@ declare const _default: {
         body: undefined;
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<{
         id: number;
@@ -36,6 +43,8 @@ declare const _default: {
         body: undefined;
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<{}[]>;
     linkSocialAccount: (req: {
@@ -46,12 +55,18 @@ declare const _default: {
         };
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<string>;
     getTrades: (req: {
-        body: undefined;
+        body: {
+            user_id?: string | undefined;
+        };
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<{
         date: Date;
@@ -66,6 +81,8 @@ declare const _default: {
         body: undefined;
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<{
         id: number;
@@ -82,7 +99,29 @@ declare const _default: {
         };
         extra: {
             userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
         };
     }) => Promise<import("../interfaces").IWatchlistList[]>;
+    getPortfolio: (req: {
+        body: {
+            userId?: string | undefined;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<import("../../../brokerage/interfaces").TradingPostAccountGroupStats>;
+    search: (req: {
+        body: {
+            term: string;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<IUserList[]>;
 };
 export default _default;

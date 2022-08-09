@@ -14,6 +14,23 @@ export class Extension {
             return EntityApiBase.handleFetchResponse<T>(resp);
         }) as (S extends undefined ? (settings?: S) => Promise<T> : (settings: S) => Promise<T>)
     }
+    protected _makePagedFetch = <S, T = S>(methodName: keyof typeof this, requestInit: S extends undefined ? (settings?: S) => RequestInit : (settings: S) => RequestInit) => {
+        return (async (req: {
+            $page: number,
+            $limit?: number,
+            settings: S
+        }) => {
+            const resp = await fetch(this.baseApi.makeUrl(methodName as string) + `?page=${req.$page}` + (req.$limit ? `&limit=${req.$limit}` : ""), { method: "POST", headers: EntityApiBase.makeHeaders(), ...requestInit(req.settings) });
+            return EntityApiBase.handleFetchResponse<T>(resp);
+        }) as (S extends undefined ? (req: {
+            page: number
+        }) => Promise<T> : (
+                req: {
+                    $page: number,
+                    $limit?: number,
+                    settings: S
+                }) => Promise<T>)
+    }
 }
 
 
@@ -25,9 +42,13 @@ type EnsuredServerType<T, ExplictBody = void> = {
     T[P] extends (s: infer InferredBody) => Promise<infer R> ?
     (req: {
         //May change in the future 
-        body: ExplictBody extends void ? InferredBody : ExplictBody,
+        body: ExplictBody extends void ?
+        (InferredBody extends { $page: number, settings: infer SettingsType } ? SettingsType : InferredBody)
+        : ExplictBody,
         extra: {
-            userId: string
+            userId: string,
+            page?: number,
+            limit?: number
         }
     }) => Promise<R> :
     never

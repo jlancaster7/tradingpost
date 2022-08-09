@@ -33,40 +33,47 @@ export class Tweets {
         }
 
     }
-    refreshTokensbyId = async (idType: string, ids: string[]): Promise<PlatformToken[]> => {
+    refreshTokensbyId = async (idType: string, id: string): Promise<PlatformToken | null> => {
         try {
-            const response = await this.repository.getTokens(idType, ids, 'twitter');
+            const response = await this.repository.getTokens(idType, [id], 'twitter');
             const authUrl = '/oauth2/token';
-            let data: PlatformToken[] = [];
-            for (let d of response) {
-                const refreshParams = {
-                    method: 'POST',
-                    headers: {
-                        "content-type": 'application/x-www-form-urlencoded'
-                    },
-                    form: {
-                        refresh_token: d.claims.refresh_token,
-                        grant_type: 'refresh_token',
-                        client_id: this.twitterConfig.clientId
-                    }
-                }
-                const fetchUrl = this.twitterUrl + authUrl;
-                const response = (await (await fetch(fetchUrl, refreshParams)).json()).data;
-                if (!response) {continue;}
-                data.push({
-                    userId: d.user_id,
-                    platform: d.platform,
-                    platformUserId: d.platform_user_id,
-                    accessToken: response.access_token,
-                    refreshToken: response.refresh_token,
-                    expiration: response.expires_in
-                });
+            let data: PlatformToken;
+            
+            if (!response.length) {
+
+                throw new Error("No token was found for this ID");
             }
+            const refreshParams = {
+                method: 'POST',
+                headers: {
+                    "content-type": 'application/json'
+                },
+                body: JSON.stringify({
+                    refresh_token: response[0].refreshToken,
+                    grant_type: 'refresh_token',
+                    client_id: this.twitterConfig.client_id
+                })
+            }
+
+            const fetchUrl = this.twitterUrl + authUrl;
+            const result = await (await fetch(fetchUrl, refreshParams)).json();
+            
+            const expiration = new Date();
+            data = {
+                userId: response[0].userId,
+                platform: response[0].platform,
+                platformUserId: response[0].platformUserId,
+                accessToken: result.access_token,
+                refreshToken: result.refresh_token,
+                expiration: new Date( expiration.getTime() + result.expires_in),
+                updatedAt: new Date()
+            };
+        
             await this.repository.upsertUserTokens(data);
             return data;
         } catch (err) {
             console.error(err);
-            return [];
+            return null;
         }
     }
     importTweets = async (twitterUserId: string, userToken: string | null = null): Promise<[formatedTweet[], number]> => {
@@ -122,26 +129,42 @@ export class Tweets {
                 }
 
                 response = await (await fetch(fetchUrl, this.params)).json();
+
+                if (response.meta && !response.meta.result_count) {
+                    this.startDate = '';
+                    return [];
+                }
                 responseData = response.data;
-                console.log(response);
+                
                 if (token && !responseData) {
-                    const newToken = await this.refreshTokensbyId('platform_user_id', [twitterUserId]);
-                    this.params.headers.authorization = 'BEARER ' + newToken[0].accessToken;
-                    response = await (await fetch(fetchUrl, this.params)).json();
-                    responseData = response.data;
-                    if (!responseData){
+                    const newToken = await this.refreshTokensbyId('platform_user_id', twitterUserId);
+                    if (newToken) {
+                        this.params.headers.authorization = 'BEARER ' + newToken!.accessToken;
+                        response = await (await fetch(fetchUrl, this.params)).json();
+                        responseData = response.data;
+                        if (!responseData){
+                            this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'] as string;
+                            response = await (await fetch(fetchUrl, this.params)).json();
+                            responseData = response.data;
+                            if (!responseData) {
+                                this.startDate = '';
+                                throw new Error(`Tried auth and api key, both failed for twitter user id: ${twitterUserId}`)
+                            }
+                        }
+                    }
+                    else {
                         this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'] as string;
                         response = await (await fetch(fetchUrl, this.params)).json();
                         responseData = response.data;
                         if (!responseData) {
                             this.startDate = '';
-                            return [];
+                            throw new Error(`Tried auth and api key, both failed for twitter user id: ${twitterUserId}`)
                         }
                     }
                 }
-                else if (!responseData) {
+                if (!responseData) {
                     this.startDate = '';
-                    return [];
+                    throw new Error(`Tried api key, failed for twitter user id: ${twitterUserId}`)
                 }
 
                 username = response.includes.users[0].username;
@@ -165,7 +188,9 @@ export class Tweets {
                 }
             }
         } catch (err) {
+            this.startDate = '';
             console.log(err);
+            return [];
         }
         this.startDate = '';
         return data;

@@ -6,7 +6,9 @@ import {
     SecurityHPRs,
     TradingPostAccountGroupStats,
     TradingPostExposure,
-    TradingPostSectorAllocations
+    TradingPostSectorAllocations,
+    TradingPostAccountGroups,
+    AccountGroupHPRsTable
 } from './interfaces';
 
 export class PortfolioSummaryService implements ISummaryService {
@@ -50,7 +52,6 @@ export class PortfolioSummaryService implements ISummaryService {
                 return: (dailyAmounts[i].amount - dailyAmounts[i - 1].amount) / dailyAmounts[i - 1].amount
             })
         }
-
         return returns;
     }
 
@@ -73,7 +74,6 @@ export class PortfolioSummaryService implements ISummaryService {
         returns.sort((a, b) => {
             return a.date.valueOf() - b.date.valueOf();
         });
-
         return returns;
     }
 
@@ -108,7 +108,6 @@ export class PortfolioSummaryService implements ISummaryService {
             }
             return 0;
         }
-
         if (securityReturns.length > benchmarkReturns.length) {
 
             securityReturns = securityReturns.slice(securityReturns.length - benchmarkReturns.length, securityReturns.length);
@@ -130,7 +129,6 @@ export class PortfolioSummaryService implements ISummaryService {
             }
             let securityHPRs = securityReturns.map(a => a.return);
             let benchmarkHPRs = benchmarkReturns.map(a => a.return);
-
             // @ts-ignore
             return computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / variance(benchmarkHPRs);
 
@@ -155,7 +153,6 @@ export class PortfolioSummaryService implements ISummaryService {
             beta.push([await this.computeSecurityBeta(d.securityId, benchmarkId, daysPrior), d.value]);
             sum += d.value;
         }
-
         let weighted_beta = 0;
         for (let d of beta) {
             weighted_beta += d[0] * (d[1] / sum);
@@ -168,7 +165,6 @@ export class PortfolioSummaryService implements ISummaryService {
         const returns = holdingsReturns.map(a => a.return);
         const meanReturn = mean(returns);
         const stdReturn = std(returns);
-
         // @ts-ignore
         return meanReturn / stdReturn;
     }
@@ -201,7 +197,6 @@ export class PortfolioSummaryService implements ISummaryService {
                 sectorAllocations[i].value += d.value / portfolioSum;
             }
         }
-
         return sectorAllocations;
     }
 
@@ -228,15 +223,38 @@ export class PortfolioSummaryService implements ISummaryService {
         return {long: long / total, short: short / total, gross: gross / total, net: net / total};
     }
 
-    computeAccountGroupSummary = async (userId: string, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<TradingPostAccountGroupStats | null> => {
-        const account_group = (await this.repository.getTradingPostAccountGroups(userId)).find(a => a.name === 'default');
+    getCurrentHoldings = async (userId: string): Promise<HistoricalHoldings[]> => {
+        const account_group = await this.getAccountGroupByName(userId, 'default');
+        const holdings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId)
+        return holdings;
+    }
+
+    getReturns = async (userId: string, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]> => {
+        const account_group = await this.getAccountGroupByName(userId, 'default');
+        const returns = await this.repository.getTradingPostAccountGroupReturns(account_group.accountGroupId, startDate, endDate)
+        return returns;
+    }
+
+    getSummary = async (userId: string): Promise<TradingPostAccountGroupStats> => {
+        const account_group = await this.getAccountGroupByName(userId, 'default');
+        const summary = await this.repository.getAccountGroupSummary(account_group.accountGroupId)
+        return summary;
+    }
+
+    getAccountGroupByName = async (userId: string, accountGroupName: string): Promise<TradingPostAccountGroups> => {
+        const account_group = (await this.repository.getTradingPostAccountGroups(userId)).find(a => a.name === accountGroupName);
         if (!account_group) {
-            return null;
+            throw new Error(`Couldn't find the default account group for userId: ${userId}`);
         }
+        return account_group;
+    }
+
+    computeAccountGroupSummary = async (userId: string, startDate: DateTime = DateTime.fromJSDate(new Date('1/1/2010')), endDate: DateTime = DateTime.now()): Promise<TradingPostAccountGroupStats> => {
+        const account_group = await this.getAccountGroupByName(userId, 'default');
 
         const currentHoldings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId);
 
-        const returns = await this.repository.getTradingPostAccountGroupReturns(account_group.accountGroupId, startDate, endDate)
+        const returns = await this.repository.getTradingPostAccountGroupReturns(account_group.accountGroupId, startDate, endDate);
 
         const beta = await this.computeAccountGroupBeta(currentHoldings, account_group.defaultBenchmarkId);
 

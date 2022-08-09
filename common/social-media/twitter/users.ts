@@ -24,76 +24,93 @@ export class TwitterUsers {
         }
     }
     
-    refreshTokensbyId = async (idType: string, ids: string[]): Promise<PlatformToken[]> => {
+    refreshTokensbyId = async (idType: string, id: string): Promise<PlatformToken | null> => {
         try {
-            const response = await this.repository.getTokens(idType, ids, 'twitter');
+            const response = await this.repository.getTokens(idType, [id], 'twitter');
             const authUrl = '/oauth2/token';
-            let data = [];
-            for (let d of response) {
-                const refreshParams = {
-                    method: 'POST',
-                    headers: {
-                        "content-type": 'application/x-www-form-urlencoded'
-                    }, 
-                    form: {
-                        refresh_token: d.claims.refresh_token,
-                        grant_type: 'refresh_token',
-                        client_id: this.twitterConfig.clientId
-                    }
+            let data: PlatformToken;
+            
+            const refreshParams = {
+                method: 'POST',
+                headers: {
+                    "content-type": 'application/x-www-form-urlencoded'
+                }, 
+                form: {
+                    refresh_token: response[0].refreshToken,
+                    grant_type: 'refresh_token',
+                    client_id: this.twitterConfig.clientId
                 }
-                const fetchUrl = this.twitterUrl + authUrl;
-                const response = (await (await fetch(fetchUrl, refreshParams)).json()).data;
-                if (!response) {continue;}
-                data.push({
-                    userId: d.user_id, 
-                    platform: d.platform, 
-                    platformUserId: d.platform_user_id, 
-                    accessToken: response.access_token, 
-                    refreshToken: response.refresh_token, 
-                    expiration: response.expires_in});
             }
+            const fetchUrl = this.twitterUrl + authUrl;
+            const result = (await (await fetch(fetchUrl, refreshParams)).json()).data;
+            
+            const expiration = new Date();
+            if (!result) {null;}
+            data = {
+                userId: response[0].userId, 
+                platform: response[0].platform, 
+                platformUserId: response[0].platformUserId, 
+                accessToken: result.access_token, 
+                refreshToken: result.refresh_token, 
+                expiration: new Date( expiration.getTime() + result.expires_in),
+                updatedAt: new Date()
+            };
+        
             await this.repository.upsertUserTokens(data);
             return data;
         } catch (err) {
             console.error(err);
-            return []
+            return null
         }
     }
    
 
-    importUserByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: Date}[]): Promise<[formatedTwitterUser[], number]> => {
+    importUserByToken = async (twitterUser: {userId: string, accessToken: string, refreshToken: string, expiration: number}): Promise<[formatedTwitterUser, number]> => {
 
-        let data: rawTwitterUser[] = [];
-        let out: PlatformToken[] = []; 
-        let temp: rawTwitterUser | null;
+        let data: rawTwitterUser | null;
+        let token: PlatformToken; 
         
-        for (let d of twitterUsers) {
-            temp = await this.getUserInfoByToken(d.accessToken);
-            if (!temp) { 
-                await this.refreshTokensbyId('user_id', [d.userId]);
-                temp = await this.getUserInfoByToken(d.accessToken);
-                if (!temp) { continue; }
+        data = await this.getUserInfoByToken(twitterUser.accessToken);
+        
+        if (!data) { 
+            const newToken = await this.refreshTokensbyId('user_id', twitterUser.userId);
+            if (!newToken) { throw new Error(`Failed to import user for user id: ${twitterUser.userId}`);
             }
-            out.push({userId: d.userId, platform: 'twitter', platformUserId: temp.id, accessToken: d.accessToken, refreshToken: d.refreshToken, expiration: d.expiration})
-            data.push(temp);
+            data = await this.getUserInfoByToken(twitterUser.accessToken);
+            if (!data) {
+                throw new Error("Twitter API failed");
+            }
         }
-        
-        if (data === []) {
-            return [[],0]
-        }
-        const formatedData = this.formatUser(data);
-        await this.repository.upsertUserTokens(out);
-        const result = await this.repository.upsertTwitterUser(formatedData);
+        const expiration = new Date();
+        token = {userId: twitterUser.userId, 
+            platform: 'twitter', 
+            platformUserId: data.id, 
+            accessToken: twitterUser.accessToken, 
+            refreshToken: twitterUser.refreshToken, 
+            expiration: new Date( expiration.getTime() + twitterUser.expiration),
+            updatedAt: new Date()
+        }     
 
-        return [formatedData, result] ;
+        const formatedData = this.formatUser([data])[0];
+        
+        let dummyTokens = (await this.repository.getTokens('platform_user_id', [token.platformUserId], 'twitter'));
+        if (dummyTokens.length && twitterUser.userId !== dummyTokens[0].userId) {
+            const dummyCheck = await this.repository.isUserIdDummy(dummyTokens[0].userId);
+            if (dummyCheck) {
+                await this.repository.mergeDummyAccounts({newUserId: twitterUser.userId, dummyUserId: dummyTokens[0].userId});
+            } else {
+                throw new Error("This account is claimed by another non-dummy user.");
+            }
+        }
+        await this.repository.upsertUserTokens(token);
+        const result = await this.repository.upsertTwitterUser([formatedData]);
+        return [formatedData, result];
     }
 
     importUserByHandle = async (handles: string | string[]): Promise<formatedTwitterUser[]> => {
         if (typeof handles === 'string') {
             handles = [handles];
         }
-        
-
         const data = await this.getUserInfo(handles);
         if (data === []) {
             return []
@@ -131,7 +148,7 @@ export class TwitterUsers {
             const userInfoEndpoint = "/users/me?";
 
             const fetchUrl = this.twitterUrl + userInfoEndpoint + new URLSearchParams({
-                "user.fields": "created_at,description,id,location,name,profile_image_url,protected,public_metrics,username",
+                "user.fields": "created_at,description,id,location,name,profile_image_url,protected,public_metrics,username"
             })
 
             const response = await fetch(fetchUrl, this.params);
