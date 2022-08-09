@@ -582,8 +582,8 @@ export type TradingPostAccountGroupStats = {
     accountGroupId: number
     beta: number
     sharpe: number
-    industryAllocations: TradingPostSectorAllocations[]
-    exposure: TradingPostExposure
+    industryAllocations: string
+    exposure: string
     date: DateTime
     benchmarkId: number // References securities table
 }

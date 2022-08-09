@@ -38,7 +38,7 @@ export class PortfolioSummaryService implements ISummaryService {
         dailyAmounts.sort((a, b) => {
             return a.date.valueOf() - b.date.valueOf();
         });
-
+        
         let returns: AccountGroupHPRs[] = [];
 
         for (let i = 1; i < dailyAmounts.length; i++) {
@@ -150,6 +150,7 @@ export class PortfolioSummaryService implements ISummaryService {
         let beta = [];
         let sum = 0;
         for (let d of holdings) {
+            if (d.securityId === 27296) { continue; }
             beta.push([await this.computeSecurityBeta(d.securityId, benchmarkId, daysPrior), d.value]);
             sum += d.value;
         }
@@ -178,19 +179,19 @@ export class PortfolioSummaryService implements ISummaryService {
             return res + value.value;
         }, 0)
 
-        let sector: string;
+        let industry: string;
         let i: number;
         for (let d of holdings) {
             let secInfo = securities.find(a => a.id === d.securityId);
             if (!secInfo) {
-                sector = 'n/a';
+                industry = 'n/a';
             } else {
-                sector = secInfo.sector;
+                industry = secInfo.industry;
             }
-            i = sectorAllocations.findIndex(a => a.sector === sector);
+            i = sectorAllocations.findIndex(a => a.sector === industry);
             if (i === -1) {
                 sectorAllocations.push({
-                    sector: sector,
+                    sector: industry,
                     value: d.value / portfolioSum
                 });
             } else {
@@ -227,9 +228,9 @@ export class PortfolioSummaryService implements ISummaryService {
         const account_group = await this.getAccountGroupByName(userId, 'default');
 
         const currentHoldings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId);
-
+        
         const historicalHoldings = await this.repository.getTradingPostHoldingsByAccountGroup(userId, account_group.accountGroupId, startDate, endDate);
-
+        
         const returns = await this.computeAccountGroupHPRs(historicalHoldings);
 
         await this.addAccountGroupHPRs(returns);
@@ -246,8 +247,8 @@ export class PortfolioSummaryService implements ISummaryService {
             accountGroupId: account_group.accountGroupId,
             beta: beta,
             sharpe: sharpe,
-            industryAllocations: allocations,
-            exposure: exposure,
+            industryAllocations: JSON.stringify(allocations),
+            exposure: JSON.stringify(exposure),
             date: returns[returns.length - 1].date,
             benchmarkId: account_group.defaultBenchmarkId
         };
