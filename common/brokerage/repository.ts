@@ -1745,6 +1745,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             cost_basis,
                             CASE 
                                 WHEN quantity = 0 THEN 0
+                                WHEN cost_basis IS NULL THEN 0
                                 ELSE (value - (cost_basis * quantity)) 
                             END
                             as pnl,
@@ -1785,10 +1786,12 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             SUM(ht.value)                                       AS value,
                             CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
+                                WHEN SUM(ch.cost_basis) IS NULL THEN 0
                                 ELSE SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)
                             END                                                 AS cost_basis,
                             CASE 
                                 WHEN SUM(ht.quantity) = 0 THEN 0
+                                WHEN SUM(ch.cost_basis) IS NULL THEN 0
                                 ELSE (SUM(ht.value) - (SUM(ht.cost_basis * ht.quantity))) 
                             END                                                 AS pnl,
                             SUM(ht.quantity)                                    AS quantity,
@@ -1830,10 +1833,12 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             SUM(ch.value)                                       AS value,
                             CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
+                                WHEN SUM(ch.cost_basis) IS NULL THEN 0
                                 ELSE SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity) 
                             END                                                 AS cost_basis,
                             CASE 
                                 WHEN SUM(ch.quantity) = 0 THEN 0
+                                WHEN SUM(ch.cost_basis) IS NULL THEN 0
                                 ELSE (SUM(ch.value) - (SUM(ch.cost_basis * ch.quantity)))
                             END                                                 AS pnl,
                             SUM(ch.quantity)                                    AS quantity,
