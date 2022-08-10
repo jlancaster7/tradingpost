@@ -27,7 +27,8 @@ import {
     TradingPostInstitutionTable,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
-    TradingPostTransactionsTable, TradingPostUser
+    TradingPostTransactionsTable, TradingPostUser,
+    TradingPostCashSecurity
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -367,6 +368,24 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 symbol: r.symbol,
                 name: r.name,
                 issueType: r.issue_type
+            }
+            return o
+        })
+    }
+
+    getTradingpostCashSecurity = async (): Promise<TradingPostCashSecurity[]> => {
+        const query = `SELECT s.id as security_id,
+                              cs.from_symbol as from_symbol,
+                              cs.to_security_symbol as to_security_symbol
+                       FROM tradingpost_cash_security cs
+                       LEFT JOIN security s
+                       ON s.symbol = cs.to_security_symbol;
+                       `;
+        const response = await this.db.query(query);
+        return response.map((r: any) => {
+            let o: TradingPostCashSecurity = {
+                fromSymbol: r.from_symbol,
+                toSecurityId: parseInt(r.security_id)
             }
             return o
         })
@@ -1845,7 +1864,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                      FROM tradingpost_current_holding ch
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ch.account_id = atg.account_id
-                     WHERE atg.account_group_id = 18
+                     WHERE atg.account_group_id = $1
                      GROUP BY atg.account_group_id, ch.security_id, ch.updated_at;`;
         const response = await this.db.any(query, [accountGroupId]);
 

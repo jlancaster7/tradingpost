@@ -163,6 +163,8 @@ export interface ISummaryService {
     computeExposure(holdings: HistoricalHoldings[]): TradingPostExposure
 
     computeAccountGroupSummary(accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats>
+
+    addAccountGroupSummary (summary: TradingPostAccountGroupStats): Promise<void>
 }
 
 export type TradingPostUser = {
@@ -620,3 +622,10 @@ export type SecurityIssue = {
     name: string
     issueType: string
 }
+
+export type TradingPostCashSecurity = {
+    fromSymbol: string
+    toSecurityId: number
+}
+
+export type TradingPostCashSecurityTable = TradingPostCashSecurity & TableInfo;
