@@ -165,7 +165,7 @@ const getTwitterTweets = async (pgClient: IDatabase<any>): Promise<TwitterTweet[
                embed
         FROM tweets
         WHERE max_width is null
-        LIMIT 10;`;
+        LIMIT 100;`;
 
     const response = await pgClient.query(query);
     if (response.length <= 0) return [];
