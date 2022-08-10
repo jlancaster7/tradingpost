@@ -1,14 +1,14 @@
 process.env.CONFIGURATION_ENV = 'production'
 
 //import express from 'express'
-import { Pool } from 'pg'
-import { DefaultConfig } from '@tradingpost/common/configuration';
-import { Client } from '@elastic/elasticsearch'
-import { Interface } from '@tradingpost/common/api'
+import {Pool} from 'pg'
+import {DefaultConfig} from '@tradingpost/common/configuration';
+import {Client} from '@elastic/elasticsearch'
+import {Interface} from '@tradingpost/common/api'
 import puppeteer from 'puppeteer'
-import { writeFileSync } from 'fs'
-import { SearchHit } from '@elastic/elasticsearch/lib/api/types';
-import { IElasticPost } from '@tradingpost/common/api/entities/interfaces';
+import {writeFileSync} from 'fs'
+import {SearchHit} from '@elastic/elasticsearch/lib/api/types';
+import {IElasticPost} from '@tradingpost/common/api/entities/interfaces';
 
 const totalSize = 5000;
 const batchSize = 1;
@@ -30,7 +30,6 @@ let jobs: Promise<{ batch: any[], sizes: Record<string, string> }>[] = [];
         maxRetries: 5,
     });
     const indexName = "tradingpost-search";
-
 
 
     const browser = await puppeteer.launch();
@@ -67,19 +66,12 @@ let jobs: Promise<{ batch: any[], sizes: Record<string, string> }>[] = [];
 
         lastIndex = lastIndex + batchSize;
         const page = await browser.newPage();
-
-
-
         //"<script async src=\"https://platform.twitter.com/widgets.js\" charset=\"utf-8\"></script>"
-
         const pageContent = `<html><body><div style="width:${maxWidthSetting}px;">${batch.map((h) =>
             `<div class="tracker" data-tracker-id="${h._id}">${h._source?.content.htmlBody.replace(scriptTag, "")}</div>`
         ).join("\r\n")}</div></body>${(batch[0]._source?.postType === "tweet" ? `<script async src=\"https://platform.twitter.com/widgets.js\" charset=\"utf-8\"></script>` : "")
-            }</html>`;
-
+        }</html>`;
         writeFileSync(`output/page${pageCount}.html`, pageContent);
-
-
         console.log("Setting Content Load");
 
         jobs.push((async () => {
@@ -135,11 +127,11 @@ let jobs: Promise<{ batch: any[], sizes: Record<string, string> }>[] = [];
                                         if (frame instanceof HTMLIFrameElement && frame.style.height !== "0px") {
                                             doneCount[trackerId] = frame.style.height;
                                         }
-                                    }
-                                    else if (tp === "substack") {
+                                    } else if (tp === "substack") {
                                         return doneCount[trackerId] = String(tracker.getBoundingClientRect().height)
                                     }
                                 });
+
                                 return doneCount;
                             })
                             // if () {
@@ -149,8 +141,7 @@ let jobs: Promise<{ batch: any[], sizes: Record<string, string> }>[] = [];
 
                             if (tryCount === 0 || Object.keys(doneCount).length === batch.length) {
                                 resolve(doneCount);
-                            }
-                            else {
+                            } else {
                                 //console.log("NOT DONE::::" + Object.keys(doneCount).length + " vs." + batch.length)
                                 setTimeout(() => checkCompletion(), 500);
                             }
@@ -184,7 +175,7 @@ let jobs: Promise<{ batch: any[], sizes: Record<string, string> }>[] = [];
                                 const pt = (d as IElasticPost)._source.postType;
 
                                 return [
-                                    { update: { _id: d._id } },
+                                    {update: {_id: d._id}},
                                     {
                                         doc: {
                                             size: {
@@ -224,6 +215,7 @@ let jobs: Promise<{ batch: any[], sizes: Record<string, string> }>[] = [];
             });
         }
     }
+
     if (jobs.length) {
         const jobResults = await Promise.all(jobs);
         const ops = jobResults.flatMap((batches, i) => {
@@ -239,7 +231,7 @@ let jobs: Promise<{ batch: any[], sizes: Record<string, string> }>[] = [];
 
 
                     return [
-                        { update: { _id: d._id } },
+                        {update: {_id: d._id}},
                         {
                             doc: {
                                 size: {

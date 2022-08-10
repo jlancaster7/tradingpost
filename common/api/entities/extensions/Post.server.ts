@@ -175,7 +175,6 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         //TODO:  need to to add incorp into api build in the future 
         const pool = await getHivePool;
         if (rep.body.is_upvoted)
-
             await pool.query(`INSERT INTO data_upvote(post_id,user_id) VALUES($1,$2)`, [rep.body.id, rep.extra.userId])
         else
             await pool.query(`DELETE FROM data_upvote WHERE post_id= $1 and user_id = $2`, [rep.body.id, rep.extra.userId])

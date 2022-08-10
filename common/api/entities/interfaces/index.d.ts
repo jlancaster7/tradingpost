@@ -48,8 +48,8 @@ export interface IPostList {
     platform: string;
     body: any;
     upvoted_count: number;
-    is_upvoted: unknown;
-    is_bookmarked: unknown;
+    is_upvoted: boolean;
+    is_bookmarked: boolean;
     subscription_level: string;
     user: IUserList[];
 }
@@ -60,8 +60,8 @@ export interface IPostGet {
     platform_post_url: string;
     body: any;
     upvoted_count: number;
-    is_upvoted: unknown;
-    is_bookmarked: unknown;
+    is_upvoted: boolean;
+    is_bookmarked: boolean;
     user: IUserList[];
 }
 export interface ISubscriberList {
@@ -81,6 +81,10 @@ export interface ISubscriberGet {
     due_date: unknown;
     payment_source: string;
     months_subscribed: string;
+}
+export interface ITradeList {
+}
+export interface ITradeGet {
 }
 export interface IUpvoteList {
     post_id: string;
@@ -118,7 +122,7 @@ export interface IUserUpdate {
     first_name?: string;
     last_name?: string;
     analyst_profile?: Statics.IAnalystProfile;
-    has_profile_pic?: unknown;
+    has_profile_pic?: boolean;
 }
 export interface IWatchlistList {
     id: number;
@@ -138,6 +142,7 @@ export interface IWatchlistGet {
     id: number;
     type: string;
     saved_by_count: number;
+    is_saved: boolean;
 }
 export interface IWatchlistInsert {
     name: string;

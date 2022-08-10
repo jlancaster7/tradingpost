@@ -550,14 +550,50 @@ CREATE UNIQUE INDEX account_group_hpr_account_group_id_date_idx ON account_group
 
 ALTER TABLE security_price
     ADD COLUMN open DECIMAL(24, 4);
+
 ALTER TABLE security_price
     ADD COLUMN high DECIMAL(24, 4);
+
 ALTER TABLE security_price
     ADD COLUMN low DECIMAL(24, 4);
 
 DROP INDEX security_price_idx;
 
 CREATE UNIQUE INDEX security_price_idx ON security_price (security_id, time DESC);
+
 CREATE INDEX security_price_idx_time ON security_price (time DESC);
+
 ALTER TABLE security
     ADD COLUMN enable_utp BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE tradingpost_account_group ADD CONSTRAINT name_userid_unique UNIQUE (name, user_id);
+ALTER TABLE TWEETS
+    ADD COLUMN aspect_ratio FLOAT;
+
+ALTER TABLE TWEETS
+    ADD COLUMN max_width FLOAT;
+
+ALTER TABLE SUBSTACK_ARTICLES
+    ADD COLUMN aspect_ratio FLOAT;
+
+ALTER TABLE SUBSTACK_ARTICLES
+    ADD COLUMN max_width FLOAT;
+
+ALTER TABLE SPOTIFY_EPISODES
+    ADD COLUMN aspect_ratio FLOAT;
+
+ALTER TABLE SPOTIFY_EPISODES
+    ADD COLUMN max_width FLOAT;
+
+ALTER TABLE YOUTUBE_VIDEOS
+    ADD COLUMN aspect_ratio FLOAT;
+
+ALTER TABLE YOUTUBE_VIDEOS
+    ADD COLUMN max_width FLOAT;
+
+CREATE UNIQUE INDEX historical_holding_acc_sec_date_quantity ON tradingpost_historical_holding (account_id, security_id, date, quantity);
+
+CREATE UNIQUE INDEX tradingpost_transaction_idx ON tradingpost_transaction (account_id, security_id, date, quantity);
+
+CREATE UNIQUE INDEX tradingpost_curernt_holding_idx ON tradingpost_current_holding (account_id, security_id, security_type);
+

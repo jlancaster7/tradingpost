@@ -24,6 +24,7 @@ export default class User extends Extension {
     }) => Promise<string>;
     getTrades: (req: {
         $page: number;
+        $limit?: number | undefined;
         settings: {
             user_id?: string | undefined;
         };

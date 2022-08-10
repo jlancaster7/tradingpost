@@ -1,6 +1,5 @@
-import { DateTime } from "luxon";
-import { getUSExchangeHoliday } from "../market-data/interfaces";
-import { policyOwnerEntityType } from "aws-sdk/clients/iam";
+import {DateTime} from "luxon";
+import {getUSExchangeHoliday} from "../market-data/interfaces";
 
 export interface IBrokerageService {
     getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
@@ -15,7 +14,8 @@ export interface IBrokerageService {
 
     exportAccounts(userId: string): Promise<TradingPostBrokerageAccounts[]>
 
-    exportTransactions(userId: string): Promise<TradingPostTransactions[]>
+    exportTransactions(userId: string): Promise<TradingPostTransactions[]
+    >
 
     exportHoldings(userId: string): Promise<TradingPostCurrentHoldings[]>
 
@@ -23,6 +23,8 @@ export interface IBrokerageService {
 }
 
 export interface IBrokerageRepository {
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
+
     getCashSecurityId(): Promise<GetSecurityBySymbol>
 
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>
@@ -581,8 +583,8 @@ export type TradingPostAccountGroupStats = {
     accountGroupId: number
     beta: number
     sharpe: number
-    industryAllocations: TradingPostSectorAllocations[]
-    exposure: TradingPostExposure
+    industryAllocations: string
+    exposure: string
     date: DateTime
     benchmarkId: number // References securities table
 }

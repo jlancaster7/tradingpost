@@ -4,6 +4,7 @@ export type LastID = string | number | null
 
 export interface Provider {
     getItems: (lastId: LastID) => Promise<{ items: ElasticSearchBody[], lastId: LastID }>
+    name: string
 }
 
 
@@ -34,6 +35,10 @@ export interface ElasticSearchBody {
         htmlBody: string | null
         description: string | null
     },
+    size: {
+        maxWidth: number
+        aspectRatio: number
+    }
     platformUpdatedAt: DateTime | null | string
     tradingpostUpdatedAt: DateTime | null | string
     platformCreatedAt: DateTime | null | string
@@ -43,7 +48,6 @@ export interface ElasticSearchBody {
 
 export interface TweetsAndUser {
     tweetID: number
-    userID: number
     twitterUserID: number
     embed: string
     language: string
@@ -75,13 +79,19 @@ export interface TweetsAndUser {
     protected: boolean,
     userTwitterCreatedAt: DateTime
     tradingPostTwitterCreatedAt: DateTime
+    aspectRatio: number
+    maxWidth: number
+    tradingpostUserId: string
+    tradingpostUserHandle: string
+    tradingpostUserEmail: string
+    tradingpostUserProfileUrl: string
+
 }
 
 // TODO: Update user_id and I believe we are using hashes rather than numeric IDs
 export interface YouTubeVideoAndChannel {
     video_id: string
     youtube_channel_id: string
-    user_id: number
     title: string
     description: string
     video_url: string
@@ -98,6 +108,12 @@ export interface YouTubeVideoAndChannel {
     channel_status: object
     channel_created_at: DateTime
     trading_post_channel_created_at: DateTime
+    maxWidth: number
+    aspectRatio: number
+    tradingpostUserId: string
+    tradingpostUserHandle: string
+    tradingpostUserEmail: string
+    tradingpostUserProfileUrl: string
 }
 
 export interface SubstackAndNewsletter {
@@ -115,7 +131,6 @@ export interface SubstackAndNewsletter {
     content_snippet: string
     substack_article_created_at: DateTime
     tradingpost_substack_article_created_at: DateTime
-    tradingpost_user_id: number
     newsletter_title: string
     newsletter_description: string
     newsletter_link: string
@@ -129,6 +144,12 @@ export interface SubstackAndNewsletter {
     newsletter_itunes: object
     last_newsletter_build_date: DateTime
     substack_added_to_tradingpost_date: DateTime
+    maxWidth: number
+    aspectRatio: number
+    tradingpostUserId: string
+    tradingpostUserHandle: string
+    tradingpostUserEmail: string
+    tradingpostProfileUrl: string
 }
 
 export interface SpotifyEpisodeAndUser {
@@ -161,7 +182,6 @@ export interface SpotifyEpisodeAndUser {
     episode_images: object
     episode_release_date: DateTime
     tradingpost_episode_created_at: DateTime
-    tradingpost_user_id: number
     podcast_name: string
     podcast_description: string
     is_podcast_explicit: boolean
@@ -175,6 +195,10 @@ export interface SpotifyEpisodeAndUser {
     podcast_images: object[]
     podcast_copyrights: any[]
     tradingpost_podcast_created_at: DateTime
-
-
+    maxWidth: number
+    aspectRatio: number
+    tradingpostUserId: string
+    tradingpostUserHandle: string
+    tradingpostUserEmail: string
+    tradingpostUserProfileUrl: string
 }

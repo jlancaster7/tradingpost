@@ -3,11 +3,29 @@ import cors from 'cors';
 import {DefaultConfig} from '@tradingpost/common/configuration';
 import pgPromise from 'pg-promise';
 import Finicity from "@tradingpost/common/finicity/index";
-import Brokerage from "@tradingpost/common/brokerage/index";
+import Brokerage from "@tradingpost/common/brokerage";
 import bodyParser from "body-parser";
+import pg from 'pg';
+import {DateTime} from 'luxon'
+
+pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
+    return parseInt(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
+    return parseFloat(value);
+});
 
 const run = async () => {
-    console.log("Starting :D ")
+    console.log(":::::: Starting TradingPost Worker Process ::::::")
     const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgp = pgPromise({});
     const pgClient = pgp({
@@ -38,13 +56,12 @@ const run = async () => {
     app.post("/finicity/webhook", async (req: Request, res: Response) => {
         if (req.body.eventType === 'added') {
             const {customerId} = req.body;
-            await brokerageService.newlyAuthenticatedBrokerage(customerId, 'finicity');
+            await brokerageService.addNewAccounts(customerId, 'finicity');
         }
 
         if (req.body.eventType === 'accountsDeleted') {
             const {customerId, eventId, payload} = req.body
             const {accounts} = payload;
-            console.log(`Removing accounts for ${customerId}`)
             await brokerageService.removeAccounts(customerId, accounts, 'finicity');
         }
 

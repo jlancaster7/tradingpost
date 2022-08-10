@@ -65,7 +65,7 @@ let userCacheInit = (async () => {
 
 export const getUserCache = async () => {
     await userCacheInit;
-   // console.log(JSON.stringify(caches.user));
+    // console.log(JSON.stringify(caches.user));
     return caches.user;
 }
 
@@ -115,5 +115,8 @@ export const cacheMonitor = async <A extends MotitoredType>(api: A, action: stri
         const user = cache[currentUserId]
         if (action === "insert")
             user.watchlists.push(responseData.id);
+        else if (action === "saveWatchlist") {
+            user.watchlists.push(responseData.id);
+        }
     }
 }
