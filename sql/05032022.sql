@@ -566,7 +566,8 @@ CREATE INDEX security_price_idx_time ON security_price (time DESC);
 ALTER TABLE security
     ADD COLUMN enable_utp BOOLEAN DEFAULT FALSE;
 
-ALTER TABLE tradingpost_account_group ADD CONSTRAINT name_userid_unique UNIQUE (name, user_id);
+ALTER TABLE tradingpost_account_group
+    ADD CONSTRAINT name_userid_unique UNIQUE (name, user_id);
 ALTER TABLE TWEETS
     ADD COLUMN aspect_ratio FLOAT;
 
@@ -595,5 +596,5 @@ CREATE UNIQUE INDEX historical_holding_acc_sec_date_quantity ON tradingpost_hist
 
 CREATE UNIQUE INDEX tradingpost_transaction_idx ON tradingpost_transaction (account_id, security_id, date, quantity);
 
-CREATE UNIQUE INDEX tradingpost_curernt_holding_idx ON tradingpost_current_holding (account_id, security_id, security_type);
+CREATE UNIQUE INDEX tradingpost_current_holding_idx ON tradingpost_current_holding (account_id, security_id, quantity);
 
