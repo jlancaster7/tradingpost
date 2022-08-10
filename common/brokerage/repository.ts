@@ -6,7 +6,8 @@ import {
     FinicityInstitution,
     FinicityTransaction,
     FinicityUser,
-    GetSecurityBySymbol, GetSecurityPrice,
+    GetSecurityBySymbol,
+    GetSecurityPrice,
     HistoricalHoldings,
     IBrokerageRepository,
     ISummaryRepository,
@@ -20,7 +21,8 @@ import {
     TradingPostBrokerageAccountsTable,
     TradingPostBrokerageAccountWithFinicity,
     TradingPostCurrentHoldings,
-    TradingPostCurrentHoldingsTable, TradingPostCurrentHoldingsTableWithSecurity,
+    TradingPostCurrentHoldingsTable,
+    TradingPostCurrentHoldingsTableWithSecurity,
     TradingPostCustomIndustry,
     TradingPostHistoricalHoldings,
     TradingPostInstitution,
@@ -33,7 +35,6 @@ import {
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
 import {addSecurity, getUSExchangeHoliday} from "../market-data/interfaces";
-import {sec} from "mathjs";
 
 export default class Repository implements IBrokerageRepository, ISummaryRepository {
     private db: IDatabase<any>;
@@ -1736,9 +1737,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     addTradingPostAccountGroupStats = async (groupStats: TradingPostAccountGroupStats[]) => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_group_id', prop: 'accountGroupId'},
-            {name: 'beta', prop: 'beta'},
+            {name: 'beta', prop: 'beta', },
             {name: 'sharpe', prop: 'sharpe'},
-            {name: 'industry_allocations', prop: 'industryAllocations'},
+            {name: 'industry_allocations', prop: 'industryAllocations', mod: ':json'},
             {name: 'exposure', prop: 'exposure'},
             {name: 'date', prop: 'date'},
             {name: 'benchmark_id', prop: 'benchmarkId'}
@@ -2084,7 +2085,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         `;
         const result = await this.db.one(query, [accountGroupId]);
 
-        const summary: TradingPostAccountGroupStats = {
+        return {
             accountGroupId: result.account_group_id,
             beta: result.beta,
             sharpe: result.sharpe,
@@ -2092,8 +2093,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             exposure: result.exposure,
             date: result.date,
             benchmarkId: result.benchmark_id
-        }
-        return summary;
+        };
     }
 
     deleteFinicityHoldings = async (accountIds: number[]): Promise<void> => {

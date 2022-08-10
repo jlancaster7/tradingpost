@@ -39,7 +39,7 @@ export default class FinicityService implements IBrokerageService {
         let finicityUser = await this.repository.getFinicityUser(userId);
         if (!finicityUser) finicityUser = await this._createFinicityUser(userId);
         const authPortal = await this.finicity.generateConnectUrl(finicityUser.customerId,
-            "https://tradingpost.life/finicity/webhook")
+            "https://worker.tradingpostapp.com/finicity/webhook")
         return authPortal.link
     }
 

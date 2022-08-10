@@ -1422,17 +1422,10 @@ test('holding history buy & sell', async () => {
             return Promise.resolve([]);
         }, getAccountGroupSummary(accountGroupId: number): Promise<TradingPostAccountGroupStats> {
             return Promise.resolve({
+                industryAllocations: "", sharpe: 0, exposure: "",
                 accountGroupId: 0,
-                beta: 0,
-                sharpe: 0,
-                industryAllocations: [],
-                exposure: {
-                  gross: 0,
-                  long: 0,
-                  net: 0,
-                  short: 0
-                },
                 date: DateTime.now(),
+                beta: 0,
                 benchmarkId: 0
             });
         }
