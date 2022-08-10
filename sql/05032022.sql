@@ -597,3 +597,20 @@ CREATE UNIQUE INDEX tradingpost_transaction_idx ON tradingpost_transaction (acco
 
 CREATE UNIQUE INDEX tradingpost_curernt_holding_idx ON tradingpost_current_holding (account_id, security_id, security_type);
 
+ALTER TABLE account_group_hpr ADD CONSTRAINT account_group_date_key UNIQUE (date, account_group_id);
+
+CREATE TABLE IF NOT EXISTS public.tradingpost_cash_security
+(
+    id bigserial NOT NULL,
+	from_symbol text NOT NULL,
+	to_security_symbol text NOT NULL,
+	updated_at timestamp with time zone NOT NULL DEFAULT now(),
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT tradingpost_cash_security_pkey PRIMARY KEY (id),
+	CONSTRAINT from_symbol_to_security_symbol_key UNIQUE (from_symbol, to_security_symbol)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.tradingpost_cash_security
+    OWNER to hive_root_user;
