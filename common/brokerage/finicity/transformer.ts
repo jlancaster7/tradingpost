@@ -10,6 +10,7 @@ import {
     TradingPostCurrentHoldings,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
+    TradingPostCashSecurity,
 } from "../interfaces";
 import {DateTime} from "luxon";
 import {addSecurity} from "../../market-data/interfaces";
@@ -18,6 +19,8 @@ interface TransformerRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>
 
     getSecuritiesWithIssue(): Promise<SecurityIssue[]>
+    
+    getTradingpostCashSecurity (): Promise<TradingPostCashSecurity[]>
 
     getTradingPostInstitutionsWithFinicityId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>
 
@@ -78,8 +81,13 @@ const transformTransactionType = (finicityTxType: string): InvestmentTransaction
     }
 }
 
-const transformSecurityType = (finSecType: string): SecurityType => {
-    return SecurityType.equity
+const transformSecurityType = (ticker: string): SecurityType => {
+    if (ticker === 'USD:CUR') {
+        return SecurityType.cashEquivalent;
+    } else {
+        return SecurityType.equity;
+    }
+    
 }
 
 export default class FinicityTransformer {
@@ -124,44 +132,57 @@ export default class FinicityTransformer {
         if (internalAccount === undefined || internalAccount === null) throw new Error(`account id(${accountId}) does not exist for holding`)
 
         const securities = await this.repository.getSecuritiesWithIssue();
+        const cashSecurities = await this.repository.getTradingpostCashSecurity();
         const securitiesMap: Record<string, SecurityIssue> = {};
+        const cashSecuritiesMap: Record<string, number> = {};
         securities.forEach(sec => securitiesMap[sec.symbol] = sec);
-
+        cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
         let tpHoldings: TradingPostCurrentHoldings[] = [];
         for (let i = 0; i < finHoldings.length; i++) {
             let holding = finHoldings[i];
 
             let security = securitiesMap[holding.symbol]
+            let cashSecurity = cashSecuritiesMap[holding.symbol];
             if (security === undefined || security === null) {
-                const sec: addSecurity = {
-                    companyName: holding.securityName,
-                    securityName: holding.securityName,
-                    issueType: holding.securityType,
-                    description: holding.description,
-                    symbol: holding.symbol,
-                    logoUrl: null,
-                    phone: null,
-                    country: null,
-                    state: null,
-                    address2: null,
-                    tags: [],
-                    employees: null,
-                    industry: null,
-                    exchange: null,
-                    primarySicCode: null,
-                    ceo: null,
-                    zip: null,
-                    address: null,
-                    website: null,
-                    sector: null
-                };
+                if (cashSecurity === undefined || cashSecurity === null) {
+                    const sec: addSecurity = {
+                        companyName: holding.securityName,
+                        securityName: holding.securityName,
+                        issueType: holding.securityType,
+                        description: holding.description,
+                        symbol: holding.symbol,
+                        logoUrl: null,
+                        phone: null,
+                        country: null,
+                        state: null,
+                        address2: null,
+                        tags: [],
+                        employees: null,
+                        industry: null,
+                        exchange: null,
+                        primarySicCode: null,
+                        ceo: null,
+                        zip: null,
+                        address: null,
+                        website: null,
+                        sector: null
+                    };
 
-                const securityId = await this.repository.addSecurity(sec)
-                security = {
-                    id: securityId,
-                    symbol: sec.symbol,
-                    name: sec.securityName ? sec.securityName : '',
-                    issueType: sec.issueType ? sec.issueType : ''
+                    const securityId = await this.repository.addSecurity(sec)
+                    security = {
+                        id: securityId,
+                        symbol: sec.symbol,
+                        name: sec.securityName ? sec.securityName : '',
+                        issueType: sec.issueType ? sec.issueType : ''
+                    }
+                }
+                else {
+                    security = {
+                        id: cashSecurity,
+                        symbol: holding.symbol,
+                        name: 'Cash',
+                        issueType: 'Cash'
+                    }
                 }
             }
 
@@ -175,7 +196,7 @@ export default class FinicityTransformer {
             tpHoldings.push({
                 accountId: internalAccount.id, // TradingPost Brokerage Account ID
                 securityId: security.id,
-                securityType: null,
+                securityType: (security.issueType === 'Cash' ? SecurityType.cashEquivalent : SecurityType.equity),
                 price: holding.currentPrice,
                 priceAsOf: priceAsOf,
                 priceSource: '',
@@ -191,8 +212,11 @@ export default class FinicityTransformer {
 
     transactions = async (userId: string, finTransactions: FinicityTransaction[]): Promise<TradingPostTransactions[]> => {
         const securities = await this.repository.getSecuritiesWithIssue();
+        const cashSecurities = await this.repository.getTradingpostCashSecurity();
+        const cashSecuritiesMap: Record<string, number> = {};
         const securitiesMap: Record<string, SecurityIssue> = {};
         securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+        cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
 
         const tpAccountsWithFinicityId = await this.repository.getTradingPostAccountsWithFinicityNumber(userId);
         const finicityIdToTpAccountMap: Record<string, number> = {};
@@ -205,7 +229,7 @@ export default class FinicityTransformer {
             const internalTpAccountId = finicityIdToTpAccountMap[transaction.accountId];
             if (!internalTpAccountId) throw new Error(`could not get internal account id for transaction with id ${transaction.id} for user ${userId}`);
 
-            if (!transaction.ticker) {
+            if (!transaction.ticker || Object.keys(cashSecuritiesMap).includes(transaction.ticker)) {
                 switch (transaction.investmentTransactionType) {
                     case "fee":
                     case "interest":
@@ -221,13 +245,13 @@ export default class FinicityTransformer {
             let security = securitiesMap[transaction.ticker]
             if (security === undefined || security === null) throw new Error(`could not find symbol(${transaction.ticker} for holding`)
 
-            if (!transaction.unitQuantity) transaction.unitQuantity = 1
+            if (!transaction.unitQuantity) transaction.unitQuantity = transaction.amount;
             // TODO: Can we be sure that they didnt factor in fees, or if they did that we have an attribute that includes fees?
-            let price = 0
+            let price = 1
             if (!transaction.unitPrice) price = transaction.amount / transaction.unitQuantity
             else price = transaction.unitPrice
 
-            let securityType = transformSecurityType(transaction.investmentTransactionType)
+            let securityType = transformSecurityType(transaction.ticker)
             let transactionType = transformTransactionType(transaction.investmentTransactionType);
 
             tpTransactions.push({

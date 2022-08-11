@@ -566,7 +566,8 @@ CREATE INDEX security_price_idx_time ON security_price (time DESC);
 ALTER TABLE security
     ADD COLUMN enable_utp BOOLEAN DEFAULT FALSE;
 
-ALTER TABLE tradingpost_account_group ADD CONSTRAINT name_userid_unique UNIQUE (name, user_id);
+ALTER TABLE tradingpost_account_group
+    ADD CONSTRAINT name_userid_unique UNIQUE (name, user_id);
 ALTER TABLE TWEETS
     ADD COLUMN aspect_ratio FLOAT;
 
@@ -595,5 +596,22 @@ CREATE UNIQUE INDEX historical_holding_acc_sec_date_quantity ON tradingpost_hist
 
 CREATE UNIQUE INDEX tradingpost_transaction_idx ON tradingpost_transaction (account_id, security_id, date, quantity);
 
-CREATE UNIQUE INDEX tradingpost_curernt_holding_idx ON tradingpost_current_holding (account_id, security_id, security_type);
+CREATE UNIQUE INDEX tradingpost_current_holding_idx ON tradingpost_current_holding (account_id, security_id, quantity);
 
+ALTER TABLE account_group_hpr ADD CONSTRAINT account_group_date_key UNIQUE (date, account_group_id);
+
+CREATE TABLE IF NOT EXISTS public.tradingpost_cash_security
+(
+    id bigserial NOT NULL,
+	from_symbol text NOT NULL,
+	to_security_symbol text NOT NULL,
+	updated_at timestamp with time zone NOT NULL DEFAULT now(),
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    CONSTRAINT tradingpost_cash_security_pkey PRIMARY KEY (id),
+	CONSTRAINT from_symbol_to_security_symbol_key UNIQUE (from_symbol, to_security_symbol)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE public.tradingpost_cash_security
+    OWNER to hive_root_user;

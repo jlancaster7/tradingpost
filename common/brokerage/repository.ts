@@ -6,7 +6,8 @@ import {
     FinicityInstitution,
     FinicityTransaction,
     FinicityUser,
-    GetSecurityBySymbol, GetSecurityPrice,
+    GetSecurityBySymbol,
+    GetSecurityPrice,
     HistoricalHoldings,
     IBrokerageRepository,
     ISummaryRepository,
@@ -20,19 +21,20 @@ import {
     TradingPostBrokerageAccountsTable,
     TradingPostBrokerageAccountWithFinicity,
     TradingPostCurrentHoldings,
-    TradingPostCurrentHoldingsTable, TradingPostCurrentHoldingsTableWithSecurity,
+    TradingPostCurrentHoldingsTable,
+    TradingPostCurrentHoldingsTableWithSecurity,
     TradingPostCustomIndustry,
     TradingPostHistoricalHoldings,
     TradingPostInstitution,
     TradingPostInstitutionTable,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
-    TradingPostTransactionsTable, TradingPostUser
+    TradingPostTransactionsTable, TradingPostUser,
+    TradingPostCashSecurity
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
 import {addSecurity, getUSExchangeHoliday} from "../market-data/interfaces";
-import {sec} from "mathjs";
 
 export default class Repository implements IBrokerageRepository, ISummaryRepository {
     private db: IDatabase<any>;
@@ -367,6 +369,24 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 symbol: r.symbol,
                 name: r.name,
                 issueType: r.issue_type
+            }
+            return o
+        })
+    }
+
+    getTradingpostCashSecurity = async (): Promise<TradingPostCashSecurity[]> => {
+        const query = `SELECT s.id as security_id,
+                              cs.from_symbol as from_symbol,
+                              cs.to_security_symbol as to_security_symbol
+                       FROM tradingpost_cash_security cs
+                       LEFT JOIN security s
+                       ON s.symbol = cs.to_security_symbol;
+                       `;
+        const response = await this.db.query(query);
+        return response.map((r: any) => {
+            let o: TradingPostCashSecurity = {
+                fromSymbol: r.from_symbol,
+                toSecurityId: parseInt(r.security_id)
             }
             return o
         })
@@ -1717,9 +1737,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     addTradingPostAccountGroupStats = async (groupStats: TradingPostAccountGroupStats[]) => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_group_id', prop: 'accountGroupId'},
-            {name: 'beta', prop: 'beta'},
+            {name: 'beta', prop: 'beta', },
             {name: 'sharpe', prop: 'sharpe'},
-            {name: 'industry_allocations', prop: 'industryAllocations'},
+            {name: 'industry_allocations', prop: 'industryAllocations', mod: ':json'},
             {name: 'exposure', prop: 'exposure'},
             {name: 'date', prop: 'date'},
             {name: 'benchmark_id', prop: 'benchmarkId'}
@@ -1845,7 +1865,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                      FROM tradingpost_current_holding ch
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ch.account_id = atg.account_id
-                     WHERE atg.account_group_id = 18
+                     WHERE atg.account_group_id = $1
                      GROUP BY atg.account_group_id, ch.security_id, ch.updated_at;`;
         const response = await this.db.any(query, [accountGroupId]);
 
@@ -2065,7 +2085,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         `;
         const result = await this.db.one(query, [accountGroupId]);
 
-        const summary: TradingPostAccountGroupStats = {
+        return {
             accountGroupId: result.account_group_id,
             beta: result.beta,
             sharpe: result.sharpe,
@@ -2073,8 +2093,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             exposure: result.exposure,
             date: result.date,
             benchmarkId: result.benchmark_id
-        }
-        return summary;
+        };
     }
 
     deleteFinicityHoldings = async (accountIds: number[]): Promise<void> => {

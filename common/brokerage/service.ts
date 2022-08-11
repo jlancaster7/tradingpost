@@ -27,19 +27,20 @@ type RuleSetFunction = (holdings: historicalAccount, tx: TradingPostTransactions
 // value at the end of each day
 let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
     "buy": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        holdings.cash = holdings.cash + tx.amount;
+        holdings.cash = holdings.cash - tx.amount;
         // Roll back buy,
         // get transaction from holding
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
         if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for buy transaction`)
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
-        holdings.holdings[hIdx] = h
+        h.value = h.quantity * h.price;
+        holdings.holdings[hIdx] = h;
         return holdings
     },
     "sell": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         // sell amount is going to be negative, hence why we can "add" it back
-        holdings.cash = holdings.cash + tx.amount
+        holdings.cash = holdings.cash - tx.amount
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
         if (hIdx === -1) {
             holdings.holdings.push({
@@ -58,13 +59,14 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
             return holdings
         }
 
-        const holding = holdings.holdings[hIdx];
-        holding.quantity = holding.quantity + (-1 * tx.quantity)
-        holdings.holdings[hIdx] = holding
+        const h = holdings.holdings[hIdx];
+        h.quantity = h.quantity + (-1 * tx.quantity);
+        h.value = h.quantity * h.price;
+        holdings.holdings[hIdx] = h;
         return holdings
     },
     "short": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        holdings.cash = holdings.cash + tx.amount;
+        holdings.cash = holdings.cash - tx.amount;
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
 
         // TODO: .... this is possible for a short?
@@ -72,11 +74,12 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for short transaction`)
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
+        h.value = h.quantity * h.price;
         holdings.holdings[hIdx] = h
         return holdings
     },
     "cover": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        holdings.cash = holdings.cash + tx.amount;
+        holdings.cash = holdings.cash - tx.amount;
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
 
         // TODO:.... I think this is possible in a cover...?
@@ -84,6 +87,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for cover transaction`)
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
+        h.value = h.quantity * h.price;
         holdings.holdings[hIdx] = h
         return holdings
     },
@@ -103,6 +107,16 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
     "transfer": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         // TODO: Assuming this is a transfer from another brokerage... we should just allocate holding in history...
         //  or de-allocate if it was transferred to another institution
+        if (tx.securityType === 'cashEquivalent') {
+            holdings.cash = holdings.cash - tx.amount;
+            return holdings;
+        }
+        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
+        if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for buy transaction`)
+        const h = holdings.holdings[hIdx];
+        h.quantity = h.quantity + (-1 * tx.quantity)
+        h.value = h.quantity * h.price;
+        holdings.holdings[hIdx] = h;
         return holdings
     },
     "dividendOrInterest": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
@@ -155,6 +169,7 @@ export default class BrokerageService {
 
         // Get Current Holdings
         const currentHoldings = await this.repository.getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(tpAccountId);
+        
         // TODO: We could recomptue old holdings history...
         if (currentHoldings.length <= 0) throw new Error("no holdings available for account " + tpAccountId);
         currentHoldings.forEach(h => allSecurityIds[h.securityId] = {});
@@ -178,7 +193,7 @@ export default class BrokerageService {
         // Get Trading Days we will compute history for
         // In our db we will have a single row for each security on each day, so with 2 securities we'll have two rows for today
         let tradingDays = await this.getTradingDays(startDate, endDate)
-
+        
         const initialHistoricalHolding: historicalAccount = {
             date: startDate,
             cash: 0,
@@ -188,7 +203,7 @@ export default class BrokerageService {
         for (const holding of currentHoldings) {
             if (holding.symbol === 'USD:CUR') {
                 initialHistoricalHolding.cash = holding.quantity;
-                continue
+                continue;
             }
 
             initialHistoricalHolding.date = holding.priceAsOf
@@ -232,7 +247,9 @@ export default class BrokerageService {
                 const closestPrice = this.getClosestPrice(allSecurityPricesMap, holdingToday.securityId, priorMarketDay)
                 if (closestPrice !== null) price = closestPrice
                 holdingToday.price = price
+                holdingToday.value = price * holdingToday.quantity
                 holdingToday.date = priorMarketDay
+                if (!holdingToday.quantity) { continue; }
                 priorHoldings.holdings.push(holdingToday)
             }
 

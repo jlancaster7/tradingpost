@@ -53,6 +53,11 @@ const run = async () => {
         res.send({Hello: "World", port: port});
     });
 
+    app.get("/another/one", (req: Request, res: Response) => {
+        console.log("Request Made")
+        res.send({Hello: "World", port: port});
+    });
+
     app.post("/finicity/webhook", async (req: Request, res: Response) => {
         if (req.body.eventType === 'added') {
             const {customerId} = req.body;

@@ -150,7 +150,7 @@ export class PortfolioSummaryService implements ISummaryService {
         let beta = [];
         let sum = 0;
         for (let d of holdings) {
-            if (d.securityId === 27296) { continue; }
+            if (d.securityId === 26830) { continue; }
             beta.push([await this.computeSecurityBeta(d.securityId, benchmarkId, daysPrior), d.value]);
             sum += d.value;
         }
@@ -244,7 +244,7 @@ export class PortfolioSummaryService implements ISummaryService {
 
         const exposure = this.computeExposure(currentHoldings);
 
-        return {
+        const summary = {
             accountGroupId: account_group.accountGroupId,
             beta: beta,
             sharpe: sharpe,
@@ -252,7 +252,14 @@ export class PortfolioSummaryService implements ISummaryService {
             exposure: JSON.stringify(exposure) as any,
             date: returns[returns.length - 1].date,
             benchmarkId: account_group.defaultBenchmarkId
-        };
+        }
+
+        await this.addAccountGroupSummary(summary);
+        return summary;
+    }
+
+    addAccountGroupSummary = async (summary: TradingPostAccountGroupStats) => {
+        this.repository.addAccountGroupSummary(summary);
     }
 
     getCurrentHoldings = async (userId: string): Promise<HistoricalHoldings[]> => {
