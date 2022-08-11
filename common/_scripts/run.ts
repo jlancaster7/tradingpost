@@ -44,7 +44,6 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     const tpUserId = "8e787902-f0e9-42aa-a8d8-18e5d7a1a34d";
     const repo = new Repository(pgClient, pgp);
     const g = await repo.getAccountGroupSummary(24);
-    console.log(g.exposure.net)
     // console.log("Starting...")
     // const brokerageService = new Brokerage(pgClient, pgp, finicity);
     // await brokerageService.addNewAccounts("6007115349", "finicity")
