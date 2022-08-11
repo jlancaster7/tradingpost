@@ -53,8 +53,14 @@ type EnsuredServerType<T, ExplictBody = void> = {
     }) => Promise<R> :
     never
 }
-
-export const ensureServerExtensions = <T>(defs: EnsuredServerType<T>) => defs
+//TODO: type the extension other stuff
+export const ensureServerExtensions = <T>(defs: EnsuredServerType<T> & {
+    get?: (i: any, extra: {
+        userId: string,
+        page?: number,
+        limit?: number
+    }) => Promise<void>
+}) => defs
 
 //Gave up on this idea
 interface IRequest<

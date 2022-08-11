@@ -131,6 +131,7 @@ makeRoute(baseFormat, (req) => {
         (req as any).extra = extra;
 
         const internalHandler = entity.internal[req.params.action as keyof (typeof entity)["internal"]];
+        const extensionHandler = entity.internal.extensions[req.params.action]
         if (req.params.action !== "extensions" && internalHandler) {
 
             const settings: RequestSettings<any> = {
@@ -141,15 +142,16 @@ makeRoute(baseFormat, (req) => {
             }
 
             const responseData = await (internalHandler as any)(settings);
-
+            if (extensionHandler)
+                await extensionHandler(responseData, extra);
             //will type better in the future by should not be needed right now
             await cacheMonitor(entity as any, req.params.action, info.sub as string, responseData);
 
             return responseData;
         }
-        else if (entity.internal.extensions[req.params.action]) {
+        else if (extensionHandler) {
             //will make this well redundant
-            const responseData = await entity.internal.extensions[req.params.action](req);
+            const responseData = await extensionHandler(req);
             await cacheMonitor(entity as any, req.params.action, info.sub as string, responseData);
             return responseData
         }

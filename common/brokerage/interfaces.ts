@@ -1,5 +1,5 @@
-import {DateTime} from "luxon";
-import {getUSExchangeHoliday} from "../market-data/interfaces";
+import { DateTime } from "luxon";
+import { getUSExchangeHoliday } from "../market-data/interfaces";
 
 export interface IBrokerageService {
     getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
@@ -583,11 +583,12 @@ export type TradingPostAccountGroupStats = {
     accountGroupId: number
     beta: number
     sharpe: number
-    industryAllocations: string
-    exposure: string
+    industryAllocations: TradingPostSectorAllocations[]
+    exposure: TradingPostExposure
     date: DateTime
     benchmarkId: number // References securities table
 }
+
 
 export type TradingPostAccountGroupStatsTable = TradingPostAccountGroupStats & TableInfo;
 

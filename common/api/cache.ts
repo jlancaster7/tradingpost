@@ -6,8 +6,10 @@ import UserApi from "./entities/apis/UserApi"
 import PostApi from "./entities/apis/PostApi"
 import WatchlistApi from "./entities/apis/WatchlistApi"
 import WatchlistSavedApi from "./entities/apis/WatchlistSavedApi"
+import { execProc } from "./entities/static/pool"
 
 type ExistsRecord = Record<string, true>
+export type PriceInfo = { id: number, symbol: string, price: { price: number, time: string, open: number, high: number, low: number } };
 const caches: {
     user: Record<string, {
         profile: IUserList
@@ -15,7 +17,10 @@ const caches: {
         upvotes: ExistsRecord,
         watchlists: number[]
     }>
-} = { user: {} }
+    price: {
+        byTicker: Record<string, PriceInfo["price"]>
+    }
+} = { user: {}, price: { byTicker: {} } }
 
 const existsCache = <T, M extends keyof T, C extends keyof T>(allRecords: T[], matchKey: M, matchValue: T[M], cacheKey: C) => {
     const rcd: ExistsRecord = {}
@@ -27,7 +32,6 @@ const existsCache = <T, M extends keyof T, C extends keyof T>(allRecords: T[], m
 const idCache = <T, M extends keyof T, C extends keyof T>(allRecords: T[], matcher: { matchKey: M, matchValue: T[M] } | ((r: T) => boolean), cacheKey: C) => {
     return allRecords.filter((r) => typeof matcher === "function" ? matcher(r) : r[matcher.matchKey] === matcher.matchValue).map((r) => r[cacheKey])
 }
-
 
 //TODO: Should write a little local hook for the client that get notified when there are updates to keep components in sync if they are using it 
 let userCacheInit = (async () => {
@@ -63,6 +67,29 @@ let userCacheInit = (async () => {
 })()
 
 
+
+
+export const getPriceCacheTask = (async () => {
+    const updatePriceCache = async () => {
+        const priceByTicker: typeof caches.price.byTicker = {}
+        const prices = await execProc<PriceInfo>("tp.api_security_prices");
+        //    console.log(JSON.stringify(prices));
+        prices.forEach((p) => {
+            priceByTicker[p.symbol] = p.price;
+        })
+        caches.price.byTicker = priceByTicker;
+    }
+    console.log("Updating Prices");
+    await updatePriceCache();
+    setInterval(() => {
+        console.log("Updating Prices")
+        updatePriceCache();
+    }, 5 * 60 * 1000)
+    return caches.price
+})()
+
+
+
 export const getUserCache = async () => {
     await userCacheInit;
     // console.log(JSON.stringify(caches.user));
@@ -71,6 +98,8 @@ export const getUserCache = async () => {
 
 //Special Monitor for cachable items
 type MotitoredType = typeof UserApi | typeof PostApi | typeof WatchlistApi | typeof WatchlistSavedApi;
+
+
 
 //make this check based on decorators?
 export const cacheMonitor = async <A extends MotitoredType>(api: A, action: string, currentUserId: string, responseData: any) => {

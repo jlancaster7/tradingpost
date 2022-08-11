@@ -190,7 +190,7 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
 //ALL ROUTES
 makeRoute(baseFormat, function (req) {
     return sharedHandler(req, function (entity) { return __awaiter(void 0, void 0, void 0, function () {
-        var info, extra, internalHandler, settings, responseData, responseData;
+        var info, extra, internalHandler, extensionHandler, settings, responseData, responseData;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, decodeToken(req)];
@@ -203,7 +203,8 @@ makeRoute(baseFormat, function (req) {
                     };
                     req.extra = extra;
                     internalHandler = entity.internal[req.params.action];
-                    if (!(req.params.action !== "extensions" && internalHandler)) return [3 /*break*/, 4];
+                    extensionHandler = entity.internal.extensions[req.params.action];
+                    if (!(req.params.action !== "extensions" && internalHandler)) return [3 /*break*/, 6];
                     settings = {
                         user_id: info.sub,
                         data: req.body,
@@ -213,22 +214,28 @@ makeRoute(baseFormat, function (req) {
                     return [4 /*yield*/, internalHandler(settings)];
                 case 2:
                     responseData = _a.sent();
-                    //will type better in the future by should not be needed right now
-                    return [4 /*yield*/, (0, cache_1.cacheMonitor)(entity, req.params.action, info.sub, responseData)];
+                    if (!extensionHandler) return [3 /*break*/, 4];
+                    return [4 /*yield*/, extensionHandler(responseData, extra)];
                 case 3:
+                    _a.sent();
+                    _a.label = 4;
+                case 4: 
+                //will type better in the future by should not be needed right now
+                return [4 /*yield*/, (0, cache_1.cacheMonitor)(entity, req.params.action, info.sub, responseData)];
+                case 5:
                     //will type better in the future by should not be needed right now
                     _a.sent();
                     return [2 /*return*/, responseData];
-                case 4:
-                    if (!entity.internal.extensions[req.params.action]) return [3 /*break*/, 7];
-                    return [4 /*yield*/, entity.internal.extensions[req.params.action](req)];
-                case 5:
+                case 6:
+                    if (!extensionHandler) return [3 /*break*/, 9];
+                    return [4 /*yield*/, extensionHandler(req)];
+                case 7:
                     responseData = _a.sent();
                     return [4 /*yield*/, (0, cache_1.cacheMonitor)(entity, req.params.action, info.sub, responseData)];
-                case 6:
+                case 8:
                     _a.sent();
                     return [2 /*return*/, responseData];
-                case 7: throw new EntityApiBase_1.PublicError("Unknown Action", 400);
+                case 9: throw new EntityApiBase_1.PublicError("Unknown Action", 400);
             }
         });
     }); });

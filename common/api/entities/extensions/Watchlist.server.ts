@@ -1,12 +1,25 @@
 import { ensureServerExtensions } from ".";
-import { getUserCache } from "../../cache";
-import WatchlistApi from "../apis/WatchlistApi";
+import { getPriceCacheTask, getUserCache } from "../../cache";
 import WatchlistSavedApi from "../apis/WatchlistSavedApi";
+import WatchlistApi, { IWatchlistGet } from "../apis/WatchlistApi";
 import { getHivePool } from "../static/pool";
 
-import Watchlist from "./Watchlist";
+import Watchlist, { IWatchlistGetExt } from "./Watchlist";
 
 export default ensureServerExtensions<Watchlist>({
+    get: async (watchlist: IWatchlistGet) => {
+        const prices = await getPriceCacheTask;
+        
+        (watchlist as IWatchlistGetExt).items.forEach((wi) => {
+            const found = prices.byTicker[wi.symbol]
+
+            console.log(JSON.stringify(found));
+            wi.price = found;
+        })
+
+
+        //return watchlist;
+    },
     getAllWatchlists: async (req) => {
         const cache = await getUserCache();
         const curUser = cache[req.extra.userId];

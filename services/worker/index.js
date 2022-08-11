@@ -41,10 +41,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = __importDefault(require("express"));
 var cors_1 = __importDefault(require("cors"));
-var configuration_1 = require("@tradingpost/common/configuration");
-var pg_promise_1 = __importDefault(require("pg-promise"));
-var index_1 = __importDefault(require("@tradingpost/common/finicity/index"));
-var brokerage_1 = __importDefault(require("@tradingpost/common/brokerage"));
+// import Finicity from "@tradingpost/common/finicity/index";
+// import Brokerage from "@tradingpost/common/brokerage";
 var body_parser_1 = __importDefault(require("body-parser"));
 var pg_1 = __importDefault(require("pg"));
 pg_1.default.types.setTypeParser(pg_1.default.types.builtins.INT8, function (value) {
@@ -60,68 +58,36 @@ pg_1.default.types.setTypeParser(pg_1.default.types.builtins.NUMERIC, function (
     return parseFloat(value);
 });
 var run = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var pgCfg, pgp, pgClient, finicityCfg, finicity, brokerageService, app, port;
+    var app, port;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                console.log(":::::: Starting TradingPost Worker Process ::::::");
-                return [4 /*yield*/, configuration_1.DefaultConfig.fromCacheOrSSM("postgres")];
-            case 1:
-                pgCfg = _a.sent();
-                pgp = (0, pg_promise_1.default)({});
-                pgClient = pgp({
-                    host: pgCfg.host,
-                    user: pgCfg.user,
-                    password: pgCfg.password,
-                    database: pgCfg.database
-                });
-                return [4 /*yield*/, pgClient.connect()];
-            case 2:
-                _a.sent();
-                return [4 /*yield*/, configuration_1.DefaultConfig.fromCacheOrSSM("finicity")];
-            case 3:
-                finicityCfg = _a.sent();
-                finicity = new index_1.default(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-                return [4 /*yield*/, finicity.init()];
-            case 4:
-                _a.sent();
-                brokerageService = new brokerage_1.default(pgClient, pgp, finicity);
-                app = (0, express_1.default)();
-                port = process.env.PORT || 8080;
-                app.use(body_parser_1.default.json());
-                app.use((0, cors_1.default)());
-                app.get("/", function (req, res) {
-                    console.log("Request Made");
-                    res.send({ Hello: "World" });
-                });
-                app.post("/finicity/webhook", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-                    var customerId, _a, customerId, eventId, payload, accounts;
-                    return __generator(this, function (_b) {
-                        switch (_b.label) {
-                            case 0:
-                                if (!(req.body.eventType === 'added')) return [3 /*break*/, 2];
-                                customerId = req.body.customerId;
-                                return [4 /*yield*/, brokerageService.addNewAccounts(customerId, 'finicity')];
-                            case 1:
-                                _b.sent();
-                                _b.label = 2;
-                            case 2:
-                                if (!(req.body.eventType === 'accountsDeleted')) return [3 /*break*/, 4];
-                                _a = req.body, customerId = _a.customerId, eventId = _a.eventId, payload = _a.payload;
-                                accounts = payload.accounts;
-                                return [4 /*yield*/, brokerageService.removeAccounts(customerId, accounts, 'finicity')];
-                            case 3:
-                                _b.sent();
-                                _b.label = 4;
-                            case 4: return [2 /*return*/, res.send()];
-                        }
-                    });
-                }); });
-                app.listen(port, function () {
-                    console.log("Server running at http://127.0.0.1:%s", port);
-                });
-                return [2 /*return*/];
-        }
+        console.log(":::::: Starting TradingPost Worker Process ::::::");
+        app = (0, express_1.default)();
+        port = process.env.PORT || 8080;
+        app.use(body_parser_1.default.json());
+        app.use((0, cors_1.default)());
+        app.get("/", function (req, res) {
+            console.log("Request Made");
+            res.send({ Hello: "World", port: port });
+        });
+        app.post("/finicity/webhook", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+            var customerId, _a, customerId, eventId, payload, accounts;
+            return __generator(this, function (_b) {
+                if (req.body.eventType === 'added') {
+                    customerId = req.body.customerId;
+                    // await brokerageService.addNewAccounts(customerId, 'finicity');
+                }
+                if (req.body.eventType === 'accountsDeleted') {
+                    _a = req.body, customerId = _a.customerId, eventId = _a.eventId, payload = _a.payload;
+                    accounts = payload.accounts;
+                    // await brokerageService.removeAccounts(customerId, accounts, 'finicity');
+                }
+                return [2 /*return*/, res.send()];
+            });
+        }); });
+        app.listen(port, function () {
+            console.log("Server running at http://127.0.0.1:%s", port);
+        });
+        return [2 /*return*/];
     });
 }); };
 (function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -134,4 +100,4 @@ var run = function () { return __awaiter(void 0, void 0, void 0, function () {
         }
     });
 }); })();
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbmRleC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLG9EQUFtRDtBQUNuRCw4Q0FBd0I7QUFDeEIsbUVBQWdFO0FBQ2hFLDBEQUFtQztBQUNuQyw2RUFBMEQ7QUFDMUQsNEVBQXNEO0FBQ3RELDREQUFxQztBQUNyQywwQ0FBb0I7QUFHcEIsWUFBRSxDQUFDLEtBQUssQ0FBQyxhQUFhLENBQUMsWUFBRSxDQUFDLEtBQUssQ0FBQyxRQUFRLENBQUMsSUFBSSxFQUFFLFVBQUMsS0FBYTtJQUN6RCxPQUFPLFFBQVEsQ0FBQyxLQUFLLENBQUMsQ0FBQztBQUMzQixDQUFDLENBQUMsQ0FBQztBQUVILFlBQUUsQ0FBQyxLQUFLLENBQUMsYUFBYSxDQUFDLFlBQUUsQ0FBQyxLQUFLLENBQUMsUUFBUSxDQUFDLE1BQU0sRUFBRSxVQUFDLEtBQWE7SUFDM0QsT0FBTyxVQUFVLENBQUMsS0FBSyxDQUFDLENBQUM7QUFDN0IsQ0FBQyxDQUFDLENBQUM7QUFFSCxZQUFFLENBQUMsS0FBSyxDQUFDLGFBQWEsQ0FBQyxZQUFFLENBQUMsS0FBSyxDQUFDLFFBQVEsQ0FBQyxNQUFNLEVBQUUsVUFBQyxLQUFhO0lBQzNELE9BQU8sVUFBVSxDQUFDLEtBQUssQ0FBQyxDQUFDO0FBQzdCLENBQUMsQ0FBQyxDQUFDO0FBRUgsWUFBRSxDQUFDLEtBQUssQ0FBQyxhQUFhLENBQUMsWUFBRSxDQUFDLEtBQUssQ0FBQyxRQUFRLENBQUMsT0FBTyxFQUFFLFVBQUMsS0FBYTtJQUM1RCxPQUFPLFVBQVUsQ0FBQyxLQUFLLENBQUMsQ0FBQztBQUM3QixDQUFDLENBQUMsQ0FBQztBQUVILElBQU0sR0FBRyxHQUFHOzs7OztnQkFDUixPQUFPLENBQUMsR0FBRyxDQUFDLG1EQUFtRCxDQUFDLENBQUE7Z0JBQ2xELHFCQUFNLDZCQUFhLENBQUMsY0FB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
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbmRleC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLG9EQUFtRDtBQUNuRCw4Q0FBd0I7QUFHeEIsNkRBQTZEO0FBQzdELHlEQUF5RDtBQUN6RCw0REFBcUM7QUFDckMsMENBQW9CO0FBR3BCLFlBQUUsQ0FBQyxLQUFLLENBQUMsYUFBYSxDQUFDLFlBQUUsQ0FBQyxLQUFLLENBQUMsUUFBUSxDQUFDLElBQUksRUFBRSxVQUFDLEtBQWE7SUFDekQsT0FBTyxRQUFRLENBQUMsS0FBSyxDQUFDLENBQUM7QUFDM0IsQ0FBQyxDQUFDLENBQUM7QUFFSCxZQUFFLENBQUMsS0FBSyxDQUFDLGFBQWEsQ0FBQyxZQUFFLENBQUMsS0FBSyxDQUFDLFFBQVEsQ0FBQyxNQUFNLEVBQUUsVUFBQyxLQUFhO0lBQzNELE9BQU8sVUFBVSxDQUFDLEtBQUssQ0FBQyxDQUFDO0FBQzdCLENBQUMsQ0FBQyxDQUFDO0FBRUgsWUFBRSxDQUFDLEtBQUssQ0FBQyxhQUFhLENBQUMsWUFBRSxDQUFDLEtBQUssQ0FBQyxRQUFRLENBQUMsTUFBTSxFQUFFLFVBQUMsS0FBYTtJQUMzRCxPQUFPLFVBQVUsQ0FBQyxLQUFLLENBQUMsQ0FBQztBQUM3QixDQUFDLENBQUMsQ0FBQztBQUVILFlBQUUsQ0FBQyxLQUFLLENBQUMsYUFBYSxDQUFDLFlBQUUsQ0FBQyxLQUFLLENBQUMsUUFBUSxDQUFDLE9BQU8sRUFBRSxVQUFDLEtBQWE7SUFDNUQsT0FBTyxVQUFVLENBQUMsS0FBSyxDQUFDLENBQUM7QUFDN0IsQ0FBQyxDQUFDLENBQUM7QUFFSCxJQUFNLEdBQUcsR0FBRzs7O1FBQ1IsT0FBTyxDQUFDLEdBQUcsQ0FBQyxtREFBbUQsQ0FBQyxDQUFBO1FBaUIxRCxHQUFHLEdBQUcsSUFBQSxpQkFBTyxHQUFFLENBQUM7UUFDaEIsSUFBSSxHQUFHLE9BQU8sQ0FBQyxHQUFHLENBQUMsSUFBSSxJQUFJLElBQUksQ0FBQztRQUV0QyxHQUFHLENBQUMsR0FBRyxDQUFDLHFCQUFVLENBQUMsSUFBSSxFQUFFLENBQUMsQ0FBQztRQUMzQixHQUFHLENBQUMsR0FBRyxDQUFDLElBQUEsY0FBSSxHQUFFLENBQUMsQ0FBQztRQUVoQixHQUFHLENBQUMsR0FBRyxDQUFDLEdBQUcsRUFBRSxVQUFDLEdBQVksRUFBRSxHQUFhO1lBQ3JDLE9BQU8sQ0FBQyxHQUFHLENBQUMsY0FBYyxDQUFDLENBQUE7WUFDM0IsR0FBRyxDQUFDLElBQUksQ0FBQyxFQUFDLEtBQUssRUFBRSxPQUFPLEVBQUUsSUFBSSxFQUFFLElBQUksRUFBQyxDQUFDLENBQUM7UUFDM0MsQ0FBQyxDQUFDLENBQUM7UUFFSCxHQUFHLENBQUMsSUFBSSxDQUFDLG1CQUFtQixFQUFFLFVBQU8sR0FBWSxFQUFFLEdBQWE7OztnQkFDNUQsSUFBSSxHQUFHLENBQUMsSUFBSSxDQUFDLFNBQVMsS0FBSyxPQUFPLEVBQUU7b0JBQ3pCLFVBQVUsR0FBSSxHQUFHLENBQUMsSUFBSSxXQUFaLENBQWE7b0JBQzlCLGlFQUFpRTtpQkFDcEU7Z0JBRUQsSUFBSSxHQUFHLENBQUMsSUFBSSxDQUFDLFNBQVMsS0FBSyxpQkFBaUIsRUFBRTtvQkFDcEMsS0FBaUMsR0FBRyxDQUFDLElBQUksRUFBeEMsVUFBVSxnQkFBQSxFQUFFLE9BQU8sYUFBQSxFQUFFLE9BQU8sYUFBQSxDQUFZO29CQUN4QyxRQUFRLEdBQUksT0FBTyxTQUFYLENBQVk7b0JBQzNCLDJFQUEyRTtpQkFDOUU7Z0JBRUQsc0JBQU8sR0FBRyxDQUFDLElBQUksRUFBRSxFQUFBOzthQUNwQixDQUFDLENBQUM7UUFFSCxHQUFHLENBQUMsTUFBTSxDQUFDLElBQUksRUFBRTtZQUNiLE9BQU8sQ0FBQyxHQUFHLENBQUMsdUNBQXVDLEVBQUUsSUFBSSxDQUFDLENBQUE7UUFDOUQsQ0FBQyxDQUFDLENBQUE7OztLQUNMLENBQUE7QUFFRCxDQUFDOzs7b0JBQ0cscUJBQU0sR0FBRyxFQUFFLEVBQUE7O2dCQUFYLFNBQVcsQ0FBQTs7OztLQUNkLENBQUMsRUFBRSxDQUFBIn0=

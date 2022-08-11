@@ -1,5 +1,10 @@
 import Extension from ".";
-import { AllWatchlists } from "../interfaces";
+import { PriceInfo } from "../../cache";
+import { AllWatchlists, IWatchlistGet, IWatchlistItemList } from "../interfaces";
+
+export type IWatchlistGetExt = Omit<IWatchlistGet, "items"> & {
+    items: (IWatchlistItemList & { price: PriceInfo["price"] | null })[]
+}
 
 export default class extends Extension {
     getAllWatchlists = this._makeFetch<undefined, AllWatchlists>("getAllWatchlists", this._defaultPostRequest)
