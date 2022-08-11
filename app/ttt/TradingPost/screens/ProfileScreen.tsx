@@ -113,7 +113,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                     <PieHolder />
                     <ElevatedSection title="Holdings">
                     </ElevatedSection>
-                    <WatchlistSection watchlists={watchlists} />
+                    <WatchlistSection title="Watchlists" watchlists={watchlists} />
                     {/* <WatchlistSection parentComponentId={props.componentId} userId={props.userId} /> */}
                 </ProfilePage>,
                 <ProfilePage index={2} minViewHeight={minViewHeight} manager={manager} currentIndex={tab} >
@@ -162,7 +162,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                             </View>
                         </Subsection>
                     </ElevatedSection>
-                    <ElevatedSection title="Competitions">
+                    {/* <ElevatedSection title="Competitions">
                         <Table elevated data={[]} columns={
                             [
                                 {
@@ -180,7 +180,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                                     width: 72
                                 }
                             ]} />
-                    </ElevatedSection>
+                    </ElevatedSection> */}
                     <ElevatedSection title="Social Analytics"></ElevatedSection>
                 </ProfilePage>
             ]}

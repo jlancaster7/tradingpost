@@ -1,12 +1,12 @@
 branch-defaults:
   default:
-    environment: tradingpost-api-dev
+    environment: Tradingpost-Api-Env
 environment-defaults:
-  tradingpost-api-dev:
+  Tradingpost-Api-Env:
     branch: null
     repository: null
 global:
-  application_name: tradingpost-api
+  application_name: Tradingpost-Api
   default_ec2_keyname: null
   default_platform: Node.js 16 running on 64bit Amazon Linux 2
   default_region: us-east-1

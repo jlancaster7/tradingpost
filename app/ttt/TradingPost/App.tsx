@@ -35,10 +35,10 @@ import { EvaIconsPack } from '@ui-kitten/eva-icons';
 //console.log("MY URL IS DEFINED HERE " + process.env.API_BASE_URL);
 
 
-if (Platform.OS === "web")
-  configApi({
-    apiBaseUrl: "//api.tradingpostapp.com"
-  })
+// if (Platform.OS === "web")
+//   configApi({
+//     apiBaseUrl: "//api.tradingpostapp.com"
+//   })
 
 //console.log("API ENV::::::::::::::::::" + process.env.API_BASE_URL)
 
