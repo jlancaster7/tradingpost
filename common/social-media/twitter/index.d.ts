@@ -13,5 +13,5 @@ export declare const addTwitterUsersByToken: (twitterUsers: {
     refreshToken: string;
     expiration: number;
 }, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => Promise<formatedTwitterUser>;
-export declare const addTweets: (twitterUserId: string, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration, startDate?: Date) => Promise<[formatedTweet[], number]>;
+export declare const addTweets: (twitterUserId: string, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration, startDate?: Date | undefined) => Promise<[formatedTweet[], number]>;
 export {};
