@@ -1,0 +1,56 @@
+{
+  "name": "dbm",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.86.0",
+    "@aws-sdk/client-ssm": "^3.85.0",
+    "@fluentui/react": "^8.66.1",
+    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/react": "^13.0.1",
+    "@testing-library/user-event": "^13.5.0",
+    "@tradingpost/common": "file:../../common",
+    "@types/dotenv": "^8.2.0",
+    "@types/jest": "^27.4.1",
+    "@types/node": "^16.11.26",
+    "@types/pg": "^8.6.5",
+    "@types/react": "^18.0.3",
+    "@types/react-dom": "^18.0.0",
+    "dotenv": "^16.0.1",
+    "express": "^4.17.3",
+    "http-proxy-middleware": "^2.0.6",
+    "pg": "^8.7.3",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-scripts": "5.0.1",
+    "typescript": "^4.6.3",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "watch": "tsc --project tsconfig.server.json --watch",
+    "server": "node ./server",
+    "build-server": "tsc --project tsconfig.server.json"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

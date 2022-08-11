@@ -1,3 +1,4 @@
+import { PriceInfo } from "../../cache"
 import { IUserList, IWatchlistList } from "../interfaces"
 
 export interface ISecurityGet {
@@ -6,6 +7,10 @@ export interface ISecurityGet {
     company_name: string
     exchange: string,
     industry: string
+    description: string,
+    logo_url: string
+    price: PriceInfo["price"]| null,
+    isOnQuickWatch?:boolean
 }
 
 export interface ISecurityList {
@@ -64,10 +69,6 @@ export interface IElasticPost {
         },
         user: {
             id: string,
-            imageUrl: string,
-            name: string,
-            type: "husk",
-            username: string
         }
     }
 }

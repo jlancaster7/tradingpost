@@ -6,8 +6,10 @@ import { join } from 'path';
 
 export type RequestSettings<T = any> = {
     user_id?: string,
-    data: T
-    //add pagination stuff here too
+    data: T,
+    limit?: number
+    page?: number
+
 }
 
 function makeExtensions(name: string) {
@@ -15,10 +17,10 @@ function makeExtensions(name: string) {
     //console.log(path);
     if (existsSync(path + ".js")) {
         const returned = require(path).default;
-    //    console.log("##############################FOUND THE FILE" + Object.keys(returned));
+        // console.log("##############################FOUND THE FILE" + Object.keys(returned));
         return returned;
     } else {
-      //  console.log("######################DID NOTTTTTTT FOUND THE FILE");
+        // console.log("######################DID NOTTTTTTT FOUND THE FILE");
         return {};
     }
 }

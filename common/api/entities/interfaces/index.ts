@@ -41,7 +41,8 @@ export interface IPlatformClaimList {
         platform: string,
     claims?: any,
     id: number,
-    user_id: string
+    user_id: string,
+    platform_user_id: string
     };
 
 export interface IPlatformClaimGet {
@@ -57,8 +58,8 @@ export interface IPostList {
     platform: string,
     body: any,
     upvoted_count: number,
-    is_upvoted: unknown,
-    is_bookmarked: unknown,
+    is_upvoted: boolean,
+    is_bookmarked: boolean,
     subscription_level: string,
     user: IUserList[]
     };
@@ -70,8 +71,8 @@ export interface IPostGet {
     platform_post_url: string,
     body: any,
     upvoted_count: number,
-    is_upvoted: unknown,
-    is_bookmarked: unknown,
+    is_upvoted: boolean,
+    is_bookmarked: boolean,
     user: IUserList[]
     };
 
@@ -93,6 +94,14 @@ export interface ISubscriberGet {
     due_date: unknown,
     payment_source: string,
     months_subscribed: string
+    };
+
+export interface ITradeList {
+    
+    };
+
+export interface ITradeGet {
+    
     };
 
 export interface IUpvoteList {
@@ -135,7 +144,7 @@ export interface IUserUpdate {
     first_name?: string,
     last_name?: string,
     analyst_profile?: Statics.IAnalystProfile,
-    has_profile_pic?: unknown
+    has_profile_pic?: boolean
     };
 
 export interface IWatchlistList {
@@ -156,7 +165,8 @@ export interface IWatchlistGet {
     name: string,
     id: number,
     type: string,
-    saved_by_count: number
+    saved_by_count: number,
+    is_saved: boolean
     };
 
 export interface IWatchlistInsert {

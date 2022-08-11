@@ -31,11 +31,14 @@ export const execProc = async <Result = any, Count extends number = 0, T extends
         const defaultError = `Invalid number of results. Expected ${ensureCount} Received:${result.rowCount}`;
         if (debug) {
             console.error(defaultError);
+            console.error(JSON.stringify(prms));
+            console.error(JSON.stringify(proc));
         }
         throw {
             message: ensureCountMessage || defaultError,
             data: {
-                procedure: proc, parameters: prms
+                procedure: proc,
+                parameters: prms
             }
         }
     }
