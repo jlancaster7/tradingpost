@@ -69,6 +69,8 @@ export interface IFinicityRepository {
 
     getFinicityUserByFinicityCustomerId(customerId: string): Promise<FinicityUser | null>
 
+    getFinicityUserByFinicityUserId (userId: string): Promise<FinicityUser | null>
+
     getFinicityUser(userId: string): Promise<FinicityUser | null>
 
     addFinicityUser(userId: string, customerId: string, type: string): Promise<FinicityUser>
@@ -628,6 +630,7 @@ export type SecurityIssue = {
 export type TradingPostCashSecurity = {
     fromSymbol: string
     toSecurityId: number
+    currency: string
 }
 
 export type TradingPostCashSecurityTable = TradingPostCashSecurity & TableInfo;

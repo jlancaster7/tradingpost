@@ -27,7 +27,7 @@ type RuleSetFunction = (holdings: historicalAccount, tx: TradingPostTransactions
 // value at the end of each day
 let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
     "buy": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        holdings.cash = holdings.cash - tx.amount;
+        holdings.cash = holdings.cash + tx.amount;
         // Roll back buy,
         // get transaction from holding
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
@@ -40,7 +40,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
     },
     "sell": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         // sell amount is going to be negative, hence why we can "add" it back
-        holdings.cash = holdings.cash - tx.amount
+        holdings.cash = holdings.cash + tx.amount
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
         if (hIdx === -1) {
             holdings.holdings.push({
@@ -66,7 +66,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         return holdings
     },
     "short": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        holdings.cash = holdings.cash - tx.amount;
+        holdings.cash = holdings.cash + tx.amount;
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
 
         // TODO: .... this is possible for a short?
@@ -79,7 +79,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         return holdings
     },
     "cover": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        holdings.cash = holdings.cash - tx.amount;
+        holdings.cash = holdings.cash + tx.amount;
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
 
         // TODO:.... I think this is possible in a cover...?

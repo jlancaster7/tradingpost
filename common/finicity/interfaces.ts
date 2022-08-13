@@ -231,6 +231,18 @@ export interface GetCustomerByAccountIdResponse {
 
 }
 
+export interface CustomerAccountsDetail {
+    margin: number
+    marginAllowed: boolean
+    cashAccountAllowed: boolean
+    description: string
+    marginBalance: number
+    shortBalance: number
+    availableCashBalance: number
+    currentBalance: number
+    dateAsOf: number
+}
+
 export interface GetCustomerAccountsResponse {
     accounts: {
         id: string
@@ -253,17 +265,7 @@ export interface GetCustomerAccountsResponse {
         oldestTransactionDate: number
         institutionLoginId: number
         lastUpdatedDate: number
-        detail: {
-            margin: number
-            marginAllowed: boolean
-            cashAccountAllowed: boolean
-            description: string
-            marginBalance: number
-            shortBalance: number
-            availableCashBalance: number
-            currentBalance: number
-            dateAsOf: number
-        }
+        detail: CustomerAccountsDetail
         position: {
             id: number
             securityIdType: string

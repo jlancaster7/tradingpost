@@ -12,8 +12,10 @@ import {
     TradingPostTransactions,
     TradingPostCashSecurity,
 } from "../interfaces";
+import { CustomerAccountsDetail } from '../../finicity/interfaces'
 import {DateTime} from "luxon";
 import {addSecurity} from "../../market-data/interfaces";
+import { abs } from "mathjs";
 
 interface TransformerRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>
@@ -121,7 +123,7 @@ export default class FinicityTransformer {
         return tpAccounts;
     }
 
-    holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], holdingDate: DateTime | null, currency: string | null): Promise<TradingPostCurrentHoldings[]> => {
+    holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], holdingDate: DateTime | null, currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<TradingPostCurrentHoldings[]> => {
         const finicityAccounts = await this.repository.getTradingPostAccountsWithFinicityNumber(userId)
         let internalAccount: TradingPostBrokerageAccountWithFinicity | null = null;
         for (let i = 0; i < finicityAccounts.length; i++) {
@@ -138,6 +140,7 @@ export default class FinicityTransformer {
         securities.forEach(sec => securitiesMap[sec.symbol] = sec);
         cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
         let tpHoldings: TradingPostCurrentHoldings[] = [];
+        let isCashSecurity: boolean = false;
         for (let i = 0; i < finHoldings.length; i++) {
             let holding = finHoldings[i];
 
@@ -177,6 +180,7 @@ export default class FinicityTransformer {
                     }
                 }
                 else {
+                    isCashSecurity = true;
                     security = {
                         id: cashSecurity,
                         symbol: holding.symbol,
@@ -204,6 +208,23 @@ export default class FinicityTransformer {
                 costBasis: holding.costBasis,
                 quantity: holding.units,
                 currency: cur
+            })
+        }
+        // Add a cash security is the broker doesn't display it this way
+        if (accountDetails && accountDetails.availableCashBalance && !isCashSecurity) {
+            let cashSecurityId = cashSecurities.find(a => a.currency === 'USD')?.toSecurityId;
+            tpHoldings.push({
+                accountId: internalAccount.id, // TradingPost Brokerage Account ID
+                // @ts-ignore
+                securityId: cashSecurityId,
+                securityType: SecurityType.cashEquivalent ,
+                price: 1,
+                priceAsOf: DateTime.now(),
+                priceSource: '',
+                value: accountDetails.availableCashBalance,
+                costBasis: null,
+                quantity: accountDetails.availableCashBalance,
+                currency: 'USD'
             })
         }
 
@@ -251,9 +272,25 @@ export default class FinicityTransformer {
             if (!transaction.unitPrice) price = transaction.amount / transaction.unitQuantity
             else price = transaction.unitPrice
 
+            
+
             let securityType = transformSecurityType(transaction.ticker)
             let transactionType = transformTransactionType(transaction.investmentTransactionType);
 
+            switch (transactionType) {
+                case "buy":
+                    transaction.amount = abs(transaction.amount);
+                    break;
+                case "sell":
+                    transaction.amount = -1 * abs(transaction.amount);
+                    break;
+                case "short":
+                    transaction.amount = -1 * abs(transaction.amount);
+                    break;
+                case "cover":
+                    transaction.amount = abs(transaction.amount);
+                    break;
+            }
             tpTransactions.push({
                 accountId: internalTpAccountId,
                 securityId: security.id,

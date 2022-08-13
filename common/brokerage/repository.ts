@@ -377,7 +377,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getTradingpostCashSecurity = async (): Promise<TradingPostCashSecurity[]> => {
         const query = `SELECT s.id as security_id,
                               cs.from_symbol as from_symbol,
-                              cs.to_security_symbol as to_security_symbol
+                              cs.to_security_symbol as to_security_symbol,
+                              cs.currency
                        FROM tradingpost_cash_security cs
                        LEFT JOIN security s
                        ON s.symbol = cs.to_security_symbol;
@@ -386,7 +387,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         return response.map((r: any) => {
             let o: TradingPostCashSecurity = {
                 fromSymbol: r.from_symbol,
-                toSecurityId: parseInt(r.security_id)
+                toSecurityId: parseInt(r.security_id),
+                currency: r.currency
             }
             return o
         })
@@ -1037,6 +1039,26 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             createdAt: DateTime.fromJSDate(response.created_at)
         }
     }
+    getFinicityUserByFinicityUserId = async (userId: string): Promise<FinicityUser | null> => {
+        const response = await this.db.oneOrNone(`
+            SELECT id,
+                   tp_user_id,
+                   customer_id,
+                   type,
+                   updated_at,
+                   created_at
+            FROM finicity_user
+            WHERE tp_user_id = $1`, [userId]);
+        if (!response) return null;
+        return {
+            id: response.id,
+            tpUserId: response.tp_user_id,
+            customerId: response.customer_id,
+            type: response.type,
+            updatedAt: DateTime.fromJSDate(response.updated_at),
+            createdAt: DateTime.fromJSDate(response.created_at)
+        }
+    }
 
     addFinicityUser = async (userId: string, customerId: string, type: string): Promise<FinicityUser> => {
         const query = `INSERT INTO finicity_user(tp_user_id, customer_id, type)
@@ -1226,6 +1248,39 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             }
         })
     }
+    getFinicityAccountDetails = async (finicityUserId: number): Promise<FinicityAccount[]> => {
+        let query = `
+            SELECT id,
+                   finicity_user_id,
+                   finicity_institution_id,
+                   account_id,
+                   detail_margin,
+                   detail_margin_allowed,
+                   detail_cash_account_allowed,
+                   detail_description,
+                   detail_margin_balance,
+                   detail_short_balance,
+                   detail_available_cash_balance,
+                   detail_current_balance,
+                   detail_date_as_of
+            FROM finicity_account
+            WHERE finicity_user_id = $1;`
+        const response = await this.db.query(query, [finicityUserId]);
+        return response.map((a: any) => {
+            return {
+                detailMargin: a.detail_margin,
+                detailMarginAllowed: a.detail_margin_allowed,
+                detailCashAccountAllowed: a.detail_cash_account_allowed,
+                detailDescription: a.detail_description,
+                detailMarginBalance: a.detail_margin_balance,
+                detailShortBalance: a.detail_short_balance,
+                detailAvailableCashBalance: a.detail_available_cash_balance,
+                detailCurrentBalance: a.detail_current_balance,
+                detailDateAsOf: a.detail_date_as_of,
+            }
+        })
+    }
+    
 
     upsertFinicityHoldings = async (holdings: FinicityHolding[]): Promise<void> => {
         const cs = new this.pgp.helpers.ColumnSet([
@@ -1267,7 +1322,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getFinicityHoldings = async (finicityUserId: number): Promise<FinicityHolding[]> => {
-        let query = `    SELECT id,
+        let query = `    SELECT fh.id,
                                 finicity_account_id,
                                 holding_id,
                                 security_id_type,
@@ -1282,7 +1337,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                 security_unit_price,
                                 units,
                                 cost_basis,
-                                status,
+                                fh.status,
                                 security_type,
                                 security_name,
                                 security_currency,
@@ -1300,10 +1355,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                 total_gl_percent,
                                 today_gl_dollar,
                                 today_gl_percent,
-                                updated_at,
-                                created_at
+                                fh.updated_at,
+                                fh.created_at
                          FROM finicity_holding fh
-                                  INNER JOIN finicity_account fa ON fa.id = fh.finicity_account_id
+                                  INNER JOIN finicity_account fa 
+                                  ON fa.id = fh.finicity_account_id
                          WHERE fa.finicity_user_id = $1`
         const response = await this.db.query(query, [finicityUserId])
         return response.map((h: any) => {
@@ -1379,53 +1435,34 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     getFinicityTransactions = async (finicityUserId: number): Promise<FinicityTransaction[]> => {
         const query = `
-            SELECT id,
-                   finicity_account_id,
-                   transaction_id,
-                   amount,
-                   account_id,
-                   customer_id,
-                   status,
-                   description,
-                   memo,
-                   type,
-                   interest_amount,
-                   principal_amount,
-                   fee_amount,
-                   escrow_amount,
-                   unit_quantity,
-                   posted_date,
-                   transaction_date,
-                   created_date,
-                   categorization_normalized_payee_name,
-                   categorization_category,
-                   categorization_city,
-                   categorization_state,
-                   categorization_postal_code,
-                   categorization_country,
-                   categorization_best_representation,
-                   running_balance_amount,
-                   check_num,
-                   income_type,
-                   subaccount_security_type,
-                   commission_amount,
-                   split_denominator,
-                   split_numerator,
-                   shares_per_contract,
-                   taxes_amount,
-                   unit_price,
-                   currency_symbol,
-                   sub_account_fund,
-                   ticker,
-                   security_id,
-                   security_id_type,
-                   investment_transaction_type,
-                   effective_date,
-                   first_effective_date,
-                   updated_at,
-                   created_at
+            SELECT ft.id,
+                   ft.internal_finicity_account_id,
+                   ft.transaction_id,
+                   ft.amount,
+                   ft.account_id,
+                   ft.customer_id,
+                   ft.status,
+                   ft.description,
+                   ft.memo,
+                   ft.type,
+                   ft.unit_quantity,
+                   ft.fee_amount,
+                   ft.cusip_no,
+                   ft.posted_date,
+                   ft.transaction_date,
+                   ft.created_date,
+                   ft.categorization_normalized_payee_name,
+                   ft.categorization_category,
+                   ft.categorization_country,
+                   ft.categorization_best_representation,
+                   ft.commission_amount,
+                   ft.unit_price,
+                   ft.ticker,
+                   ft.investment_transaction_type,
+                   ft.updated_at,
+                   ft.created_at
             FROM finicity_transaction ft
-                     INNER JOIN finicity_account fa ON fa.id = ft.finicity_account_id
+                     INNER JOIN finicity_account fa ON fa.id = ft.internal_finicity_account_id
             WHERE fa.finicity_user_id = $1
         `
         const response = await this.db.query(query, [finicityUserId]);
@@ -1434,46 +1471,27 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 id: t.id,
                 finicityAccountId: t.finicity_account_id,
                 transactionId: t.transaction_id,
-                amount: t.amount,
                 accountId: t.account_id,
                 customerId: t.customer_id,
-                status: t.status,
+                amount: t.amount,
                 description: t.description,
-                memo: t.memo,
-                type: t.type,
-                interestAmount: t.interest_amount,
-                principalAmount: t.principal_amount,
-                feeAmount: t.fee_amount,
-                escrowAmount: t.escrow_amount,
-                unitQuantity: t.unit_quantity,
                 postedDate: t.posted_date,
                 transactionDate: t.transaction_date,
+                investmentTransactionType: t.investment_transaction_type,
+                status: t.status,
+                memo: t.memo,
+                type: t.type,
+                unitQuantity: t.unit_quantity,
+                feeAmount: t.fee_amount,
+                cusipNo: t.cusip_no,
                 createdDate: t.created_date,
                 categorizationNormalizedPayeeName: t.categorization_normalized_payee_name,
                 categorizationCategory: t.categorization_category,
-                categorizationCity: t.categorization_city,
-                categorizationState: t.categorization_state,
-                categorizationPostalCode: t.categorization_postal_code,
                 categorizationCountry: t.categorization_country,
                 categorizationBestRepresentation: t.categorization_best_representation,
-                runningBalanceAmount: t.running_balance_amount,
-                checkNum: t.check_num,
-                incomeType: t.income_type,
-                subaccountSecurityType: t.subaccount_security_type,
                 commissionAmount: t.commission_amount,
-                splitDenominator: t.split_denominator,
-                splitNumerator: t.split_numerator,
-                sharesPerContract: t.shares_per_contract,
-                taxesAmount: t.taxes_amount,
-                unitPrice: t.unit_price,
-                currencySymbol: t.currency_symbol,
-                subAccountFund: t.sub_account_fund,
                 ticker: t.ticker,
-                securityId: t.security_id,
-                securityIdType: t.security_id_type,
-                investmentTransactionType: t.investment_transaction_type,
-                effectiveDate: t.effective_date,
-                firstEffectiveDate: t.first_effective_date,
+                unitPrice: t.unit_price,
                 updatedAt: DateTime.fromJSDate(t.updated_at),
                 createdAt: DateTime.fromJSDate(t.created_at)
             }
