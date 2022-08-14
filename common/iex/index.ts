@@ -268,10 +268,10 @@ export interface GetIntraDayPrices {
     marketNotional: number
     marketNumberOfTrades: number
     marketChangeOverTime: number
-    high: number
-    low: number
-    open: number
-    close: number
+    high: number | null
+    low: number | null
+    open: number | null
+    close: number | null
     average: number
     volume: number
     notional: number

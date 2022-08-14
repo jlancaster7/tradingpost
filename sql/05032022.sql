@@ -598,20 +598,38 @@ CREATE UNIQUE INDEX tradingpost_transaction_idx ON tradingpost_transaction (acco
 
 CREATE UNIQUE INDEX tradingpost_current_holding_idx ON tradingpost_current_holding (account_id, security_id, quantity);
 
-ALTER TABLE account_group_hpr ADD CONSTRAINT account_group_date_key UNIQUE (date, account_group_id);
+ALTER TABLE account_group_hpr
+    ADD CONSTRAINT account_group_date_key UNIQUE (date, account_group_id);
 
 CREATE TABLE IF NOT EXISTS public.tradingpost_cash_security
 (
-    id bigserial NOT NULL,
-	from_symbol text NOT NULL,
-	to_security_symbol text NOT NULL,
-	updated_at timestamp with time zone NOT NULL DEFAULT now(),
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    id                 bigserial                NOT NULL,
+    from_symbol        text                     NOT NULL,
+    to_security_symbol text                     NOT NULL,
+    updated_at         timestamp with time zone NOT NULL DEFAULT now(),
+    created_at         timestamp with time zone NOT NULL DEFAULT now(),
     CONSTRAINT tradingpost_cash_security_pkey PRIMARY KEY (id),
-	CONSTRAINT from_symbol_to_security_symbol_key UNIQUE (from_symbol, to_security_symbol)
-)
-
-TABLESPACE pg_default;
+    CONSTRAINT from_symbol_to_security_symbol_key UNIQUE (from_symbol, to_security_symbol)
+);
 
 ALTER TABLE public.tradingpost_cash_security
     OWNER to hive_root_user;
+
+ALTER TABLE security_price
+    ADD COLUMN is_eod BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE security_price
+    ADD COLUMN is_intraday BOOLEAN DEFAULT TRUE;
+
+DROP INDEX security_price_idx;
+
+CREATE UNIQUE INDEX security_price_sec_time_eod_idx ON security_price (security_id, time DESC, is_eod);
+
+CREATE UNIQUE INDEX security_price_sec_time_intraday_idx ON security_price (security_id, time DESC, is_intraday);
+
+ALTER TABLE security_price
+    ADD CONSTRAINT price_flag_constraint CHECK ((is_eod IS TRUE AND is_intraday IS FALSE) OR
+                                                (is_eod IS FALSE AND is_intraday IS TRUE));
+
+CREATE UNIQUE INDEX security_price_eod_idx ON security_price (security_id, cast(time AT time ZONE 'America/New_York' AS DATE), is_eod) WHERE is_eod = TRUE;
+CREATE INDEX security_price_eod_time_idx ON security_price (cast(time AT time ZONE 'America/New_York' AS DATE), is_eod) WHERE is_eod = TRUE;

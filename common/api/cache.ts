@@ -72,7 +72,7 @@ let userCacheInit = (async () => {
 export const getPriceCacheTask = (async () => {
     const updatePriceCache = async () => {
         const priceByTicker: typeof caches.price.byTicker = {}
-        const prices = await execProc<PriceInfo>("tp.api_security_prices");
+        const prices = await execProc<PriceInfo>("tp.api_security_price");
         //    console.log(JSON.stringify(prices));
         prices.forEach((p) => {
             priceByTicker[p.symbol] = p.price;

@@ -12,7 +12,7 @@ import {
     getIexSecurityBySymbol,
     getSecurityWithLatestPrice,
     updateIexSecurity,
-    updateSecurity
+    updateSecurity, securityPrice, updateSecurityPrice
 } from "./interfaces";
 
 import {ColumnSet, IDatabase, IMain} from 'pg-promise';
@@ -26,6 +26,21 @@ export default class Repository {
         this.pgp = pgp;
     }
 
+    insertSecuritiesPrices = async (securitiesPrices: addSecurityPrice[]) => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'security_id', prop: 'securityId'},
+            {name: 'high', prop: 'high'},
+            {name: 'low', prop: 'low'},
+            {name: 'open', prop: 'open'},
+            {name: 'price', prop: 'price'},
+            {name: 'time', prop: 'time'},
+            {name: 'is_eod', prop: 'isEod'},
+            {name: 'is_intraday', prop: 'isIntraday'}
+        ], {table: 'security_price'})
+        const query = this.pgp.helpers.insert(securitiesPrices, cs);
+        await this.db.none(query);
+    }
+
     upsertSecuritiesPrices = async (securityPrices: addSecurityPrice[]) => {
         if (securityPrices.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
@@ -34,18 +49,35 @@ export default class Repository {
             {name: 'low', prop: 'low'},
             {name: 'open', prop: 'open'},
             {name: 'price', prop: 'price'},
-            {name: 'time', prop: 'time'}
+            {name: 'time', prop: 'time'},
+            {name: 'is_eod', prop: 'isEod'},
+            {name: 'is_intraday', prop: 'isIntraday'}
         ], {table: 'security_price'})
-        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, "security_id,time")
+        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, "security_id,time,is_intraday")
+        await this.db.none(query);
+    }
+
+    updatePricesById = async (securityPrices: updateSecurityPrice[]) => {
+        if (securityPrices.length <= 0) return
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'id', prop: 'id'},
+            {name: 'security_id', prop: 'securityId'},
+            {name: 'high', prop: 'high'},
+            {name: 'low', prop: 'low'},
+            {name: 'open', prop: 'open'},
+            {name: 'price', prop: 'price'},
+            {name: 'time', prop: 'time'},
+            {name: 'is_eod', prop: 'isEod'},
+            {name: 'is_intraday', prop: 'isIntraday'}
+        ], {table: 'security_price'});
+
+        const query = this.pgp.helpers.update(securityPrices, cs) + ` WHERE v.id = t.id`
         await this.db.none(query);
     }
 
     getUsExchangeListedSecuritiesWithPricing = async (): Promise<getSecurityWithLatestPrice[]> => {
         const data = await this.db.query(`
             WITH latest_pricing AS (SELECT sp.security_id,
-                                           sp.high,
-                                           sp.low,
-                                           sp.open,
                                            sp.time,
                                            sp.price
                                     FROM security_price sp
@@ -56,18 +88,33 @@ export default class Repository {
                                                          GROUP BY security_id) AS max_prices
                                                         ON
                                                                     max_prices.security_id = sp.security_id
-                                                                AND max_prices.time = sp.time)
-            SELECT id,
-                   symbol,
-                   lp.time  latest_time,
-                   lp.price latest_price,
-                   lp.high  latest_high_price,
-                   lp.low   latest_low_price,
-                   lp.open  latest_open
+                                                                AND max_prices.time = sp.time),
+                 eod_pricing AS (SELECT sp.id,
+                                        sp.security_id,
+                                        sp.high,
+                                        sp.low,
+                                        sp.open,
+                                        sp.price,
+                                        sp.time
+                                 FROM security_price sp
+                                 WHERE sp.time >
+                                       concat(current_date, ' 00:00:00-04')::timestamptz at time zone 'America/New_York'
+                                   AND is_eod = TRUE)
+            SELECT s.id,
+                   s.symbol,
+                   lp.time  as latest_time,
+                   lp.price as latest_price,
+                   ep.id    as ep_id,
+                   ep.high  as ep_high,
+                   ep.low   as ep_low,
+                   ep.open  as ep_open,
+                   ep.price as ep_price,
+                   ep.time  as ep_time
             FROM SECURITY s
                      LEFT JOIN
                  latest_pricing lp ON
                      lp.security_id = s.id
+                     LEFT JOIN eod_pricing ep ON ep.security_id = s.id
             WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
               AND enable_utp = FALSE;`)
@@ -77,9 +124,12 @@ export default class Repository {
                 symbol: row.symbol,
                 latestTime: DateTime.fromJSDate(row.latest_time),
                 latestPrice: row.latest_price,
-                latestHigh: row.latest_high,
-                latestLow: row.latest_low,
-                latestOpen: row.latest_open
+                isEodLow: row.ep_low,
+                isEodHigh: row.ep_high,
+                isEodId: row.ep_id,
+                isEodPrice: row.ep_price,
+                isEodOpen: row.ep_open,
+                isEodTime: DateTime.fromJSDate(row.ep_time)
             }
             return obj
         })
@@ -109,7 +159,13 @@ export default class Repository {
                    phone,
                    logo_url,
                    last_updated,
-                   created_at
+                   created_at,
+                   (SELECT price
+                    FROM security_price
+                    WHERE time < '2022-08-01 00:00:00-04'
+                      AND security_id = security.id
+                    ORDER BY time DESC
+                    LIMIT 1) as latest_price
             FROM security
             WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
@@ -138,7 +194,8 @@ export default class Repository {
                 phone: row.phone,
                 logoUrl: row.logoUrl,
                 lastUpdated: row.lastUpdated,
-                createdAt: row.createdAt
+                createdAt: row.createdAt,
+                latestPrice: row.latest_price
             }
             return obj;
         })
@@ -544,19 +601,6 @@ export default class Repository {
         });
     }
 
-    addSecuritiesPrices = async (securitiesPrices: addSecurityPrice[]) => {
-        const cs = new this.pgp.helpers.ColumnSet([
-            {name: 'security_id', prop: 'securityId'},
-            {name: 'high', prop: 'high'},
-            {name: 'low', prop: 'low'},
-            {name: 'open', prop: 'open'},
-            {name: 'price', prop: 'price'},
-            {name: 'time', prop: 'time'},
-        ], {table: 'security_price'})
-        const query = this.pgp.helpers.insert(securitiesPrices, cs) + ` ON CONFLICT DO NOTHING;`
-        await this.db.none(query);
-    }
-
     upsertSecuritiesInformation = async (securitiesInformation: upsertSecuritiesInformation[]) => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'security_id', prop: 'securityId'},
@@ -679,7 +723,7 @@ export default class Repository {
         return await this.db.query(`DELETE
                                     FROM security_price
                                     WHERE time < now() - INTERVAL '8 days'
-                                      AND (time AT TIME ZONE 'America/New_York')::TIME != '16:00:00';`)
+                                      AND is_intraday is TRUE;`)
     }
 }
 

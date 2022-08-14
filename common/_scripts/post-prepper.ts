@@ -47,7 +47,7 @@ const run = async () => {
 
                 const page = await browser.newPage();
                 await page.setDefaultNavigationTimeout(0);
-                // await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.134 Safari/537.36')
+                await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.134 Safari/537.36')
 
                 const whenLoaded = new Promise((res) => {
                     page.on("load", () => {

@@ -5,13 +5,21 @@ import pg from 'pg';
 import pgPromise from 'pg-promise'
 import {buildGroups} from '../../lambdas/market-data/utils'
 import {addSecurityPrice, getSecurityBySymbol} from "../market-data/interfaces";
-import IEX, {GetIntraDayPrices} from "../iex/index";
+import IEX, {GetHistoricalPrice, GetIntraDayPrices} from "../iex/index";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
 });
 
 pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     return parseFloat(value);
 });
 
@@ -67,70 +75,6 @@ pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
 //     await client.batchInsert('security_prices', prices);
 // }
 
-const errorDoSingluar = async (repository: Repository, iex: IEX, securityGroup: getSecurityBySymbol[]) => {
-    for (let i = 0; i < securityGroup.length; i++) {
-        const symbol = securityGroup[i].symbol;
-        try {
-            const response = await iex.bulk([symbol], ["intraday-prices"], {
-                chartIEXOnly: true,
-                chartIEXWhenNull: true
-            });
-
-            let securityPrices: addSecurityPrice[] = [];
-            if (response[symbol] === undefined || response[symbol] === null) {
-                console.error(`could not find symbol ${symbol}`)
-                continue
-            }
-
-            const intradayPrices = (response[symbol]['intraday-prices']) as GetIntraDayPrices[]
-            let lastClose = getFirstValue(intradayPrices, 'close');
-            let lastLow = getFirstValue(intradayPrices, 'low');
-            let lastHigh = getFirstValue(intradayPrices, 'high');
-            let lastOpen = getFirstValue(intradayPrices, 'open');
-
-            if (lastClose === null) return
-            if (lastLow === null) lastLow = lastClose
-            if (lastHigh === null) lastHigh = lastClose
-            if (lastOpen === null) lastOpen = lastClose
-
-            intradayPrices.forEach(ip => {
-                const dt = DateTime.fromFormat("2022-07-22 13:30", "yyyy-LL-dd HH:mm", {
-                    zone: "America/New_York"
-                });
-
-                let close = ip.close;
-                if (close !== null) lastClose = close
-                if (close === null) close = lastClose
-
-                let low = ip.low;
-                if (low !== null) lastLow = low;
-                if (low === null) low = lastLow;
-
-                let high = ip.high;
-                if (high !== null) lastHigh = high
-                if (high === null) high = lastHigh
-
-                let open = ip.open;
-                if (open !== null) lastOpen = open;
-                if (open === null) open = lastOpen
-
-                securityPrices.push({
-                    price: close,
-                    low: low,
-                    high: high,
-                    open: open,
-                    time: dt.toJSDate(),
-                    securityId: securityGroup[i].id
-                });
-            })
-            if (securityPrices.length <= 0) continue
-            await repository.addSecuritiesPrices(securityPrices);
-        } catch (e) {
-            console.error(e, symbol)
-        }
-    }
-}
-
 (async () => {
     const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
     const pgp = pgPromise({});
@@ -146,80 +90,91 @@ const errorDoSingluar = async (repository: Repository, iex: IEX, securityGroup: 
     const iex = new IEX(iexConfiguration.key);
 
     const repository = new Repository(pgClient, pgp);
-    console.log("Starting...")
     const securities = await repository.getUSExchangeListedSecurities();
     const securitiesMap: Record<string, getSecurityBySymbol> = {};
     securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+    const groupSecurities = buildGroups(securities, 100);
 
-    const groupSecurities = buildGroups(securities);
+    let latestSecurityPrices: Record<string, number> = {};
+    securities.forEach(sec => latestSecurityPrices[sec.symbol] = sec.latestPrice);
+
+    const dates = ["20220808", "20220809", "20220810", "20220811", "20220812"];
     for (let i = 0; i < groupSecurities.length; i++) {
         console.log(`Processing ${i + 1}/${groupSecurities.length}`)
         const securityGroup = groupSecurities[i];
         const symbols = securityGroup.map(sec => sec.symbol);
-        let response: Record<string, any>;
+        for (let dateIdx = 0; dateIdx < dates.length; dateIdx++) {
+            const date = dates[dateIdx];
+            console.log(`\t\tProcessing Day: ${date}`)
+            let response: Record<string, any>;
 
-        try {
-            response = await iex.bulk(symbols, ["intraday-prices"], {
-                chartIEXOnly: true,
-                chartIEXWhenNull: true
-            });
-        } catch (e) {
-            await errorDoSingluar(repository, iex, securityGroup)
-            continue
-        }
-
-        let securityPrices: addSecurityPrice[] = [];
-        securityGroup.forEach(sec => {
-            const {symbol, id} = sec;
-            if (response[symbol] === undefined || response[symbol] === null) {
-                console.error(`could not find symbol ${symbol}`)
-                return
+            try {
+                response = await iex.bulk(symbols, ["chart"], {
+                    chartIEXOnly: true,
+                    chartIEXWhenNull: true,
+                    exactDate: date,
+                });
+            } catch (e) {
+                console.error(e)
+                continue
             }
 
-            const intradayPrices = (response[symbol]['intraday-prices']) as GetIntraDayPrices[]
-            let lastClose = getFirstValue(intradayPrices, 'close');
-            let lastLow = getFirstValue(intradayPrices, 'low');
-            let lastHigh = getFirstValue(intradayPrices, 'high');
-            let lastOpen = getFirstValue(intradayPrices, 'open');
+            let securityPrices: addSecurityPrice[] = [];
+            securityGroup.forEach(sec => {
+                const {symbol, id} = sec;
+                if (response[symbol] === undefined || response[symbol] === null) {
+                    console.error(`could not find symbol ${symbol}`)
+                    return
+                }
 
-            if (lastClose === null) return
-            if (lastLow === null) lastLow = lastClose
-            if (lastHigh === null) lastHigh = lastClose
-            if (lastOpen === null) lastOpen = lastClose
+                const intradayPrices = (response[symbol]['chart']) as GetIntraDayPrices[]
 
-            intradayPrices.forEach(ip => {
-                const dt = DateTime.fromFormat("2022-07-22 13:30", "yyyy-LL-dd HH:mm", {
-                    zone: "America/New_York"
-                });
+                let latestPrice = latestSecurityPrices[symbol];
+                intradayPrices.forEach(ip => {
+                    const dt = DateTime.fromFormat(`${ip.date} ${ip.minute}`, "yyyy-LL-dd HH:mm", {
+                        zone: "America/New_York"
+                    });
 
-                let close = ip.close;
-                if (close !== null) lastClose = close
-                if (close === null) close = lastClose
+                    let close = ip.close,
+                        open = ip.open,
+                        high = ip.high,
+                        low = ip.low;
+                    if (close !== null) latestPrice = close
+                    else {
+                        close = latestPrice;
+                        open = latestPrice;
+                        high = latestPrice;
+                        low = latestPrice;
+                    }
 
-                let low = ip.low;
-                if (low !== null) lastLow = low;
-                if (low === null) low = lastLow;
+                    if (close === null) return;
+                    if (open === null) open = close
+                    if (high === null) high = close
+                    if (low === null) low = close
 
-                let high = ip.high;
-                if (high !== null) lastHigh = high
-                if (high === null) high = lastHigh
 
-                let open = ip.open;
-                if (open !== null) lastOpen = open;
-                if (open === null) open = lastOpen
+                    latestSecurityPrices[symbol] = close
 
-                securityPrices.push({
-                    price: close,
-                    low: low,
-                    high: high,
-                    open: open,
-                    time: dt.toJSDate(),
-                    securityId: id
-                });
+                    securityPrices.push({
+                        price: close,
+                        low: low,
+                        high: high,
+                        open: open,
+                        time: dt.toJSDate(),
+                        securityId: id,
+                        isEod: false,
+                        isIntraday: true
+                    });
+                })
+            });
+
+            const newSecPrices = securityPrices.filter(sec => {
+                if (sec.price === null) return false;
+                return true;
             })
-        });
-        if (securityPrices.length <= 0) continue
-        await repository.addSecuritiesPrices(securityPrices);
+            if (newSecPrices.length <= 0) continue
+            await repository.upsertSecuritiesPrices(newSecPrices);
+        }
     }
 
 
@@ -260,14 +215,6 @@ const errorDoSingluar = async (repository: Repository, iex: IEX, securityGroup: 
     //     await insertPrices(pgClient, missingTimesInsert)
     // }
 })()
-
-const getFirstValue = (values: Record<string, any>[], tag: string): any | null => {
-    for (let i = 0; i < values.length; i++) {
-        const value = values[i];
-        if (value[tag]) return value[tag]
-    }
-    return null;
-}
 
 // Fill in history with High/Low/Open/
 // Fill in intra-day with High/Low/Open

@@ -118,6 +118,11 @@ export class Configuration<K extends Record<string, any>> {
     }
 
     fromSSM = async <T extends keyof K>(path: T, options?: ConfigOptions): Promise<K[T]> => {
+        if (path in process.env) {
+            const val = process.env[path] as string;
+            return (options?.raw || this.defaultOptions[path]?.raw) ? val : JSON.parse(val);
+        }
+
         const fullPath = `/${this.environment}/${path as string}`
         const res = (await this.ssmClient
             .getParameter({Name: fullPath, WithDecryption: true}));
