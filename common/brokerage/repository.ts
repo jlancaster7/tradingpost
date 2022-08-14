@@ -1704,7 +1704,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'currency', prop: 'currency'},
             {name: 'date', prop: 'date'},
         ], {table: 'tradingpost_historical_holding'})
-        const query = upsertReplaceQuery(historicalHoldings, cs, this.pgp)
+        const query = upsertReplaceQuery(historicalHoldings, cs, this.pgp, 'account_id, security_id, date, quantity')
         await this.db.none(query);
     }
 
@@ -1949,7 +1949,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                      FROM security_price
                      WHERE security_id = $1
                        AND time BETWEEN $2 AND $3
-                       AND (time at time zone 'America/New_York')::time = '16:00:00'
+                       AND is_eod = true;
         `;
         const response = await this.db.any(query, [securityId, startDate, endDate]);
 

@@ -176,6 +176,8 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
                     low: quote.low,
                     price: quote.latestPrice,
                     securityId: existingSecurity.id,
+                    isEod: true,
+                    isIntraday: false,
                     time: DateTime.now().setZone('America/New_York').set({hour: 16, minute: 0, second: 0}).toJSDate()
                 });
 

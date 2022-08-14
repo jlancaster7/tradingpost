@@ -12,7 +12,8 @@ import {
     getIexSecurityBySymbol,
     getSecurityWithLatestPrice,
     updateIexSecurity,
-    updateSecurity, securityPrice, updateSecurityPrice
+    updateSecurity, securityPrice, updateSecurityPrice,
+    getSecurityBySymbolwithPx
 } from "./interfaces";
 
 import {ColumnSet, IDatabase, IMain} from 'pg-promise';
@@ -135,7 +136,7 @@ export default class Repository {
         })
     }
 
-    getUSExchangeListedSecurities = async (): Promise<getSecurityBySymbol[]> => {
+    getUSExchangeListedSecurities = async (): Promise<getSecurityBySymbolwithPx[]> => {
         const data = await this.db.query(`
             SELECT id,
                    symbol,
@@ -171,7 +172,7 @@ export default class Repository {
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
               AND enable_utp = FALSE;`)
         return data.map((row: any) => {
-            let obj: getSecurityBySymbol = {
+            let obj: getSecurityBySymbolwithPx = {
                 id: row.id,
                 symbol: row.symbol,
                 companyName: row.company_name,

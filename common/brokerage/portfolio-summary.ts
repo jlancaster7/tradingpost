@@ -110,7 +110,7 @@ export class PortfolioSummaryService implements ISummaryService {
         }
         if (securityReturns.length > benchmarkReturns.length) {
 
-            securityReturns = securityReturns.slice(securityReturns.length - benchmarkReturns.length - 1);
+            securityReturns = securityReturns.slice(securityReturns.length - benchmarkReturns.length);
             const dateCheck = checkDates(securityReturns, benchmarkReturns);
             if (dateCheck === 1) {
                 throw new Error(`Date mismatch, see the above detail for security: ${securityId}, benchmark: ${benchmarkId}`);
@@ -122,7 +122,7 @@ export class PortfolioSummaryService implements ISummaryService {
             return computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / variance(benchmarkHPRs);
         } else if (securityReturns.length < benchmarkReturns.length) {
 
-            benchmarkReturns = benchmarkReturns.slice(benchmarkReturns.length - securityReturns.length - 1);
+            benchmarkReturns = benchmarkReturns.slice(benchmarkReturns.length - securityReturns.length);
             const dateCheck = checkDates(securityReturns, benchmarkReturns);
             if (dateCheck === 1) {
                 throw new Error(`Date mismatch, see the above detail for security: ${securityId}, benchmark: ${benchmarkId}`);
