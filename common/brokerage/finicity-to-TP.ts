@@ -66,6 +66,6 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     }
     const tpAccountIds = tpAccounts.map(a => a.id);
     await repo.addTradingPostAccountGroup(userId, 'default', tpAccountIds, 10117)
-    await portfolioSummaryService.computeAccountGroupSummary(userId)
-
+    const stat = await portfolioSummaryService.computeAccountGroupSummary(userId)
+    console.log(stat);
 })()
