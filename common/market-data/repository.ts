@@ -27,6 +27,7 @@ export default class Repository {
     }
 
     insertSecuritiesPrices = async (securitiesPrices: addSecurityPrice[]) => {
+        if (securitiesPrices.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'security_id', prop: 'securityId'},
             {name: 'high', prop: 'high'},
@@ -60,15 +61,15 @@ export default class Repository {
     updatePricesById = async (securityPrices: updateSecurityPrice[]) => {
         if (securityPrices.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
-            {name: 'id', prop: 'id'},
-            {name: 'security_id', prop: 'securityId'},
-            {name: 'high', prop: 'high'},
-            {name: 'low', prop: 'low'},
-            {name: 'open', prop: 'open'},
-            {name: 'price', prop: 'price'},
-            {name: 'time', prop: 'time'},
-            {name: 'is_eod', prop: 'isEod'},
-            {name: 'is_intraday', prop: 'isIntraday'}
+            {name: 'id', prop: 'id', cast: 'bigint'},
+            {name: 'security_id', prop: 'securityId', cast: 'bigint'},
+            {name: 'high', prop: 'high', cast: 'decimal'},
+            {name: 'low', prop: 'low', cast: 'decimal'},
+            {name: 'open', prop: 'open', cast: 'decimal'},
+            {name: 'price', prop: 'price', cast: 'decimal'},
+            {name: 'time', prop: 'time', cast: 'timestamptz'},
+            {name: 'is_eod', prop: 'isEod', cast: 'boolean'},
+            {name: 'is_intraday', prop: 'isIntraday', cast: 'boolean'}
         ], {table: 'security_price'});
 
         const query = this.pgp.helpers.update(securityPrices, cs) + ` WHERE v.id = t.id`
@@ -85,10 +86,12 @@ export default class Repository {
                                                                 max(time) time
                                                          FROM security_price security_price
                                                          WHERE time > NOW() - INTERVAL '5 Days'
+                                                           AND is_eod = true
                                                          GROUP BY security_id) AS max_prices
                                                         ON
                                                                     max_prices.security_id = sp.security_id
-                                                                AND max_prices.time = sp.time),
+                                                                AND max_prices.time = sp.time
+                                    WHERE is_eod = TRUE),
                  eod_pricing AS (SELECT sp.id,
                                         sp.security_id,
                                         sp.high,
@@ -111,10 +114,10 @@ export default class Repository {
                    ep.price as ep_price,
                    ep.time  as ep_time
             FROM SECURITY s
-                     LEFT JOIN
+                     left JOIN
                  latest_pricing lp ON
-                     lp.security_id = s.id
-                     LEFT JOIN eod_pricing ep ON ep.security_id = s.id
+                     s.id = lp.security_id
+                     left JOIN eod_pricing ep ON s.id = ep.security_id
             WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
               AND enable_utp = FALSE;`)
@@ -159,13 +162,13 @@ export default class Repository {
                    phone,
                    logo_url,
                    last_updated,
-                   created_at,
-                   (SELECT price
-                    FROM security_price
-                    WHERE time < '2022-08-01 00:00:00-04'
-                      AND security_id = security.id
-                    ORDER BY time DESC
-                    LIMIT 1) as latest_price
+                   created_at
+--                    (SELECT price
+--                     FROM security_price
+--                     WHERE time < '2022-08-01 00:00:00-04'
+--                       AND security_id = security.id
+--                     ORDER BY time DESC
+--                     LIMIT 1) as latest_price
             FROM security
             WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
@@ -195,7 +198,6 @@ export default class Repository {
                 logoUrl: row.logoUrl,
                 lastUpdated: row.lastUpdated,
                 createdAt: row.createdAt,
-                latestPrice: row.latest_price
             }
             return obj;
         })

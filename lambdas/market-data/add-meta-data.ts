@@ -156,7 +156,6 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
         const iexResponse = await iex.bulk(symbols, ["previous", "stats", "quote"]);
 
         const securitiesInformation: upsertSecuritiesInformation[] = [];
-        const securityPrices: addSecurityPrice[] = [];
         for (let i = 0; i < symbols.length; i++) {
             const symbol = symbols[i];
             if (iexResponse[symbol] === undefined || iexResponse === null) continue;
@@ -167,17 +166,6 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
             const quote = (iexResponse[symbol].quote as GetQuote);
             const stats = (iexResponse[symbol].stats as GetStatsBasic);
             const previous = (iexResponse[symbol].previous as GetPreviousDayPrice) || {};
-
-            if (quote.latestPrice !== null)
-                // Ingest end of day price & all stats stuff....
-                securityPrices.push({
-                    open: quote.open,
-                    high: quote.high,
-                    low: quote.low,
-                    price: quote.latestPrice,
-                    securityId: existingSecurity.id,
-                    time: DateTime.now().setZone('America/New_York').set({hour: 16, minute: 0, second: 0}).toJSDate()
-                });
 
             securitiesInformation.push({
                 avg10Volume: stats.avg10Volume,
@@ -247,7 +235,6 @@ const ingestEveningSecuritiesInformation = async (repository: Repository, iex: I
             });
         }
 
-        await repository.upsertSecuritiesPrices(securityPrices);
         await repository.upsertSecuritiesInformation(securitiesInformation);
     }
 }

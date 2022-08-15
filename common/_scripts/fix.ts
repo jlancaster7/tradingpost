@@ -96,7 +96,7 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     const groupSecurities = buildGroups(securities, 100);
 
     let latestSecurityPrices: Record<string, number> = {};
-    securities.forEach(sec => latestSecurityPrices[sec.symbol] = sec.latestPrice);
+    securities.forEach(sec => latestSecurityPrices[sec.symbol] = 0); //sec.latestPrice);
 
     const dates = ["20220808", "20220809", "20220810", "20220811", "20220812"];
     for (let i = 0; i < groupSecurities.length; i++) {
@@ -133,7 +133,7 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
                 intradayPrices.forEach(ip => {
                     const dt = DateTime.fromFormat(`${ip.date} ${ip.minute}`, "yyyy-LL-dd HH:mm", {
                         zone: "America/New_York"
-                    });
+                    }).set({second: 0, millisecond: 0});
 
                     let close = ip.close,
                         open = ip.open,

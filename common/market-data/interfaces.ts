@@ -171,7 +171,6 @@ export interface getSecurityBySymbol {
     logoUrl: string
     lastUpdated: Date
     createdAt: Date
-    latestPrice: number
 }
 
 export interface getIexSecurityBySymbol extends getSecurityBySymbol {

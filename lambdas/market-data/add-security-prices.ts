@@ -12,6 +12,23 @@ import {DateTime} from "luxon";
 import MarketTradingHours from "@tradingpost/common/market-data/market-trading-hours";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import {buildGroups} from "./utils";
+import pg from 'pg';
+
+pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
+    return parseInt(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
+    return parseFloat(value);
+});
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
@@ -53,6 +70,7 @@ const runLambda = async () => {
 
         if (currentTime.toUnixInteger() >= t930.toUnixInteger() && currentTime.toUnixInteger() <= t400.toUnixInteger()) {
             await processIntradayPrices(repository, iex)
+            console.log("Finished")
         }
     } catch (e) {
         console.error(e)
@@ -130,10 +148,6 @@ const processIntradayPrices = async (repository: Repository, iex: IEX) => {
     const securities = await repository.getUsExchangeListedSecuritiesWithPricing();
     const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
 
-    let securityPrices: addSecurityPrice[] = [];
-    let eodPricesInsert: addSecurityPrice[] = [];
-    let eodPricesUpdate: updateSecurityPrice[] = [];
-
     for (let i = 0; i < securityGroups.length; i++) {
         const securityGroup = securityGroups[i];
         const symbols = securityGroup.map(sec => sec.symbol);
@@ -145,17 +159,29 @@ const processIntradayPrices = async (repository: Repository, iex: IEX) => {
             });
 
             const {prices, eodInsert, eodUpdate} = await perform(securityGroup, response)
-            securityPrices = [...securityPrices, ...prices]
-            eodPricesInsert = [...eodPricesInsert, ...eodInsert];
-            eodPricesUpdate = [...eodPricesUpdate, ...eodUpdate];
+
+            try {
+                await repository.upsertSecuritiesPrices(prices);
+            } catch (e) {
+                console.error("could not upsert security prices.... ", e)
+            }
+
+            try {
+                await repository.insertSecuritiesPrices(eodInsert);
+            } catch (e) {
+                console.error("could not insert security prices ", e)
+            }
+
+            try {
+                await repository.updatePricesById(eodUpdate)
+            } catch (e) {
+                console.error("could not update security prices ", e)
+            }
         } catch (err) {
             console.error(err)
+            console.error(symbols.join(", "))
         }
     }
-
-    await repository.upsertSecuritiesPrices(securityPrices);
-    await repository.insertSecuritiesPrices(eodPricesInsert);
-    await repository.updatePricesById(eodPricesUpdate)
 }
 
 type PerformResponse = {
@@ -172,13 +198,11 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
     for (let i = 0; i < securityGroup.length; i++) {
         const sec = securityGroup[i];
         if (response[sec.symbol] === undefined || response[sec.symbol] === null) {
-            console.error(`could not find intraday-prices for symbol ${sec.symbol}`);
             continue
         }
 
         const intradayPrices = (response[sec.symbol]['intraday-prices'] as GetIntraDayPrices[])
         if (intradayPrices.length <= 0) {
-            console.error(`no intraday prices available for symbol ${sec.symbol}`)
             continue
         }
 
@@ -209,6 +233,11 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
                 zone: "America/New_York"
             });
 
+            if (!t.isValid) continue
+
+            // Ignoring 4:00pm prices for security prices
+            if (t.hour === 16) continue
+
             if (sec.latestTime !== null && sec.latestTime.toUnixInteger() > t.toUnixInteger()) continue
 
             let high = ip.high,
@@ -229,7 +258,10 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
                 eodPrice.low = ip.low
             if (eodPrice.open === null && ip.open !== null && t.hour === 9 && t.minute === 30)
                 eodPrice.open = ip.open
+            if (eodPrice.open === null && t.hour === 9 && t.minute === 30)
+                eodPrice.open = close
 
+            eodPrice.price = close
             securityPrices.push({
                 price: close,
                 securityId: sec.id,
@@ -261,7 +293,7 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
             low: eodPrice.low,
             open: eodPrice.open,
             time: eodPrice.time.toJSDate(),
-            securityId: eodPrice.securityId,
+            securityId: sec.id,
             id: eodPrice.id,
         })
     }
