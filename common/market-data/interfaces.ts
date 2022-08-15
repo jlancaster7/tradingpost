@@ -173,9 +173,6 @@ export interface getSecurityBySymbol {
     createdAt: Date
 }
 
-export interface getSecurityBySymbolwithPx extends getSecurityBySymbol {
-    latestPrice: number
-}
 
 export interface getIexSecurityBySymbol extends getSecurityBySymbol {
     validated: boolean
