@@ -1,11 +1,10 @@
 import {DefaultConfig} from "../configuration";
-import Repository from "../market-data/repository";
-import {DateTime} from 'luxon';
 import pg from 'pg';
 import pgPromise from 'pg-promise'
-import {buildGroups} from '../../lambdas/market-data/utils'
-import {addSecurityPrice, getSecurityBySymbol} from "../market-data/interfaces";
-import IEX, {GetHistoricalPrice, GetIntraDayPrices} from "../iex/index";
+
+import Repository from '../brokerage/repository';
+import Brokerage from '../brokerage';
+import Finicity from "../finicity/index";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -86,96 +85,102 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     })
     await pgClient.connect()
 
-    const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
-    const iex = new IEX(iexConfiguration.key);
+    const finCfg = await DefaultConfig.fromCacheOrSSM('finicity');
 
-    const repository = new Repository(pgClient, pgp);
-    const securities = await repository.getUSExchangeListedSecurities();
-    const securitiesMap: Record<string, getSecurityBySymbol> = {};
-    securities.forEach(sec => securitiesMap[sec.symbol] = sec);
-    const groupSecurities = buildGroups(securities, 100);
+    // const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
+    // const iex = new IEX(iexConfiguration.key);
+    const finicity = new Finicity(finCfg.partnerId, finCfg.partnerSecret, finCfg.appKey);
+    await finicity.init();
+    const brokerage = new Brokerage(pgClient, pgp, finicity);
+    console.log("Starting")
+    await brokerage.removeAccounts('6007115349', ['6011899109'], 'finicity');
+    console.log("Removing")
+    // const securities = await repository.getUSExchangeListedSecurities();
+    // const securitiesMap: Record<string, getSecurityBySymbol> = {};
+    // securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+    // const groupSecurities = buildGroups(securities, 100);
+    //
+    // let latestSecurityPrices: Record<string, number> = {};
+    // securities.forEach(sec => latestSecurityPrices[sec.symbol] = 0); //sec.latestPrice);
 
-    let latestSecurityPrices: Record<string, number> = {};
-    securities.forEach(sec => latestSecurityPrices[sec.symbol] = 0); //sec.latestPrice);
-
-    const dates = ["20220808", "20220809", "20220810", "20220811", "20220812"];
-    for (let i = 0; i < groupSecurities.length; i++) {
-        console.log(`Processing ${i + 1}/${groupSecurities.length}`)
-        const securityGroup = groupSecurities[i];
-        const symbols = securityGroup.map(sec => sec.symbol);
-        for (let dateIdx = 0; dateIdx < dates.length; dateIdx++) {
-            const date = dates[dateIdx];
-            console.log(`\t\tProcessing Day: ${date}`)
-            let response: Record<string, any>;
-
-            try {
-                response = await iex.bulk(symbols, ["chart"], {
-                    chartIEXOnly: true,
-                    chartIEXWhenNull: true,
-                    exactDate: date,
-                });
-            } catch (e) {
-                console.error(e)
-                continue
-            }
-
-            let securityPrices: addSecurityPrice[] = [];
-            securityGroup.forEach(sec => {
-                const {symbol, id} = sec;
-                if (response[symbol] === undefined || response[symbol] === null) {
-                    console.error(`could not find symbol ${symbol}`)
-                    return
-                }
-
-                const intradayPrices = (response[symbol]['chart']) as GetIntraDayPrices[]
-
-                let latestPrice = latestSecurityPrices[symbol];
-                intradayPrices.forEach(ip => {
-                    const dt = DateTime.fromFormat(`${ip.date} ${ip.minute}`, "yyyy-LL-dd HH:mm", {
-                        zone: "America/New_York"
-                    }).set({second: 0, millisecond: 0});
-
-                    let close = ip.close,
-                        open = ip.open,
-                        high = ip.high,
-                        low = ip.low;
-                    if (close !== null) latestPrice = close
-                    else {
-                        close = latestPrice;
-                        open = latestPrice;
-                        high = latestPrice;
-                        low = latestPrice;
-                    }
-
-                    if (close === null) return;
-                    if (open === null) open = close
-                    if (high === null) high = close
-                    if (low === null) low = close
-
-
-                    latestSecurityPrices[symbol] = close
-
-                    securityPrices.push({
-                        price: close,
-                        low: low,
-                        high: high,
-                        open: open,
-                        time: dt.toJSDate(),
-                        securityId: id,
-                        isEod: false,
-                        isIntraday: true
-                    });
-                })
-            });
-
-            const newSecPrices = securityPrices.filter(sec => {
-                if (sec.price === null) return false;
-                return true;
-            })
-            if (newSecPrices.length <= 0) continue
-            await repository.upsertSecuritiesPrices(newSecPrices);
-        }
-    }
+    // const dates = ["20220808", "20220809", "20220810", "20220811", "20220812"];
+    // for (let i = 0; i < groupSecurities.length; i++) {
+    //     console.log(`Processing ${i + 1}/${groupSecurities.length}`)
+    //     const securityGroup = groupSecurities[i];
+    //     const symbols = securityGroup.map(sec => sec.symbol);
+    //     for (let dateIdx = 0; dateIdx < dates.length; dateIdx++) {
+    //         const date = dates[dateIdx];
+    //         console.log(`\t\tProcessing Day: ${date}`)
+    //         let response: Record<string, any>;
+    //
+    //         try {
+    //             response = await iex.bulk(symbols, ["chart"], {
+    //                 chartIEXOnly: true,
+    //                 chartIEXWhenNull: true,
+    //                 exactDate: date,
+    //             });
+    //         } catch (e) {
+    //             console.error(e)
+    //             continue
+    //         }
+    //
+    //         let securityPrices: addSecurityPrice[] = [];
+    //         securityGroup.forEach(sec => {
+    //             const {symbol, id} = sec;
+    //             if (response[symbol] === undefined || response[symbol] === null) {
+    //                 console.error(`could not find symbol ${symbol}`)
+    //                 return
+    //             }
+    //
+    //             const intradayPrices = (response[symbol]['chart']) as GetIntraDayPrices[]
+    //
+    //             let latestPrice = latestSecurityPrices[symbol];
+    //             intradayPrices.forEach(ip => {
+    //                 const dt = DateTime.fromFormat(`${ip.date} ${ip.minute}`, "yyyy-LL-dd HH:mm", {
+    //                     zone: "America/New_York"
+    //                 }).set({second: 0, millisecond: 0});
+    //
+    //                 let close = ip.close,
+    //                     open = ip.open,
+    //                     high = ip.high,
+    //                     low = ip.low;
+    //                 if (close !== null) latestPrice = close
+    //                 else {
+    //                     close = latestPrice;
+    //                     open = latestPrice;
+    //                     high = latestPrice;
+    //                     low = latestPrice;
+    //                 }
+    //
+    //                 if (close === null) return;
+    //                 if (open === null) open = close
+    //                 if (high === null) high = close
+    //                 if (low === null) low = close
+    //
+    //
+    //                 latestSecurityPrices[symbol] = close
+    //
+    //                 securityPrices.push({
+    //                     price: close,
+    //                     low: low,
+    //                     high: high,
+    //                     open: open,
+    //                     time: dt.toJSDate(),
+    //                     securityId: id,
+    //                     isEod: false,
+    //                     isIntraday: true
+    //                 });
+    //             })
+    //         });
+    //
+    //         const newSecPrices = securityPrices.filter(sec => {
+    //             if (sec.price === null) return false;
+    //             return true;
+    //         })
+    //         if (newSecPrices.length <= 0) continue
+    //         await repository.upsertSecuritiesPrices(newSecPrices);
+    //     }
+    // }
 
 
     // const tradingMap = await getTradingMap(pgClient);

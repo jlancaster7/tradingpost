@@ -9,7 +9,7 @@ import {PortfolioSummaryService} from "./portfolio-summary";
 import {
     HistoricalHoldings,
     TradingPostAccountGroupStats,
-    AccountGroupHPRsTable, TradingPostBrokerageAccounts, TradingPostBrokerageAccountsTable
+    AccountGroupHPRsTable, TradingPostBrokerageAccountsTable
 } from './interfaces';
 
 export default class Brokerage extends BrokerageService {
@@ -81,15 +81,13 @@ export default class Brokerage extends BrokerageService {
     }
 
     addNewTransactions = async (userId: string, brokerageId: string, accountIds?: string[]) => {
+
     }
 
     removeAccounts = async (brokerageCustomerId: string, accountIds: string[], brokerageId: string) => {
         const brokerage = this.brokerageMap[brokerageId];
         const tpAccountIds = await brokerage.removeAccounts(brokerageCustomerId, accountIds)
-        await this.repository.deleteTradingPostBrokerageTransactions(tpAccountIds)
-        await this.repository.deleteTradingPostBrokerageHoldings(tpAccountIds)
         await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds)
-        await this.repository.deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds)
     }
 
     generateBrokerageAuthenticationLink = async (userId: string, brokerageId: string): Promise<string> => {

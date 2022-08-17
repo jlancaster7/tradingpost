@@ -375,14 +375,14 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingpostCashSecurity = async (): Promise<TradingPostCashSecurity[]> => {
-        const query = `SELECT s.id as security_id,
-                              cs.from_symbol as from_symbol,
+        const query = `SELECT s.id                  as security_id,
+                              cs.from_symbol        as from_symbol,
                               cs.to_security_symbol as to_security_symbol,
                               cs.currency
                        FROM tradingpost_cash_security cs
-                       LEFT JOIN security s
-                       ON s.symbol = cs.to_security_symbol;
-                       `;
+                                LEFT JOIN security s
+                                          ON s.symbol = cs.to_security_symbol;
+        `;
         const response = await this.db.query(query);
         return response.map((r: any) => {
             let o: TradingPostCashSecurity = {
@@ -1280,7 +1280,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             }
         })
     }
-    
+
 
     upsertFinicityHoldings = async (holdings: FinicityHolding[]): Promise<void> => {
         const cs = new this.pgp.helpers.ColumnSet([
@@ -1358,8 +1358,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                 fh.updated_at,
                                 fh.created_at
                          FROM finicity_holding fh
-                                  INNER JOIN finicity_account fa 
-                                  ON fa.id = fh.finicity_account_id
+                                  INNER JOIN finicity_account fa
+                                             ON fa.id = fh.finicity_account_id
                          WHERE fa.finicity_user_id = $1`
         const response = await this.db.query(query, [finicityUserId])
         return response.map((h: any) => {
@@ -1755,7 +1755,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     addTradingPostAccountGroupStats = async (groupStats: TradingPostAccountGroupStats[]) => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_group_id', prop: 'accountGroupId'},
-            {name: 'beta', prop: 'beta', },
+            {name: 'beta', prop: 'beta',},
             {name: 'sharpe', prop: 'sharpe'},
             {name: 'industry_allocations', prop: 'industryAllocations', mod: ':json'},
             {name: 'exposure', prop: 'exposure'},
@@ -1785,12 +1785,12 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                 WHEN quantity = 0 THEN 0
                                 WHEN cost_basis is null THEN 0
                                 ELSE (value - (quantity * cost_basis))
-                            END as pnl,
+                                END as pnl,
                             quantity,
                             date
                      FROM tradingpost_historical_holding
                      WHERE account_id = $1
-                     AND date BETWEEN $2 AND $3
+                       AND date BETWEEN $2 AND $3
         `;
 
         const response = await this.db.any(query, [accountId, startDate, endDate]);
@@ -1817,22 +1817,22 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostHoldingsByAccountGroup = async (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id                                  AS account_group_id,
-                            ht.security_id                                        AS security_id,
-                            AVG(ht.price)                                         AS price,
-                            SUM(ht.value)                                         AS value,
+        let query = `SELECT atg.account_group_id AS account_group_id,
+                            ht.security_id       AS security_id,
+                            AVG(ht.price)        AS price,
+                            SUM(ht.value)        AS value,
                             CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN sum(ht.cost_basis) is null THEN 0
-                                ELSE SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity) 
-                            END                                                 AS cost_basis,
-                            CASE 
+                                ELSE SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)
+                                END              AS cost_basis,
+                            CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN SUM(ht.cost_basis) IS null THEN 0
                                 ELSE (SUM(ht.value) - (SUM(ht.cost_basis * ht.quantity)))
-                            END                                                 AS pnl,
-                            SUM(ht.quantity)                                      AS quantity,
-                            ht.date                                               AS date
+                                END              AS pnl,
+                            SUM(ht.quantity)     AS quantity,
+                            ht.date              AS date
                      FROM tradingpost_historical_holding ht
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ht.account_id = atg.account_id
@@ -1864,22 +1864,22 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostCurrentHoldingsByAccountGroup = async (accountGroupId: number): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id                                AS account_group_id,
-                            ch.security_id                                      AS security_id,
-                            AVG(ch.price)                                       AS price,
-                            SUM(ch.value)                                       AS value,
+        let query = `SELECT atg.account_group_id AS account_group_id,
+                            ch.security_id       AS security_id,
+                            AVG(ch.price)        AS price,
+                            SUM(ch.value)        AS value,
                             CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN sum(ch.cost_basis) is null THEN 0
-                                ELSE SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity) 
-                            END                                                 AS cost_basis,
-                            CASE 
+                                ELSE SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)
+                                END              AS cost_basis,
+                            CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN SUM(ch.cost_basis) IS null THEN 0
                                 ELSE (SUM(ch.value) - (SUM(ch.cost_basis * ch.quantity)))
-                            END                                                 AS pnl,
-                            SUM(ch.quantity)                                    AS quantity,
-                            ch.updated_at                                       AS updated_at
+                                END              AS pnl,
+                            SUM(ch.quantity)     AS quantity,
+                            ch.updated_at        AS updated_at
                      FROM tradingpost_current_holding ch
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ch.account_id = atg.account_id
@@ -2049,7 +2049,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         ], {table: 'account_group_hpr'})
         const query = upsertReplaceQueryWithColumns(accountGroupReturns, cs, this.pgp, ["return"],
             "date, account_group_id")
-        
+
         const result = await this.db.result(query)
         return result.rowCount > 0 ? 1 : 0
     }
@@ -2136,31 +2136,42 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     deleteTradingPostBrokerageAccounts = async (accountIds: number[]): Promise<void> => {
-        const query = `DELETE
-                       FROM tradingpost_brokerage_account
-                       WHERE id IN ($1:list)`
-        await this.db.none(query, [accountIds])
-    }
+        if (accountIds.length <= 0) return
+        try {
+            const accountGroupRes = await this.db.query(`SELECT distinct account_group_id
+                                                         FROM _TRADINGPOST_ACCOUNT_TO_GROUP
+                                                         WHERE account_id IN ($1:list)`, [accountIds]);
+            let accountGroupIds = accountGroupRes.map((r: { account_group_id: any; }) => r.account_group_id);
+            if (accountGroupIds.length > 0) {
+                console.log("Account Group Ids: ", accountGroupIds)
+                await this.db.none(`
+                BEGIN;
+                    DELETE FROM ACCOUNT_GROUP_HPR WHERE account_group_id IN ($1:list);
+                    DELETE FROM TRADINGPOST_ACCOUNT_GROUP_STAT WHERE account_group_id IN ($1:list);
+                    DELETE FROM _TRADINGPOST_ACCOUNT_TO_GROUP WHERE account_group_id IN($1:list);
+                    DELETE FROM TRADINGPOST_ACCOUNT_GROUP WHERE id IN($1:list);
+                COMMIT;
+                `, [accountGroupIds])
+            }
+        } catch (e) {
+            console.error(e)
+        }
 
-    deleteTradingPostBrokerageTransactions = async (accountIds: number[]): Promise<void> => {
-        const query = `DELETE
-                       FROM tradingpost_transaction
-                       WHERE account_id IN ($1:list)`
-        await this.db.none(query, [accountIds]);
-    }
-
-    deleteTradingPostBrokerageHoldings = async (accountIds: number[]): Promise<void> => {
-        const query = `DELETE
-                       FROM TRADINGPOST_CURRENT_HOLDING
-                       WHERE account_id IN ($1:list)`
-        await this.db.none(query, [accountIds]);
-    }
-
-    deleteTradingPostBrokerageHistoricalHoldings = async (accountIds: number[]): Promise<void> => {
-        const query = `DELETE
-                       FROM TRADINGPOST_HISTORICAL_HOLDING
-                       WHERE account_id IN ($1:list)`
-        await this.db.none(query, [accountIds]);
+        try {
+            if (accountIds.length > 0) {
+                console.log("ACCOUNT IDS: ", accountIds)
+                await this.db.none(`
+                BEGIN;            
+                    DELETE FROM TRADINGPOST_HISTORICAL_HOLDING WHERE account_id IN ($1:list);
+                    DELETE FROM TRADINGPOST_CURRENT_HOLDING WHERE account_id IN ($1:list);
+                    DELETE FROM TRADINGPOST_TRANSACTION WHERE account_id IN ($1:list);
+                    DELETE FROM TRADINGPOST_BROKERAGE_ACCOUNT WHERE id IN ($1:list);
+                COMMIT;
+            `, [accountIds])
+            }
+        } catch (e) {
+            console.error("Here...", e)
+        }
     }
 }
 

@@ -487,9 +487,12 @@ export default class FinicityService implements IBrokerageService {
         }
 
         const ids = removalAccounts.map(ra => ra.id);
-        await this.repository.deleteFinicityHoldings(ids);
-        await this.repository.deleteFinicityTransactions(ids);
-        await this.repository.deleteFinicityAccounts(ids)
+
+        if (ids.length > 0) {
+            await this.repository.deleteFinicityHoldings(ids);
+            await this.repository.deleteFinicityTransactions(ids);
+            await this.repository.deleteFinicityAccounts(ids)
+        }
 
         const tradingpostAccounts = await this.repository.getTradingPostBrokerageAccounts(finicityUser.tpUserId);
         let tpAccountIds: number[] = [];

@@ -41,20 +41,20 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
     const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
     await finicity.init()
-    const deleteTables = [
-        'tradingpost_current_holding',
-        'tradingpost_historical_holding',
-        'tradingpost_transaction',
-        'account_group_hpr',
-        '_tradingpost_account_to_group',
-        'tradingpost_account_group_stat',
-        'tradingpost_account_group',
-        'tradingpost_brokerage_account'
-    ]
-    for (let d of deleteTables) {
-        let query = `DELETE FROM ${d}`;
-        await pgClient.query(query);
-    }
+    // const deleteTables = [
+    //     'tradingpost_current_holding',
+    //     'tradingpost_historical_holding',
+    //     'tradingpost_transaction',
+    //     'account_group_hpr',
+    //     '_tradingpost_account_to_group',
+    //     'tradingpost_account_group_stat',
+    //     'tradingpost_account_group',
+    //     'tradingpost_brokerage_account'
+    // ]
+    // for (let d of deleteTables) {
+    //     let query = `DELETE FROM ${d}`;
+    //     await pgClient.query(query);
+    // }
 
     const tpUserId = "8e787902-f0e9-42aa-a8d8-18e5d7a1a34d";
 
