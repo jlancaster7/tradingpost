@@ -1,5 +1,5 @@
-import { DateTime } from "luxon";
-import { getUSExchangeHoliday } from "../market-data/interfaces";
+import {DateTime} from "luxon";
+import {getUSExchangeHoliday} from "../market-data/interfaces";
 
 export interface IBrokerageService {
     getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
@@ -14,8 +14,7 @@ export interface IBrokerageService {
 
     exportAccounts(userId: string): Promise<TradingPostBrokerageAccounts[]>
 
-    exportTransactions(userId: string): Promise<TradingPostTransactions[]
-    >
+    exportTransactions(userId: string): Promise<TradingPostTransactions[]>
 
     exportHoldings(userId: string): Promise<TradingPostCurrentHoldings[]>
 
@@ -56,12 +55,6 @@ export interface IBrokerageRepository {
     getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
 
     deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
-
-    deleteTradingPostBrokerageTransactions(accountIds: number[]): Promise<void>
-
-    deleteTradingPostBrokerageHoldings(accountIds: number[]): Promise<void>
-
-    deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds: number[]): Promise<void>
 }
 
 export interface IFinicityRepository {
@@ -69,7 +62,7 @@ export interface IFinicityRepository {
 
     getFinicityUserByFinicityCustomerId(customerId: string): Promise<FinicityUser | null>
 
-    getFinicityUserByFinicityUserId (userId: string): Promise<FinicityUser | null>
+    getFinicityUserByFinicityUserId(userId: string): Promise<FinicityUser | null>
 
     getFinicityUser(userId: string): Promise<FinicityUser | null>
 
@@ -167,7 +160,7 @@ export interface ISummaryService {
 
     computeAccountGroupSummary(accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats>
 
-    addAccountGroupSummary (summary: TradingPostAccountGroupStats): Promise<void>
+    addAccountGroupSummary(summary: TradingPostAccountGroupStats): Promise<void>
 }
 
 export type TradingPostUser = {

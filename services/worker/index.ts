@@ -6,6 +6,7 @@ import Finicity from "@tradingpost/common/finicity/index";
 import Brokerage from "@tradingpost/common/brokerage";
 import bodyParser from "body-parser";
 import pg from 'pg';
+import crypto from "crypto";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -48,11 +49,18 @@ const run = async () => {
     app.use(cors());
 
     app.get("/", (req: Request, res: Response) => {
-        console.log("Request Made")
         res.send({Hello: "World", port: port});
     });
 
     app.post("/finicity/webhook", async (req: Request, res: Response) => {
+        const body = req.body;
+
+        const signature = crypto.createHmac('sha256', finicityCfg.partnerSecret).update(JSON.stringify(body)).digest('hex')
+        if (req.get('x-finicity-signature') !== signature) {
+            // Spoofing Detected
+            throw new Error("invalid request");
+        }
+
         if (req.body.eventType === 'added') {
             const {customerId} = req.body;
             await brokerageService.addNewAccounts(customerId, 'finicity');
