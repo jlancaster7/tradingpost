@@ -46,7 +46,7 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     const transformer = new FinicityTransformer(repo);
     const finicityService = new FinicityService(finicity, repo, transformer)
     const broker = new Brokerage(pgClient, pgp, finicity);
-    const userId = '8e787902-f0e9-42aa-a8d8-18e5d7a1a34d';
+    const userId = 'b0ab5204-4f6f-41b4-8ad3-f92e2380bb00';
 
     const account = await finicityService.exportAccounts(userId);
     await repo.upsertTradingPostBrokerageAccounts(account);
@@ -61,7 +61,7 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     const start = DateTime.now().setZone("America/New_York");
     const end = start.minus({month: 24})
     for (let d of tpAccounts) {
-        const holdingHistory = await broker.computeHoldingsHistory(d.id, start, end);
+        const holdingHistory = await broker.computeHoldingsHistory(d.id, end);
         await repo.upsertTradingPostHistoricalHoldings(holdingHistory);
     }
     const tpAccountIds = tpAccounts.map(a => a.id);

@@ -219,7 +219,7 @@ export default class FinicityTransformer {
                 securityId: cashSecurityId,
                 securityType: SecurityType.cashEquivalent ,
                 price: 1,
-                priceAsOf: DateTime.now(),
+                priceAsOf: DateTime.fromSeconds(accountDetails.dateAsOf),
                 priceSource: '',
                 value: accountDetails.availableCashBalance,
                 costBasis: null,
