@@ -215,7 +215,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 costBasis: row.cost_basis,
                 currency: row.currency,
                 price: row.price,
-                priceAsOf: row.price_as_of,
+                priceAsOf: DateTime.fromJSDate(row.price_as_of),
                 securityId: row.security_id,
                 priceSource: row.price_source,
                 quantity: row.quantity,
@@ -1971,7 +1971,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             prices.push({
                 securityId: parseInt(d.security_id),
                 price: parseFloat(d.price),
-                date: d.time
+                date: DateTime.fromJSDate(d.time)
             });
         }
         return prices;

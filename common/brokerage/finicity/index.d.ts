@@ -7,7 +7,7 @@ export default class FinicityService implements IBrokerageService {
     private transformer;
     constructor(finicity: Finicity, repository: IFinicityRepository, transformer: FinicityTransformer);
     getTradingPostUserAssociatedWithBrokerageUser: (brokerageUserId: string) => Promise<TradingPostUser>;
-    generateBrokerageAuthenticationLink: (userId: string, brokerageAccount?: string | undefined) => Promise<string>;
+    generateBrokerageAuthenticationLink: (userId: string, brokerageAccount?: string) => Promise<string>;
     _createFinicityUser: (userId: string) => Promise<FinicityUser>;
     importInstitutions: () => Promise<void>;
     getAddInstitution: (finicityInstitutionId: number) => Promise<{
@@ -15,8 +15,8 @@ export default class FinicityService implements IBrokerageService {
         finicityInstitutionId: number;
     }>;
     importAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
-    importHoldings: (userId: string, brokerageIds?: string[] | number[] | undefined) => Promise<TradingPostCurrentHoldings[]>;
-    importTransactions: (userId: string, brokerageIds?: string[] | number[] | undefined) => Promise<TradingPostTransactions[]>;
+    importHoldings: (userId: string, brokerageIds?: string[] | number[]) => Promise<TradingPostCurrentHoldings[]>;
+    importTransactions: (userId: string, brokerageIds?: string[] | number[]) => Promise<TradingPostTransactions[]>;
     exportAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
     exportHoldings: (userId: string) => Promise<TradingPostCurrentHoldings[]>;
     exportTransactions: (userId: string) => Promise<TradingPostTransactions[]>;

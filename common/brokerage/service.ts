@@ -162,7 +162,7 @@ export default class BrokerageService {
         await this.repository.upsertTradingPostTransactions(transactions);
     }
 
-    computeHoldingsHistory = async (tpAccountId: number, startDate: DateTime, endDate: DateTime): Promise<TradingPostHistoricalHoldings[]> => {
+    computeHoldingsHistory = async (tpAccountId: number, endDate: DateTime): Promise<TradingPostHistoricalHoldings[]> => {
         const cashSecurity = await this.repository.getCashSecurityId();
 
         let allSecurityIds: Record<number, unknown> = {}
@@ -188,12 +188,10 @@ export default class BrokerageService {
             transactionsPerDate[txDateUnix] = txs
         });
 
-        const allSecurityPricesMap: Record<number, GetSecurityPrice[]> = await this.getSecurityPrices(Object.keys(allSecurityIds).map(id => parseInt(id)), startDate, endDate);
-
         // Get Trading Days we will compute history for
         // In our db we will have a single row for each security on each day, so with 2 securities we'll have two rows for today
-        let tradingDays = await this.getTradingDays(startDate, endDate)
         
+        let startDate = DateTime.now().setZone("America/New_York");
         const initialHistoricalHolding: historicalAccount = {
             date: startDate,
             cash: 0,
@@ -202,6 +200,8 @@ export default class BrokerageService {
 
         for (const holding of currentHoldings) {
             if (holding.symbol === 'USD:CUR') {
+                startDate = holding.priceAsOf;
+                initialHistoricalHolding.date = holding.priceAsOf
                 initialHistoricalHolding.cash = holding.quantity;
                 continue;
             }
@@ -222,6 +222,8 @@ export default class BrokerageService {
             })
         }
 
+        const allSecurityPricesMap: Record<number, GetSecurityPrice[]> = await this.getSecurityPrices(Object.keys(allSecurityIds).map(id => parseInt(id)), startDate, endDate);
+        let tradingDays = await this.getTradingDays(startDate, endDate)
         let historicalHoldingCollection = [initialHistoricalHolding]
 
         for (let i = 0; i < tradingDays.length - 1; i++) {

@@ -71,7 +71,7 @@ export default class Brokerage extends BrokerageService {
 
         for (let i = 0; i < accountsToProcess.length; i++) {
             const account = accountsToProcess[i];
-            const holdingHistory = await this.computeHoldingsHistory(account.id, start, end);
+            const holdingHistory = await this.computeHoldingsHistory(account.id, end);
             await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
         }
 

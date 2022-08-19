@@ -99,7 +99,7 @@ export class PortfolioSummaryService implements ISummaryService {
 
         function checkDates(arr1: SecurityHPRs[], arr2: SecurityHPRs[]) {
             for (let i = 0; i < arr1.length; i++) {
-                if (arr1[i].date.valueOf() !== arr2[i].date.valueOf()) {
+                if (arr1[i].date.toISODate() !== arr2[i].date.toISODate()) {
                     console.log('date mismatch, see the below:')
                     console.log(arr1[i]);
                     console.log(arr2[i]);
