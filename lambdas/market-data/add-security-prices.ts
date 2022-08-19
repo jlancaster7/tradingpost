@@ -34,6 +34,7 @@ let pgClient: IDatabase<any>;
 let pgp: IMain;
 
 const runLambda = async () => {
+    console.log("Starting")
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -64,25 +65,26 @@ const runLambda = async () => {
 
     try {
         if (currentTime.set({second: 0, millisecond: 0}).toUnixInteger() == t415.toUnixInteger()) {
+            console.log("Processing Close Price")
             await processClosePrice(repository, iex);
             return
         }
 
         if (currentTime.toUnixInteger() >= t930.toUnixInteger() && currentTime.toUnixInteger() <= t400.toUnixInteger()) {
             await processIntradayPrices(repository, iex)
-            console.log("Finished")
         }
     } catch (e) {
         console.error(e)
         throw e
     }
+    console.log("Finished")
 }
 
 const processClosePrice = async (repository: Repository, iex: IEX) => {
     const securities = await repository.getUsExchangeListedSecuritiesWithPricing();
     const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
     const updateEod: updateSecurityPrice[] = [];
-    const insertEod: addSecurityPrice[] = []
+    const insertEod: addSecurityPrice[] = [];
     const dt = DateTime.now().setZone("America/New_York").set({minute: 0, hour: 16, second: 0, millisecond: 0});
 
     for (let i = 0; i < securityGroups.length; i++) {
@@ -93,18 +95,53 @@ const processClosePrice = async (repository: Repository, iex: IEX) => {
             const response = await iex.bulk(symbols, ["ohlc"])
             for (let j = 0; j < securityGroup.length; j++) {
                 const sec = securityGroup[j];
+                let eodPrice = {
+                    price: sec.isEodPrice ? sec.isEodPrice : sec.latestPrice,
+                    low: sec.isEodLow,
+                    high: sec.isEodHigh,
+                    open: sec.isEodOpen,
+                    isEod: true,
+                    isIntraday: false,
+                    securityId: sec.id,
+                    time: dt.toJSDate(),
+                }
+
                 if (response[sec.symbol] === undefined || response[sec.symbol] === null) {
+                    if (sec.isEodId === null && eodPrice.price !== null) insertEod.push({
+                        price: eodPrice.price,
+                        low: eodPrice.low,
+                        high: eodPrice.high,
+                        time: eodPrice.time,
+                        open: eodPrice.open,
+                        securityId: eodPrice.securityId,
+                        isEod: true,
+                        isIntraday: false,
+                    });
+                    else if (sec.isEodId !== null && eodPrice.price !== null) {
+                        updateEod.push({
+                            id: sec.isEodId,
+                            price: eodPrice.price,
+                            low: eodPrice.low,
+                            high: eodPrice.high,
+                            open: eodPrice.open,
+                            isEod: true,
+                            isIntraday: false,
+                            securityId: sec.id,
+                            time: eodPrice.time,
+                        })
+                    }
+
                     console.error(`could not find quote for symbol ${sec.symbol}`);
                     continue
                 }
 
                 const ohlc = (response[sec.symbol]['ohlc'] as GetOHLC)
-                let close = ohlc.close.price,
-                    open = ohlc.open.price,
+                let close = ohlc.close?.price,
+                    open = ohlc.open?.price,
                     high = ohlc.high,
                     low = ohlc.low;
 
-                let curEodPrice = sec.isEodPrice;
+                let curEodPrice = eodPrice.price;
                 if (close === null) {
                     if (curEodPrice === null) continue
                     close = curEodPrice;
@@ -113,25 +150,29 @@ const processClosePrice = async (repository: Repository, iex: IEX) => {
                     low = curEodPrice;
                 }
 
-                let eodPrice: addSecurityPrice = {
-                    price: close,
+                if (sec.isEodId === null && curEodPrice !== null) {
+                    insertEod.push({
+                        price: curEodPrice,
+                        low: low,
+                        high: high,
+                        open: open,
+                        isEod: true,
+                        isIntraday: false,
+                        time: dt.toJSDate(),
+                        securityId: sec.id
+                    });
+                }
+
+                if (sec.isEodId !== null && curEodPrice !== null) updateEod.push({
+                    id: sec.isEodId,
+                    price: curEodPrice,
                     low: low,
                     high: high,
                     open: open,
                     isEod: true,
                     isIntraday: false,
-                    securityId: sec.id,
                     time: dt.toJSDate(),
-                }
-
-                if (sec.isEodId === null) {
-                    insertEod.push(eodPrice);
-                    continue
-                }
-
-                updateEod.push({
-                    ...eodPrice,
-                    id: sec.isEodId
+                    securityId: sec.id
                 })
             }
         } catch
@@ -146,7 +187,13 @@ const processClosePrice = async (repository: Repository, iex: IEX) => {
 
 const processIntradayPrices = async (repository: Repository, iex: IEX) => {
     const securities = await repository.getUsExchangeListedSecuritiesWithPricing();
+    console.log("Total Securities: ", securities.length);
     const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
+    console.log("Total Security Groups: ", securityGroups.length)
+
+    let securitiesPrices: addSecurityPrice[] = [],
+        newEodPrices: addSecurityPrice[] = [],
+        oldEodPrices: updateSecurityPrice[] = [];
 
     for (let i = 0; i < securityGroups.length; i++) {
         const securityGroup = securityGroups[i];
@@ -159,28 +206,31 @@ const processIntradayPrices = async (repository: Repository, iex: IEX) => {
             });
 
             const {prices, eodInsert, eodUpdate} = await perform(securityGroup, response)
-
-            try {
-                await repository.upsertSecuritiesPrices(prices);
-            } catch (e) {
-                console.error("could not upsert security prices.... ", e)
-            }
-
-            try {
-                await repository.insertSecuritiesPrices(eodInsert);
-            } catch (e) {
-                console.error("could not insert security prices ", e)
-            }
-
-            try {
-                await repository.updatePricesById(eodUpdate)
-            } catch (e) {
-                console.error("could not update security prices ", e)
-            }
+            securitiesPrices = [...securitiesPrices, ...prices];
+            newEodPrices = [...newEodPrices, ...eodInsert];
+            oldEodPrices = [...oldEodPrices, ...eodUpdate];
         } catch (err) {
             console.error(err)
             console.error(symbols.join(", "))
         }
+    }
+
+    try {
+        await repository.upsertSecuritiesPrices(securitiesPrices);
+    } catch (e) {
+        console.error("could not upsert security prices.... ", e)
+    }
+
+    try {
+        await repository.insertSecuritiesPrices(newEodPrices);
+    } catch (e) {
+        console.error("could not insert security prices ", e)
+    }
+
+    try {
+        await repository.updatePricesById(oldEodPrices)
+    } catch (e) {
+        console.error("could not update security prices ", e)
     }
 }
 
@@ -195,14 +245,49 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
     const eodInsert: addSecurityPrice[] = []
     const eodUpdate: updateSecurityPrice[] = []
 
+    const today930 = DateTime.now().setZone("America/New_York").set({hour: 9, minute: 30, second: 0, millisecond: 0});
     for (let i = 0; i < securityGroup.length; i++) {
         const sec = securityGroup[i];
+        let eodPrice = {
+            id: sec.isEodId,
+            securityId: sec.id,
+            price: sec.isEodPrice ? sec.isEodPrice : sec.latestPrice,
+            time: today930,
+            open: sec.isEodOpen ? sec.isEodOpen : sec.latestPrice,
+            high: sec.isEodHigh ? sec.isEodHigh : sec.latestPrice,
+            low: sec.isEodLow ? sec.isEodLow : sec.latestPrice,
+            isIntraday: false,
+            isEod: true
+        }
+
         if (response[sec.symbol] === undefined || response[sec.symbol] === null) {
+            if (eodPrice.id === null && eodPrice.price !== null) eodInsert.push({
+                price: eodPrice.price,
+                securityId: eodPrice.securityId,
+                open: eodPrice.open,
+                time: eodPrice.time.toJSDate(),
+                high: eodPrice.high,
+                low: eodPrice.low,
+                isEod: true,
+                isIntraday: false,
+            })
+            else if (eodPrice.price === null) console.log("EOD PRICE IS NULL -- WE GOT NOTHING FOR SECURITY: ", sec.symbol)
             continue
         }
 
         const intradayPrices = (response[sec.symbol]['intraday-prices'] as GetIntraDayPrices[])
         if (intradayPrices.length <= 0) {
+            if (eodPrice.id === null && eodPrice.price !== null) eodInsert.push({
+                price: eodPrice.price,
+                securityId: eodPrice.securityId,
+                open: eodPrice.open,
+                time: eodPrice.time.toJSDate(),
+                high: eodPrice.high,
+                low: eodPrice.low,
+                isEod: true,
+                isIntraday: false,
+            })
+            else if (eodPrice.price === null) console.log("WE GOT NOTHING FOR SECURITY: ", sec.symbol)
             continue
         }
 
@@ -211,19 +296,9 @@ const perform = async (securityGroup: getSecurityWithLatestPrice[], response: Re
             zone: "America/New_York"
         });
 
-        if (sec.latestTime !== null && mostRecentPriceTimeAvail.toUnixInteger() === sec.latestTime.toUnixInteger()) continue
+        eodPrice.time = mostRecentPriceTimeAvail
 
-        let eodPrice = {
-            id: sec.isEodId,
-            securityId: sec.id,
-            price: sec.isEodPrice,
-            time: mostRecentPriceTimeAvail,
-            open: sec.isEodOpen,
-            high: sec.isEodHigh,
-            low: sec.isEodLow,
-            isIntraday: false,
-            isEod: true
-        }
+        if (sec.latestTime !== null && mostRecentPriceTimeAvail.toUnixInteger() === sec.latestTime.toUnixInteger()) continue
 
         let latestPrice = sec.latestPrice;
 

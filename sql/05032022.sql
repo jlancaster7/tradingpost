@@ -633,3 +633,6 @@ ALTER TABLE security_price
 
 CREATE UNIQUE INDEX security_price_eod_idx ON security_price (security_id, cast(time AT time ZONE 'America/New_York' AS DATE), is_eod) WHERE is_eod = TRUE;
 CREATE INDEX security_price_eod_time_idx ON security_price (cast(time AT time ZONE 'America/New_York' AS DATE), is_eod) WHERE is_eod = TRUE;
+
+ALTER TABLE finicity_account ADD COLUMN tx_push_id TEXT;
+ALTER TABLE finicity_account ADD COLUMN tx_push_signing_key TEXT;

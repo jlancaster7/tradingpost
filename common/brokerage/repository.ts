@@ -1156,6 +1156,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'parent_account', prop: 'parentAccount'},
             {name: 'account_nickname', prop: 'accountNickname'},
             {name: 'market_segment', prop: 'marketSegment'},
+            {name: 'tx_push_id', prop: 'txPushId'},
+            {name: 'tx_push_signing_key', prop: 'txPushSigningKey'}
         ], {table: 'finicity_account'});
 
         const query = upsertReplaceQuery(accounts, cs, this.pgp, "account_id")
@@ -1201,12 +1203,15 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    account_nickname,
                    market_segment,
                    updated_at,
-                   created_at
+                   created_at,
+                   tx_push_id,
+                   tx_push_signing_key
             FROM finicity_account
             WHERE finicity_user_id = $1;`
         const response = await this.db.query(query, [finicityUserId]);
+
         return response.map((a: any) => {
-            return {
+            let o: FinicityAccount = {
                 id: a.id,
                 finicityUserId: a.finicity_user_id,
                 finicityInstitutionId: a.finicity_institition_id,
@@ -1244,8 +1249,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 accountNickname: a.account_nickname,
                 marketSegment: a.market_segment,
                 updatedAt: DateTime.fromJSDate(a.updated_at),
-                createdAt: DateTime.fromJSDate(a.created_at)
+                createdAt: DateTime.fromJSDate(a.created_at),
+                txPushId: a.tx_push_id,
+                txPushSigningKey: a.tx_push_signing_key
             }
+            return o
         })
     }
     getFinicityAccountDetails = async (finicityUserId: number): Promise<FinicityAccount[]> => {

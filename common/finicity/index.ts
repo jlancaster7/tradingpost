@@ -14,7 +14,12 @@ import {
     AddConsumerResponse,
     GetCustomerByAccountIdResponse,
     GetCustomerAccountsResponse,
-    GetCustomerAccountByIdResponse, GetAccountOwner, GetAllCustomerTransactions, GetInstitution, GetAccountAndHoldings,
+    GetCustomerAccountByIdResponse,
+    GetAccountOwner,
+    GetAllCustomerTransactions,
+    GetInstitution,
+    GetAccountAndHoldings,
+    EnableCustomerTx,
 } from "./interfaces";
 import fs from "fs";
 
@@ -403,5 +408,40 @@ export default class Finicity {
         } catch (e) {
             throw new Error(body.toString());
         }
+    }
+
+    registerTxPush = async (customerId: string, accountId: string, callbackUrl: string): Promise<EnableCustomerTx> => {
+        const url = new URL(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts/${accountId}/txPush`);
+        const response = await fetch(url.toString(), {
+            method: "POST",
+            headers: {
+                'Finicity-App-Token': this.accessToken,
+                'Finicity-App-Key': this.appKey,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                callbackUrl: callbackUrl
+            })
+        })
+
+        const body = await response.text();
+        try {
+            return JSON.parse(body) as EnableCustomerTx;
+        } catch (e) {
+            throw new Error(body.toString());
+        }
+    }
+
+    deleteTxPushSubscription = async (customerId: string, subscriptionId: string): Promise<void> => {
+        const url = new URL(`https://api.finicity.com/aggregation/v1/customers/${customerId}/subscriptions/${subscriptionId}`);
+        await fetch(url.toString(), {
+            method: "DELETE",
+            headers: {
+                'Finicity-App-Token': this.accessToken,
+                'Finicity-App-Key': this.appKey
+            }
+        })
+        // TODO: Make check status code to make sure things were deleted appropriately....
     }
 }

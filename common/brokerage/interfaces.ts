@@ -293,6 +293,9 @@ export type FinicityAccount = {
     marketSegment: string
     updatedAt: DateTime
     createdAt: DateTime
+
+    txPushId: string
+    txPushSigningKey: string
 }
 
 export type FinicityHolding = {

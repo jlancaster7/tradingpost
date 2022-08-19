@@ -362,6 +362,16 @@ export interface GetAccountAndHoldings {
     marketSegment: string
 }
 
+export interface EnableCustomerTx {
+    subscriptions: {
+        id: string
+        accountId: string
+        type: string
+        callbackUrl: string
+        signingKey: string
+    }[]
+}
+
 export interface GetAllCustomerTransactions {
     found: number
     displaying: number

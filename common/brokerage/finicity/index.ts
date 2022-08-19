@@ -8,7 +8,6 @@ import {
     TradingPostBrokerageAccounts,
     TradingPostCurrentHoldings,
     TradingPostInstitution,
-    TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
     IFinicityRepository, TradingPostBrokerageAccountsTable, TradingPostUser,
 } from "../interfaces";
@@ -243,6 +242,8 @@ export default class FinicityService implements IBrokerageService {
         if (finicityUser === null) throw new Error(`no user accounts exist for user id ${userId}`)
         await this.finicity.refreshCustomerAccounts(userId);
 
+        const currentFinicityAccounts = await this.repository.getFinicityAccounts(finicityUser.id);
+
         const finicityAccounts = await this.finicity.getCustomerAccounts(userId)
         if (!finicityAccounts) throw new Error("NO ACCOUNTS AVAIL...")
 
@@ -251,9 +252,31 @@ export default class FinicityService implements IBrokerageService {
             const fa = finicityAccounts.accounts[i];
 
             const {
-                tradingPostInstitutionId,
-                finicityInstitutionId
+                finicityInstitutionId,
+                tradingPostInstitutionId
             } = await this.getAddInstitution(parseInt(fa.institutionId));
+
+            let isIn = false;
+            currentFinicityAccounts.forEach(ca => {
+                if (isIn) return
+                if (ca.finicityInstitutionId == tradingPostInstitutionId && ca.number == fa.number) isIn = true
+            });
+
+            if (isIn) continue
+
+            let txPushId = "",
+                txSigningKey = "";
+            // This will push transactions to our table
+            const subscription = await this.finicity.registerTxPush(finicityUser.customerId, fa.id,
+                "https://worker.tradingpostapp.com/finicity/webhook");
+
+            subscription.subscriptions.forEach(s => {
+                if (s.id !== "" && s.id !== null) {
+                    txPushId = s.id;
+                    txSigningKey = s.signingKey;
+                }
+            })
+
             newFinicityAccounts.push({
                 id: 0,
                 finicityUserId: finicityUser.id,
@@ -293,6 +316,8 @@ export default class FinicityService implements IBrokerageService {
                 parentAccount: fa.parentAccount,
                 updatedAt: DateTime.now(),
                 createdAt: DateTime.now(),
+                txPushId: txPushId,
+                txPushSigningKey: txSigningKey
             })
         }
 
@@ -486,9 +511,17 @@ export default class FinicityService implements IBrokerageService {
             }
         }
 
-        const ids = removalAccounts.map(ra => ra.id);
+        if (removalAccounts.length > 0) {
+            for (let i = 0; i < removalAccounts.length; i++) {
+                try {
+                    const acc = removalAccounts[i];
+                    await this.finicity.deleteTxPushSubscription(finicityUser.customerId, acc.txPushId);
+                } catch (e) {
+                    console.error(e)
+                }
+            }
 
-        if (ids.length > 0) {
+            const ids = removalAccounts.map(ra => ra.id);
             await this.repository.deleteFinicityHoldings(ids);
             await this.repository.deleteFinicityTransactions(ids);
             await this.repository.deleteFinicityAccounts(ids)

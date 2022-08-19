@@ -1,5 +1,4 @@
 import {DateTime} from "luxon";
-import {addSerializer} from "jest-snapshot";
 
 export interface addSecurityPrice {
     securityId: number

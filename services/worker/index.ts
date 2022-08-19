@@ -61,6 +61,8 @@ const run = async () => {
             throw new Error("invalid request");
         }
 
+        console.log(req.body);
+
         if (req.body.eventType === 'added') {
             const {customerId} = req.body;
             await brokerageService.addNewAccounts(customerId, 'finicity');
@@ -70,6 +72,12 @@ const run = async () => {
             const {customerId, eventId, payload} = req.body
             const {accounts} = payload;
             await brokerageService.removeAccounts(customerId, accounts, 'finicity');
+        }
+
+        // TODO: YEAH....
+        if (req.body.eventType === 'SOMETHING') {
+            const {customerId, eventId, payload} = req.body;
+            await brokerageService.addNewTransactions(customerId, 'finicity')
         }
 
         return res.send()
