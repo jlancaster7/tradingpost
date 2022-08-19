@@ -25,7 +25,7 @@ export default class Repository {
         const spotifyShowIds = await this.db.query(query);
         return spotifyShowIds;
     }
-    getTwitterUsers = async (): Promise<{twitter_user_id: string, access_token: string | null, refresh_token: string | null}[]>  => {
+    getTwitterUsers = async (): Promise<{ twitter_user_id: string, access_token: string | null, refresh_token: string | null }[]> => {
         let query = `SELECT twitter_user_id, a.access_token, a.refresh_token
                      FROM twitter_users
                               LEFT JOIN (SELECT platform_user_id, access_token, refresh_token
@@ -46,7 +46,7 @@ export default class Repository {
         const substackIds = await this.db.query(query);
         return substackIds;
     }
-    getYoutubeUsers = async (): Promise<{youtube_channel_id: string, access_token: string | null, refresh_token: string | null}[]> => {
+    getYoutubeUsers = async (): Promise<{ youtube_channel_id: string, access_token: string | null, refresh_token: string | null }[]> => {
         let query = `SELECT a.youtube_channel_id, b.access_token, b.refresh_token
                      FROM youtube_users as a
                               LEFT JOIN (SELECT platform_user_id, access_token, refresh_token
@@ -114,27 +114,28 @@ export default class Repository {
                                   user_id,
                                   created_at,
                                   updated_at
-                            FROM data_platform_claim
-                            WHERE ${idType} IN ($1) AND platform = $2
-                `;
+                           FROM data_platform_claim
+                           WHERE ${idType} IN ($1)
+                             AND platform = $2
+            `;
             const response = await this.db.many(query, [ids.join(', '), platform]);
             let result: PlatformToken[] = [];
             for (let i = 0; i < response.length; i++) {
                 result.push({
-                userId: response[i].user_id, 
-                platform: response[i].platform,
-                platformUserId: response[i].platform_user_id, 
-                accessToken: response[i].access_token, 
-                refreshToken: response[i].refresh_token, 
-                expiration: response[i].expiration,
-                updatedAt: response[i].updated_at
+                    userId: response[i].user_id,
+                    platform: response[i].platform,
+                    platformUserId: response[i].platform_user_id,
+                    accessToken: response[i].access_token,
+                    refreshToken: response[i].refresh_token,
+                    expiration: response[i].expiration,
+                    updatedAt: response[i].updated_at
                 })
             }
             return result;
         } catch (error) {
             return []
         }
-        
+
     }
 
     upsertUserTokens = async (userTokens: PlatformToken) => {
@@ -159,55 +160,60 @@ export default class Repository {
     }
     removeUserToken = async (idType: string, id: string, platform: string) => {
         try {
-            const query = `DELETE FROM data_platform_claim
-                           WHERE ${idType} IN ($1) AND platform = $2
-                           `;
+            const query = `DELETE
+                           FROM data_platform_claim
+                           WHERE ${idType} IN ($1)
+                             AND platform = $2
+            `;
             await this.db.none(query, [id, platform]);
         } catch (error) {
             throw new Error(`Failed to delete Youtube claim for id: ${id}`);
         }
-        
+
     }
 
     isUserIdDummy = async (userId: string): Promise<boolean> => {
-        const query = `SELECT dummy FROM data_user WHERE id = $1`
+        const query = `SELECT dummy
+                       FROM data_user
+                       WHERE id = $1`
         return (await this.db.one(query, [userId])).dummy;
     }
 
-    mergeDummyAccounts = async (userId: {newUserId: string, dummyUserId: string}) => {
+    mergeDummyAccounts = async (userId: { newUserId: string, dummyUserId: string }) => {
         try {
             let tableQuery = `SELECT c.conrelid::regclass AS table_from
-                                  FROM pg_constraint c
-                                      INNER JOIN pg_namespace n
-                                                 ON n.oid = c.connamespace
-                                      CROSS JOIN LATERAL unnest(c.conkey) ak(k)
-                                      INNER JOIN pg_attribute a
-                                                 ON a.attrelid = c.conrelid
-                                                 AND a.attnum = ak.k
-                                  WHERE c.confrelid::regclass::text = 'data_user'
-                                  and a.attname = 'user_id'
-                                  and c.contype = 'f'
-                                  `;
+                              FROM pg_constraint c
+                                       INNER JOIN pg_namespace n
+                                                  ON n.oid = c.connamespace
+                                       CROSS JOIN LATERAL unnest(c.conkey) ak(k)
+                                       INNER JOIN pg_attribute a
+                                                  ON a.attrelid = c.conrelid
+                                                      AND a.attnum = ak.k
+                              WHERE c.confrelid::regclass::text = 'data_user'
+                                and a.attname = 'user_id'
+                                and c.contype = 'f'
+            `;
             const tableResponse = await this.db.query(tableQuery);
             console.log(userId)
             await this.db.tx(async t => {
                 let updateQueries = [];
                 for (let d of tableResponse) {
                     updateQueries.push(this.db.oneOrNone(`UPDATE ${d.table_from}
-                                    SET user_id = '${userId.newUserId}'
-                                    WHERE user_id = '${userId.dummyUserId}'
-                                    `));
-                                }
-                updateQueries.push(this.db.none(`DELETE FROM data_user
-                                                WHERE id = '${userId.dummyUserId}'
-                                                AND dummy = true`));
+                                                          SET user_id = '${userId.newUserId}'
+                                                          WHERE user_id = '${userId.dummyUserId}'
+                    `));
+                }
+                updateQueries.push(this.db.none(`DELETE
+                                                 FROM data_user
+                                                 WHERE id = '${userId.dummyUserId}'
+                                                   AND dummy = true`));
                 return t.batch(updateQueries);
             })
         } catch (err) {
             console.error(err);
             throw new Error(`Merge for newUserId: ${userId.newUserId} dummyUserId: ${userId.dummyUserId} failed`)
         }
-        
+
     }
 
     upsertTweets = async (formatedTweets: formatedTweet[]) => {
@@ -230,14 +236,17 @@ export default class Repository {
                 {name: 'cashtags', prop: 'cashtags'},
                 {name: 'hashtags', prop: 'hashtags'},
                 {name: 'mentions', prop: 'mentions'},
-                {name: 'twitter_created_at', prop: 'twitter_created_at'}
+                {name: 'twitter_created_at', prop: 'twitter_created_at'},
+                {name: 'aspect_ratio', prop: 'aspect_ratio'},
+                {name: 'max_width', prop: 'max_width'}
             ], {table: 'tweets'})
             const query = this.pgp.helpers.insert(formatedTweets, cs) + ` ON CONFLICT ON CONSTRAINT tweets_tweet_id_key DO UPDATE SET
                                                                             like_count = EXCLUDED.like_count,
                                                                             quote_count = EXCLUDED.quote_count,
                                                                             reply_count = EXCLUDED.reply_count,
-                                                                            retweet_count = EXCLUDED.retweet_count
-                                                                            `;
+                                                                            retweet_count = EXCLUDED.retweet_count,
+                                                                            aspect_ratio = EXCLUDED.aspect_ratio,
+                                                                            max_width = EXCLUDED.max_width`;
 
             const result = await this.db.result(query);
             return result.rowCount;
@@ -294,6 +303,8 @@ export default class Repository {
                 {name: 'content_snippet', prop: 'content_snippet'},
                 {name: 'article_id', prop: 'article_id'},
                 {name: 'itunes', prop: 'itunes'},
+                {name: 'aspect_ratio', prop: 'aspect_ratio'},
+                {name: 'max_width', prop: 'max_width'}
             ], {table: 'substack_articles'});
 
             const query = this.pgp.helpers.insert(formattedArticles, cs) + ' ON CONFLICT DO NOTHING';
@@ -348,7 +359,10 @@ export default class Repository {
                 {name: 'external_urls', prop: 'external_urls'},
                 {name: 'images', prop: 'images'},
                 {name: 'release_date', prop: 'release_date'},
+                {name: 'aspect_ratio', prop: 'aspect_ratio'},
+                {name: 'max_width', prop: 'max_width'}
             ], {table: 'spotify_episodes'});
+
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile
             const query = this.pgp.helpers.insert(episodes, cs) + ' ON CONFLICT DO NOTHING';
             const results = await this.db.result(query);
@@ -405,6 +419,8 @@ export default class Repository {
                 {name: 'thumbnails', prop: 'thumbnails'},
                 {name: 'video_url', prop: 'video_url'},
                 {name: 'video_embed', prop: 'video_embed'},
+                {name: 'aspect_ratio', prop: 'aspect_ratio'},
+                {name: 'max_width', prop: 'max_width'}
             ], {table: 'youtube_videos'});
             const query = this.pgp.helpers.insert(formattedVideos, cs) + ' ON CONFLICT DO NOTHING;'
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile

@@ -48,6 +48,8 @@ export interface formatedYoutubeVideo {
     thumbnails: string
     video_url: string
     video_embed: string
+    aspect_ratio: number
+    max_width: number
 }
 
 export interface youtubeParams {

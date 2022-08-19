@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import {rawTweet, formatedTweet, twitterParams} from '../interfaces/twitter';
 import Repository from '../repository'
 import {twitterConfig, PlatformToken} from '../interfaces/utils';
+import PostPrepper from "../../post-prepper";
 
 export class Tweets {
     private twitterConfig: twitterConfig;
@@ -38,7 +39,7 @@ export class Tweets {
             const response = await this.repository.getTokens(idType, [id], 'twitter');
             const authUrl = '/oauth2/token';
             let data: PlatformToken;
-            
+
             if (!response.length) {
 
                 throw new Error("No token was found for this ID");
@@ -57,7 +58,7 @@ export class Tweets {
 
             const fetchUrl = this.twitterUrl + authUrl;
             const result = await (await fetch(fetchUrl, refreshParams)).json();
-            
+
             const expiration = new Date();
             data = {
                 userId: response[0].userId,
@@ -65,10 +66,10 @@ export class Tweets {
                 platformUserId: response[0].platformUserId,
                 accessToken: result.access_token,
                 refreshToken: result.refresh_token,
-                expiration: new Date( expiration.getTime() + result.expires_in),
+                expiration: new Date(expiration.getTime() + result.expires_in),
                 updatedAt: new Date()
             };
-        
+
             await this.repository.upsertUserTokens(data);
             return data;
         } catch (err) {
@@ -77,11 +78,20 @@ export class Tweets {
         }
     }
     importTweets = async (twitterUserId: string, userToken: string | null = null): Promise<[formatedTweet[], number]> => {
+        const postPrepper = new PostPrepper();
+        await postPrepper.init()
         const data = await this.getUserTweets(twitterUserId, userToken);
         if (data === []) {
             return [[], 0];
         }
-        const formatedData = this.formatTweets(data);
+
+        const formatedData = await this.formatTweets(data);
+        for (let i = 0; i < formatedData.length; i++) {
+            const {maxWidth, aspectRatio} = await postPrepper.twitter(formatedData[i].embed);
+            formatedData[i].max_width = maxWidth;
+            formatedData[i].aspect_ratio = aspectRatio;
+        }
+
         const result = await this.repository.upsertTweets(formatedData);
         return [formatedData, result];
     }
@@ -135,14 +145,14 @@ export class Tweets {
                     return [];
                 }
                 responseData = response.data;
-                
+
                 if (token && !responseData) {
                     const newToken = await this.refreshTokensbyId('platform_user_id', twitterUserId);
                     if (newToken) {
                         this.params.headers.authorization = 'BEARER ' + newToken!.accessToken;
                         response = await (await fetch(fetchUrl, this.params)).json();
                         responseData = response.data;
-                        if (!responseData){
+                        if (!responseData) {
                             this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'] as string;
                             response = await (await fetch(fetchUrl, this.params)).json();
                             responseData = response.data;
@@ -151,8 +161,7 @@ export class Tweets {
                                 throw new Error(`Tried auth and api key, both failed for twitter user id: ${twitterUserId}`)
                             }
                         }
-                    }
-                    else {
+                    } else {
                         this.params.headers.authorization = 'BEARER ' + this.twitterConfig['bearer_token'] as string;
                         response = await (await fetch(fetchUrl, this.params)).json();
                         responseData = response.data;
@@ -196,7 +205,7 @@ export class Tweets {
         return data;
     }
 
-    formatTweets = (rawTweets: rawTweet[]): formatedTweet[] => {
+    formatTweets = async (rawTweets: rawTweet[]): Promise<formatedTweet[]> => {
         let formatedTweets: formatedTweet[] = [];
         for (let i = 0; i < rawTweets.length; i++) {
             let urls = null;
@@ -235,7 +244,9 @@ export class Tweets {
                 cashtags: rawTweets[i].entities ? (rawTweets[i].entities!.cashtags ? JSON.stringify(rawTweets[i].entities!.cashtags) : null) : null,
                 hashtags: rawTweets[i].entities ? (rawTweets[i].entities!.hashtags ? JSON.stringify(rawTweets[i].entities!.hashtags) : null) : null,
                 mentions: rawTweets[i].entities ? (rawTweets[i].entities!.mentions ? JSON.stringify(rawTweets[i].entities!.mentions) : null) : null,
-                twitter_created_at: rawTweets[i].created_at
+                twitter_created_at: rawTweets[i].created_at,
+                aspect_ratio: 0,
+                max_width: 0
             })
         }
         return formatedTweets;

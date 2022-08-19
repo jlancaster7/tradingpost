@@ -20,7 +20,7 @@ export interface SubstackUser {
 }
 
 export interface SubstackFeed {
-    items: {[key: string]: string}[],
+    items: { [key: string]: string }[],
     feedUrl: string,
     image: {
         link: string,
@@ -60,5 +60,6 @@ export interface SubstackArticles {
     content_snippet: string,
     article_id: string,
     itunes: string
-
+    aspect_ratio: number
+    max_width: number
 }

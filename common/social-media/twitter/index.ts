@@ -3,6 +3,7 @@ import {TwitterUsers} from './users';
 import {Tweets} from './tweets';
 import Repository from '../repository'
 import {IDatabase, IMain} from "pg-promise";
+import PostPrepper from "../../post-prepper/index";
 
 type TwitterConfiguration = {
     API_key: string
@@ -10,26 +11,23 @@ type TwitterConfiguration = {
     bearer_token: string
 }
 
-
-
 export const lambdaImportTweets = async (pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => {
-    
     const repository = new Repository(pgClient, pgp);
     const twitterIds = await repository.getTwitterUsers();
     const Tweet = new Tweets(twitterConfiguration, repository);
     let result: [formatedTweet[], number];
     let tweetsImported = 0;
-   
+
     for (let i = 0; i < twitterIds.length; i++) {
         result = await Tweet.importTweets(twitterIds[i].twitter_user_id, twitterIds[i].access_token);
         tweetsImported += result[1];
     }
     console.log(`${tweetsImported} tweets were imported!`);
-    
+
 }
 
 export const addTwitterUsersByHandle = async (handles: string | string[], pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser[]> => {
-    
+
     const repository = new Repository(pgClient, pgp);
     const TwitterUser = new TwitterUsers(twitterConfiguration, repository);
 
@@ -43,8 +41,8 @@ export const addTwitterUsersByHandle = async (handles: string | string[], pgClie
     console.log(`Successfully imported ${result.length} of ${length} Twitter profiles.`);
     return result
 }
-export const addTwitterUsersByToken = async (twitterUsers: {userId: string, accessToken: string, refreshToken: string, expiration: number}, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser> => {
-    
+export const addTwitterUsersByToken = async (twitterUsers: { userId: string, accessToken: string, refreshToken: string, expiration: number }, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser> => {
+
     const repository = new Repository(pgClient, pgp);
     const TwitterUser = new TwitterUsers(twitterConfiguration, repository);
     const Tweet = new Tweets(twitterConfiguration, repository);
@@ -54,7 +52,7 @@ export const addTwitterUsersByToken = async (twitterUsers: {userId: string, acce
     console.log(`Successfully imported ${result[0].username} Twitter profile.`);
     return result[0];
 
-    
+
 }
 export const addTweets = async (twitterUserId: string, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration, startDate?: Date): Promise<[formatedTweet[], number]> => {
     const repository = new Repository(pgClient, pgp);

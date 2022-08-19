@@ -6,7 +6,6 @@ import {IDatabase, IMain} from "pg-promise";
 
 
 async function lambdaImportRSSFeeds(pgClient: IDatabase<any>, pgp: IMain) {
-
     const repository = new Repository(pgClient, pgp);
     const substackIds = await repository.getSubstackUsers();
     const ssArticles = new Substack(repository);

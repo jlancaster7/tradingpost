@@ -53,4 +53,6 @@ export interface spotifyEpisode {
     release_date_precision: string
     type: string
     uri: string
+    aspect_ratio: number
+    max_width: number
 }

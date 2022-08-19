@@ -9,9 +9,8 @@ type SpotifyConfiguration = {
 }
 
 async function lambdaImportEpisodes(pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration) {
-
     const repository = new Repository(pgClient, pgp);
-    const spotifyShowIds = await repository.getSpotifyUsers(); 
+    const spotifyShowIds = await repository.getSpotifyUsers();
     const Spotify = new SpotifyShows(repository, spotifyConfiguration);
 
     let result: [spotifyEpisode[], number];
@@ -19,14 +18,13 @@ async function lambdaImportEpisodes(pgClient: IDatabase<any>, pgp: IMain, spotif
 
     for (let i = 0; i < spotifyShowIds.length; i++) {
         result = await Spotify.importEpisodes(spotifyShowIds[i].spotify_show_id);
-        
         episodeImported += result[1];
     }
 
     console.log(`${episodeImported} episodes were imported!`);
 }
 
-async function importSpotifyShows(spotifyUsers: {userId: string, showId: string}, pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration): Promise<[spotifyShow, number]> {
+async function importSpotifyShows(spotifyUsers: { userId: string, showId: string }, pgClient: IDatabase<any>, pgp: IMain, spotifyConfiguration: SpotifyConfiguration): Promise<[spotifyShow, number]> {
     const repository = new Repository(pgClient, pgp);
     const Spotify = new SpotifyShows(repository, spotifyConfiguration);
 

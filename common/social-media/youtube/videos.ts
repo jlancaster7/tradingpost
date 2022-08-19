@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
-import { rawYoutubeVideo, youtubeParams, formatedYoutubeVideo } from '../interfaces/youtube';
-import { youtubeConfig, PlatformToken } from '../interfaces/utils';
+import {rawYoutubeVideo, youtubeParams, formatedYoutubeVideo} from '../interfaces/youtube';
+import {youtubeConfig, PlatformToken} from '../interfaces/utils';
 import Repository from '../repository';
 
 
@@ -11,7 +11,7 @@ export class YoutubeVideos {
     public startDate: string;
     public defaultStartDateDays: number;
     private params: youtubeParams;
-    
+
 
     constructor(repository: Repository, youtubeConfig: youtubeConfig) {
         this.youtubeConfig = youtubeConfig;
@@ -35,11 +35,11 @@ export class YoutubeVideos {
         const result = await this.repository.getYoutubeLastUpdate(youtubeChannelId);
         this.setStartDate(result);
     }
-    refreshTokenById = async (idType: string, id: string): Promise<PlatformToken | null>  => {
+    refreshTokenById = async (idType: string, id: string): Promise<PlatformToken | null> => {
 
         const response = await this.repository.getTokens(idType, [id], 'youtube');
         let data: PlatformToken;
-        
+
         const refreshParams = {
             method: 'POST',
             headers: {
@@ -60,15 +60,15 @@ export class YoutubeVideos {
             return null;
         }
         data = {
-            userId: response[0].userId, 
-            platform: response[0].platform, 
-            platformUserId: response[0].platformUserId, 
-            accessToken: result.access_token, 
-            refreshToken: result.refresh_token, 
+            userId: response[0].userId,
+            platform: response[0].platform,
+            platformUserId: response[0].platformUserId,
+            accessToken: result.access_token,
+            refreshToken: result.refresh_token,
             expiration: new Date(today.getTime() + result.expires_in),
             updatedAt: new Date()
         };
-        
+
         await this.repository.upsertUserTokens(data);
         return data;
     }
@@ -116,8 +116,7 @@ export class YoutubeVideos {
             }
             if (accessToken) {
                 channelParams.append('access_token', key)
-            }
-            else {
+            } else {
                 channelParams.append('key', key)
             }
             fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
@@ -133,18 +132,17 @@ export class YoutubeVideos {
                     fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
                     response = await (await fetch(fetchUrl, this.params)).json();
                     items = response.items;
-                    if(!items) {
+                    if (!items) {
                         channelParams.delete('access_token');
                         channelParams.append('key', this.youtubeConfig.api_key as string);
                         fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
-                        response = await (await fetch(fetchUrl, this.params)).json();         
+                        response = await (await fetch(fetchUrl, this.params)).json();
                         items = response.items;
                         if (!items) {
                             throw new Error(`Was unable to get videos using API key or accessToken ${youtubeChannelId}`);
                         }
                     }
-                }
-                else {
+                } else {
                     channelParams.delete('access_token');
                     channelParams.append('key', this.youtubeConfig.api_key as string);
                     fetchUrl = this.youtubeUrl + playlistEndpoint + channelParams;
@@ -157,8 +155,7 @@ export class YoutubeVideos {
                         throw new Error(`No videos were return for ${youtubeChannelId}`);
                     }
                 }
-            }
-            else if (!items) {
+            } else if (!items) {
                 throw new Error(`No videos were return for ${youtubeChannelId}`);
             }
             items.forEach((element: any) => {
@@ -193,6 +190,8 @@ export class YoutubeVideos {
             delete formatedVideos[i].kind;
             delete formatedVideos[i].etag;
             delete formatedVideos[i].id;
+            formatedVideos[i].aspect_ratio = 1.0
+            formatedVideos[i].max_width = 400.0
         }
         return formatedVideos;
     }

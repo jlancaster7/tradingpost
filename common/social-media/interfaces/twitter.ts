@@ -31,6 +31,8 @@ export interface formatedTweet {
     hashtags: string | null,
     mentions: string | null,
     twitter_created_at: Date
+    aspect_ratio: number
+    max_width: number
 }
 
 export interface rawTwitterUser {
