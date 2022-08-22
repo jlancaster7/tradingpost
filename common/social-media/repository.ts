@@ -5,16 +5,15 @@ import {SubstackArticles, SubstackUser} from './interfaces/rss_feeds';
 import {spotifyShow, spotifyEpisode} from './interfaces/podcasts';
 import {formatedYoutubeVideo, formatedChannelInfo} from './interfaces/youtube';
 import {IDatabase, IMain} from "pg-promise";
+import PostPrepper from "../post-prepper/index";
 
 export default class Repository {
     private db: IDatabase<any>;
     private readonly pgp: IMain;
 
-
     constructor(db: IDatabase<any>, pgp: IMain) {
         this.db = db;
         this.pgp = pgp;
-
     }
 
     getSpotifyUsers = async (): Promise<{ spotify_show_id: string }[]> => {
@@ -22,9 +21,9 @@ export default class Repository {
                      FROM spotify_users
         `;
 
-        const spotifyShowIds = await this.db.query(query);
-        return spotifyShowIds;
+        return await this.db.query(query);
     }
+
     getTwitterUsers = async (): Promise<{ twitter_user_id: string, access_token: string | null, refresh_token: string | null }[]> => {
         let query = `SELECT twitter_user_id, a.access_token, a.refresh_token
                      FROM twitter_users
@@ -34,8 +33,7 @@ export default class Repository {
                                         ON twitter_users.twitter_user_id = a.platform_user_id
         `;
 
-        const twitterIds = await this.db.query(query);
-        return twitterIds;
+        return await this.db.query(query);
     }
 
     getSubstackUsers = async (): Promise<{ substack_user_id: string }[]> => {
@@ -43,9 +41,9 @@ export default class Repository {
                      FROM substack_users
         `;
 
-        const substackIds = await this.db.query(query);
-        return substackIds;
+        return await this.db.query(query);
     }
+
     getYoutubeUsers = async (): Promise<{ youtube_channel_id: string, access_token: string | null, refresh_token: string | null }[]> => {
         let query = `SELECT a.youtube_channel_id, b.access_token, b.refresh_token
                      FROM youtube_users as a
@@ -55,8 +53,7 @@ export default class Repository {
                                         ON a.youtube_channel_id = b.platform_user_id
         `;
 
-        const channelIds = await this.db.query(query);
-        return channelIds;
+        return await this.db.query(query);
     }
 
     getTweetsLastUpdate = async (twitterUserId: string): Promise<Date> => {

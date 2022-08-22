@@ -1,6 +1,5 @@
-import puppeteer from 'puppeteer';
+import {Browser} from "puppeteer";
 import {sleep} from "../utils/sleep";
-
 
 const MAX_WIDTH = 400;
 
@@ -10,14 +9,30 @@ type SizeResponse = {
 }
 
 export default class PostPrepper {
-    private browser: puppeteer.Browser | undefined = undefined;
+    private browser: Browser | undefined = undefined;
     private twitterScriptTag: string = "<script async src=\"https://platform.twitter.com/widgets.js\" charset=\"utf-8\"></script>";
 
     constructor() {
     }
 
-    init = async (): Promise<void> => {
-        this.browser = await puppeteer.launch();
+    say = () => {
+        console.log("Hi")
+    }
+
+    init = async (puppeteerBrowser: Browser): Promise<void> => {
+        if (this.browser) return;
+        if (puppeteerBrowser) {
+            this.browser = puppeteerBrowser;
+            return
+        }
+
+        const pup = await require('puppeteer');
+        this.browser = await pup.launch()
+    }
+
+    cleanup = async (): Promise<void> => {
+        if (!this.browser) return;
+        await this.browser.close()
     }
 
     twitter = async (html: string): Promise<SizeResponse> => {

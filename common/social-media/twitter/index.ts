@@ -11,10 +11,10 @@ type TwitterConfiguration = {
     bearer_token: string
 }
 
-export const lambdaImportTweets = async (pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => {
+export const lambdaImportTweets = async (pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration, postPrepper: PostPrepper) => {
     const repository = new Repository(pgClient, pgp);
     const twitterIds = await repository.getTwitterUsers();
-    const Tweet = new Tweets(twitterConfiguration, repository);
+    const Tweet = new Tweets(twitterConfiguration, repository, postPrepper);
     let result: [formatedTweet[], number];
     let tweetsImported = 0;
 
@@ -23,11 +23,9 @@ export const lambdaImportTweets = async (pgClient: IDatabase<any>, pgp: IMain, t
         tweetsImported += result[1];
     }
     console.log(`${tweetsImported} tweets were imported!`);
-
 }
 
 export const addTwitterUsersByHandle = async (handles: string | string[], pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser[]> => {
-
     const repository = new Repository(pgClient, pgp);
     const TwitterUser = new TwitterUsers(twitterConfiguration, repository);
 
@@ -42,21 +40,16 @@ export const addTwitterUsersByHandle = async (handles: string | string[], pgClie
     return result
 }
 export const addTwitterUsersByToken = async (twitterUsers: { userId: string, accessToken: string, refreshToken: string, expiration: number }, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration): Promise<formatedTwitterUser> => {
-
     const repository = new Repository(pgClient, pgp);
     const TwitterUser = new TwitterUsers(twitterConfiguration, repository);
-    const Tweet = new Tweets(twitterConfiguration, repository);
-
     const result = await TwitterUser.importUserByToken(twitterUsers);
-    const tweetResults = await Tweet.importTweets(result[0].twitter_user_id, twitterUsers.accessToken)
     console.log(`Successfully imported ${result[0].username} Twitter profile.`);
     return result[0];
-
-
 }
-export const addTweets = async (twitterUserId: string, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration, startDate?: Date): Promise<[formatedTweet[], number]> => {
+
+export const addTweets = async (twitterUserId: string, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration, postPrepper: PostPrepper, startDate?: Date): Promise<[formatedTweet[], number]> => {
     const repository = new Repository(pgClient, pgp);
-    const Tweet = new Tweets(twitterConfiguration, repository);
+    const Tweet = new Tweets(twitterConfiguration, repository, postPrepper);
     const token = await repository.getTokens('platform_user_id', [twitterUserId], 'twitter');
     if (startDate !== undefined) {
         await Tweet.setStartDate(twitterUserId, startDate);

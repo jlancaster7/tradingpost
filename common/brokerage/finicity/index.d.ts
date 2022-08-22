@@ -15,8 +15,8 @@ export default class FinicityService implements IBrokerageService {
         finicityInstitutionId: number;
     }>;
     importAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
-    importHoldings: (userId: string, brokerageIds?: number[] | string[] | undefined) => Promise<TradingPostCurrentHoldings[]>;
-    importTransactions: (userId: string, brokerageIds?: number[] | string[] | undefined) => Promise<TradingPostTransactions[]>;
+    importHoldings: (userId: string, brokerageIds?: string[] | number[] | undefined) => Promise<TradingPostCurrentHoldings[]>;
+    importTransactions: (userId: string, brokerageIds?: string[] | number[] | undefined) => Promise<TradingPostTransactions[]>;
     exportAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
     exportHoldings: (userId: string) => Promise<TradingPostCurrentHoldings[]>;
     exportTransactions: (userId: string) => Promise<TradingPostTransactions[]>;

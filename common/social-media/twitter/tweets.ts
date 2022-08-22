@@ -11,8 +11,9 @@ export class Tweets {
     public defaultStartDateDays: number;
     private params: twitterParams;
     private repository: Repository;
+    private postPrepper: PostPrepper;
 
-    constructor(twitterConfig: twitterConfig, repository: Repository) {
+    constructor(twitterConfig: twitterConfig, repository: Repository, postPrepper: PostPrepper) {
         this.twitterConfig = twitterConfig;
         this.repository = repository;
         this.params = {
@@ -21,6 +22,7 @@ export class Tweets {
                 authorization: 'BEARER ' + this.twitterConfig['bearer_token'] as string
             }
         }
+        this.postPrepper = postPrepper;
         this.twitterUrl = "https://api.twitter.com/2";
         this.startDate = '';
         this.defaultStartDateDays = 90;
@@ -77,9 +79,8 @@ export class Tweets {
             return null;
         }
     }
+
     importTweets = async (twitterUserId: string, userToken: string | null = null): Promise<[formatedTweet[], number]> => {
-        const postPrepper = new PostPrepper();
-        await postPrepper.init()
         const data = await this.getUserTweets(twitterUserId, userToken);
         if (data === []) {
             return [[], 0];
@@ -87,7 +88,7 @@ export class Tweets {
 
         const formatedData = await this.formatTweets(data);
         for (let i = 0; i < formatedData.length; i++) {
-            const {maxWidth, aspectRatio} = await postPrepper.twitter(formatedData[i].embed);
+            const {maxWidth, aspectRatio} = await this.postPrepper.twitter(formatedData[i].embed);
             formatedData[i].max_width = maxWidth;
             formatedData[i].aspect_ratio = aspectRatio;
         }

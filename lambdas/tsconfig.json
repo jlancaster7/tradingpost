@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "target": "es2016",
+    "target": "es2020",
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": "./",
-    "sourceMap": true
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "preserveConstEnums": true,
+    "module": "CommonJS"
   }
 }

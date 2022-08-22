@@ -5,9 +5,11 @@ import PostPrepper from "../../post-prepper/index";
 
 export class Substack {
     private repository: Repository;
+    private postPrepper: PostPrepper;
 
-    constructor(repository: Repository) {
+    constructor(repository: Repository, postPrepper: PostPrepper) {
         this.repository = repository
+        this.postPrepper = postPrepper;
     }
 
     importUsers = async (substackUser: { userId: string, username: string }): Promise<[SubstackUser, number]> => {
@@ -52,9 +54,6 @@ export class Substack {
     }
 
     importArticles = async (username: string): Promise<[SubstackArticles[], number]> => {
-        const postPrepper = new PostPrepper();
-        await postPrepper.init();
-
         const results = await this.getUserFeed(username);
         if (!results) {
             return [[], 0];
@@ -62,7 +61,7 @@ export class Substack {
 
         const formatedArticles = await this.formatArticles(results);
         for (let i = 0; i < formatedArticles.length; i++) {
-            const {maxWidth, aspectRatio} = await postPrepper.substack(formatedArticles[i].content_encoded);
+            const {maxWidth, aspectRatio} = await this.postPrepper.substack(formatedArticles[i].content_encoded);
             formatedArticles[i].max_width = maxWidth;
             formatedArticles[i].aspect_ratio = aspectRatio
         }
