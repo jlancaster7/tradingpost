@@ -59,12 +59,19 @@ export class Substack {
             return [[], 0];
         }
 
+        const jobs = [];
         const formatedArticles = await this.formatArticles(results);
         for (let i = 0; i < formatedArticles.length; i++) {
-            const {maxWidth, aspectRatio} = await this.postPrepper.substack(formatedArticles[i].content_encoded);
-            formatedArticles[i].max_width = maxWidth;
-            formatedArticles[i].aspect_ratio = aspectRatio
+            jobs.push(this.postPrepper.substack(formatedArticles[i].content_encoded));
         }
+
+        const r = await Promise.all(jobs);
+
+        r.forEach((item, idx) => {
+            const {maxWidth, aspectRatio} = item;
+            formatedArticles[idx].max_width = maxWidth;
+            formatedArticles[idx].aspect_ratio = aspectRatio
+        })
 
         const success = await this.repository.insertSubstackArticles(formatedArticles);
 

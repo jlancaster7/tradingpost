@@ -3,13 +3,14 @@ import {Context} from "aws-lambda";
 import {lambdaImportRSSFeeds} from "@tradingpost/common/social-media/rss_feeds/import";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
-import PostPrepper from "@tradingpost/common/post-prepper/index";
+import PostPrepper from "@tradingpost/common/post-prepper";
+import {Browser} from 'puppeteer';
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
+let browser: Browser;
 
 const runLambda = async () => {
-    let browser: any = null;
     if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
         const chromium = require('@sparticuz/chrome-aws-lambda');
         // @ts-ignore
@@ -41,7 +42,7 @@ const runLambda = async () => {
 
     const postPrepper = new PostPrepper()
 
-    // // @ts-ignore
+    // @ts-ignore
     await postPrepper.init(browser);
 
     try {

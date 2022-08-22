@@ -82,16 +82,22 @@ export class Tweets {
 
     importTweets = async (twitterUserId: string, userToken: string | null = null): Promise<[formatedTweet[], number]> => {
         const data = await this.getUserTweets(twitterUserId, userToken);
-        if (data === []) {
+        if (data.length <= 0) {
             return [[], 0];
         }
 
         const formatedData = await this.formatTweets(data);
+        const jobs = [];
         for (let i = 0; i < formatedData.length; i++) {
-            const {maxWidth, aspectRatio} = await this.postPrepper.twitter(formatedData[i].embed);
-            formatedData[i].max_width = maxWidth;
-            formatedData[i].aspect_ratio = aspectRatio;
+            jobs.push(this.postPrepper.twitter(formatedData[i].embed));
         }
+
+        const r = await Promise.all(jobs);
+        r.forEach((item, idx) => {
+            const {maxWidth, aspectRatio} = item;
+            formatedData[idx].max_width = maxWidth;
+            formatedData[idx].aspect_ratio = aspectRatio;
+        });
 
         const result = await this.repository.upsertTweets(formatedData);
         return [formatedData, result];

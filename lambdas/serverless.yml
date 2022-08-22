@@ -123,7 +123,7 @@ functions:
     handler: social-media/substack.run
     description: Ingests Substack Data
     logRetentionInDays: 14
-    timeout: 600
+    timeout: 900
     memorySize: 1600
     reservedConcurrency: 1
     events:
