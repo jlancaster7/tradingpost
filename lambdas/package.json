@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@elastic/elasticsearch": "^8.2.1",
     "@sparticuz/chrome-aws-lambda": "^16.0.0",
     "@tradingpost/common": "file:../common",
     "aws-lambda": "^1.0.7",

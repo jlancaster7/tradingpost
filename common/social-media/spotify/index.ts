@@ -1,17 +1,15 @@
 import fetch from 'node-fetch';
-import {spotifyConfig, PlatformToken} from '../interfaces/utils';
-import {spotifyParams, spotifyShow, spotifyEpisode} from '../interfaces/podcasts';
+import {spotifyConfig} from '../utils';
+import {spotifyParams, spotifyShow, spotifyEpisode} from './interfaces';
 import Repository from '../repository';
-import {start} from 'repl';
 
-
-export class SpotifyShows {
+export default class Spotify {
     private spotifyConfig: spotifyConfig;
     private repository: Repository;
     private tokenUrl: string;
-    private showUrl: string;
+    private readonly showUrl: string;
     private access_token: string;
-    private params: spotifyParams;
+    private readonly params: spotifyParams;
 
     constructor(repository: Repository, spotifyConfig: spotifyConfig) {
         this.spotifyConfig = spotifyConfig;
@@ -86,6 +84,7 @@ export class SpotifyShows {
         if (data.length <= 0) {
             return [[], 0]
         }
+    
         const results = await this.repository.insertSpotifyEpisodes(data);
 
         return [data, results]

@@ -2,7 +2,7 @@ import express, {Request, Response} from 'express';
 import cors from 'cors';
 import {DefaultConfig} from '@tradingpost/common/configuration';
 import pgPromise from 'pg-promise';
-import Finicity from "@tradingpost/common/finicity/index";
+import Finicity from "@tradingpost/common/finicity";
 import Brokerage from "@tradingpost/common/brokerage";
 import bodyParser from "body-parser";
 import pg from 'pg';

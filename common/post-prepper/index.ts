@@ -15,10 +15,6 @@ export default class PostPrepper {
     constructor() {
     }
 
-    say = () => {
-        console.log("Hi")
-    }
-
     init = async (puppeteerBrowser: Browser): Promise<void> => {
         if (this.browser) return;
         if (puppeteerBrowser) {

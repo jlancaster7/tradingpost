@@ -1,10 +1,12 @@
 import 'dotenv/config';
 import {Context} from "aws-lambda";
-import {lambdaImportRSSFeeds} from "@tradingpost/common/social-media/rss_feeds/import";
+import {DefaultSubstack} from "@tradingpost/common/social-media/substack/service";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import PostPrepper from "@tradingpost/common/post-prepper";
 import {Browser} from 'puppeteer';
+import ElasticService from "@tradingpost/common/elastic";
+import {Client as ElasticClient} from "@elastic/elasticsearch";
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
@@ -41,12 +43,23 @@ const runLambda = async () => {
     }
 
     const postPrepper = new PostPrepper()
+    const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
+    const elasticService = new ElasticService(new ElasticClient({
+        cloud: {
+            id: elasticConfiguration.cloudId
+        },
+        auth: {
+            apiKey: elasticConfiguration.apiKey
+        },
+        maxRetries: 5,
+    }), "tradingpost-search");
 
     // @ts-ignore
     await postPrepper.init(browser);
+    const substack = DefaultSubstack(pgClient, pgp, postPrepper, elasticService)
 
     try {
-        await lambdaImportRSSFeeds(pgClient, pgp, postPrepper);
+        await substack.importArticles();
     } catch (e) {
         console.error(e)
         throw e

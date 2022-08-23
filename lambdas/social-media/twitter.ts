@@ -1,10 +1,12 @@
 import 'dotenv/config';
 import {Context} from "aws-lambda";
-import {lambdaImportTweets} from "@tradingpost/common/social-media/twitter";
+import {DefaultTwitter} from "@tradingpost/common/social-media/twitter/service";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import PostPrepper from "@tradingpost/common/post-prepper";
 import {Browser} from "puppeteer";
+import ElasticService from "@tradingpost/common/elastic";
+import {Client as ElasticClient} from "@elastic/elasticsearch";
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
@@ -40,14 +42,26 @@ const runLambda = async () => {
         await pgClient.connect()
     }
 
-    const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
     const postPrepper = new PostPrepper()
+    const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
+    const elasticService = new ElasticService(new ElasticClient({
+        cloud: {
+            id: elasticConfiguration.cloudId
+        },
+        auth: {
+            apiKey: elasticConfiguration.apiKey
+        },
+        maxRetries: 5,
+    }), "tradingpost-search");
 
     // @ts-ignore
     await postPrepper.init(browser);
 
+    const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
+    const twitter = DefaultTwitter(twitterConfiguration, pgClient, pgp, postPrepper, elasticService);
+
     try {
-        await lambdaImportTweets(pgClient, pgp, twitterConfiguration, postPrepper);
+        await twitter.importTweets();
     } catch (e) {
         console.error(e)
         throw e;

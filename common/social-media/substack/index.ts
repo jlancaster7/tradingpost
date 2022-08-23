@@ -1,9 +1,9 @@
 import Parser from 'rss-parser';
-import {SubstackUser, SubstackFeed, SubstackArticles} from '../interfaces/rss_feeds';
+import {SubstackUser, SubstackFeed, SubstackArticles} from './interfaces';
 import Repository from '../repository'
-import PostPrepper from "../../post-prepper/index";
+import PostPrepper from "../../post-prepper";
 
-export class Substack {
+export default class Substack {
     private repository: Repository;
     private postPrepper: PostPrepper;
 
@@ -13,7 +13,6 @@ export class Substack {
     }
 
     importUsers = async (substackUser: { userId: string, username: string }): Promise<[SubstackUser, number]> => {
-
         let results = [];
         let data: SubstackFeed | undefined;
         let count = 0;
@@ -61,6 +60,7 @@ export class Substack {
 
         const jobs = [];
         const formatedArticles = await this.formatArticles(results);
+
         for (let i = 0; i < formatedArticles.length; i++) {
             jobs.push(this.postPrepper.substack(formatedArticles[i].content_encoded));
         }
