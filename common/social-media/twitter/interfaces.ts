@@ -1,14 +1,58 @@
+import {DateTime} from "luxon";
+
+export interface TweetsAndUsers {
+    tweetID: number
+    twitterUserID: number
+    embed: string
+    language: string
+    likeCount: number
+    possiblySensitive: boolean
+    quoteCount: number
+    replyCount: number
+    retweetCount: number
+    text: string
+    tweetURL: string
+    URLs: string[]
+    mediaKeys: {
+        data: string[]
+    }
+    annotations: object
+    cashtags: object
+    hashtags: object
+    mentions: object
+    tweetTwitterCreatedAt: DateTime
+    tradingPostTweetCreatedAt: DateTime
+    twitterUsername: string
+    displayName: string
+    description: string
+    location: string
+    followerCount: number
+    followingCount: number
+    profileImageURL: string
+    profileURL: string
+    protected: boolean,
+    userTwitterCreatedAt: DateTime
+    tradingPostTwitterCreatedAt: DateTime
+    aspectRatio: number
+    maxWidth: number
+    tradingpostUserId: string
+    tradingpostUserHandle: string
+    tradingpostUserEmail: string
+    tradingpostUserProfileUrl: string
+
+}
+
 export interface rawTweet {
     id: string,
     twitter_user_id: string,
     embed: string,
     lang: string,
-    public_metrics: {[key: string]: number},
+    public_metrics: { [key: string]: number },
     possibly_sensitive: boolean,
     text: string,
     tweet_url: string,
-    entities?: {[key: string]: string},
-    attachments?: {[key: string]: string},
+    entities?: { [key: string]: string },
+    attachments?: { [key: string]: string },
     created_at: Date
 }
 
@@ -31,12 +75,14 @@ export interface formatedTweet {
     hashtags: string | null,
     mentions: string | null,
     twitter_created_at: Date
+    aspect_ratio: number
+    max_width: number
 }
 
 export interface rawTwitterUser {
     protected: boolean,
     name: string,
-    public_metrics: {[key: string]: number},
+    public_metrics: { [key: string]: number },
     location: string,
     created_at: string,
     username: string,
@@ -60,15 +106,15 @@ export interface formatedTwitterUser {
 }
 
 export type PlatformToken = {
-    userId: string, 
+    userId: string,
     platform: string,
-    platformUserId: string, 
-    accessToken: string, 
-    refreshToken: string, 
+    platformUserId: string,
+    accessToken: string,
+    refreshToken: string,
     expiration: string
 }
 
 export interface twitterParams {
     method: string,
-    headers: {[key: string]: string}
+    headers: { [key: string]: string }
 }

@@ -6,7 +6,6 @@ export interface config {
 }
 
 export interface twitterConfig {
-
     [key: string]: string | number | boolean
 }
 
@@ -23,11 +22,11 @@ export interface spotifyConfig {
 }
 
 export type PlatformToken = {
-    userId: string, 
+    userId: string,
     platform: string,
-    platformUserId: string, 
-    accessToken: string | null, 
-    refreshToken: string | null, 
+    platformUserId: string,
+    accessToken: string | null,
+    refreshToken: string | null,
     expiration: Date | null,
     updatedAt: Date
 }

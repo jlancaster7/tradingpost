@@ -1,17 +1,15 @@
 import fetch from 'node-fetch';
-import { spotifyConfig, PlatformToken } from '../interfaces/utils';
-import { spotifyParams, spotifyShow, spotifyEpisode } from '../interfaces/podcasts';
+import {spotifyConfig} from '../utils';
+import {spotifyParams, spotifyShow, spotifyEpisode} from './interfaces';
 import Repository from '../repository';
-import { start } from 'repl';
 
-
-export class SpotifyShows {
+export default class Spotify {
     private spotifyConfig: spotifyConfig;
     private repository: Repository;
     private tokenUrl: string;
-    private showUrl: string;
+    private readonly showUrl: string;
     private access_token: string;
-    private params: spotifyParams;
+    private readonly params: spotifyParams;
 
     constructor(repository: Repository, spotifyConfig: spotifyConfig) {
         this.spotifyConfig = spotifyConfig;
@@ -50,24 +48,27 @@ export class SpotifyShows {
         }
     }
 
-    importShows = async (spotifyUsers: {userId: string, showId: string}): Promise<[spotifyShow, number]> => {
+    importShows = async (spotifyUsers: { userId: string, showId: string }): Promise<[spotifyShow, number]> => {
         let shows = await this.getShowInfo(spotifyUsers.showId);
 
         const out = {
-            userId: spotifyUsers.userId, 
-            platform: 'substack', 
-            platformUserId: spotifyUsers.showId, 
-            accessToken: null, 
-            refreshToken: null, 
+            userId: spotifyUsers.userId,
+            platform: 'substack',
+            platformUserId: spotifyUsers.showId,
+            accessToken: null,
+            refreshToken: null,
             expiration: null,
             updatedAt: new Date()
         }
-        
+
         const dummyTokens = await this.repository.getTokens('platform_user_id', [out.platformUserId], 'spotify');
         if (dummyTokens.length && spotifyUsers.userId !== dummyTokens[0].userId) {
             const dummyCheck = await this.repository.isUserIdDummy(dummyTokens[0].userId);
             if (dummyCheck) {
-                await this.repository.mergeDummyAccounts({newUserId: spotifyUsers.userId, dummyUserId: dummyTokens[0].userId});
+                await this.repository.mergeDummyAccounts({
+                    newUserId: spotifyUsers.userId,
+                    dummyUserId: dummyTokens[0].userId
+                });
             } else {
                 throw new Error("This account is claimed by another non-dummy user.");
             }
@@ -83,8 +84,9 @@ export class SpotifyShows {
         if (data.length <= 0) {
             return [[], 0]
         }
-        const results = await this.repository.insertSpotifyEpisodes(data);
     
+        const results = await this.repository.insertSpotifyEpisodes(data);
+
         return [data, results]
     }
 
@@ -95,7 +97,7 @@ export class SpotifyShows {
         let fetchUrl: string;
         let showResponse;
         let formatedShowInfo: spotifyShow;
-        fetchUrl = this.showUrl + showIds+ '?market=US';
+        fetchUrl = this.showUrl + showIds + '?market=US';
 
         showResponse = await (await fetch(fetchUrl, this.params)).json();
 
@@ -125,14 +127,14 @@ export class SpotifyShows {
             languages: JSON.stringify(showResponse.languages),
             external_urls: JSON.stringify(showResponse.external_urls),
             images: JSON.stringify(showResponse.images)
-        }        
+        }
         return formatedShowInfo;
     }
 
     getEpisodes = async (showId: string): Promise<spotifyEpisode[]> => {
         try {
             const startDate = await this.repository.getSpotifyLastUpdate(showId);
-            
+
             if (this.access_token === '') await this.setAccessToken()
             let results: spotifyEpisode[] = [];
             let fetchUrl: string | null;
@@ -145,11 +147,13 @@ export class SpotifyShows {
                 response = await fetch(fetchUrl, this.params);
                 body = await response.json();
                 if (Object.hasOwnProperty("error")) throw new Error(body["error"]);
-                
+
                 fetchUrl = body.next;
-                
+
                 for (let i = 0; i < body.items.length; i++) {
-                    if (startDate > new Date(body.items[i].release_date)) { fetchUrl = null }
+                    if (startDate > new Date(body.items[i].release_date)) {
+                        fetchUrl = null
+                    }
                     const embeddedResponse = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${body.items[i].id}`);
                     const embeddedBody = await embeddedResponse.text();
                     try {
@@ -183,7 +187,9 @@ export class SpotifyShows {
                         embed: JSON.stringify(element.embed),
                         external_urls: JSON.stringify(element.external_urls),
                         images: JSON.stringify(element.images),
-                        release_date: new Date(element.release_date)
+                        release_date: new Date(element.release_date),
+                        aspect_ratio: 2.0,
+                        max_width: 400.00
                     }
                     results.push(x)
                 });

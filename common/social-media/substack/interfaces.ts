@@ -1,3 +1,5 @@
+import {DateTime} from "luxon";
+
 export interface SubstackUser {
     substack_user_id: string,
     title: string,
@@ -20,7 +22,7 @@ export interface SubstackUser {
 }
 
 export interface SubstackFeed {
-    items: {[key: string]: string}[],
+    items: { [key: string]: string }[],
     feedUrl: string,
     image: {
         link: string,
@@ -60,5 +62,42 @@ export interface SubstackArticles {
     content_snippet: string,
     article_id: string,
     itunes: string
+    aspect_ratio: number
+    max_width: number
+}
 
+export interface SubstackAndNewsletter {
+    substack_user_id: string
+    article_id: string
+    creator: string
+    title: string
+    link: string
+    content_encoded: string
+    content_encoded_snippet: string
+    enclosure: object
+    dc_creator: string
+    itunes: object
+    content: string
+    content_snippet: string
+    substack_article_created_at: DateTime
+    tradingpost_substack_article_created_at: DateTime
+    newsletter_title: string
+    newsletter_description: string
+    newsletter_link: string
+    newsletter_language: string
+    newsletter_email: string
+    newsletter_image: {
+        url: string
+        link: string
+        title: string
+    }
+    newsletter_itunes: object
+    last_newsletter_build_date: DateTime
+    substack_added_to_tradingpost_date: DateTime
+    maxWidth: number
+    aspectRatio: number
+    tradingpostUserId: string
+    tradingpostUserHandle: string
+    tradingpostUserEmail: string
+    tradingpostProfileUrl: string
 }

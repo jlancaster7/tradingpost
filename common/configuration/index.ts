@@ -126,6 +126,13 @@ export class Configuration<K extends Record<string, any>> {
 
     fromSSM = async <T extends keyof K>(path: T, options?: ConfigOptions): Promise<K[T]> => {
         let output: string | undefined;
+
+        if (path in process.env) {
+            const val = process.env[path] as string;
+            return (options?.raw || this.defaultOptions[path]?.raw) ? val : JSON.parse(val);
+        }
+
+
         const fullPath = `/${this.environment}/${path as string}`
         if ((process.env as any)[path]) {
             console.log(`${fullPath} as been loaded from the local environment`);

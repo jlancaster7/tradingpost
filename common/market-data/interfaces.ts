@@ -2,20 +2,20 @@ import {DateTime} from "luxon";
 
 export interface addSecurityPrice {
     securityId: number
-    high: number
-    low: number
-    open: number
+    high: number | null
+    low: number | null
+    open: number | null
     price: number
     time: Date
+    isEod: boolean
+    isIntraday: boolean
 }
 
-export interface securityPrice {
+export interface updateSecurityPrice extends addSecurityPrice {
     id: number
-    high: number
-    low: number
-    open: number
-    price: number
-    time: DateTime
+}
+
+export interface securityPrice extends updateSecurityPrice {
     createdAt: DateTime
 }
 
@@ -136,11 +136,14 @@ export interface getUSExchangeHoliday {
 export interface getSecurityWithLatestPrice {
     id: number
     symbol: string
-    latestTime: DateTime
-    latestPrice: number
-    latestHigh: number
-    latestLow: number
-    latestOpen: number
+    latestTime: DateTime | null
+    latestPrice: number | null
+    isEodId: number | null
+    isEodHigh: number | null
+    isEodLow: number | null
+    isEodOpen: number | null
+    isEodPrice: number | null
+    isEodTime: DateTime | null
 }
 
 export interface getSecurityBySymbol {
@@ -168,6 +171,7 @@ export interface getSecurityBySymbol {
     lastUpdated: Date
     createdAt: Date
 }
+
 
 export interface getIexSecurityBySymbol extends getSecurityBySymbol {
     validated: boolean

@@ -1,15 +1,15 @@
 import 'dotenv/config';
-process.env.CONFIGURATION_ENV = 'production';
 import {Context} from "aws-lambda";
-import {lambdaImportYoutube} from "@tradingpost/common/social-media/youtube/import";
+import {DefaultYoutube} from "@tradingpost/common/social-media/youtube/service";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
+import ElasticService from "@tradingpost/common/elastic";
+import {Client as ElasticClient} from "@elastic/elasticsearch";
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
 const runLambda = async () => {
-    const youtubeConfiguration = await DefaultConfig.fromCacheOrSSM("youtube");
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -22,14 +22,28 @@ const runLambda = async () => {
         await pgClient.connect()
     }
 
+    const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
+    const elasticService = new ElasticService(new ElasticClient({
+        cloud: {
+            id: elasticConfiguration.cloudId
+        },
+        auth: {
+            apiKey: elasticConfiguration.apiKey
+        },
+        maxRetries: 5,
+    }), "tradingpost-search");
+
+    const youtubeCfg = await DefaultConfig.fromCacheOrSSM("youtube");
+    const youtube = DefaultYoutube(youtubeCfg, pgClient, pgp, elasticService);
+
     try {
-        await lambdaImportYoutube(pgClient, pgp, youtubeConfiguration);
+        await youtube.import();
     } catch (e) {
         console.error(e)
         throw e;
     }
 }
-runLambda();
+
 export const run = async (event: any, context: Context) => {
     await runLambda();
 }

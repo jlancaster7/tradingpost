@@ -4,21 +4,28 @@ app: tradingpost-app
 frameworkVersion: '3'
 
 plugins:
-  - serverless-bundle
   - serverless-prune-plugin
+  - serverless-esbuild
 
+package:
+  individually: true
 
 custom:
-  bundle:
-    sourcemaps: true
-    linting: false
-    tsConfig: 'tsconfig.json'
-    ignorePackages:
+  prune:
+    automatic: true
+    number: 1
+  esbuild:
+    platform: node
+    target: 'node16'
+    external:
+      - '@sparticuz/chrome-aws-lambda'
+    exclude:
       - pg-native
 
 provider:
   stage: production
   name: aws
+  architecture: x86_64
   environment:
     CONFIGURATION_ENV: production
     NODE_ENV: production
@@ -42,7 +49,7 @@ functions:
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1024
-    reservedConcurrency: 2
+    reservedConcurrency: 1
     events:
       - schedule:
           rate: cron(20 20 ? * MON-FRI *) # 4:20 PM EDT
@@ -56,35 +63,38 @@ functions:
       - schedule:
           rate: cron(0 11 ? * MON-FRI *) # 8:00 AM EST
           enabled: true
+
   add-holidays:
     handler: market-data/add-holidays.run
     description: Ingests market holidays once a year
     logRetentionInDays: 14
     timeout: 300
-    reservedConcurrency: 2
+    reservedConcurrency: 1
     memorySize: 1024
     events:
       - schedule:
           rate: cron(0 0 1 1 ? *)
           enabled: true
+
   add-security-pricing:
     handler: market-data/add-security-prices.run
     description: Ingests security prices
     logRetentionInDays: 14
-    timeout: 180
-    reservedConcurrency: 2
+    timeout: 600
+    reservedConcurrency: 1
     memorySize: 1024
     events:
       - schedule:
-          rate: cron(* 11-22 ? * MON-FRI *)
+          rate: cron(* 12-20 ? * MON-FRI *)
           enabled: true
-          #       Run M-F every-day from 9:00AM ET -> 4:00 ET
-          #       We run 8:00 -> 4 because of daylight savings -- shift would be 8->3
-          #     then we just validate within the function that it should ingest
+      - schedule:
+          rate: cron(15 20 ? * MON-FRI *) # 4:15 PM EDT
+          enabled: true
+
   security-pruning:
     handler: market-data/security-pruning.run
     description: Prunes security data
-    reservedConcurrency: 2
+    reservedConcurrency: 1
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
@@ -100,7 +110,7 @@ functions:
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
-    reservedConcurrency: 2
+    reservedConcurrency: 1
     events:
       - schedule:
           rate: cron(0 11 ? * MON-SUN *) # Run once a day at 7AM ET
@@ -113,9 +123,9 @@ functions:
     handler: social-media/substack.run
     description: Ingests Substack Data
     logRetentionInDays: 14
-    timeout: 600
-    memorySize: 1024
-    reservedConcurrency: 2
+    timeout: 900
+    memorySize: 1600
+    reservedConcurrency: 1
     events:
       - schedule:
           rate: cron(0 11 ? * MON-SUN *) # Run once a day at 7AM ET
@@ -128,20 +138,21 @@ functions:
     handler: social-media/twitter.run
     description: Ingests Twitter Data
     logRetentionInDays: 14
-    timeout: 600
-    memorySize: 1024
-    reservedConcurrency: 2
+    timeout: 900
+    memorySize: 1600
+    reservedConcurrency: 1
     events:
       - schedule:
           rate: cron(*/10 * ? * MON-SUN *) # Run every 10 minutes every day
           enabled: true
+
   youtube:
     handler: social-media/youtube.run
     description: Ingests YouTube User Data
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
-    reservedConcurrency: 2
+    reservedConcurrency: 1
     events:
       - schedule:
           rate: cron(0 11 ? * MON-SUN *) # Run once a day at 7AM ET

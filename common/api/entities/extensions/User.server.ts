@@ -1,15 +1,16 @@
-import User, { UploadProfilePicBody } from "./User"
-import { ensureServerExtensions } from "."
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import UserApi, { IUserGet, IUserList, IUserUpdate } from '../apis/UserApi'
+import User, {UploadProfilePicBody} from "./User"
+import {ensureServerExtensions} from "."
+import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import UserApi, {IUserGet, IUserList, IUserUpdate} from '../apis/UserApi'
 import Brokerage from '../../../brokerage'
-import { DefaultConfig } from "../../../configuration";
+import {DefaultConfig} from "../../../configuration";
 import pgPromise from "pg-promise";
 import Finicity from "../../../finicity";
 //import FinicityTransformer from '../../../brokerage/finicity/transformer'
 import { execProc } from '../../../db'
-import { addTwitterUsersByToken } from '../../../social-media/twitter/index'
-import { getUserCache } from "../../cache";
+//import { } from '../../../social-media/twitter/index'
+import {DefaultTwitter} from "../../../social-media/twitter/service";
+import {getUserCache} from "../../cache";
 import WatchlistApi from "../apis/WatchlistApi";
 import { DateTime } from 'luxon'
 
@@ -60,10 +61,7 @@ const init = (async () => {
 
 export default ensureServerExtensions<User>({
     generateBrokerageLink: async (req) => {
-
         const { brokerage } = await init;
-
-
         const test = await brokerage.generateBrokerageAuthenticationLink(req.extra.userId, "finicity");
         console.log(JSON.stringify(test));
         return {
@@ -83,8 +81,7 @@ export default ensureServerExtensions<User>({
                 has_profile_pic: true
             });
 
-        }
-        else
+        } else
             throw {
                 message: "Unathorized",
                 code: 401
@@ -116,24 +113,23 @@ export default ensureServerExtensions<User>({
 
             })
             const authResp = (await info.json()) as ITokenResponse;
-            const { pgClient, pgp } = await init;
+            const {pgClient, pgp} = await init;
             const config = await DefaultConfig.fromCacheOrSSM("twitter");
-            const handle = await addTwitterUsersByToken({
+            const handle = await DefaultTwitter(config, pgClient, pgp).addTwitterUsersByToken({
                 accessToken: authResp.access_token,
                 expiration: authResp.expires_in,
                 refreshToken: authResp.refresh_token,
                 userId: req.extra.userId
-            }, pgClient, pgp, config)
+            })
             return handle.username;
-        }
-        else return "";
+        } else return "";
     },
     getTrades: (r) => {
         return execProc("public.api_trade_list", {
             limit: r.extra.limit || 5,
             user_id: r.extra.userId,
             page: r.extra.page,
-            data: { user_id: r.body.user_id }
+            data: {user_id: r.body.user_id}
         })
     },
     getHoldings: r => execProc("public.api_holding_list", {
@@ -157,7 +153,7 @@ export default ensureServerExtensions<User>({
         //make sure there are public or that you are a subscriber 
     },
     getPortfolio: async (r) => {
-        const { brokerage } = await init;
+        const {brokerage} = await init;
         return await brokerage.portfolioSummaryService.getSummary(r.body.userId || r.extra.userId);
     },
     search: async (r) => {
@@ -171,8 +167,7 @@ export default ensureServerExtensions<User>({
                     output.push(item.profile)
             });
 
-        }
-        else {
+        } else {
             throw new Error("Search term must be at least 3 characters");
         }
         return output;

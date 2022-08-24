@@ -99,7 +99,7 @@ export class PortfolioSummaryService implements ISummaryService {
 
         function checkDates(arr1: SecurityHPRs[], arr2: SecurityHPRs[]) {
             for (let i = 0; i < arr1.length; i++) {
-                if (arr1[i].date.valueOf() !== arr2[i].date.valueOf()) {
+                if (arr1[i].date.toISODate() !== arr2[i].date.toISODate()) {
                     console.log('date mismatch, see the below:')
                     console.log(arr1[i]);
                     console.log(arr2[i]);
@@ -110,10 +110,10 @@ export class PortfolioSummaryService implements ISummaryService {
         }
         if (securityReturns.length > benchmarkReturns.length) {
 
-            securityReturns = securityReturns.slice(securityReturns.length - benchmarkReturns.length, securityReturns.length);
+            securityReturns = securityReturns.slice(securityReturns.length - benchmarkReturns.length);
             const dateCheck = checkDates(securityReturns, benchmarkReturns);
             if (dateCheck === 1) {
-                return 0;
+                throw new Error(`Date mismatch, see the above detail for security: ${securityId}, benchmark: ${benchmarkId}`);
             }
             let securityHPRs = securityReturns.map(a => a.return);
             let benchmarkHPRs = benchmarkReturns.map(a => a.return);
@@ -122,10 +122,10 @@ export class PortfolioSummaryService implements ISummaryService {
             return computeCovariance(securityHPRs, benchmarkHPRs, benchmarkHPRs.length) / variance(benchmarkHPRs);
         } else if (securityReturns.length < benchmarkReturns.length) {
 
-            benchmarkReturns = benchmarkReturns.slice(benchmarkReturns.length - securityReturns.length, benchmarkReturns.length);
+            benchmarkReturns = benchmarkReturns.slice(benchmarkReturns.length - securityReturns.length);
             const dateCheck = checkDates(securityReturns, benchmarkReturns);
             if (dateCheck === 1) {
-                return 0;
+                throw new Error(`Date mismatch, see the above detail for security: ${securityId}, benchmark: ${benchmarkId}`);
             }
             let securityHPRs = securityReturns.map(a => a.return);
             let benchmarkHPRs = benchmarkReturns.map(a => a.return);
@@ -136,7 +136,7 @@ export class PortfolioSummaryService implements ISummaryService {
             for (let i = 0; i < benchmarkReturns.length; i++) {
                 const dateCheck = checkDates(securityReturns, benchmarkReturns);
                 if (dateCheck === 1) {
-                    return 0;
+                    throw new Error(`Date mismatch, see the above detail for security: ${securityId}, benchmark: ${benchmarkId}`);
                 }
             }
         }
@@ -150,9 +150,10 @@ export class PortfolioSummaryService implements ISummaryService {
         let beta = [];
         let sum = 0;
         for (let d of holdings) {
+            sum += d.value;
             if (d.securityId === 26830) { continue; }
             beta.push([await this.computeSecurityBeta(d.securityId, benchmarkId, daysPrior), d.value]);
-            sum += d.value;
+            
         }
         let weighted_beta = 0;
         for (let d of beta) {
@@ -236,8 +237,14 @@ export class PortfolioSummaryService implements ISummaryService {
 
         await this.addAccountGroupHPRs(returns);
 
-        const beta = await this.computeAccountGroupBeta(currentHoldings, account_group.defaultBenchmarkId);
-
+        let beta: number;
+        try {
+            beta = await this.computeAccountGroupBeta(currentHoldings, account_group.defaultBenchmarkId);
+        } catch (err) {
+            console.log(err);
+            beta = 1;
+        }
+        
         const sharpe = this.computeSharpe(returns);
 
         const allocations = await this.computeSectorAllocations(currentHoldings);

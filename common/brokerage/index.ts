@@ -9,7 +9,7 @@ import {PortfolioSummaryService} from "./portfolio-summary";
 import {
     HistoricalHoldings,
     TradingPostAccountGroupStats,
-    AccountGroupHPRsTable, TradingPostBrokerageAccounts, TradingPostBrokerageAccountsTable
+    AccountGroupHPRsTable, TradingPostBrokerageAccountsTable, TradingPostHistoricalHoldings
 } from './interfaces';
 
 export default class Brokerage extends BrokerageService {
@@ -71,7 +71,7 @@ export default class Brokerage extends BrokerageService {
 
         for (let i = 0; i < accountsToProcess.length; i++) {
             const account = accountsToProcess[i];
-            const holdingHistory = await this.computeHoldingsHistory(account.id, start, end);
+            const holdingHistory = await this.computeHoldingsHistory(account.id, end);
             await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
         }
 
@@ -80,16 +80,39 @@ export default class Brokerage extends BrokerageService {
         await this.portfolioSummaryService.computeAccountGroupSummary(tradingPostUser.id)
     }
 
-    addNewTransactions = async (userId: string, brokerageId: string, accountIds?: string[]) => {
+    addNewTransactions = async (brokerageUserId: string, brokerageId: string, accountIds?: string[]) => {
+        const brokerage = this.brokerageMap[brokerageId];
+
+        const holdings = await brokerage.importHoldings(brokerageUserId);
+        await this.repository.upsertTradingPostCurrentHoldings(holdings);
+
+        const transactions = await brokerage.importTransactions(brokerageUserId);
+        await this.repository.upsertTradingPostTransactions(transactions);
+
+        let historicalHoldings: TradingPostHistoricalHoldings[] = [];
+        holdings.forEach(h => {
+            historicalHoldings.push({
+                accountId: h.accountId,
+                price: h.price,
+                securityId: h.securityId,
+                value: h.value,
+                costBasis: h.costBasis,
+                quantity: h.quantity,
+                date: DateTime.now(),
+                currency: "USD",
+                securityType: h.securityType,
+                priceAsOf: h.priceAsOf,
+                priceSource: h.priceSource
+            });
+        });
+
+        await this.repository.upsertTradingPostHistoricalHoldings(historicalHoldings)
     }
 
     removeAccounts = async (brokerageCustomerId: string, accountIds: string[], brokerageId: string) => {
         const brokerage = this.brokerageMap[brokerageId];
         const tpAccountIds = await brokerage.removeAccounts(brokerageCustomerId, accountIds)
-        await this.repository.deleteTradingPostBrokerageTransactions(tpAccountIds)
-        await this.repository.deleteTradingPostBrokerageHoldings(tpAccountIds)
         await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds)
-        await this.repository.deleteTradingPostBrokerageHistoricalHoldings(tpAccountIds)
     }
 
     generateBrokerageAuthenticationLink = async (userId: string, brokerageId: string): Promise<string> => {

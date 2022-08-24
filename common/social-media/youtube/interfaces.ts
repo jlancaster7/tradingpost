@@ -1,3 +1,33 @@
+import {DateTime} from "luxon";
+
+// TODO: Update user_id and I believe we are using hashes rather than numeric IDs
+export interface YouTubeVideoAndChannel {
+    video_id: string
+    youtube_channel_id: string
+    title: string
+    description: string
+    video_url: string
+    video_embed: string
+    thumbnails: object
+    youtube_created_at: DateTime
+    trading_post_youtube_video_created_at: DateTime
+    channel_title: string
+    channel_description: string
+    country: string
+    custom_channel_url: string
+    channel_thumbnails: object
+    channel_statistics: object
+    channel_status: object
+    channel_created_at: DateTime
+    trading_post_channel_created_at: DateTime
+    maxWidth: number
+    aspectRatio: number
+    tradingpostUserId: string
+    tradingpostUserHandle: string
+    tradingpostUserEmail: string
+    tradingpostUserProfileUrl: string
+}
+
 export interface channelInfo {
     id: string,
     title: string,
@@ -48,6 +78,8 @@ export interface formatedYoutubeVideo {
     thumbnails: string
     video_url: string
     video_embed: string
+    aspect_ratio: number
+    max_width: number
 }
 
 export interface youtubeParams {

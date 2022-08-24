@@ -27,7 +27,7 @@ type RuleSetFunction = (holdings: historicalAccount, tx: TradingPostTransactions
 // value at the end of each day
 let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
     "buy": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        holdings.cash = holdings.cash - tx.amount;
+        holdings.cash = holdings.cash + tx.amount;
         // Roll back buy,
         // get transaction from holding
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
@@ -40,7 +40,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
     },
     "sell": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         // sell amount is going to be negative, hence why we can "add" it back
-        holdings.cash = holdings.cash - tx.amount
+        holdings.cash = holdings.cash + tx.amount
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
         if (hIdx === -1) {
             holdings.holdings.push({
@@ -66,7 +66,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         return holdings
     },
     "short": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        holdings.cash = holdings.cash - tx.amount;
+        holdings.cash = holdings.cash + tx.amount;
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
 
         // TODO: .... this is possible for a short?
@@ -79,7 +79,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         return holdings
     },
     "cover": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        holdings.cash = holdings.cash - tx.amount;
+        holdings.cash = holdings.cash + tx.amount;
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
 
         // TODO:.... I think this is possible in a cover...?
@@ -162,7 +162,7 @@ export default class BrokerageService {
         await this.repository.upsertTradingPostTransactions(transactions);
     }
 
-    computeHoldingsHistory = async (tpAccountId: number, startDate: DateTime, endDate: DateTime): Promise<TradingPostHistoricalHoldings[]> => {
+    computeHoldingsHistory = async (tpAccountId: number, endDate: DateTime): Promise<TradingPostHistoricalHoldings[]> => {
         const cashSecurity = await this.repository.getCashSecurityId();
 
         let allSecurityIds: Record<number, unknown> = {}
@@ -188,12 +188,10 @@ export default class BrokerageService {
             transactionsPerDate[txDateUnix] = txs
         });
 
-        const allSecurityPricesMap: Record<number, GetSecurityPrice[]> = await this.getSecurityPrices(Object.keys(allSecurityIds).map(id => parseInt(id)), startDate, endDate);
-
         // Get Trading Days we will compute history for
         // In our db we will have a single row for each security on each day, so with 2 securities we'll have two rows for today
-        let tradingDays = await this.getTradingDays(startDate, endDate)
         
+        let startDate = DateTime.now().setZone("America/New_York");
         const initialHistoricalHolding: historicalAccount = {
             date: startDate,
             cash: 0,
@@ -202,6 +200,8 @@ export default class BrokerageService {
 
         for (const holding of currentHoldings) {
             if (holding.symbol === 'USD:CUR') {
+                startDate = holding.priceAsOf;
+                initialHistoricalHolding.date = holding.priceAsOf
                 initialHistoricalHolding.cash = holding.quantity;
                 continue;
             }
@@ -222,6 +222,8 @@ export default class BrokerageService {
             })
         }
 
+        const allSecurityPricesMap: Record<number, GetSecurityPrice[]> = await this.getSecurityPrices(Object.keys(allSecurityIds).map(id => parseInt(id)), startDate, endDate);
+        let tradingDays = await this.getTradingDays(startDate, endDate)
         let historicalHoldingCollection = [initialHistoricalHolding]
 
         for (let i = 0; i < tradingDays.length - 1; i++) {

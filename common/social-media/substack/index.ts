@@ -1,35 +1,35 @@
 import Parser from 'rss-parser';
-import { PlatformToken } from '../interfaces/utils';
-import {SubstackUser, SubstackFeed, SubstackArticles} from '../interfaces/rss_feeds';
+import {SubstackUser, SubstackFeed, SubstackArticles} from './interfaces';
 import Repository from '../repository'
+import PostPrepper from "../../post-prepper";
 
-
-export class Substack {
+export default class Substack {
     private repository: Repository;
+    private postPrepper: PostPrepper;
 
-    constructor(repository: Repository) {
+    constructor(repository: Repository, postPrepper: PostPrepper) {
         this.repository = repository
+        this.postPrepper = postPrepper;
     }
 
-    importUsers = async (substackUser: {userId: string, username: string}): Promise<[SubstackUser, number]> => {
-        
+    importUsers = async (substackUser: { userId: string, username: string }): Promise<[SubstackUser, number]> => {
         let results = [];
         let data: SubstackFeed | undefined;
         let count = 0;
-        
+
         let formatedUser: SubstackUser;
-        
+
         data = await this.getUserFeed(substackUser.username);
         if (!data) {
             throw new Error(`Substack user: ${substackUser.username} for userId: ${substackUser.userId} was not found`);
 
         }
         const token = {
-            userId: substackUser.userId, 
-            platform: 'substack', 
-            platformUserId: substackUser.username, 
-            accessToken: null, 
-            refreshToken: null, 
+            userId: substackUser.userId,
+            platform: 'substack',
+            platformUserId: substackUser.username,
+            accessToken: null,
+            refreshToken: null,
             expiration: null,
             updatedAt: new Date()
         }
@@ -38,14 +38,17 @@ export class Substack {
         if (dummyTokens.length && substackUser.userId !== dummyTokens[0].userId) {
             const dummyCheck = await this.repository.isUserIdDummy(dummyTokens[0].userId);
             if (dummyCheck) {
-                await this.repository.mergeDummyAccounts({newUserId: substackUser.userId, dummyUserId: dummyTokens[0].userId});
+                await this.repository.mergeDummyAccounts({
+                    newUserId: substackUser.userId,
+                    dummyUserId: dummyTokens[0].userId
+                });
             } else {
                 throw new Error("This account is claimed by another non-dummy user.");
             }
         }
         await this.repository.upsertUserTokens(token);
         count = await this.repository.insertSubstackUser(formatedUser);
-    
+
         return [formatedUser, count];
     }
 
@@ -55,7 +58,20 @@ export class Substack {
             return [[], 0];
         }
 
-        const formatedArticles = this.formatArticles(results);
+        const jobs = [];
+        const formatedArticles = await this.formatArticles(results);
+
+        for (let i = 0; i < formatedArticles.length; i++) {
+            jobs.push(this.postPrepper.substack(formatedArticles[i].content_encoded));
+        }
+
+        const r = await Promise.all(jobs);
+
+        r.forEach((item, idx) => {
+            const {maxWidth, aspectRatio} = item;
+            formatedArticles[idx].max_width = maxWidth;
+            formatedArticles[idx].aspect_ratio = aspectRatio
+        })
 
         const success = await this.repository.insertSubstackArticles(formatedArticles);
 
@@ -90,7 +106,7 @@ export class Substack {
         return formatedUser;
     }
 
-    formatArticles = (userFeed: SubstackFeed): SubstackArticles[] => {
+    formatArticles = async (userFeed: SubstackFeed): Promise<SubstackArticles[]> => {
         const rawArticles = userFeed.items;
         let formatedArticles = [];
         let temp: SubstackArticles;
@@ -98,6 +114,7 @@ export class Substack {
             if (!rawArticles[i].creator) {
                 rawArticles[i].creator = '';
             }
+
             temp = {
                 substack_user_id: userFeed.username,
                 creator: rawArticles[i].creator,
@@ -111,7 +128,9 @@ export class Substack {
                 content: rawArticles[i].content,
                 content_snippet: rawArticles[i].contentSnippet,
                 article_id: rawArticles[i].guid,
-                itunes: JSON.stringify(rawArticles[i].itunes)
+                itunes: JSON.stringify(rawArticles[i].itunes),
+                aspect_ratio: 0,
+                max_width: 0
             }
             formatedArticles.push(temp);
         }

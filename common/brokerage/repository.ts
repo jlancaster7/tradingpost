@@ -215,7 +215,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 costBasis: row.cost_basis,
                 currency: row.currency,
                 price: row.price,
-                priceAsOf: row.price_as_of,
+                priceAsOf: DateTime.fromJSDate(row.price_as_of),
                 securityId: row.security_id,
                 priceSource: row.price_source,
                 quantity: row.quantity,
@@ -375,18 +375,20 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingpostCashSecurity = async (): Promise<TradingPostCashSecurity[]> => {
-        const query = `SELECT s.id as security_id,
-                              cs.from_symbol as from_symbol,
-                              cs.to_security_symbol as to_security_symbol
+        const query = `SELECT s.id                  as security_id,
+                              cs.from_symbol        as from_symbol,
+                              cs.to_security_symbol as to_security_symbol,
+                              cs.currency
                        FROM tradingpost_cash_security cs
-                       LEFT JOIN security s
-                       ON s.symbol = cs.to_security_symbol;
-                       `;
+                                LEFT JOIN security s
+                                          ON s.symbol = cs.to_security_symbol;
+        `;
         const response = await this.db.query(query);
         return response.map((r: any) => {
             let o: TradingPostCashSecurity = {
                 fromSymbol: r.from_symbol,
-                toSecurityId: parseInt(r.security_id)
+                toSecurityId: parseInt(r.security_id),
+                currency: r.currency
             }
             return o
         })
@@ -1037,6 +1039,26 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             createdAt: DateTime.fromJSDate(response.created_at)
         }
     }
+    getFinicityUserByFinicityUserId = async (userId: string): Promise<FinicityUser | null> => {
+        const response = await this.db.oneOrNone(`
+            SELECT id,
+                   tp_user_id,
+                   customer_id,
+                   type,
+                   updated_at,
+                   created_at
+            FROM finicity_user
+            WHERE tp_user_id = $1`, [userId]);
+        if (!response) return null;
+        return {
+            id: response.id,
+            tpUserId: response.tp_user_id,
+            customerId: response.customer_id,
+            type: response.type,
+            updatedAt: DateTime.fromJSDate(response.updated_at),
+            createdAt: DateTime.fromJSDate(response.created_at)
+        }
+    }
 
     addFinicityUser = async (userId: string, customerId: string, type: string): Promise<FinicityUser> => {
         const query = `INSERT INTO finicity_user(tp_user_id, customer_id, type)
@@ -1134,6 +1156,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'parent_account', prop: 'parentAccount'},
             {name: 'account_nickname', prop: 'accountNickname'},
             {name: 'market_segment', prop: 'marketSegment'},
+            {name: 'tx_push_id', prop: 'txPushId'},
+            {name: 'tx_push_signing_key', prop: 'txPushSigningKey'}
         ], {table: 'finicity_account'});
 
         const query = upsertReplaceQuery(accounts, cs, this.pgp, "account_id")
@@ -1179,12 +1203,15 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    account_nickname,
                    market_segment,
                    updated_at,
-                   created_at
+                   created_at,
+                   tx_push_id,
+                   tx_push_signing_key
             FROM finicity_account
             WHERE finicity_user_id = $1;`
         const response = await this.db.query(query, [finicityUserId]);
+
         return response.map((a: any) => {
-            return {
+            let o: FinicityAccount = {
                 id: a.id,
                 finicityUserId: a.finicity_user_id,
                 finicityInstitutionId: a.finicity_institition_id,
@@ -1222,10 +1249,46 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 accountNickname: a.account_nickname,
                 marketSegment: a.market_segment,
                 updatedAt: DateTime.fromJSDate(a.updated_at),
-                createdAt: DateTime.fromJSDate(a.created_at)
+                createdAt: DateTime.fromJSDate(a.created_at),
+                txPushId: a.tx_push_id,
+                txPushSigningKey: a.tx_push_signing_key
+            }
+            return o
+        })
+    }
+    getFinicityAccountDetails = async (finicityUserId: number): Promise<FinicityAccount[]> => {
+        let query = `
+            SELECT id,
+                   finicity_user_id,
+                   finicity_institution_id,
+                   account_id,
+                   detail_margin,
+                   detail_margin_allowed,
+                   detail_cash_account_allowed,
+                   detail_description,
+                   detail_margin_balance,
+                   detail_short_balance,
+                   detail_available_cash_balance,
+                   detail_current_balance,
+                   detail_date_as_of
+            FROM finicity_account
+            WHERE finicity_user_id = $1;`
+        const response = await this.db.query(query, [finicityUserId]);
+        return response.map((a: any) => {
+            return {
+                detailMargin: a.detail_margin,
+                detailMarginAllowed: a.detail_margin_allowed,
+                detailCashAccountAllowed: a.detail_cash_account_allowed,
+                detailDescription: a.detail_description,
+                detailMarginBalance: a.detail_margin_balance,
+                detailShortBalance: a.detail_short_balance,
+                detailAvailableCashBalance: a.detail_available_cash_balance,
+                detailCurrentBalance: a.detail_current_balance,
+                detailDateAsOf: a.detail_date_as_of,
             }
         })
     }
+
 
     upsertFinicityHoldings = async (holdings: FinicityHolding[]): Promise<void> => {
         const cs = new this.pgp.helpers.ColumnSet([
@@ -1267,7 +1330,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getFinicityHoldings = async (finicityUserId: number): Promise<FinicityHolding[]> => {
-        let query = `    SELECT id,
+        let query = `    SELECT fh.id,
                                 finicity_account_id,
                                 holding_id,
                                 security_id_type,
@@ -1282,7 +1345,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                 security_unit_price,
                                 units,
                                 cost_basis,
-                                status,
+                                fh.status,
                                 security_type,
                                 security_name,
                                 security_currency,
@@ -1300,10 +1363,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                 total_gl_percent,
                                 today_gl_dollar,
                                 today_gl_percent,
-                                updated_at,
-                                created_at
+                                fh.updated_at,
+                                fh.created_at
                          FROM finicity_holding fh
-                                  INNER JOIN finicity_account fa ON fa.id = fh.finicity_account_id
+                                  INNER JOIN finicity_account fa
+                                             ON fa.id = fh.finicity_account_id
                          WHERE fa.finicity_user_id = $1`
         const response = await this.db.query(query, [finicityUserId])
         return response.map((h: any) => {
@@ -1379,53 +1443,34 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     getFinicityTransactions = async (finicityUserId: number): Promise<FinicityTransaction[]> => {
         const query = `
-            SELECT id,
-                   finicity_account_id,
-                   transaction_id,
-                   amount,
-                   account_id,
-                   customer_id,
-                   status,
-                   description,
-                   memo,
-                   type,
-                   interest_amount,
-                   principal_amount,
-                   fee_amount,
-                   escrow_amount,
-                   unit_quantity,
-                   posted_date,
-                   transaction_date,
-                   created_date,
-                   categorization_normalized_payee_name,
-                   categorization_category,
-                   categorization_city,
-                   categorization_state,
-                   categorization_postal_code,
-                   categorization_country,
-                   categorization_best_representation,
-                   running_balance_amount,
-                   check_num,
-                   income_type,
-                   subaccount_security_type,
-                   commission_amount,
-                   split_denominator,
-                   split_numerator,
-                   shares_per_contract,
-                   taxes_amount,
-                   unit_price,
-                   currency_symbol,
-                   sub_account_fund,
-                   ticker,
-                   security_id,
-                   security_id_type,
-                   investment_transaction_type,
-                   effective_date,
-                   first_effective_date,
-                   updated_at,
-                   created_at
+            SELECT ft.id,
+                   ft.internal_finicity_account_id,
+                   ft.transaction_id,
+                   ft.amount,
+                   ft.account_id,
+                   ft.customer_id,
+                   ft.status,
+                   ft.description,
+                   ft.memo,
+                   ft.type,
+                   ft.unit_quantity,
+                   ft.fee_amount,
+                   ft.cusip_no,
+                   ft.posted_date,
+                   ft.transaction_date,
+                   ft.created_date,
+                   ft.categorization_normalized_payee_name,
+                   ft.categorization_category,
+                   ft.categorization_country,
+                   ft.categorization_best_representation,
+                   ft.commission_amount,
+                   ft.unit_price,
+                   ft.ticker,
+                   ft.investment_transaction_type,
+                   ft.updated_at,
+                   ft.created_at
             FROM finicity_transaction ft
-                     INNER JOIN finicity_account fa ON fa.id = ft.finicity_account_id
+                     INNER JOIN finicity_account fa ON fa.id = ft.internal_finicity_account_id
             WHERE fa.finicity_user_id = $1
         `
         const response = await this.db.query(query, [finicityUserId]);
@@ -1434,46 +1479,27 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 id: t.id,
                 finicityAccountId: t.finicity_account_id,
                 transactionId: t.transaction_id,
-                amount: t.amount,
                 accountId: t.account_id,
                 customerId: t.customer_id,
-                status: t.status,
+                amount: t.amount,
                 description: t.description,
-                memo: t.memo,
-                type: t.type,
-                interestAmount: t.interest_amount,
-                principalAmount: t.principal_amount,
-                feeAmount: t.fee_amount,
-                escrowAmount: t.escrow_amount,
-                unitQuantity: t.unit_quantity,
                 postedDate: t.posted_date,
                 transactionDate: t.transaction_date,
+                investmentTransactionType: t.investment_transaction_type,
+                status: t.status,
+                memo: t.memo,
+                type: t.type,
+                unitQuantity: t.unit_quantity,
+                feeAmount: t.fee_amount,
+                cusipNo: t.cusip_no,
                 createdDate: t.created_date,
                 categorizationNormalizedPayeeName: t.categorization_normalized_payee_name,
                 categorizationCategory: t.categorization_category,
-                categorizationCity: t.categorization_city,
-                categorizationState: t.categorization_state,
-                categorizationPostalCode: t.categorization_postal_code,
                 categorizationCountry: t.categorization_country,
                 categorizationBestRepresentation: t.categorization_best_representation,
-                runningBalanceAmount: t.running_balance_amount,
-                checkNum: t.check_num,
-                incomeType: t.income_type,
-                subaccountSecurityType: t.subaccount_security_type,
                 commissionAmount: t.commission_amount,
-                splitDenominator: t.split_denominator,
-                splitNumerator: t.split_numerator,
-                sharesPerContract: t.shares_per_contract,
-                taxesAmount: t.taxes_amount,
-                unitPrice: t.unit_price,
-                currencySymbol: t.currency_symbol,
-                subAccountFund: t.sub_account_fund,
                 ticker: t.ticker,
-                securityId: t.security_id,
-                securityIdType: t.security_id_type,
-                investmentTransactionType: t.investment_transaction_type,
-                effectiveDate: t.effective_date,
-                firstEffectiveDate: t.first_effective_date,
+                unitPrice: t.unit_price,
                 updatedAt: DateTime.fromJSDate(t.updated_at),
                 createdAt: DateTime.fromJSDate(t.created_at)
             }
@@ -1686,7 +1712,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'currency', prop: 'currency'},
             {name: 'date', prop: 'date'},
         ], {table: 'tradingpost_historical_holding'})
-        const query = upsertReplaceQuery(historicalHoldings, cs, this.pgp)
+        const query = upsertReplaceQuery(historicalHoldings, cs, this.pgp, 'account_id, security_id, date, quantity')
         await this.db.none(query);
     }
 
@@ -1737,7 +1763,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     addTradingPostAccountGroupStats = async (groupStats: TradingPostAccountGroupStats[]) => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_group_id', prop: 'accountGroupId'},
-            {name: 'beta', prop: 'beta', },
+            {name: 'beta', prop: 'beta',},
             {name: 'sharpe', prop: 'sharpe'},
             {name: 'industry_allocations', prop: 'industryAllocations', mod: ':json'},
             {name: 'exposure', prop: 'exposure'},
@@ -1767,12 +1793,12 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                 WHEN quantity = 0 THEN 0
                                 WHEN cost_basis is null THEN 0
                                 ELSE (value - (quantity * cost_basis))
-                            END as pnl,
+                                END as pnl,
                             quantity,
                             date
                      FROM tradingpost_historical_holding
                      WHERE account_id = $1
-                     AND date BETWEEN $2 AND $3
+                       AND date BETWEEN $2 AND $3
         `;
 
         const response = await this.db.any(query, [accountId, startDate, endDate]);
@@ -1799,22 +1825,22 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostHoldingsByAccountGroup = async (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id                                  AS account_group_id,
-                            ht.security_id                                        AS security_id,
-                            AVG(ht.price)                                         AS price,
-                            SUM(ht.value)                                         AS value,
+        let query = `SELECT atg.account_group_id AS account_group_id,
+                            ht.security_id       AS security_id,
+                            AVG(ht.price)        AS price,
+                            SUM(ht.value)        AS value,
                             CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN sum(ht.cost_basis) is null THEN 0
-                                ELSE SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity) 
-                            END                                                 AS cost_basis,
-                            CASE 
+                                ELSE SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)
+                                END              AS cost_basis,
+                            CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN SUM(ht.cost_basis) IS null THEN 0
                                 ELSE (SUM(ht.value) - (SUM(ht.cost_basis * ht.quantity)))
-                            END                                                 AS pnl,
-                            SUM(ht.quantity)                                      AS quantity,
-                            ht.date                                               AS date
+                                END              AS pnl,
+                            SUM(ht.quantity)     AS quantity,
+                            ht.date              AS date
                      FROM tradingpost_historical_holding ht
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ht.account_id = atg.account_id
@@ -1846,22 +1872,22 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostCurrentHoldingsByAccountGroup = async (accountGroupId: number): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id                                AS account_group_id,
-                            ch.security_id                                      AS security_id,
-                            AVG(ch.price)                                       AS price,
-                            SUM(ch.value)                                       AS value,
+        let query = `SELECT atg.account_group_id AS account_group_id,
+                            ch.security_id       AS security_id,
+                            AVG(ch.price)        AS price,
+                            SUM(ch.value)        AS value,
                             CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN sum(ch.cost_basis) is null THEN 0
-                                ELSE SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity) 
-                            END                                                 AS cost_basis,
-                            CASE 
+                                ELSE SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)
+                                END              AS cost_basis,
+                            CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN SUM(ch.cost_basis) IS null THEN 0
                                 ELSE (SUM(ch.value) - (SUM(ch.cost_basis * ch.quantity)))
-                            END                                                 AS pnl,
-                            SUM(ch.quantity)                                    AS quantity,
-                            ch.updated_at                                       AS updated_at
+                                END              AS pnl,
+                            SUM(ch.quantity)     AS quantity,
+                            ch.updated_at        AS updated_at
                      FROM tradingpost_current_holding ch
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ch.account_id = atg.account_id
@@ -1930,7 +1956,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                      FROM security_price
                      WHERE security_id = $1
                        AND time BETWEEN $2 AND $3
-                       AND (time at time zone 'America/New_York')::time = '16:00:00'
+                       AND is_eod = true;
         `;
         const response = await this.db.any(query, [securityId, startDate, endDate]);
 
@@ -1944,7 +1970,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             prices.push({
                 securityId: parseInt(d.security_id),
                 price: parseFloat(d.price),
-                date: d.time
+                date: DateTime.fromJSDate(d.time)
             });
         }
         return prices;
@@ -2030,7 +2056,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         ], {table: 'account_group_hpr'})
         const query = upsertReplaceQueryWithColumns(accountGroupReturns, cs, this.pgp, ["return"],
             "date, account_group_id")
-        
+
         const result = await this.db.result(query)
         return result.rowCount > 0 ? 1 : 0
     }
@@ -2117,31 +2143,42 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     deleteTradingPostBrokerageAccounts = async (accountIds: number[]): Promise<void> => {
-        const query = `DELETE
-                       FROM tradingpost_brokerage_account
-                       WHERE id IN ($1:list)`
-        await this.db.none(query, [accountIds])
-    }
+        if (accountIds.length <= 0) return
+        try {
+            const accountGroupRes = await this.db.query(`SELECT distinct account_group_id
+                                                         FROM _TRADINGPOST_ACCOUNT_TO_GROUP
+                                                         WHERE account_id IN ($1:list)`, [accountIds]);
+            let accountGroupIds = accountGroupRes.map((r: { account_group_id: any; }) => r.account_group_id);
+            if (accountGroupIds.length > 0) {
+                console.log("Account Group Ids: ", accountGroupIds)
+                await this.db.none(`
+                BEGIN;
+                    DELETE FROM ACCOUNT_GROUP_HPR WHERE account_group_id IN ($1:list);
+                    DELETE FROM TRADINGPOST_ACCOUNT_GROUP_STAT WHERE account_group_id IN ($1:list);
+                    DELETE FROM _TRADINGPOST_ACCOUNT_TO_GROUP WHERE account_group_id IN($1:list);
+                    DELETE FROM TRADINGPOST_ACCOUNT_GROUP WHERE id IN($1:list);
+                COMMIT;
+                `, [accountGroupIds])
+            }
+        } catch (e) {
+            console.error(e)
+        }
 
-    deleteTradingPostBrokerageTransactions = async (accountIds: number[]): Promise<void> => {
-        const query = `DELETE
-                       FROM tradingpost_transaction
-                       WHERE account_id IN ($1:list)`
-        await this.db.none(query, [accountIds]);
-    }
-
-    deleteTradingPostBrokerageHoldings = async (accountIds: number[]): Promise<void> => {
-        const query = `DELETE
-                       FROM TRADINGPOST_CURRENT_HOLDING
-                       WHERE account_id IN ($1:list)`
-        await this.db.none(query, [accountIds]);
-    }
-
-    deleteTradingPostBrokerageHistoricalHoldings = async (accountIds: number[]): Promise<void> => {
-        const query = `DELETE
-                       FROM TRADINGPOST_HISTORICAL_HOLDING
-                       WHERE account_id IN ($1:list)`
-        await this.db.none(query, [accountIds]);
+        try {
+            if (accountIds.length > 0) {
+                console.log("ACCOUNT IDS: ", accountIds)
+                await this.db.none(`
+                BEGIN;            
+                    DELETE FROM TRADINGPOST_HISTORICAL_HOLDING WHERE account_id IN ($1:list);
+                    DELETE FROM TRADINGPOST_CURRENT_HOLDING WHERE account_id IN ($1:list);
+                    DELETE FROM TRADINGPOST_TRANSACTION WHERE account_id IN ($1:list);
+                    DELETE FROM TRADINGPOST_BROKERAGE_ACCOUNT WHERE id IN ($1:list);
+                COMMIT;
+            `, [accountIds])
+            }
+        } catch (e) {
+            console.error("Here...", e)
+        }
     }
 }
 

@@ -1,17 +1,29 @@
-import { formatedTweet, formatedTwitterUser } from '../interfaces/twitter';
-import { IDatabase, IMain } from "pg-promise";
-declare type TwitterConfiguration = {
-    API_key: string;
-    API_secret_key: string;
-    bearer_token: string;
-};
-export declare const lambdaImportTweets: (pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => Promise<void>;
-export declare const addTwitterUsersByHandle: (handles: string | string[], pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => Promise<formatedTwitterUser[]>;
-export declare const addTwitterUsersByToken: (twitterUsers: {
-    userId: string;
-    accessToken: string;
-    refreshToken: string;
-    expiration: number;
-}, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration) => Promise<formatedTwitterUser>;
-export declare const addTweets: (twitterUserId: string, pgClient: IDatabase<any>, pgp: IMain, twitterConfiguration: TwitterConfiguration, startDate?: Date) => Promise<[formatedTweet[], number]>;
-export {};
+import Repository from "../repository";
+import { twitterConfig, PlatformToken } from '../utils';
+import { formatedTweet, formatedTwitterUser, rawTweet, rawTwitterUser } from "./interfaces";
+import PostPrepper from "../../post-prepper";
+export default class Twitter {
+    private repository;
+    private twitterCfg;
+    private readonly twitterUrl;
+    private readonly params;
+    private startDate;
+    private defaultStartDateDays;
+    private postPrepper;
+    constructor(twitterCfg: twitterConfig, repository: Repository, postPrepper: PostPrepper);
+    refreshTokensbyId: (idType: string, id: string) => Promise<PlatformToken | null>;
+    setStartDate: (twitterUserId: string, startDate?: Date | null) => Promise<void>;
+    importTweets: (twitterUserId: string, userToken?: string | null) => Promise<[formatedTweet[], number]>;
+    getUserTweets: (twitterUserId: string, token?: string | null) => Promise<rawTweet[]>;
+    formatTweets: (rawTweets: rawTweet[]) => Promise<formatedTweet[]>;
+    importUserByToken: (twitterUser: {
+        userId: string;
+        accessToken: string;
+        refreshToken: string;
+        expiration: number;
+    }) => Promise<[formatedTwitterUser, number]>;
+    importUserByHandle: (handles: string | string[]) => Promise<formatedTwitterUser[]>;
+    getUserInfo: (handles: string[]) => Promise<rawTwitterUser[]>;
+    getUserInfoByToken: (token: string) => Promise<rawTwitterUser | null>;
+    formatUser: (rawUsers: rawTwitterUser[]) => formatedTwitterUser[];
+}
