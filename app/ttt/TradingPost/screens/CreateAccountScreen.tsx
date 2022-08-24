@@ -1,4 +1,4 @@
-import React, { Dispatch, ReactElement, ReactNode, Ref, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Dispatch, ReactElement, ReactNode, Ref, SetStateAction, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 //import { ScrollView } from 'react-native-gesture-handler';
 import { Tab, TabBar, TabView, Text } from '@ui-kitten/components';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -112,10 +112,14 @@ export default (props: any) => {
         resolvedIndex = 1
         if (appUser)
             resolvedIndex = 2
-            //resolvedIndex = 7
+        //resolvedIndex = 7
     }
     resolvedIndex = Math.max(wizardIndex, resolvedIndex);
 
+    useLayoutEffect(() => {
+        if (appUser)
+            user.resetData(appUser);
+    }, [appUser]);
     const caProps = {
         user,
         navigation: props.navigation,
@@ -139,7 +143,7 @@ export default (props: any) => {
             setWizardIndex(Math.max(resolvedIndex - 1, 1));
         }
     }
-    console.log("Wizard Index isss resolved to " + resolvedIndex)
+
     return <TabView
         style={{
             backgroundColor: "white",
@@ -154,6 +158,8 @@ export default (props: any) => {
         tabBarStyle={{
             height: 0,
             padding: 0,
+            paddingBottom: 0,
+            paddingTop: 0
         }}
         shouldLoadComponent={(index) => index === resolvedIndex}
     // onSelect={index => {
@@ -162,7 +168,7 @@ export default (props: any) => {
     >
         {screenKeys.map((v, i) => {
             const Screen = screens[screenKeys[i] as keyof typeof screens];
-            return <Tab >
+            return <Tab key={"TAB_" + i} >
                 <Screen {...caProps} />
             </Tab>
         })}

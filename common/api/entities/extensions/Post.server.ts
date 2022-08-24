@@ -5,7 +5,7 @@ import Post from './Post'
 import { Client as ElasticClient } from '@elastic/elasticsearch';
 import { IElasticPost, IElasticPostExt } from "../interfaces";
 import { getUserCache } from "../../cache";
-import { getHivePool } from '../static/pool'
+import { getHivePool } from '../../../db'
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import PostApi from "../apis/PostApi";
 
@@ -82,7 +82,7 @@ const searchQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions
 
         //console.log("REG EXP:::::\${" + k + "}");
         queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
-        //console.log("New QS:" + queryString);
+        console.log("New QS:" + queryString);
     });
 
     return JSON.parse(queryString);

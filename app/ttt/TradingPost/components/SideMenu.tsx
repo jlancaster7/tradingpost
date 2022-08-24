@@ -38,7 +38,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
     //     })
     //     return () => sub1.remove();
     // }, [])
-
+    const { setValue: setHasAuthed } = useData("hasAuthed");
     const activeTabId = `BottomTabs_${activeTabIndex}`
     const { signOut } = useAppUser();
     //Not sure if the issue here but this seems to work for now.
@@ -92,7 +92,10 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
         },
         {
             label: "Logout",
-            onPress: () => signOut(),
+            onPress: () => {
+                setHasAuthed(false);
+                signOut()
+            },
             icon: sideMenu.LogOut
         }] as { onPress?: () => void, label: string, icon: React.FC<SvgProps> }[]).map((item, index, array) => {
             return <MenuItem

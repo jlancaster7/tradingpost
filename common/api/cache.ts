@@ -6,7 +6,7 @@ import UserApi from "./entities/apis/UserApi"
 import PostApi from "./entities/apis/PostApi"
 import WatchlistApi from "./entities/apis/WatchlistApi"
 import WatchlistSavedApi from "./entities/apis/WatchlistSavedApi"
-import { execProc } from "./entities/static/pool"
+import { execProc } from "../db"
 
 type ExistsRecord = Record<string, true>
 export type PriceInfo = { id: number, symbol: string, price: { price: number, time: string, open: number, high: number, low: number } };

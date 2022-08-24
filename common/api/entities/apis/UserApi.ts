@@ -6,6 +6,7 @@ class UserApi extends EntityApi<IUserGet,IUserList,never,IUserUpdate> {
     protected listFunction = "public.api_user_list";
     protected insertFunction = '';
     protected updateFunction = "public.api_user_update";
+    protected apiCallName = 'UserApi';
     extensions = new Extensions.default(this)
 }
 export default new UserApi();

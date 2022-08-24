@@ -1,4 +1,4 @@
-import { execProc, execProcOne } from '../static/pool';
+import { execProc, execProcOne } from '../../../db';
 import { EntityApiBase } from './EntityApiBase';
 import { makeError } from '../../errors'
 import { existsSync } from 'fs'
@@ -9,7 +9,6 @@ export type RequestSettings<T = any> = {
     data: T,
     limit?: number
     page?: number
-
 }
 
 function makeExtensions(name: string) {

@@ -159,6 +159,38 @@
 
 
 
+    DROP FUNCTION IF EXISTS public.api_subscription_get(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_subscription_get(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"settings" json,"cost" money,"name" text,"user_id" UUID)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  return query SELECT * FROM public.view_subscription_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
+    END;
+    $BODY$;
+
+
+    DROP FUNCTION IF EXISTS public.api_subscription_list(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_subscription_list(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"user_id" UUID,"name" text,"cost" money)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  return query SELECT * FROM public.view_subscription_list(request) as v WHERE CASE WHEN  request->'data' ? 'ids' THEN  v.id in (SELECT value::BIGINT from jsonb_array_elements_text(request->'data'->'ids')) ELSE true end;
+    END;
+    $BODY$;
+
+
+
+
+
+
 
 
 

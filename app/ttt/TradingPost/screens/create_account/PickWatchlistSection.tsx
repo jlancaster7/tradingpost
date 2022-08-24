@@ -5,22 +5,16 @@ import { Alert, TouchableOpacity, Image, ImageStyle, ViewStyle, View, Animated, 
 import { Avatar, Icon, Input, Text, } from "@ui-kitten/components";
 //import { signOut, getStoredCreds, CreateAuth0User, UpdateUserProfile, signInStoredCreds } from "../../apis/Authentication";
 import { TextField, ITextField } from "../../components/TextField";
-import { bannerText, flex, paddView, sizes, textInputWiz } from "../../style";
+import { bannerText, flex, noMargin, paddView, sizes, textInputWiz } from "../../style";
 import { bindTextInput, IEntity, useReadonlyEntity, useSecuritiesList } from "../../utils/hooks";
 import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators";
 import { CreateAccountProps, sideMargin, useChangeLock } from "../CreateAccountScreen";
 
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
 
-
 import WatchlistApi from '@tradingpost/common/api/entities/apis/WatchlistApi'
-import { useAppUser } from "../../App";
-import { List } from "../../components/List";
-import { SearchBar } from "../../components/SearchBar";
-import { LogoImage } from "../../components/LogoImage";
 import { SvgExpo } from "../../components/SvgExpo";
 import AnalyzeImage from '../../assets/analyze2.svg'
-import { ISecurityList } from "@tradingpost/common/api/entities/interfaces";
 import { useWatchlistPicker, WatchlistPicker } from "../../components/WatchlistPicker";
 import { ElevatedSection } from "../../components/Section";
 
@@ -97,14 +91,14 @@ export function PickWatchlistSection(props: CreateAccountProps) {
 
     >
         <View style={paddView}>
-            <ElevatedSection title="" style={flex}>
+            <ElevatedSection title="" style={[flex, noMargin]}>
                 <Animated.View style={{ opacity: opacityAnim }}>
-                    <Pressable onPress={()=>{
+                    <Pressable onPress={() => {
                         props.navigation.navigate("OverlayModal");
                     }}><Text
                         style={[bannerText, { marginVertical: sizes.rem0_5 }]}>
-                        Help us get to know you.
-                    </Text>
+                            Help us get to know you.
+                        </Text>
                     </Pressable>
                     <SvgExpo>
                         <AnalyzeImage />

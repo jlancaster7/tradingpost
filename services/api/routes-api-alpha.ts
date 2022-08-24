@@ -7,6 +7,7 @@ import { DefaultConfig } from "@tradingpost/common/configuration";
 import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
 import { cacheMonitor } from '@tradingpost/common/api/cache'
 import UserApi from "@tradingpost/common/api/entities/apis/UserApi";
+import SecurityApi from "@tradingpost/common/api/entities/static/SecurityApi";
 const router = Express.Router();
 const baseFormat = '/:entity/:action';
 
@@ -59,7 +60,13 @@ const makeRoute = (path: string, action: (req: Express.Request, res: Express.Res
 function resolver(...path: string[]) {
     const output = path.find(p => {
         try {
-            require.resolve(p)
+            const resolveKey = require.resolve(p)
+            //NEED TO DISABLE FOR PROD
+            if (require.cache[resolveKey]) {
+                console.log("clearing... " + resolveKey);
+                delete require.cache[resolveKey];
+            }
+
             return true;
         }
         catch (ex) {
@@ -121,10 +128,12 @@ makeRoute("/authapi/init", async (req) => {
 //ALL ROUTES
 makeRoute(baseFormat, (req) => {
     return sharedHandler(req, async (entity) => {
-        const info = await decodeToken(req);
+        //TODO: clean up how this is decided
+        const token = (req.params.action !== "list" || (entity as any) !== SecurityApi) ? await decodeToken(req) : {};
+
         //need to add to info about requests;
         const extra = {
-            userId: info.sub,
+            userId: token.sub,
             page: req.query.page ? Number(req.query.page) : undefined,
             limit: req.query.limit ? Number(req.query.limit) : undefined
         };
@@ -135,7 +144,7 @@ makeRoute(baseFormat, (req) => {
         if (req.params.action !== "extensions" && internalHandler) {
 
             const settings: RequestSettings<any> = {
-                user_id: info.sub,
+                user_id: token.sub,
                 data: req.body,
                 page: extra.page,
                 limit: extra.limit
@@ -145,14 +154,14 @@ makeRoute(baseFormat, (req) => {
             if (extensionHandler)
                 await extensionHandler(responseData, extra);
             //will type better in the future by should not be needed right now
-            await cacheMonitor(entity as any, req.params.action, info.sub as string, responseData);
+            await cacheMonitor(entity as any, req.params.action, token.sub as string, responseData);
 
             return responseData;
         }
         else if (extensionHandler) {
             //will make this well redundant
             const responseData = await extensionHandler(req);
-            await cacheMonitor(entity as any, req.params.action, info.sub as string, responseData);
+            await cacheMonitor(entity as any, req.params.action, token.sub as string, responseData);
             return responseData
         }
         else {

@@ -6,6 +6,7 @@ class AlertApi extends EntityApi<never,IAlertList,never,never> {
     protected listFunction = "public.api_alert_list";
     protected insertFunction = '';
     protected updateFunction = '';
+    protected apiCallName = 'AlertApi';
     extensions = new Extensions.default(this)
 }
 export default new AlertApi();

@@ -11,7 +11,12 @@ export const shadow: ViewStyle = {
     shadowRadius: 0.25,
 }
 
-
+export const noMargin = {
+    marginTop: 0,
+    marginRight: 0,
+    marginBottom: 0,
+    marginLeft: 0,
+}
 
 export function rounded(size: number) {
     return {

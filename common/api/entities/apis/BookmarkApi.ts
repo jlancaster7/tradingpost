@@ -6,6 +6,7 @@ class BookmarkApi extends EntityApi<IBookmarkGet,IBookmarkList,never,never> {
     protected listFunction = "public.api_bookmark_list";
     protected insertFunction = '';
     protected updateFunction = '';
+    protected apiCallName = 'BookmarkApi';
     extensions = new Extensions.default(this)
 }
 export default new BookmarkApi();

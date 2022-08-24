@@ -1,6 +1,5 @@
 import { Request, Response } from 'express'
-import { getHivePool } from '@tradingpost/common/api/entities/static/pool'
-
+import { getHivePool } from '@tradingpost/common/db/index'
 
 export const healthCheck = async (req: Request, res: Response) => {
     try {

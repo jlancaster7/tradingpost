@@ -6,6 +6,7 @@ class UpvoteApi extends EntityApi<IUpvoteGet,IUpvoteList,never,never> {
     protected listFunction = "public.api_upvote_list";
     protected insertFunction = '';
     protected updateFunction = '';
+    protected apiCallName = 'UpvoteApi';
     extensions = new Extensions.default(this)
 }
 export default new UpvoteApi();

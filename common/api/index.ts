@@ -6,6 +6,7 @@ import Comment from './entities/apis/CommentApi'
 import PlatformClaim from './entities/apis/PlatformClaimApi'
 import Post from './entities/apis/PostApi'
 import Subscriber from './entities/apis/SubscriberApi'
+import Subscription from './entities/apis/SubscriptionApi'
 import Trade from './entities/apis/TradeApi'
 import Upvote from './entities/apis/UpvoteApi'
 import User from './entities/apis/UserApi'
@@ -14,10 +15,10 @@ import WatchlistItem from './entities/apis/WatchlistItemApi'
 import WatchlistSaved from './entities/apis/WatchlistSavedApi'
 export * as Interface from './entities/interfaces'
 export const Api:{ 
-Alert: typeof Alert,Bookmark: typeof Bookmark,Comment: typeof Comment,PlatformClaim: typeof PlatformClaim,Post: typeof Post,Subscriber: typeof Subscriber,Trade: typeof Trade,Upvote: typeof Upvote,User: typeof User,Watchlist: typeof Watchlist,WatchlistItem: typeof WatchlistItem,WatchlistSaved: typeof WatchlistSaved,
+Alert: typeof Alert,Bookmark: typeof Bookmark,Comment: typeof Comment,PlatformClaim: typeof PlatformClaim,Post: typeof Post,Subscriber: typeof Subscriber,Subscription: typeof Subscription,Trade: typeof Trade,Upvote: typeof Upvote,User: typeof User,Watchlist: typeof Watchlist,WatchlistItem: typeof WatchlistItem,WatchlistSaved: typeof WatchlistSaved,
 Auth: typeof Auth,Security: typeof Security
 }
  = {
-Alert,Bookmark,Comment,PlatformClaim,Post,Subscriber,Trade,Upvote,User,Watchlist,WatchlistItem,WatchlistSaved,
+Alert,Bookmark,Comment,PlatformClaim,Post,Subscriber,Subscription,Trade,Upvote,User,Watchlist,WatchlistItem,WatchlistSaved,
 Auth,Security
 }

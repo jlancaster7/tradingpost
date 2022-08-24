@@ -1906,8 +1906,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get returns for accountGroupId: ${accountGroupId}`);
-        }
-        ;
+        };
         let holdingPeriodReturns: AccountGroupHPRsTable[] = []
         for (let d of response) {
             holdingPeriodReturns.push({

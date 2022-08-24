@@ -47,6 +47,7 @@ var configuration_1 = require("@tradingpost/common/configuration");
 var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 var cache_1 = require("@tradingpost/common/api/cache");
 var UserApi_1 = __importDefault(require("@tradingpost/common/api/entities/apis/UserApi"));
+var SecurityApi_1 = __importDefault(require("@tradingpost/common/api/entities/static/SecurityApi"));
 var router = express_1.default.Router();
 var baseFormat = '/:entity/:action';
 //TODO: need to throw errros that will set the status number. (401 in this case)
@@ -60,7 +61,7 @@ var decodeToken = function (req, disableModelCheck) { return __awaiter(void 0, v
                 if (!(typeof bearerHeader !== 'undefined')) return [3 /*break*/, 2];
                 bearer = bearerHeader.split(' ');
                 if (bearer[0].toLowerCase() !== "bearer")
-                    throw new Error("Invalid authorization type: \"".concat(bearer[0], "\"."));
+                    throw new Error("Invalid authorization type: \"" + bearer[0] + "\".");
                 _a = jsonwebtoken_1.verify;
                 _b = [bearer[1]];
                 return [4 /*yield*/, configuration_1.DefaultConfig.fromCacheOrSSM("authkey")];
@@ -115,7 +116,12 @@ function resolver() {
     }
     var output = path.find(function (p) {
         try {
-            require.resolve(p);
+            var resolveKey = require.resolve(p);
+            //NEED TO DISABLE FOR PROD
+            if (require.cache[resolveKey]) {
+                console.log("clearing... " + resolveKey);
+                delete require.cache[resolveKey];
+            }
             return true;
         }
         catch (ex) {
@@ -131,7 +137,7 @@ var sharedHandler = function (req, routeDetails) { return __awaiter(void 0, void
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                entity = require(resolver((0, path_1.join)("@tradingpost/common/api/entities/apis/".concat(req.params.entity)), (0, path_1.join)("@tradingpost/common/api/entities/static/".concat(req.params.entity))))
+                entity = require(resolver(path_1.join("@tradingpost/common/api/entities/apis/" + req.params.entity), path_1.join("@tradingpost/common/api/entities/static/" + req.params.entity)))
                     .default;
                 return [4 /*yield*/, routeDetails(entity)];
             case 1: return [2 /*return*/, _a.sent()];
@@ -147,9 +153,9 @@ makeRoute("/authapi/login", function (req) { return __awaiter(void 0, void 0, vo
                 throw new EntityApiBase_1.PublicError("Unauthorized...", 401);
             case 1:
                 if (!req.body.email) return [3 /*break*/, 3];
-                return [4 /*yield*/, (0, auth_1.loginPass)(req.body.email, req.body.pass, "")];
+                return [4 /*yield*/, auth_1.loginPass(req.body.email, req.body.pass, "")];
             case 2: return [2 /*return*/, _a.sent()];
-            case 3: return [4 /*yield*/, (0, auth_1.loginToken)(req.body.pass)];
+            case 3: return [4 /*yield*/, auth_1.loginToken(req.body.pass)];
             case 4: return [2 /*return*/, _a.sent()];
         }
     });
@@ -160,7 +166,7 @@ makeRoute("/authapi/create", function (req) { return __awaiter(void 0, void 0, v
             case 0:
                 if (!req.body.email || !req.body.pass)
                     throw new EntityApiBase_1.PublicError("Invalid Request");
-                return [4 /*yield*/, (0, auth_1.createLogin)(req.body.email, req.body.pass)];
+                return [4 /*yield*/, auth_1.createLogin(req.body.email, req.body.pass)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -174,7 +180,7 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
                 info = _a.sent();
                 if (!info.claims.email)
                     throw new Error("Invalid Request");
-                return [4 /*yield*/, (0, auth_1.createUser)({
+                return [4 /*yield*/, auth_1.createUser({
                         email: info.claims.email,
                         first_name: req.body.first_name,
                         last_name: req.body.last_name,
@@ -182,7 +188,7 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
                     })];
             case 2:
                 login = _a.sent();
-                (0, cache_1.cacheMonitor)(UserApi_1.default, "insert", login.user_id, {});
+                cache_1.cacheMonitor(UserApi_1.default, "insert", login.user_id, {});
                 return [2 /*return*/, login];
         }
     });
@@ -190,52 +196,60 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
 //ALL ROUTES
 makeRoute(baseFormat, function (req) {
     return sharedHandler(req, function (entity) { return __awaiter(void 0, void 0, void 0, function () {
-        var info, extra, internalHandler, extensionHandler, settings, responseData, responseData;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, decodeToken(req)];
+        var token, _a, extra, internalHandler, extensionHandler, settings, responseData, responseData;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    if (!(req.params.action !== "list" || entity !== SecurityApi_1.default)) return [3 /*break*/, 2];
+                    return [4 /*yield*/, decodeToken(req)];
                 case 1:
-                    info = _a.sent();
+                    _a = _b.sent();
+                    return [3 /*break*/, 3];
+                case 2:
+                    _a = {};
+                    _b.label = 3;
+                case 3:
+                    token = _a;
                     extra = {
-                        userId: info.sub,
+                        userId: token.sub,
                         page: req.query.page ? Number(req.query.page) : undefined,
                         limit: req.query.limit ? Number(req.query.limit) : undefined
                     };
                     req.extra = extra;
                     internalHandler = entity.internal[req.params.action];
                     extensionHandler = entity.internal.extensions[req.params.action];
-                    if (!(req.params.action !== "extensions" && internalHandler)) return [3 /*break*/, 6];
+                    if (!(req.params.action !== "extensions" && internalHandler)) return [3 /*break*/, 8];
                     settings = {
-                        user_id: info.sub,
+                        user_id: token.sub,
                         data: req.body,
                         page: extra.page,
                         limit: extra.limit
                     };
                     return [4 /*yield*/, internalHandler(settings)];
-                case 2:
-                    responseData = _a.sent();
-                    if (!extensionHandler) return [3 /*break*/, 4];
+                case 4:
+                    responseData = _b.sent();
+                    if (!extensionHandler) return [3 /*break*/, 6];
                     return [4 /*yield*/, extensionHandler(responseData, extra)];
-                case 3:
-                    _a.sent();
-                    _a.label = 4;
-                case 4: 
-                //will type better in the future by should not be needed right now
-                return [4 /*yield*/, (0, cache_1.cacheMonitor)(entity, req.params.action, info.sub, responseData)];
                 case 5:
-                    //will type better in the future by should not be needed right now
-                    _a.sent();
-                    return [2 /*return*/, responseData];
-                case 6:
-                    if (!extensionHandler) return [3 /*break*/, 9];
-                    return [4 /*yield*/, extensionHandler(req)];
+                    _b.sent();
+                    _b.label = 6;
+                case 6: 
+                //will type better in the future by should not be needed right now
+                return [4 /*yield*/, cache_1.cacheMonitor(entity, req.params.action, token.sub, responseData)];
                 case 7:
-                    responseData = _a.sent();
-                    return [4 /*yield*/, (0, cache_1.cacheMonitor)(entity, req.params.action, info.sub, responseData)];
-                case 8:
-                    _a.sent();
+                    //will type better in the future by should not be needed right now
+                    _b.sent();
                     return [2 /*return*/, responseData];
-                case 9: throw new EntityApiBase_1.PublicError("Unknown Action", 400);
+                case 8:
+                    if (!extensionHandler) return [3 /*break*/, 11];
+                    return [4 /*yield*/, extensionHandler(req)];
+                case 9:
+                    responseData = _b.sent();
+                    return [4 /*yield*/, cache_1.cacheMonitor(entity, req.params.action, token.sub, responseData)];
+                case 10:
+                    _b.sent();
+                    return [2 /*return*/, responseData];
+                case 11: throw new EntityApiBase_1.PublicError("Unknown Action", 400);
             }
         });
     }); });

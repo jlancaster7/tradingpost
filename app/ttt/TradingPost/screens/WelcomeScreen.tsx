@@ -124,8 +124,10 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
     useLayoutEffect(() => {
         ///*|| loginResult*
         if (appUser || loginResult) {
-            if (!appUser || !hasAuthed)
+            console.log("Has authed is ....." + hasAuthed)
+            if (!appUser || !hasAuthed) {   
                 navigation.navigate("Create");
+            }
             else {
 
                 navigation.navigate("Dash")

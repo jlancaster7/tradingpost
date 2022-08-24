@@ -7,11 +7,11 @@ import { DefaultConfig } from "../../../configuration";
 import pgPromise from "pg-promise";
 import Finicity from "../../../finicity";
 //import FinicityTransformer from '../../../brokerage/finicity/transformer'
-import { execProc } from "../static/pool";
+import { execProc } from '../../../db'
 import { addTwitterUsersByToken } from '../../../social-media/twitter/index'
 import { getUserCache } from "../../cache";
 import WatchlistApi from "../apis/WatchlistApi";
-
+import { DateTime } from 'luxon'
 
 export interface ITokenResponse {
     "token_type": "bearer",
@@ -42,11 +42,14 @@ const init = (async () => {
 
     const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
     const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
+    console.log("Start Init ")
     await finicity.init();
     brokerage = new Brokerage(pgClient, pgp, finicity);
 
+    console.log("Start Connection ")
 
     await pgClient.connect();
+    console.log("Returning ")
     return {
         brokerage,
         pgp,
@@ -57,14 +60,14 @@ const init = (async () => {
 
 export default ensureServerExtensions<User>({
     generateBrokerageLink: async (req) => {
-        //TODO: make this use a better pardigm... is a pool being used? Alternatively Maybe we ensure this loads when the server gets up and running.
+
         const { brokerage } = await init;
-        //console.log(typeof test);
+
+
         const test = await brokerage.generateBrokerageAuthenticationLink(req.extra.userId, "finicity");
         console.log(JSON.stringify(test));
         return {
             link: test
-
         }
 
     },
@@ -137,6 +140,10 @@ export default ensureServerExtensions<User>({
         user_id: r.extra.userId,
         data: {}
     }),
+    getReturns: async r => {
+        const { brokerage } = await init;
+        return await brokerage.getUserReturns(r.body.userId || r.extra.userId, DateTime.fromISO(r.body.startDate as any as string), DateTime.fromISO(r.body.endDate as any as string));
+    },
     getWatchlists: async r => {
         const cache = await getUserCache();
         //a tad inefficient but oh well

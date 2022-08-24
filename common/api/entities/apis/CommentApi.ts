@@ -6,6 +6,7 @@ class CommentApi extends EntityApi<ICommentGet,ICommentList,never,never> {
     protected listFunction = "public.api_comment_list";
     protected insertFunction = '';
     protected updateFunction = '';
+    protected apiCallName = 'CommentApi';
     extensions = new Extensions.default(this)
 }
 export default new CommentApi();

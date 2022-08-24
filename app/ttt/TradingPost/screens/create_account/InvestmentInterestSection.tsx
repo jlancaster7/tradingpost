@@ -4,7 +4,7 @@ import { Autocomplete, AutocompleteItem, Button, Icon, IndexPath, Text, Layout }
 import { ChipPicker } from "../../components/ChipBar"
 import { ElevatedSection, Section } from "../../components/Section"
 import { PlusIcon } from "../../images"
-import { bannerText, flex, paddView, sizes, thinBannerText } from "../../style"
+import { bannerText, flex, noMargin, paddView, sizes, thinBannerText } from "../../style"
 import { Picker } from '../../components/Picker'
 import {
     CreateAccountProps,
@@ -128,7 +128,6 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
         iconUrl: value.logo_url
     }))
     return <ScrollWithButtons
-        fillHeight
         buttons={
             {
                 locked: lockButtons,
@@ -166,7 +165,7 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
             }
         }>
         <View style={paddView}>
-            <ElevatedSection title="" style={flex}>
+            <ElevatedSection title="" style={[]}>
                 <AppearView onLayout={(ev) => {
                     setSliderWidth(ev.nativeEvent.layout.width)
                 }} style={[flex]}>

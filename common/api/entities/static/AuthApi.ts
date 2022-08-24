@@ -3,7 +3,7 @@ import { apiUrl, EntityApiBase } from "./EntityApiBase";
 export type LoginResult = { token: string, verified: boolean, user_id: string, hash: string }
 export class AuthApi {
     async createLogin(email: string, pass: string) {
-        const resp = await fetch(apiUrl(this.constructor.name, "create"), {
+        const resp = await fetch(apiUrl("AuthApi", "create"), {
             method: "POST",
             body: JSON.stringify({
                 email,
@@ -17,7 +17,7 @@ export class AuthApi {
     }
 
     async createUser(first_name: string, last_name: string, handle: string) {
-        const resp = await fetch(apiUrl(this.constructor.name, "init"), {
+        const resp = await fetch(apiUrl("AuthApi", "init"), {
             method: "POST",
             body: JSON.stringify({
                 first_name,
@@ -37,7 +37,7 @@ export class AuthApi {
         return await this.login("", token);
     }
     async login(email: string, pass: string) {
-        const resp = await fetch(apiUrl(this.constructor.name, "login"), {
+        const resp = await fetch(apiUrl("AuthApi", "login"), {
             method: "POST",
             body: JSON.stringify({
                 email,

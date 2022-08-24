@@ -96,6 +96,21 @@ export interface ISubscriberGet {
     months_subscribed: string
     };
 
+export interface ISubscriptionList {
+        id: number,
+    user_id: string,
+    name: string,
+    cost: number
+    };
+
+export interface ISubscriptionGet {
+        id: number,
+    settings?: any,
+    cost: number,
+    name: string,
+    user_id: string
+    };
+
 export interface ITradeList {
     
     };

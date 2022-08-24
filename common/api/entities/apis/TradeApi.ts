@@ -6,6 +6,7 @@ class TradeApi extends EntityApi<never,never,never,never> {
     protected listFunction = '';
     protected insertFunction = '';
     protected updateFunction = '';
+    protected apiCallName = 'TradeApi';
     extensions = new Extensions.default(this)
 }
 export default new TradeApi();

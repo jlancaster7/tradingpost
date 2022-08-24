@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { initLds, setValue } from '../lds';
 import Auth from '@tradingpost/common/api/entities/static/AuthApi'
 import { Authentication, useAppUser } from '../App';
+import '../utils/hooks';
 export default function useCachedResources() {
   const [isLoadingComplete, setLoadingComplete] = useState(false);
 
@@ -25,8 +26,10 @@ export default function useCachedResources() {
         });
 
         const lds = await initLds();
-
+        console.log("Caching Stuff" + JSON.stringify(lds));
+       // useSecuritiesList();
         if (lds.authToken) {
+          console.log("There is an LDS token");
           try {
             const results = await Authentication.signIn("", lds.authToken);
             setValue("loginResult", results.loginResult);
@@ -37,6 +40,7 @@ export default function useCachedResources() {
             console.error(ex);
           }
         }
+
 
 
 

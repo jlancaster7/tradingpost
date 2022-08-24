@@ -1,5 +1,10 @@
-import {SSM} from '@aws-sdk/client-ssm';
-
+import { SSM } from '@aws-sdk/client-ssm';
+//We can add this in the future if we want
+// declare global {
+//     namespace NodeJS {
+//         interface ProcessEnv extends Partial<ConfigPaths> { }
+//     }
+// }
 type ConfigKeys =
     "elastic"
     | "iex"
@@ -14,6 +19,8 @@ type ConfigKeys =
     | "substack"
     | "sendgrid"
     | "finicity"
+
+
 
 export interface ConfigPaths extends Record<ConfigKeys, unknown> {
     elastic: {
@@ -118,13 +125,19 @@ export class Configuration<K extends Record<string, any>> {
     }
 
     fromSSM = async <T extends keyof K>(path: T, options?: ConfigOptions): Promise<K[T]> => {
+        let output: string | undefined;
         const fullPath = `/${this.environment}/${path as string}`
-        const res = (await this.ssmClient
-            .getParameter({Name: fullPath, WithDecryption: true}));
-        if (res.Parameter?.Value === undefined)
+        if ((process.env as any)[path]) {
+            console.log(`${fullPath} as been loaded from the local environment`);
+            output = process.env[path] as any
+        }
+        else
+            output = (await this.ssmClient.getParameter({ Name: fullPath, WithDecryption: true })).Parameter?.Value;
+
+        if (output === undefined)
             throw new Error(`Could not find value for parameter path '${fullPath}' please make sure the path exists and the value is populated`);
 
-        return (options?.raw || this.defaultOptions[path]?.raw) ? res.Parameter.Value : JSON.parse(res.Parameter.Value);
+        return (options?.raw || this.defaultOptions[path]?.raw) ? output : JSON.parse(output);
     }
 
     //NOTE: Currently cache will only use default options. This was done to remove the need to cache based on options 
@@ -149,12 +162,12 @@ const API_VERSION = '2014-11-06';
 export const DefaultConfig = new Configuration<ConfigPaths>(new SSM({
     apiVersion: API_VERSION,
     region: BASE_REGION,
-}), {authkey: {raw: true}});
+}), { authkey: { raw: true } });
 
 
 export const AutomationConfig = new Configuration<{ npm_key: string }>(new SSM({
     apiVersion: API_VERSION,
     region: BASE_REGION,
-}), {npm_key: {raw: true}}, "automation");
+}), { npm_key: { raw: true } }, "automation");
 
 
