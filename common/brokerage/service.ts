@@ -141,6 +141,8 @@ export default class BrokerageService {
         if (!brokerage) throw new Error("no brokerage found")
 
         const holdings = await brokerage.importHoldings(brokerageUserId);
+        if (holdings.length <= 0) return;
+
         await this.repository.upsertTradingPostCurrentHoldings(holdings);
 
         let holdingHistory: TradingPostHistoricalHoldings[] = holdings.map(holding => ({

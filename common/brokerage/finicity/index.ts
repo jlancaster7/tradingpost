@@ -331,6 +331,7 @@ export default class FinicityService implements IBrokerageService {
         if (finicityUser === null) throw new Error(`no user accounts exist for user id ${userId} in holdings`);
 
         const finAccountsAndHoldings = await this.finicity.getCustomerAccounts(finicityUser.customerId);
+        if (finAccountsAndHoldings.accounts.length <= 0) return [];
 
         const internalAccounts = await this.repository.getFinicityAccounts(finicityUser.id);
         let accountMap: Record<string, number> = {}

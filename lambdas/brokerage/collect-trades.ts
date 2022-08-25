@@ -51,7 +51,7 @@ const run = async () => {
     const finicityUsers = await repository.getFinicityUsers();
     for (let i = 0; i < finicityUsers.length; i++) {
         const finicityUser = finicityUsers[i];
-        await brokerageService.pullNewData(finicityUser.customerId, 'finicity');
+        await brokerageService.pullNewData('finicity', finicityUser.customerId);
     }
 }
 
