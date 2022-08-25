@@ -5,6 +5,7 @@ import { Alert, Animated, Keyboard, TextInputProps, TextProps, ViewProps } from 
 import { PickerProps } from "../components/Picker";
 import { LDS, useData } from '../lds';
 import { bannerText } from "../style";
+import { AwaitedReturn } from './misc';
 //import { ToastProps } from "react-native-ui-lib/typings/components/Toast";
 //import { ITempUser } from "../interfaces/IUser";
 //import { PickerProps } from '../components/Picker'
@@ -27,50 +28,44 @@ const ensureIterable = (value: any): value is Iterable<any> => {
 
 
 
-let isLoadingSecurities = false;
-//TODO: FIX THIS ... THIS IS DUMB
-const getSecurityList = async (loaded: (secs: Exclude<LDS["securities"], undefined>) => void, onErr: (err: any) => void) => {
-    if (!isLoadingSecurities) {
-        isLoadingSecurities = true;
-        try {
-            const list = await Api.Security.extensions.list(),
-                byId: Parameters<typeof loaded>[0]["byId"] = {},
-                bySymbol: Parameters<typeof loaded>[0]["bySymbol"] = {}
-            list.forEach((r) => {
-                byId[r.id] = r;
-                bySymbol[r.symbol] = r;
-            })
-            loaded({
-                list,
-                byId,
-                bySymbol
-            });
-        }
-        catch (ex) {
-            //Only sends error to one compoennt... not great.. should be fixed eventually
-            onErr(ex);
-        }
-        finally {
-            isLoadingSecurities = false;
-        }
+
+const getSecurityList = (async () => {
+
+    const list = await Api.Security.extensions.list(),
+        byId: Record<number, typeof list[0]> = {},
+        bySymbol: Record<string, typeof list[0]> = {}
+    list.forEach((r) => {
+        byId[r.id] = r;
+        bySymbol[r.symbol] = r;
+    })
+    return {
+        list,
+        byId,
+        bySymbol
     }
-}
+})()
 
 export const useSecuritiesList = () => {
 
-    const [err, setErr] = useState<any>(),
-        { value, setValue } = useData("securities")
+    const [err, setErr] = useState<any>()
+    const { value: securities, setValue: setSecurities } = useData("securities");
+    const [localValue, setLocalValue] = useState(securities)
+
 
     useEffect(() => {
-        getSecurityList(setValue, setErr);
-    }, [])
+        if (!securities)
+            getSecurityList.then((r) => {
+                setSecurities(r)
+                setLocalValue(r);
+            }).catch(ex => setErr(ex));
+    }, [securities])
 
     return {
         err,
-        securities: value || {
-            byId:{},
-            bySymbol:{},
-            list:[]
+        securities: localValue || {
+            byId: {},
+            bySymbol: {},
+            list: []
         }
     }
 }

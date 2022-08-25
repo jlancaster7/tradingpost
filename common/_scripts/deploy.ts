@@ -2,7 +2,6 @@ import packageInfo from '../package.json'
 import { AutomationConfig } from '../configuration'
 import { exec } from 'child_process';
 import { execAsync } from './util';
-//import { promisify } from 'util'
 
 //npm version <update_type>
 (async () => {
@@ -27,6 +26,7 @@ import { execAsync } from './util';
     }
     catch (ex) {
         console.error(ex);
+        process.exit(-1);
     }
 })()
 

@@ -6,8 +6,9 @@ export class SecurityApi extends EntityApi<ISecurityGet, ISecurityList, never, n
     protected insertFunction: string = "";
     protected getFunction: string = "tp.api_security_get";
     protected listFunction: string = "tp.api_security_list"
+    protected apiCallName: string = "SecurityApi"
     extensions = new SecExt(this)
 }
 
 export default new SecurityApi();
-export { ISecurityGet, ISecurityList } 
+//export { ISecurityGet, ISecurityList } 

@@ -1,6 +1,6 @@
 import { IUserList, IWatchlistList } from "../interfaces";
 import { Extension } from "./index";
-import { TradingPostAccountGroupStats } from '../../../brokerage/interfaces';
+import { AccountGroupHPRsTable, TradingPostAccountGroupStats } from '../../../brokerage/interfaces';
 export declare type UploadProfilePicBody = {
     userId: string;
     image: string;
@@ -49,6 +49,11 @@ export default class User extends Extension {
     getWatchlists: (settings: {
         userId: string;
     }) => Promise<IWatchlistList[]>;
+    getReturns: (settings: {
+        userId?: string | undefined;
+        startDate: Date;
+        endDate: Date;
+    }) => Promise<AccountGroupHPRsTable[]>;
     getPortfolio: (settings: {
         userId?: string | undefined;
     }) => Promise<TradingPostAccountGroupStats>;

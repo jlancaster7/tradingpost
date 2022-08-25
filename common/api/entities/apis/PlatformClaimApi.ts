@@ -6,6 +6,7 @@ class PlatformClaimApi extends EntityApi<IPlatformClaimGet,IPlatformClaimList,ne
     protected listFunction = "public.api_platform_claim_list";
     protected insertFunction = '';
     protected updateFunction = '';
+    protected apiCallName = 'PlatformClaimApi';
     extensions = new Extensions.default(this)
 }
 export default new PlatformClaimApi();

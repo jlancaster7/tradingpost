@@ -103,6 +103,18 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<import("../interfaces").IWatchlistList[]>;
+    getReturns: (req: {
+        body: {
+            userId?: string | undefined;
+            startDate: Date;
+            endDate: Date;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<import("../../../brokerage/interfaces").AccountGroupHPRsTable[]>;
     getPortfolio: (req: {
         body: {
             userId?: string | undefined;

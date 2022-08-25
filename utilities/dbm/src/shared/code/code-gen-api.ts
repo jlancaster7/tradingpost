@@ -22,6 +22,7 @@ class ${entityPascaled}Api extends EntityApi<${interfaces.join(",")}> {
     protected listFunction = ${can.list ? apiFunc("LIST") : "''"};
     protected insertFunction = ${can.insert ? apiFunc("INSERT") : "''"};
     protected updateFunction = ${can.update ? apiFunc("UPDATE") : "''"};
+    protected apiCallName = '${entityPascaled}Api';
     extensions = new Extensions.default(this)
 }
 export default new ${entityPascaled}Api();

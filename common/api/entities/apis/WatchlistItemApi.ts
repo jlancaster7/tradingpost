@@ -6,6 +6,7 @@ class WatchlistItemApi extends EntityApi<IWatchlistItemGet,IWatchlistItemList,ne
     protected listFunction = "public.api_watchlist_item_list";
     protected insertFunction = '';
     protected updateFunction = '';
+    protected apiCallName = 'WatchlistItemApi';
     extensions = new Extensions.default(this)
 }
 export default new WatchlistItemApi();

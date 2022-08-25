@@ -122,8 +122,7 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
             },
             column
             //        { field: "symbol", align: "left", style: { lineHeight: sizes.rem1_5 } },
-
-        ] as ITableColumn<IWatchlistGetExt["items"][0]>[]
+        ] as ITableColumn<IWatchlistGetExt["items"][number]>[]
     }
 }
 

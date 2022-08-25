@@ -27,7 +27,7 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
     //abstract deleteFunction: string;
     protected abstract getFunction: string;
     protected abstract listFunction: string;
-
+    protected abstract apiCallName :string;
     static token: string
 
     static makeHeaders<T>() {
@@ -48,8 +48,8 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
             throw data;
     }
 
-    makeUrl = (method: string) => apiUrl(this.constructor.name, method);
-    //`${this.constructor.name}${(id !== undefined ? "/" + id : "")}`
+    makeUrl = (method: string) => apiUrl(this.apiCallName, method);
+    
     //assumes fetch exists globally
     async get(id: string | number) {
         const resp = await fetch(this.makeUrl("get"), {

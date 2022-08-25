@@ -1,5 +1,5 @@
 import { pbkdf2Sync, randomBytes } from 'crypto'
-import { execProc, execProcOne } from './entities/static/pool'
+import { execProc, execProcOne } from '../db'
 import { LoginResult } from './entities/static/AuthApi'
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { DefaultConfig } from '../configuration';

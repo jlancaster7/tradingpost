@@ -10,14 +10,15 @@ import { DataOrQuery } from '../components/List'
 import { DashScreenProps, TabScreenProps } from "../navigation";
 import { flex, paddView, sizes } from "../style";
 import { useToast } from "react-native-toast-notifications";
-import {  useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistScreen";
+import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistScreen";
 import { AwaitedReturn, toPercent, toPercent2, toThousands } from "../utils/misc";
 import { WatchlistSection } from "../components/WatchlistSection";
 import Theme from '../theme-light.json'
 import { LimitedTable } from "./TableModalScreen";
 import { ButtonGroup } from "../components/ButtonGroup";
-import { PieHolder } from "../components/PieHolder";
+import { LineHolder, PieHolder } from "../components/PieHolder";
 import { AppColors } from "../constants/Colors";
+import { LineChart } from "../components/LineChart";
 
 const styles = {
     stateLabel: {
@@ -36,23 +37,22 @@ export const PortfolioScreen = (props: TabScreenProps) => {
 
     const [watchlists, setWatchlists] = useState<AllWatchlists>()
     const [quickWatchlist, setQuickWatchlist] = useState<IWatchlistGet>()
-    const toast = useToast();
-    //const [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>();
+    const toast = useToast();//const [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>();
     const [holdings, setHoldings] = useState<AwaitedReturn<typeof Api.User.extensions.getHoldings>>();
     const [portfolio, setPortfolio] = useState<AwaitedReturn<typeof Api.User.extensions.getPortfolio>>();
+    const [returns, setReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>();
 
     useEffect(() => {
         (async () => {
             try {
                 const [lists, holdings] = await Promise.all([
                     Api.Watchlist.extensions.getAllWatchlists(),
-                    Api.User.extensions.getHoldings(),
-
+                    Api.User.extensions.getHoldings()
                 ]);
                 //KEeping apart for now .. seems to have an error
                 try {
                     const portfolio = await Api.User.extensions.getPortfolio({});
-                    setPortfolio(portfolio);    
+                    setPortfolio(portfolio);
                 } catch (ex) {
                     console.error(ex);
                 }
@@ -80,14 +80,23 @@ export const PortfolioScreen = (props: TabScreenProps) => {
             }
         })()
     }, [])
+
+
+    useEffect(() => {
+        Api.User.extensions.getReturns({
+            startDate: new Date("8/21/22"),
+            endDate: new Date("8/22/22")
+        }).then(r => setReturns(r)).catch(ex => console.error(ex))
+    }, [])
+
     const [portPeriod, setPortPeriod] = useState("1Y")
-    const { columns: watchlistItemColumns} = useWatchlistItemColumns(true)
+    const { columns: watchlistItemColumns } = useWatchlistItemColumns(true)
     return <View style={[paddView]}>
         <ScrollView>
             <ElevatedSection key={"portfolio"} title="Portfolio">
                 <Subsection title="Performance">
                     <View style={{ marginBottom: sizes.rem1 }}>
-                        <PieHolder />
+                        <LineHolder />
                     </View>
                     <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "5Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
                     <View style={{ borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2 }}>
@@ -188,7 +197,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
             />
             <WatchlistSection
                 title="Shared Watchlists"
-                key={"my_watchlist"}
+                key={"shared_watchlist"}
                 watchlists={watchlists?.saved}
                 shared
             />

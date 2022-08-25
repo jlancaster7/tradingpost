@@ -44,9 +44,7 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
         if (securities.length && props.securitiesLoaded) {
             props.securitiesLoaded()
         }
-        else {
-            console.log("sec lenght " + securities.length)
-        }
+
     }, [securities.length, Boolean(props.securitiesLoaded)])
     props.selectionConverter.current = securities.length ? (_selectedItems) => securities.filter((s) => _selectedItems[s.id]) : null;
     props.symbolConverter.current = securities.length ? (_symbols) => {
@@ -60,7 +58,7 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
     //}
     //  else if (props.selectionConverter)
     const delayRef = useRef(0);
-    console.log("NUMBER OF SECURITEIS ARE " + securities.length)
+
     const selectedItemCount = Object.keys(selectedItems).length;
     useEffect(() => {
         if (delayRef.current)

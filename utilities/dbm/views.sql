@@ -153,6 +153,34 @@
     $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.view_subscription_list(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.view_subscription_list(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"user_id" UUID,"name" text,"cost" money)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."id", d."user_id", d."name", d."cost" FROM public.data_subscription as d;
+    END;
+    $BODY$;
+
+
+    DROP FUNCTION IF EXISTS public.view_subscription_get(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.view_subscription_get(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"settings" json,"cost" money,"name" text,"user_id" UUID)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."id", CASE WHEN d.user_id = (request->>'user_id')::UUID THEN d."settings" END as "settings", d."cost", d."name", d."user_id" FROM public.data_subscription as d;
+    END;
+    $BODY$;
+
+
     DROP FUNCTION IF EXISTS public.view_upvote_list(jsonb);
   
     CREATE OR REPLACE FUNCTION public.view_upvote_list(

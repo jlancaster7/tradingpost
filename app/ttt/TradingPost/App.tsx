@@ -32,15 +32,10 @@ import { EvaIconsPack } from '@ui-kitten/eva-icons';
 //   //warnColor: '#FF963C'
 // });
 
-//console.log("MY URL IS DEFINED HERE " + process.env.API_BASE_URL);
-
-
-// if (Platform.OS === "web")
-//   configApi({
-//     apiBaseUrl: "//api.tradingpostapp.com"
-//   })
-
-//console.log("API ENV::::::::::::::::::" + process.env.API_BASE_URL)
+if (!__DEV__)
+  configApi({
+    apiBaseUrl: "https://api.tradingpostapp.com"
+  })
 
 export default function App() {
   const { isLoadingComplete } = useCachedResources();

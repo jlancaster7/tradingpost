@@ -96,14 +96,14 @@ export type TabScreenProps<T = never> = DashScreenProps & {
 function DrawerPart() {
   const { appUser } = useAppUser();
 
-  const linkTo = useLinkTo();
+  // const linkTo = useLinkTo();
 
-  useEffect(() => {
-    if (!appUser) {
-      Auth.signOut();
-      linkTo("/login")
-    }
-  }, [appUser, linkTo])
+  // useEffect(() => {
+  //   if (!appUser) {
+  //     Auth.signOut();
+  //     linkTo("/login")
+  //   }
+  // }, [appUser, linkTo])
 
   return appUser ? <Drawer.Navigator drawerContent={(props) => <SideMenu appUser={appUser} {...props} />}
     screenOptions={({ route, navigation }) => ({
@@ -142,7 +142,7 @@ function DrawerPart() {
 function RootNavigator() {
   return <Stack.Navigator screenOptions={{ headerTitle: () => <AppTitle style={{ marginTop: sizes.rem0_5, height: "100%", aspectRatio: 4 }} />, headerTitleAlign: "center", headerBackVisible: false }}>
     <Stack.Screen name="Root" component={WelcomeScreen} options={{ headerShown: false }} />
-    <Stack.Screen name="Create" component={CreateAccountScreen} options={{ headerShown: true, headerBackVisible: false }} />
+    <Stack.Screen name="Create" component={CreateAccountScreen} options={{ headerShown: false, headerBackVisible: false }} />
     <Stack.Screen name="Dash" component={DrawerPart} options={{ headerShown: false }} />
     <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
     <Stack.Group screenOptions={{ presentation: 'modal' }}>

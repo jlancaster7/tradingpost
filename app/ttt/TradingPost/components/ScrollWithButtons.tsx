@@ -33,7 +33,11 @@ export type ButtonPanelProps = {
     }
 }
 export function ButtonPanel(props: ButtonPanelProps) {
-    return <View style={[{ borderTopColor: "#ccc", borderTopWidth: 1, flexDirection: "row", paddingTop: 8, paddingBottom: 8, justifyContent: "space-evenly", zIndex: 1000 }]}>
+    return <View style={[{ borderTopColor: "#ccc", borderTopWidth: 1, flexDirection: "row", 
+    paddingTop: 8,
+     paddingBottom: 8, 
+     
+     justifyContent: "space-evenly", zIndex: 1000 }]}>
         {props.left && <SecondaryButton style={{ width: "48%" }} onPress={props.left.onPress} disabled={props.locked} >{props.left.text}</SecondaryButton>}
         <PrimaryButton style={{ width: props.left ? "48%" : "96%" }} onPress={props.right.onPress} disabled={props.locked} >{props.right.text}</PrimaryButton>
     </View>

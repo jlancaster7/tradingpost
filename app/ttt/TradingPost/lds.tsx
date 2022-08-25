@@ -63,18 +63,17 @@ export const useData = <T extends keyof LDS>(key: T) => {
 
 }
 
-
 export const setValue = async <T extends keyof LDS>(key: T, v: LDS[T]) => {
     lds[key] = v;
     if (isCachedMap[key]) {
         const cachedLds: Partial<LDS> = { ...lds }
         Object.keys(lds).forEach((k) => {
             if (!isCachedMap[k as keyof LDS]) {
-                console.log("DELETING KEY:" + k);
+                //console.log("DELETING KEY:" + k);
                 delete cachedLds[k as keyof LDS]
             }
             else {
-                console.log("CACHING KEY" + k)
+                //console.log("CACHING KEY" + k)
             }
         })
         await AsyncStorage.setItem(LDS_CACHE_KEY, JSON.stringify(cachedLds));
@@ -84,8 +83,10 @@ export const setValue = async <T extends keyof LDS>(key: T, v: LDS[T]) => {
 
 export const initLds = async () => {
     //load all cached values
+    console.log("Initing LDS");
     const result = await AsyncStorage.getItem(LDS_CACHE_KEY);
     if (result) {
+        console.log("Results" + result);
         lds = JSON.parse(result);
         Object.keys(lds).forEach((k) =>
             EventRegister.emit(ldsChangedEvenName, { k }));

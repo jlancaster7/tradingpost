@@ -17,6 +17,7 @@ import { join } from 'path'
     }
     catch (ex) {
         console.error(ex);
+        process.exit(-1);
     }
 })()
 

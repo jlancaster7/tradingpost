@@ -1,10 +1,12 @@
 {
   "name": "@tradingpost/common",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "description": "Code common to other repos",
   "main": "index.js",
   "scripts": {
-    "deploy": "node ./_scripts/deploy"
+    "test": "jest",
+    "deploy": "node ./_scripts/deploy",
+    "watch": "tsc -w"
   },
   "author": "Levert James Jr.",
   "license": "MIT",

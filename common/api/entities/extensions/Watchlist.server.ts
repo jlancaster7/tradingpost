@@ -2,7 +2,7 @@ import { ensureServerExtensions } from ".";
 import { getPriceCacheTask, getUserCache } from "../../cache";
 import WatchlistSavedApi from "../apis/WatchlistSavedApi";
 import WatchlistApi, { IWatchlistGet } from "../apis/WatchlistApi";
-import { getHivePool } from "../static/pool";
+import { getHivePool } from  '../../../db'
 
 import Watchlist, { IWatchlistGetExt } from "./Watchlist";
 

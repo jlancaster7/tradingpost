@@ -6,6 +6,7 @@ class SubscriberApi extends EntityApi<ISubscriberGet,ISubscriberList,never,never
     protected listFunction = "public.api_subscriber_list";
     protected insertFunction = '';
     protected updateFunction = '';
+    protected apiCallName = 'SubscriberApi';
     extensions = new Extensions.default(this)
 }
 export default new SubscriberApi();

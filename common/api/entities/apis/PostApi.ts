@@ -6,6 +6,7 @@ class PostApi extends EntityApi<IPostGet,IPostList,never,never> {
     protected listFunction = "public.api_post_list";
     protected insertFunction = '';
     protected updateFunction = '';
+    protected apiCallName = 'PostApi';
     extensions = new Extensions.default(this)
 }
 export default new PostApi();

@@ -10,18 +10,12 @@
 
 /* No changes to data_subscriber [subscriber]*/
 
-CREATE  TABLE tradingpost_transactio(
+CREATE  TABLE data_subscription(
     id BIGSERIAL PRIMARY KEY NOT NULL,
-    account_id BIGINT,
-    security_id TEXT,
-    security_type TEXT,
-    date TEXT,
-    quantity MONEY,
-    price MONEY,
-    amount MONEY,
-    fees MONEY,
-    type TEXT,
-    currency TEXT,
+    user_id UUID,
+    name TEXT,
+    cost MONEY,
+    settings JSON,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 

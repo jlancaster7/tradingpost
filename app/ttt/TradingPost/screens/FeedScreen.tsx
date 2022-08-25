@@ -50,7 +50,12 @@ export const FeedPart = (props: {
                 bookmarkedOnly: bookmarkedOnly,
                 userId,
                 data: searchText ? {
-                    terms: searchText.split(" ")
+                    terms: (() => {
+                        const terms = searchText.split(" ");
+                        if (terms.length === 1)
+                            return terms[0]
+                        else return terms.map(t => `(${t})`).join(" OR ")
+                    })()
                 } : undefined
             }));
             const newItems = [...(allItems || []), ...posts]
