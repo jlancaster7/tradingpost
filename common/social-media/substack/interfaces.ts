@@ -101,3 +101,8 @@ export interface SubstackAndNewsletter {
     tradingpostUserEmail: string
     tradingpostProfileUrl: string
 }
+
+export interface SubstackAndNewsletterTable extends SubstackAndNewsletter {
+    id: number
+    created_at: DateTime
+}

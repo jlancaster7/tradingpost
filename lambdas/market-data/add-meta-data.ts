@@ -12,7 +12,6 @@ import Repository from "@tradingpost/common/market-data/repository";
 import {
     addIexSecurity,
     addSecurity,
-    addSecurityPrice,
     updateIexSecurity,
     upsertSecuritiesInformation
 } from '@tradingpost/common/market-data/interfaces';
@@ -22,6 +21,23 @@ import {Context} from "aws-lambda";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import {diff} from "deep-object-diff";
 import {buildGroups} from "./utils";
+import pg from "pg";
+
+pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
+    return parseInt(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
+    return parseFloat(value);
+});
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
@@ -31,10 +47,10 @@ const runLambda = async () => {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
         pgClient = pgp({
-            host: postgresConfiguration['host'] as string,
-            user: postgresConfiguration['user'] as string,
-            password: postgresConfiguration['password'] as string,
-            database: postgresConfiguration['database'] as string
+            host: postgresConfiguration.host,
+            user: postgresConfiguration.user,
+            password: postgresConfiguration.password,
+            database: postgresConfiguration.database
         })
         await pgClient.connect();
     }

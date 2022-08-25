@@ -1,6 +1,4 @@
 import {Client as ElasticClient} from '@elastic/elasticsearch';
-import {SearchBody} from "../models/elastic/search";
-
 
 export default class ElasticService {
     private client: ElasticClient;
@@ -11,11 +9,12 @@ export default class ElasticService {
         this.indexName = indexName;
     }
 
-    ingest = async (items: any[], indexName?: string): Promise<void> => {
+    ingest = async (items: any[], indexName?: string | null): Promise<void> => {
+        if (items.length <= 0) return;
         let idxName = '';
-        if (!this.indexName && !indexName) throw new Error("create an index name on initialization, or pass via function prototype")
-        if (!this.indexName && indexName) idxName = indexName
-        else if (!indexName && this.indexName) idxName = this.indexName
+        if (indexName) idxName = indexName
+        else if (this.indexName) idxName = this.indexName
+        else throw new Error("create an index name on initialization, or pass via function prototype")
 
         let group = [];
         for (let i = 0; i < items.length; i++) {
@@ -44,6 +43,7 @@ export default class ElasticService {
                         }
                     });
                     console.log(erroredDocs)
+                    return
                 }
             }
         }

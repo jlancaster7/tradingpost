@@ -1,18 +1,33 @@
 import 'dotenv/config';
-import {Client as PostgresClient} from 'pg';
+import pg from 'pg';
 import {Client as ElasticClient} from '@elastic/elasticsearch';
 import {DefaultConfig} from '../../configuration';
-import {DateTime} from 'luxon';
 import yargs from "yargs";
 import fs from "fs";
-import Repository from "../../social-media/repository";
-import ElasticService from "../../elastic/index";
-import pgPromise, {IDatabase, IMain} from "pg-promise";
+import ElasticService from "../../elastic";
+import pgPromise from "pg-promise";
 import {DefaultYoutube} from "../../social-media/youtube/service";
-import PostPrepper from "../../post-prepper/index";
+import PostPrepper from "../../post-prepper";
 import {DefaultTwitter} from "../../social-media/twitter/service";
 import {DefaultSubstack} from "../../social-media/substack/service";
 import {DefaultSpotify} from "../../social-media/spotify/service";
+
+pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
+    return parseInt(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
+    return parseFloat(value);
+});
+
 
 const run = async () => {
     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
@@ -26,26 +41,28 @@ const run = async () => {
 
     await pgClient.connect()
     const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
-    const elasticService = new ElasticService(new ElasticClient({
+    const elasticClient = new ElasticClient({
         cloud: {
-            id: elasticConfiguration['cloudId'] as string
+            id: elasticConfiguration.cloudId as string
         },
         auth: {
-            apiKey: elasticConfiguration['apiKey'] as string
+            apiKey: elasticConfiguration.apiKey as string
         },
         maxRetries: 5,
-    }));
+    })
+
+    const indexName = "tradingpost-search";
+    const elasticService = new ElasticService(elasticClient, indexName);
 
     const postPrepper = new PostPrepper();
-    const repository = new Repository(pgClient, pgp);
 
     const youtubeCfg = await DefaultConfig.fromCacheOrSSM("youtube");
     const youtube = DefaultYoutube(youtubeCfg, pgClient, pgp, elasticService);
 
     const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
-    const twitter = DefaultTwitter(twitterConfiguration, pgClient, pgp, elasticService);
+    const twitter = DefaultTwitter(twitterConfiguration, pgClient, pgp, postPrepper, elasticService);
 
-    const substack = DefaultSubstack(pgClient, pgp, elasticService)
+    const substack = DefaultSubstack(pgClient, pgp, postPrepper, elasticService)
 
     const spotifyConfiguration = await DefaultConfig.fromCacheOrSSM("spotify");
     const spotify = DefaultSpotify(elasticService, pgClient, pgp, spotifyConfiguration)
@@ -55,41 +72,39 @@ const run = async () => {
     // @ts-ignore
     if (argv.scratch) await rebuildElasticIndex(elasticClient, indexName);
 
-    const indexName = "tradingpost-search";
-
     console.log("Processing YouTube")
-    let lastYouTubeId = '';
+    let lastYouTubeId: number = 0;
     while (true) {
         const videosAndChannels = await youtube.exportYouTubeVideoAndChannels(lastYouTubeId);
         if (videosAndChannels.length <= 0) break
-        lastYouTubeId = videosAndChannels[videosAndChannels.length - 1].video_id
-        await elasticService.ingest(youtube.map(videosAndChannels), indexName)
+        lastYouTubeId = videosAndChannels[videosAndChannels.length - 1].id
+        await elasticService.ingest(youtube.map(videosAndChannels))
     }
 
     console.log("Processing Spotify")
-    let lastSpotifyEpisodeId = '';
+    let lastSpotifyEpisodeId = 0;
     while (true) {
         const episodesAndUsers = await spotify.exportEpisodesAndUsers(lastSpotifyEpisodeId);
         if (episodesAndUsers.length <= 0) break
-        lastSpotifyEpisodeId = episodesAndUsers[episodesAndUsers.length - 1].spotify_episode_id
-        await elasticService.ingest(spotify.map(episodesAndUsers), indexName)
+        lastSpotifyEpisodeId = episodesAndUsers[episodesAndUsers.length - 1].id
+        await elasticService.ingest(spotify.map(episodesAndUsers))
     }
 
     console.log("Processing Substack")
-    let lastSubstackId = '';
+    let lastSubstackId = 0;
     while (true) {
         const substackUsersAndArticles = await substack.exportArticlesAndUsers(lastSubstackId);
         if (substackUsersAndArticles.length <= 0) break
-        lastSubstackId = substackUsersAndArticles[substackUsersAndArticles.length - 1].article_id
+        lastSubstackId = substackUsersAndArticles[substackUsersAndArticles.length - 1].id
         await elasticService.ingest(substack.map(substackUsersAndArticles))
     }
 
     console.log("Processing Twitter")
-    let lastTwitterId = '';
+    let lastTwitterId = 0;
     while (true) {
         const usersAndTweets = await twitter.exportTweetsAndUsers(lastTwitterId);
         if (usersAndTweets.length <= 0) break
-        lastTwitterId = usersAndTweets[usersAndTweets.length - 1].tradingpostUserId
+        lastTwitterId = usersAndTweets[usersAndTweets.length - 1].id
         await elasticService.ingest(twitter.map(usersAndTweets))
     }
 
@@ -146,3 +161,7 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
         }
     });
 }
+
+(async () => {
+    await run();
+})()

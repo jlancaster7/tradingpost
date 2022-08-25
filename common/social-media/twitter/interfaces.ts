@@ -39,7 +39,11 @@ export interface TweetsAndUsers {
     tradingpostUserHandle: string
     tradingpostUserEmail: string
     tradingpostUserProfileUrl: string
+}
 
+export interface TweetsAndUsersTable extends TweetsAndUsers {
+    id: number
+    created_at: DateTime
 }
 
 export interface rawTweet {

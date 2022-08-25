@@ -1,4 +1,9 @@
-import {formatedYoutubeVideo, formatedChannelInfo, YouTubeVideoAndChannel} from './interfaces';
+import {
+    formatedYoutubeVideo,
+    formatedChannelInfo,
+    YouTubeVideoAndChannel,
+    YouTubeVideoAndChannelTable
+} from './interfaces';
 import {IDatabase, IMain} from "pg-promise";
 import Repository from '../repository';
 import ElasticService from "../../elastic";
@@ -41,7 +46,7 @@ export default class YouTubeService {
         await this.elasticSrv.ingest(this.map(videosAndChannels));
     }
 
-    exportYouTubeVideoAndChannels = async (lastId: string): Promise<YouTubeVideoAndChannel[]> => {
+    exportYouTubeVideoAndChannels = async (lastId: number): Promise<YouTubeVideoAndChannelTable[]> => {
         return this.repository.getYoutubeVideosAndChannelsById(lastId);
     }
 

@@ -1,9 +1,8 @@
 import 'dotenv/config'
+import {Context} from 'aws-lambda';
 import {DefaultConfig} from "@tradingpost/common/configuration";
-import {Context} from "aws-lambda";
-import Repository from '@tradingpost/common/market-data/repository';
 import pgPromise, {IDatabase, IMain} from "pg-promise";
-import pg from "pg";
+import pg from 'pg';
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -24,7 +23,8 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
-const runLambda = async () => {
+
+const run = async () => {
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -34,23 +34,11 @@ const runLambda = async () => {
             password: postgresConfiguration.password,
             database: postgresConfiguration.database
         })
+
         await pgClient.connect();
     }
-
-    const repository = new Repository(pgClient, pgp);
-
-    try {
-        await start(repository)
-    } catch (e) {
-        console.error(e)
-        throw e
-    }
 }
 
-const start = async (repository: Repository) => {
-    await repository.removeSecurityPricesAfter7Days()
+export const handler = async (event: any, context: Context) => {
+    await run();
 }
-
-export const run = async (event: any, context: Context) => {
-    await runLambda();
-};
