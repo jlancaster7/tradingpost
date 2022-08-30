@@ -9,13 +9,13 @@ import { useEffect, useRef } from "react";
 import { Animated } from "react-native";
 import { View } from "../../components/Themed";
 import { ElevatedSection } from "../../components/Section";
-
+import { useLinkTo } from "@react-navigation/native";
 
 
 export const AnalystStartSection = (props: CreateAccountProps) => {
 
-    const opacityAnim = useRef(new Animated.Value(0)).current;
-
+    const opacityAnim = useRef(new Animated.Value(0)).current,
+        linkTo = useLinkTo<any>();
     useEffect(() => {
         Animated.timing(
             opacityAnim,
@@ -33,14 +33,14 @@ export const AnalystStartSection = (props: CreateAccountProps) => {
             right: {
                 text: "I'm An Analyst",
                 onPress: () => {
-                    props.navigateByName("Analyst Interest");
+                    linkTo("/create/analystinterest");
                 }
             },
             left: {
                 text: "Not Now",
                 onPress: () => {
                     //need to change this to skip 2 
-                    props.navigateByName("Profile Picture");
+                    linkTo("/create/profilepicture");
                 }
             }
         }}

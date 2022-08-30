@@ -26,6 +26,7 @@ import { Slider } from "../../components/Slider"
 import { AppColors } from "../../constants/Colors"
 import { Api } from "@tradingpost/common/api"
 import { AddButton } from "../../components/AddButton"
+import { useLinkTo } from "@react-navigation/native";
 
 //import { AppConfig } from "../../apis/ApplicationApi"
 
@@ -108,7 +109,7 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
     const { securities: { list: securities } } = useSecuritiesList();
     const [lockButtons, setLockButtons] = useChangeLock(props, [anaylistProfile]);
     const [sliderWidth, setSliderWidth] = useState(100);
-
+    const linkTo = useLinkTo<any>();
     const [acText, setAcText] = useState("");
     const acValues = useMemo(() => {
         const r = new RegExp(acText, "i");
@@ -133,7 +134,7 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
                 locked: lockButtons,
                 left: props.saveOnly ? undefined : {
                     text: "Nevermind",
-                    onPress: () => props.navigateByName("Profile Picture")
+                    onPress: () => linkTo('/create/profilepicture')
                 },
                 right: {
                     text: props.saveOnly ? "Apply" : "Continue",
@@ -152,7 +153,7 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
                             props.user.resetData(props.user.data);
 
                             if (!props.saveOnly)
-                                props.next();
+                                linkTo('/create/linkbrokerage')
 
                         } catch (ex: any) {
                             console.error(ex);

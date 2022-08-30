@@ -17,6 +17,7 @@ import { SvgExpo } from "../../components/SvgExpo";
 import AnalyzeImage from '../../assets/analyze2.svg'
 import { useWatchlistPicker, WatchlistPicker } from "../../components/WatchlistPicker";
 import { ElevatedSection } from "../../components/Section";
+import { useLinkTo } from "@react-navigation/native";
 
 type FieldRefs = {
     first: RefObject<ITextField>,
@@ -30,12 +31,14 @@ export function PickWatchlistSection(props: CreateAccountProps) {
         [lockButtons, setLockButtons] = useChangeLock(props),
         opacityAnim = useRef(new Animated.Value(0)).current,
         { selectionConverter: converterRef, selectedItems, onSelectedItemschanged: setSelectedItems, symbolConverter } = useWatchlistPicker(),
+        linkTo = useLinkTo<any>(),
         buttonConfig = {
             locked: lockButtons,
             left: {
                 text: "Not Now",
                 onPress: () => {
-                    props.next();
+                    linkTo('/create/analyststart');
+                    
                 }
             },
             right: {
@@ -54,7 +57,7 @@ export function PickWatchlistSection(props: CreateAccountProps) {
                                 name: "Primary Watchlist",
                                 type: "primary" //primary | private | public 
                             })
-                            props.next();
+                            linkTo('/create/analyststart');
                         }
                         catch (ex: any) {
                             props.toastMessage(ex.message);

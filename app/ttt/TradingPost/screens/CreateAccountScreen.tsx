@@ -26,16 +26,16 @@ import { AnalystStartSection } from './create_account/AnalystStartSection';
 import { LinkBrokerageSection } from './create_account/LinkBrokerageSection';
 //import { Screen } from './BaseScreen';
 
-const screens = {
-    'Login Info': AccountInfoSection,
+export const screens = {
+    'LoginInfo': AccountInfoSection,
     //'Verify': () => <View><Text>Verify Your Account</Text></View>,
-    'Basic Info': BasicInfoSection,
+    'BasicInfo': BasicInfoSection,
     'Watchlist': PickWatchlistSection,
-    'Analyst Start': AnalystStartSection,
-    'Analyst Interest': InvestmentInterestSection,
-    'Link Brokerage': LinkBrokerageSection,
-    'Add Claims': YourContent,
-    'Profile Picture': ProfileIconSection//,
+    'AnalystStart': AnalystStartSection,
+    'AnalystInterest': InvestmentInterestSection,
+    'LinkBrokerage': LinkBrokerageSection,
+    'AddClaims': YourContent,
+    'ProfilePicture': ProfileIconSection//,
     //'Content Accounts': YourContent,
     //'Account Settings': AccountSettings
 }
@@ -48,9 +48,11 @@ export type CreateAccountProps = {
     //    prompt: PromptFunc,
     setWizardIndex: Dispatch<SetStateAction<number>>,
     navigation: NavigationProp<any>
+    /*
     next(skip?: number): void,
     back(): void,
     navigateByName(name: keyof typeof screens): void
+    */
 };
 //export type AuthAccountProps = CreateAccountProps & { user: IEntity<IAuthenticatedUser> }
 
@@ -82,7 +84,6 @@ function SubScreen(props: { screenIndex: number, caProps: CreateAccountProps }) 
 
 
 export default (props: any) => {
-
     const
         //  { isKeyboardVisible } = useIsKeyboardVisible(),
         { appUser } = useAppUser(),
@@ -105,8 +106,9 @@ export default (props: any) => {
             id: "",
             tags: []
         }),
-        toast = useToast();
-
+        toast = useToast(),
+        resolvedIndex = screenKeys.findIndex((k) => k === props.route.params.params.screen);
+    /*
     let resolvedIndex = 0;
     if (wizardIndex < 2 && loginResult) {
         resolvedIndex = 1
@@ -115,7 +117,7 @@ export default (props: any) => {
         //resolvedIndex = 7
     }
     resolvedIndex = Math.max(wizardIndex, resolvedIndex);
-
+    */
     useLayoutEffect(() => {
         if (appUser)
             user.resetData(appUser);
@@ -131,6 +133,7 @@ export default (props: any) => {
         }),
         setWizardIndex,
         saveOnly: false,
+        /*
         next: (length: number = 1) => {
             setWizardIndex(resolvedIndex + length);
         },
@@ -142,8 +145,8 @@ export default (props: any) => {
         back: () => {
             setWizardIndex(Math.max(resolvedIndex - 1, 1));
         }
+        */
     }
-
     return <TabView
         style={{
             backgroundColor: "white",
