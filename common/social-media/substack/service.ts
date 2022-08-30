@@ -1,4 +1,4 @@
-import {SubstackAndNewsletter} from './interfaces';
+import {SubstackAndNewsletter, SubstackAndNewsletterTable} from './interfaces';
 import SubStack from './';
 import Repository from '../repository';
 import {IDatabase, IMain} from "pg-promise";
@@ -32,7 +32,7 @@ class SubstackService {
         await this.elasticSrv.ingest(this.map(articlesAndUsers));
     }
 
-    exportArticlesAndUsers = async (lastId: string): Promise<SubstackAndNewsletter[]> => {
+    exportArticlesAndUsers = async (lastId: number): Promise<SubstackAndNewsletterTable[]> => {
         return await this.repository.getSubstackArticlesAndUsers(lastId);
     }
 

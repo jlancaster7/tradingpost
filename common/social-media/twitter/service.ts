@@ -1,4 +1,4 @@
-import {formatedTweet, formatedTwitterUser, TweetsAndUsers} from './interfaces';
+import {formatedTweet, formatedTwitterUser, TweetsAndUsers, TweetsAndUsersTable} from './interfaces';
 import Repository from '../repository'
 import {IDatabase, IMain} from "pg-promise";
 import PostPrepper from "../../post-prepper";
@@ -37,7 +37,7 @@ export default class TwitterService {
         await this.elasticSrv.ingest(this.map(tweetsAndUsers));
     }
 
-    exportTweetsAndUsers = async (lastId: string): Promise<TweetsAndUsers[]> => {
+    exportTweetsAndUsers = async (lastId: number): Promise<TweetsAndUsersTable[]> => {
         return await this.repository.getTweetsAndUsersById(lastId);
     }
 

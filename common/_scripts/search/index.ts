@@ -1,148 +1,168 @@
-// import 'dotenv/config';
-// import {Client as PostgresClient} from 'pg';
-// import {Client as ElasticClient} from '@elastic/elasticsearch';
-// import {DefaultConfig} from '../../configuration';
-// import {DateTime} from 'luxon';
-// import yargs from "yargs";
-// import fs from "fs";
-// import Repository from "../../social-media/repository";
-// import ElasticService from "../../elastic/index";
-// import pgPromise, {IDatabase, IMain} from "pg-promise";
-// import {DefaultYoutube} from "../../social-media/youtube/service";
-// import PostPrepper from "../../post-prepper/index";
-// import {DefaultTwitter} from "../../social-media/twitter/service";
-// import {DefaultSubstack} from "../../social-media/substack/service";
-// import {DefaultSpotify} from "../../social-media/spotify/service";
+import 'dotenv/config';
+import pg from 'pg';
+import {Client as ElasticClient} from '@elastic/elasticsearch';
+import {DefaultConfig} from '../../configuration';
+import yargs from "yargs";
+import fs from "fs";
+import ElasticService from "../../elastic";
+import pgPromise from "pg-promise";
+import {DefaultYoutube} from "../../social-media/youtube/service";
+import PostPrepper from "../../post-prepper";
+import {DefaultTwitter} from "../../social-media/twitter/service";
+import {DefaultSubstack} from "../../social-media/substack/service";
+import {DefaultSpotify} from "../../social-media/spotify/service";
 
-// const run = async () => {
-//     const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-//     const pgp = pgPromise({});
-//     const pgClient = pgp({
-//         host: postgresConfiguration.host,
-//         user: postgresConfiguration.user,
-//         password: postgresConfiguration.password,
-//         database: postgresConfiguration.database
-//     });
+pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
+    return parseInt(value);
+});
 
-//     await pgClient.connect()
-//     const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
-//     const elasticService = new ElasticService(new ElasticClient({
-//         cloud: {
-//             id: elasticConfiguration['cloudId'] as string
-//         },
-//         auth: {
-//             apiKey: elasticConfiguration['apiKey'] as string
-//         },
-//         maxRetries: 5,
-//     }));
+pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
+    return parseFloat(value);
+});
 
-//     const postPrepper = new PostPrepper();
-//     const repository = new Repository(pgClient, pgp);
+pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
+    return parseFloat(value);
+});
 
-//     const youtubeCfg = await DefaultConfig.fromCacheOrSSM("youtube");
-//     const youtube = DefaultYoutube(youtubeCfg, pgClient, pgp, elasticService);
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
+    return parseFloat(value);
+});
 
-//     const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
-//     //const twitter = DefaultTwitter(twitterConfiguration, pgClient, pgp, elasticService);
 
-//     const substack = DefaultSubstack(pgClient, pgp, elasticService)
+const run = async () => {
+    const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
+    const pgp = pgPromise({});
+    const pgClient = pgp({
+        host: postgresConfiguration.host,
+        user: postgresConfiguration.user,
+        password: postgresConfiguration.password,
+        database: postgresConfiguration.database
+    });
 
-//     const spotifyConfiguration = await DefaultConfig.fromCacheOrSSM("spotify");
-//     const spotify = DefaultSpotify(elasticService, pgClient, pgp, spotifyConfiguration)
+    await pgClient.connect()
+    const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
+    const elasticClient = new ElasticClient({
+        cloud: {
+            id: elasticConfiguration.cloudId as string
+        },
+        auth: {
+            apiKey: elasticConfiguration.apiKey as string
+        },
+        maxRetries: 5,
+    })
 
-//     const argv = yargs(process.argv.slice(2)).argv;
+    const indexName = "tradingpost-search";
+    const elasticService = new ElasticService(elasticClient, indexName);
 
-//     // @ts-ignore
-//     if (argv.scratch) await rebuildElasticIndex(elasticClient, indexName);
+    const postPrepper = new PostPrepper();
 
-//     const indexName = "tradingpost-search";
+    const youtubeCfg = await DefaultConfig.fromCacheOrSSM("youtube");
+    const youtube = DefaultYoutube(youtubeCfg, pgClient, pgp, elasticService);
 
-//     console.log("Processing YouTube")
-//     let lastYouTubeId = '';
-//     while (true) {
-//         const videosAndChannels = await youtube.exportYouTubeVideoAndChannels(lastYouTubeId);
-//         if (videosAndChannels.length <= 0) break
-//         lastYouTubeId = videosAndChannels[videosAndChannels.length - 1].video_id
-//         await elasticService.ingest(youtube.map(videosAndChannels), indexName)
-//     }
+    const twitterConfiguration = await DefaultConfig.fromCacheOrSSM("twitter");
+    const twitter = DefaultTwitter(twitterConfiguration, pgClient, pgp, postPrepper, elasticService);
 
-//     console.log("Processing Spotify")
-//     let lastSpotifyEpisodeId = '';
-//     while (true) {
-//         const episodesAndUsers = await spotify.exportEpisodesAndUsers(lastSpotifyEpisodeId);
-//         if (episodesAndUsers.length <= 0) break
-//         lastSpotifyEpisodeId = episodesAndUsers[episodesAndUsers.length - 1].spotify_episode_id
-//         await elasticService.ingest(spotify.map(episodesAndUsers), indexName)
-//     }
+    const substack = DefaultSubstack(pgClient, pgp, postPrepper, elasticService)
 
-//     console.log("Processing Substack")
-//     let lastSubstackId = '';
-//     while (true) {
-//         const substackUsersAndArticles = await substack.exportArticlesAndUsers(lastSubstackId);
-//         if (substackUsersAndArticles.length <= 0) break
-//         lastSubstackId = substackUsersAndArticles[substackUsersAndArticles.length - 1].article_id
-//         await elasticService.ingest(substack.map(substackUsersAndArticles))
-//     }
+    const spotifyConfiguration = await DefaultConfig.fromCacheOrSSM("spotify");
+    const spotify = DefaultSpotify(elasticService, pgClient, pgp, spotifyConfiguration)
 
-//     console.log("Processing Twitter")
-//     let lastTwitterId = '';
-//     while (true) {
-//         const usersAndTweets = await twitter.exportTweetsAndUsers(lastTwitterId);
-//         if (usersAndTweets.length <= 0) break
-//         lastTwitterId = usersAndTweets[usersAndTweets.length - 1].tradingpostUserId
-//         await elasticService.ingest(twitter.map(usersAndTweets))
-//     }
+    const argv = yargs(process.argv.slice(2)).argv;
 
-//     await pgp.end();
-//     console.log("Finished")
-// }
+    // @ts-ignore
+    if (argv.scratch) await rebuildElasticIndex(elasticClient, indexName);
 
-// const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: string) => {
-//     try {
-//         await elasticClient.indices.delete({index: indexName});
-//     } catch (e) {
-//         console.error()
-//     }
+    console.log("Processing YouTube")
+    let lastYouTubeId: number = 0;
+    while (true) {
+        const videosAndChannels = await youtube.exportYouTubeVideoAndChannels(lastYouTubeId);
+        if (videosAndChannels.length <= 0) break
+        lastYouTubeId = videosAndChannels[videosAndChannels.length - 1].id
+        await elasticService.ingest(youtube.map(videosAndChannels))
+    }
 
-//     const esIndexSchema = JSON.parse(fs.readFileSync('../../../elastic/schema.json', 'utf8'));
-//     let synonymList = fs.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
-//     synonymList = synonymList.map(a => a.slice(0, -1));
+    console.log("Processing Spotify")
+    let lastSpotifyEpisodeId = 0;
+    while (true) {
+        const episodesAndUsers = await spotify.exportEpisodesAndUsers(lastSpotifyEpisodeId);
+        if (episodesAndUsers.length <= 0) break
+        lastSpotifyEpisodeId = episodesAndUsers[episodesAndUsers.length - 1].id
+        await elasticService.ingest(spotify.map(episodesAndUsers))
+    }
 
-//     // @ts-ignore
-//     await elasticClient.indices.create({
-//         index: indexName,
-//         mappings: esIndexSchema.mappings,
-//         settings: {
-//             "index": {
-//                 "analysis": {
-//                     "filter": {
-//                         "synonym_filter": {
-//                             "type": "synonym",
-//                             "synonyms": synonymList,
-//                             "updateable": true
-//                         }
-//                     },
-//                     "tokenizer": {
-//                         "my_tokenizer": {
-//                             "type": "pattern",
-//                             "pattern": ","
-//                         }
-//                     },
-//                     "analyzer": {
-//                         // @ts-ignore
-//                         "synonym_analyzer": {
-//                             "tokenizer": "my_tokenizer",
-//                             "filter": ["synonym_filter"]
-//                         },
-//                         "default": {
-//                             "type": "whitespace"
-//                         },
-//                         "default_search": {
-//                             "type": "keyword"
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//     });
-// }
+    console.log("Processing Substack")
+    let lastSubstackId = 0;
+    while (true) {
+        const substackUsersAndArticles = await substack.exportArticlesAndUsers(lastSubstackId);
+        if (substackUsersAndArticles.length <= 0) break
+        lastSubstackId = substackUsersAndArticles[substackUsersAndArticles.length - 1].id
+        await elasticService.ingest(substack.map(substackUsersAndArticles))
+    }
+
+    console.log("Processing Twitter")
+    let lastTwitterId = 0;
+    while (true) {
+        const usersAndTweets = await twitter.exportTweetsAndUsers(lastTwitterId);
+        if (usersAndTweets.length <= 0) break
+        lastTwitterId = usersAndTweets[usersAndTweets.length - 1].id
+        await elasticService.ingest(twitter.map(usersAndTweets))
+    }
+
+    await pgp.end();
+    console.log("Finished")
+}
+
+const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: string) => {
+    try {
+        await elasticClient.indices.delete({index: indexName});
+    } catch (e) {
+        console.error()
+    }
+
+    const esIndexSchema = JSON.parse(fs.readFileSync('../../../elastic/schema.json', 'utf8'));
+    let synonymList = fs.readFileSync('../../../elastic/stock_ticker_synonyms.txt').toString().split("\n");
+    synonymList = synonymList.map(a => a.slice(0, -1));
+
+    // @ts-ignore
+    await elasticClient.indices.create({
+        index: indexName,
+        mappings: esIndexSchema.mappings,
+        settings: {
+            "index": {
+                "analysis": {
+                    "filter": {
+                        "synonym_filter": {
+                            "type": "synonym",
+                            "synonyms": synonymList,
+                            "updateable": true
+                        }
+                    },
+                    "tokenizer": {
+                        "my_tokenizer": {
+                            "type": "pattern",
+                            "pattern": ","
+                        }
+                    },
+                    "analyzer": {
+                        // @ts-ignore
+                        "synonym_analyzer": {
+                            "tokenizer": "my_tokenizer",
+                            "filter": ["synonym_filter"]
+                        },
+                        "default": {
+                            "type": "whitespace"
+                        },
+                        "default_search": {
+                            "type": "keyword"
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+(async () => {
+    await run();
+})()
+>>>>>>> 9cfde5aa5bd1521dfd4883d4101d2615de04903c

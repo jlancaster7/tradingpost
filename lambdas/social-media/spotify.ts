@@ -1,10 +1,27 @@
 import 'dotenv/config';
+import pg from 'pg';
 import {Context} from "aws-lambda";
 import {DefaultSpotify} from "@tradingpost/common/social-media/spotify/service";
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import ElasticService from "@tradingpost/common/elastic";
 import {Client as ElasticClient} from '@elastic/elasticsearch'
+
+pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
+    return parseInt(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
+    return parseFloat(value);
+});
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;

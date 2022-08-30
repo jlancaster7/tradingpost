@@ -1,5 +1,5 @@
 import Spotify from './';
-import {spotifyEpisode, spotifyShow, SpotifyEpisodeAndUser} from './interfaces';
+import {spotifyEpisode, spotifyShow, SpotifyEpisodeAndUser, SpotifyEpisodeAndUserTable} from './interfaces';
 import Repository from '../repository';
 import {IDatabase, IMain} from 'pg-promise'
 import {SearchBody} from '../../models/elastic/search';
@@ -37,7 +37,7 @@ class SpotifyService {
         await this.elasticSrv.ingest(elasticEpisodes);
     }
 
-    exportEpisodesAndUsers = async (lastId: string): Promise<SpotifyEpisodeAndUser[]> => {
+    exportEpisodesAndUsers = async (lastId: number): Promise<SpotifyEpisodeAndUserTable[]> => {
         return await this.repository.getEpisodesAndUsersById(lastId);
     }
 

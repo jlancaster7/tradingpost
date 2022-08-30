@@ -109,3 +109,8 @@ export interface SpotifyEpisodeAndUser {
     tradingpostUserEmail: string
     tradingpostUserProfileUrl: string
 }
+
+export interface SpotifyEpisodeAndUserTable extends SpotifyEpisodeAndUser {
+    id: number
+    created_at: DateTime
+}

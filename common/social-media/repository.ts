@@ -1,9 +1,14 @@
 import {DateTime} from "luxon";
-import {formatedTweet, formatedTwitterUser, TweetsAndUsers} from './twitter/interfaces';
+import {formatedTweet, formatedTwitterUser, TweetsAndUsers, TweetsAndUsersTable} from './twitter/interfaces';
 import {PlatformToken} from './utils';
-import {SubstackAndNewsletter, SubstackArticles, SubstackUser} from './substack/interfaces';
-import {spotifyShow, spotifyEpisode, SpotifyEpisodeAndUser} from './spotify/interfaces';
-import {formatedYoutubeVideo, formatedChannelInfo, YouTubeVideoAndChannel} from './youtube/interfaces';
+import {SubstackAndNewsletter, SubstackAndNewsletterTable, SubstackArticles, SubstackUser} from './substack/interfaces';
+import {spotifyShow, spotifyEpisode, SpotifyEpisodeAndUser, SpotifyEpisodeAndUserTable} from './spotify/interfaces';
+import {
+    formatedYoutubeVideo,
+    formatedChannelInfo,
+    YouTubeVideoAndChannel,
+    YouTubeVideoAndChannelTable
+} from './youtube/interfaces';
 import {IDatabase, IMain} from "pg-promise";
 
 export default class Repository {
@@ -82,7 +87,7 @@ export default class Repository {
                        AND sa.aspect_ratio IS NOT NULL
                      ORDER BY sa.id;`
         const response = await this.db.query(query, [articleIds]);
-        if(response.length <= 0) return [];
+        if (response.length <= 0) return [];
         return response.map((row: any) => {
             let obj: SubstackAndNewsletter = {
                 article_id: row.article_id,
@@ -119,7 +124,7 @@ export default class Repository {
         });
     }
 
-    getSubstackArticlesAndUsers = async (lastId: string): Promise<SubstackAndNewsletter[]> => {
+    getSubstackArticlesAndUsers = async (lastId: number): Promise<SubstackAndNewsletterTable[]> => {
         let query = `SELECT sa.id                  AS id,
                             sa.substack_user_id,
                             sa.article_id,
@@ -162,9 +167,11 @@ export default class Repository {
                        AND sa.aspect_ratio IS NOT NULL
                      ORDER BY sa.id;`
         const response = await this.db.query(query, [lastId]);
-        if(response.length <= 0) return [];
+        if (response.length <= 0) return [];
         return response.map((row: any) => {
-            let obj: SubstackAndNewsletter = {
+            let obj: SubstackAndNewsletterTable = {
+                id: row.id,
+                created_at: DateTime.fromJSDate(row.tradingpost_substack_article_created_at),
                 article_id: row.article_id,
                 content: row.content,
                 content_encoded: row.content_encoded,
@@ -364,7 +371,7 @@ export default class Repository {
         }
     }
 
-    getTweetsAndUsersById = async (lastId: string): Promise<TweetsAndUsers[]> => {
+    getTweetsAndUsersById = async (lastId: number): Promise<TweetsAndUsersTable[]> => {
         let query = `SELECT t.id                  AS id,
                             t.tweet_id            AS tweet_id,
                             t.twitter_user_id,
@@ -423,7 +430,9 @@ export default class Repository {
         if (response.length <= 0) return [];
 
         return response.map((row: any) => {
-            let obj: TweetsAndUsers = {
+            let obj: TweetsAndUsersTable = {
+                id: row.id,
+                created_at: DateTime.fromJSDate(row.trading_post_tweet_created_at),
                 annotations: row.annotations,
                 cashtags: row.cashtags,
                 description: row.description,
@@ -746,7 +755,7 @@ export default class Repository {
               AND se.aspect_ratio != 0
               AND se.aspect_ratio IS NOT NULL`;
         const response = await this.db.query(query, [episodeIds]);
-        if(response.length <= 0) return [];
+        if (response.length <= 0) return [];
         return response.map((row: any) => {
             let obj: SpotifyEpisodeAndUser = {
                 audio_preview_url: row.audio_preview_url,
@@ -790,7 +799,7 @@ export default class Repository {
         });
     }
 
-    getEpisodesAndUsersById = async (id: string): Promise<SpotifyEpisodeAndUser[]> => {
+    getEpisodesAndUsersById = async (id: number): Promise<SpotifyEpisodeAndUserTable[]> => {
         let query = `SELECT se.id                   AS id,
                             se.spotify_episode_id,
                             se.spotify_show_id,
@@ -847,9 +856,11 @@ export default class Repository {
                      ORDER BY se.id
                      LIMIT 5000;`;
         const response = await this.db.query(query, [id]);
-        if(response.length <= 0) return [];
+        if (response.length <= 0) return [];
         return response.map((row: any) => {
-            let obj: SpotifyEpisodeAndUser = {
+            let obj: SpotifyEpisodeAndUserTable = {
+                id: row.id,
+                created_at: DateTime.fromJSDate(row.tradingpost_episode_created_at),
                 audio_preview_url: row.audio_preview_url,
                 episode_description: row.episode_description,
                 episode_duration_ms: row.episode_duration_ms,
@@ -1035,7 +1046,7 @@ export default class Repository {
         });
     }
 
-    getYoutubeVideosAndChannelsById = async (lastId: string): Promise<YouTubeVideoAndChannel[]> => {
+    getYoutubeVideosAndChannelsById = async (lastId: number): Promise<YouTubeVideoAndChannelTable[]> => {
         let query = `SELECT yv.id                 AS id,
                             yv.video_id,
                             yv.youtube_channel_id,
@@ -1081,7 +1092,9 @@ export default class Repository {
 
         if (response.length <= 0) return [];
         return response.map((row: any) => {
-            let obj: YouTubeVideoAndChannel = {
+            let obj: YouTubeVideoAndChannelTable = {
+                id: row.id,
+                created_at: DateTime.fromJSDate(row.trading_post_youtube_video_created_at),
                 channel_created_at: row.channel_created_at,
                 channel_description: row.channel_description,
                 channel_statistics: row.channel_statistics,

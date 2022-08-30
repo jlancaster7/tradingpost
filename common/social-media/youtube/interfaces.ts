@@ -28,6 +28,11 @@ export interface YouTubeVideoAndChannel {
     tradingpostUserProfileUrl: string
 }
 
+export interface YouTubeVideoAndChannelTable extends YouTubeVideoAndChannel {
+    id: number
+    created_at: DateTime
+}
+
 export interface channelInfo {
     id: string,
     title: string,

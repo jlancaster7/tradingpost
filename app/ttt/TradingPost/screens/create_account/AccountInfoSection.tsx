@@ -116,6 +116,7 @@ export function AccountInfoSection(props: CreateAccountProps) {
                             if (loginEntity.data.email && loginEntity.data.password) {
                                 const login = await Auth.createLogin(loginEntity.data.email, loginEntity.data.password);
                                 setLoginResult(login);
+                                linkTo('/create/basicinfo')
                             }
                             else {
                                 throw new Error("Something is very wrong." + JSON.stringify(loginEntity.data))
@@ -129,7 +130,7 @@ export function AccountInfoSection(props: CreateAccountProps) {
                             props.user.resetData(props.user.data);
 
                             if (!props.saveOnly)
-                                props.next();
+                                linkTo('/create/basicinfo')
 
                         }
                     } catch (ex: any) {

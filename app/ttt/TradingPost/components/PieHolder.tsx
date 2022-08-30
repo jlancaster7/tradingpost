@@ -43,17 +43,18 @@ export function PieHolder() {
 export const LineHolder = () => {
     return <View style={[row, { aspectRatio: 16 / 9, padding: sizes.rem1, borderWidth: 1, borderRadius: sizes.rem1, borderColor: "#ccc" }]}>
         <View
-            style={{ width: sizes.rem1, height: "100%" }}
+            style={{ width: sizes.rem1, height: "90%", marginRight:"3%" }}
         >
             <YAxis
                 data={data2}
-                style={{ width: "100%", flex: 1 }}
+                style={{ width: "100%", height: "100%", flex: 1 }}
                 svg={{
                     fill: 'grey',
                     fontSize: 10,
                 }}
             //numberOfTicks={10}
-            //formatLabel={(value) => `${value}ºC`}
+                //yAccessor={(value: any)=> value - value % 1}
+                formatLabel={(value: any) => `$${value.toFixed(1)}`}
             />
             <View
                 style={{ width: "100%", height: sizes.rem1 }}
@@ -65,7 +66,7 @@ export const LineHolder = () => {
             </LineChart>
             <XAxis
                 data={data2}
-                style={{ height: sizes.rem1, width: "100%" }}
+                style={{ height: sizes.rem1, width: "98%" }}
                 svg={{
                     fill: 'grey',
                     fontSize: 10,

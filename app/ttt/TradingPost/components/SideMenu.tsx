@@ -24,6 +24,7 @@ import { NavigationProp } from "@react-navigation/native";
 import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { DashScreenProps } from "../navigation";
 import { ProfileButton } from "./ProfileButton";
+import { useLinkTo } from "@react-navigation/native";
 
 const padSmall = { marginBottom: sizes.rem1 / 8 };
 
@@ -41,6 +42,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
     const { setValue: setHasAuthed } = useData("hasAuthed");
     const activeTabId = `BottomTabs_${activeTabIndex}`
     const { signOut } = useAppUser();
+    const linkTo = useLinkTo<any>();
     //Not sure if the issue here but this seems to work for now.
     //const { EnsureUser, appUser, signOut } = useEnsureUser(props.navigation as any as NavigationProp<any>);
     const currentUser = props.appUser;
@@ -80,7 +82,14 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
         },
         {
             label: "Account",
-            onPress: () => props.navigation.navigate("Create"),
+            //onPress: () => props.navigation.navigate("Create"),
+            onPress: () => linkTo('/create/watchlist'),
+            icon: sideMenu.Account,
+        },
+        {
+            label: "Watchlist",
+            onPress: () => props.navigation.navigate("Watchlist"),
+            //onPress: () => linkTo('/create/watchlist'),
             icon: sideMenu.Account,
         },
         {

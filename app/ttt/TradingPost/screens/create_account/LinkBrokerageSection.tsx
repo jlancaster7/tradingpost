@@ -14,6 +14,7 @@ import { Table } from "../../components/Table";
 import { AddButton, EditButton } from "../../components/AddButton";
 import { openBrowserAsync } from 'expo-web-browser';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useLinkTo } from "@react-navigation/native";
 
 export const LinkBrokerageSection = (props: CreateAccountProps) => {
 
@@ -67,14 +68,14 @@ export const LinkBrokerageSection = (props: CreateAccountProps) => {
         })
     }, [])
 
-    //const linkTo = useLinkTo<any>()
+    const linkTo = useLinkTo<any>()
     return <ScrollWithButtons
         fillHeight
         buttons={{
             right: {
                 text: "I'm Done Linking Accounts",
                 onPress: () => {
-                    props.next();
+                    linkTo('/create/addclaims')
                 }
             }
         }}

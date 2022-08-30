@@ -22,6 +22,7 @@ import Auth from '@tradingpost/common/api/entities/static/AuthApi'
 import UserApi from '@tradingpost/common/api/entities/apis/UserApi'
 import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
 import { useAppUser } from "../../App";
+import { useLinkTo } from "@react-navigation/native";
 
 
 type FieldRefs = {
@@ -40,6 +41,7 @@ export function BasicInfoSection(props: CreateAccountProps) {
             last: useRef<ITextField>(null),
             username: useRef<ITextField>(null),
         },
+        linkTo = useLinkTo<any>(),
         buttonConfig = {
             locked: lockButtons,
             left: {
@@ -76,6 +78,7 @@ export function BasicInfoSection(props: CreateAccountProps) {
                         else {
                             const { token } = await Auth.createUser(props.user.data.first_name, props.user.data.last_name, props.user.data.handle);
                             await signIn("", token);
+                            linkTo('/create/watchlist')
                             //props.next();                            
                             //props.navigation.navigate("Root");
                             //setLockButtons(false);

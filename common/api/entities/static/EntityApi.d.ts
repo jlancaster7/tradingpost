@@ -10,10 +10,10 @@ export declare abstract class EntityApi<TGet, TList, TInsert, TUpdate> extends E
         parent: EntityApi<TGet, TList, TInsert, TUpdate>;
         extensions: any;
         list: (settings?: RequestSettings<{
-            ids?: (string | number)[];
-        }>) => Promise<TList[]>;
-        get: (settings?: RequestSettings) => Promise<TGet>;
-        update: (settings?: RequestSettings<TUpdate>) => Promise<TGet>;
-        insert: (settings?: RequestSettings<TInsert>) => Promise<TGet>;
+            ids?: (string | number)[] | undefined;
+        }> | undefined) => Promise<TList[]>;
+        get: (settings?: RequestSettings<any> | undefined) => Promise<TGet>;
+        update: (settings?: RequestSettings<TUpdate> | undefined) => Promise<TGet>;
+        insert: (settings?: RequestSettings<TInsert> | undefined) => Promise<TGet>;
     };
 }

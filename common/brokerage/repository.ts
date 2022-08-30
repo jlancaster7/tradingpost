@@ -975,6 +975,23 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
+    getFinicityUsers = async (): Promise<FinicityUser[]> => {
+        const query = `SELECT id, tp_user_id, customer_id, type, updated_at, created_at
+                       FROM finicity_user;`;
+        const response = await this.db.query(query);
+        return response.map((r: any) => {
+            let o: FinicityUser = {
+                tpUserId: r.tp_user_id,
+                createdAt: DateTime.fromJSDate(r.created_at),
+                id: r.id,
+                type: r.type,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                customerId: r.customer_id
+            }
+            return o;
+        });
+    }
+
     getTradingPostUserByFinicityCustomerId = async (finicityCustomerId: string): Promise<TradingPostUser | null> => {
         const query = `
             SELECT du.id,

@@ -43,6 +43,16 @@ provider:
       - subnet-0365b7b01827b2dfe
 
 functions:
+  collect-trades:
+    handler: brokerage/collect-trades.handler
+    description: Collects Finicity Trades Daily
+    logRetentionInDays: 14
+    timeout: 900
+    memorySize: 512
+    events:
+      - schedule:
+          rate: cron(0 11 ? * MON-FRI *) # 5AM UTC
+          enabled: true
   add-meta-data:
     handler: market-data/add-meta-data.run
     description: Ingests securities, exchanges, in the morning, in the evening it ingests stats, quotes, and closing pricing

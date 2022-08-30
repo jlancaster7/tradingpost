@@ -136,11 +136,13 @@ export default class BrokerageService {
         this.portfolioSummaryService = portfolioSummaryService;
     }
 
-    pullNewData = async (userId: string, brokerageId: string) => {
+    pullNewData = async (brokerageId: string, brokerageUserId: string) => {
         const brokerage = this.brokerageMap[brokerageId];
         if (!brokerage) throw new Error("no brokerage found")
 
-        const holdings = await brokerage.importHoldings(userId);
+        const holdings = await brokerage.importHoldings(brokerageUserId);
+        if (holdings.length <= 0) return;
+
         await this.repository.upsertTradingPostCurrentHoldings(holdings);
 
         let holdingHistory: TradingPostHistoricalHoldings[] = holdings.map(holding => ({
@@ -155,10 +157,10 @@ export default class BrokerageService {
             quantity: holding.quantity,
             currency: holding.currency,
             date: DateTime.now()
-        }))
+        }));
         await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
 
-        const transactions = await brokerage.importTransactions(userId);
+        const transactions = await brokerage.importTransactions(brokerageUserId);
         await this.repository.upsertTradingPostTransactions(transactions);
     }
 
@@ -169,7 +171,7 @@ export default class BrokerageService {
 
         // Get Current Holdings
         const currentHoldings = await this.repository.getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(tpAccountId);
-        
+
         // TODO: We could recomptue old holdings history...
         if (currentHoldings.length <= 0) throw new Error("no holdings available for account " + tpAccountId);
         currentHoldings.forEach(h => allSecurityIds[h.securityId] = {});
@@ -190,7 +192,7 @@ export default class BrokerageService {
 
         // Get Trading Days we will compute history for
         // In our db we will have a single row for each security on each day, so with 2 securities we'll have two rows for today
-        
+
         let startDate = DateTime.now().setZone("America/New_York");
         const initialHistoricalHolding: historicalAccount = {
             date: startDate,
@@ -251,7 +253,9 @@ export default class BrokerageService {
                 holdingToday.price = price
                 holdingToday.value = price * holdingToday.quantity
                 holdingToday.date = priorMarketDay
-                if (!holdingToday.quantity) { continue; }
+                if (!holdingToday.quantity) {
+                    continue;
+                }
                 priorHoldings.holdings.push(holdingToday)
             }
 

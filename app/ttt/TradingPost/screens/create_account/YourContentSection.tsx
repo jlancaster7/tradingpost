@@ -17,20 +17,28 @@ import { bindTextInput, useOpacityAnim, useReadonlyEntity } from "../../utils/ho
 import { TextField } from "../../components/TextField"
 import { TBI } from "../../utils/misc"
 import { useTwitterAuth } from "../../utils/third-party/twitter"
-import { useData } from "../../lds"
+import { useData } from "../../lds";
+import { useLinkTo } from "@react-navigation/native";
 //import { claimPlatform, createPlatform, Platform } from "../../apis/UserApi"
 //import { AmiraError } from "../../AmiraError"
 
 export function YourContent(props: CreateAccountProps) {
     //const claims = useReadonlyEntity(props.user.data.claims),
-    const { AppearView } = useOpacityAnim(),
+    const { AppearView } = useOpacityAnim()
+    let twitterHandle: any;
+    let setTwitterHandle: any;
+    if (props.user.data.claims) {
         [twitterHandle, setTwitterHandle] = useState(props.user.data.claims.find(c => c.platform === "twitter")?.platform_user_id)
-    //useEffect(() => {
+    } 
+    else {
+        [twitterHandle, setTwitterHandle] = useState('');
+    }
+        //useEffect(() => {
     //        if (props.saveOnly)
     //      setLockButtons(!broadcastEntity.hasChanged && !notificationEntity.hasChanged);
     //}, [props.saveOnly, broadcastEntity.hasChanged, notificationEntity.hasChanged]);
 
-
+    const linkTo = useLinkTo<any>();
     const getToken = useTwitterAuth();
     return <ScrollWithButtons
         fillHeight
@@ -41,7 +49,7 @@ export function YourContent(props: CreateAccountProps) {
             // },
             right: {
                 text: 'Done With Accounts',
-                onPress: () => props.next()
+                onPress: () => linkTo('/create/profilepicture')
             }
         }}
     >

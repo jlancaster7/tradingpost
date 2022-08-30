@@ -120,13 +120,12 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         { appUser, signIn, authToken, loginResult } = useAppUser(),
         { value: hasAuthed } = useData("hasAuthed")
 
-
+    const linkTo = useLinkTo<any>();
     useLayoutEffect(() => {
         ///*|| loginResult*
         if (appUser || loginResult) {
             console.log("Has authed is ....." + hasAuthed)
             if (!appUser || !hasAuthed) {   
-                navigation.navigate("Create");
             }
             else {
 
@@ -136,7 +135,6 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         }
 
     }, [appUser, loginResult])
-    const linkTo = useLinkTo<any>();
 
     return <> <View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>
         <AppTitle style={{ marginVertical: sizes.rem1, alignSelf: "center", width: "100%", aspectRatio: 5 }} />
@@ -227,7 +225,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         <LoginButtons
             createAccountProps={{
                 onPress: () => {
-                    linkTo("/create");
+                    linkTo("/create/logininfo");
                     //navigation.navigate("Create");
                     //CreateAccountScreen.open(p.componentId, {});
                 }
