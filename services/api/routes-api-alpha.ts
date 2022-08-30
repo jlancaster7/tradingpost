@@ -6,11 +6,12 @@ import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 import { DefaultConfig } from "@tradingpost/common/configuration";
 import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
 import { cacheMonitor } from '@tradingpost/common/api/cache'
+
 import UserApi from "@tradingpost/common/api/entities/apis/UserApi";
 import SecurityApi from "@tradingpost/common/api/entities/static/SecurityApi";
+
 const router = Express.Router();
 const baseFormat = '/:entity/:action';
-
 
 //TODO: need to throw errros that will set the status number. (401 in this case)
 const decodeToken = async (req: Express.Request, disableModelCheck?: boolean) => {
@@ -129,7 +130,7 @@ makeRoute("/authapi/init", async (req) => {
 makeRoute(baseFormat, (req) => {
     return sharedHandler(req, async (entity) => {
         //TODO: clean up how this is decided
-        const token = (req.params.action !== "list" || (entity as any) !== SecurityApi) ? await decodeToken(req) : {};
+        const token = (req.params.action !== "list" || (entity as any).constructor.name !== SecurityApi.constructor.name) ? await decodeToken(req) : {};
 
         //need to add to info about requests;
         const extra = {

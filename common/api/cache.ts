@@ -72,7 +72,7 @@ let userCacheInit = (async () => {
 export const getPriceCacheTask = (async () => {
     const updatePriceCache = async () => {
         const priceByTicker: typeof caches.price.byTicker = {}
-        const prices = await execProc<PriceInfo>("tp.api_security_price");
+        const prices = await execProc<PriceInfo>("tp.api_security_prices");
         //    console.log(JSON.stringify(prices));
         prices.forEach((p) => {
             priceByTicker[p.symbol] = p.price;
@@ -100,11 +100,20 @@ export const getUserCache = async () => {
 type MotitoredType = typeof UserApi | typeof PostApi | typeof WatchlistApi | typeof WatchlistSavedApi;
 
 
+const ensureUserApi = (test: any): test is typeof UserApi => {
+    return test.constructor.name === UserApi.constructor.name
+}
+const ensurePostApi = (test: any): test is typeof PostApi => {
+    return test.constructor.name === PostApi.constructor.name
+}
+const ensureWatchlistApi = (test: any): test is (typeof WatchlistApi) | (typeof WatchlistSavedApi) => {
+    return test.constructor.name === WatchlistApi.constructor.name || test.constructor.name === WatchlistSavedApi.constructor.name
+}
 
 //make this check based on decorators?
 export const cacheMonitor = async <A extends MotitoredType>(api: A, action: string, currentUserId: string, responseData: any) => {
     const cache = await getUserCache();
-    if (api === UserApi) {
+    if (ensureUserApi(api)) {
         switch (action as "update" | "insert") {
             case "insert":
             case "update":
@@ -123,7 +132,7 @@ export const cacheMonitor = async <A extends MotitoredType>(api: A, action: stri
                 break;
         }
     }
-    else if (api === PostApi) {
+    else if (ensurePostApi(api)) {
         const user = cache[currentUserId];
         switch (action as keyof (typeof PostApi)["extensions"]) {
             case "setBookmarked":
@@ -140,7 +149,7 @@ export const cacheMonitor = async <A extends MotitoredType>(api: A, action: stri
                 break;
         }
     }
-    else if (api === WatchlistApi || api === WatchlistSavedApi) {
+    else if (ensureWatchlistApi(api)) {
         const user = cache[currentUserId]
         if (action === "insert")
             user.watchlists.push(responseData.id);
