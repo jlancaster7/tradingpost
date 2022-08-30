@@ -46,11 +46,11 @@ class SubstackService {
             let obj: SearchBody = {
                 id: `substack_${n.article_id}`,
                 content: {
-                    body: n.content,
-                    description: n.content_snippet,
+                    body: n.content_encoded_snippet,
+                    description: n.content,
                     htmlBody: n.content_encoded,
-                    htmlTitle: n.content_encoded_snippet,
-                    title: n.content_snippet
+                    htmlTitle: n.title,
+                    title: n.title
                 },
                 imageUrl: n.newsletter_image.url,
                 meta: {},
