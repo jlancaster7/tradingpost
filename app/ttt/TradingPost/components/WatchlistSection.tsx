@@ -4,7 +4,7 @@ import { IWatchlistList } from "@tradingpost/common/api/entities/interfaces"
 import React, { useEffect, useState } from "react"
 import { Pressable, Text } from "react-native"
 import { PlusIcon } from "../images"
-import { useNoteField } from "../screens/WatchlistScreen"
+import { useNoteField } from "../screens/WatchlistViewerScreen"
 import { sizes } from "../style"
 import { AddButton } from "./AddButton"
 import { ElevatedSection, Section } from "./Section"
@@ -38,7 +38,7 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
                 column
             ]}
             rowPressed={(item, idx) => {
-                nav.navigate("Watchlist", {
+                nav.navigate("WatchlistViewer", {
                     watchlistId: item.id
                 })
             }}

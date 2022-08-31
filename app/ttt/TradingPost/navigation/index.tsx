@@ -46,6 +46,7 @@ import { TableModalScreen } from '../screens/TableModalScreen';
 import { IconButton } from '../components/IconButton';
 import { OverlayScreen } from '../screens/OverlayScreen';
 import { CompanyScreen } from '../screens/CompanyScreen';
+import {WatchlistViewerScreen} from '../screens/WatchlistViewerScreen';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -63,7 +64,7 @@ type UndefinedProxy<T extends keyof any> = {
 }
 
 // TODO: these defined the parameters... so should type these correctly .. I will do that in the future
-export type AllPages = UndefinedProxy<"Launch" | "Create" | "Login" | "Dash" | "WatchlistEditor" | "Watchlist" | "Auth" | "ImagePicker" | "Profile"> & {
+export type AllPages = UndefinedProxy<"Launch" | "Create" | "Login" | "Dash" | "WatchlistViewer"|"WatchlistEditor" | "Watchlist" | "Auth" | "ImagePicker" | "Profile"> & {
   "Company": Parameters<(typeof CompanyScreen)>["0"]["route"]["params"],
   "Bookmarks": Parameters<(typeof FeedScreen)>["0"]["route"]["params"],
   "TableModal": Parameters<(typeof TableModalScreen)>["0"]["route"]["params"],
@@ -148,6 +149,7 @@ function RootNavigator() {
     <Stack.Group screenOptions={{ presentation: 'modal' }}>
       <Stack.Screen name="Modal" component={ModalScreen} />
       <Stack.Screen name="WatchlistEditor" component={WatchlistEditorScreen} />
+      <Stack.Screen name="WatchlistViewer" component={WatchlistViewerScreen} />
       <Stack.Screen name="Watchlist" component={WatchlistScreen} />
       <Stack.Screen name="Auth" component={AuthScreen} />
       <Stack.Screen name="ImagePicker" component={ImagePickerScreen} />

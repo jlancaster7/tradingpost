@@ -11,7 +11,7 @@ export const OverlayScreen = () => {
         }} style={{ backgroundColor: "white", opacity: 0.85, position: "absolute", height: "100%", width: "100%" }}></Pressable>
         <View style={{ margin: sizes.rem1, padding: sizes.rem1, backgroundColor: "orange" }}>
             <Text>
-                FUCK OFF
+                test
             </Text>
         </View>
     </View>
