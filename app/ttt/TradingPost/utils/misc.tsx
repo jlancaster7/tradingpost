@@ -146,5 +146,5 @@ export function toDollars(number: number) {
     return toDollarsAndCents(number).split(".")[0];
 }
 export function toDollarsAndCents(number: number) {
-    return currencyFormatter.format(number).split(".")[0];
+    return currencyFormatter.format(number);
 }
