@@ -1,13 +1,19 @@
 import { messaging } from 'firebase-admin';
-import { MessagesResponse, Message, MessageOptions, INotificationsRepository } from "./interfaces";
-import Repository from "./repository";
-export { Repository };
-export declare class Notifications {
+import { Message, MessageOptions, INotificationsRepository, MulticastMessageResponse, MessageResponse } from "./interfaces";
+export interface BulkMessage {
+    token: string;
+    title: string;
+    body: string;
+    imageUrl?: string;
+    provider?: "Android" | "Apple";
+    data: Record<string, any>;
+}
+export default class Notifications {
     private iOSMessenger;
     private androidMessenger;
     private repository;
     constructor(iosMessenger: messaging.Messaging, androidMessenger: messaging.Messaging, repository: INotificationsRepository);
-    sendMessageToUser: (userId: string, msg: Message, msgOpts?: MessageOptions | undefined) => Promise<MessagesResponse>;
-    sendMessageToUserDevice: (userId: string, deviceId: string, msg: Message, msgOpts?: MessageOptions | undefined) => Promise<MessagesResponse>;
-    sendMessageToAllUsers: (msg: Message, msgOptions?: MessageOptions | undefined) => Promise<void>;
+    sendBatchMessages: (msgs: BulkMessage[]) => Promise<void>;
+    sendMessageToUser: (userId: string, msg: Message, msgOpts?: MessageOptions) => Promise<MessageResponse>;
+    sendMessageToUserDevices: (userId: string, deviceIds: string[], provider: string, msg: Message, msgOpts?: MessageOptions) => Promise<MulticastMessageResponse>;
 }

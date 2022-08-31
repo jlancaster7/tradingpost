@@ -631,8 +631,16 @@ ALTER TABLE security_price
     ADD CONSTRAINT price_flag_constraint CHECK ((is_eod IS TRUE AND is_intraday IS FALSE) OR
                                                 (is_eod IS FALSE AND is_intraday IS TRUE));
 
-CREATE UNIQUE INDEX security_price_eod_idx ON security_price (security_id, cast(time AT time ZONE 'America/New_York' AS DATE), is_eod) WHERE is_eod = TRUE;
+CREATE UNIQUE INDEX security_price_eod_idx ON security_price (security_id,
+                                                              cast(time AT time ZONE 'America/New_York' AS DATE),
+                                                              is_eod) WHERE is_eod = TRUE;
 CREATE INDEX security_price_eod_time_idx ON security_price (cast(time AT time ZONE 'America/New_York' AS DATE), is_eod) WHERE is_eod = TRUE;
 
-ALTER TABLE finicity_account ADD COLUMN tx_push_id TEXT;
-ALTER TABLE finicity_account ADD COLUMN tx_push_signing_key TEXT;
+ALTER TABLE finicity_account
+    ADD COLUMN tx_push_id TEXT;
+ALTER TABLE finicity_account
+    ADD COLUMN tx_push_signing_key TEXT;
+
+ALTER TABLE USER_DEVICE
+    ADD COLUMN timezone TEXT NOT NULL DEFAULT 'America/New_York';
+CREATE INDEX user_device_timezone ON user_device (timezone);

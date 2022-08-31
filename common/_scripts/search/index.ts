@@ -165,4 +165,3 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
 (async () => {
     await run();
 })()
->>>>>>> 9cfde5aa5bd1521dfd4883d4101d2615de04903c

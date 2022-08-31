@@ -1,10 +1,23 @@
 import {messaging} from 'firebase-admin';
-import {MessagesResponse, UserDevice, Message, MessageOptions, INotificationsRepository} from "./interfaces";
-import Repository from "./repository"
+import {
+    Message,
+    MessageOptions,
+    INotificationsRepository,
+    MulticastMessageResponse,
+    MessageResponse
+} from "./interfaces";
+import {Message as FirebaseMessage} from 'firebase-admin/lib/messaging'
 
-export {Repository};
+export interface BulkMessage {
+    token: string
+    title: string
+    body: string
+    imageUrl?: string
+    provider?: "Android" | "Apple"
+    data: Record<string, any>
+}
 
-export class Notifications {
+export default class Notifications {
     private iOSMessenger: messaging.Messaging;
     private androidMessenger: messaging.Messaging;
     private repository: INotificationsRepository
@@ -15,26 +28,57 @@ export class Notifications {
         this.repository = repository
     }
 
-    sendMessageToUser = async (userId: string, msg: Message, msgOpts?: MessageOptions): Promise<MessagesResponse> => {
+    sendBatchMessages = async (msgs: BulkMessage[]): Promise<void> => {
+        const bulkMessages: FirebaseMessage[] = [];
+        const appleMessages: FirebaseMessage[] = [];
+        const androidMessages: FirebaseMessage[] = [];
+        msgs.forEach(msg => {
+            let fbMsg = {
+                notification: {
+                    title: msg.title,
+                    body: msg.body,
+                    imageUrl: msg.imageUrl
+                },
+                token: msg.token,
+                data: msg.data
+            };
+
+            if (msg.provider === 'Android') androidMessages.push(fbMsg)
+            if (msg.provider === 'Apple') appleMessages.push(fbMsg)
+            if (!msg.provider) bulkMessages.push(fbMsg)
+        });
+
+        if (bulkMessages.length > 500) throw new Error("bulk messages must be less than 500");
+        if (appleMessages.length > 500) throw new Error("iOs bulk messages must be less than 500");
+        if (androidMessages.length > 500) throw new Error("android bulk messages must be less than 500");
+
+        try {
+            if (appleMessages.length > 0) await this.iOSMessenger.sendAll(appleMessages)
+            if (androidMessages.length > 0) await this.androidMessenger.sendAll(androidMessages);
+            if (bulkMessages.length > 0) await this.iOSMessenger.sendAll(bulkMessages);
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    sendMessageToUser = async (userId: string, msg: Message, msgOpts?: MessageOptions): Promise<MessageResponse> => {
         const userDevices = await this.repository.getUserDevices(userId)
-        const errors: {
-            reason: string
-            userId: string
-            deviceId: string
-        }[] = [];
+        const errors: MessageResponse = {errors: []};
 
         for (let i = 0; i < userDevices.length; i++) {
             const userDevice = userDevices[i];
             try {
-                let sendMsg: messaging.Message = {token: userDevice.deviceId};
+                let sendMsg: messaging.Message = {
+                    token: userDevice.deviceId, data: msg.data, notification: {
+                        title: msg.title,
+                        body: msg.body,
+                        imageUrl: msg.imageUrl
+                    }
+                };
                 switch (userDevice.provider) {
                     case "Apple":
                         sendMsg.apns = {
                             ...sendMsg.apns,
-                            headers: {},
-                            payload: {
-                                aps: {}
-                            },
                             fcmOptions: {
                                 imageUrl: msg.imageUrl,
                                 analyticsLabel: msgOpts?.analyticsLabel
@@ -45,11 +89,6 @@ export class Notifications {
                     case "Android":
                         sendMsg.android = {
                             ...sendMsg.android,
-                            notification: {
-                                title: msg.title,
-                                body: msg.body,
-                                imageUrl: msg.imageUrl
-                            },
                             fcmOptions: {
                                 analyticsLabel: msgOpts?.analyticsLabel
                             }
@@ -60,14 +99,14 @@ export class Notifications {
                         // TODO: Implement later
                         break;
                     default:
-                        errors.push({
+                        errors.errors.push({
                             userId: userDevice.userId,
                             deviceId: userDevice.deviceId,
                             reason: `Unknown notification provider registered: Provider:[${userDevice.provider}] for sending notification`
                         })
                 }
             } catch (e: any) {
-                errors.push({
+                errors.errors.push({
                     userId: userDevice.userId,
                     deviceId: userDevice.deviceId,
                     reason: e.toString()
@@ -75,50 +114,42 @@ export class Notifications {
             }
         }
 
-        return {errors};
+        return errors;
     }
 
-    sendMessageToUserDevice = async (userId: string, deviceId: string, msg: Message, msgOpts?: MessageOptions): Promise<MessagesResponse> => {
-        let userDevice: UserDevice;
+    // sendMessageToUserDevices all tokens passed should be for a single provider(e.g., Apple, v. Android)
+    sendMessageToUserDevices = async (userId: string, deviceIds: string[], provider: string, msg: Message, msgOpts?: MessageOptions): Promise<MulticastMessageResponse> => {
+        if (deviceIds.length > 500) throw new Error("device ids limited to 500 per request")
         try {
-            userDevice = await this.repository.getUserDeviceByDeviceId(deviceId);
-        } catch (e: any) {
-            return {
-                errors: [{userId, deviceId, reason: e.toString()}]
-            }
-        }
+            let sendMsg: messaging.MulticastMessage = {
+                data: msg.data,
+                tokens: deviceIds,
+                notification: {
+                    title: msg.title,
+                    body: msg.body,
+                    imageUrl: msg.imageUrl
+                }
+            };
 
-        try {
-
-            let sendMsg: messaging.Message = {token: deviceId};
-            switch (userDevice.provider) {
+            switch (provider) {
                 case "Apple":
                     sendMsg.apns = {
                         ...sendMsg.apns,
-                        headers: {},
-                        payload: {
-                            aps: {}
-                        },
                         fcmOptions: {
                             imageUrl: msg.imageUrl,
                             analyticsLabel: msgOpts?.analyticsLabel
                         }
                     }
-                    await this.iOSMessenger.send(sendMsg)
+                    await this.iOSMessenger.sendMulticast(sendMsg)
                     break;
                 case "Android":
                     sendMsg.android = {
                         ...sendMsg.android,
-                        notification: {
-                            title: msg.title,
-                            body: msg.body,
-                            imageUrl: msg.imageUrl
-                        },
                         fcmOptions: {
                             analyticsLabel: msgOpts?.analyticsLabel
                         }
                     }
-                    await this.androidMessenger.send(sendMsg);
+                    await this.androidMessenger.sendMulticast(sendMsg);
                     break;
                 case "Web": // TODO: Implement Web Notifications
                     break;
@@ -126,8 +157,8 @@ export class Notifications {
                     return {
                         errors: [{
                             userId: userId,
-                            deviceId: deviceId,
-                            reason: `Unknown notification provider registered: Provider:[${userDevice.provider}] for sending notification`
+                            deviceIds: deviceIds,
+                            reason: `Unknown notification provider registered: Provider:[${provider}] for sending notification`
                         }]
                     }
             }
@@ -135,16 +166,12 @@ export class Notifications {
             return {
                 errors: [{
                     userId: userId,
-                    deviceId: deviceId,
+                    deviceIds: deviceIds,
                     reason: e.toString()
                 }]
             }
         }
 
         return {errors: []}
-    }
-
-    sendMessageToAllUsers = async (msg: Message, msgOptions?: MessageOptions) => {
-        // Paginate over
     }
 }

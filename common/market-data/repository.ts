@@ -54,7 +54,23 @@ export default class Repository {
             {name: 'is_eod', prop: 'isEod'},
             {name: 'is_intraday', prop: 'isIntraday'}
         ], {table: 'security_price'})
-        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, "security_id,time,is_intraday")
+        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, "(security_id,time,is_intraday)")
+        await this.db.none(query);
+    }
+
+    upsertEodPrices = async (securityPrices: addSecurityPrice[]) => {
+        if (securityPrices.length <= 0) return
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'security_id', prop: 'securityId'},
+            {name: 'high', prop: 'high'},
+            {name: 'low', prop: 'low'},
+            {name: 'open', prop: 'open'},
+            {name: 'price', prop: 'price'},
+            {name: 'time', prop: 'time'},
+            {name: 'is_eod', prop: 'isEod'},
+            {name: 'is_intraday', prop: 'isIntraday'}
+        ], {table: 'security_price'})
+        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, "(security_id, (((\"time\" AT TIME ZONE 'America/New_York'::text))::date)) where is_eod = true")
         await this.db.none(query);
     }
 
@@ -666,7 +682,7 @@ export default class Repository {
             {name: 'day_5_change_percent', prop: 'day5ChangePercent'},
             {name: 'last_updated', prop: 'now()'},
         ], {table: 'security_information'})
-        const query = upsertReplaceQuery(securitiesInformation, cs, this.pgp, "security_id")
+        const query = upsertReplaceQuery(securitiesInformation, cs, this.pgp, "(security_id)")
         await this.db.none(query);
     }
 
@@ -725,7 +741,7 @@ export default class Repository {
 
 function upsertReplaceQuery(data: any, cs: ColumnSet, pgp: IMain, conflict: string = "id") {
     return pgp.helpers.insert(data, cs) +
-        ` ON CONFLICT(${conflict}) DO UPDATE SET ` +
+        ` ON CONFLICT ${conflict} DO UPDATE SET ` +
         cs.columns.map(x => {
             let col = pgp.as.name(x.name);
             return `${col}=EXCLUDED.${col}`

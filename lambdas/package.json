@@ -8,11 +8,13 @@
     "aws-sdk": "^2.1153.0",
     "deep-object-diff": "^1.1.7",
     "dotenv": "^10.0.0",
+    "firebase-admin": "^11.0.1",
     "luxon": "^2.4.0",
     "pg": "^8.7.3",
     "pg-promise": "^10.11.1",
     "puppeteer": "^16.2.0",
-    "puppeteer-core": "^16.1.0"
+    "puppeteer-core": "^16.1.0",
+    "tzdata": "^1.0.32"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.102",
