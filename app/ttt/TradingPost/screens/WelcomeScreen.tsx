@@ -125,17 +125,16 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         ///*|| loginResult*
         if (appUser || loginResult) {
             console.log("Has authed is ....." + hasAuthed)
-            if (!appUser || !hasAuthed) {   
+            if (!appUser || !hasAuthed) {
 
-                navigation.navigate("Create",{
-                    
+                navigation.navigate("Create", {
+
                 })
             }
             else {
                 navigation.navigate("Dash")
             }
         }
-
     }, [appUser, loginResult])
 
     return <> <View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>

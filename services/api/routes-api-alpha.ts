@@ -6,7 +6,7 @@ import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 import { DefaultConfig } from "@tradingpost/common/configuration";
 import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
 import { cacheMonitor } from '@tradingpost/common/api/cache'
-
+import { addToWaitlist } from '@tradingpost/common/api/waitlist';
 import UserApi from "@tradingpost/common/api/entities/apis/UserApi";
 import SecurityApi from "@tradingpost/common/api/entities/static/SecurityApi";
 
@@ -124,6 +124,14 @@ makeRoute("/authapi/init", async (req) => {
     cacheMonitor(UserApi, "insert", login.user_id, {});
     return login;
 
+});
+
+makeRoute("/waitlist/add", async (req) => {
+    if (!req.body.email) {
+        throw new PublicError("Invalid Request");
+    }
+    console.log(req.body.email);
+    return await addToWaitlist(req.body.email);
 });
 
 //ALL ROUTES
