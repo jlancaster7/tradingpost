@@ -19,7 +19,7 @@ import {
     GetAllCustomerTransactions,
     GetInstitution,
     GetAccountAndHoldings,
-    EnableCustomerTx,
+    EnableCustomerTx, AddCustomerResponseError,
 } from "./interfaces";
 import fs from "fs";
 
@@ -203,7 +203,7 @@ export default class Finicity {
         }
     }
 
-    addCustomer = async (applicationId: string, username: string): Promise<AddCustomerResponse> => {
+    addCustomer = async (applicationId: string, username: string): Promise<AddCustomerResponse | AddCustomerResponseError> => {
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -219,15 +219,21 @@ export default class Finicity {
 
         const body = await response.text();
         try {
-            return await JSON.parse(body) as AddCustomerResponse
+            const res = await JSON.parse(body) as AddCustomerResponse | AddCustomerResponseError;
+            if ('code' in res) return res as AddCustomerResponseError
+            return res as AddCustomerResponse
         } catch (e) {
             throw new Error(body.toString());
         }
     }
 
-    getCustomers = async (): Promise<GetCustomersResponse> => {
-        const response = await fetch("https://api.finicity.com/aggregation/v1/customers", {
-            method: "POST",
+    getCustomers = async (start: number = 0, limit: number = 25, username?: string): Promise<GetCustomersResponse> => {
+        const url = new URL("https://api.finicity.com/aggregation/v1/customers");
+        url.searchParams.set("start", start.toString());
+        url.searchParams.set("limit", limit.toString())
+        if (username) url.searchParams.set("username", username)
+        const response = await fetch(url.toString(), {
+            method: "GET",
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',

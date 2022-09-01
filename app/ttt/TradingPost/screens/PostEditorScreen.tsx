@@ -1,5 +1,7 @@
+import { Api } from "@tradingpost/common/api";
 import React, { useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
+import { useToast } from "react-native-toast-notifications";
 import { Header } from "../components/Headers";
 import { Label } from "../components/Label";
 import { ButtonPanel } from "../components/ScrollWithButtons";
@@ -15,12 +17,13 @@ export const PostEditorScreen = (props: TabScreenProps) => {
     const postEntity = useReadonlyEntity({
         content: "",
         title: "",
-        platform: "tradingpost",
         subscription_level: "standard",
         photos: []
     }),
         [locked, setLocked] = useState(false),
-        editorRef = useRef<any>()
+        editorRef = useRef<any>(null),
+        toast = useToast()
+
     //[contentFocused, setContentFocused] = useState(false)
 
     return <View style={{ backgroundColor: "white", flexGrow: 1 }}>
@@ -39,8 +42,9 @@ export const PostEditorScreen = (props: TabScreenProps) => {
 
             }} style={[flex, {}]}
                 contentContainerStyle={{ minHeight: "100%" }} >
-                <TextEditor editorRef={editorRef} />
-
+                <TextEditor html={postEntity.data.content} onChangeHtml={(html) => {
+                    postEntity.update({ content: html });
+                }} />
                 {/* <RichEditor onFocus={() => {
                     setContentFocused(true)
                 }} onBlur={() => setContentFocused(false)} containerStyle={{ minHeight: 1 }} initialContentHTML={postEntity.data.content} ref={editorRef} placeholder={"Add content to your post"}
@@ -49,6 +53,7 @@ export const PostEditorScreen = (props: TabScreenProps) => {
         </View>
         {/* //TODO: add are you sure if dirty  */}
         <ButtonPanel
+
             locked={locked}
             left={{
                 onPress: () => {
@@ -58,31 +63,34 @@ export const PostEditorScreen = (props: TabScreenProps) => {
             }}
             right={{
                 onPress: async () => {
-                    // setLocked(true);
-                    // if (!postEntity.data.content || !postEntity.data.title) {
-                    //     dashref.current?.toastMessage("Please provide a title and content for your post");
-                    //     setLocked(false);
-                    // }
-                    // else {
-                    //     try {
-                    //         const { id: postId } = await createPost(null, postEntity.data);
-                    //         Navigation.pop(props.componentId);
 
-                    //         const posts = await getPosts([postId]);
-                    //         screens.push(props.componentId, "Post",
-                    //             { passProps: { post: posts[0] } });
 
-                    //     }
-                    //     catch (ex: any) {
-                    //         dashref.current?.toastMessage(ex.message);
-                    //         setLocked(false);
-                    //     }
-                    // }
+                    setLocked(true);
+                    if (!postEntity.data.content || !postEntity.data.title) {
+                        toast.show("Please provide a title and content for your post");
+                        setLocked(false);
+                    }
+                    else {
+                        try {
+                            //const { id: postId } = 
+                            await Api.Post.extensions.create(postEntity.data);
+                            // Navigation.pop(props.componentId);
+                            // const posts = await getPosts([postId]);
+                            // screens.push(props.componentId, "Post",
+                            //     { passProps: { post: posts[0] } });
+                            props.navigation.goBack();
 
-                },
+                        }
+                        catch (ex: any) {
+                            toast.show(ex.message);
+                            setLocked(false);
+                        }
+                    }
+                }
+                ,
                 "text": "Create"
             }}
         />
-        <TextEditorToolbar editorRef={editorRef} />
+
     </View>
 }

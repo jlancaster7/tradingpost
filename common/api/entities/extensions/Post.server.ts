@@ -180,5 +180,10 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             await pool.query(`DELETE FROM data_upvote WHERE post_id= $1 and user_id = $2`, [rep.body.id, rep.extra.userId])
 
         return rep.body;
+    },
+    create: async (req) => {
+        const pool = await getHivePool;
+        await pool.query(`INSERT INTO data_internal_post(user_id, title, content) VALUES($1,$2,$3)`, [req.extra.userId, req.body.title, req.body.content])
+        return {}
     }
 })

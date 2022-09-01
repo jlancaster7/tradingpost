@@ -12,7 +12,7 @@ import {
     IFinicityRepository, TradingPostBrokerageAccountsTable, TradingPostUser,
 } from "../interfaces";
 import Finicity from "../../finicity";
-import {GetInstitutionsInstitution} from "../../finicity/interfaces";
+import {AddCustomerResponse, AddCustomerResponseError, GetInstitutionsInstitution} from "../../finicity/interfaces";
 import {DateTime} from "luxon";
 import FinicityTransformer from "./transformer";
 
@@ -43,8 +43,25 @@ export default class FinicityService implements IBrokerageService {
     }
 
     _createFinicityUser = async (userId: string): Promise<FinicityUser> => {
-        const finCustomer = await this.finicity.addCustomer("trading-post", userId);
-        return this.repository.addFinicityUser(userId, finCustomer.id, "active");
+        let finCustomer = await this.finicity.addCustomer("trading-post", userId);
+
+        // TODO: Update to include additional customers...
+        if ((finCustomer as AddCustomerResponseError).code !== undefined) {
+            const customersResponse = await this.finicity.getCustomers(0, 25, userId);
+            console.log(customersResponse)
+            customersResponse.customers.forEach(customer => {
+                if (customer.username === userId) {
+                    finCustomer = {
+                        id: customer.id,
+                        createdDate: customer.createdDate,
+                        username: customer.username
+                    } as AddCustomerResponse
+                }
+            })
+        }
+
+        if ((finCustomer as AddCustomerResponseError).code !== undefined) throw new Error("customer exists but could not be found")
+        return await this.repository.addFinicityUser(userId, (finCustomer as AddCustomerResponse).id, "active");
     }
 
     importInstitutions = async (): Promise<void> => {

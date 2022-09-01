@@ -24,6 +24,7 @@ import { HtmlView } from './HtmlView'
 import { useWindowDimensions } from 'react-native'
 import { ProfileButton } from './ProfileButton'
 import { useToast } from 'react-native-toast-notifications'
+import { NavigationProp, useNavigation } from "@react-navigation/native"
 //import { setBookmarked } from '../apis/PostApi'
 //import { openProfileScreen } from '../screens/ProfileScreen'
 
@@ -116,13 +117,22 @@ export const resolvePostContent = (itm: Interface.IElasticPost | undefined, wind
         case 'spotify':
             const matches = /src="(.*)"/.exec(itm._source.content.body);
             return matches?.[1] || "";
+        case 'substack':
+            //return SubstackView({post: itm});
+            /*
+            return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"></meta></head>
+            <body style="margin:0; padding:0;width:${itm?._source.size.maxWidth}px;transform: scale(${windowWidth / itm._source.size.maxWidth});transform-origin: top left;">
+            <h1>${itm?._source.content.title}</h1>
+            <p>${itm?._source.content.body}</p>
+            </body></html>`
+            */
         default:
             return itm?._source.content.htmlBody || "";
     }
 }
 export function PostView(props: { post: Interface.IElasticPostExt }) {
     const { post } = props
-
+    const nav = useNavigation<NavigationProp<any>>();
 
     //const cu = null,// ensureCurrentUser(),
 
@@ -154,8 +164,17 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                 {
                     <ProfileButton userId={props.post._source.user.id} profileUrl={props.post.ext.user?.profile_url || ""} size={56} />
                 }
-                <View style={[flex, { marginLeft: sizes.rem0_5 }]}>
-                    <Subheader text={"@" + (props.post.ext.user?.handle || "NoUserAttached")} style={{ color: "black", fontWeight: "bold" }} />
+                <View style={[flex, { marginLeft: sizes.rem1_5 }]}>
+                    <Pressable onPress={() => {
+                        if (props.post._source.user.id)
+                            nav.navigate("Profile", {
+                            userId: props.post._source.user.id
+                        });
+                    }}
+                    style={{width: "min-content"}}>
+                        <Subheader text={"@" + (props.post.ext.user?.handle || "NoUserAttached")} style={{ color: "black", fontWeight: "bold" }} />
+                    </Pressable>
+                    
                     <View>
                         <ScrollView nestedScrollEnabled horizontal>
                             <View style={row}>
@@ -244,7 +263,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                             });
                         }}
                         accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{ height: 24, width: 24, opacity: isUpvoted ? 1 : 0.25 }} />} appearance={"ghost"} >{
-                            isUpvoted ? "1" : "-"
+                            isUpvoted ? "1" : " "
                         }</Button>}
                     {/* <Button iconSource={(props: any) => <CommentIcon height={20} width={20} style={{ marginRight: sizes.rem1 / 2 }} />} label="Comment" color="black" backgroundColor={Colors.transparent} /> */}
                     {//postType === "platform" && <IconButton iconSource={navIcons.Feed.active} style={{ marginLeft: "auto" }} />
@@ -257,28 +276,35 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
 }
 
 
-const SubstackView = (props: { post: Interface.IPostList }) => {
+const SubstackView = (props: { post: Interface.IElasticPost }) => {
     const { post } = props;
-    return <View style={{ margin: sizes.rem1 }}>
-        <View key="profile" style={{ flexDirection: "row", marginBottom: sizes.rem1, }}>
+    return <View style={{ marginVertical: sizes.rem1, marginHorizontal: sizes.rem0_5}}>
+        <View key="profile" style={{ display: "flex", flexDirection: "row", marginBottom: sizes.rem1, }}>
             {/* <Image style={{ aspectRatio: 0.9, marginRight: sizes.rem1 / 2 }} source={{ uri: post.platform_profile_url }} /> */}
-            <IconifyIcon style={{ width: 40, height: 40, marginTop: 2, marginRight: sizes.rem1 / 1.5 }} svgProps={{ style: { margin: "auto" } }} icon={social.SubstackLogo} currentColor={socialStyle.substackColor} />
+            <a href={post._source.postUrl} style={{display: "flex", flexDirection: "row", textDecoration: "none"}}>
+            <IconifyIcon style={{ width: 30, height: 30, marginTop: 2, marginRight: sizes.rem1 / 1.5 }} svgProps={{ style: { margin: "auto" } }} icon={social.SubstackLogo} currentColor={socialStyle.substackColor}  />
+            {<Subheader text={post._source.content.title || ""} style={{ color: "black", fontSize: fonts.medium, fontWeight:"600", fontFamily: "K2D" }}></Subheader> }
+            </a>
             <View style={{}}>
-                <Text style={{ fontSize: fonts.small, fontWeight: "bold", textAlignVertical: "center" }}>
+                <Text style={{ fontSize: fonts.small, fontFamily: "K2D", fontWeight: "bold", textAlignVertical: "center" }}>
+                    
                     {/* {post.creator.first_name} {post.creator.last_name} */}
                 </Text>
                 {/* <Text>{post.platform_display_name}</Text> */}
             </View>
+            
         </View>
-        {/* <Subheader text={post.title || ""} style={{ color: "black" }}></Subheader> */}
-        {/* <Text key="content" style={{ fontSize: fonts.small }}>{post.content}</Text> */}
+        {<Text key="content" style={{ fontSize: fonts.small }}>{post._source.content.description}</Text> }
+        {<Text key="date" style={{ fontSize: fonts.xSmall, fontFamily: "K2D", paddingVertical: 5 }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString()}</Text> }
     </View>
 }
 
 const PostContentView = (props: { post: Interface.IElasticPost }) => {
     const { width: windowWidth, scale } = useWindowDimensions(),
         availWidth = windowWidth - spaceOnSide
-
+    if (props.post._source.postType === 'substack') {
+        return SubstackView(props)
+    }
     return <HtmlView style={{ height: postInnerHeight(props.post, availWidth) }}
         isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}
     >{resolvePostContent(props.post, availWidth)}

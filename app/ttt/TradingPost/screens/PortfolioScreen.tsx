@@ -10,7 +10,7 @@ import { DataOrQuery } from '../components/List'
 import { DashScreenProps, TabScreenProps } from "../navigation";
 import { flex, paddView, sizes } from "../style";
 import { useToast } from "react-native-toast-notifications";
-import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistScreen";
+import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewerScreen";
 import { AwaitedReturn, toPercent, toPercent2, toThousands } from "../utils/misc";
 import { WatchlistSection } from "../components/WatchlistSection";
 import Theme from '../theme-light.json'

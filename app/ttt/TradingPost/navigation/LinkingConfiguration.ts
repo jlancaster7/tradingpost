@@ -68,6 +68,7 @@ const linking: LinkingOptions<any> = {
         }
       },
       Auth:"auth/:platform",
+      WatchlistViewer: "WatchlistViewer/:watchlistId",
       Modal: 'modal',
       NotFound: '*',
     },

@@ -22,7 +22,7 @@ import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
 import { useToast } from "react-native-toast-notifications";
 import { FeedPart } from "./FeedScreen";
 import { AppColors } from "../constants/Colors";
-import { useMakeSecurityFields } from "./WatchlistScreen";
+import { useMakeSecurityFields } from "./WatchlistViewerScreen";
 import { PrimaryChip } from "../components/PrimaryChip";
 //import { screens } from "../navigationComponents";
 //import { getUser } from "../apis/UserApi";
@@ -204,7 +204,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
             <ProfileBanner navigator={props.navigation} profilePic={user?.profile_url} collapse={collapsed}
                 bannerPic={""}
                 extraMarginTop={collapseShift}
-                platforms={user?.claims.map(c => c.platform) || []}
+                platforms={user?.claims ? user?.claims.map(c => c.platform) : []}
 
             />
             <View style={[collapsed ? row : undefined, { width: "100%", alignItems: "center" }]}>

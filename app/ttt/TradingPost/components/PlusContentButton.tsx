@@ -3,6 +3,7 @@ import { Pressable } from "react-native"
 import { shadow } from "../style"
 import { IconifyIcon } from "./IconfiyIcon"
 import plusCircle from '@iconify/icons-mdi/plus-circle'
+import { AppColors } from "../constants/Colors"
 
 /**
  * This component assumes it will be placed in the bottom right corner of its parent.
@@ -14,15 +15,20 @@ export const PlusContentButton = (props: {
 }) => {
 
     return <Pressable style={[shadow, {
-        position: "absolute", bottom: 10, right: 10,
-        backgroundColor: "transparent",
+        position: "absolute", 
+        bottom: 10, 
+        right: 10,
+        backgroundColor: "blue",
         height: 64, aspectRatio: 1,
         borderRadius: 32,
         overflow: "hidden"
     }]} onPress={props.onPress}>
-        <IconifyIcon icon={plusCircle} currentColor="green" style={{ height: "120%", top: "-10%", left: "-10%", aspectRatio: 1, margin: 0, padding: 0, backgroundColor: "white" }} svgProps={{
+        <IconifyIcon icon={plusCircle} currentColor="green" style={{ height:64, width:64,  aspectRatio: 1, margin: 0, padding: 0, backgroundColor:"white" }} svgProps={{
             style: {
-                height: "120%"
+                height:64 * 1.2,
+                width:64* 1.2,
+                marginTop:"-10%",
+                marginLeft:"-10%"
             }
         }} />
     </Pressable>

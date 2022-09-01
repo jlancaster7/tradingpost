@@ -4,7 +4,7 @@ import { rootRepo } from './misc';
 import 'dotenv/config'
 import { createInterface } from 'readline';
 import fetch from 'node-fetch';
-import term from 'terminate'
+// import term from 'terminate'
 //This is something
 const config = (() => {
     const validConfigs = ["LOCAL", "DEV", "TEST"] as const;
@@ -16,6 +16,7 @@ const config = (() => {
 })()
 
 const startApiServer = function* () {
+    console.log("HIIIIIII")
     let proc: ReturnType<typeof spawnVerbose> | undefined;
     while (true)
         yield (async () => {

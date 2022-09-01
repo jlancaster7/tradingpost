@@ -43,6 +43,12 @@ provider:
       - subnet-0365b7b01827b2dfe
 
 functions:
+#  trades-notifications:
+#    handler: notifications/trades.handler
+#    description: Dispatches new trades notifications to users
+#    logRetentionInDays: 14
+#    timeout: 900
+#    memorySize: 1024
   collect-trades:
     handler: brokerage/collect-trades.handler
     description: Collects Finicity Trades Daily

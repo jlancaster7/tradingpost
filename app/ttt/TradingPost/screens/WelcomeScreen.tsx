@@ -127,7 +127,9 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
             console.log("Has authed is ....." + hasAuthed)
             if (!appUser || !hasAuthed) {   
 
-                navigation.navigate("Create")
+                navigation.navigate("Create",{
+                    
+                })
             }
             else {
                 navigation.navigate("Dash")

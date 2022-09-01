@@ -131,6 +131,11 @@ export interface AddCustomerResponse {
     createdDate: number
 }
 
+export interface AddCustomerResponseError {
+    code: number
+    message: string
+}
+
 export interface AddConsumerRequest {
     firstName: string
     lastName: string
@@ -182,7 +187,7 @@ export interface LocalFinicityKey {
 }
 
 export interface GetCustomersCustomerResponse {
-    id: number
+    id: string
     username: string
     firstName: string
     lastName: string

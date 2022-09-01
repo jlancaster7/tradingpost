@@ -22,7 +22,8 @@ export class AuthApi {
             body: JSON.stringify({
                 first_name,
                 last_name,
-                handle
+                handle,
+                dummy: false
             }),
             headers: EntityApiBase.makeHeaders()
         });

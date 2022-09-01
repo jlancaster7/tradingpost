@@ -21,4 +21,8 @@ export default class extends Extension {
         id: string;
         is_upvoted: boolean;
     }>;
+    create: (settings: {
+        title: string;
+        content: string;
+    }) => Promise<{}>;
 }

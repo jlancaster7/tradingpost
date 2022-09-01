@@ -1,8 +1,12 @@
-import { MutableRefObject, useRef } from 'react'
+import { MutableRefObject, PropsWithRef, useRef } from 'react'
 import { RichEditor, RichToolbar } from 'react-native-pell-rich-editor'
 
 export const TextEditor = (
-    props: { editorRef: MutableRefObject<any> }
+    props: PropsWithRef<{
+        editorRef?: MutableRefObject<any>,
+        html: string,
+        onChangeHtml: (text:string)=>void
+    }>
 ) => {
     return <RichEditor ref={props.editorRef} />
 }

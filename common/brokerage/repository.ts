@@ -1080,6 +1080,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     addFinicityUser = async (userId: string, customerId: string, type: string): Promise<FinicityUser> => {
         const query = `INSERT INTO finicity_user(tp_user_id, customer_id, type)
                        VALUES ($1, $2, $3)
+                       ON CONFLICT(customer_id) DO UPDATE SET tp_user_id=EXCLUDED.tp_user_id,
+                                                              type=EXCLUDED.type
                        RETURNING id, updated_at, created_at`;
         const response = await this.db.one(query, [userId, customerId, type]);
         return {
@@ -1949,7 +1951,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get returns for accountGroupId: ${accountGroupId}`);
-        };
+        }
+        ;
         let holdingPeriodReturns: AccountGroupHPRsTable[] = []
         for (let d of response) {
             holdingPeriodReturns.push({
