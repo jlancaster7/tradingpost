@@ -15,18 +15,21 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
     const nav = useNavigation<any>();
 
 
-    const fields: ITableColumn<IWatchlistList>[] = !props.shared ? [{ field: "name", alias: "Name", align: "left" },
-    { field: "item_count", alias: "Items" },
-    { field: "saved_by_count", alias: "Saves" },
-    { field: "type" }] : [{ field: "name", alias: "Name", align: "left" },
-    {
-        field: "user",
-        align: "left",
-        alias: "Analyst",
-        stringify: (user: IWatchlistList["user"], key, item) => {
-            return user[0].handle
-        },
-    }]
+    const fields: ITableColumn<IWatchlistList>[] = !props.shared ?
+        [{ field: "name", alias: "Name", align: "left" },
+        { field: "item_count", alias: "Items" },
+        { field: "saved_by_count", alias: "Saves" },
+        { field: "type" }] :
+
+        [{ field: "name", alias: "Name", align: "left" },
+        {
+            field: "user",
+            align: "left",
+            alias: "Analyst",
+            stringify: (user: IWatchlistList["user"], key, item) => {
+                return user[0].handle
+            },
+        }]
     const { column, shownMap } = useNoteField(props.hideNoteOnEmpty);
     return <ElevatedSection title={props.title} button={props.showAddButton ? (p) => <AddButton height={p.height} width={p.width} onPress={() => {
         nav.navigate("WatchlistEditor")

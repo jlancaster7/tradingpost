@@ -3,11 +3,12 @@ import { Api, Interface } from "@tradingpost/common/api";
 import React, { useEffect, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import { View, Text } from "react-native";
+import { PlusContentButton } from "../components/PlusContentButton";
 import { PostList } from "../components/PostList";
 import { spaceOnSide, postInnerHeight, PostView } from "../components/PostView";
-import { SearchBar } from "../components/SearchBar";
+import { TabScreenProps } from "../navigation";
 
-export const FeedScreen = (props: { navigation: NavigationProp<any> } & { route: { params: { bookmarkedOnly?: "true" | "false" } } }) => {
+export const FeedScreen = (props: TabScreenProps<{ bookmarkedOnly?: "true" | "false" }>) => {
     const [searchText, setSearchText] = useState("");
 
     //useEffect(()=>{
@@ -26,8 +27,9 @@ export const FeedScreen = (props: { navigation: NavigationProp<any> } & { route:
     return (
         <View style={{ flex: 1, backgroundColor: "#F7f8f8" }}>
             <FeedPart bookmarkedOnly={props.route.params.bookmarkedOnly === "true"} searchText={searchText} />
-            {/* <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-        <EditScreenInfo path="/screens/TabOneScreen.tsx" /> */}
+            <PlusContentButton onPress={() => {
+                props.navigation.navigate("PostEditor")
+            }} />
         </View>
     );
 }

@@ -46,6 +46,7 @@ import { TableModalScreen } from '../screens/TableModalScreen';
 import { IconButton } from '../components/IconButton';
 import { OverlayScreen } from '../screens/OverlayScreen';
 import { CompanyScreen } from '../screens/CompanyScreen';
+import { PostEditorScreen } from '../screens/PostEditorScreen';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -67,7 +68,8 @@ export type AllPages = UndefinedProxy<"Launch" | "Create" | "Login" | "Dash" | "
   "Company": Parameters<(typeof CompanyScreen)>["0"]["route"]["params"],
   "Bookmarks": Parameters<(typeof FeedScreen)>["0"]["route"]["params"],
   "TableModal": Parameters<(typeof TableModalScreen)>["0"]["route"]["params"],
-  "OverlayModal": undefined
+  "OverlayModal": undefined,
+  "PostEditor": undefined
 }
 
 const Drawer = createDrawerNavigator();
@@ -89,7 +91,7 @@ export type DashScreenProps = {
 }
 
 export type TabScreenProps<T = never> = DashScreenProps & {
-  navigation: NavigationProp<any>,
+  navigation: NavigationProp<AllPages>,
   route: T extends never ? undefined : { params: T }
 }
 
@@ -148,6 +150,7 @@ function RootNavigator() {
     <Stack.Group screenOptions={{ presentation: 'modal' }}>
       <Stack.Screen name="Modal" component={ModalScreen} />
       <Stack.Screen name="WatchlistEditor" component={WatchlistEditorScreen} />
+      <Stack.Screen name="PostEditor" component={PostEditorScreen} />
       <Stack.Screen name="Watchlist" component={WatchlistScreen} />
       <Stack.Screen name="Auth" component={AuthScreen} />
       <Stack.Screen name="ImagePicker" component={ImagePickerScreen} />
