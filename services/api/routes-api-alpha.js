@@ -39,6 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
 var express_1 = __importDefault(require("express"));
 var path_1 = require("path");
 var auth_1 = require("@tradingpost/common/api/auth");
@@ -46,6 +47,7 @@ var jsonwebtoken_1 = require("jsonwebtoken");
 var configuration_1 = require("@tradingpost/common/configuration");
 var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 var cache_1 = require("@tradingpost/common/api/cache");
+var waitlist_1 = require("@tradingpost/common/api/waitlist");
 var UserApi_1 = __importDefault(require("@tradingpost/common/api/entities/apis/UserApi"));
 var SecurityApi_1 = __importDefault(require("@tradingpost/common/api/entities/static/SecurityApi"));
 var router = express_1.default.Router();
@@ -190,6 +192,19 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
                 login = _a.sent();
                 (0, cache_1.cacheMonitor)(UserApi_1.default, "insert", login.user_id, {});
                 return [2 /*return*/, login];
+        }
+    });
+}); });
+makeRoute("/waitlist/add", function (req) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                if (!req.body.email) {
+                    throw new EntityApiBase_1.PublicError("Invalid Request");
+                }
+                console.log(req.body.email);
+                return [4 /*yield*/, (0, waitlist_1.addToWaitlist)(req.body.email)];
+            case 1: return [2 /*return*/, _a.sent()];
         }
     });
 }); });

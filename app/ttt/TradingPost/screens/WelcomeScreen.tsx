@@ -123,15 +123,8 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
     const linkTo = useLinkTo<any>();
     useLayoutEffect(() => {
         ///*|| loginResult*
-        if (appUser || loginResult) {
-            console.log("Has authed is ....." + hasAuthed)
-            if (!appUser || !hasAuthed) {   
-            }
-            else {
-
-                navigation.navigate("Dash")
-
-            }
+        if (appUser) {
+            navigation.navigate("Dash")
         }
 
     }, [appUser, loginResult])
