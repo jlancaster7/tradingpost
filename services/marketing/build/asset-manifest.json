@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.92f38e7b.css",
-    "main.js": "/static/js/main.63a2a745.js",
+    "main.js": "/static/js/main.f059a52d.js",
     "static/media/UserPic1.svg": "/static/media/UserPic1.ebbac6af1463fb9be439c85ef9dc59a4.svg",
     "static/media/DesktopIllustration.svg": "/static/media/DesktopIllustration.5a5dd1f302c5ed5c22b2.svg",
     "static/media/MobileIllustration.svg": "/static/media/MobileIllustration.b53a4d1d75c037286b32.svg",
@@ -14,6 +14,7 @@
     "static/media/TikTok.svg": "/static/media/TikTok.1266ae61824ffe4330d6.svg",
     "static/media/Verifiedportfolios.svg": "/static/media/Verifiedportfolios.2c17a1e1156dd482a3a0d88bcf417474.svg",
     "static/media/twitter.svg": "/static/media/twitter.71fde01947a4476a12b8.svg",
+    "static/media/Gainconfidence.svg": "/static/media/Gainconfidence.1e28813ae4650f10ecf553e257277e2d.svg",
     "static/media/linkedin.svg": "/static/media/linkedin.c87eb6173a1fb505d13d.svg",
     "static/media/AboutClouds.svg": "/static/media/AboutClouds.afadce929e93256fbb83.svg",
     "static/media/MobileClouds.svg": "/static/media/MobileClouds.a8f930bf076a29d42b40.svg",
@@ -21,10 +22,10 @@
     "static/media/Itsyourdata.svg": "/static/media/Itsyourdata.978d244c2174d526dcf0593d9a2c58f4.svg",
     "static/media/Arrow.svg": "/static/media/Arrow.c2f16ea4b16e6e7402d1.svg",
     "main.92f38e7b.css.map": "/static/css/main.92f38e7b.css.map",
-    "main.63a2a745.js.map": "/static/js/main.63a2a745.js.map"
+    "main.f059a52d.js.map": "/static/js/main.f059a52d.js.map"
   },
   "entrypoints": [
     "static/css/main.92f38e7b.css",
-    "static/js/main.63a2a745.js"
+    "static/js/main.f059a52d.js"
   ]
 }
