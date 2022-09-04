@@ -24,6 +24,7 @@ export function TextField(props: {
     spellCheck?: boolean,
     //defaulted this to false... which is the right way to to a positive assetion...  
     autoCorrect?: boolean,
+    markRequired?: boolean
     //caption?: InputProps["caption"],
 
 } & TextInputProps & Pick<InputProps, "caption" | "accessoryLeft" | "accessoryRight">) {
@@ -50,6 +51,7 @@ export function TextField(props: {
 
     return <Input
         ref={rnuRef}
+
         numberOfLines={props.numberOfLines}
         spellCheck={props.spellCheck || false}
         autoCorrect={props.autoCorrect || false}
@@ -66,7 +68,14 @@ export function TextField(props: {
         //markRequired={props.markRequired}
         //ref={props.textInputRef?.current?.field}
         onSubmitEditing={props.onSubmitEditing}
-        label={props.label}
+        label={(textProps) => {
+            return props.label ? <Text {...textProps}>{props.label}{<Text {...textProps} style={[
+                textProps?.style,
+                {
+                    color: "red"
+                }]}  >{props.markRequired ? "*" : ""}</Text>}</Text> :
+                <Text></Text>
+        }}
         onChangeText={(t) => {
             setValueTracker(t);
             if (validate && props.validateOnChange) {

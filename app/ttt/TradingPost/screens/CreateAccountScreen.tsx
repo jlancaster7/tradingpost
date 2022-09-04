@@ -106,8 +106,11 @@ export default (props: any) => {
             id: "",
             tags: []
         }),
-        toast = useToast(),
-        resolvedIndex = screenKeys.findIndex((k) => k === props.route.params.params.screen);
+        toast = useToast();
+
+        let resolvedIndex = screenKeys.findIndex((k) => k === props?.route?.params?.params?.screen) ;
+
+        resolvedIndex = resolvedIndex === -1 ? 2 : resolvedIndex;
     /*
     let resolvedIndex = 0;
     if (wizardIndex < 2 && loginResult) {

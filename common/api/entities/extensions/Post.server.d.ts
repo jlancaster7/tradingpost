@@ -41,6 +41,17 @@ declare const _default: {
         id: string;
         is_upvoted: boolean;
     }>;
+    create: (req: {
+        body: {
+            title: string;
+            content: string;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<{}>;
 } & {
     get?: ((i: any, extra: {
         userId: string;
