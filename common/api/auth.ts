@@ -14,6 +14,7 @@ const makeUserToken = async (user_id: string) => {
     const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
     return jwt.sign({}, authKey, { subject: user_id });
 }
+
 //return token
 export const loginPass = async (email: string, pass: string, csrf: string) => {
     console.log(`${email}::::${pass}`);
