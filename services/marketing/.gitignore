@@ -1,2 +1,3 @@
-!*.js
 build
+!webpack.server.js
+server-build

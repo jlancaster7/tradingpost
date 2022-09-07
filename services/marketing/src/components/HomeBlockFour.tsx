@@ -1,4 +1,5 @@
 import React from "react";
+import UserPicSvg from '../assets/UserPic1.svg';
 
 const HomeBlockFour = () => {
     return (
@@ -6,7 +7,7 @@ const HomeBlockFour = () => {
             <h1>Featured Analysts and Traders</h1>
             <div className="grid-container-b4">
                 <div className='grid-item-b4'>
-                    <img src={require('../assets/UserPic1.svg').default} alt=""/>
+                    <img src={UserPicSvg} alt=""/>
                     <h1>Josh Lancaster</h1>
                     <p>Specialty Finance</p>
                     <div className='inner-grid-container-b4'>
@@ -24,10 +25,10 @@ const HomeBlockFour = () => {
                         </div>
 
                     </div>
-                    
+
                 </div>
                 <div className='grid-item-b4'>
-                    <img src={require('../assets/UserPic1.svg').default} alt=""/>
+                    <img src={UserPicSvg} alt=""/>
                     <h1>Josh Lancaster</h1>
                     <p>Specialty Finance</p>
                     <div className='inner-grid-container-b4'>
@@ -45,10 +46,10 @@ const HomeBlockFour = () => {
                         </div>
 
                     </div>
-                    
+
                 </div>
                 <div className='grid-item-b4'>
-                    <img src={require('../assets/UserPic1.svg').default} alt=""/>
+                    <img src={UserPicSvg} alt=""/>
                     <h1>Josh Lancaster</h1>
                     <p>Specialty Finance</p>
                     <div className='inner-grid-container-b4'>
@@ -66,10 +67,10 @@ const HomeBlockFour = () => {
                         </div>
 
                     </div>
-                    <button type='none' className="subButton" disabled='true'>Sign Up & Subscribe</button>
+                    <button type={undefined} className="subButton" disabled={true}>Sign Up & Subscribe</button>
                 </div>
                 <div className='grid-item-b4'>
-                    <img src={require('../assets/UserPic1.svg').default} alt=""/>
+                    <img src={UserPicSvg} alt=""/>
                     <h1>Josh Lancaster</h1>
                     <p>Specialty Finance</p>
                     <div className='inner-grid-container-b4'>
@@ -87,7 +88,7 @@ const HomeBlockFour = () => {
                         </div>
 
                     </div>
-                    
+
                 </div>
 
             </div>

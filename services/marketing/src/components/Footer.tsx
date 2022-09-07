@@ -1,5 +1,4 @@
 import React from "react";
-// import DraftPolicyPdf from "../assets/DraftPrivacyPolicy-HivemindStudios-TradingpostApp.pdf";
 
 const Footer = () => {
     return (
@@ -11,14 +10,14 @@ const Footer = () => {
                 <a href={"../assets/DraftPrivacyPolicy-HivemindStudios-TradingpostApp.pdf"}
                    target="_blank" rel="noreferrer"
                    style={{
-                    color: "white"
-                }}>Privacy Policy</a>
+                       color: "white"
+                   }}>Privacy Policy</a>
                 <a href="/" style={{
                     color: "white",
-                 }}>Terms of Service</a>
-                 <a href="/" style={{
+                }}>Terms of Service</a>
+                <a href="/" style={{
                     color: "white",
-                 }}>Contact Us</a>
+                }}>Contact Us</a>
 
             </div>
             <div className="socialMedia">

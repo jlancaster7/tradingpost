@@ -1,17 +1,18 @@
 import React from "react";
-// import TPLogo from '../assets/TPLogo.svg';
+import TPLogoSvg from '../assets/TPLogo.svg';
+
 const Navbar = () => {
-    return ( 
+    return (
         <nav className="navbar">
             <h1 className='title'>
-                {/*<a href="/"><TPLogo/></a>*/}
+                <a href="/"><img src={TPLogoSvg} alt="tradingpost logo"/></a>
                 <a href="/"><span className='titleWhite'>Trading</span></a>
                 <a href="/"><span className='titleGreen'>Post</span></a>
-            </h1> 
+            </h1>
             <div className="links">
                 <a href="/about" style={{
                     color: "white",
-                 }}>About</a>
+                }}>About</a>
             </div>
         </nav>
     );
