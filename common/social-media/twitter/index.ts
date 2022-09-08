@@ -313,7 +313,7 @@ export default class Twitter {
             handles = [handles];
         }
         const data = await this.getUserInfo(handles);
-        if (data === []) {
+        if (data === null || data.length <= 0) {
             return []
         }
         const formatedData = this.formatUser(data);

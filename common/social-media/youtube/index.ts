@@ -243,7 +243,7 @@ export default class YouTube {
 
         formatedData = this.formatChannelInfo(data);
         const dummyTokens = await this.repository.getTokens('platform_user_id', out.map(a => a.platformUserId), 'youtube');
-        if (dummyTokens !== [] && !dummyTokens.map(a => a.userId).includes(youtubeUsers.userId)) {
+        if (dummyTokens !== null && dummyTokens.length > 0 && !dummyTokens.map(a => a.userId).includes(youtubeUsers.userId)) {
             for (let d of dummyTokens) {
                 const dummyCheck = await this.repository.isUserIdDummy(d.userId);
                 if (!dummyCheck) {

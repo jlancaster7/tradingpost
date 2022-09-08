@@ -2,6 +2,7 @@ import { exec } from 'child_process'
 export const execAsync = async (cmd: string, options?: {
     env?: NodeJS.ProcessEnv
 }) => {
+    // @ts-ignore
     const { err, stderr, stdout } = await new Promise((resolve, reject) => {
         try {
             console.log(`Exec Async: ${cmd}`);
