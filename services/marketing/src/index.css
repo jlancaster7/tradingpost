@@ -65,6 +65,12 @@ body {
     .navbar .links {
         display: none
     }
+    .navbar .loginButton {
+        display: none;
+        position: absolute;
+        right: 7%;   
+    }
+
 
     .footer {
         background-color: #0B2075;
@@ -230,13 +236,15 @@ body {
     }
 
     .home .appStoreIcons {
+        
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         position: relative;
-        z-index: 1;
-        padding: 3.5vh;
+        z-index: 0;
+        padding: 0;
+        visibility: hidden;
     }
 
     .home .appStoreIcons .playstore {
@@ -257,7 +265,7 @@ body {
         text-align: center;
         position: relative;
         top: 0;
-        margin-top: -10%;
+        margin-top: -30%;
         margin-bottom: 5%;
     }
 
@@ -559,11 +567,12 @@ body {
 
     /* Color/shape of burger icon bars on hover*/
     .bm-burger-bars-hover {
-        background: #a90000;
+        background: white;
     }
 
     /* Position and sizing of clickable cross button */
     .bm-cross-button {
+        display: none;
         height: 24px;
         width: 24px;
     }
@@ -571,6 +580,7 @@ body {
     /* Color/shape of close button cross */
     .bm-cross {
         background: #bdc3c7;
+
     }
 
     /*
@@ -579,12 +589,12 @@ body {
     */
     .bm-menu-wrap {
         position: fixed;
-        height: 100%;
+        height: auto;
     }
 
     /* General sidebar styles */
     .bm-menu {
-        background: #373a47;
+        background: white;
         padding: 2.5em 1.5em 0;
         font-size: 1.15em;
     }
@@ -596,20 +606,37 @@ body {
 
     /* Wrapper for item list */
     .bm-item-list {
+
         color: #b8b7ad;
-        padding: 0.8em;
+
     }
 
     .bm-item {
-        display: inline-block;
+        display: flex !important;
 
-        color: #d1d1d1;
+        color: #050B2C;
+        padding: 10px 15px 30px;
         margin-bottom: 10px;
+        font-size: 28px;
+        font-weight: 600;
         text-align: left;
         text-decoration: none;
         transition: color 0.2s;
     }
 
+    .menu-item img {
+        width: 15%;
+        height: auto;
+        margin-right: 30px;
+    }
+    .menu-item p {
+        width: 50%;
+        color: #050B2C;
+
+        font-size: 28px;
+        font-weight: 600;
+        text-align: left;
+    }
     /* Styling of overlay */
     .bm-overlay {
         background: rgba(0, 0, 0, 0.3);
@@ -622,7 +649,7 @@ body {
 
 @media (min-width: 769px) {
     .navbar {
-
+        position: relative;
         display: flex;
         align-items: center;
         background-color: #050B2C;
@@ -633,7 +660,6 @@ body {
     .navbar .title {
         margin-left: 7%;
         font-size: 32px;
-        font-size: 3vw;
         font-weight: 500;
         padding: 1vw;
         z-index: 1;
@@ -652,7 +678,8 @@ body {
     }
 
     .navbar h1 img {
-        width: 4vw;
+        width: 3vw;
+        width: 48px;
         height: auto;
         margin-right: 1vw;
         vertical-align: sub;
@@ -668,11 +695,31 @@ body {
 
     .navbar .links a {
         margin-left: 16px;
-        font-size: 16px;
         font-size: 1.5vw;
+        font-size: 18px;
+    
         text-decoration: none;
         padding: 1vw;
-
+    }
+    .navbar .loginButton {
+        display: block;
+        position: absolute;
+        right: 7%;   
+    }
+    .navbar .loginButton button {
+        background: none;
+        border-style: solid;
+        border-width: 3px;
+        border-color: white;
+        
+        width: 8vw;
+        height: 3vw;
+        color: white;
+        font-size: 1vw;
+        font-weight: 600;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1;
     }
 
     .footer {
@@ -755,7 +802,7 @@ body {
     .home .centralPromise {
         text-align: center;
         font-size: 46px;
-        font-size: 3.5vw;
+        
         font-weight: 600;
         margin-left: 25%;
         margin-right: 25%;
@@ -774,9 +821,9 @@ body {
         text-align: center;
         color: white;
         font-size: 20px;
-        font-size: 1.25vw;
-        margin-left: 30%;
-        margin-right: 30%;
+        
+        margin-left: 29%;
+        margin-right: 29%;
         padding: 1vw;
     }
 
@@ -784,8 +831,8 @@ body {
         text-align: center;
         color: white;
         font-size: 20px;
-        font-size: 1.4vw;
-        font-weight: 600;
+        
+        font-weight: 700;
         padding: 1vw;
     }
 
@@ -793,7 +840,7 @@ body {
         text-align: center;
         color: white;
         font-size: 20px;
-        font-size: 1.6vw;
+        
         font-weight: 600;
         margin-left: 32%;
         margin-right: 32%;
@@ -812,6 +859,7 @@ body {
         padding: 1vw;
         border-radius: 10px;
         width: 20vw;
+        
         font-size: 1vw;
         height: 1.2vw;
         margin-right: 1%;
@@ -822,7 +870,9 @@ body {
         padding: 1vw;
         width: 8vw;
         color: white;
-        font-size: 1vw;
+        
+        font-size: 14px;
+        font-size: 1.2vw;
         font-weight: 600;
         border-radius: 10px;
     }
@@ -831,6 +881,7 @@ body {
         text-align: center;
         position: relative;
         z-index: 1;
+        visibility: hidden;
     }
 
     .home .appStoreIcons .playstore {
@@ -916,6 +967,7 @@ body {
     .blocktext h1 {
         color: white;
         font-size: 2.5vw;
+        font-size: 36px;
         font-weight: 400;
         position: relative;
         margin-bottom: 3%;
@@ -924,6 +976,7 @@ body {
     .blocktext p {
         color: white;
         font-size: 1.5vw;
+        font-size: 20px;
         font-weight: 300;
     }
 
@@ -957,8 +1010,9 @@ body {
 
     .grid-item-left-b3 h1 {
         color: white;
-        font-size: 40px;
+        
         font-size: 2.5vw;
+        font-size: 36px;
         font-weight: 400;
         position: relative;
         margin-bottom: 3%;
@@ -966,8 +1020,9 @@ body {
 
     .grid-item-left-b3 p {
         color: white;
-        font-size: 20px;
+        
         font-size: 1.5vw;
+        font-size: 20px;
         font-weight: 300;
     }
 
@@ -998,16 +1053,18 @@ body {
 
     .discovery h1 {
         color: white;
-        font-size: 40px;
+        
         font-size: 3.25vw;
+        font-size: 40px;
         font-weight: 400;
         padding: 2%;
     }
 
     .discovery p {
         color: white;
-        font-size: 20px;
+        
         font-size: 1.5vw;
+        font-size: 20px;
         font-weight: 300;
     }
 
@@ -1147,19 +1204,25 @@ body {
     }
 
     .aboutStory {
-        width: 50%;
-        margin: 3% 26% 3%;
+
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        margin: 2% 0% 2%;
+        
     }
 
     .aboutStory h2 {
+        margin: 0% 30% 0%;
         font-weight: 600;
         font-size: 28px;
 
     }
 
     .aboutStory p {
-        margin-top: 3%;
-        font-size: 18px;
+
+        margin: 3% 30% 0%;
+        font-size: 16px;
 
     }
 

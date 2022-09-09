@@ -12,7 +12,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 function App() {
     return (
         <>
-            <SideMenu pageWrapId={'page-wrap'} outerContainerId={'Navbar'}/>
+            <SideMenu pageWrapId={'page-wrap'} outerContainerId={'navbar'}/>
 
             <Navbar/>
 

@@ -7,10 +7,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "react",
-    "include": [
-      "src",
-      "src/custom.d.ts"
-    ]
-  }
+    "jsx": "react"
+  }, 
+  "include": [
+    "src",
+    "src/custom.d.ts"
+  ]
 }

@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import TPLogoSvg from '../assets/TPLogo.svg';
 
 const Navbar = () => {
@@ -13,6 +13,13 @@ const Navbar = () => {
                 <a href="/about" style={{
                     color: "white",
                 }}>About</a>
+            </div>
+            <div className="loginButton">
+                <button type="button" onClick={() => {
+                    window.location.href = 'https://m.tradingpostapp.com';
+                }}>
+                    Login
+                </button>
             </div>
         </nav>
     );

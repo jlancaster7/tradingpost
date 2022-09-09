@@ -15,7 +15,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-app.get(['/', '/about', '/privacy-policy'], (req, res) => {
+app.get(['/', '/about', '/privacy-policy'], (req: any, res: any) => {
     let html = ReactDOMServer.renderToString(
         <StaticRouter location={req.url}>
             <App/>
