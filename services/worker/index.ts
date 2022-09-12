@@ -56,12 +56,10 @@ const run = async () => {
         const body = req.body;
 
         const signature = crypto.createHmac('sha256', finicityCfg.partnerSecret).update(JSON.stringify(body)).digest('hex')
-        if (req.get('x-finicity-signature') !== signature) {
+        if (req.get('x-finicity-signature') !== signature && process.env.NODE_ENV !== 'development') {
             // Spoofing Detected
-            throw new Error("invalid request");
+            throw new Error("request signature from finicity is invalid");
         }
-
-        console.log(req.body);
 
         if (req.body.eventType === 'added') {
             const {customerId} = req.body;

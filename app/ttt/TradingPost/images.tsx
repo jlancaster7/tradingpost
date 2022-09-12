@@ -30,9 +30,9 @@ import SpotifyLogo from '@iconify/icons-logos/spotify-icon'
 import TwitterLogo from '@iconify/icons-logos/twitter'
 import LinkedInLogo from '@iconify/icons-logos/linkedin-icon'
 import SubstackLogo from '@iconify/icons-simple-icons/substack'
-import React, { Component } from 'react'
-import { SvgExpo } from './components/SvgExpo'
-import { SvgProps } from 'react-native-svg'
+import React, {Component} from 'react'
+import {SvgExpo} from './components/SvgExpo'
+import {SvgProps} from 'react-native-svg'
 
 export const sideMenu = {
     Account,
@@ -49,7 +49,7 @@ export const sideMenu = {
 }
 
 function makeExpoSvg(Svg: React.FC<SvgProps>) {
-    return (props: SvgProps & { onReady?: (parent: any) => void }) => <SvgExpo {...props}><Svg /></SvgExpo>
+    return (props: SvgProps & { onReady?: (parent: any) => void }) => <SvgExpo {...props}><Svg/></SvgExpo>
 }
 
 export const AppTitle = makeExpoSvg(_AppTitle)
@@ -69,9 +69,7 @@ export const BookmarkActive = makeExpoSvg(_BookmarkActive);
 export const BookmarkActiveBlue = makeExpoSvg(_BookmarkActiveBlue);
 
 
-export { Logo, LogoNoBg };
-
-
+export {Logo, LogoNoBg};
 
 
 export const rnui = {
@@ -79,7 +77,7 @@ export const rnui = {
     add: require('./assets/rnui/add.png'),
     plus: require('./assets/rnui/plus.png')
 }
-export type NavIconKeys = "Portfolio" | "Search" | "Feed"; //| "Bookmark"; //| "Notification";
+export type NavIconKeys = "Portfolio" | "Search" | "Feed" | "Notification"; //| "Bookmark";
 export const navIcons: Record<NavIconKeys, { active: number, inactive: number }> = {
     "Portfolio": {
         active: require("./assets/nav-bar/portfolio-active.png"),
@@ -93,22 +91,20 @@ export const navIcons: Record<NavIconKeys, { active: number, inactive: number }>
         active: require("./assets/nav-bar/search-active.png"),
         inactive: require("./assets/nav-bar/search.png")
     },
-
     // "Bookmark": {
     //     active: require("./assets/nav-bar/bookmark-active.png"),
     //     inactive: require("./assets/nav-bar/bookmark.png")
     // },
-    // "Notification": {
-    //     active: require("./assets/nav-bar/notification-active.png"),
-    //     inactive: require("./assets/nav-bar/notification.png")
-    // },
+    "Notification": {
+        active: require("./assets/nav-bar/notification-active.png"),
+        inactive: require("./assets/nav-bar/notification.png")
+    },
 }
 
 export const BookmarkIcons = {
     active: require("./assets/nav-bar/bookmark-active.png"),
     inactive: require("./assets/nav-bar/bookmark.png")
 }
-
 
 
 export const topBarIcons = {

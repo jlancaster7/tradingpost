@@ -3,16 +3,12 @@ import {DateTime} from 'luxon';
 import {
     PartnerAuthenticationResponse,
     AddCustomerResponse,
-    LocalFinicityKey,
-    GetCustomersCustomerResponse,
     GetCustomersResponse,
     AddConsumerRequest,
     GenerateLinkResponse,
     GetInstitutions,
-    GetInstitutionsInstitution,
     GetConsumerResponse,
     AddConsumerResponse,
-    GetCustomerByAccountIdResponse,
     GetCustomerAccountsResponse,
     GetCustomerAccountByIdResponse,
     GetAccountOwner,
@@ -417,7 +413,7 @@ export default class Finicity {
     }
 
     registerTxPush = async (customerId: string, accountId: string, callbackUrl: string): Promise<EnableCustomerTx> => {
-        const url = new URL(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts/${accountId}/txPush`);
+        const url = new URL(`https://api.finicity.com/aggregation/v1/customers/${customerId}/accounts/${accountId}/txpush`);
         const response = await fetch(url.toString(), {
             method: "POST",
             headers: {

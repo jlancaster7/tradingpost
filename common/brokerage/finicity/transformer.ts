@@ -7,15 +7,15 @@ import {
     SecurityType,
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountWithFinicity,
+    TradingPostCashSecurity,
     TradingPostCurrentHoldings,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
-    TradingPostCashSecurity,
 } from "../interfaces";
-import { CustomerAccountsDetail } from '../../finicity/interfaces'
+import {CustomerAccountsDetail} from '../../finicity/interfaces'
 import {DateTime} from "luxon";
 import {addSecurity} from "../../market-data/interfaces";
-import { abs } from "mathjs";
+import {abs} from "mathjs";
 
 interface TransformerRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>
@@ -78,6 +78,8 @@ const transformTransactionType = (finicityTxType: string): InvestmentTransaction
             return InvestmentTransactionType.cash
         case "otherInfo":
             throw new Error("transaction action could not be translated")
+        case "other":
+            return InvestmentTransactionType.cash
         default:
             throw new Error(`unknown investment transaction type ${finicityTxType}`)
     }
@@ -256,6 +258,7 @@ export default class FinicityTransformer {
                     case "interest":
                     case "deposit":
                     case "transfer":
+                    case "other":
                     case "contribution":
                         transaction.ticker = "USD:CUR"
                         break
