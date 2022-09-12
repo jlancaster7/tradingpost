@@ -283,16 +283,18 @@ export default class FinicityService implements IBrokerageService {
 
             let txPushId = "",
                 txSigningKey = "";
+
             // This will push transactions to our table
             const subscription = await this.finicity.registerTxPush(finicityUser.customerId, fa.id,
                 "https://worker.tradingpostapp.com/finicity/webhook");
 
-            subscription.subscriptions.forEach(s => {
-                if (s.id !== "" && s.id !== null) {
-                    txPushId = s.id;
-                    txSigningKey = s.signingKey;
-                }
-            })
+            if (subscription.subscriptions)
+                subscription.subscriptions.forEach(s => {
+                    if (s.id !== "" && s.id !== null) {
+                        txPushId = s.id;
+                        txSigningKey = s.signingKey;
+                    }
+                })
 
             newFinicityAccounts.push({
                 id: 0,

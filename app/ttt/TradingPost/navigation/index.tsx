@@ -5,7 +5,16 @@
  */
 import { FontAwesome } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { getFocusedRouteNameFromRoute, NavigationContainer, DefaultTheme, DarkTheme, useNavigation, useLinkTo, NavigationProp, useNavigationState } from '@react-navigation/native';
+import {
+  getFocusedRouteNameFromRoute,
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme,
+  useNavigation,
+  useLinkTo,
+  NavigationProp,
+  useNavigationState
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { createDrawerNavigator } from '@react-navigation/drawer';
@@ -15,7 +24,6 @@ import * as React from 'react';
 import { useEffect } from 'react';
 
 import { Text, ImageBackground, Image, ColorSchemeName, Pressable, View } from 'react-native';
-
 
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
@@ -137,8 +145,19 @@ function DrawerPart() {
                   bookmarkedOnly: isMarked ? "false" : "true"
                 })
               }}>
-                {!isMarked ? <IconButton iconSource={isMarked ? BookmarkIcons.active : BookmarkIcons.inactive} style={{ height: 24, width: 24, marginRight: sizes.rem1 }} />
-                  : <BookmarkActiveBlue style={{ height: 16, width: 16, marginLeft: "auto", marginRight: (sizes.rem1_5 + sizes.rem1) / 2 }} />
+                {!isMarked ? <IconButton
+                  iconSource={isMarked ? BookmarkIcons.active : BookmarkIcons.inactive}
+                  style={{
+                    height: 24,
+                    width: 24,
+                    marginRight: sizes.rem1
+                  }} />
+                  : <BookmarkActiveBlue style={{
+                    height: 16,
+                    width: 16,
+                    marginLeft: "auto",
+                    marginRight: (sizes.rem1_5 + sizes.rem1) / 2
+                  }} />
                 }
               </Pressable>
             }
@@ -149,7 +168,7 @@ function DrawerPart() {
       })()
     })}>
     <Drawer.Screen name="Root" component={BottomTabNavigator} initialParams={{ appUser }} />
-  </Drawer.Navigator > : null;
+  </Drawer.Navigator> : null;
 }
 
 function RootNavigator() {
@@ -170,11 +189,6 @@ function RootNavigator() {
       <Stack.Screen name="Auth" component={AuthScreen} />
       <Stack.Screen name="ImagePicker" component={ImagePickerScreen} />
       <Stack.Screen name="Company" component={CompanyScreen} />
-      {/* <Stack.Screen name="Bookmarks" component={FeedScreen}
-        initialParams={{
-          bookmarkedOnly: true
-        }}
-      /> */}
       <Stack.Screen name="TableModal" component={TableModalScreen} />
       <Stack.Screen name="OverlayModal" options={{
         presentation: "transparentModal",
@@ -204,7 +218,7 @@ function RootNavigator() {
     }}>
       <Stack.Screen name="Profile" component={ProfileScreen} />
     </Stack.Group>
-  </Stack.Navigator >
+  </Stack.Navigator>
 }
 
 /**
@@ -223,6 +237,9 @@ const DashComponents: Partial<Record<keyof typeof navIcons, { c: React.Component
   },
   Search: {
     c: SearchScreen,
+  },
+  Notification: {
+    c: NotificationsScreen
   }
 }
 
@@ -241,12 +258,14 @@ function BottomTabNavigator(props: { appUser: IUserGet }) {
           key={n}
           name={n}
           options={({ navigation, route }) => ({
-            //TODO: this makes things a bit choppy .. shoudl change in the future 
+            //TODO: this makes things a bit choppy .. shoudl change in the future
             unmountOnBlur: true,
             tabBarShowLabel: false,
             lazy: true,
             tabBarIcon: ({ color, focused, size }) => {
-              return <ImageBackground source={navIcons[n as keyof typeof navIcons][focused ? "active" : "inactive"]} resizeMode="contain" style={{ height: size, width: size }} />
+              return <ImageBackground
+                source={navIcons[n as keyof typeof navIcons][focused ? "active" : "inactive"]}
+                resizeMode="contain" style={{ height: size, width: size }} />
             },
             // headerRight: (() => {
             //   const hr = DashComponents[n as keyof typeof navIcons]?.headerRight;

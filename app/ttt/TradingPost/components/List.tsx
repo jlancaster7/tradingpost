@@ -83,7 +83,6 @@ export function List<T, U>(props: {
                             setCurrentPage(nextPage);
                             isLoadingRef.current = false;
                         }
-
                     });
                 }
                 else {

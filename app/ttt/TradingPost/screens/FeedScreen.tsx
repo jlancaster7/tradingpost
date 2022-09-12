@@ -39,7 +39,6 @@ export const FeedPart = (props: {
     bookmarkedOnly?: boolean,
     searchText?: string,
     userId?: string
-
 }) => {
     const { width: windowWidth } = useWindowDimensions();
     const { searchText, bookmarkedOnly, userId } = props

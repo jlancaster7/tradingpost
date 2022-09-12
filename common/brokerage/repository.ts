@@ -1659,6 +1659,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'account_id', prop: 'account_id'},
             {name: 'account_group_id', prop: 'account_group_id'},
         ], {table: '_tradingpost_account_to_group'});
+
+        if (values.length <= 0) return 0
+
         const accountGroupsQuery = this.pgp.helpers.insert(values, cs) + ' ON CONFLICT DO NOTHING';
         const result = await this.db.result(accountGroupsQuery);
         return result.rowCount > 0 ? 1 : 0;
@@ -2197,7 +2200,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             `, [accountIds])
             }
         } catch (e) {
-            console.error("Here...", e)
+            console.error(e)
         }
     }
 }

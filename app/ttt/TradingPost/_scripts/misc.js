@@ -1,5 +1,5 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+exports.__esModule = true;
 exports.rootRepo = void 0;
-const path_1 = require("path");
-exports.rootRepo = path_1.join(__dirname, "../../../..");
+var path_1 = require("path");
+exports.rootRepo = (0, path_1.join)(__dirname, "../../../..");

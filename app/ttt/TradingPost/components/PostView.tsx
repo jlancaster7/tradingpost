@@ -164,7 +164,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         }</Button>}
                 </View>}
         </View>
-    </View >
+    </View>
 }
 
 

@@ -266,7 +266,7 @@ export class PortfolioSummaryService implements ISummaryService {
     }
 
     addAccountGroupSummary = async (summary: TradingPostAccountGroupStats) => {
-        this.repository.addAccountGroupSummary(summary);
+        await this.repository.addAccountGroupSummary(summary);
     }
 
     getCurrentHoldings = async (userId: string): Promise<HistoricalHoldings[]> => {

@@ -16,7 +16,6 @@ const config = (() => {
 })()
 
 const startApiServer = function* () {
-    console.log("HIIIIIII")
     let proc: ReturnType<typeof spawnVerbose> | undefined;
     while (true)
         yield (async () => {
