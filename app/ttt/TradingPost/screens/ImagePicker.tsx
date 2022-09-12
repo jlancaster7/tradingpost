@@ -1,11 +1,13 @@
 
 
 import React, { useEffect, useLayoutEffect, useState } from "react";
-import { Image, Text, Button, Animated, ImageBackground, useWindowDimensions, View, Alert } from "react-native";
+import { Image, Text, Button, Animated, ImageBackground, useWindowDimensions, View, Alert, Platform } from "react-native";
 import { TabScreenProps } from "../navigation";
 import { ImageEditor } from 'expo-image-editor'
 import { flex } from "../style";
 import * as ImagePicker from 'expo-image-picker'
+import { PrimaryButton } from "../components/PrimaryButton";
+import { Api } from "@tradingpost/common/api";
 //import { ImageManipulator } from 'expo-image-crop'
 //const imageCrop = require('expo-image-crop')
 //const ImageManipulator = imageCrop.ImageManipulator;
@@ -37,7 +39,9 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
         const response = await ImagePicker.requestMediaLibraryPermissionsAsync();
         // If they said yes then launch the image picker
         if (response.granted) {
-            const pickerResult = await ImagePicker.launchImageLibraryAsync();
+            const pickerResult = await ImagePicker.launchImageLibraryAsync({
+                base64:true
+            });
             // Check they didn't cancel the picking
             console.log("PHOTO HAS BEEN SELECTED");
             if (!pickerResult.cancelled) {
@@ -65,14 +69,30 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
             source={{ uri: imageData?.uri }}
         />
         <Button title="Select Photo" onPress={() => selectPhoto()} />
+
+        {imageData?.uri &&
+            <PrimaryButton onPress={async () => {
+                try {
+                    await Api.User.extensions.uploadProfilePic({
+                        image: imageData.uri
+                    })
+                    props.navigation.goBack()
+                }
+                catch (ex) {
+                    console.error(ex);
+                }
+
+            }} >Upload Photo</PrimaryButton>}
         <ImageEditor
+
+            //asView={Platform.OS === "web"}
             visible={editorVisible}
             onCloseEditor={() => {
-                 console.log("CLOSING....................................................");
+                console.log("CLOSING....................................................");
                 setEditorVisible(false)
             }}
             imageUri={imageUri}
-            fixedCropAspectRatio={16 / 9}
+            fixedCropAspectRatio={1}
             lockAspectRatio={true}
             minimumCropDimensions={{
                 width: 100,
@@ -81,7 +101,7 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
             onEditingComplete={(result) => {
                 setImageData(result);
             }}
-            mode="full"
+            mode="crop-only"
         />
     </View>
 

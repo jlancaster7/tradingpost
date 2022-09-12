@@ -10,14 +10,9 @@
 
 /* No changes to data_subscriber [subscriber]*/
 
-CREATE  TABLE data_subscription(
-    id BIGSERIAL PRIMARY KEY NOT NULL,
-    user_id UUID,
-    name TEXT,
-    cost MONEY,
-    settings JSON,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+/* No changes to data_subscription [subscription]*/
+
+/* No changes to tradingpost_transactio [trade]*/
 
 /* No changes to data_upvote [upvote]*/
 

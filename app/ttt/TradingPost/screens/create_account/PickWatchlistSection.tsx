@@ -5,10 +5,9 @@ import { Alert, TouchableOpacity, Image, ImageStyle, ViewStyle, View, Animated, 
 import { Avatar, Icon, Input, Text, } from "@ui-kitten/components";
 //import { signOut, getStoredCreds, CreateAuth0User, UpdateUserProfile, signInStoredCreds } from "../../apis/Authentication";
 import { TextField, ITextField } from "../../components/TextField";
-import { bannerText, flex, noMargin, paddView, sizes, textInputWiz } from "../../style";
-import { bindTextInput, IEntity, useReadonlyEntity, useSecuritiesList } from "../../utils/hooks";
+import { bannerText, flex, noMargin, paddView, sizes, textInputWiz, thinBannerText } from "../../style";
 import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators";
-import { CreateAccountProps, sideMargin, useChangeLock } from "../CreateAccountScreen";
+import { CreateAccountProps, sideMargin, useChangeLock } from "./shared";
 
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
 
@@ -99,11 +98,11 @@ export function PickWatchlistSection(props: CreateAccountProps) {
                     <Pressable onPress={() => {
                         props.navigation.navigate("OverlayModal");
                     }}><Text
-                        style={[bannerText, { marginVertical: sizes.rem0_5 }]}>
+                        style={[thinBannerText, { marginVertical: sizes.rem0_5 }]}>
                             Help us get to know you.
                         </Text>
                     </Pressable>
-                    <SvgExpo>
+                    <SvgExpo style={{width:"100%", aspectRatio:1.5}}>
                         <AnalyzeImage />
                     </SvgExpo>
                     <Text

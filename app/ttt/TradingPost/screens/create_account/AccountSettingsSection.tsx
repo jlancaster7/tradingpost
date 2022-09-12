@@ -4,7 +4,7 @@ import { IconifyIcon } from "../../components/IconfiyIcon"
 import { Section, Subsection } from "../../components/Section"
 import { SwitchField } from "../../components/SwitchField"
 import { sizes } from "../../style"
-import { CreateAccountProps, sideMargin, useChangeLock } from "../CreateAccountScreen"
+import { CreateAccountProps, sideMargin, useChangeLock } from "./shared"
 import StripeLogo from '@iconify/icons-logos/stripe'
 import CheckerLogo from '@iconify/icons-mdi/checkerboard'
 //import { SetDashboardLayout } from "../../layouts/DashboardLayout"

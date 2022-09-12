@@ -80,10 +80,12 @@ export interface ISubscriberList {
         subscription_id: number,
     user_id: string,
     start_date: unknown,
-    due_date: unknown,
+    due_date?: unknown,
     months_subscribed: string,
     payment_source: string,
-    id: number
+    id: number,
+    subscription: ISubscriptionGet[],
+    user: IUserList[]
     };
 
 export interface ISubscriberGet {
@@ -91,16 +93,32 @@ export interface ISubscriberGet {
     subscription_id: number,
     start_date: unknown,
     user_id: string,
-    due_date: unknown,
+    due_date?: unknown,
     payment_source: string,
-    months_subscribed: string
+    months_subscribed: string,
+    subscription: ISubscriptionGet[],
+    user: IUserList[]
+    };
+
+export interface ISubscriberInsert {
+        subscription_id: number,
+    user_id: string,
+    start_date: unknown
+    };
+
+export interface ISubscriberUpdate {
+        id?: number,
+    subscription_id?: number,
+    user_id?: string,
+    start_date?: unknown
     };
 
 export interface ISubscriptionList {
         id: number,
     user_id: string,
     name: string,
-    cost: number
+    cost: number,
+    user: IUserList[]
     };
 
 export interface ISubscriptionGet {
@@ -108,7 +126,23 @@ export interface ISubscriptionGet {
     settings?: any,
     cost: number,
     name: string,
+    user_id: string,
+    user: IUserList[]
+    };
+
+export interface ISubscriptionInsert {
+        name: string,
+    settings?: any,
+    cost: number,
     user_id: string
+    };
+
+export interface ISubscriptionUpdate {
+        name?: string,
+    settings?: any,
+    id?: number,
+    cost?: number,
+    user_id?: string
     };
 
 export interface ITradeList {
@@ -136,7 +170,8 @@ export interface IUserList {
     handle: string,
     tags: string[],
     display_name: string,
-    profile_url?: string
+    profile_url?: string,
+    subscription: { cost:string, id:number  }
     };
 
 export interface IUserGet {
@@ -151,7 +186,9 @@ export interface IUserGet {
     last_name: string,
     profile_url?: string,
     banner_url?: string,
-    analyst_profile?: Statics.IAnalystProfile
+    analyst_profile?: Statics.IAnalystProfile,
+    is_subscribed: boolean,
+    subscription: { cost:string, id:number  }
     };
 
 export interface IUserUpdate {
@@ -159,7 +196,8 @@ export interface IUserUpdate {
     first_name?: string,
     last_name?: string,
     analyst_profile?: Statics.IAnalystProfile,
-    has_profile_pic?: boolean
+    has_profile_pic?: boolean,
+    profile_url?: string
     };
 
 export interface IWatchlistList {

@@ -15,8 +15,10 @@ const baseFormat = '/:entity/:action';
 
 //TODO: need to throw errros that will set the status number. (401 in this case)
 const decodeToken = async (req: Express.Request, disableModelCheck?: boolean) => {
+    
     const bearerHeader = req.headers['authorization'];
     console.log("AUTH HEADER IS " + req.headers.authorization);
+
     //check if bearer is undefined
     if (typeof bearerHeader !== 'undefined') {
         //split the space at the bearer
@@ -62,7 +64,7 @@ function resolver(...path: string[]) {
     const output = path.find(p => {
         try {
             const resolveKey = require.resolve(p)
-            //NEED TO DISABLE FOR PROD
+            //NEED TO DISABLE FOR PROD and make this a lil less hacky 
             if (require.cache[resolveKey]) {
                 console.log("clearing... " + resolveKey);
                 delete require.cache[resolveKey];
@@ -75,13 +77,19 @@ function resolver(...path: string[]) {
         }
     });
     if (!output)
-        throw new Error("Not path could be resolved ");
+        throw new Error("Not path could be resolved " + path.join(","));
     return output;
 }
 
 const sharedHandler = async (req: Express.Request, routeDetails: (entity: EntityApi<any, any, any, any>) => Promise<void>) => {
     //For efficiency I will generate everything in "/api". For now doing a lookup to both
     ///... this can already be changed.. will do it later.....
+
+    //This should be set to only happen in dev mode... 
+    try {
+        resolver('@tradingpost/common/api/entities/extensions/' + req.params.entity.substring(0, req.params.entity.length - 3) + ".server")
+    } catch (ex) { }
+
     const entity =
         require(
             resolver(

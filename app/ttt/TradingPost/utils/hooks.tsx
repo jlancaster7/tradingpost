@@ -29,50 +29,6 @@ const ensureIterable = (value: any): value is Iterable<any> => {
 
 
 
-const getSecurityList = (async () => {
-
-    const list = await Api.Security.extensions.list(),
-        byId: Record<number, typeof list[0]> = {},
-        bySymbol: Record<string, typeof list[0]> = {}
-    list.forEach((r) => {
-        byId[r.id] = r;
-        bySymbol[r.symbol] = r;
-    })
-    return {
-        list,
-        byId,
-        bySymbol
-    }
-})()
-
-export const useSecuritiesList = () => {
-
-    const [err, setErr] = useState<any>()
-    const { value: securities, setValue: setSecurities } = useData("securities");
-    const [localValue, setLocalValue] = useState(securities)
-
-
-    useEffect(() => {
-        if (!securities)
-            getSecurityList.then((r) => {
-                setSecurities(r)
-                setLocalValue(r);
-            }).catch(ex => setErr(ex));
-    }, [securities])
-
-    return {
-        err,
-        securities: localValue || {
-            byId: {},
-            bySymbol: {},
-            list: []
-        }
-    }
-}
-
-
-
-
 
 export const useOpacityAnim = () => {
     const opacityAnim = useRef(new Animated.Value(0)).current

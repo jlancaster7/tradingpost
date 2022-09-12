@@ -130,7 +130,7 @@ async function updateServer() {
     for (const f of files) {
         await pool.query(readFileSync(`${f}.sql`, "utf8"));
     }
-    return {"ok":"ok"}
+    return { "ok": "ok" }
 }
 async function getTableDefs(tableName?: string) {
 
@@ -191,7 +191,7 @@ const calls: Record<string, RequestHandler> = {
         const tds = await getTableDefs();
         entities.forEach((e) => {
             //if column needs a view that view is needed at a higher level
-            const defs = makeEntityDefs(e, {}, runTest, tds.filter((td) => td.table_name === (e.definition?.tableNameOverride||`data_${ensureSnake(e.name)}`)), entities);
+            const defs = makeEntityDefs(e, {}, runTest, tds.filter((td) => td.table_name === (e.definition?.tableNameOverride || `data_${ensureSnake(e.name)}`)), entities);
             if (defs) {
                 tableDefs.push(defs.table);
                 functionDefs.push(defs.functions);
@@ -321,17 +321,22 @@ $$;`
         //create extensions files 
 
         const imports: string[] = [`import * as Dummy  from "../extensions"`]
-        const data: string[] = []
+        //const data: string[] = []
+        const realExts: string[] = [];
         Object.keys(apiDefs).forEach(d => {
             const name = ensurePascalCase(d);
             if (existsSync(join(apiExtensionsPath, name + ".ts"))) {
-                imports.push(`export * as ${name} from '../extensions/${name}'`)
+                imports.push(`import * as ${name} from '../extensions/${name}'`)
+                realExts.push(name);
                 //data.push(`${name}: ${name}Ext`)
             }
             else {
                 imports.push(`export const ${name} = Dummy`)
             }
         });
+        imports.push(`export {${realExts.join(",")}}`);
+
+
         const outputPathForExt = join(entitySourcePath, "apis", "extensions.ts");
         console.log("WRITTING TO PATH EXT: " + outputPathForExt)
         writeFileSync(outputPathForExt, imports.join("\r\n")// + "\r\n" +

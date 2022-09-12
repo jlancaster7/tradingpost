@@ -9,15 +9,15 @@ import { Picker } from '../../components/Picker'
 import {
     CreateAccountProps,
     sideMargin, useChangeLock
-} from "../CreateAccountScreen"
+} from "./shared"
 
 import {
     //bindMultiPicker,
     bindPicker,
     useOpacityAnim,
-    useReadonlyEntity,
-    useSecuritiesList
+    useReadonlyEntity
 } from "../../utils/hooks"
+import { useSecuritiesList} from '../../SecurityList'
 //import { UpdateUserProfile } from "../../apis/Authentication"
 import { ChipTextField } from "../../components/ChipTextField"
 import { ScrollWithButtons } from "../../components/ScrollWithButtons"

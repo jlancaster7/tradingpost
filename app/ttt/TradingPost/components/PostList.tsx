@@ -9,35 +9,18 @@ import { fonts } from "../style";
 //import { toAmiraDate, fromAmiraDate } from "../utils/misc";
 import { DataOrQuery, List } from "./List";
 import { PostView } from "./PostView";
+import { View } from "./Themed";
 
 
 
 export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>, datasetKey?: string }) {
-
     return <List
-
+        //style={{ borderColor: "orange", borderWidth: 5 }}
+        // contentContainerStyle={{ height:"auto", borderColor: "blue", borderWidth: 5 }}
         getItemLayout={(items, index, sizeCache) => {
             const curItem = items?.[index];
-            const output = typeof curItem === "object" ? sizeCache[index]
-                //|| (sizeCache[index] = {
-                //     index,
-                //     offset: index ? sizeCache[index - 1].offset + sizeCache[index - 1].length : 0,
-                //     length: (() => {
-                //         const size = (items?.[index] as IElasticPost | undefined)?._source.size
-                //         if (size) {
-                //             return size.maxWidthPx / size.aspectRatio;
-                //             //return size
-                //         }
-                //         else {
-                //             return 20;
-                //         }
-                //     })()
-                //}) 
-                :
-                { index, offset: sizeCache[index - 1].offset + sizeCache[index - 1].length, length: 40 };
-
+            const output = typeof curItem === "object" ? sizeCache[index] : { index, offset: sizeCache[index - 1].offset + sizeCache[index - 1].length, length: 40 };
             return output;
-
         }}
         data={props.posts}
         keyExtractor={(item, index) => typeof item === "string" ? "loadingtext" : (index + "_" + item._id)}
@@ -52,8 +35,9 @@ export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>
             }
         }}
         noDataMessage={"No Posts Available"}
-        loadingItem={"COOL"}
+        loadingItem={"  "}
     />
+
 }
 
 

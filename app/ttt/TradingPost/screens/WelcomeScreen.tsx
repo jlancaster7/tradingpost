@@ -11,7 +11,6 @@ import { Link } from "../components/Link";
 import { Animated, Platform, View, StyleSheet, Alert } from "react-native";
 import { SvgExpo } from "../components/SvgExpo";
 import { LoginButtons } from "../components/LoginButtons";
-import useCachedResources from "../hooks/useCachedResources";
 import { NavigationProp, useLinkTo } from "@react-navigation/native";
 import { Text, Layout, ViewPager, TabView, Tab } from "@ui-kitten/components";
 import { useState } from "react";
@@ -28,7 +27,7 @@ import { Section } from "../components/Section";
 import { useToast } from "react-native-toast-notifications";
 //import { PublicPages } from "../navigation";
 //import { EntityApiBase } from "@tradingpost/common/api/entities/static/EntityApiBase";
-import { useAppUser } from "../App";
+import { useAppUser } from "../Authentication";
 import { useData } from "../lds";
 //import { resetEnsureUser } from "../components/EnsureUser";
 
@@ -136,9 +135,9 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
             }
         }
     }, [appUser, loginResult])
-
-    return <> <View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>
+    return <><View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>
         <AppTitle style={{ marginVertical: sizes.rem1, alignSelf: "center", width: "100%", aspectRatio: 5 }} />
+
         <TabView
             selectedIndex={selectedIndex}
             onSelect={index => {
@@ -146,7 +145,11 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                 //console.log("VALUE IS BEING SET TO " + (index === NaN ? 1 : index))
                 setSelectedIndex(isNaN(index) ? 0 : index)
             }}
-            style={{ width: "100%" }}
+            style={{
+                width: "100%",
+                //maxHeight: Platform.OS !== "web" ? "50%" : undefined,
+
+            }}
             indicatorStyle={{
                 height: 0
             }}
@@ -155,7 +158,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
             }}
         >
             <Tab>
-                <SplashWelcome
+                <WTF_View
                     onReady={(item) => {
                         if (Platform.OS === "web" && item instanceof HTMLDivElement) {
                             const stonks = ["fb", "tsla", "nvda", "btc", "ether", "doge"].map((n) => item.querySelector<SVGGElement>(`[id=${n}]`));
@@ -166,7 +169,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
 
                             let lastItem: SVGGElement | null = null;
                             let lastItem2: SVGGElement | null = null;
-                            console.log("DOING INTERVAL STUFF");
+
                             if (intervalRef.current)
                                 clearInterval(intervalRef.current);
 
@@ -220,6 +223,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                 </Section>
             </Tab>
         </TabView>
+
         <Animated.Text style={[bannerText, {
             opacity: !selectedIndex ? 1 : opacityAnim
         }]}> {!selectedIndex ? "Welcome to the team!" : "Hey... Welcome Back!"}</Animated.Text>
@@ -256,29 +260,22 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                 //setGlobalUser(true)
             }}
         />
+
     </View>
         {!selectedIndex && <Link style={{ textAlign: "right", position: "absolute", bottom: sizes.rem1, right: sizes.rem1, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>What is TradingPost{">>"}</Link>}
     </>
 
 
-    //    
-    //</View >
-    // return <>
-    //     <AppTitle style={{ marginVertical: sizes.rem2, alignSelf: "center" }} />
-    //     <SplashWelcome style={{ backgroundColor: "orange", width: "100%", aspectRatio: 1.5 }} />
-    //     <Text style={{ textAlign: "center", margin: sizes.rem2, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>Welcome to the team!</Text>
-    //     {/* <LoginButtons
-    //         createAccountProps={{
-    //             onPress: () => {
-    //                 //    CreateAccountScreen.open(p.componentId, {});
-    //             }
-    //         }}
-    //         loginProps={{
-    //             //    onPress: () => LoginScreen.open(p.componentId, {})
-    //         }}
-    //     /> */}
+}
 
-    // </View>
-    //     <Link style={{ textAlign: "right", position: "absolute", bottom: sizes.rem1, right: sizes.rem1, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>What is TradingPost{">>"}</Link>
-    // </>
+
+const WTF_View = (props: {
+    onReady: (item: any) => void
+
+}) => {
+    return <View style={{ width:"100%", aspectRatio:1.5 }}>
+        <SplashWelcome
+            onReady={props.onReady}
+        />
+    </View>
 }

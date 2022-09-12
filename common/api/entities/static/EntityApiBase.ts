@@ -27,13 +27,13 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
     //abstract deleteFunction: string;
     protected abstract getFunction: string;
     protected abstract listFunction: string;
-    protected abstract apiCallName :string;
+    protected abstract apiCallName: string;
     static token: string
 
     static makeHeaders<T>() {
         return {
             'Content-Type': 'application/json',
-            'Authorization': this.token ? `Bearer ${this.token}` : ''
+            'Authorization': this.token ? `Bearer ${this.token}` : undefined as any as string
         }
     }
 
@@ -49,7 +49,7 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
     }
 
     makeUrl = (method: string) => apiUrl(this.apiCallName, method);
-    
+
     //assumes fetch exists globally
     async get(id: string | number) {
         const resp = await fetch(this.makeUrl("get"), {

@@ -15,7 +15,7 @@ import * as React from 'react';
 import { useEffect } from 'react';
 
 import { Text, ImageBackground, Image, ColorSchemeName, Pressable, View } from 'react-native';
-import { useAppUser } from '../App';
+
 
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
@@ -48,15 +48,21 @@ import { OverlayScreen } from '../screens/OverlayScreen';
 import { CompanyScreen } from '../screens/CompanyScreen';
 import { PostEditorScreen } from '../screens/PostEditorScreen';
 import { WatchlistViewerScreen } from '../screens/WatchlistViewerScreen';
+import { PostScreen } from '../screens/PostScreen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useAppUser } from '../Authentication';
+import { SubscriptionScreen, SubscriptionSettingsScreen } from '../screens/SubscriptionScreen';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
   return (
-    <NavigationContainer
-      linking={LinkingConfiguration}
-      theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <RootNavigator />
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer
+        linking={LinkingConfiguration}
+        theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <RootNavigator />
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
 
@@ -65,12 +71,16 @@ type UndefinedProxy<T extends keyof any> = {
 }
 
 // TODO: these defined the parameters... so should type these correctly .. I will do that in the future
-export type AllPages = UndefinedProxy<"Launch" | "Create" | "Login" | "Dash" | "WatchlistViewer" | "WatchlistEditor" | "Watchlist" | "Auth" | "ImagePicker" | "Profile"> & {
+export type AllPages = UndefinedProxy<"Launch" | "Create" | "Login" | "Dash" | "WatchlistViewer" | "WatchlistEditor" | "Watchlist" | "Auth" | "ImagePicker"> & {
   "Company": Parameters<(typeof CompanyScreen)>["0"]["route"]["params"],
   "Bookmarks": Parameters<(typeof FeedScreen)>["0"]["route"]["params"],
   "TableModal": Parameters<(typeof TableModalScreen)>["0"]["route"]["params"],
   "OverlayModal": undefined,
-  "PostEditor": undefined
+  "PostEditor": undefined,
+  "PostScreen": Parameters<(typeof PostScreen)>["0"]["route"]["params"],
+  "Profile": Parameters<(typeof ProfileScreen)>["0"]["route"]["params"],
+  "Subscription": undefined,
+  "SubscriptionSettings": undefined
 }
 
 const Drawer = createDrawerNavigator();
@@ -150,7 +160,10 @@ function RootNavigator() {
     <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
     <Stack.Group screenOptions={{ presentation: 'modal' }}>
       <Stack.Screen name="Modal" component={ModalScreen} />
+      <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+      <Stack.Screen name="SubscriptionSettings" component={SubscriptionSettingsScreen} />
       <Stack.Screen name="WatchlistEditor" component={WatchlistEditorScreen} />
+      <Stack.Screen name="PostScreen" component={PostScreen} />
       <Stack.Screen name="PostEditor" component={PostEditorScreen} />
       <Stack.Screen name="WatchlistViewer" component={WatchlistViewerScreen} />
       <Stack.Screen name="Watchlist" component={WatchlistScreen} />

@@ -3,22 +3,18 @@ import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { initLds, setValue } from '../lds';
-import Auth from '@tradingpost/common/api/entities/static/AuthApi'
-import { Authentication, useAppUser } from '../App';
-import '../utils/hooks';
+import { Authentication } from '../Authentication';
+import   '../SecurityList'
 export default function useCachedResources() {
   const [isLoadingComplete, setLoadingComplete] = useState(false);
 
   // Load any resources or data that we need prior to rendering the app
   useEffect(() => {
     async function loadResourcesAndDataAsync() {
+
       try {
 
-
         SplashScreen.preventAutoHideAsync();
-
-
-
         // Load fonts
         await Font.loadAsync({
           ...FontAwesome.font,
@@ -26,10 +22,8 @@ export default function useCachedResources() {
         });
 
         const lds = await initLds();
-        console.log("Caching Stuff" + JSON.stringify(lds));
-       // useSecuritiesList();
+        
         if (lds.authToken) {
-          console.log("There is an LDS token");
           try {
             const results = await Authentication.signIn("", lds.authToken);
             setValue("loginResult", results.loginResult);
@@ -42,12 +36,9 @@ export default function useCachedResources() {
         }
 
 
-
-
-
       } catch (e) {
         // We might want to provide this error information to an error reporting service
-        console.warn(e);
+        console.error(e);
       } finally {
         setLoadingComplete(true);
         SplashScreen.hideAsync();
@@ -56,6 +47,8 @@ export default function useCachedResources() {
 
     loadResourcesAndDataAsync();
   }, []);
+
+
 
   return {
     isLoadingComplete,

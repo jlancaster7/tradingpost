@@ -30,7 +30,7 @@ export function List<T, U>(props: {
         index: number,
         sizeCache: SizeParts[]
     ) => { length: number; offset: number; index: number }) | undefined;
-} & ListProps<T> & Pick<FlatListProps<HasU<T, U>>, "numColumns" | "ListHeaderComponent" | "StickyHeaderComponent" | "keyExtractor">) {
+} & ListProps<T> & Pick<FlatListProps<HasU<T, U>>, "style" | "contentContainerStyle" | "numColumns" | "ListHeaderComponent" | "StickyHeaderComponent" | "keyExtractor">) {
 
     const [internalData, setInternalData] = useState<T[]>(),
         { data, preloadOffset, datasetKey } = props,
@@ -116,8 +116,10 @@ export function List<T, U>(props: {
 
     return !internalData?.length ? <NoDataPanel message={internalData ? props.noDataMessage : (props.loadingMessage || "Loading...")} /> :
         <FlatList
-            style={[{ height: "100%" }]}
-            contentContainerStyle={[{ height: "100%" }]}
+            style={[{ 
+            //    height: "100%" 
+            }, props.style]}
+            // contentContainerStyle={[{ height: "100%" }, props.contentContainerStyle]}
             getItemLayout={props.getItemLayout ? (a, b) => (props.getItemLayout as any)(a, b, sizeCache) : undefined}
             numColumns={props.numColumns}
             ListHeaderComponent={props.ListHeaderComponent}

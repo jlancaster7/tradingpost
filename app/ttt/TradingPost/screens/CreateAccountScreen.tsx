@@ -1,4 +1,5 @@
 import React, { Dispatch, ReactElement, ReactNode, Ref, SetStateAction, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 //import { ScrollView } from 'react-native-gesture-handler';
 import { Tab, TabBar, TabView, Text } from '@ui-kitten/components';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -21,9 +22,11 @@ import { BasicInfoSection } from './create_account/BasicInfoSection';
 import { EntityApiBase } from '@tradingpost/common/api/entities/static/EntityApiBase';
 import { ProfileIconSection } from './create_account/ProfileIconSection';
 import { PickWatchlistSection } from './create_account/PickWatchlistSection';
-import { useAppUser } from '../App';
+import { useAppUser } from '../Authentication';
 import { AnalystStartSection } from './create_account/AnalystStartSection';
 import { LinkBrokerageSection } from './create_account/LinkBrokerageSection';
+import { AppColors } from '../constants/Colors';
+import { CreateAccountProps } from './create_account/shared';
 //import { Screen } from './BaseScreen';
 
 export const screens = {
@@ -39,25 +42,7 @@ export const screens = {
     //'Content Accounts': YourContent,
     //'Account Settings': AccountSettings
 }
-export type CreateAccountProps = {
-    saveOnly?: boolean,
-    user: IEntity<IUserGet>,
-    //login?: LoginResult,
-    //componentId: string,
-    toastMessage: (msg: string, delay?: number | undefined) => void,//ToastMessageFunction,
-    //    prompt: PromptFunc,
-    setWizardIndex: Dispatch<SetStateAction<number>>,
-    navigation: NavigationProp<any>
-    /*
-    next(skip?: number): void,
-    back(): void,
-    navigateByName(name: keyof typeof screens): void
-    */
-};
-//export type AuthAccountProps = CreateAccountProps & { user: IEntity<IAuthenticatedUser> }
 
-const paddView = [flex, { padding: sizes.rem1 }] as ViewStyle
-export const sideMargin = sizes.rem1_5;
 
 // export function ensureAuthProps(props: CreateAccountProps): props  is AuthAccountProps {
 //     return IsAuthenticated(props.user.data)
@@ -66,7 +51,6 @@ export const sideMargin = sizes.rem1_5;
 
 
 const screenKeys = Object.keys(screens);
-
 
 function SubScreen(props: { screenIndex: number, caProps: CreateAccountProps }) {
     const { screenIndex, caProps } = props;
@@ -104,13 +88,15 @@ export default (props: any) => {
             claims: [],
             display_name: "",
             id: "",
-            tags: []
+            tags: [],
+            subscription: null as any,
+            is_subscribed: false
         }),
         toast = useToast();
 
-        let resolvedIndex = screenKeys.findIndex((k) => k === props?.route?.params?.params?.screen) ;
+    let resolvedIndex = screenKeys.findIndex((k) => k === props?.route?.params?.params?.screen);
 
-        resolvedIndex = resolvedIndex === -1 ? 2 : resolvedIndex;
+    resolvedIndex = resolvedIndex === -1 ? 2 : resolvedIndex;
     /*
     let resolvedIndex = 0;
     if (wizardIndex < 2 && loginResult) {
@@ -150,9 +136,13 @@ export default (props: any) => {
         }
         */
     }
+
+    const insets = useSafeAreaInsets();
+
     return <TabView
         style={{
-            backgroundColor: "white",
+            paddingTop: insets.top / 2,
+            backgroundColor: AppColors.background,
             flexGrow: 1,
             maxHeight: "100%",
         }}
@@ -195,59 +185,6 @@ export default (props: any) => {
         </Tab> */}
     </TabView>
 
-    // return !props.asProfile ?
-    //     <BaseScreen dashboardRef={dashRef} title={
-    //         caProps.login ? (!caProps.login.verified ? 'Verify Account' : 'Setup Account') : 'Create Account'
-    //     } scrollContentFlex >
-    //         <Wizard activeIndex={wizardIndex} onActiveIndexChanged={(idx) => setWizardIndex(idx)}>
-    //             {screenKeys.map((v, i) => <Wizard.Step state={getWizardState(i)} label={v} />)}
-    //         </Wizard>
-    //         <View style={flex}>
-    //             <ScrollView nestedScrollEnabled
-    //                 contentContainerStyle={!isKeyboardVisible ? flex : { flex: 0 }}>
-    //                 {<SubScreen caProps={caProps} screenIndex={wizardIndex} />}
-    //             </ScrollView>
-    //         </View>
-    //     </BaseScreen > :
-    //     /** No idea why, but this is not scrollable unless there is a background color... a fun react-native bug. **/
-    //     <View style={[flex, { backgroundColor: "transparent" }]}>
-    //         <TabController
-    //             items={screenKeys.map((v, i) => ({
-    //                 label: v.split(" ").join("\r\n"),
-    //                 labelStyle: {
-    //                     //width: 96,
-    //                     fontSize: fonts.xSmall,
-    //                     lineHeight: fonts.xSmall * 1.1,
-    //                     textAlign: "center"
-    //                 }
-    //             }))}>
-    //             <TabController.TabBar spreadItems />
-    //             <View style={flex}>
-    //                 {screenKeys.map((v, i) =>
-    //                     <TabController.TabPage index={i} key={v} lazy>
-    //                         <View style={flex}>
-    //                             <SubScreen caProps={caProps} screenIndex={i} />
-    //                         </View>
-    //                     </TabController.TabPage>
-    //                 )}
-    //             </View>
-    //         </TabController>
-    //     </View>
 
-
-
-}
-
-export function useChangeLock(caProps: CreateAccountProps, otherEntities?: IEntity<any>[]) {
-    const output = useState(caProps.saveOnly || false)
-    const setLockButtons = output[1];
-    useEffect(() => {
-        if (caProps.saveOnly) {
-            const otherHasChanged = Boolean(otherEntities?.find((e) => e.hasChanged))
-            setLockButtons(!(otherHasChanged || caProps.user.hasChanged));
-        }
-    }, [caProps.saveOnly, caProps.user.hasChanged, otherEntities]);
-
-    return output
 }
 

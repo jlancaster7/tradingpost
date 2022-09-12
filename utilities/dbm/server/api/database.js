@@ -290,7 +290,7 @@ var calls = {
     }); },
     updateServer: updateServer,
     createSQLDiff: function (req) { return __awaiter(void 0, void 0, void 0, function () {
-        var entities, runTest, tableDefs, viewDefs, functionDefs, apiDefs, interfacesDefs, makeOrGetDef, allViewsInfo, tds, viewsRequired, maxLoops, i, viewOutput, output, testQuery, pool, client_1, results, extensionPlaceHolder, baseSourcePath, entitySourcePath, apiExtensionsPath, imports, data, outputPathForExt, staticFileNames;
+        var entities, runTest, tableDefs, viewDefs, functionDefs, apiDefs, interfacesDefs, makeOrGetDef, allViewsInfo, tds, viewsRequired, maxLoops, i, viewOutput, output, testQuery, pool, client_1, results, extensionPlaceHolder, baseSourcePath, entitySourcePath, apiExtensionsPath, imports, realExts, outputPathForExt, staticFileNames;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, getAllEntities()];
@@ -417,17 +417,19 @@ var calls = {
                     entitySourcePath = (0, path_1.join)(baseSourcePath, "entities");
                     apiExtensionsPath = (0, path_1.join)(entitySourcePath, "extensions");
                     imports = ["import * as Dummy  from \"../extensions\""];
-                    data = [];
+                    realExts = [];
                     Object.keys(apiDefs).forEach(function (d) {
                         var name = (0, code_gen_util_1.ensurePascalCase)(d);
                         if ((0, fs_1.existsSync)((0, path_1.join)(apiExtensionsPath, name + ".ts"))) {
-                            imports.push("export * as ".concat(name, " from '../extensions/").concat(name, "'"));
+                            imports.push("import * as ".concat(name, " from '../extensions/").concat(name, "'"));
+                            realExts.push(name);
                             //data.push(`${name}: ${name}Ext`)
                         }
                         else {
                             imports.push("export const ".concat(name, " = Dummy"));
                         }
                     });
+                    imports.push("export {".concat(realExts.join(","), "}"));
                     outputPathForExt = (0, path_1.join)(entitySourcePath, "apis", "extensions.ts");
                     console.log("WRITTING TO PATH EXT: " + outputPathForExt);
                     (0, fs_1.writeFileSync)(outputPathForExt, imports.join("\r\n") // + "\r\n" +

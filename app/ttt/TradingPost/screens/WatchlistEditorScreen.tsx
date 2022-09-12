@@ -13,6 +13,7 @@ import { setValue } from "../lds";
 import { DashScreenProps, TabScreenProps } from "../navigation";
 import { flex, paddView, paddViewWhite, sizes } from "../style";
 type WLTypes = "public" | "primary" | "private";
+
 export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: number }>) => {
     const pickerProps = useWatchlistPicker();
     const [name, setName] = useState("");

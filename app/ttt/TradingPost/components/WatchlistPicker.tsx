@@ -1,7 +1,7 @@
 import data from "@iconify/icons-logos/youtube-icon";
 import React, { MutableRefObject, useEffect, useRef, useState } from "react";
 import { Pressable, View, ViewStyle, Text } from "react-native";
-import { useSecuritiesList } from "../utils/hooks";
+import { useSecuritiesList} from '../SecurityList'
 import { SearchBar } from "./SearchBar";
 import { Interface } from "@tradingpost/common/api"
 import { ISecurityList } from "@tradingpost/common/api/entities/interfaces";

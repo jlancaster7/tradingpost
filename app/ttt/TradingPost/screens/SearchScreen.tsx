@@ -53,7 +53,7 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                 onValueChange={(value) => {
                     setSearchType(value);
                     setPeople(undefined);
-                }} items={[{ label: "People", "value": "people" }, { label: "Posts", value: "posts" }]} />
+                }} items={[{ label: "Analysts", "value": "people" }, { label: "Posts", value: "posts" }]} />
             {searchType === "posts" && <FeedPart searchText={searchText} />}
             {searchType === "people" && <View
                 style={{ marginHorizontal: sizes.rem1, flex: 1 }}><List

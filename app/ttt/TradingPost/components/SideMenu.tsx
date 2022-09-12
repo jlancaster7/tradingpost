@@ -19,7 +19,7 @@ import { SvgExpo } from "./SvgExpo";
 //import { useEnsureUser } from "./EnsureUser";
 import { useRef } from "react";
 import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
-import { useAppUser } from "../App";
+import { useAppUser } from '../Authentication';
 import { NavigationProp } from "@react-navigation/native";
 import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { DashScreenProps } from "../navigation";
@@ -65,7 +65,11 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
                 <Text style={[font("medium", "black", true), padSmall]} >{currentUser.display_name}</Text>
             </Pressable>
             <Text style={[font("xSmall", "darkgray", true), padSmall]} >subscribers: TBD</Text>
-            <Link style={{ fontSize: fonts.xSmall, fontWeight: "bold" }}
+            <Link onPress={() => {
+                
+                props.navigation.navigate("Subscription");
+
+            }} style={{ fontSize: fonts.xSmall, fontWeight: "bold" }}
             // onPress={() =>
             //      screens.push(activeTabId, "ManageSubscriptions", {
             //     options: fullDashOptions,

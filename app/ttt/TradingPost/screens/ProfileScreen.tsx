@@ -24,6 +24,7 @@ import { FeedPart } from "./FeedScreen";
 import { AppColors } from "../constants/Colors";
 import { useMakeSecurityFields } from "./WatchlistViewerScreen";
 import { PrimaryChip } from "../components/PrimaryChip";
+import { useAppUser } from "../Authentication";
 //import { screens } from "../navigationComponents";
 //import { getUser } from "../apis/UserApi";
 
@@ -54,7 +55,6 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
         headerHeight = bannerHeight + TabPanelSize + ButtonBarsize + ButtonMargin * 2 + titles + tabBarMargin;
 
     const clampMax = bannerHeight - profileImageSmall;
-    //    const scrollYClamped = Animated.diffClamp(translateHeaderY, 0, clampMax);
     const minViewHeight = dim.height - clampMax - StatusBarsize - headerHeight + bannerHeight + 2 * titles;
     const [collapsed, setCollapsed] = useState(false);
     const [isMaxed, setIsMaxed] = useState(false);
@@ -64,6 +64,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
         extrapolate: 'clamp',
     });
     const manager = useRef<boolean[]>([]).current;
+    const { appUser } = useAppUser();
 
     useEffect(() => {
         translation.addListener((v: { value: number }) => {
@@ -81,7 +82,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
 
     useEffect(() => {
 
-        if (userId) {
+        if (userId && !user) {
             (async () => {
                 try {
                     const [user, watchlists] = await Promise.all([
@@ -98,7 +99,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
             })()
         }
 
-    }, [userId])
+    }, [userId, user])
 
     return <View style={[flex]}>
         <Animated.FlatList
@@ -119,8 +120,6 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                 <ProfilePage index={2} minViewHeight={minViewHeight} manager={manager} currentIndex={tab} >
                     <ElevatedSection title="">
                         <Table
-
-
                             keyExtractor={(item, idx) => {
                                 return item ? "trade_" + idx : "empty";
                             }}
@@ -212,10 +211,59 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                     <Text style={{ color: "black", textAlign: !collapsed ? "center" : "left", fontSize: fonts.xSmall }}>@{user?.handle || ""}</Text>
                     <Text style={{ color: "black", textAlign: !collapsed ? "center" : "left", fontSize: fonts.medium }}>{user?.display_name}</Text>
                 </View>
-                <SecondaryButton style={{
-                    width: "50%", marginVertical: ButtonMargin,
-                    marginLeft: "auto", marginRight: collapsed ? sizes.rem1 : "auto"
-                }} >Subscribe</SecondaryButton>
+                {appUser && user && <SecondaryButton
+                    style={{
+                        width: "50%", marginVertical: ButtonMargin,
+                        marginLeft: "auto", marginRight: collapsed ? sizes.rem1 : "auto"
+                    }}
+                    {...(() => {
+                        let children: string;
+                        let onPress: () => void;
+                        if (appUser && user && user?.id !== appUser?.id) {
+                            if (!user.is_subscribed) {
+                                children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : "(Free)"}`
+                                onPress = async () => {
+                                    await Api.Subscriber.insert({
+                                        subscription_id: user.subscription.id,
+                                        //TODO: this should be moved to the server side 
+                                        start_date: new Date(),
+                                        user_id: appUser?.id
+                                    });
+                                    setUser(undefined);
+                                }
+                            }
+                            else {
+                                children = 'Subscribed',
+                                    onPress = async () => {
+                                        //Todo:: make this an are you sure
+                                        await Api.Subscriber.extensions.removeSubscription({
+                                            subscriptionId: user.subscription?.id
+                                        });
+                                        setUser(undefined);
+                                    }
+                            }
+
+                        }
+                        else {
+                            if (user?.subscription?.id) {
+                                children = 'Manage Subscriptions'
+                                onPress = () => props.navigation.navigate("Subscription")
+                            }
+                            else {
+                                children = 'Become An Analyst'
+                                onPress = () => props.navigation.navigate("SubscriptionSettings")
+
+                            }
+
+                        }
+
+                        return {
+                            children,
+                            onPress
+                        }
+
+                    })()}
+                />}
             </View>
             {/* </ElevatedSection> */}
             <ElevatedSection title="" style={{ marginHorizontal: sizes.rem1, marginTop: tabBarMargin }} >

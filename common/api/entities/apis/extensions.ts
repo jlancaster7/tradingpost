@@ -1,14 +1,15 @@
-import * as Dummy  from "../extensions"
+import * as Dummy from "../extensions"
 export const Alert = Dummy
 export const Bookmark = Dummy
 export const Comment = Dummy
 export const PlatformClaim = Dummy
-export * as Post from '../extensions/Post'
-export const Subscriber = Dummy
-export const Subscription = Dummy
+import * as Post from '../extensions/Post'
+import * as Subscriber from '../extensions/Subscriber'
+import * as Subscription from '../extensions/Subscription'
 export const Trade = Dummy
 export const Upvote = Dummy
-export * as User from '../extensions/User'
-export * as Watchlist from '../extensions/Watchlist'
+import * as User from '../extensions/User'
+import * as Watchlist from '../extensions/Watchlist'
 export const WatchlistItem = Dummy
 export const WatchlistSaved = Dummy
+export { Post, Subscriber, Subscription, User, Watchlist }

@@ -2,7 +2,7 @@ import { Icon, Text } from "@ui-kitten/components";
 import { ScrollWithButtons } from "../../components/ScrollWithButtons"
 import { AppColors } from "../../constants/Colors";
 import { bannerText, flex, paddView, paddViewWhite, sizes, thinBannerText } from "../../style";
-import { CreateAccountProps } from "../CreateAccountScreen"
+import { CreateAccountProps } from "./shared"
 import Bank from '../../assets/bank.svg'
 import { SvgExpo } from "../../components/SvgExpo";
 import React, { useEffect, useRef, useState } from "react";

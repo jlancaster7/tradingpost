@@ -322,8 +322,8 @@ export function Chart<D>(props: ChartProps<D>) {
         ...paths,
     } 
 
-    console.log(`SIZE IS : ${width},${height}`);
-    console.log(paths.path);
+    //console.log(`SIZE IS : ${width},${height}`);
+    //console.log(paths.path);
 
     return (
         <View style={style}>

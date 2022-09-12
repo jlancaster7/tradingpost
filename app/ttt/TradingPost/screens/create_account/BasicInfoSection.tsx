@@ -11,7 +11,7 @@ import { TextField, ITextField } from "../../components/TextField";
 import { bannerText, flex, sizes, textInputWiz } from "../../style";
 import { bindTextInput, IEntity, useReadonlyEntity } from "../../utils/hooks";
 import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators";
-import { CreateAccountProps, sideMargin, useChangeLock } from "../CreateAccountScreen";
+import { CreateAccountProps, sideMargin, useChangeLock } from "./shared";
 
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
 import { ProfileBanner } from "../../components/ProfileBanner";
@@ -21,7 +21,7 @@ import { AppColors } from "../../constants/Colors";
 import Auth from '@tradingpost/common/api/entities/static/AuthApi'
 import UserApi from '@tradingpost/common/api/entities/apis/UserApi'
 import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
-import { useAppUser } from "../../App";
+import { useAppUser } from "../../Authentication";
 import { useLinkTo } from "@react-navigation/native";
 
 

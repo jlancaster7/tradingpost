@@ -26,7 +26,10 @@ var spliKeyInfo = function (entityName, field, fields, priveLetter) {
     entityName = entityName || view.split("_").filter(function (v, i, a) { return i <= a.length - 2; }).join("_");
     var userIdField = (0, code_gen_util_1.getUserId)(entityName);
     //const userProperty = `(${$request}->>'user_id')::UUID`;
-    var privClause = field.private ? " and ".concat(priveLetter || "t", ".").concat(userIdField, " = ").concat(code_gen_config_1.$userProperty) : "";
+    var privClause = field.private && field.name !== userIdField ? " and ".concat(priveLetter || "t", ".").concat(userIdField, " = ").concat(code_gen_config_1.$userProperty) : "";
+    if (privClause) {
+        console.log("".concat(field.name, " vs.").concat(userIdField));
+    }
     return {
         view: view,
         entityName: entityName,
@@ -55,7 +58,13 @@ var makeViewStatement = function (entityName, tableName, view, fieldMap, _fields
                 case "inline":
                     return "(".concat(field.calc, ") as \"").concat(fn, "\"");
                 default:
-                    return field.private ? "CASE WHEN d.".concat((0, code_gen_util_1.getUserId)(entityName), " = (").concat(code_gen_config_1.$request, "->>'user_id')::UUID THEN d.\"").concat(fn, "\" END as \"").concat(fn, "\"") : 'd."' + fn + '"';
+                    if (field.private && fn !== 'user_id') {
+                        console.log("WTF user_id vs ".concat(fn));
+                        return "CASE WHEN d.".concat((0, code_gen_util_1.getUserId)(entityName), " = (").concat(code_gen_config_1.$request, "->>'user_id')::UUID THEN d.\"").concat(fn, "\" END as \"").concat(fn, "\"");
+                    }
+                    else {
+                        return 'd."' + fn + '"';
+                    }
             }
         }
         else

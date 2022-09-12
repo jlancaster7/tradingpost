@@ -11,7 +11,11 @@ export const spliKeyInfo = (entityName: string, field: EntityField, fields: Enti
     entityName = entityName || view.split("_").filter((v, i, a) => i <= a.length - 2).join("_")
     const userIdField = getUserId(entityName);
     //const userProperty = `(${$request}->>'user_id')::UUID`;
-    const privClause = field.private ? ` and ${priveLetter || "t"}.${userIdField} = ${$userProperty}` : "";
+
+    const privClause = field.private && field.name !== userIdField ? ` and ${priveLetter || "t"}.${userIdField} = ${$userProperty}` : "";
+    if (privClause) {
+        console.log(`${field.name} vs.${userIdField}`)
+    }
 
     return {
         view,
@@ -39,12 +43,19 @@ export const makeViewStatement = (entityName: string, tableName: string, view: E
                         return `EXISTS(SELECT * FROM ${tempPrefix}.view_${view}(${$request}) as t WHERE t.${key}=d."${splitKey}"${privClause}) as "${fn}"`;
                     case "json":
                         return `(SELECT json_agg(t) FROM ${tempPrefix}.view_${view}(${$request}) as t WHERE t.${key}=d."${splitKey}"${privClause}) as "${fn}"`;
-                    case "inline":
+                    case "inline":   
                         return `(${field.calc}) as "${fn}"`;
                     default:
-                        return field.private ? `CASE WHEN d.${getUserId(entityName)} = (${$request}->>'user_id')::UUID THEN d."${fn}" END as "${fn}"` : 'd."' + fn + '"';
+                            if(field.private && fn !== 'user_id'){
+                                console.log(`WTF user_id vs ${fn}`)
+                                return `CASE WHEN d.${getUserId(entityName)} = (${$request}->>'user_id')::UUID THEN d."${fn}" END as "${fn}"`;
+                            }
+                            else{
+                                return 'd."' + fn + '"'
+                            }
+                        
                 }
-            }
+            }   
             else
                 return fn
         }).join(", ")
@@ -75,7 +86,7 @@ export const makeViewDef = (entity: Entity, views: EntityView[], validFields: En
                             prefixOverride: "view",
                             isTest
                         },
-                        
+
                         "", {
                         body: `RETURN QUERY ${viewSelect}`
                     })

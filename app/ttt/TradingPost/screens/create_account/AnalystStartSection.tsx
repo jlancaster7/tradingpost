@@ -2,7 +2,6 @@ import { Icon, Text } from "@ui-kitten/components";
 import { ScrollWithButtons } from "../../components/ScrollWithButtons"
 import { AppColors } from "../../constants/Colors";
 import { bannerText, flex, fonts, paddView, sizes, thinBannerText } from "../../style";
-import { CreateAccountProps } from "../CreateAccountScreen"
 import Analytics from '../../assets/analytics.svg'
 import { SvgExpo } from "../../components/SvgExpo";
 import { useEffect, useRef } from "react";
@@ -10,6 +9,7 @@ import { Animated } from "react-native";
 import { View } from "../../components/Themed";
 import { ElevatedSection } from "../../components/Section";
 import { useLinkTo } from "@react-navigation/native";
+import { CreateAccountProps } from "./shared";
 
 
 export const AnalystStartSection = (props: CreateAccountProps) => {
@@ -48,9 +48,9 @@ export const AnalystStartSection = (props: CreateAccountProps) => {
         <View style={[paddView, { justifyContent: "center" }]}>
             <ElevatedSection title="">
                 <Animated.View style={[{ opacity: opacityAnim }]}>
-                    <Text style={[bannerText]}>Are you a Market Analyst?</Text>
+                    <Text style={[thinBannerText]}>Are you a Market Analyst?</Text>
                     <View style={{ padding: sizes.rem1 }}>
-                        <SvgExpo>
+                        <SvgExpo style={{ width:"100%", aspectRatio:1.5}}>
                             <Analytics />
                         </SvgExpo>
                     </View>

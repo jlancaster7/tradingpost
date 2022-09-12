@@ -39,7 +39,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
 var express_1 = __importDefault(require("express"));
 var path_1 = require("path");
 var auth_1 = require("@tradingpost/common/api/auth");
@@ -119,7 +118,7 @@ function resolver() {
     var output = path.find(function (p) {
         try {
             var resolveKey = require.resolve(p);
-            //NEED TO DISABLE FOR PROD
+            //NEED TO DISABLE FOR PROD and make this a lil less hacky 
             if (require.cache[resolveKey]) {
                 console.log("clearing... " + resolveKey);
                 delete require.cache[resolveKey];
@@ -131,7 +130,7 @@ function resolver() {
         }
     });
     if (!output)
-        throw new Error("Not path could be resolved ");
+        throw new Error("Not path could be resolved " + path.join(","));
     return output;
 }
 var sharedHandler = function (req, routeDetails) { return __awaiter(void 0, void 0, void 0, function () {
@@ -139,6 +138,13 @@ var sharedHandler = function (req, routeDetails) { return __awaiter(void 0, void
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                //For efficiency I will generate everything in "/api". For now doing a lookup to both
+                ///... this can already be changed.. will do it later.....
+                //This should be set to only happen in dev mode... 
+                try {
+                    resolver('@tradingpost/common/api/entities/extensions/' + req.params.entity.substring(0, req.params.entity.length - 3) + ".server");
+                }
+                catch (ex) { }
                 entity = require(resolver((0, path_1.join)("@tradingpost/common/api/entities/apis/".concat(req.params.entity)), (0, path_1.join)("@tradingpost/common/api/entities/static/".concat(req.params.entity))))
                     .default;
                 return [4 /*yield*/, routeDetails(entity)];

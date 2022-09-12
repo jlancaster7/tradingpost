@@ -147,23 +147,122 @@
     $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.api_subscriber_insert(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_subscriber_insert(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    DECLARE
+_idField BIGINT;
+    BEGIN
+  INSERT INTO public.data_subscriber(
+  subscription_id,
+user_id,
+start_date)
+VALUES ((request->'data'->>'subscription_id')::bigint,
+(request->>'user_id')::UUID,
+(request->'data'->>'start_date')::timestamptz)
+returning public.data_subscriber.id INTO _idField;
+return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v.id = _idField;
+    END;
+    $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.api_subscriber_update(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_subscriber_update(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  UPDATE public.data_subscriber v SET subscription_id =  tp.prop_or_default(request->'data' ,'subscription_id',v.subscription_id), 
+user_id= (request->>'user_id')::UUID, 
+start_date =  tp.prop_or_default(request->'data' ,'start_date',v.start_date) WHERE v."id" = (request->'data'->>'id')::BIGINT;
+return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
+    END;
+    $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.api_subscriber_get(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_subscriber_get(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
+    END;
+    $BODY$;
 
-/**** [subscriber] Primary Key is missing .....Cant create a list statement ****/
+
+    DROP FUNCTION IF EXISTS public.api_subscriber_list(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_subscriber_list(
+        request jsonb)
+        RETURNS TABLE("subscription_id" bigint,"user_id" UUID,"start_date" TIMESTAMP WITH TIME ZONE,"due_date" TIMESTAMP WITH TIME ZONE,"id" BIGINT,"subscription" json,"user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  return query SELECT * FROM public.view_subscriber_list(request) as v WHERE CASE WHEN  request->'data' ? 'ids' THEN  v.id in (SELECT value::BIGINT from jsonb_array_elements_text(request->'data'->'ids')) ELSE true end;
+    END;
+    $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.api_subscription_insert(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_subscription_insert(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"settings" json,"cost" money,"name" text,"user_id" UUID,"user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    DECLARE
+_idField BIGINT;
+    BEGIN
+  INSERT INTO public.data_subscription(
+  user_id,
+name,
+cost,
+settings)
+VALUES ((request->>'user_id')::UUID,
+(request->'data'->>'name')::text,
+(request->'data'->>'cost')::money,
+(request->'data'->>'settings')::json)
+returning public.data_subscription.id INTO _idField;
+return query SELECT * FROM public.view_subscription_get(request) as v WHERE v.id = _idField;
+    END;
+    $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.api_subscription_update(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_subscription_update(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"settings" json,"cost" money,"name" text,"user_id" UUID,"user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  UPDATE public.data_subscription v SET user_id= (request->>'user_id')::UUID, 
+name =  tp.prop_or_default(request->'data' ,'name',v.name), 
+cost =  tp.prop_or_default(request->'data' ,'cost',v.cost), 
+settings =  tp.prop_or_default(request->'data' ,'settings',v.settings) WHERE v."id" = (request->'data'->>'id')::BIGINT;
+return query SELECT * FROM public.view_subscription_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
+    END;
+    $BODY$;
 
 
     DROP FUNCTION IF EXISTS public.api_subscription_get(jsonb);
   
     CREATE OR REPLACE FUNCTION public.api_subscription_get(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"settings" json,"cost" money,"name" text,"user_id" UUID)
+        RETURNS TABLE("id" BIGINT,"settings" json,"cost" money,"name" text,"user_id" UUID,"user" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -177,7 +276,7 @@
   
     CREATE OR REPLACE FUNCTION public.api_subscription_list(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"user_id" UUID,"name" text,"cost" money)
+        RETURNS TABLE("id" BIGINT,"user_id" UUID,"name" text,"cost" money,"user" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -233,13 +332,14 @@
   
     CREATE OR REPLACE FUNCTION public.api_user_update(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"is_subscribed" boolean,"subscription" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
   UPDATE public.data_user v SET first_name =  tp.prop_or_default(request->'data' ,'first_name',v.first_name), 
 last_name =  tp.prop_or_default(request->'data' ,'last_name',v.last_name), 
+profile_url =  tp.prop_or_default(request->'data' ,'profile_url',v.profile_url), 
 analyst_profile =  tp.prop_or_default(request->'data' ,'analyst_profile',v.analyst_profile), 
 has_profile_pic =  tp.prop_or_default(request->'data' ,'has_profile_pic',v.has_profile_pic) WHERE v."id" = (request->'data'->>'id')::UUID;
 return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (request->'data'->>'id')::UUID;
@@ -251,7 +351,7 @@ return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (re
   
     CREATE OR REPLACE FUNCTION public.api_user_get(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"is_subscribed" boolean,"subscription" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -265,7 +365,7 @@ return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (re
   
     CREATE OR REPLACE FUNCTION public.api_user_list(
         request jsonb)
-        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text)
+        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     

@@ -7,6 +7,7 @@ import PostApi from "./entities/apis/PostApi"
 import WatchlistApi from "./entities/apis/WatchlistApi"
 import WatchlistSavedApi from "./entities/apis/WatchlistSavedApi"
 import { execProc } from "../db"
+import SubscriptionApi from "./entities/apis/SubscriptionApi"
 
 type ExistsRecord = Record<string, true>
 export type PriceInfo = { id: number, symbol: string, price: { price: number, time: string, open: number, high: number, low: number } };
@@ -103,6 +104,9 @@ type MotitoredType = typeof UserApi | typeof PostApi | typeof WatchlistApi | typ
 const ensureUserApi = (test: any): test is typeof UserApi => {
     return test.constructor.name === UserApi.constructor.name
 }
+const ensureSubscriptionApi = (test: any): test is typeof SubscriptionApi => {
+    return test.constructor.name === SubscriptionApi.constructor.name
+}
 const ensurePostApi = (test: any): test is typeof PostApi => {
     return test.constructor.name === PostApi.constructor.name
 }
@@ -113,7 +117,7 @@ const ensureWatchlistApi = (test: any): test is (typeof WatchlistApi) | (typeof 
 //make this check based on decorators?
 export const cacheMonitor = async <A extends MotitoredType>(api: A, action: string, currentUserId: string, responseData: any) => {
     const cache = await getUserCache();
-    if (ensureUserApi(api)) {
+    if (ensureUserApi(api) || ensureSubscriptionApi(api)) {
         switch (action as "update" | "insert") {
             case "insert":
             case "update":
@@ -124,7 +128,7 @@ export const cacheMonitor = async <A extends MotitoredType>(api: A, action: stri
                     upvotes: {},
                     watchlists: []
                 })
-                user.profile = (await api.internal.list({
+                user.profile = (await UserApi.internal.list({
                     data: {
                         ids: [currentUserId]
                     }

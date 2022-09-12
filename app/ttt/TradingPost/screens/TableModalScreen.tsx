@@ -15,7 +15,7 @@ export function LimitedTable<T>(props: {
     tableProps: Omit<Parameters<typeof Table<T>>[0], "maxPage">
 }) {
     const nav = useNavigation<NavigationProp<AllPages>>();
-    return <View style={[{ height: "100%" }]}>
+    return <View style={[{}]}>
         <View>
             <Table {...props.tableProps} maxPage={props.maxPage} />
         </View>

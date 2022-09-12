@@ -2,11 +2,10 @@ import { IUserList, IWatchlistList } from "../interfaces";
 import { Extension } from "./index";
 import { AccountGroupHPRsTable, TradingPostAccountGroupStats } from '../../../brokerage/interfaces';
 export declare type UploadProfilePicBody = {
-    userId: string;
     image: string;
 };
 export default class User extends Extension {
-    uploadProfilePic: (settings: UploadProfilePicBody) => Promise<void>;
+    uploadProfilePic: (settings: UploadProfilePicBody) => Promise<{}>;
     generateBrokerageLink: (settings?: undefined) => Promise<{
         link: string;
     }>;

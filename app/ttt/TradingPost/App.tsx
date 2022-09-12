@@ -1,3 +1,20 @@
+import { configApi } from '@tradingpost/common/api/entities/static/EntityApiBase'
+import Constants, { AppOwnership } from 'expo-constants'
+
+if (!__DEV__) {
+  configApi({
+    apiBaseUrl: "https://api.tradingpostapp.com"
+  })
+}
+else if (__DEV__ && AppOwnership.Expo === Constants.appOwnership) {
+  console.log("BUNLDE URL IS " + Constants.manifest?.hostUri);
+  configApi({
+
+    apiBaseUrl: `http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
+  })
+
+}
+
 import { StatusBar } from 'expo-status-bar';
 //import { SafeAreaProvider } from 'react-native-safe-area-context';
 //import { Colors } from 'react-native-ui-lib';
@@ -5,20 +22,18 @@ import { StatusBar } from 'expo-status-bar';
 import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
 import Navigation, { AllPages } from './navigation';
-import { Platform, Text } from 'react-native'
+import { LogBox, Platform, Text } from 'react-native'
 import WelcomeScreen from './screens/WelcomeScreen';
 import * as eva from '@eva-design/eva';
 import { ApplicationProvider, Layout, Button, IconRegistry } from '@ui-kitten/components';
 import theme from "./theme-light.json"; // <-- Import app theme
 import { ToastProvider } from 'react-native-toast-notifications';
 import { useData } from './lds'
-import Auth from '@tradingpost/common/api/entities/static/AuthApi';
-import User from '@tradingpost/common/api/entities/apis/UserApi';
-import { } from '@tradingpost/common/api/entities/apis/UserApi';
 import React, { useCallback, useEffect } from 'react';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { configApi } from '@tradingpost/common/api/entities/static/EntityApiBase'
+
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
+import { useAppUser } from './Authentication';
 
 // Colors.loadColors({
 //   primary: '#11146F',
@@ -32,10 +47,9 @@ import { EvaIconsPack } from '@ui-kitten/eva-icons';
 //   //warnColor: '#FF963C'
 // });
 
-if (!__DEV__)
-  configApi({
-    apiBaseUrl: "https://api.tradingpostapp.com"
-  })
+LogBox.ignoreAllLogs();
+
+
 
 export default function App() {
   const { isLoadingComplete } = useCachedResources();
@@ -53,9 +67,21 @@ export default function App() {
   }, [Boolean(authToken)])
 
 
+  useEffect(() => {
+    if (isLoadingComplete) {
+      //needed to add a delay to this request. It is not working if done prior to this
+      setTimeout(() => {
+        console.log("TRYING TO LOAD SECURITIES");
+        require('./utils/hooks');
+      }, 4000)
+
+    }
+  }, [isLoadingComplete])
+
   if (!isLoadingComplete) {
     return null;
   }
+
 
   return <ApplicationProvider {...eva} theme={{ ...eva.light, ...theme }}>
     <IconRegistry icons={EvaIconsPack} />
@@ -66,41 +92,5 @@ export default function App() {
   </ApplicationProvider>
 }
 
-export const Authentication = {
 
-  signIn: async (email: string, pass: string) => {
-    const result = await Auth.login(email, pass);
-    return {
-      loginResult: result,
-      currentUser: result.user_id ? await User.get(result.user_id) : undefined
-    }
-  }
-}
-
-export const useAppUser = () => {
-  const { value: appUser, setValue: setAppUser } = useData("currentUser");
-  const { value: loginResult, setValue: setLoginResult } = useData("loginResult");
-  const { value: authToken, setValue: setAuthToken } = useData("authToken");
-
-  return {
-    appUser,
-    authToken,
-    loginResult,
-    signIn: useCallback(async (email: string, pass: string) => {
-      const value = await Authentication.signIn(email, pass)
-      setLoginResult(value.loginResult);
-      setAppUser(value.currentUser);
-
-      if (value.loginResult.user_id)
-        setAuthToken(value.loginResult.token);
-
-    }, []),
-    signOut: useCallback(() => {
-      Auth.signOut();
-      setAuthToken(undefined);
-      setLoginResult(undefined);
-      setAppUser(undefined);
-    }, [])
-  }
-}
 

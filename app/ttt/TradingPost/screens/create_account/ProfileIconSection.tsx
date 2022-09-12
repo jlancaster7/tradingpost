@@ -4,7 +4,7 @@ import { Animated, Pressable, View } from "react-native";
 import { ScrollWithButtons } from "../../components/ScrollWithButtons"
 import { AppColors } from "../../constants/Colors";
 import { bannerText, sizes, thinBannerText } from "../../style";
-import { CreateAccountProps, sideMargin } from "../CreateAccountScreen"
+import { CreateAccountProps, sideMargin } from "./shared"
 import { Api } from "@tradingpost/common/api";
 import { ProfileButton } from "../../components/ProfileButton";
 import { ElevatedSection } from "../../components/Section";

@@ -11,7 +11,6 @@ import { TextField, ITextField } from "../../components/TextField";
 import { bannerText, flex, sizes, textInputWiz } from "../../style";
 import { bindTextInput, IEntity, useReadonlyEntity } from "../../utils/hooks";
 import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators";
-import { CreateAccountProps, sideMargin, useChangeLock } from "../CreateAccountScreen";
 
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
 import { ProfileBanner } from "../../components/ProfileBanner";
@@ -19,9 +18,10 @@ import { Label } from "../../components/Label";
 import { TBI } from "../../utils/misc";
 import { AppColors } from "../../constants/Colors";
 import Auth from '@tradingpost/common/api/entities/static/AuthApi'
-import { useAppUser } from "../../App";
+import { useAppUser } from "../../Authentication";
 import { useData } from "../../lds";
 import { useLinkTo } from "@react-navigation/native";
+import { CreateAccountProps, useChangeLock, sideMargin } from "./shared";
 
 
 type FieldRefs = {
@@ -54,45 +54,18 @@ export function AccountInfoSection(props: CreateAccountProps) {
         },
         buttonConfig = {
             locked: lockButtons,
-            // left: isUnconfirmed || isBroken ? {
-            //     text: "Cancel",
-            //     onPress: async () => {
-            //         props.navigation.goBack();
-            //         //await signOut();
-            //         //TBI();
-            //         //Navigation.pop(props.componentId)
-            //     }
-            // }
             left: (props.saveOnly ? undefined : {
                 text: "Cancel",
                 onPress: () => {
                     if (props.navigation.canGoBack()) {
-                        props.navigation.goBack()//Navigation.pop(props.componentId)
+                        props.navigation.goBack()
                     }
                     else {
                         linkTo("/login");
                     }
                 }
             }),
-            right:
-            // isUnconfirmed ? {
-            //     text: "I'm Verified",
-            //     onPress: async () => {
-            //         setLockButtons(true);
-            //         try {
-            //             TBI();
-            //             // const account = await signInStoredCreds();
-            //             // if (account && !account.status_confirmed)
-            //             //     props.toastMessage("Verification has not been completed.")
-            //         }
-            //         catch (ex) {
-            //             //console.error(ex);
-            //             props.toastMessage("Error trying to sign in");
-            //         }
-            //         setLockButtons(false);
-            //     }
-            // } :
-            {
+            right: {
                 text: props.saveOnly ? "Apply" : "Create",
                 onPress: async () => {
                     setLockButtons(true);
@@ -110,9 +83,6 @@ export function AccountInfoSection(props: CreateAccountProps) {
                             setLockButtons(false);
                         }
                         else if (!false) {  //create new user
-                            //Alert.alert("CREATING", "USER DATA")
-                            //await CreateAuth0User(props.user.data);
-                            //TBI();
                             if (loginEntity.data.email && loginEntity.data.password) {
                                 const login = await Auth.createLogin(loginEntity.data.email, loginEntity.data.password);
                                 setLoginResult(login);

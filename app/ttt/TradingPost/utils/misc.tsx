@@ -1,5 +1,6 @@
 import React from 'react';
 import { Alert } from "react-native";
+import numeral, {} from 'numeral'
 //import { AmiraError } from '../AmiraError';
 
 export type AwaitedReturn<T extends (...args: any[]) => Promise<any>> = Awaited<ReturnType<T>>
@@ -105,9 +106,11 @@ export function badDate() {
     return toAmiraDate(new Date())
 }
 
-const pctFormatter = Intl.NumberFormat('en-US', {
-    style: 'percent',
-})
+//const pctFormatter = numeral()
+
+//NumberFormat('en-US', {
+  //  style: 'percent',
+//})
 /**** All of these should be moved to a formatter file */
 
 export function toAmiraDate(date: Date) {
@@ -117,27 +120,27 @@ export function fromAmiraDate(date: string) {
     return new Date(date + 'Z');
 }
 
-const pct2Formatter = Intl.NumberFormat('en-US', {
-    style: 'percent',
-    minimumFractionDigits: 2
-})
+// const pct2Formatter = NumberFormat('en-US', {
+//     style: 'percent',
+//     minimumFractionDigits: 2
+// })
 
 export function toPercent(number: number) {
-    return (number === undefined || number === null) ? "" : pctFormatter.format(number)
+    return (number === undefined || number === null) ? "" : numeral(number).format('0%')
 }
 export function toPercent2(number: number) {
-    return (number === undefined || number === null) ? "" : pct2Formatter.format(number)
+    return (number === undefined || number === null) ? "" : numeral(number).format('0.00%')
 }
-const thousandFormatter = Intl.NumberFormat('en-US', {
-    maximumSignificantDigits: 3
-})
+// const thousandFormatter = NumberFormat('en-US', {
+//     maximumSignificantDigits: 3
+// })
 export function toThousands(number: number) {
-    return thousandFormatter.format(number)
+    return    numeral(number).format('0,0');
 }
-const currencyFormatter = Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: "USD",
-})
+// const currencyFormatter = NumberFormat('en-US', {
+//     style: 'currency',
+//     currency: "USD",
+// })
 
 export function isoToDate(dateString: string) {
     return dateString.split("T")[0];
@@ -146,5 +149,5 @@ export function toDollars(number: number) {
     return toDollarsAndCents(number).split(".")[0];
 }
 export function toDollarsAndCents(number: number) {
-    return currencyFormatter.format(number);
+    return   numeral(number).format('$0,0.00') //currencyFormatter.format(number);
 }

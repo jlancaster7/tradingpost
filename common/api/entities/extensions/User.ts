@@ -1,10 +1,10 @@
 import { IUserGet, IUserList, IWatchlistList } from "../interfaces";
 import { ensureServerExtensions, Extension } from "./index"
 import { AccountGroupHPRsTable, TradingPostAccountGroupStats } from '../../../brokerage/interfaces'
-export type UploadProfilePicBody = { userId: string, image: string };
+export type UploadProfilePicBody = {  image: string };
 
 export default class User extends Extension {
-    uploadProfilePic = this._makeFetch<UploadProfilePicBody, void>("uploadProfilePic", this._defaultPostRequest)
+    uploadProfilePic = this._makeFetch<UploadProfilePicBody, {}>("uploadProfilePic", this._defaultPostRequest)
     generateBrokerageLink = this._makeFetch<undefined, { link: string }>("generateBrokerageLink", this._defaultPostRequest)
     getBrokerageAccounts = this._makeFetch<undefined, { id: number, broker_name: string, account_number: string, user_id: string }[]>("getBrokerageAccounts", this._defaultPostRequest)
     initBrokerageAccounts = this._makeFetch<undefined, {}[]>("initBrokerageAccounts", this._defaultPostRequest)

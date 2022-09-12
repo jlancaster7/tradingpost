@@ -15,7 +15,7 @@ declare const _default: {
             page?: number | undefined;
             limit?: number | undefined;
         };
-    }) => Promise<void>;
+    }) => Promise<{}>;
     generateBrokerageLink: (req: {
         body: undefined;
         extra: {

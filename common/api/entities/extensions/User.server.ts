@@ -1,16 +1,16 @@
-import User, {UploadProfilePicBody} from "./User"
-import {ensureServerExtensions} from "."
-import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
-import UserApi, {IUserGet, IUserList, IUserUpdate} from '../apis/UserApi'
+import User, { UploadProfilePicBody } from "./User"
+import { ensureServerExtensions } from "."
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import UserApi, { IUserGet, IUserList, IUserUpdate } from '../apis/UserApi'
 import Brokerage from '../../../brokerage'
-import {DefaultConfig} from "../../../configuration";
+import { DefaultConfig } from "../../../configuration";
 import pgPromise from "pg-promise";
 import Finicity from "../../../finicity";
 //import FinicityTransformer from '../../../brokerage/finicity/transformer'
 import { execProc } from '../../../db'
 //import { } from '../../../social-media/twitter/index'
-import {DefaultTwitter} from "../../../social-media/twitter/service";
-import {getUserCache} from "../../cache";
+import { DefaultTwitter } from "../../../social-media/twitter/service";
+import { getUserCache } from "../../cache";
 import WatchlistApi from "../apis/WatchlistApi";
 import { DateTime } from 'luxon'
 
@@ -50,7 +50,7 @@ const init = (async () => {
     console.log("Start Connection ")
 
     await pgClient.connect();
-    console.log("Returning ")
+    console.log("Returning ");
     return {
         brokerage,
         pgp,
@@ -70,22 +70,20 @@ export default ensureServerExtensions<User>({
 
     },
     uploadProfilePic: async (req) => {
-        const body = req.body;
-        if (req.extra.userId !== body.userId) {
-            await client.send(new PutObjectCommand({
-                Bucket: "tradingpost-images",
-                Key: `/profile-pics/${body.userId}`,
-                Body: body.image
-            }));
-            await UserApi.update(body.userId, {
-                has_profile_pic: true
-            });
-
-        } else
-            throw {
-                message: "Unathorized",
-                code: 401
+        await client.send(new PutObjectCommand({
+            Bucket: "tradingpost-images",
+            Key: `/profile-pics/${req.extra.userId}`,
+            Body: Buffer.from(req.body.image, 'base64url')
+        }));
+        await UserApi.internal.update({
+            user_id:req.extra.userId,
+            data: {
+                id: req.extra.userId,
+                has_profile_pic: true,
+                profile_url: `https://tradingpost-images.s3.amazonaws.com/profile-pics/${req.extra.userId}`
             }
+        });
+        return {};
     },
     getBrokerageAccounts: (r) => {
         return execProc("public.api_brokerage_account", {
@@ -113,7 +111,7 @@ export default ensureServerExtensions<User>({
 
             })
             const authResp = (await info.json()) as ITokenResponse;
-            const {pgClient, pgp} = await init;
+            const { pgClient, pgp } = await init;
             const config = await DefaultConfig.fromCacheOrSSM("twitter");
             const handle = await DefaultTwitter(config, pgClient, pgp).addTwitterUsersByToken({
                 accessToken: authResp.access_token,
@@ -129,7 +127,7 @@ export default ensureServerExtensions<User>({
             limit: r.extra.limit || 5,
             user_id: r.extra.userId,
             page: r.extra.page,
-            data: {user_id: r.body.user_id}
+            data: { user_id: r.body.user_id }
         })
     },
     getHoldings: r => execProc("public.api_holding_list", {
@@ -153,7 +151,7 @@ export default ensureServerExtensions<User>({
         //make sure there are public or that you are a subscriber 
     },
     getPortfolio: async (r) => {
-        const {brokerage} = await init;
+        const { brokerage } = await init;
         return await brokerage.portfolioSummaryService.getSummary(r.body.userId || r.extra.userId);
     },
     search: async (r) => {
@@ -163,7 +161,9 @@ export default ensureServerExtensions<User>({
             const regex = new RegExp(r.body.term, "i");
             Object.keys(cache).forEach((id) => {
                 const item = cache[id as keyof typeof cache];
-                if (regex.test(item.profile.handle) || regex.test(item.profile.display_name))
+                if ( /* Ensure that the user is an analyst */
+                    item.profile.subscription?.id &&
+                    (regex.test(item.profile.handle) || regex.test(item.profile.display_name)))
                     output.push(item.profile)
             });
 

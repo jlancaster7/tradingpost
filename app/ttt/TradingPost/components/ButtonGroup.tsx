@@ -12,14 +12,21 @@ export const ButtonGroup = <T extends string>(props: {
     return <UI_ButtonGroup style={[{ width: "100%", marginBottom: sizes.rem1 }, props.style]}>
         {
             props.items.map((v, idx, arr) => {
-                return <Button key={'button_' + idx} style={props.value === v.value ? { backgroundColor: "green", width: 100 / arr.length + "%" } : [{
-                    backgroundColor: '#777'// "lightgray"
-                    , opacity: 0.25, width: 100 / arr.length + "%"
-                }, props.unselectedStyle]} onPress={() => props.onValueChange(v.value)}>{v.label}</Button>
+                const isSelected = props.value === v.value;
+                const opacity = isSelected ? 1 : 0.25;
+                console.log(`Button at idx ${idx} isSelected: ${isSelected} with opacity of ${opacity}`);
+
+                return <Button key={'button_' + idx + "_" + isSelected}
+                    style={[
+                        {
+                            backgroundColor: isSelected ? "green" : "#777",
+                            width: 100 / arr.length + "%",
+                            opacity
+                        }, isSelected ? props.unselectedStyle : undefined]
+                    }
+                    onPress={() => props.onValueChange(v.value)}>{v.label}</Button>
             })
         }
-        {/* <Button style={type === "public" ? { backgroundColor: "green", width: "50%" } : { backgroundColor: "lightgray", opacity: 0.25, width: "50%" }} onPress={() => setWatchlistType("public")}>Public</Button>
-        <Button style={type === "private" ? { backgroundColor: "green", width: "50%" } : { backgroundColor: "lightgray", opacity: 0.25, width: "50%" }} onPress={() => setWatchlistType("private")}>Private</Button> */}
     </UI_ButtonGroup>
 
 }

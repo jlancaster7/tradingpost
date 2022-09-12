@@ -7,7 +7,7 @@ import { Avatar, Icon } from "@ui-kitten/components"
 import React, { PropsWithChildren, useEffect, useState } from "react"
 import { View, Text, Pressable } from "react-native"
 import { useToast } from "react-native-toast-notifications"
-import { useAppUser } from "../App"
+import { useAppUser } from "../Authentication"
 import { EditButton, FavButton } from "../components/AddButton"
 import { ProfileBar } from "../components/ProfileBar"
 import { ElevatedSection, Section, Subsection } from "../components/Section"
@@ -16,7 +16,7 @@ import { TextField } from "../components/TextField"
 import { AppColors } from "../constants/Colors"
 import { AllPages, TabScreenProps } from "../navigation"
 import { elevated, flex, paddView, paddViewWhite, row, sizes } from "../style"
-import { useSecuritiesList } from "../utils/hooks"
+import { useSecuritiesList} from '../SecurityList'
 import { toDollarsAndCents } from "../utils/misc"
 
 
