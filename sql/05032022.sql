@@ -644,3 +644,14 @@ ALTER TABLE finicity_account
 ALTER TABLE USER_DEVICE
     ADD COLUMN timezone TEXT NOT NULL DEFAULT 'America/New_York';
 CREATE INDEX user_device_timezone ON user_device (timezone);
+
+CREATE TABLE notification
+(
+    id         BIGSERIAL                      NOT NULL PRIMARY KEY,
+    user_id    UUID REFERENCES data_user (id) NOT NULL,
+    type       TEXT                           NOT NULL, -- TODO: Should be an enum
+    date_time  TIMESTAMPTZ                    NOT NULL,
+    data       JSONB,
+    updated_at TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
