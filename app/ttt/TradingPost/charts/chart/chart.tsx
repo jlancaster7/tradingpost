@@ -288,7 +288,7 @@ export function Chart<D>(props: ChartProps<D>) {
     const yValues = mappedData.map((item) => item.y)
     const xValues = mappedData.map((item) => item.x)
 
-    const yExtent = array.extent([...yValues, gridMin || 0, gridMax || 0])
+    const yExtent = array.extent([...yValues])
     const xExtent = array.extent([...xValues])
 
     const { yMin = yExtent[0] || 0, yMax = yExtent[1] || 0, xMin = xExtent[0] || 0, xMax = xExtent[1] || 0 } = props;
@@ -297,12 +297,12 @@ export function Chart<D>(props: ChartProps<D>) {
     const y = yScale()
         .domain([yMin, yMax])
         .range([height - bottom, top])
-        .clamp(clampY || false)
+        .clamp(clampY || false);
 
     const x = xScale()
         .domain([xMin, xMax])
         .range([left, width - right])
-        .clamp(clampX || false)
+        .clamp(clampX || false);
 
     const paths = createPaths({
         data: mappedData,

@@ -102,10 +102,10 @@ class YAxis extends PureComponent {
                         <Svg
                             style={{
                                 position: 'absolute',
-                                top:4,
+                                top:0,
                                 left: 0,
                                 height: height,
-                                width: width*1.02,
+                                width: width,
                             }}
                         >
                             <G>
@@ -124,8 +124,8 @@ class YAxis extends PureComponent {
                                                 alignmentBaseline={'middle'}
                                                 {...svg}
                                                 key={y(value)}
-                                                y={y(value)-3}
-                                                opacity={index % 2 ? 0 : 1}
+                                                y={y(value)}
+                                                //opacity={index % 2 ? 0 : 1}
                                             >
                                                 {formatLabel(value, index, ticks.length)}
                                             </SVGText>

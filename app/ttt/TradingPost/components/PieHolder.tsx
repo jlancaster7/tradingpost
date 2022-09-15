@@ -40,40 +40,66 @@ export function PieHolder() {
 }
 
 
-export const LineHolder = () => {
-    return <View style={[row, { aspectRatio: 16 / 9, padding: sizes.rem1, borderWidth: 1, borderRadius: sizes.rem1, borderColor: "#ccc" }]}>
+export const LineHolder = (props: any) => {
+    let lineData = []
+    let gridData;
+    let xData;
+    if (!props.data) {
+        lineData =  data2;
+        gridData = data2;
+        xData = data2;
+    }
+    else {
+        lineData = props.data;
+        gridData = lineData.map((a: any) => a.return)
+        xData = lineData.map((a: any) => new Date(a.date))
+    }
+    console.log(gridData);
+    const contentInset = { top: 5, bottom: 5, right: 5, left: 5 }
+    return <View style={[row, { aspectRatio: 16 / 9, padding: sizes.rem0_5, borderWidth: 1, borderRadius: sizes.rem1, borderColor: "#ccc" }]}>
+        
         <View
-            style={{ width: sizes.rem1, height: "90%", marginRight:"3%" }}
+            style={{ width: sizes.rem1_5, height: "85%", marginRight:"3%" }}
         >
             <YAxis
-                data={data2}
+                data={gridData}
                 style={{ width: "100%", height: "100%", flex: 1 }}
                 svg={{
                     fill: 'grey',
                     fontSize: 10,
+                    
                 }}
-            //numberOfTicks={10}
+                numberOfTicks={10}
+                contentInset={contentInset}
                 //yAccessor={(value: any)=> value - value % 1}
-                formatLabel={(value: any) => `$${value.toFixed(1)}`}
+                formatLabel={(value: any) => `$${value.toFixed(2)}`}
             />
-            <View
-                style={{ width: "100%", height: sizes.rem1 }}
-            ></View>
-        </View>
+*/        </View>
+            
         <View style={{ flex: 1, height: "100%" }}>
-            <LineChart svg={{ stroke: "blue" }} style={{ flex: 1 }} data={data2} yAccessor={undefined}>
-                <Grid />
+            <LineChart svg={{ stroke: "blue" }} style={{ flex: 1 }} data={gridData} 
+                //numberOfTicks={10}
+                contentInset={contentInset}
+                >
+                
+                <Grid direction={undefined} />
             </LineChart>
+            
             <XAxis
-                data={data2}
+                data={gridData}
                 style={{ height: sizes.rem1, width: "98%" }}
                 svg={{
                     fill: 'grey',
                     fontSize: 10,
                 }}
-            //numberOfTicks={10}
+                contentInset={contentInset}
+                //min={xData[0]}
+                //max={xData[xData.length - 1]}
+                //xAccessor={( index: any ) => index}
+                numberOfTicks={10}
             //formatLabel={(value) => `${value}ºC`}
             />
         </View>
+            
     </View>
 }
