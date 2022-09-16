@@ -1,10 +1,10 @@
-import { NavigationProp, useNavigation } from "@react-navigation/native"
-import { Interface } from "@tradingpost/common/api"
-import { Avatar, Text } from "@ui-kitten/components"
+import {NavigationProp, useNavigation} from "@react-navigation/native"
+import {Interface} from "@tradingpost/common/api"
+import {Avatar, Text} from "@ui-kitten/components"
 import React from "react"
-import { Pressable, View, ViewStyle } from "react-native"
-import { flex, sizes } from "../style"
-import { ProfileButton } from "./ProfileButton"
+import {Pressable, View, ViewStyle} from "react-native"
+import {flex, sizes} from "../style"
+import {ProfileButton} from "./ProfileButton"
 
 export const ProfileBar = (props: {
     user?: Interface.IUserList,
@@ -19,9 +19,9 @@ export const ProfileBar = (props: {
         }
     }
 
-    return <View style={props.style}><View style={{ flexDirection: "row", width: "100%", marginBottom: sizes.rem0_5 }}>
-        <ProfileButton userId={props.user?.id || ""} profileUrl={props.user?.profile_url || ""} size={sizes.rem2} />
-        <View style={[flex, { marginLeft: sizes.rem0_5 }]}>
+    return <View style={props.style}><View style={{flexDirection: "row", width: "100%", marginBottom: sizes.rem0_5}}>
+        <ProfileButton userId={props.user?.id || ""} profileUrl={props.user?.profile_url || ""} size={sizes.rem2}/>
+        <View style={[flex, {marginLeft: sizes.rem0_5}]}>
             <Pressable onPress={openProfile}><Text category={"s1"}>{props.user?.display_name}</Text></Pressable>
             <Pressable onPress={openProfile}><Text category={"s2"}>{"@" + props.user?.handle}</Text></Pressable>
         </View>

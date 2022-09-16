@@ -1,21 +1,20 @@
-import React, { Component, MutableRefObject, PropsWithChildren, Ref, useCallback, useRef, useState } from "react";
-import { ComponentProvider, Pressable, SafeAreaView, ScrollView, StyleProp, Text, ViewStyle } from "react-native";
-import { Layout, LayoutComponent, Navigation } from "react-native-navigation";
-import { Button, Dialog, DialogProps, Image, Toast, TouchableOpacityProps, View } from "react-native-ui-lib";
-import { Header } from "../components/Headers";
-import { LogoImage } from "../components/LogoImage";
-import { LogoTitleImage } from "../components/LogoTitleImage";
-import { flex, shadow, sizes } from "../style";
-import { ToastMessageFunction, useToast } from "../utils/hooks";
+import React, {Component, MutableRefObject, PropsWithChildren, Ref, useCallback, useRef, useState} from "react";
+import {ComponentProvider, Pressable, SafeAreaView, ScrollView, StyleProp, Text, ViewStyle} from "react-native";
+import {Layout, LayoutComponent, Navigation} from "react-native-navigation";
+import {Button, Dialog, DialogProps, Image, Toast, TouchableOpacityProps, View} from "react-native-ui-lib";
+import {Header} from "../components/Headers";
+import {LogoImage} from "../components/LogoImage";
+import {LogoTitleImage} from "../components/LogoTitleImage";
+import {flex, shadow, sizes} from "../style";
+import {ToastMessageFunction, useToast} from "../utils/hooks";
 
-import { SideMenu } from "../components/SideMenu";
+import {SideMenu} from "../components/SideMenu";
 //import { LoginScreen } from "../screens/LoginScreen";
 //import { MenuButton } from "./layouts/DashboardLayout";
 //import { CreateAccountScreen } from "../screens/CreateAccountScreen";
-import { SvgProps } from "react-native-svg";
-import { topBarIcons } from "../images";
+import {SvgProps} from "react-native-svg";
+import {topBarIcons} from "../images";
 // import { BookmarkScreen, FeedScreen } from "./screens/FeedScreen";
-// import { NotificationScreen } from "./screens/NotificationScreen";
 // import { FeedFilterScreen } from "./screens/FeedFilterScreen";
 // import { PostScreen } from "./screens/PostScreen";
 // import { ManageSubscriptionsScreen } from "./screens/ManageSubscriptionsScreen";
@@ -24,7 +23,7 @@ import { topBarIcons } from "../images";
 // import { WatchlistsScreen } from "./screens/WatchlistsScreen";
 // import { CompetitionsScreen } from "./screens/CompetitionsScreen";
 // import { FeedbackScreen } from "./screens/FeedbackScreen";
-import { ImagePickerScreen } from "../screens/ImagePickerScreen";
+import {ImagePickerScreen} from "../screens/ImagePickerScreen";
 import WelcomeScreen from "../screens/WelcomeScreen";
 // import { NewPostScreen } from "./screens/NewPostScreen";
 // import { UpsertWatchlistScreen } from "./screens/UpsertWatchListScreen";
@@ -47,14 +46,18 @@ export function SetPublicLayout(isLoggedIn?: boolean) {
 }
 
 type MenuButtonProps = SvgProps & { componentId: string, rootTag: number } & Pick<TouchableOpacityProps, "onPress">;
+
 export function MenuButton(props: MenuButtonProps) {
     return <Pressable android_ripple={{
         color: "lightgray",
         radius: 20,
         foreground: false
-    }} onPress={props.onPress} style={{ display: "flex", marginLeft: 8, height: 40, width: 40, padding: 12 }}><Image source={topBarIcons.menu} style={{ height: 16, width: 16 }} /></Pressable>
+    }} onPress={props.onPress} style={{display: "flex", marginLeft: 8, height: 40, width: 40, padding: 12}}><Image
+        source={topBarIcons.menu} style={{height: 16, width: 16}}/></Pressable>
 }
+
 export type DashProps = { componentId: string, isFullscreen?: boolean }
+
 export interface PromptConfig {
     title: string,
     message: string,
@@ -67,11 +70,14 @@ export interface PromptButton {
     textColor?: string,
     onPress: (dialog: IDialog) => void
 }
+
 export type PromptFunc = (title: string, message: string, buttons: PromptButton[]) => Ref<IDialog>;
+
 export interface IDashboard {
     toastMessage: ToastMessageFunction,
     prompt: PromptFunc
 }
+
 export type IDialog = {
     hideDialogView: () => void
 } & Component<DialogProps>
@@ -79,8 +85,8 @@ export type IDialog = {
 export type BaseScreenProps = { viewStyle?: StyleProp<ViewStyle>, dashboardRef?: MutableRefObject<IDashboard | undefined>, title?: string, scrollContentFlex?: boolean };
 
 export function BaseScreen(props: PropsWithChildren<BaseScreenProps>) {
-    const { children, viewStyle, title, scrollContentFlex } = props,
-        { toastMessage, toastProps } = useToast(),
+    const {children, viewStyle, title, scrollContentFlex} = props,
+        {toastMessage, toastProps} = useToast(),
         prompRef = useRef<IDialog>(null),
         [promptProps, setPromptProps] = useState<DialogProps & { _message?: string, _title?: string, _buttons?: PromptButton[] }>(),
         dashboardRef = useRef<IDashboard>({
@@ -116,21 +122,31 @@ export function BaseScreen(props: PropsWithChildren<BaseScreenProps>) {
     return (
         <SafeAreaView style={[flex]}>
             {/* <KeyboardAvoidingView behavior='position' style={flex}> */}
-            <ScrollView style={[flex]} contentContainerStyle={{ flex: scrollContentFlex ? 1 : undefined }} >
+            <ScrollView style={[flex]} contentContainerStyle={{flex: scrollContentFlex ? 1 : undefined}}>
                 {/* {props.title ? <LogoTitleImage title={title} /> : <LogoImage size="mega" style={{ alignSelf: "center" }} noBg />} */}
                 <View style={[flex, viewStyle]}>{children}</View>
             </ScrollView>
             {/* </KeyboardAvoidingView> */}
             <Toast {...toastProps} />
-            <Dialog ref={prompRef} onDialogDismissed={() => setPromptProps({ visible: false })} visible={promptProps?.visible} containerStyle={[shadow, { backgroundColor: "white", padding: sizes.rem1, borderRadius: sizes.rem1 / 2, borderColor: "#ccc", borderWidth: 1 }]} >
-                <Header text={promptProps?._title || ""} />
-                <Text style={{ marginBottom: sizes.rem1 }}>{promptProps?._message}</Text>
-                <View style={promptProps?._buttons?.length === 2 ? { flexDirection: "row", justifyContent: "space-between" } : { flexDirection: "column" }}>
+            <Dialog ref={prompRef} onDialogDismissed={() => setPromptProps({visible: false})}
+                    visible={promptProps?.visible} containerStyle={[shadow, {
+                backgroundColor: "white",
+                padding: sizes.rem1,
+                borderRadius: sizes.rem1 / 2,
+                borderColor: "#ccc",
+                borderWidth: 1
+            }]}>
+                <Header text={promptProps?._title || ""}/>
+                <Text style={{marginBottom: sizes.rem1}}>{promptProps?._message}</Text>
+                <View style={promptProps?._buttons?.length === 2 ? {
+                    flexDirection: "row",
+                    justifyContent: "space-between"
+                } : {flexDirection: "column"}}>
                     {promptProps?._buttons?.map((b) => {
                         return <Button
                             label={b.text} color={b.textColor} backgroundColor={b.backgroundColor}
                             onPress={() => b.onPress(prompRef.current as IDialog)}
-                            style={promptProps._buttons?.length === 2 ? { width: "49%" } : undefined}
+                            style={promptProps._buttons?.length === 2 ? {width: "49%"} : undefined}
                         />
                     })}
                 </View>
@@ -148,7 +164,7 @@ export let screens = navigationFactory("screens", {
     // Notification: () => NotificationScreen,
     // Bookmark: () => BookmarkScreen,
     // App: () => App,
- //   CreateAccount: () => CreateAccountScreen,
+    //   CreateAccount: () => CreateAccountScreen,
     // FeedFilter: () => FeedFilterScreen,
     // Post: () => PostScreen,
     //ImagePicker: () => ImagePickerScreen,
@@ -189,11 +205,13 @@ function navigationFactory<T extends Record<string, ComponentProvider>>(prefix: 
             ...componentSettings
         }
     }
+
     function getLayout(name: NavigationKey, componentSettings?: Omit<LayoutComponent, "name"> & { alignment?: "fill" | "center" }): Layout {
         return {
             component: getComponent(name, componentSettings)
         }
     }
+
     function push(componentId: string, name: NavigationKey, componentSettings?: Omit<LayoutComponent, "name"> & { alignment?: "fill" | "center" }) {
         Navigation.push(componentId, getLayout(name, componentSettings))
     }

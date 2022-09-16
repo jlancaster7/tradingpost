@@ -59,6 +59,7 @@ export const FeedPart = (props: {
                     })()
                 } : undefined
             }));
+
             const newItems = [...(allItems || []), ...posts]
             newItems.forEach((itm, index) => {
                 if (!sizeCache[index]) {
