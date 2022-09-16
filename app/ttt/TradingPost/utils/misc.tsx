@@ -137,6 +137,9 @@ export function toPercent2(number: number) {
 export function toThousands(number: number) {
     return    numeral(number).format('0,0');
 }
+export function toNumber2(number: number) {
+    return (number === undefined || number === null) ? "" : numeral(number).format('0.00')
+}
 // const currencyFormatter = NumberFormat('en-US', {
 //     style: 'currency',
 //     currency: "USD",
@@ -144,6 +147,16 @@ export function toThousands(number: number) {
 
 export function isoToDate(dateString: string) {
     return dateString.split("T")[0];
+}
+export function toDateMonthYear(dateString: string) {
+    const m = (new Date(dateString).toDateString().slice(4,7));
+    const y = String((new Date(dateString).getFullYear())).slice(2);
+    return `${m}-${y}`;
+}
+export function toDateDayMonth(dateString: string) {
+    const d = (new Date(dateString).toDateString().slice(8,11));
+    const m = (new Date(dateString).toDateString().slice(4,7));
+    return `${d} ${m}`;
 }
 export function toDollars(number: number) {
     return toDollarsAndCents(number).split(".")[0];

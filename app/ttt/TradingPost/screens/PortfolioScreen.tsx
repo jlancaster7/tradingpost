@@ -11,7 +11,7 @@ import { DashScreenProps, TabScreenProps } from "../navigation";
 import { flex, paddView, sizes } from "../style";
 import { useToast } from "react-native-toast-notifications";
 import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewerScreen";
-import { AwaitedReturn, toPercent, toPercent2, toThousands } from "../utils/misc";
+import { AwaitedReturn, toPercent, toPercent2, toThousands, toDollarsAndCents, toDollars, toNumber2 } from "../utils/misc";
 import { WatchlistSection } from "../components/WatchlistSection";
 import Theme from '../theme-light.json'
 import { LimitedTable } from "./TableModalScreen";
@@ -19,6 +19,7 @@ import { ButtonGroup } from "../components/ButtonGroup";
 import { LineHolder, PieHolder } from "../components/PieHolder";
 import { AppColors } from "../constants/Colors";
 import { LineChart } from "../components/LineChart";
+import InteractiveChart from "../components/InteractiveGraph";
 
 const styles = {
     stateLabel: {
@@ -33,6 +34,15 @@ const styles = {
 }
 type TradeReturnType = AwaitedReturn<typeof Api.User.extensions.getTrades>
 
+const periods: {[key: string]: number} = {
+    "1D": 1, 
+    "1W": 5,
+    "1M": 20, 
+    "3M": 60, 
+    "1Y": 252, 
+    "2Y": 504, 
+    "Max": 1000
+}
 export const PortfolioScreen = (props: TabScreenProps) => {
 
     const [watchlists, setWatchlists] = useState<AllWatchlists>()
@@ -41,6 +51,8 @@ export const PortfolioScreen = (props: TabScreenProps) => {
     const [holdings, setHoldings] = useState<AwaitedReturn<typeof Api.User.extensions.getHoldings>>();
     const [portfolio, setPortfolio] = useState<AwaitedReturn<typeof Api.User.extensions.getPortfolio>>();
     const [returns, setReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>();
+    const [twReturns, settwReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>();
+    const [portPeriod, setPortPeriod] = useState("1Y")
 
     useEffect(() => {
         (async () => {
@@ -83,32 +95,74 @@ export const PortfolioScreen = (props: TabScreenProps) => {
 
 
     useEffect(() => {
-        Api.User.extensions.getReturns({
-            startDate: new Date("8/21/22"),
-            endDate: new Date("8/22/22")
-        }).then(r => setReturns(r)).catch(ex => console.error(ex))
+        (async () => {
+            try {
+                let today = new Date();    
+                const returns = await Api.User.extensions.getReturns({
+                    startDate: new Date(today.setDate(today.getDate() - 1001)),
+                    endDate: new Date()
+                })
+                setReturns(returns);
+                let twr: any[] = [];
+                twr.push(JSON.parse(JSON.stringify(returns[returns.length - periods[portPeriod]])));
+                
+                
+                twr[0].return = 1;
+                
+                const day = new Date(String(twr[0].date))
+                twr[0].date = new Date(day.setDate(day.getDate() - 1));
+                
+                returns?.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
+                    twr.push(JSON.parse(JSON.stringify(r)));
+                    twr[i+1].return = twr[i].return * (1 + r.return);
+                })
+                settwReturns(twr);
+                
+            } catch (err) {
+                console.error(err)
+            }
+        })()
     }, [])
+    useEffect(() => {
+        if (!returns) {
+            return
+        }
 
-    const [portPeriod, setPortPeriod] = useState("1Y")
+        let twr: any[] = [];
+        twr.push(JSON.parse(JSON.stringify(returns[returns.length - periods[portPeriod]])));
+        twr[0].return = 1;
+        const day = new Date(String(twr[0].date))
+        twr[0].date = new Date(day.setDate(day.getDate() - 1));
+        returns?.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
+            twr.push(JSON.parse(JSON.stringify(r)));
+            twr[i+1].return = twr[i].return * (1 + r.return);
+        })
+        settwReturns(twr);
+        
+    }, [portPeriod])
+    
+    let cummReturn = 0;
+    if (twReturns) cummReturn = twReturns[twReturns.length - 1].return - 1;
     const { columns: watchlistItemColumns } = useWatchlistItemColumns(true)
     return <View style={[paddView]}>
         <ScrollView>
             <ElevatedSection key={"portfolio"} title="Portfolio">
                 <Subsection title="Performance">
-                    <View style={{ marginBottom: sizes.rem1 }}>
-                        <LineHolder />
+                    <View style={{ marginBottom: sizes.rem1 }} >
+                        {/*<LineHolder data={twReturns} />*/}
+                        <InteractiveChart data={twReturns} period={portPeriod} />
                     </View>
-                    <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "5Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
+                    <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
                     <View style={{ borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2 }}>
                         <View key={"returns"} style={{ flexDirection: "row" }}>
                             {[
-                                { title: "Total Return", value: 0.5 },
-                                { title: "Beta", value: portfolio?.beta || 0 },
-                                { title: "Sharpe Ratio", value: portfolio?.sharpe || 0 }]
+                                { title: "Total Return", value: toPercent2(cummReturn) },
+                                { title: "Beta", value: toNumber2(portfolio?.beta || 0) },
+                                { title: "Sharpe Ratio", value: toPercent2(portfolio?.sharpe || 0) }]
                                 .map((item, idx) => {
                                     return <View key={"key_" + idx} style={flex}>
                                         <Text style={styles.stateLabel} >{item.title}</Text>
-                                        <Text style={styles.stateValue}>{toPercent(item.value)}</Text>
+                                        <Text style={styles.stateValue}>{item.value}</Text>
                                     </View>
                                 })}
                         </View>
@@ -134,11 +188,12 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                             ...useMakeSecurityFields((item: Exclude<typeof holdings, undefined>[0]) => {
                                 return Number(item.security_id)
                             }),
-                            { field: "quantity", stringify: (a, b, c) => String(a) },
-                            { field: "price", stringify: toThousands },
-                            { field: "value", stringify: toThousands },
-                            { alias: "pnl", stringify: (a, b, c) => toThousands(Number(c.value) - Number(c.cost_basis)) }
-                        ]} />
+                            { alias: "# Shares", stringify: (a, b, c) => String(toThousands(c.quantity)), headerStyle: {overflow: 'visible'} },
+                            { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.quantity)) },
+                            { alias: "$ Value", stringify: (a, b, c) => String(toDollars(c.value)) },
+                            { alias: "PnL", stringify: (a, b, c) => toDollars(Number(c.value) - Number(c.cost_basis)) }
+                        ]}
+                         />
                 }</Subsection>
                 <Subsection key="trades" title="Trades">
                     <LimitedTable
@@ -158,9 +213,9 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                                 ...useMakeSecurityFields((item: TradeReturnType[0]) => {
                                     return Number(item.security_id)
                                 }),
-                                { field: "date", stringify: (a, b, c) => String(a) },
-                                { field: "quantity", stringify: toThousands },
-                                { field: "price", stringify: toThousands }
+                                { alias: "Date", stringify: (a, b, c) => new Date(Date.parse(String(c.date))).toLocaleDateString() },
+                                { alias: "# Shares", stringify: (a, b, c) => String(toThousands(c.quantity)) },
+                                { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.price)) }
                             ]
                         }
                         }

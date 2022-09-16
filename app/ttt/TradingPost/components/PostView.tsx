@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, Image, ImageBackground, PixelRatio, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, ImageBackground, Linking, PixelRatio, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Button, Icon } from '@ui-kitten/components'
 
 import { flex, fonts, row, shadow, sizes } from '../style'
@@ -150,7 +150,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                                 setShowStatus(true);
                             Api.Post.extensions.setUpvoted({
                                 id: post._id,
-                                is_upvoted: !isUpvoted
+                                is_upvoted: !isUpvoted // return number of upvotes. 
                             }).then((r) => {
                                 if (r.is_upvoted)
                                     setTimeout(() => {
@@ -170,25 +170,19 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
 
 const SubstackView = (props: { post: Interface.IElasticPost }) => {
     const { post } = props;
-    return <View style={{ marginVertical: sizes.rem1, marginHorizontal: sizes.rem0_5 }}>
-        <View key="profile" style={{ display: "flex", flexDirection: "row", marginBottom: sizes.rem1, }}>
+    return <View style={{ marginVertical: sizes.rem1, marginHorizontal: sizes.rem0_5}}>
+        <View key="profile" >
             {/* <Image style={{ aspectRatio: 0.9, marginRight: sizes.rem1 / 2 }} source={{ uri: post.platform_profile_url }} /> */}
-            {/* <a href={post._source.postUrl} style={{ display: "flex", flexDirection: "row", textDecoration: "none" }}>
-                <IconifyIcon style={{ width: 30, height: 30, marginTop: 2, marginRight: sizes.rem1 / 1.5 }} svgProps={{ style: { margin: "auto" } }} icon={social.SubstackLogo} currentColor={socialStyle.substackColor} />
-                {<Subheader text={post._source.content.title || ""} style={{ color: "black", fontSize: fonts.medium, fontWeight: "600", fontFamily: "K2D" }}></Subheader>}
-            </a> */}
-            {/* <View style={{}}>
-                <Text style={{ fontSize: fonts.small, 
-                    fontFamily: "K2D", 
-                    fontWeight: "bold", textAlignVertical: "center" }}>
-                </Text>
-            </View> */}
-
+            <Pressable onPress={()=>{
+                Linking.openURL(post._source.postUrl)
+            }}
+                style={{ marginBottom: sizes.rem1, display: "flex", flexDirection: "row"}}>
+                <IconifyIcon style={{ width: 30, height: 30, marginTop: 2, marginRight: sizes.rem1 / 1.5 }} svgProps={{ style: { margin: "auto" } }} icon={social.SubstackLogo} currentColor={socialStyle.substackColor}  />
+                {<Subheader text={post._source.content.title || ""} style={{ display: "flex", color: "black", fontSize: fonts.medium, fontWeight:"600", fontFamily: "K2D", maxWidth: "85%" }}></Subheader> }
+            </Pressable>
         </View>
-        {<Text key="content" style={{ fontSize: fonts.small }}>{post._source.content.description}</Text>}
-        {<Text key="date" style={{ fontSize: fonts.xSmall, 
-            //fontFamily: "K2D", 
-            paddingVertical: 5 }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString()}</Text>}
+        {<Text key="content" style={{ fontSize: fonts.small }}>{post._source.content.description}</Text> }
+        {<Text key="date" style={{ fontSize: fonts.xSmall, fontFamily: "K2D", paddingVertical: 5 }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString()}</Text> }
     </View>
 }
 

@@ -214,13 +214,15 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                 {appUser && user && <SecondaryButton
                     style={{
                         width: "50%", marginVertical: ButtonMargin,
-                        marginLeft: "auto", marginRight: collapsed ? sizes.rem1 : "auto"
+                        marginLeft: "auto", marginRight: collapsed ? sizes.rem1 : "auto",
+                        backgroundColor: user.subscription.is_subscribed ? '#D81222' : '#35A265',
+                        borderColor: user.subscription.is_subscribed ? '#D81222' : '#35A265',
                     }}
                     {...(() => {
                         let children: string;
                         let onPress: () => void;
                         if (appUser && user && user?.id !== appUser?.id) {
-                            if (!user.is_subscribed) {
+                            if (!user.subscription.is_subscribed) {
                                 children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : "(Free)"}`
                                 onPress = async () => {
                                     await Api.Subscriber.insert({
@@ -234,6 +236,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                             }
                             else {
                                 children = 'Subscribed',
+                                
                                     onPress = async () => {
                                         //Todo:: make this an are you sure
                                         await Api.Subscriber.extensions.removeSubscription({
@@ -241,6 +244,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                                         });
                                         setUser(undefined);
                                     }
+                                    
                             }
 
                         }

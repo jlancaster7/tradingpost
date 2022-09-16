@@ -74,14 +74,16 @@ export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number)
                 })()}
             size="tiny" /></SecPressable>,
         headerStyle: {
-            width: sizes.rem1_5,
-            marginRight: sizes.rem0_5
+            width: sizes.rem1_5,    
+            marginRight: sizes.rem0_5,
+            overflow: 'visible' as 'visible'
         },
-        alias: " ",
+        alias: "Ticker",
+        align: "right" as "right",
         width: sizes.rem1_5
     },
     {
-        alias: "Security",
+        alias: "",
         align: "left" as "left",
         style: { lineHeight: sizes.rem1_5 },
         stringify: (value: any, key: any, item: any) => {

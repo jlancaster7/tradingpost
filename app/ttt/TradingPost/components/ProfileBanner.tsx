@@ -75,11 +75,13 @@ export function ProfileBanner<T extends boolean>(props: { profilePic: string | u
             <Text style={[flex, {
                 textAlign: "center", transform: [{
                     translateX: - profileImageSize / 4
-                }]
+                }],
+                maxWidth: '48%' // some weird ness here where the  social bar/ this container is weider than the screen so creating a horizontial scroll bar
             }]} >Subscribers {0}</Text>
             <View style={[row, flex, {
                 justifyContent: "center",
                 height: sizes.rem1_5,
+                maxWidth: '50%',
                 transform: [{
                     translateX: profileImageSize / 4
                 }]
