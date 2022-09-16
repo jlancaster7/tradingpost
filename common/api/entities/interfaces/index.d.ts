@@ -191,4 +191,20 @@ export interface IWatchlistSavedList {
 }
 export interface IWatchlistSavedGet {
 }
+export interface ISecurityPrices {
+    historical: {
+        high: number;
+        low: number;
+        open: number;
+        close: number;
+        time: string;
+    }[];
+    intraday: {
+        high: number;
+        low: number;
+        open: number;
+        close: number;
+        time: string;
+    }[];
+}
 export * from '../static/interfaces';
