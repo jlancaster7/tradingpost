@@ -47,8 +47,9 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
             <ButtonGroup
                 style={{ margin: sizes.rem1, width: "auto" }}
                 unselectedStyle={{
-                    backgroundColor: "#777",
+                    backgroundColor: "#35A265",
                 }}
+                
                 value={searchType}
                 onValueChange={(value) => {
                     setSearchType(value);
