@@ -161,6 +161,6 @@ export function toDateDayMonth(dateString: string) {
 export function toDollars(number: number) {
     return toDollarsAndCents(number).split(".")[0];
 }
-export function toDollarsAndCents(number: number) {
-    return   numeral(number).format('$0,0.00') //currencyFormatter.format(number);
+export function toDollarsAndCents(number: number | undefined | null) {
+    return  (number === undefined || number === null) ? "" : numeral(number).format('$0,0.00') //currencyFormatter.format(number);
 }

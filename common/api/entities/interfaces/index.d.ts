@@ -197,14 +197,14 @@ export interface ISecurityPrices {
         low: number;
         open: number;
         close: number;
-        time: string;
+        date: string;
     }[];
     intraday: {
         high: number;
         low: number;
         open: number;
         close: number;
-        time: string;
+        date: string;
     }[];
 }
 export * from '../static/interfaces';

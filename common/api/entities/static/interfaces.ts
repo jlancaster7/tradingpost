@@ -1,3 +1,4 @@
+import { number } from "mathjs"
 import { PriceInfo } from "../../cache"
 import { IUserList, IWatchlistList } from "../interfaces"
 
@@ -10,6 +11,8 @@ export interface ISecurityGet {
     description: string,
     logo_url: string
     price: PriceInfo["price"]| null,
+    week_52_high: number,
+    week_52_low: number,
     isOnQuickWatch?:boolean
 }
 

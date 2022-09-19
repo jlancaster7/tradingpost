@@ -44,7 +44,7 @@ export default ensureServerExtensions<Security>({
               FROM security_price
               WHERE is_eod = true
                 AND security_id = $1
-              ORDER BY time DESC`, [securityId]);
+              ORDER BY time asc`, [securityId]);
         }
 
         const [historical, intraday] = await Promise.all(pricingPromises);
@@ -56,11 +56,11 @@ export default ensureServerExtensions<Security>({
         if (req.body.includeIntraday) {
             intraday && intraday.rows.forEach((r: { high: any; low: any; open: any; price: any; time: Date }) => {
                 return res.intraday.push({
-                    high: r.high,
-                    low: r.low,
-                    open: r.open,
-                    close: r.price,
-                    time: r.time.toString()
+                    high: parseFloat(r.high),
+                    low: parseFloat(r.low),
+                    open: parseFloat(r.open),
+                    close: parseFloat(r.price),
+                    date: r.time.toString()
                 });
             })
         }
@@ -68,11 +68,11 @@ export default ensureServerExtensions<Security>({
         if (req.body.includeHistorical) {
             historical && historical.rows.forEach((r: { high: any; low: any; open: any; price: any; time: Date }) => {
                 return res.historical.push({
-                    high: r.high,
-                    low: r.low,
-                    open: r.open,
-                    close: r.price,
-                    time: r.time.toString()
+                    high: parseFloat(r.high),
+                    low: parseFloat(r.low),
+                    open: parseFloat(r.open),
+                    close: parseFloat(r.price),
+                    date: r.time.toString()
                 })
             })
         }

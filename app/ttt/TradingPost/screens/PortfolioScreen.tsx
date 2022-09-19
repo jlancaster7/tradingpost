@@ -51,7 +51,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
     const [holdings, setHoldings] = useState<AwaitedReturn<typeof Api.User.extensions.getHoldings>>();
     const [portfolio, setPortfolio] = useState<AwaitedReturn<typeof Api.User.extensions.getPortfolio>>();
     const [returns, setReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>();
-    const [twReturns, settwReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>();
+    const [twReturns, settwReturns] = useState<{x: string, y: number}[]>();
     const [portPeriod, setPortPeriod] = useState("1Y")
 
     useEffect(() => {
@@ -103,19 +103,19 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                     endDate: new Date()
                 })
                 setReturns(returns);
-                let twr: any[] = [];
-                twr.push(JSON.parse(JSON.stringify(returns[returns.length - periods[portPeriod]])));
-                
-                
-                twr[0].return = 1;
-                
-                const day = new Date(String(twr[0].date))
-                twr[0].date = new Date(day.setDate(day.getDate() - 1));
-                
+                let twr: {x: string, y: number}[] = [];
+                const day = new Date(String(returns.slice(returns.length - periods[portPeriod])[0].date))
+                twr.push({x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1})
+                //twr.push(JSON.parse(JSON.stringify(returns[returns.length - periods[portPeriod]])));
+                //twr[0].return = 1;
+                //const day = new Date(String(twr[0].date))
+                //twr[0].date = new Date(day.setDate(day.getDate() - 1));
                 returns?.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
-                    twr.push(JSON.parse(JSON.stringify(r)));
-                    twr[i+1].return = twr[i].return * (1 + r.return);
+                    twr.push({x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return)})
+                    //twr.push(JSON.parse(JSON.stringify(r)));
+                    //twr[i+1].return = twr[i].return * (1 + r.return);
                 })
+
                 settwReturns(twr);
                 
             } catch (err) {
@@ -128,21 +128,25 @@ export const PortfolioScreen = (props: TabScreenProps) => {
             return
         }
 
-        let twr: any[] = [];
-        twr.push(JSON.parse(JSON.stringify(returns[returns.length - periods[portPeriod]])));
-        twr[0].return = 1;
-        const day = new Date(String(twr[0].date))
-        twr[0].date = new Date(day.setDate(day.getDate() - 1));
+        let twr: {x: string, y: number}[] = [];
+        const day = new Date(String(returns.slice(returns.length - periods[portPeriod])[0].date))
+        twr.push({x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1})
+        //twr.push(JSON.parse(JSON.stringify(returns[returns.length - periods[portPeriod]])));
+        //twr[0].return = 1;
+        //const day = new Date(String(twr[0].date))
+        //twr[0].date = new Date(day.setDate(day.getDate() - 1));
         returns?.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
-            twr.push(JSON.parse(JSON.stringify(r)));
-            twr[i+1].return = twr[i].return * (1 + r.return);
+            twr.push({x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return)})
+            //twr.push(JSON.parse(JSON.stringify(r)));
+            //twr[i+1].return = twr[i].return * (1 + r.return);
         })
         settwReturns(twr);
         
     }, [portPeriod])
     
     let cummReturn = 0;
-    if (twReturns) cummReturn = twReturns[twReturns.length - 1].return - 1;
+    
+    if (twReturns) cummReturn = twReturns[twReturns.length - 1].y - 1;
     const { columns: watchlistItemColumns } = useWatchlistItemColumns(true)
     return <View style={[paddView]}>
         <ScrollView>
@@ -150,7 +154,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                 <Subsection title="Performance">
                     <View style={{ marginBottom: sizes.rem1 }} >
                         {/*<LineHolder data={twReturns} />*/}
-                        <InteractiveChart data={twReturns} period={portPeriod} />
+                        <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
                     </View>
                     <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
                     <View style={{ borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2 }}>
@@ -189,7 +193,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                                 return Number(item.security_id)
                             }),
                             { alias: "# Shares", stringify: (a, b, c) => String(toThousands(c.quantity)), headerStyle: {overflow: 'visible'} },
-                            { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.quantity)) },
+                            { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.price)) },
                             { alias: "$ Value", stringify: (a, b, c) => String(toDollars(c.value)) },
                             { alias: "PnL", stringify: (a, b, c) => toDollars(Number(c.value) - Number(c.cost_basis)) }
                         ]}

@@ -37,16 +37,16 @@ function InteractiveChart(props: any) {
         props = {data: [{date: String(new Date()), return: 2}, {date: String(new Date("9/1/2022")) , return: 1}]}
     }
     //console.log(props.data.map((a: any) => a.date));
-    const dateList = props.data.map((a: any) => a.date);
+    const dateList = props.data.map((a: any) => a.x);
     //const [dateList, setDateList] = useState([]);
 
 
-    const priceList = props.data.map((a: any) => a.return)
+    const priceList = props.data.map((a: any) => a.y)
     //const [priceList, setPriceList] = useState([]);
     
     const size = useRef(dateList.length);
     size.current = dateList.length;
-    console.log(size.current);
+    
     
     const [positionX, setPositionX] = useState(-1);// The currently selected X coordinate position
 
@@ -100,7 +100,7 @@ function InteractiveChart(props: any) {
         setPositionX(Number(value));
     };
 
-    const CustomGrid = ( props: {x: any, y: any, ticks: any} ) => (
+    const CustomGrid = ( props: {x: any, y: any, ticks: any, performance: Boolean} ) => (
 
         <G>
             {
@@ -113,7 +113,7 @@ function InteractiveChart(props: any) {
                         x2="100%"
                         y1={props.y(1)}
                         y2={props.y(1)}
-                        strokeWidth={0.5}
+                        strokeWidth={props.performance ? 0.5 : 0}
                         stroke="#35A265"
                         
                     />
@@ -241,25 +241,25 @@ function InteractiveChart(props: any) {
                     <LineChart
                         style={{ flex: 1 }}
                         data={priceList}
-                        curve={shape.curveNatural}
-                        //curve={shape.curveMonotoneX}
+                        //curve={shape.curveNatural}
+                        curve={shape.curveMonotoneX}
                         contentInset={{ ...verticalContentInset }}
                         svg={{ stroke: "#11146F" }}>
                         {/*<CustomLine />*/}
-                        <CustomGrid x={undefined} y={undefined} ticks={undefined} />
+                        <CustomGrid x={undefined} y={undefined} ticks={undefined} performance={props.performance} />
                         <CustomGradient />
                         <Tooltip x={undefined} y={undefined} ticks={undefined} />
                     </LineChart>
                 </View>
 
                 <YAxis
-                    style={{ width: "10%" }}
+                    style={{ width: "12%" }}
                     data={priceList}
                     contentInset={verticalContentInset}
                     svg={{ fontSize: apx(18), fill: '#617485', fontFamily: 'K2D' }}
                     numberOfTicks={5}
                     
-                    formatLabel={(value: any, index: any) => `$${value.toFixed(2)}`}
+                    formatLabel={(value: any, index: any) => `$${String(value).split('.')[0].length > 2 ? value.toFixed(1) : value.toFixed(2)}`}
                 />
             </View>
             <XAxis
@@ -269,7 +269,7 @@ function InteractiveChart(props: any) {
                     width: "100%",
                     height: apx(70),
                 }}
-                numberOfTicks={props.period === '1D' ? 1 : 3}
+                numberOfTicks={props.period === '1D' ? 1 : 5}
                 data={priceList}
                 formatLabel={(value: any, index: any) => ['1D', '1W', '1M'].includes(props.period) ? toDateDayMonth(dateList[value]) : toDateMonthYear(dateList[value])}
                 contentInset={{
