@@ -14,6 +14,7 @@ import _CommentIcon from './assets/post-feed/comment.svg'
 import _BookmarkActive from './assets/post-feed/bookmark-active.svg'
 import _BookmarkActiveBlue from './assets/post-feed/bookmark-active-blue.svg'
 import _BookmarkInactive from './assets/post-feed/bookmark.svg'
+import _Retweet from './assets/post-feed/ei_retweet.svg'
 
 // /** Side Menu Icons */
 import Account from './assets/side-menu/Account.svg'
@@ -28,6 +29,7 @@ import Watchlist from './assets/side-menu/Watchlist.svg'
 import YouTubeLogo from '@iconify/icons-logos/youtube-icon'
 import SpotifyLogo from '@iconify/icons-logos/spotify-icon'
 import TwitterLogo from '@iconify/icons-logos/twitter'
+
 import LinkedInLogo from '@iconify/icons-logos/linkedin-icon'
 import SubstackLogo from '@iconify/icons-simple-icons/substack'
 import React, {Component} from 'react'
@@ -58,6 +60,9 @@ export const SplashWelcome = makeExpoSvg(_SplashWelcome)
 export const IconBg = makeExpoSvg(_IconBg)
 export const IconNoBg = makeExpoSvg(_IconNoBg)
 export const PlusIcon = makeExpoSvg(_PlusIcon)
+
+export const Retweet = makeExpoSvg(_Retweet); 
+
 
 // IconBg,
 // IconNoBg,
@@ -118,5 +123,6 @@ export const social = {
     SubstackLogo,
     SpotifyLogo,
 }
+
 
 export const postBg = require("./assets/post-feed/flatgrad.png");

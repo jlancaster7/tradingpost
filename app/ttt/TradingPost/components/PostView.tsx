@@ -7,7 +7,7 @@ import UserLogo from '@iconify/icons-mdi/user'
 import { IconifyIcon } from './IconfiyIcon'
 import { Header, Subheader } from './Headers'
 import { PrimaryChip } from './PrimaryChip'
-import { BookmarkActive, BookmarkIcons, CommentIcon, navIcons, postBg, social, UpvoteIcon } from '../images'
+import { BookmarkActive, BookmarkIcons, CommentIcon, navIcons, postBg, social, UpvoteIcon, Retweet } from '../images'
 import { social as socialStyle } from '../style'
 import { IconButton } from './IconButton'
 //import { IPostList } from '../api/entities/interfaces'
@@ -195,10 +195,25 @@ const parseHtmlEnteties = (str: string) => {
 const PostContentView = (props: { post: Interface.IElasticPost }) => {
     const { width: windowWidth, scale } = useWindowDimensions(),
         availWidth = windowWidth - spaceOnSide
+    
     if (props.post._source.postType === 'substack') {
         return SubstackView(props)
     }
-    return <HtmlView style={{ height: postInnerHeight(props.post, availWidth) }}
-        isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}
-    >{resolvePostContent(props.post, availWidth)}</HtmlView>
+    return <View>
+        <View style={{display: (props.post._source.postType === 'tweet' && props.post._source.content.body.slice(0,2) === 'RT') ? 'flex': 'none',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginTop: 2}}>
+            <Retweet style={{ width: 30, height: 30,  }}/>
+            <Text style={{fontWeight: '500',
+                        marginLeft: 2}}>
+                {'Retweet'}
+            </Text>
+        </View>
+        <HtmlView style={{ height: postInnerHeight(props.post, availWidth), marginTop: props.post._source.postType === 'spotify' ? 8 : 0}}
+            isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}>
+                {resolvePostContent(props.post, availWidth)}
+        </HtmlView>
+    </View> 
+    
 }
