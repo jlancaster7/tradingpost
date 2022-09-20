@@ -222,8 +222,8 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                     style={{
                         width: "50%", marginVertical: ButtonMargin,
                         marginLeft: "auto", marginRight: collapsed ? sizes.rem1 : "auto",
-                        backgroundColor: user.subscription.is_subscribed ? '#D81222' : '#35A265',
-                        borderColor: user.subscription.is_subscribed ? '#D81222' : '#35A265',
+                        backgroundColor: user.subscription.is_subscribed ? '#EC5328' : '#35A265',
+                        borderColor: user.subscription.is_subscribed ? '#EC5328' : '#35A265',
                     }}
                     {...(() => {
                         let children: string;
@@ -284,6 +284,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                         marginHorizontal: 10
                     }}
                     style={{ width: "100%", marginHorizontal: 0 }}
+                    key={"tabbar"}
                     selectedIndex={tab}
                     onSelect={t => {
                         if (collapsed)

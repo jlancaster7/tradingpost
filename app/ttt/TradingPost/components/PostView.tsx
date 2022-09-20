@@ -181,9 +181,15 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
                 {<Subheader text={post._source.content.title || ""} style={{ display: "flex", color: "black", fontSize: fonts.medium, fontWeight:"600", fontFamily: "K2D", maxWidth: "85%" }}></Subheader> }
             </Pressable>
         </View>
-        {<Text key="content" style={{ fontSize: fonts.small }}>{post._source.content.description}</Text> }
+        {<Text key="content" style={{ fontSize: fonts.small }}>{parseHtmlEnteties(post._source.content.description)}</Text> }
         {<Text key="date" style={{ fontSize: fonts.xSmall, fontFamily: "K2D", paddingVertical: 5 }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString()}</Text> }
     </View>
+}
+const parseHtmlEnteties = (str: string) => {
+    return str.replace(/&#([0-9]{1,4});/gi, function(match, numStr) {
+        var num = parseInt(numStr, 10); // read num as normal number
+        return String.fromCharCode(num);
+    });
 }
 
 const PostContentView = (props: { post: Interface.IElasticPost }) => {
