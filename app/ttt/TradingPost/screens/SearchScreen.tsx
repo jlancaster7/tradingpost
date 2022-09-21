@@ -1,4 +1,4 @@
-import { NavigationProp } from "@react-navigation/native";
+import {NavigationProp} from "@react-navigation/native";
 import { Api, Interface } from "@tradingpost/common/api";
 import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
@@ -9,7 +9,6 @@ import { SearchBar } from "../components/SearchBar";
 import { ElevatedSection } from "../components/Section";
 import { sizes } from "../style";
 import { FeedPart } from "./FeedScreen";
-import { Text } from '@ui-kitten/components'
 
 
 export const SearchScreen = (props: { navigation: NavigationProp<any> } & { route: { params: {} } }) => {
@@ -47,8 +46,9 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
             <ButtonGroup
                 style={{ margin: sizes.rem1, width: "auto" }}
                 unselectedStyle={{
-                    backgroundColor: "#777",
+                    backgroundColor: "#35A265",
                 }}
+                
                 value={searchType}
                 onValueChange={(value) => {
                     setSearchType(value);

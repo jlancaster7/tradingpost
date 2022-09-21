@@ -73,13 +73,15 @@ export function ProfileBanner<T extends boolean>(props: { subscriberCount: numbe
         </Pressable>
         {!collapse && <View key="uncollapseFoot" style={[row, { width: "100%", alignSelf: "stretch", height: actionPanelSize, backgroundColor: "white", alignContent: "center", alignItems: "center" }]}>
             <Text style={[flex, {
+                maxWidth: '48%', // some weird ness here where the  social bar/ this container is weider than the screen so creating a horizontial scroll bar
                 textAlign: "center", transform: [{
-                    translateX: - profileImageSize / 4
+                    translateX: - profileImageSize / 4,
                 }]
             }]} >Subscribers {props.subscriberCount || "-"}</Text>
             <View style={[row, flex, {
                 justifyContent: "center",
                 height: sizes.rem1_5,
+                maxWidth: '50%',
                 transform: [{
                     translateX: profileImageSize / 4
                 }]

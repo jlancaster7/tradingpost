@@ -90,9 +90,9 @@ class XAxis extends PureComponent {
                             style={{
                                 position: 'absolute',
                                 top: 0,
-                                left: -5,
+                                left: 0,
                                 height: height,
-                                width: width * 1.05,
+                                width: width,
                             }}
                         >
                             <G>
@@ -113,8 +113,8 @@ class XAxis extends PureComponent {
                                                 {...svg}
                                                 {...valueSvg}
                                                 key={index}
-                                                y={7}
-                                                x={x(value) + 7}
+                                                y={0}
+                                                x={x(value)}
                                                 
                                             >
                                                 {formatLabel(value, index)}

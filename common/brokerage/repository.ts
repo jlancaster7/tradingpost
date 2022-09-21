@@ -1961,12 +1961,13 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             holdingPeriodReturns.push({
                 id: parseInt(d.id),
                 accountGroupId: parseInt(d.account_group_id),
-                date: d.date,
+                date: DateTime.fromJSDate(d.date),
                 return: parseFloat(d.return),
-                created_at: d.created_at,
-                updated_at: d.updated_at
+                created_at: DateTime.fromJSDate(d.created_at),
+                updated_at: DateTime.fromJSDate(d.updated_at)
             })
         }
+
         return holdingPeriodReturns;
     }
 

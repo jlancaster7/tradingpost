@@ -59,10 +59,7 @@ var startApiServer = function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                console.log("HIIIIIII");
-                _a.label = 1;
-            case 1:
-                if (!true) return [3 /*break*/, 3];
+                if (!true) return [3 /*break*/, 2];
                 return [4 /*yield*/, (function () { return __awaiter(_this, void 0, void 0, function () {
                         var _this = this;
                         return __generator(this, function (_a) {
@@ -107,10 +104,10 @@ var startApiServer = function () {
                             }
                         });
                     }); })()];
-            case 2:
+            case 1:
                 _a.sent();
-                return [3 /*break*/, 1];
-            case 3: return [2 /*return*/];
+                return [3 /*break*/, 0];
+            case 2: return [2 /*return*/];
         }
     });
 }();

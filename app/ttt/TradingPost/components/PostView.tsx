@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, Image, ImageBackground, PixelRatio, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, ImageBackground, Linking, PixelRatio, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Button, Icon } from '@ui-kitten/components'
 
 import { flex, fonts, row, shadow, sizes } from '../style'
@@ -7,7 +7,7 @@ import UserLogo from '@iconify/icons-mdi/user'
 import { IconifyIcon } from './IconfiyIcon'
 import { Header, Subheader } from './Headers'
 import { PrimaryChip } from './PrimaryChip'
-import { BookmarkActive, BookmarkIcons, CommentIcon, navIcons, postBg, social, UpvoteIcon } from '../images'
+import { BookmarkActive, BookmarkIcons, CommentIcon, navIcons, postBg, social, UpvoteIcon, Retweet } from '../images'
 import { social as socialStyle } from '../style'
 import { IconButton } from './IconButton'
 //import { IPostList } from '../api/entities/interfaces'
@@ -150,7 +150,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                                 setShowStatus(true);
                             Api.Post.extensions.setUpvoted({
                                 id: post._id,
-                                is_upvoted: !isUpvoted
+                                is_upvoted: !isUpvoted // return number of upvotes. 
                             }).then((r) => {
                                 if (r.is_upvoted)
                                     setTimeout(() => {
@@ -170,35 +170,50 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
 
 const SubstackView = (props: { post: Interface.IElasticPost }) => {
     const { post } = props;
-    return <View style={{ marginVertical: sizes.rem1, marginHorizontal: sizes.rem0_5 }}>
-        <View key="profile" style={{ display: "flex", flexDirection: "row", marginBottom: sizes.rem1, }}>
+    return <View style={{ marginVertical: sizes.rem1, marginHorizontal: sizes.rem0_5}}>
+        <View key="profile" >
             {/* <Image style={{ aspectRatio: 0.9, marginRight: sizes.rem1 / 2 }} source={{ uri: post.platform_profile_url }} /> */}
-            {/* <a href={post._source.postUrl} style={{ display: "flex", flexDirection: "row", textDecoration: "none" }}>
-                <IconifyIcon style={{ width: 30, height: 30, marginTop: 2, marginRight: sizes.rem1 / 1.5 }} svgProps={{ style: { margin: "auto" } }} icon={social.SubstackLogo} currentColor={socialStyle.substackColor} />
-                {<Subheader text={post._source.content.title || ""} style={{ color: "black", fontSize: fonts.medium, fontWeight: "600", fontFamily: "K2D" }}></Subheader>}
-            </a> */}
-            {/* <View style={{}}>
-                <Text style={{ fontSize: fonts.small, 
-                    fontFamily: "K2D", 
-                    fontWeight: "bold", textAlignVertical: "center" }}>
-                </Text>
-            </View> */}
-
+            <Pressable onPress={()=>{
+                Linking.openURL(post._source.postUrl)
+            }}
+                style={{ marginBottom: sizes.rem1, display: "flex", flexDirection: "row"}}>
+                <IconifyIcon style={{ width: 30, height: 30, marginTop: 2, marginRight: sizes.rem1 / 1.5 }} svgProps={{ style: { margin: "auto" } }} icon={social.SubstackLogo} currentColor={socialStyle.substackColor}  />
+                {<Subheader text={post._source.content.title || ""} style={{ display: "flex", color: "black", fontSize: fonts.medium, fontWeight:"600", fontFamily: "K2D", maxWidth: "85%" }}></Subheader> }
+            </Pressable>
         </View>
-        {<Text key="content" style={{ fontSize: fonts.small }}>{post._source.content.description}</Text>}
-        {<Text key="date" style={{ fontSize: fonts.xSmall, 
-            //fontFamily: "K2D", 
-            paddingVertical: 5 }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString()}</Text>}
+        {<Text key="content" style={{ fontSize: fonts.small }}>{parseHtmlEnteties(post._source.content.description)}</Text> }
+        {<Text key="date" style={{ fontSize: fonts.xSmall, fontFamily: "K2D", paddingVertical: 5 }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString()}</Text> }
     </View>
+}
+const parseHtmlEnteties = (str: string) => {
+    return str.replace(/&#([0-9]{1,4});/gi, function(match, numStr) {
+        var num = parseInt(numStr, 10); // read num as normal number
+        return String.fromCharCode(num);
+    });
 }
 
 const PostContentView = (props: { post: Interface.IElasticPost }) => {
     const { width: windowWidth, scale } = useWindowDimensions(),
         availWidth = windowWidth - spaceOnSide
+    
     if (props.post._source.postType === 'substack') {
         return SubstackView(props)
     }
-    return <HtmlView style={{ height: postInnerHeight(props.post, availWidth) }}
-        isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}
-    >{resolvePostContent(props.post, availWidth)}</HtmlView>
+    return <View>
+        <View style={{display: (props.post._source.postType === 'tweet' && props.post._source.content.body.slice(0,2) === 'RT') ? 'flex': 'none',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginTop: 2}}>
+            <Retweet style={{ width: 30, height: 30,  }}/>
+            <Text style={{fontWeight: '500',
+                        marginLeft: 2}}>
+                {'Retweet'}
+            </Text>
+        </View>
+        <HtmlView style={{ height: postInnerHeight(props.post, availWidth), marginTop: props.post._source.postType === 'spotify' ? 8 : 0}}
+            isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}>
+                {resolvePostContent(props.post, availWidth)}
+        </HtmlView>
+    </View> 
+    
 }

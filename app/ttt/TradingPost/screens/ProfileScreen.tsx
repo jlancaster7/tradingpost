@@ -25,6 +25,8 @@ import { AppColors } from "../constants/Colors";
 import { useMakeSecurityFields } from "./WatchlistViewerScreen";
 import { PrimaryChip } from "../components/PrimaryChip";
 import { useAppUser } from "../Authentication";
+import InteractiveChart from "../components/InteractiveGraph";
+import { ButtonGroup } from "../components/ButtonGroup";
 //import { screens } from "../navigationComponents";
 //import { getUser } from "../apis/UserApi";
 
@@ -41,7 +43,7 @@ const collapseShift = 2 * ButtonMargin;
 
 export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
     const userId = props.route?.params?.userId;
-
+    const [portPeriod, setPortPeriod] = useState("1Y")  
 
     const [user, setUser] = useState<IUserGet>(),
         [watchlists, setWatchlists] = useState<AwaitedReturn<typeof Api.User.extensions.getWatchlists>>(),
@@ -111,7 +113,12 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                     />
                 </ProfilePage>,
                 <ProfilePage index={1} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
-                    <PieHolder />
+                     <ElevatedSection title="Performance">
+                    <View style={{ marginBottom: sizes.rem1 }} >
+                        <InteractiveChart performance={true}/>
+                    </View>
+                    <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
+                    </ElevatedSection>
                     <ElevatedSection title="Holdings">
                     </ElevatedSection>
                     <WatchlistSection title="Watchlists" watchlists={watchlists} />
@@ -218,7 +225,9 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                 {appUser && user && <SecondaryButton
                     style={{
                         width: "50%", marginVertical: ButtonMargin,
-                        marginLeft: "auto", marginRight: collapsed ? sizes.rem1 : "auto"
+                        marginLeft: "auto", marginRight: collapsed ? sizes.rem1 : "auto",
+                        backgroundColor: user.subscription.is_subscribed ? '#EC5328' : '#35A265',
+                        borderColor: user.subscription.is_subscribed ? '#EC5328' : '#35A265',
                     }}
                     {...(() => {
                         let children: string;
@@ -238,6 +247,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                             }
                             else {
                                 children = 'Subscribed',
+                                
                                     onPress = async () => {
                                         //Todo:: make this an are you sure
                                         await Api.Subscriber.extensions.removeSubscription({
@@ -245,6 +255,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                                         });
                                         setUser(undefined);
                                     }
+                                    
                             }
 
                         }
@@ -273,9 +284,11 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
             <ElevatedSection title="" style={{ marginHorizontal: sizes.rem1, marginTop: tabBarMargin }} >
                 <TabBar
                     indicatorStyle={{
-                        marginTop: 26
+                        marginTop: 26,
+                        marginHorizontal: 10
                     }}
-                    style={{ width: "100%" }}
+                    style={{ width: "100%", marginHorizontal: 0 }}
+                    key={"tabbar"}
                     selectedIndex={tab}
                     onSelect={t => {
                         if (collapsed)

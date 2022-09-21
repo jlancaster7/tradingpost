@@ -68,41 +68,25 @@ export interface ISubscriberList {
     subscription_id: number;
     user_id: string;
     start_date: unknown;
-    due_date?: unknown;
+    due_date: unknown;
     months_subscribed: string;
     payment_source: string;
     id: number;
-    subscription: ISubscriptionGet[];
-    user: IUserList[];
 }
 export interface ISubscriberGet {
     id: number;
     subscription_id: number;
     start_date: unknown;
     user_id: string;
-    due_date?: unknown;
+    due_date: unknown;
     payment_source: string;
     months_subscribed: string;
-    subscription: ISubscriptionGet[];
-    user: IUserList[];
-}
-export interface ISubscriberInsert {
-    subscription_id: number;
-    user_id: string;
-    start_date: unknown;
-}
-export interface ISubscriberUpdate {
-    id?: number;
-    subscription_id?: number;
-    user_id?: string;
-    start_date?: unknown;
 }
 export interface ISubscriptionList {
     id: number;
     user_id: string;
     name: string;
     cost: number;
-    user: IUserList[];
 }
 export interface ISubscriptionGet {
     id: number;
@@ -110,20 +94,6 @@ export interface ISubscriptionGet {
     cost: number;
     name: string;
     user_id: string;
-    user: IUserList[];
-}
-export interface ISubscriptionInsert {
-    name: string;
-    settings?: any;
-    cost: number;
-    user_id: string;
-}
-export interface ISubscriptionUpdate {
-    name?: string;
-    settings?: any;
-    id?: number;
-    cost?: number;
-    user_id?: string;
 }
 export interface ITradeList {
 }
@@ -178,7 +148,6 @@ export interface IUserUpdate {
     last_name?: string;
     analyst_profile?: Statics.IAnalystProfile;
     has_profile_pic?: boolean;
-    profile_url?: string;
 }
 export interface IWatchlistList {
     id: number;
@@ -234,4 +203,34 @@ export interface IWatchlistSavedList {
 }
 export interface IWatchlistSavedGet {
 }
+export interface ISecurityPrices {
+    historical: {
+        high: number;
+        low: number;
+        open: number;
+        close: number;
+        date: string;
+    }[];
+    intraday: {
+        high: number;
+        low: number;
+        open: number;
+        close: number;
+        date: string;
+    }[];
+}
+export declare type ListAlertsResponse = {
+    id: number;
+    type: string;
+    dateTime: string;
+    data: Record<string, any>;
+};
+export declare type ListTradesResponse = {
+    id: number;
+    dateTime: string;
+    price: string;
+    type: string;
+    handle: string;
+    symbol: string;
+};
 export * from '../static/interfaces';
