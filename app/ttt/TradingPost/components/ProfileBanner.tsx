@@ -47,7 +47,7 @@ const viewStyle: ViewStyle = {
 
 type ImageResultCallback = (a: any, b: any) => void;
 
-export function ProfileBanner<T extends boolean>(props: { profilePic: string | undefined, bannerPic: string | undefined, editMode?: T, collapse?: boolean, extraMarginTop?: number, navigator: NavigationProp<any>, platforms: string[] } &
+export function ProfileBanner<T extends boolean>(props: { subscriberCount: number | undefined, profilePic: string | undefined, bannerPic: string | undefined, editMode?: T, collapse?: boolean, extraMarginTop?: number, navigator: NavigationProp<any>, platforms: string[] } &
     (T extends true ? {
         onBannerPicked: ImageResultCallback,
         onProfilePicked: ImageResultCallback
@@ -76,7 +76,7 @@ export function ProfileBanner<T extends boolean>(props: { profilePic: string | u
                 textAlign: "center", transform: [{
                     translateX: - profileImageSize / 4
                 }]
-            }]} >Subscribers {0}</Text>
+            }]} >Subscribers {props.subscriberCount || "-"}</Text>
             <View style={[row, flex, {
                 justifyContent: "center",
                 height: sizes.rem1_5,

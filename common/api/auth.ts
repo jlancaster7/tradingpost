@@ -1,10 +1,11 @@
 import { pbkdf2Sync, randomBytes } from 'crypto'
-import { execProc, execProcOne } from '../db'
+import { execProc, execProcOne, getHivePool } from '../db'
 import { LoginResult } from './entities/static/AuthApi'
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { DefaultConfig } from '../configuration';
 import { PublicError } from './entities/static/EntityApiBase';
-
+import UserApi from './entities/apis/UserApi'
+import { sendByTemplate } from '../sendGrid';
 
 export const hashPass = (pass: string, salt: string) => {
     return salt + pbkdf2Sync(pass, Buffer.from(salt), 100000, 128, 'sha512').toString("base64");
@@ -104,4 +105,46 @@ export const createUser = async (data: {
         token: await makeUserToken(newUser.user_id),
         user_id: newUser.user_id
     } as LoginResult
+}
+
+export const forgotPassword = async (email: string) => {
+    //generate reset token 
+    const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
+
+    const [user] = await execProc<LoginResult>("tp.api_local_login_get", { data: { email } });
+
+    if (user) {
+
+        //TODO: make this token expire faster and attach this to a code ( to prevent multiple tokens from working)
+        const token = jwt.sign({ resetUserId: user.user_id }, await DefaultConfig.fromCacheOrSSM("authkey"));
+        await sendByTemplate({
+            to: email,
+            templateId: "d-f232bafc8eb04bd99986991c71ab15cd",
+            dynamicTemplateData: {
+                Weblink: (process.env.WEBLINK_BASE_URL || "https://app.tradingpostapp.com") + `/resetpassword?token=${token}`
+            }
+        })
+    }
+}
+
+export const resetPassword = async (email: string, tokenOrPass: string, isPass: boolean, newPassword: string) => {
+    let userId = null;
+    if (isPass) {
+        const result = await loginPass(email, tokenOrPass, '');
+        userId = result.user_id;
+    }
+    else {
+        const data = jwt.verify(tokenOrPass, await DefaultConfig.fromCacheOrSSM("authkey")) as jwt.JwtPayload;
+        console.log(data);
+        userId = data.resetUserId;
+    }
+
+
+    var byteBuf = randomBytes(30),
+        salt = byteBuf.toString('base64'),
+        hash = hashPass(newPassword, salt);
+
+    (await getHivePool).query("UPDATE tp.local_login set hash=$1 where user_id=$2", [hash, userId])
+    
+    return {};
 }

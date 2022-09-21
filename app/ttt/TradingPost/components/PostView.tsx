@@ -160,7 +160,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                             });
                         }}
                         accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{ height: 24, width: 24, opacity: isUpvoted ? 1 : 0.25 }} />} appearance={"ghost"} >{
-                            isUpvoted ? "1" : " "
+                            
                         }</Button>}
                 </View>}
         </View>

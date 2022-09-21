@@ -1,3 +1,4 @@
+import { NavigationProp } from "@react-navigation/native";
 import { Api } from "@tradingpost/common/api";
 import { ISubscriberList } from "@tradingpost/common/api/entities/interfaces";
 import { Text, Tab, TabView, Avatar } from "@ui-kitten/components";
@@ -167,9 +168,21 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
 }
 
 export const SubscriptionSettingsScreen = (props: TabScreenProps) => {
+
+
+    return <View style={paddView}>
+        <SubscriptionSettingsView navigation={props.navigation} />
+    </View>
+}
+
+export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<any>, submitRef?: React.MutableRefObject<{ submit: () => Promise<void> }> }) => {
+
     const call = Api.Subscription.extensions.getByUserId;
     const subscription = useReadonlyEntity<AwaitedReturn<typeof call>>(null)
     const toast = useToast();
+
+
+
 
     useEffect(() => {
         (async () => {
@@ -182,40 +195,42 @@ export const SubscriptionSettingsScreen = (props: TabScreenProps) => {
         })()
     }, [])
 
-    return <View style={paddView}>
-        <ElevatedSection title="Primary Subscription">
-            <Picker
-                style={{ marginBottom: sizes.rem1 }}
-                value={subscription?.data?.cost || 0}
-                onSelect={(item) => {
-                    subscription.update({
-                        cost: item.row ? Math.pow(5, item.row) : 0
-                    })
-                }}
-                items={[...Array.from({ length: 10 }).map((v, i) => {
-                    const cost = i ? Math.pow(5, i) : 0;
-                    return {
-                        label: cost ? `${cost}/month` : "Free",
-                        value: cost
-                    }
-                })]}
-            />
-            {/* Codes will go here   */}
-            <PrimaryButton disabled={!subscription.hasChanged} onPress={async () => {
-                if (subscription.data?.id) {
-                    Api.Subscription.update(subscription.data.id, {
-                        cost: subscription?.data?.cost || 0
-                    })
+    const submit = async () => {
+        if (subscription.data?.id) {
+            await Api.Subscription.update(subscription.data.id, {
+                cost: subscription?.data?.cost || 0
+            })
+        }
+        else {
+            await Api.Subscription.insert({
+                name: "Basic Subscription",
+                cost: subscription?.data?.cost || 0,
+                user_id: ''
+            })
+        }
+        props.navigation?.goBack();
+    };
+    if (props.submitRef)
+        props.submitRef.current.submit = submit;
+
+    return <ElevatedSection title="Primary Subscription">
+        <Picker
+            style={{ marginBottom: sizes.rem1 }}
+            value={subscription?.data?.cost || 0}
+            onSelect={(item) => {
+                subscription.update({
+                    cost: item.row ? Math.pow(5, item.row) : 0
+                })
+            }}
+            items={[...Array.from({ length: 10 }).map((v, i) => {
+                const cost = i ? Math.pow(5, i) : 0;
+                return {
+                    label: cost ? `${cost}/month` : "Free",
+                    value: cost
                 }
-                else {
-                    Api.Subscription.insert({
-                        name: "Basic Subscription",
-                        cost: subscription?.data?.cost || 0,
-                        user_id: ''
-                    })
-                }
-                props.navigation.goBack();
-            }} >Apply</PrimaryButton>
-        </ElevatedSection>
-    </View>
+            })]}
+        />
+        {/* Codes will go here   */}
+        {!props.submitRef?.current && <PrimaryButton disabled={!subscription.hasChanged} onPress={submit} >Apply</PrimaryButton>}
+    </ElevatedSection>
 }

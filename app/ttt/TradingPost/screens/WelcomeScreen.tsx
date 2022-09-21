@@ -101,9 +101,6 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         return () => clearInterval(cleanUp.current);
     }, [])
 
-
-
-
     const
         userRef = useRef<ITextField>(null),
         passRef = useRef<ITextField>(null),
@@ -112,12 +109,13 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         [loggingIn, setLoggingIn] = useState(false),
         //{ isKeyboardVisible } = useIsKeyboardVisible(),
         //{ toastMessage, toastProps } = useToast(),
-        [resetMode, setResetMode] = useState(false),
+        //[resetMode, setResetMode] = useState(false),
         intervalRef = useRef<any>(),
         opacityAnim = useRef(new Animated.Value(0)).current,
         toast = useToast(),
         { appUser, signIn, authToken, loginResult } = useAppUser(),
-        { value: hasAuthed } = useData("hasAuthed")
+        { value: hasAuthed } = useData("hasAuthed"),
+        [recoverEmail, setRecoverEmail] = useState<string>()
 
     const linkTo = useLinkTo<any>();
     useLayoutEffect(() => {
@@ -219,8 +217,20 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                         //errorMessage="Invalid Password"
                         //validateOnChange
                         secureTextEntry textInputRef={passRef} />
-                    <Link style={{ paddingTop: 4, paddingBottom: 16, alignSelf: "flex-end" }} onPress={() => setResetMode(true)}>Forgot Password?</Link>
+                    <Link style={{ paddingTop: 4, paddingBottom: 16, alignSelf: "flex-end" }} onPress={() => {
+                        //setResetMode(true);
+                        setSelectedIndex(2)
+
+                    }}>Forgot Password?</Link>
                 </Section>
+            </Tab>
+            <Tab>
+                <View>
+                    <Text>Please enter your email address to </Text>
+                    <TextField value={recoverEmail} placeholder="Email Address" onChangeText={(t) => {
+                        setRecoverEmail(t);
+                    }} />
+                </View>
             </Tab>
         </TabView>
 
@@ -273,7 +283,7 @@ const WTF_View = (props: {
     onReady: (item: any) => void
 
 }) => {
-    return <View style={{ width:"100%", aspectRatio:1.5 }}>
+    return <View style={{ width: "100%", aspectRatio: 1.5 }}>
         <SplashWelcome
             onReady={props.onReady}
         />

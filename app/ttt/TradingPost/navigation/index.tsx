@@ -60,6 +60,9 @@ import { PostScreen } from '../screens/PostScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppUser } from '../Authentication';
 import { SubscriptionScreen, SubscriptionSettingsScreen } from '../screens/SubscriptionScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { ChangePasswordScreen } from '../screens/ChangePasswordScreen';
+import { VerificationScreen } from '../screens/VerificationScreen';
 
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
@@ -88,7 +91,9 @@ export type AllPages = UndefinedProxy<"Launch" | "Create" | "Login" | "Dash" | "
   "PostScreen": Parameters<(typeof PostScreen)>["0"]["route"]["params"],
   "Profile": Parameters<(typeof ProfileScreen)>["0"]["route"]["params"],
   "Subscription": undefined,
-  "SubscriptionSettings": undefined
+  "SubscriptionSettings": undefined,
+  "VerifyAccount": undefined,
+  "ResetPassword": undefined
 }
 
 const Drawer = createDrawerNavigator();
@@ -105,13 +110,16 @@ const HeaderTp = () => {
   </SvgExpo>
 }
 
-export type DashScreenProps = {
-  appUser: IUserGet
+export type DashScreenProps<T = never> = {
+  appUser: IUserGet,
+  navigation: NavigationProp<any>
+  route: T extends never ? undefined : {
+    params: T
+  }
 }
 
-export type TabScreenProps<T = never> = DashScreenProps & {
-  navigation: NavigationProp<AllPages>,
-  route: T extends never ? undefined : { params: T }
+export type TabScreenProps<T = never> = DashScreenProps<T> & {
+  navigation: NavigationProp<AllPages>
 }
 
 function DrawerPart() {
@@ -135,7 +143,6 @@ function DrawerPart() {
         switch (routeName) {
           case "Feed":
             return () => {
-
               const state = useNavigationState((state) => {
                 return (((state.routes[0]?.state?.routes as any[])?.find(r => r.name === "Feed").params as any)?.bookmarkedOnly || "false") as "true" | "false"
               });
@@ -172,7 +179,11 @@ function DrawerPart() {
 }
 
 function RootNavigator() {
-  return <Stack.Navigator screenOptions={{ headerTitle: () => <AppTitle style={{ marginTop: sizes.rem0_5, height: "100%", aspectRatio: 4 }} />, headerTitleAlign: "center", headerBackVisible: false }}>
+  return <Stack.Navigator screenOptions={{
+    headerTitle: () => <AppTitle height={"100%"} style={{ marginTop: sizes.rem0_5, height: sizes.rem2, aspectRatio: 5.77 }} />,
+
+    headerTitleAlign: "center", headerBackVisible: false
+  }}>
     <Stack.Screen name="Root" component={WelcomeScreen} options={{ headerShown: false }} />
     <Stack.Screen name="Create" component={CreateAccountScreen} options={{ headerShown: false, headerBackVisible: false }} />
     <Stack.Screen name="Dash" component={DrawerPart} options={{ headerShown: false }} />
@@ -180,6 +191,8 @@ function RootNavigator() {
     <Stack.Group screenOptions={{ presentation: 'modal' }}>
       <Stack.Screen name="Modal" component={ModalScreen} />
       <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+      <Stack.Screen name="ResetPassword" component={ChangePasswordScreen} />
+      <Stack.Screen name="VerifyAccount" component={VerificationScreen} />
       <Stack.Screen name="SubscriptionSettings" component={SubscriptionSettingsScreen} />
       <Stack.Screen name="WatchlistEditor" component={WatchlistEditorScreen} />
       <Stack.Screen name="PostScreen" component={PostScreen} />

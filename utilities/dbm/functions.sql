@@ -332,7 +332,7 @@ return query SELECT * FROM public.view_subscription_get(request) as v WHERE v."i
   
     CREATE OR REPLACE FUNCTION public.api_user_update(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"is_subscribed" boolean,"subscription" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -351,7 +351,7 @@ return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (re
   
     CREATE OR REPLACE FUNCTION public.api_user_get(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"is_subscribed" boolean,"subscription" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     

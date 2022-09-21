@@ -14,7 +14,7 @@ import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators
 import { CreateAccountProps, sideMargin, useChangeLock } from "./shared";
 
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
-import { ProfileBanner } from "../../components/ProfileBanner";
+
 import { Label } from "../../components/Label";
 import { TBI } from "../../utils/misc";
 import { AppColors } from "../../constants/Colors";
