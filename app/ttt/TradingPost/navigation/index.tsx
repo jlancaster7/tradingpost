@@ -23,7 +23,7 @@ import {SideMenu} from '../components/SideMenu';
 import * as React from 'react';
 import {useEffect} from 'react';
 
-import {Text, ImageBackground, Image, ColorSchemeName, Pressable, View} from 'react-native';
+import {Text, ImageBackground, Image, ColorSchemeName, Pressable, View, Platform} from 'react-native';
 
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
@@ -178,7 +178,9 @@ function DrawerPart() {
 
 function RootNavigator() {
     return <Stack.Navigator screenOptions={{
-        headerTitle: () => <AppTitle style={{marginTop: sizes.rem0_5, height: "100%", aspectRatio: 4}}/>,
+        headerTitle: () => <AppTitle style={{
+            marginTop: sizes.rem0_5, height: "100%", aspectRatio: 4, ...Platform.select({ios: {width: '80%', aspectRatio: 8}})
+        }}/>,
         headerTitleAlign: "center",
         headerBackVisible: false
     }}>

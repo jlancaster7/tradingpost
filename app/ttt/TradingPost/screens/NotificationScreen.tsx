@@ -11,11 +11,11 @@ import {NavigationProp, useNavigation} from "@react-navigation/native";
 
 export const NotificationScreen = () => {
     return <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
-        <ScrollView>
+        <View>
             <Layout style={{
                 backgroundColor: "#ffffff",
-                paddingBottom: '2px',
-                paddingTop: '2px',
+                paddingBottom: '2%',
+                paddingTop: '2%',
                 borderBottomColor: '#11146F',
                 borderStyle: 'solid',
                 borderBottomWidth: 2,
@@ -76,7 +76,7 @@ export const NotificationScreen = () => {
                 noDataMessage={"No Notifications Available"}
                 loadingItem={" "}
             />
-        </ScrollView>
+        </View>
     </View>
 }
 
@@ -103,12 +103,12 @@ const NewTradeNotification = (props: { response: ListAlertsResponse }): JSX.Elem
 
     return <NotificationTab>
         <Pressable onPress={openTrades}>
-            <View style={{flex: 1}}>
+            <View style={{flex: 1, flexWrap: 'wrap'}}>
                 <View style={{flexDirection: 'row'}}>
                     <Text style={{marginRight: 10}}>
                         {dtFmt}
                     </Text>
-                    <Text>
+                    <Text style={{flex: 1, flexWrap: 'wrap'}}>
                         {props.response.data.message} <Text style={{fontWeight: 'bold'}}>Click to learn more.</Text>
                     </Text>
                 </View>
