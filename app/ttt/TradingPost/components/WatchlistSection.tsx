@@ -14,12 +14,11 @@ import { ITableColumn, Table } from "./Table"
 export function WatchlistSection(props: { title: string, watchlists: Interface.IWatchlistList[] | undefined, showAddButton?: boolean, shared?: boolean, hideNoteOnEmpty?: boolean }) {
     const nav = useNavigation<any>();
 
-
     const fields: ITableColumn<IWatchlistList>[] = !props.shared ?
         [{ field: "name", alias: "Name", align: "left" },
         { field: "item_count", alias: "Items" },
         { field: "saved_by_count", alias: "Saves" },
-        { field: "type" }] :
+        { field: "type", alias: "Type" }] :
 
         [{ field: "name", alias: "Name", align: "left" },
         {

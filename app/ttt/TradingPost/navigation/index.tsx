@@ -55,7 +55,8 @@ import {IconButton} from '../components/IconButton';
 import {OverlayScreen} from '../screens/OverlayScreen';
 import {CompanyScreen} from '../screens/CompanyScreen';
 import {PostEditorScreen} from '../screens/PostEditorScreen';
-import {NotificationsScreen} from "../screens/NotificationsScreen";
+import {NotificationScreen} from "../screens/NotificationScreen";
+import {NotificationTradeScreen} from "../screens/NotificationTradeScreen";
 import {WatchlistViewerScreen} from '../screens/WatchlistViewerScreen';
 import {PostScreen} from '../screens/PostScreen';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
@@ -91,7 +92,8 @@ export type AllPages =
     "PostScreen": Parameters<(typeof PostScreen)>["0"]["route"]["params"],
     "Profile": Parameters<(typeof ProfileScreen)>["0"]["route"]["params"],
     "Subscription": undefined,
-    "SubscriptionSettings": undefined
+    "SubscriptionSettings": undefined,
+    "NotificationTrade": Parameters<typeof NotificationTradeScreen>["0"]["route"]["params"]
 }
 
 const Drawer = createDrawerNavigator();
@@ -211,6 +213,7 @@ function RootNavigator() {
                     //marginTop: -64
                 }
             }} component={OverlayScreen}/>
+            <Stack.Screen name="NotificationTrade" component={NotificationTradeScreen}/>
         </Stack.Group>
         <Stack.Group screenOptions={{
             presentation: "modal",
@@ -247,7 +250,7 @@ const DashComponents: Partial<Record<keyof typeof navIcons, { c: React.Component
         c: SearchScreen,
     },
     Notification: {
-        c: NotificationsScreen,
+        c: NotificationScreen,
     }
 }
 

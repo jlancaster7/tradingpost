@@ -207,4 +207,18 @@ export interface ISecurityPrices {
         date: string;
     }[];
 }
+export declare type ListAlertsResponse = {
+    id: number;
+    type: string;
+    dateTime: string;
+    data: Record<string, any>;
+};
+export declare type ListTradesResponse = {
+    id: number;
+    dateTime: string;
+    price: string;
+    type: string;
+    handle: string;
+    symbol: string;
+};
 export * from '../static/interfaces';

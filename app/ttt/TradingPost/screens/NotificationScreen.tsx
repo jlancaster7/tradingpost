@@ -1,28 +1,15 @@
 import React from "react";
-import {Pressable, useWindowDimensions} from "react-native";
+import {Pressable} from "react-native";
 import {ScrollView, View} from "react-native";
 import {Layout, Text} from '@ui-kitten/components';
 import {List} from "../components/List";
 import {flex, fonts, sizes} from "../style";
 import {Api} from '@tradingpost/common/api';
-import {ListAlertsResponse} from "@tradingpost/common/api/entities/extensions/Notification";
+import {ListAlertsResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
 import {NavigationProp, useNavigation} from "@react-navigation/native";
-import {createNativeStackNavigator} from "@react-navigation/native-stack";
-import {NotificationTradeScreen} from "./NotificationTradeScreen";
 
-const Stack = createNativeStackNavigator();
-
-export const NotificationsScreen = () => {
-    return (
-        <Stack.Navigator screenOptions={{headerShown: false}}>
-            <Stack.Screen name={"Root"} component={NotificationView}/>
-            <Stack.Screen name={"NotificationTrade"} component={NotificationTradeScreen}/>
-        </Stack.Navigator>
-    )
-}
-
-const NotificationView = () => {
+export const NotificationScreen = () => {
     return <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
         <ScrollView>
             <Layout style={{
@@ -58,7 +45,6 @@ const NotificationView = () => {
                         page,
                     }));
 
-                    console.log("NOTIFICATIONS: ", notifications)
                     const newNotifications = [...(allItems || []), ...notifications];
                     newNotifications.forEach((item, index) => {
                         if (!sizeCache[index]) {
