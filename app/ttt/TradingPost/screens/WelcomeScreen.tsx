@@ -29,6 +29,8 @@ import { useToast } from "react-native-toast-notifications";
 //import { EntityApiBase } from "@tradingpost/common/api/entities/static/EntityApiBase";
 import { useAppUser } from "../Authentication";
 import { useData } from "../lds";
+import { PrimaryButton } from "../components/PrimaryButton";
+import { Api } from "@tradingpost/common/api";
 //import { resetEnsureUser } from "../components/EnsureUser";
 
 
@@ -114,8 +116,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         opacityAnim = useRef(new Animated.Value(0)).current,
         toast = useToast(),
         { appUser, signIn, authToken, loginResult } = useAppUser(),
-        { value: hasAuthed } = useData("hasAuthed"),
-        [recoverEmail, setRecoverEmail] = useState<string>()
+        { value: hasAuthed } = useData("hasAuthed")
 
     const linkTo = useLinkTo<any>();
     useLayoutEffect(() => {
@@ -226,10 +227,19 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
             </Tab>
             <Tab>
                 <View>
-                    <Text>Please enter your email address to </Text>
-                    <TextField value={recoverEmail} placeholder="Email Address" onChangeText={(t) => {
-                        setRecoverEmail(t);
+                    <Text>Please enter your email address to recover your password:</Text>
+                    <TextField style={{ marginVertical: sizes.rem1 }} value={username} placeholder="Email Address" onChangeText={(t) => {
+                        setUsername(t);
                     }} />
+                    <PrimaryButton onPress={async () => {
+                        if (username && /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/.test(username)) {
+                            Api.Auth.forgotPassword(username);
+                            toast.show("Recovery Email has been sent");
+                        }
+                        else {
+                            toast.show("Please enter a valid email address");
+                        }
+                    }} >Recover Password</PrimaryButton>
                 </View>
             </Tab>
         </TabView>
@@ -247,7 +257,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
             }}
             loginProps={{
                 onPress: async () => {
-                    if (!selectedIndex) {
+                    if (selectedIndex !== 1) {
                         setSelectedIndex(1);
                         Animated.timing(
                             opacityAnim,

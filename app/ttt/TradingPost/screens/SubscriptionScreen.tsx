@@ -182,8 +182,6 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
     const toast = useToast();
 
 
-
-
     useEffect(() => {
         (async () => {
             try {
@@ -214,6 +212,9 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
         props.submitRef.current.submit = submit;
 
     return <ElevatedSection title="Primary Subscription">
+        <Text style={{ marginVertical: sizes.rem1 }}>
+            Set a cost associated with subscribing to your account.
+        </Text>
         <Picker
             style={{ marginBottom: sizes.rem1 }}
             value={subscription?.data?.cost || 0}

@@ -190,8 +190,6 @@ export default ensureServerExtensions<User>({
                 Weblink: (process.env.WEBLINK_BASE_URL || "https://app.tradingpostapp.com") + `/verifyaccount?token=${token}`
             }
         })
-
         return {}
-    },
-
+    }
 })

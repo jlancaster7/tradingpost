@@ -65,6 +65,18 @@ export class AuthApi {
         const result = await EntityApiBase.handleFetchResponse(resp);
         return result;
     }
+
+    async forgotPassword(email: string) {
+        const resp = await fetch(apiUrl("AuthApi", "resetpassword"), {
+            method: "POST",
+            body: JSON.stringify({
+                email
+            }),
+            headers: EntityApiBase.makeHeaders()
+        });
+        const result = await EntityApiBase.handleFetchResponse(resp);
+        return result;
+    }
 }
 
 export default new AuthApi();

@@ -42,6 +42,8 @@ export const SubscriptionCostSection = (props: CreateAccountProps) => {
             }
         }}
     >
-        <SubscriptionSettingsView submitRef={submitRef} />
+        <View style={[paddView,{alignItems:"center", alignContent:"center"}]}>
+            <SubscriptionSettingsView submitRef={submitRef} />
+        </View>
     </ScrollWithButtons >
 }
