@@ -27,6 +27,7 @@ import { AnalystStartSection } from './create_account/AnalystStartSection';
 import { LinkBrokerageSection } from './create_account/LinkBrokerageSection';
 import { AppColors } from '../constants/Colors';
 import { CreateAccountProps } from './create_account/shared';
+import { SubscriptionCostSection } from './create_account/SubscrpitionCostSection';
 //import { Screen } from './BaseScreen';
 
 export const screens = {
@@ -38,6 +39,7 @@ export const screens = {
     'AnalystInterest': InvestmentInterestSection,
     'LinkBrokerage': LinkBrokerageSection,
     'AddClaims': YourContent,
+    'SubscriptionCost': SubscriptionCostSection,
     'ProfilePicture': ProfileIconSection//,
     //'Content Accounts': YourContent,
     //'Account Settings': AccountSettings

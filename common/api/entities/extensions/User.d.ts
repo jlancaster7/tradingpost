@@ -59,4 +59,5 @@ export default class User extends Extension {
     search: (settings: {
         term: string;
     }) => Promise<IUserList[]>;
+    sendEmailValidation: (settings?: undefined) => Promise<{}>;
 }

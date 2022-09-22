@@ -16,7 +16,6 @@ import WatchlistSaved from './entities/apis/WatchlistSavedApi'
 import Notification from './entities/apis/NotificationApi';
 import * as Interface from './entities/interfaces'
 
-
 export const Api: {
     Alert: typeof Alert, Bookmark: typeof Bookmark, Comment: typeof Comment, PlatformClaim: typeof PlatformClaim, Post: typeof Post, Subscriber: typeof Subscriber, Subscription: typeof Subscription, Trade: typeof Trade, Upvote: typeof Upvote, User: typeof User, Watchlist: typeof Watchlist, WatchlistItem: typeof WatchlistItem, WatchlistSaved: typeof WatchlistSaved,
     Auth: typeof Auth, Security: typeof Security, Notification: typeof Notification

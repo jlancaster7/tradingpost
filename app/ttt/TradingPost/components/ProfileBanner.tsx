@@ -47,7 +47,7 @@ const viewStyle: ViewStyle = {
 
 type ImageResultCallback = (a: any, b: any) => void;
 
-export function ProfileBanner<T extends boolean>(props: { profilePic: string | undefined, bannerPic: string | undefined, editMode?: T, collapse?: boolean, extraMarginTop?: number, navigator: NavigationProp<any>, platforms: string[] } &
+export function ProfileBanner<T extends boolean>(props: { subscriberCount: number | undefined, profilePic: string | undefined, bannerPic: string | undefined, editMode?: T, collapse?: boolean, extraMarginTop?: number, navigator: NavigationProp<any>, platforms: string[] } &
     (T extends true ? {
         onBannerPicked: ImageResultCallback,
         onProfilePicked: ImageResultCallback
@@ -73,11 +73,11 @@ export function ProfileBanner<T extends boolean>(props: { profilePic: string | u
         </Pressable>
         {!collapse && <View key="uncollapseFoot" style={[row, { width: "100%", alignSelf: "stretch", height: actionPanelSize, backgroundColor: "white", alignContent: "center", alignItems: "center" }]}>
             <Text style={[flex, {
+                maxWidth: '48%', // some weird ness here where the  social bar/ this container is weider than the screen so creating a horizontial scroll bar
                 textAlign: "center", transform: [{
-                    translateX: - profileImageSize / 4
-                }],
-                maxWidth: '48%' // some weird ness here where the  social bar/ this container is weider than the screen so creating a horizontial scroll bar
-            }]} >Subscribers {0}</Text>
+                    translateX: - profileImageSize / 4,
+                }]
+            }]} >Subscribers {props.subscriberCount || "-"}</Text>
             <View style={[row, flex, {
                 justifyContent: "center",
                 height: sizes.rem1_5,

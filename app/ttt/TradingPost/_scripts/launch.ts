@@ -27,6 +27,7 @@ const startApiServer = function* () {
             proc = spawnVerbose("Starting Api Server", "api", `npm run start --prefix ${join(rootRepo, "services", "api")}`, {
                 env: {
                     PORT: process.env.API_PORT,
+                    WEBLINK_BASE_URL: process.env.WEBLINK_BASE_URL,
                     "postgres": (() => {
                         if (config === "LOCAL") {
                             if (!process.env.postgres)
@@ -44,7 +45,7 @@ const startApiServer = function* () {
                 } catch (ex) {
                     return false;
                 }
-            },{maxRetries: 10, retryInterval:2000});
+            }, { maxRetries: 10, retryInterval: 2000 });
             return proc;
         })()
 }()

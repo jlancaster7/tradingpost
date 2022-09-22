@@ -207,7 +207,11 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
         </Animated.FlatList>
         <Animated.View style={{ position: "absolute", top: 0, backgroundColor: AppColors.background, transform: [{ translateY: translation }], alignItems: "stretch", width: "100%" }}>
             {/* <ElevatedSection style={{ alignItems: "center", width:"100%" }} title=""> */}
-            <ProfileBanner navigator={props.navigation} profilePic={user?.profile_url} collapse={collapsed}
+            <ProfileBanner
+                subscriberCount={user?.subscription?.count}
+                navigator={props.navigation}
+                profilePic={user?.profile_url}
+                collapse={collapsed}
                 bannerPic={""}
                 extraMarginTop={collapseShift}
                 platforms={user?.claims ? user?.claims.map(c => c.platform) : []}
@@ -229,7 +233,7 @@ export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
                         let children: string;
                         let onPress: () => void;
                         if (appUser && user && user?.id !== appUser?.id) {
-                            if (!user.subscription.is_subscribed) {
+                            if (!user.subscription?.is_subscribed) {
                                 children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : "(Free)"}`
                                 onPress = async () => {
                                     await Api.Subscriber.insert({

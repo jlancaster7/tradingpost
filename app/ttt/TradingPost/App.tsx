@@ -34,7 +34,7 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import { useAppUser } from './Authentication';
-
+import { getSecurityList } from './SecurityList'
 // Colors.loadColors({
 //   primary: '#11146F',
 //   //primaryColor: '#2364AA',
@@ -46,6 +46,9 @@ import { useAppUser } from './Authentication';
 //   //successColor: '#ADC76F',
 //   //warnColor: '#FF963C'
 // });
+
+
+
 
 LogBox.ignoreAllLogs();
 
@@ -69,11 +72,13 @@ export default function App() {
 
   useEffect(() => {
     if (isLoadingComplete) {
+
+      getSecurityList();
       //needed to add a delay to this request. It is not working if done prior to this
-      setTimeout(() => {
-        console.log("TRYING TO LOAD SECURITIES");
-        require('./utils/hooks');
-      }, 4000)
+      //setTimeout(() => {
+      //console.log("TRYING TO LOAD SECURITIES");
+
+      //}, 4000)
 
     }
   }, [isLoadingComplete])

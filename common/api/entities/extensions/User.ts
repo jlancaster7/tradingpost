@@ -1,7 +1,7 @@
 import { IUserGet, IUserList, IWatchlistList } from "../interfaces";
 import { ensureServerExtensions, Extension } from "./index"
 import { AccountGroupHPRsTable, TradingPostAccountGroupStats } from '../../../brokerage/interfaces'
-export type UploadProfilePicBody = {  image: string };
+export type UploadProfilePicBody = { image: string };
 
 export default class User extends Extension {
     uploadProfilePic = this._makeFetch<UploadProfilePicBody, {}>("uploadProfilePic", this._defaultPostRequest)
@@ -15,4 +15,6 @@ export default class User extends Extension {
     getReturns = this._makeFetch<{ userId?: string, startDate: Date, endDate: Date }, AccountGroupHPRsTable[]>("getReturns", this._defaultPostRequest)
     getPortfolio = this._makeFetch<{ userId?: string }, TradingPostAccountGroupStats>("getPortfolio", this._defaultPostRequest)
     search = this._makeFetch<{ term: string }, IUserList[]>("search", this._defaultPostRequest)
+    //TODO: should thorttle this to prevent DDOS
+    sendEmailValidation = this._makeFetch<undefined, {}>("sendEmailValidation", this._defaultPostRequest)
 }
