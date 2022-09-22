@@ -105,7 +105,7 @@ const SocialBar = (props: { claims: string[] }) => {
             //social.TwitterLogo, social.LinkedInLogo, social.YouTubeLogo
             //social.TwitterLogo, social.LinkedInLogo, social.YouTubeLogo
             const logo = social[logoName + "Logo" as keyof typeof social];
-            return props.claims.find((c) => c.toLowerCase() === logoName.toLowerCase()) ? <View style={{ height: "100%", aspectRatio: 1 }}>
+            return props.claims.find((c) => c.toLowerCase() === logoName.toLowerCase()) ? <View key={`socialV_${i}`} style={{ height: "100%", aspectRatio: 1 }}>
                 <IconifyIcon key={`social_${i}`} icon={logo} svgProps={{ height: "75%" }} style={{ height: "75%", margin: "12.5%", aspectRatio: 1 }} />
             </View> : undefined
         })}

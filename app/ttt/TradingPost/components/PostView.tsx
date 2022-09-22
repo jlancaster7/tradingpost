@@ -94,9 +94,9 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                     //openProfileScreen(props.parentComponentId, props.post.creator.id_creator);
                 }} style={[row, { alignItems: "center", overflow: "hidden", borderBottomColor: "#ccc", borderBottomWidth: 1, padding: sizes.rem1 / 2 }]}>
                 {
-                    <ProfileButton userId={props.post._source.user.id} profileUrl={props.post.ext.user?.profile_url || ""} size={56} />
+                    <ProfileButton userId={props.post._source.user.id} profileUrl={props.post.ext.user?.profile_url || ""} size={48} />
                 }
-                <View style={[flex, { marginLeft: sizes.rem1_5 }]}>
+                <View style={[flex, { marginLeft: sizes.rem1 }]}>
                     <Pressable onPress={() => {
                         if (props.post._source.user.id)
                             nav.navigate("Profile", {
@@ -204,7 +204,7 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
                       flexDirection: 'row',
                       alignItems: 'center',
                       marginTop: 2}}>
-            <Retweet style={{ width: 30, height: 30,  }}/>
+            <Retweet width={30} height={30} style={{ width: 30, height: 30}}/>
             <Text style={{fontWeight: '500',
                         marginLeft: 2}}>
                 {'Retweet'}

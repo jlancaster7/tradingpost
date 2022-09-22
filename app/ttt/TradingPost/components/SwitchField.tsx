@@ -1,19 +1,21 @@
 import React, { ReactElement } from "react";
-import { Switch, SwitchProps, } from "react-native-ui-lib";
+import { Toggle } from "@ui-kitten/components";
+import { Icon, Text } from "@ui-kitten/components";
+import { View, Animated } from "react-native"
 
-import { LabeledField } from "./LabeledField";
-export type SwitchFieldProps = {
-    compact?: boolean,
-    label?: string,
-    switchProps?: SwitchProps,
-    leftElement?: (props: { width: number, height: number }) => ReactElement
-}
 
-export function SwitchField(props: SwitchFieldProps) {
-    return <LabeledField
-        compact={props.compact}
-        label={props.label}
-        leftElement={props.leftElement}
-    ><Switch {...props.switchProps} /></LabeledField>
+export function SwitchField(props: any) {
+    return <View style={props.viewStyle}>
+        <Toggle
+            style={props.toggleStyle}
+            checked={props.checked}
+            onChange={props.onChange} />
+        
+        <Text style={props.textStyle}>
+            {props.label}
+        </Text>
+    </View> 
+    
+
 }
 

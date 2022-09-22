@@ -1,8 +1,8 @@
 import React from "react";
-import UserPic1Svg from '../assets/UserPic1.svg';
-import UserPic2Svg from '../assets/UserPic2.svg';
-import UserPic3Svg from '../assets/UserPic3.svg';
-import UserPic4Svg from '../assets/UserPic4.svg';
+import UserPic1Png from '../assets/UserPic1.png';
+import UserPic2Png from '../assets/UserPic2.png';
+import UserPic3Png from '../assets/UserPic3.png';
+import UserPic4Png from '../assets/UserPic4.png';
 
 const HomeBlockFour = () => {
     return (
@@ -10,7 +10,7 @@ const HomeBlockFour = () => {
             <h1>Featured Analysts and Traders</h1>
             <div className="grid-container-b4">
                 <div className='grid-item-b4'>
-                    <img src={UserPic1Svg} alt=""/>
+                    <img src={UserPic1Png} alt=""/>
                     <h1>BTD Capital</h1>
                     <p>Generalist</p>
                     <div className='inner-grid-container-b4'>
@@ -31,7 +31,7 @@ const HomeBlockFour = () => {
 
                 </div>
                 <div className='grid-item-b4'>
-                    <img src={UserPic2Svg} alt=""/>
+                    <img src={UserPic2Png} alt=""/>
                     <h1>Nathan Feller</h1>
                     <p>Mid-Cap Tech</p>
                     <div className='inner-grid-container-b4'>
@@ -52,7 +52,7 @@ const HomeBlockFour = () => {
 
                 </div>
                 <div className='grid-item-b4'>
-                    <img src={UserPic3Svg} alt=""/>
+                    <img src={UserPic3Png} alt=""/>
                     <h1>Steve Young</h1>
                     <p>Oil & Gas</p>
                     <div className='inner-grid-container-b4'>
@@ -73,7 +73,7 @@ const HomeBlockFour = () => {
                     <button type={undefined} className="subButton" disabled={true}>Sign Up & Subscribe</button>
                 </div>
                 <div className='grid-item-b4'>
-                    <img src={UserPic4Svg} alt=""/>
+                    <img src={UserPic4Png} alt=""/>
                     <h1>Janet Johnson</h1>
                     <p>Specialty Finance</p>
                     <div className='inner-grid-container-b4'>
