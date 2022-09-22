@@ -1,4 +1,4 @@
-import * as Dummy from "../extensions"
+import * as Dummy  from "../extensions"
 export const Alert = Dummy
 export const Bookmark = Dummy
 export const Comment = Dummy

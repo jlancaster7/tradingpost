@@ -135,6 +135,14 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<IUserList[]>;
+    sendEmailValidation: (req: {
+        body: undefined;
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<{}>;
 } & {
     get?: ((i: any, extra: {
         userId: string;

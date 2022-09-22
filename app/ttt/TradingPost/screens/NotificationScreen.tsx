@@ -3,7 +3,7 @@ import {Pressable} from "react-native";
 import {ScrollView, View} from "react-native";
 import {Layout, Text} from '@ui-kitten/components';
 import {List} from "../components/List";
-import {flex, fonts, sizes} from "../style";
+import {flex, fonts, paddView, sizes} from "../style";
 import {Api} from '@tradingpost/common/api';
 import {ListAlertsResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
@@ -81,8 +81,8 @@ export const NotificationScreen = () => {
 }
 
 const NotificationTab: React.FC<any> = (props: any) => {
-    return <ElevatedSection title={""}>
-        <View style={{marginBottom: -sizes.rem0_5}}>
+    return <ElevatedSection title={""} style={{marginHorizontal: sizes.rem2/2, marginVertical: sizes.rem1/2,}}>
+        <View style={{ marginBottom: -sizes.rem0_5}}>
             <View style={{flexDirection: "row", width: "100%", marginBottom: sizes.rem0_5}}>
                 <View style={[flex, {marginLeft: sizes.rem0_5}]}>
                     {props.children}
@@ -105,7 +105,7 @@ const NewTradeNotification = (props: { response: ListAlertsResponse }): JSX.Elem
         <Pressable onPress={openTrades}>
             <View style={{flex: 1, flexWrap: 'wrap'}}>
                 <View style={{flexDirection: 'row'}}>
-                    <Text style={{marginRight: 10}}>
+                    <Text style={{marginRight: 10, fontFamily: "K2D"}}>
                         {dtFmt}
                     </Text>
                     <Text style={{flex: 1, flexWrap: 'wrap'}}>

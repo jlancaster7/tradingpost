@@ -13,7 +13,8 @@ import { DefaultTwitter } from "../../../social-media/twitter/service";
 import { getUserCache } from "../../cache";
 import WatchlistApi from "../apis/WatchlistApi";
 import { DateTime } from 'luxon'
-
+import jwt from 'jsonwebtoken'
+import { sendByTemplate } from '../../../sendGrid'
 export interface ITokenResponse {
     "token_type": "bearer",
     "expires_in": number,
@@ -76,7 +77,7 @@ export default ensureServerExtensions<User>({
             Body: Buffer.from(req.body.image, 'base64url')
         }));
         await UserApi.internal.update({
-            user_id:req.extra.userId,
+            user_id: req.extra.userId,
             data: {
                 id: req.extra.userId,
                 has_profile_pic: true,
@@ -166,10 +167,29 @@ export default ensureServerExtensions<User>({
                     (regex.test(item.profile.handle) || regex.test(item.profile.display_name)))
                     output.push(item.profile)
             });
-
         } else {
             throw new Error("Search term must be at least 3 characters");
         }
         return output;
+    },
+    sendEmailValidation: async (r) => {
+
+        const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
+
+        const user = await UserApi.internal.get({
+            data: { id: r.extra.userId },
+            user_id: r.extra.userId
+        })
+
+        //TODO: make this token expire faster and attach this to a code ( to prevent multiple tokens from working)
+        const token = jwt.sign({ verified: true }, authKey, { subject: r.extra.userId });
+        await sendByTemplate({
+            to: user.email,
+            templateId: "d-23c8fc09ded942d386d7c888a95a0653",
+            dynamicTemplateData: {
+                Weblink: (process.env.WEBLINK_BASE_URL || "https://app.tradingpostapp.com") + `/verifyaccount?token=${token}`
+            }
+        })
+        return {}
     }
 })

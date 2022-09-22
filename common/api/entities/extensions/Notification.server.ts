@@ -63,7 +63,7 @@ export default ensureServerExtensions<Notification>({
                                 ON
                                     subscriber.subscription_id = SUBSCRIPTION.id
             WHERE subscriber.user_id = $1
-              AND SECURITY_TYPE NOT IN ('cashEquivalent')
+              AND SECURITY_TYPE NOT IN ('cashEquivalent') AND tt.type NOT IN ('cancel')
             ORDER BY date DESC
             LIMIT $2 OFFSET $3;`
         const limit = req.extra.limit && req.extra.limit > 0 ? req.extra.limit : 30;

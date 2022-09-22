@@ -49,7 +49,7 @@ export function YourContent(props: CreateAccountProps) {
             // },
             right: {
                 text: 'Done With Accounts',
-                onPress: () => linkTo('/create/profilepicture')
+                onPress: () => linkTo('/create/subscriptioncost')
             }
         }}
     >

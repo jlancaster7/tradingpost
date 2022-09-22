@@ -13,7 +13,7 @@ import { bindTextInput, IEntity, useReadonlyEntity } from "../../utils/hooks";
 import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators";
 
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
-import { ProfileBanner } from "../../components/ProfileBanner";
+
 import { Label } from "../../components/Label";
 import { TBI } from "../../utils/misc";
 import { AppColors } from "../../constants/Colors";
