@@ -256,7 +256,8 @@ function InteractiveChart(props: any) {
                     style={{ width: "12%" }}
                     data={priceList}
                     contentInset={verticalContentInset}
-                    svg={{ fontSize: apx(18), fill: '#617485', fontFamily: 'K2D' }}
+                    svg={{ fontSize: apx(18), fill: '#617485',
+                }}
                     numberOfTicks={5}
                     
                     formatLabel={(value: any, index: any) => `$${String(value).split('.')[0].length > 2 ? value.toFixed(1) : value.toFixed(2)}`}
@@ -280,7 +281,6 @@ function InteractiveChart(props: any) {
                     fontSize: apx(18),
                     fill: '#617485',
                     y: apx(20),
-                    fontFamily: 'K2D',
                     rotation: 30,
                     textAnchor:'start'
                     // originY: 30,

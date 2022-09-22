@@ -26,7 +26,7 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
-const run = async () => {
+const run = async (tokenFile?: string) => {
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -41,7 +41,7 @@ const run = async () => {
     }
 
     const finicityCfg = await DefaultConfig.fromCacheOrSSM('finicity');
-    const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
+    const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey, tokenFile);
     await finicity.init();
 
     // TODO: Run this every 15 mins from 4AM MT -> 6AM MT if an accounts positions have not been updated to today,
@@ -55,6 +55,10 @@ const run = async () => {
     }
 }
 
-export const handler = async (event: any, context: Context) => {
-    await run();
-}
+// export const handler = async (event: any, context: Context) => {
+//     await run("/tmp/token-file.json");
+// }
+
+(async() => {
+   await run();
+})()
