@@ -12,11 +12,11 @@ import React from "react";
 export const NotificationTradeScreen = (props: any) => {
     return (
         <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
-            <ScrollView>
+            <View>
                 <Layout style={{
                     backgroundColor: "#ffffff",
-                    paddingBottom: '2px',
-                    paddingTop: '2px',
+                    paddingBottom: '2%',
+                    paddingTop: '2%',
                     borderBottomColor: '#11146F',
                     borderStyle: 'solid',
                     borderBottomWidth: 2,
@@ -195,7 +195,7 @@ export const NotificationTradeScreen = (props: any) => {
                     noDataMessage={"No Trades Available"}
                     loadingItem={" "}
                 />
-            </ScrollView>
+            </View>
         </View>
     )
 }
