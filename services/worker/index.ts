@@ -72,12 +72,6 @@ const run = async () => {
             await brokerageService.removeAccounts(customerId, accounts, 'finicity');
         }
 
-        // TODO: YEAH....
-        if (req.body.eventType === 'SOMETHING') {
-            const {customerId, eventId, payload} = req.body;
-            await brokerageService.addNewTransactions(customerId, 'finicity')
-        }
-
         return res.send()
     });
 

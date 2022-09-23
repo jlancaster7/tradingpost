@@ -4,7 +4,7 @@ import {getUSExchangeHoliday} from "../market-data/interfaces";
 export interface IBrokerageService {
     getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
 
-    generateBrokerageAuthenticationLink(userId: string, brokerageAccount?: string): Promise<string>
+    generateBrokerageAuthenticationLink(userId: string, brokerageAccount?: string, brokerageAccountId?: string): Promise<string>
 
     importAccounts(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostBrokerageAccounts[]>
 
@@ -34,6 +34,8 @@ export interface IBrokerageRepository {
 
     upsertTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
 
+    updateErrorStatusOfAccount(accountId: number, error: boolean, errorCode: number): Promise<void>
+
     addTradingPostTransactions(transactions: TradingPostTransactions[]): Promise<void>
 
     upsertTradingPostTransactions(transactions: TradingPostTransactions[]): Promise<void>
@@ -58,7 +60,13 @@ export interface IBrokerageRepository {
 }
 
 export interface IFinicityRepository {
+    updateErrorStatusOfAccount(accountId: number, error: boolean, errorCode: number): Promise<void>
+
     getTradingPostUserByFinicityCustomerId(finicityCustomerId: string): Promise<TradingPostUser | null>
+
+    getFinicityAccountByTradingpostBrokerageAccountId(tpBrokerageAccountId: number): Promise<FinicityAndTradingpostBrokerageAccount | null>
+
+    getFinicityAccountByFinicityAccountId(finicityAccountId: string): Promise<FinicityAccountAndInstitution>
 
     getFinicityUserByFinicityCustomerId(customerId: string): Promise<FinicityUser | null>
 
@@ -161,6 +169,29 @@ export interface ISummaryService {
     computeAccountGroupSummary(accountGroupId: string, startDate: DateTime, endDate: DateTime): Promise<TradingPostAccountGroupStats>
 
     addAccountGroupSummary(summary: TradingPostAccountGroupStats): Promise<void>
+}
+
+export type FinicityAndTradingpostBrokerageAccount = {
+    finicityInternalAccountId: number
+    finicityInternalUserId: number
+    finicityInternalInstitutionId: number
+    finicityAccountId: string
+    finicityInstitutionLoginId: number
+    accountNumber: string
+    tradingpostInternalBrokerageAccountId: number
+    tradingpostUserId: string
+    tradingpostInternalInstitutionId: number
+    status: string
+    error: boolean
+    errorCode: number
+}
+
+export type FinicityAccountAndInstitution = {
+    id: number
+    finicityAccountId: string
+    finicityCustomerId: string
+    institutionName: string
+    finicityInstitutionId: string
 }
 
 export type TradingPostUser = {
@@ -558,6 +589,8 @@ export type TradingPostBrokerageAccounts = {
     officialName: string | null
     type: string // Margin or Cash Account
     subtype: string | null
+    error: boolean
+    errorCode: number
 }
 
 export type TradingPostBrokerageAccountsTable = TradingPostBrokerageAccounts & TableInfo;
