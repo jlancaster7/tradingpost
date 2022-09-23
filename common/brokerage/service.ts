@@ -136,34 +136,6 @@ export default class BrokerageService {
         this.portfolioSummaryService = portfolioSummaryService;
     }
 
-    pullNewData = async (brokerageId: string, brokerageUserId: string) => {
-        const brokerage = this.brokerageMap[brokerageId];
-        if (!brokerage) throw new Error("no brokerage found")
-
-        const holdings = await brokerage.importHoldings(brokerageUserId);
-        if (holdings.length <= 0) return;
-
-        await this.repository.upsertTradingPostCurrentHoldings(holdings);
-
-        let holdingHistory: TradingPostHistoricalHoldings[] = holdings.map(holding => ({
-            accountId: holding.accountId,
-            securityId: holding.securityId,
-            securityType: holding.securityType,
-            price: holding.price,
-            priceAsOf: holding.priceAsOf,
-            priceSource: holding.priceSource,
-            value: holding.value,
-            costBasis: holding.costBasis,
-            quantity: holding.quantity,
-            currency: holding.currency,
-            date: DateTime.now()
-        }));
-        await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
-
-        const transactions = await brokerage.importTransactions(brokerageUserId);
-        await this.repository.upsertTradingPostTransactions(transactions);
-    }
-
     computeHoldingsHistory = async (tpAccountId: number, endDate: DateTime): Promise<TradingPostHistoricalHoldings[]> => {
         const cashSecurity = await this.repository.getCashSecurityId();
 

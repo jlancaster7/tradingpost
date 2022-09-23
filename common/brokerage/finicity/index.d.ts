@@ -7,7 +7,7 @@ export default class FinicityService implements IBrokerageService {
     private transformer;
     constructor(finicity: Finicity, repository: IFinicityRepository, transformer: FinicityTransformer);
     getTradingPostUserAssociatedWithBrokerageUser: (brokerageUserId: string) => Promise<TradingPostUser>;
-    generateBrokerageAuthenticationLink: (userId: string, brokerageAccount?: string) => Promise<string>;
+    generateBrokerageAuthenticationLink: (userId: string, brokerageAccount?: string, brokerageAccountId?: string) => Promise<string>;
     _createFinicityUser: (userId: string) => Promise<FinicityUser>;
     importInstitutions: () => Promise<void>;
     getAddInstitution: (finicityInstitutionId: number) => Promise<{
@@ -16,6 +16,11 @@ export default class FinicityService implements IBrokerageService {
     }>;
     importAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
     importHoldings: (userId: string, brokerageIds?: string[] | number[]) => Promise<TradingPostCurrentHoldings[]>;
+    updateTradingpostBrokerageAccountError: (accounts: {
+        accountId: number;
+        error: boolean;
+        errorCode: number;
+    }[]) => Promise<void>;
     importTransactions: (userId: string, brokerageIds?: string[] | number[]) => Promise<TradingPostTransactions[]>;
     exportAccounts: (userId: string) => Promise<TradingPostBrokerageAccounts[]>;
     exportHoldings: (userId: string) => Promise<TradingPostCurrentHoldings[]>;

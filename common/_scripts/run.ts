@@ -58,13 +58,13 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     //     await pgClient.query(query);
     // }
 
-    const tpUserId = "fb3a92f3-ce22-4a9c-8680-49600893bd68";
-
-    console.log("Starting...")
+    const tpUserId = "8e787902-f0e9-42aa-a8d8-18e5d7a1a34d";
+    //
+    // console.log("Starting...")
     const brokerageService = new Brokerage(pgClient, pgp, finicity);
     // await brokerageService.addNewAccounts("6007115349", "finicity")
-    const url = await brokerageService.generateBrokerageAuthenticationLink(tpUserId, 'finicity');
+    const url = await brokerageService.generateBrokerageAuthenticationLink(tpUserId, 'finicity', '332');
     console.log(url)
-    // await brokerageService.newlyAuthenticatedBrokerage(tpUserId, 'finicity')
-    console.log("Finished")
+    // // await brokerageService.newlyAuthenticatedBrokerage(tpUserId, 'finicity')
+    // console.log("Finished")
 })()

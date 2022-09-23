@@ -18,9 +18,11 @@ export default function useCachedResources() {
         // Load fonts
         await Font.loadAsync({
           ...FontAwesome.font,
+          //                                     SpaceMono-Regular
           'space-mono': require('../assets/fonts/SpaceMono-Regular.ttf'),
           'K2D': require('../assets/fonts/K2D-Regular.ttf'),
         });
+
 
         const lds = await initLds();
         

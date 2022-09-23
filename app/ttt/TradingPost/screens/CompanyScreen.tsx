@@ -1,6 +1,6 @@
 import { Api, Interface } from "@tradingpost/common/api";
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { useToast } from "react-native-toast-notifications";
 import { Avatar, Text } from '@ui-kitten/components'
 import { PieHolder } from "../components/PieHolder";
@@ -40,6 +40,7 @@ export const CompanyScreen = (props: TabScreenProps<{ securityId: number }>) => 
         Api.Security.get(securityId)
             .then((s) => {
                 setSecurity(s)
+                console.log(s);
                 s.description ? setDescription(s.description.substring(0,300) + '...') :
                 setIsFav(s.isOnQuickWatch || false)
             })
@@ -55,9 +56,10 @@ export const CompanyScreen = (props: TabScreenProps<{ securityId: number }>) => 
             .catch((ex) => toast.show(ex.message))
             
     }, [securityId, portPeriod])
-    return <View>
-        <View style={paddView}>
-        <ElevatedSection title="Company"
+    return <View style={[{height: "100%"}]}>
+        <ScrollView>      
+        <View style={[paddView, {height: "100%"}]}>
+        <ElevatedSection key={"Company"} title="Company"
             button={(p) => {
                 return <FavButton {...p} isSelected={isFav} onPress={() => {
                     if (security) {
@@ -102,9 +104,11 @@ export const CompanyScreen = (props: TabScreenProps<{ securityId: number }>) => 
             <Text style={{ marginTop: sizes.rem1 }}>{description}</Text>
         </ElevatedSection >
         </View>
+
         <View >
         <ElevatedSection title="" style={{ marginHorizontal: sizes.rem1 }} >
                 <TabBar
+                    key={"company_tabBar"}
                     indicatorStyle={{
                         marginTop: 26,
                         marginHorizontal: 10
@@ -114,14 +118,14 @@ export const CompanyScreen = (props: TabScreenProps<{ securityId: number }>) => 
                     onSelect={t => {
                         setTab(t);
                     }}>
-                    {["Posts", "Analysts"].map(t => <Tab style={{ marginTop: -4 }} title={t} />)}
+                    {["Posts", "Analysts"].map(t => <Tab key={"tab_id" + t} style={{ marginTop: -4 }} title={t} />)}
                 </TabBar>
         </ ElevatedSection>
         <FeedPart searchText={`$${security?.symbol}`} />
-            
+        
         </View>
-        
-        
+
+        </ScrollView>
     </View >
 
 

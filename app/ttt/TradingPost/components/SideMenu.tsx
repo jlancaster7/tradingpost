@@ -94,7 +94,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
             label: "Watchlist",
             onPress: () => props.navigation.navigate("Watchlist"),
             //onPress: () => linkTo('/create/watchlist'),
-            icon: sideMenu.Account,
+            icon: sideMenu.Watchlist,
         },
         {
             label: "Bookmarks",
@@ -102,6 +102,18 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
                 bookmarkedOnly: "true"
             }),
             icon: sideMenu.BookmarkActiveBlue,
+        },
+        {
+            label: "Help",
+            onPress: () => props.navigation.navigate("Watchlist"),
+
+            icon: sideMenu.Help,
+        },
+        {
+            label: "Settings",
+            onPress: () => props.navigation.navigate("AccountSettings"),
+
+            icon: sideMenu.Account,
         },
         {
             label: "Logout",
@@ -114,6 +126,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
             return <MenuItem
                 key={"SM_" + index}
                 icon={item.icon}
+                size={"10%"}
                 onPress={item.onPress || TBI}
                 navigation={props.navigation}
                 isLast={index === array.length - 1}
@@ -146,7 +159,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
     </DrawerContentScrollView>
 }
 
-function MenuItem(props: { navigation: DrawerContentComponentProps["navigation"], children: string, icon: React.FC<SvgProps>, onPress?: () => void, isLast?: boolean }) {
+function MenuItem(props: { navigation: DrawerContentComponentProps["navigation"], children: string, icon: React.FC<SvgProps>, onPress?: () => void, isLast?: boolean, size?: string | number }) {
     const { icon: SvgElement } = props
     return <DrawerItem
         style={props.isLast ? { marginTop: "auto" } : undefined}

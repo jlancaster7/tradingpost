@@ -42,6 +42,7 @@ import { SvgExpo } from '../components/SvgExpo';
 import Auth from '@tradingpost/common/api/entities/static/AuthApi';
 import { IUserGet } from '@tradingpost/common/api/entities/interfaces';
 import { sizes } from '../style';
+import { AccountSettingsScreen } from '../screens/AccountSettingsScreen';
 import { FeedScreen } from '../screens/FeedScreen';
 import { PortfolioScreen } from '../screens/PortfolioScreen';
 import { WatchlistEditorScreen } from '../screens/WatchlistEditorScreen';
@@ -84,6 +85,7 @@ type UndefinedProxy<T extends keyof any> = {
 
 // TODO: these defined the parameters... so should type these correctly .. I will do that in the future
 export type AllPages = UndefinedProxy<"Launch" | "Create" | "Login" | "Dash" | "WatchlistViewer" | "WatchlistEditor" | "Watchlist" | "Auth" | "ImagePicker"> & {
+  "AccountSettings": undefined,
   "Company": Parameters<(typeof CompanyScreen)>["0"]["route"]["params"],
   "Bookmarks": Parameters<(typeof FeedScreen)>["0"]["route"]["params"],
   "TableModal": Parameters<(typeof TableModalScreen)>["0"]["route"]["params"],
@@ -194,6 +196,7 @@ function RootNavigator() {
       <Stack.Screen name="Subscription" component={SubscriptionScreen} />
       <Stack.Screen name="ResetPassword" component={ChangePasswordScreen} />
       <Stack.Screen name="VerifyAccount" component={VerificationScreen} />
+      <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
       <Stack.Screen name="SubscriptionSettings" component={SubscriptionSettingsScreen} />
       <Stack.Screen name="WatchlistEditor" component={WatchlistEditorScreen} />
       <Stack.Screen name="PostScreen" component={PostScreen} />

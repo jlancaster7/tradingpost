@@ -21,8 +21,8 @@ interface TransformerRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>
 
     getSecuritiesWithIssue(): Promise<SecurityIssue[]>
-    
-    getTradingpostCashSecurity (): Promise<TradingPostCashSecurity[]>
+
+    getTradingpostCashSecurity(): Promise<TradingPostCashSecurity[]>
 
     getTradingPostInstitutionsWithFinicityId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>
 
@@ -91,7 +91,7 @@ const transformSecurityType = (ticker: string): SecurityType => {
     } else {
         return SecurityType.equity;
     }
-    
+
 }
 
 export default class FinicityTransformer {
@@ -118,14 +118,16 @@ export default class FinicityTransformer {
                 name: account.name,
                 officialName: account.number,
                 type: account.type,
-                subtype: null
+                subtype: null,
+                error: account.aggregationStatusCode === 103 || account.aggregationStatusCode === 185,
+                errorCode: account.aggregationStatusCode
             });
         }
 
         return tpAccounts;
     }
 
-    holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], holdingDate: DateTime | null, currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<TradingPostCurrentHoldings[]> => {
+    getFinicityToTradingPostAccount = async (userId: string, accountId: string) => {
         const finicityAccounts = await this.repository.getTradingPostAccountsWithFinicityNumber(userId)
         let internalAccount: TradingPostBrokerageAccountWithFinicity | null = null;
         for (let i = 0; i < finicityAccounts.length; i++) {
@@ -133,6 +135,11 @@ export default class FinicityTransformer {
             if (finAcc.externalFinicityAccountId === accountId) internalAccount = finAcc;
         }
 
+        return internalAccount;
+    }
+
+    holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], holdingDate: DateTime | null, currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<TradingPostCurrentHoldings[]> => {
+        let internalAccount = await this.getFinicityToTradingPostAccount(userId, accountId);
         if (internalAccount === undefined || internalAccount === null) throw new Error(`account id(${accountId}) does not exist for holding`)
 
         const securities = await this.repository.getSecuritiesWithIssue();
@@ -180,8 +187,7 @@ export default class FinicityTransformer {
                         name: sec.securityName ? sec.securityName : '',
                         issueType: sec.issueType ? sec.issueType : ''
                     }
-                }
-                else {
+                } else {
                     isCashSecurity = true;
                     security = {
                         id: cashSecurity,
@@ -219,7 +225,7 @@ export default class FinicityTransformer {
                 accountId: internalAccount.id, // TradingPost Brokerage Account ID
                 // @ts-ignore
                 securityId: cashSecurityId,
-                securityType: SecurityType.cashEquivalent ,
+                securityType: SecurityType.cashEquivalent,
                 price: 1,
                 priceAsOf: DateTime.fromSeconds(accountDetails.dateAsOf),
                 priceSource: '',
@@ -275,7 +281,6 @@ export default class FinicityTransformer {
             if (!transaction.unitPrice) price = transaction.amount / transaction.unitQuantity
             else price = transaction.unitPrice
 
-            
 
             let securityType = transformSecurityType(transaction.ticker)
             let transactionType = transformTransactionType(transaction.investmentTransactionType);

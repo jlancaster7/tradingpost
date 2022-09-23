@@ -30,7 +30,7 @@ import {
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
     TradingPostTransactionsTable, TradingPostUser,
-    TradingPostCashSecurity
+    TradingPostCashSecurity, FinicityAccountAndInstitution, FinicityAndTradingpostBrokerageAccount
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -43,6 +43,14 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     constructor(db: IDatabase<any>, pgp: IMain) {
         this.db = db;
         this.pgp = pgp;
+    }
+
+    updateErrorStatusOfAccount = async (accountId: number, error: boolean, errorCode: number): Promise<void> => {
+        const query = `UPDATE tradingpost_brokerage_account
+                       SET error      = $1,
+                           error_code = $2
+                       WHERE id = $3`;
+        await this.db.none(query, [error, errorCode, accountId])
     }
 
     getCashSecurityId = async (): Promise<GetSecurityBySymbol> => {
@@ -97,6 +105,66 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             logoUrl: r.logo_url,
             createdAt: r.created_at,
             lastUpdated: r.last_updated
+        }
+    }
+
+    getFinicityAccountByTradingpostBrokerageAccountId = async (tpBrokerageAccountId: number): Promise<FinicityAndTradingpostBrokerageAccount | null> => {
+        const query = `
+            SELECT fa.id                      AS finicity_internal_account_id,
+                   fa.finicity_user_id        AS finicity_internal_user_id,
+                   fa.finicity_institution_id AS finicity_internal_institution_id,
+                   fa.account_id              AS finicity_account_id,
+                   fa.number                  AS account_number,
+                   fa.institution_login_id    AS finicity_institution_login_id,
+                   tba.id                     AS tradingpost_internal_brokerage_account_id,
+                   tba.user_id                AS tradingpost_user_id,
+                   tba.institution_id         AS tradingpost_internal_institution_id,
+                   tba.status                 AS status,
+                   tba.error                  AS error,
+                   tba.error_code             AS error_code
+            FROM FINICITY_ACCOUNT FA
+                     INNER JOIN TRADINGPOST_BROKERAGE_ACCOUNT TBA ON
+                        tba.account_number = fa.number
+                    AND fa.finicity_institution_id = (SELECT id
+                                                      FROM finicity_institution
+                                                      WHERE name = (SELECT name
+                                                                    FROM TRADINGPOST_INSTITUTION TI
+                                                                    WHERE id = TBA.INSTITUTION_ID))
+            WHERE tba.id = $1;`
+        const response = await this.db.one(query, [tpBrokerageAccountId]);
+        return {
+            finicityInternalAccountId: response.finicity_internal_account_id,
+            finicityInternalUserId: response.finicity_internal_user_id,
+            finicityInternalInstitutionId: response.finicity_internal_institution_id,
+            finicityAccountId: response.finicity_account_id,
+            accountNumber: response.account_number,
+            finicityInstitutionLoginId: response.finicity_institution_login_id,
+            tradingpostInternalBrokerageAccountId: response.tradingpost_internal_brokerage_account_id,
+            tradingpostUserId: response.tradingpost_user_id,
+            tradingpostInternalInstitutionId: response.tradingpost_internal_institution_id,
+            status: response.status,
+            error: response.error,
+            errorCode: response.error_code
+        }
+    }
+
+    getFinicityAccountByFinicityAccountId = async (finicityAccountId: string): Promise<FinicityAccountAndInstitution> => {
+        const query = `SELECT fa.id             AS internal_account_id,
+                              fa.account_id     AS finicity_account_id,
+                              fa.customer_id    AS finicity_customer_id,
+                              fi.name           AS finicity_institution_name,
+                              fi.institution_id AS finicity_institution_id
+                       FROM FINICITY_ACCOUNT FA
+                                INNER JOIN FINICITY_INSTITUTION FI ON
+                           fa.FINICITY_INSTITUTION_ID = fi.id
+                       WHERE fa.account_id = $1;`
+        const response = await this.db.one(query, [finicityAccountId]);
+        return {
+            id: response.id,
+            finicityAccountId: response.finicity_account_id,
+            finicityCustomerId: response.finicity_customer_id,
+            institutionName: response.finicity_institution_name,
+            finicityInstitutionId: response.finicity_institution_id
         }
     }
 
@@ -164,7 +232,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               type,
                               subtype,
                               updated_at,
-                              created_at
+                              created_at,
+                              error,
+                              error_code
                        FROM tradingpost_brokerage_account
                        WHERE id = $1;`
         const result = await this.db.oneOrNone(query, [accountId])
@@ -181,7 +251,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             subtype: result.subtype,
             accountNumber: result.account_number,
             officialName: result.official_name,
-            institutionId: result.institution_id
+            institutionId: result.institution_id,
+            error: result.error,
+            errorCode: result.error_code
         }
     }
 
@@ -317,6 +389,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    tba.subtype,
                    tba.updated_at,
                    tba.created_at,
+                   tba.error,
+                   tba.error_code,
                    fa.finicity_user_id        internal_finicity_user_id,
                    fa.id                      internal_finicity_account_id,
                    fa.finicity_institution_id internal_finicity_institution_id,
@@ -347,6 +421,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 internalFinicityUserId: r.internal_finicity_user_id,
                 officialName: r.official_name,
                 name: r.name,
+                errorCode: r.error_code,
+                error: r.error,
                 updated_at: DateTime.fromJSDate(r.updated_at),
                 created_at: DateTime.fromJSDate(r.created_at)
             }
@@ -1310,6 +1386,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
 
     upsertFinicityHoldings = async (holdings: FinicityHolding[]): Promise<void> => {
+        if (holdings.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'finicity_account_id', prop: 'finicityAccountId'},
             {name: 'holding_id', prop: 'holdingId'},
@@ -1685,6 +1762,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertTradingPostCurrentHoldings = async (currentHoldings: TradingPostCurrentHoldings[]): Promise<void> => {
+        if (currentHoldings.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_id', prop: 'accountId'},
             {name: 'security_id', prop: 'securityId'},
@@ -1766,6 +1844,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertTradingPostTransactions = async (transactions: TradingPostTransactions[]) => {
+        if (transactions.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_id', prop: 'accountId'},
             {name: 'security_id', prop: 'securityId'},

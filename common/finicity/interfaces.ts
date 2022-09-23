@@ -411,3 +411,22 @@ export interface GetAllCustomerTransactions {
         investmentTransactionType: string
     }[]
 }
+
+export type ConnectFixRequest = {
+    customerId: string
+    partnerId?: string
+    language: string
+    institutionLoginId: number
+    redirectUri?: string
+    webhook: string
+    webhookContentType: string
+    webhookData: object
+    webhookHeaders: object
+    institutionSettings: object
+    singleUseUrl: boolean
+    experience?: string
+}
+
+export type ConnectFixResponse = {
+    link: string
+}

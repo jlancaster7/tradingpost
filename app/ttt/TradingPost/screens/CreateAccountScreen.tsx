@@ -9,7 +9,7 @@ import { IEntity,/* ToastMessageFunction,*/ useIsKeyboardVisible, useReadonlyEnt
 //import { IsAuthenticated, useCurrentUser } from '../apis/Authentication';
 import { AccountInfoSection } from './create_account/AccountInfoSection';
 import { InvestmentInterestSection } from './create_account/InvestmentInterestSection';
-import { AccountSettings } from './create_account/AccountSettingsSection';
+
 import { YourContent } from './create_account/YourContentSection';
 import { Alert, View, ViewStyle } from 'react-native';
 //import { IDashboard, IDialog, PromptButton, PromptFunc, BaseScreen } from '../layouts/BaseLayout';
@@ -34,6 +34,7 @@ export const screens = {
     'LoginInfo': AccountInfoSection,
     //'Verify': () => <View><Text>Verify Your Account</Text></View>,
     'BasicInfo': BasicInfoSection,
+    //'AccountSettings': AccountSettings,
     'Watchlist': PickWatchlistSection,
     'AnalystStart': AnalystStartSection,
     'AnalystInterest': InvestmentInterestSection,
@@ -42,7 +43,7 @@ export const screens = {
     'SubscriptionCost': SubscriptionCostSection,
     'ProfilePicture': ProfileIconSection//,
     //'Content Accounts': YourContent,
-    //'Account Settings': AccountSettings
+    
 }
 
 

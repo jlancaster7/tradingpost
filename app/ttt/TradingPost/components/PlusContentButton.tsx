@@ -19,11 +19,11 @@ export const PlusContentButton = (props: {
         bottom: 10, 
         right: 10,
         backgroundColor: "blue",
-        height: 64, aspectRatio: 1,
-        borderRadius: 32,
+        height: 62, aspectRatio: 1,
+        borderRadius: 34,
         overflow: "hidden"
     }]} onPress={props.onPress}>
-        <IconifyIcon icon={plusCircle} currentColor="green" style={{ height:64, width:64,  aspectRatio: 1, margin: 0, padding: 0, backgroundColor:"white" }} svgProps={{
+        <IconifyIcon icon={plusCircle} currentColor="green" style={{ height:64*1.2, width:64*1.2,  aspectRatio: 1, margin: 0, padding: 0, backgroundColor:"white" }} svgProps={{
             style: {
                 height:64 * 1.2,
                 width:64* 1.2,

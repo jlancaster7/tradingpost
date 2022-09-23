@@ -199,12 +199,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_user_update(
         request jsonb)
-        RETURNS TABLE("id" UUID,"first_name" text,"last_name" text,"analyst_profile" json,"has_profile_pic" boolean,"profile_url" text)
+        RETURNS TABLE("id" UUID,"first_name" text,"last_name" text,"analyst_profile" json,"has_profile_pic" boolean,"profile_url" text,"settings" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url" FROM public.data_user as d;
+  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url", CASE WHEN d.id = (request->>'user_id')::UUID THEN d."settings" END as "settings" FROM public.data_user as d;
     END;
     $BODY$;
 
