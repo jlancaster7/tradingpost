@@ -23,11 +23,7 @@ import { SideMenu } from '../components/SideMenu';
 import * as React from 'react';
 import { useEffect } from 'react';
 
-<<<<<<< HEAD
-import { Text, ImageBackground, Image, ColorSchemeName, Pressable, View } from 'react-native';
-=======
 import {Text, ImageBackground, Image, ColorSchemeName, Pressable, View, Platform} from 'react-native';
->>>>>>> 8f177f914b14ca8aae490ae89ab804317997c051
 
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
@@ -181,7 +177,7 @@ function DrawerPart() {
     })}>
     <Drawer.Screen name="Root" component={BottomTabNavigator} initialParams={{ appUser }} />
   </Drawer.Navigator> : null;
-}
+} 
 
 function RootNavigator() {
   return <Stack.Navigator screenOptions={{
