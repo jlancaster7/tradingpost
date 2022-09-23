@@ -49,6 +49,7 @@ const run = async () => {
     app.use(cors());
 
     app.get("/", (req: Request, res: Response) => {
+        console.log("HI!")
         res.send({Hello: "World", port: port});
     });
 
@@ -60,6 +61,8 @@ const run = async () => {
             // Spoofing Detected
             throw new Error("request signature from finicity is invalid");
         }
+
+        console.log(req.body);
 
         if (req.body.eventType === 'added') {
             const {customerId} = req.body;
