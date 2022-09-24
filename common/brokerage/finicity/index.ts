@@ -34,9 +34,29 @@ export default class FinicityService implements IBrokerageService {
         return tpUser
     }
 
-    generateBrokerageAuthenticationLink = async (userId: string, brokerageAccount?: string): Promise<string> => {
+    generateBrokerageAuthenticationLink = async (userId: string, brokerageAccount?: string, brokerageAccountId?: string): Promise<string> => {
         let finicityUser = await this.repository.getFinicityUser(userId);
         if (!finicityUser) finicityUser = await this._createFinicityUser(userId);
+
+        if (brokerageAccountId) {
+            const acc = await this.repository.getFinicityAccountByTradingpostBrokerageAccountId(parseInt(brokerageAccountId))
+            if (acc === null) throw new Error(`could not fetch finicity trading post account for tradingpost brokerage account id ${brokerageAccountId}`);
+            console.log("DATA: ", acc)
+            console.log("USER ID: ", userId)
+            const link = await this.finicity.generateConnectFix({
+                customerId:finicityUser.customerId,
+                language: "en",
+                institutionLoginId: acc.finicityInstitutionLoginId,
+                webhook: "https://worker.tradingpostapp.com/finicity/webhook",
+                webhookContentType: "application/json",
+                webhookData: {},
+                webhookHeaders: {},
+                institutionSettings: {},
+                singleUseUrl: true,
+            });
+            return link.link;
+        }
+
         const authPortal = await this.finicity.generateConnectUrl(finicityUser.customerId,
             "https://worker.tradingpostapp.com/finicity/webhook")
         return authPortal.link
@@ -48,7 +68,7 @@ export default class FinicityService implements IBrokerageService {
         // TODO: Update to include additional customers...
         if ((finCustomer as AddCustomerResponseError).code !== undefined) {
             const customersResponse = await this.finicity.getCustomers(0, 25, userId);
-            console.log(customersResponse)
+
             customersResponse.customers.forEach(customer => {
                 if (customer.username === userId) {
                     finCustomer = {
@@ -262,7 +282,7 @@ export default class FinicityService implements IBrokerageService {
         const currentFinicityAccounts = await this.repository.getFinicityAccounts(finicityUser.id);
 
         const finicityAccounts = await this.finicity.getCustomerAccounts(userId)
-        if (!finicityAccounts) throw new Error("NO ACCOUNTS AVAIL...")
+        if (!finicityAccounts) throw new Error(`no finicity accounts returned for tradingpost user id ${userId}`)
 
         const newFinicityAccounts: FinicityAccount[] = [];
         for (let i = 0; i < finicityAccounts.accounts.length; i++) {
@@ -341,8 +361,8 @@ export default class FinicityService implements IBrokerageService {
         }
 
         await this.repository.upsertFinicityAccounts(newFinicityAccounts);
-        const accountsWithIds = await this.repository.getFinicityAccounts(finicityUser.id);
-        return this.transformer.accounts(finicityUser.tpUserId, accountsWithIds);
+        const allAccounts = await this.repository.getFinicityAccounts(finicityUser.id);
+        return this.transformer.accounts(finicityUser.tpUserId, allAccounts);
     }
 
     importHoldings = async (userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostCurrentHoldings[]> => {
@@ -356,12 +376,22 @@ export default class FinicityService implements IBrokerageService {
         let accountMap: Record<string, number> = {}
         internalAccounts.forEach(acc => accountMap[acc.accountId] = acc.id);
 
+        let tpAccountErrs: { accountId: number, error: boolean, errorCode: number }[] = [];
         let tpHoldings: TradingPostCurrentHoldings[] = [];
         for (let i = 0; i < finAccountsAndHoldings.accounts.length; i++) {
             let account = finAccountsAndHoldings.accounts[i];
+            if (account.aggregationStatusCode === 103 || account.aggregationStatusCode === 185) {
+                const acc = await this.transformer.getFinicityToTradingPostAccount(finicityUser.tpUserId, account.id);
+                if (acc === undefined || acc === null) continue;
+                tpAccountErrs.push({
+                    accountId: acc.id,
+                    error: true,
+                    errorCode: account.aggregationStatusCode
+                })
+                continue;
+            }
+
             let finicityHoldings: FinicityHolding[] = [];
-            console.log(account)
-            console.log(finicityUser.customerId)
             account.position.forEach(pos => {
                 finicityHoldings.push({
                     id: 0,
@@ -403,15 +433,25 @@ export default class FinicityService implements IBrokerageService {
             });
 
             await this.repository.upsertFinicityHoldings(finicityHoldings);
-
             const transformedHoldings = await this.transformer.holdings(finicityUser.tpUserId, account.id, finicityHoldings,
                 DateTime.fromSeconds(account.detail.dateAsOf), account.currency, account.detail);
             tpHoldings.push(...transformedHoldings)
         }
 
+        if (tpAccountErrs.length > 0) await this.updateTradingpostBrokerageAccountError(tpAccountErrs);
+
         return tpHoldings;
     }
 
+    updateTradingpostBrokerageAccountError = async (accounts: { accountId: number, error: boolean, errorCode: number }[]): Promise<void> => {
+        for (let i = 0; i < accounts.length; i++) {
+            const acc = accounts[i];
+            await this.repository.updateErrorStatusOfAccount(acc.accountId, acc.error, acc.errorCode);
+        }
+    }
+
+    // TODO: we should also mix in the tradingpost account here to validate if we should pull transactions or not,
+    //      since its.. you know... broken
     importTransactions = async (userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostTransactions[]> => {
         const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(userId);
         if (finicityUser === null) throw new Error(`no user accounts exist for user id ${userId} in transactions`);

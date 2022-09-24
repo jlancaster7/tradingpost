@@ -51,7 +51,7 @@ const run = async (tokenFile?: string) => {
     const finicityUsers = await repository.getFinicityUsers();
     for (let i = 0; i < finicityUsers.length; i++) {
         const finicityUser = finicityUsers[i];
-        await brokerageService.pullNewData('finicity', finicityUser.customerId);
+        await brokerageService.pullNewTransactionsAndHoldings('finicity', finicityUser.customerId);
     }
 }
 
@@ -59,6 +59,6 @@ const run = async (tokenFile?: string) => {
 //     await run("/tmp/token-file.json");
 // }
 
-(async() => {
-   await run();
+(async () => {
+    await run()
 })()

@@ -655,3 +655,8 @@ CREATE TABLE notification
     updated_at TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE tradingpost_brokerage_account
+    ADD COLUMN error BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE tradingpost_brokerage_account
+    ADD COLUMN error_code INT NOT NULL DEFAULT 0;

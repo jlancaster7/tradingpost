@@ -9,17 +9,25 @@ import {PortfolioSummaryService} from "./portfolio-summary";
 import {
     HistoricalHoldings,
     TradingPostAccountGroupStats,
-    AccountGroupHPRsTable, TradingPostBrokerageAccountsTable, TradingPostHistoricalHoldings
+    AccountGroupHPRsTable,
+    TradingPostBrokerageAccountsTable,
+    TradingPostHistoricalHoldings,
+    IBrokerageService,
+    IBrokerageRepository, TradingPostBrokerageAccounts
 } from './interfaces';
+
+const Default = (pgClient: IDatabase<any>, pgp: IMain, finicity: Finicity): [Record<string, IBrokerageService>, IBrokerageRepository, PortfolioSummaryService] => {
+    const repo = new Repository(pgClient, pgp)
+    const portSummary = new PortfolioSummaryService(repo);
+    const brokerageMap = {
+        "finicity": new FinicityService(finicity, repo, new FinicityTransformer(repo))
+    }
+    return [brokerageMap, repo, portSummary]
+}
 
 export default class Brokerage extends BrokerageService {
     constructor(pgClient: IDatabase<any>, pgp: IMain, finicity: Finicity) {
-        const repo = new Repository(pgClient, pgp)
-        const portSummary = new PortfolioSummaryService(repo);
-        const brokerageMap = {
-            "finicity": new FinicityService(finicity, repo, new FinicityTransformer(repo))
-        }
-        super(brokerageMap, repo, portSummary)
+        super(...(Default(pgClient, pgp, finicity)))
     }
 
     getUserHoldings = async (tpUserId: string): Promise<HistoricalHoldings[]> => {
@@ -80,6 +88,40 @@ export default class Brokerage extends BrokerageService {
         await this.portfolioSummaryService.computeAccountGroupSummary(tradingPostUser.id)
     }
 
+    pullNewTransactionsAndHoldings = async (brokerageId: string, brokerageUserId: string) => {
+        const brokerage = this.brokerageMap[brokerageId];
+        if (!brokerage) throw new Error("no brokerage found")
+
+        const tradingPostUser = await brokerage.getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId);
+
+        // TODO: Instead of adding error codes at the holding level, we could write a function to pull accoutns
+        //  and then return error response for those accounts there... this way we avoid throwing exceptions as well
+        //  return accounts in multiple states and validate if its in an error state, according to the service...
+
+        const holdings = await brokerage.importHoldings(brokerageUserId);
+        await this.repository.upsertTradingPostCurrentHoldings(holdings);
+
+        let holdingHistory: TradingPostHistoricalHoldings[] = holdings.map(holding => ({
+            accountId: holding.accountId,
+            securityId: holding.securityId,
+            securityType: holding.securityType,
+            price: holding.price,
+            priceAsOf: holding.priceAsOf,
+            priceSource: holding.priceSource,
+            value: holding.value,
+            costBasis: holding.costBasis,
+            quantity: holding.quantity,
+            currency: holding.currency,
+            date: DateTime.now()
+        }));
+        await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
+
+        const transactions = await brokerage.importTransactions(brokerageUserId);
+        await this.repository.upsertTradingPostTransactions(transactions);
+
+        await this.portfolioSummaryService.computeAccountGroupSummary(tradingPostUser.id)
+    }
+
     addNewTransactions = async (brokerageUserId: string, brokerageId: string, accountIds?: string[]) => {
         const brokerage = this.brokerageMap[brokerageId];
 
@@ -115,8 +157,8 @@ export default class Brokerage extends BrokerageService {
         await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds)
     }
 
-    generateBrokerageAuthenticationLink = async (userId: string, brokerageId: string): Promise<string> => {
+    generateBrokerageAuthenticationLink = async (userId: string, brokerageId: string, brokerageAccountId?: string): Promise<string> => {
         const brokerage = this.brokerageMap[brokerageId];
-        return await brokerage.generateBrokerageAuthenticationLink(userId);
+        return await brokerage.generateBrokerageAuthenticationLink(userId, undefined, brokerageAccountId);
     }
 }

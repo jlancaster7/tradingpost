@@ -15,7 +15,7 @@ import {
     GetAllCustomerTransactions,
     GetInstitution,
     GetAccountAndHoldings,
-    EnableCustomerTx, AddCustomerResponseError,
+    EnableCustomerTx, AddCustomerResponseError, ConnectFixRequest, ConnectFixResponse,
 } from "./interfaces";
 import fs from "fs";
 
@@ -281,6 +281,35 @@ export default class Finicity {
             return JSON.parse(body) as GetCustomerAccountByIdResponse
         } catch (e) {
             throw new Error(body.toString());
+        }
+    }
+
+    generateConnectFix = async (request: ConnectFixRequest): Promise<ConnectFixResponse> => {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Finicity-App-Key': this.appKey,
+            'Finicity-App-Token': this.accessToken
+        };
+
+        const finicityCallbackUrl = process.env.FINICITY_CALLBACK_URL;
+        if (!finicityCallbackUrl) throw new Error("finicity callback url not set within the system");
+
+        if (!request.redirectUri) request.redirectUri = finicityCallbackUrl
+        if(!request.partnerId) request.partnerId = this.partnerId
+        const url = `https://api.finicity.com/connect/v2/generate/fix`;
+        const response = await fetch(url, {
+            method: "POST",
+            body: JSON.stringify(request),
+            headers
+        });
+        const body = await response.text();
+        try {
+            const r =  JSON.parse(body) as ConnectFixResponse
+            console.log(r)
+            return r;
+        } catch (e) {
+            throw new Error(body.toString())
         }
     }
 
