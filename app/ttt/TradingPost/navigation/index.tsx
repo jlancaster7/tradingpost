@@ -85,7 +85,7 @@ type UndefinedProxy<T extends keyof any> = {
 
 // TODO: these defined the parameters... so should type these correctly .. I will do that in the future
 export type AllPages = UndefinedProxy<"Launch" | "Create" | "Login" | "Dash" | "WatchlistViewer" | "WatchlistEditor" | "Watchlist" | "Auth" | "ImagePicker"> & {
-  "AccountSettings": undefined,
+  "AccountSettings": Parameters<(typeof AccountSettingsScreen)>["0"]["route"]["params"],
   "Company": Parameters<(typeof CompanyScreen)>["0"]["route"]["params"],
   "Bookmarks": Parameters<(typeof FeedScreen)>["0"]["route"]["params"],
   "TableModal": Parameters<(typeof TableModalScreen)>["0"]["route"]["params"],

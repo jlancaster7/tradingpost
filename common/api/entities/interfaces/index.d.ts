@@ -171,6 +171,7 @@ export interface IUserGet {
         is_subscribed: boolean;
         count: number;
     };
+    settings?: Statics.IUserSettings;
 }
 export interface IUserUpdate {
     id?: string;
@@ -179,7 +180,7 @@ export interface IUserUpdate {
     analyst_profile?: Statics.IAnalystProfile;
     has_profile_pic?: boolean;
     profile_url?: string;
-    settings?: any;
+    settings?: Statics.IUserSettings;
 }
 export interface IWatchlistList {
     id: number;

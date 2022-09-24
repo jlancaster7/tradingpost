@@ -332,7 +332,7 @@ return query SELECT * FROM public.view_subscription_get(request) as v WHERE v."i
   
     CREATE OR REPLACE FUNCTION public.api_user_update(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -340,7 +340,7 @@ return query SELECT * FROM public.view_subscription_get(request) as v WHERE v."i
   UPDATE public.data_user v SET first_name =  tp.prop_or_default(request->'data' ,'first_name',v.first_name), 
 last_name =  tp.prop_or_default(request->'data' ,'last_name',v.last_name), 
 profile_url =  tp.prop_or_default(request->'data' ,'profile_url',v.profile_url), 
-settings= (request->>'user_id')::UUID, 
+settings =  tp.prop_or_default(request->'data' ,'settings',v.settings), 
 analyst_profile =  tp.prop_or_default(request->'data' ,'analyst_profile',v.analyst_profile), 
 has_profile_pic =  tp.prop_or_default(request->'data' ,'has_profile_pic',v.has_profile_pic) WHERE v."id" = (request->'data'->>'id')::UUID;
 return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (request->'data'->>'id')::UUID;
@@ -352,7 +352,7 @@ return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (re
   
     CREATE OR REPLACE FUNCTION public.api_user_get(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     

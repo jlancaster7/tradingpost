@@ -11,7 +11,7 @@ export function ScrollWithButtons(props: { children?: ReactNode, buttons?: Butto
     const { isKeyboardVisible } = useIsKeyboardVisible();
     return <View style={[flex,]} >
         <View style={[flex, { backgroundColor: AppColors.background }]} >
-            <ScrollView nestedScrollEnabled contentContainerStyle={[{ maxHeight: "100%", height: props.fillHeight ? "100%" : undefined }]}>
+            <ScrollView nestedScrollEnabled contentContainerStyle={props.fillHeight ? { maxHeight: "100%", height: "100%"} : {}}>
                 {/* This is here to force layout of the content. Seems like a but with enxted scrollview content */}
                 {!isKeyboardVisible && <View style={{ height: 0 }} ></View>}
                 {props.children}

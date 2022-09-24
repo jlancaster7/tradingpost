@@ -31,6 +31,18 @@ export interface IAnalystProfile {
     benchmark: string
     interests: string[]
 }
+export interface IUserSettings {
+    push_notifications: {
+        mentions: boolean,
+        upvotes: boolean,
+        watchlist_changes: boolean,
+    },
+    portfolio_display: {
+        performance: boolean,
+        portfolio: boolean,
+        trades: boolean
+    }
+}
 
 export interface IElasticResponse {
     hits: IElasticPost[]

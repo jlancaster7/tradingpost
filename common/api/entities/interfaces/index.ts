@@ -187,7 +187,8 @@ export interface IUserGet {
     profile_url?: string,
     banner_url?: string,
     analyst_profile?: Statics.IAnalystProfile,
-    subscription: { cost:string, id:number , is_subscribed:boolean, count:number   }
+    subscription: { cost:string, id:number , is_subscribed:boolean, count:number   },
+    settings?: Statics.IUserSettings
     };
 
 export interface IUserUpdate {
@@ -197,7 +198,7 @@ export interface IUserUpdate {
     analyst_profile?: Statics.IAnalystProfile,
     has_profile_pic?: boolean,
     profile_url?: string,
-    settings?: any
+    settings?: Statics.IUserSettings
     };
 
 export interface IWatchlistList {

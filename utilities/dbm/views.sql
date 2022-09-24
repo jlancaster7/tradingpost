@@ -204,7 +204,7 @@
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url", CASE WHEN d.id = (request->>'user_id')::UUID THEN d."settings" END as "settings" FROM public.data_user as d;
+  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url", d."settings" FROM public.data_user as d;
     END;
     $BODY$;
 
@@ -339,12 +339,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_user_get(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."handle", CASE WHEN d.id = (request->>'user_id')::UUID THEN d."email" END as "email", (SELECT json_agg(t) FROM public.view_platform_claim_list(request) as t WHERE t.user_id=d."id") as "claims", d."bio", d."tags", d."id", (concat(d."first_name",' ',d."last_name")) as "display_name", d."first_name", d."last_name", d."profile_url", d."banner_url", d."analyst_profile", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID ) as "is_subscribed" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription" FROM public.data_user as d;
+  RETURN QUERY SELECT d."handle", CASE WHEN d.id = (request->>'user_id')::UUID THEN d."email" END as "email", (SELECT json_agg(t) FROM public.view_platform_claim_list(request) as t WHERE t.user_id=d."id") as "claims", d."bio", d."tags", d."id", (concat(d."first_name",' ',d."last_name")) as "display_name", d."first_name", d."last_name", d."profile_url", d."banner_url", d."analyst_profile", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID ) as "is_subscribed" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."settings" FROM public.data_user as d;
     END;
     $BODY$;
 

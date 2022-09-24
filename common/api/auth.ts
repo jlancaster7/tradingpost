@@ -93,7 +93,8 @@ export const createUser = async (data: {
     email: string,
     first_name: string,
     last_name: string,
-    handle: string
+    handle: string,
+    dummy: boolean
 }) => {
 
     const [newUser] = await execProc<{ user_id: string }>("tp.api_local_login_create_user", {

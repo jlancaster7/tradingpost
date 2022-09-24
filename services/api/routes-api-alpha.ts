@@ -127,7 +127,8 @@ makeRoute("/authapi/init", async (req) => {
         email: info.claims.email,
         first_name: req.body.first_name,
         last_name: req.body.last_name,
-        handle: req.body.handle
+        handle: req.body.handle,
+        dummy: req.body.dummy
     });
     cacheMonitor(UserApi, "insert", login.user_id, {});
     return login;
