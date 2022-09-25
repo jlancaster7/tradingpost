@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {Pressable} from "react-native";
 import {ScrollView, View} from "react-native";
 import {Layout, Text} from '@ui-kitten/components';
@@ -8,8 +8,18 @@ import {Api} from '@tradingpost/common/api';
 import {ListAlertsResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
 import {NavigationProp, useNavigation} from "@react-navigation/native";
+import * as Notifications from 'expo-notifications'
 
 export const NotificationScreen = () => {
+    const [code, setCode] = useState('');
+    useEffect(() => {
+        const d = async () => {
+            const token = (await Notifications.getDevicePushTokenAsync()).data;
+            console.log(token)
+            setCode(token);
+        }
+        d().then().catch()
+    }, [])
     return <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
         <View>
             <Layout style={{
@@ -29,6 +39,7 @@ export const NotificationScreen = () => {
                     color: '#11146F',
                 }}>Notifications</Text>
             </Layout>
+            <Text>CODE: {code}</Text>
             <List
                 key={"STATIC"}
                 datasetKey={"__________"}
@@ -81,8 +92,8 @@ export const NotificationScreen = () => {
 }
 
 const NotificationTab: React.FC<any> = (props: any) => {
-    return <ElevatedSection title={""} style={{marginHorizontal: sizes.rem2/2, marginVertical: sizes.rem1/2,}}>
-        <View style={{ marginBottom: -sizes.rem0_5}}>
+    return <ElevatedSection title={""} style={{marginHorizontal: sizes.rem2 / 2, marginVertical: sizes.rem1 / 2,}}>
+        <View style={{marginBottom: -sizes.rem0_5}}>
             <View style={{flexDirection: "row", width: "100%", marginBottom: sizes.rem0_5}}>
                 <View style={[flex, {marginLeft: sizes.rem0_5}]}>
                     {props.children}

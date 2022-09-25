@@ -236,4 +236,34 @@ export interface IWatchlistSavedList {
 }
 export interface IWatchlistSavedGet {
 }
+export interface ISecurityPrices {
+    historical: {
+        high: number;
+        low: number;
+        open: number;
+        close: number;
+        date: string;
+    }[];
+    intraday: {
+        high: number;
+        low: number;
+        open: number;
+        close: number;
+        date: string;
+    }[];
+}
+export declare type ListAlertsResponse = {
+    id: number;
+    type: string;
+    dateTime: string;
+    data: Record<string, any>;
+};
+export declare type ListTradesResponse = {
+    id: number;
+    dateTime: string;
+    price: string;
+    type: string;
+    handle: string;
+    symbol: string;
+};
 export * from '../static/interfaces';

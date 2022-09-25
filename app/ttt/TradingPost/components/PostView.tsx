@@ -28,6 +28,8 @@ import { NavigationProp, useNavigation } from "@react-navigation/native"
 import { AllPages } from '../navigation'
 //import { setBookmarked } from '../apis/PostApi'
 //import { openProfileScreen } from '../screens/ProfileScreen'
+import { WebView } from "react-native-webview";
+
 
 
 const postTotalVerticalMargin = sizes.rem1;
@@ -195,7 +197,6 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
     </View>
 }
 
-
 const SubstackView = (props: { post: Interface.IElasticPost }) => {
     const { post } = props;
     return <View style={{ marginVertical: sizes.rem1, marginHorizontal: sizes.rem0_5 }}>
@@ -227,6 +228,20 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
     if (props.post._source.postType === 'substack') {
         return SubstackView(props)
     }
+
+    if(props.post._source.postType === 'youtube' && Platform.OS !== "web") {
+        let u = resolvePostContent(props.post, availWidth);
+        u = `https:${u}`
+        console.log(u)
+        return <WebView
+            allowsFullscreenVideo
+            allowsInlineMediaPlayback
+            mediaPlaybackRequiresUserAction
+            style={{flex:1, aspectRatio: 1}}
+            source={{uri: u}}
+        />
+    }
+
     return <View>
         <View style={{display: (props.post._source.postType === 'tweet' && props.post._source.content.body.slice(0,2) === 'RT') ? 'flex': 'none',
                       flexDirection: 'row',

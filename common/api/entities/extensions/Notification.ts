@@ -1,5 +1,5 @@
 import Extension from "./";
-import {ListAlertsResponse, ListTradesResponse} from "../interfaces/index";
+import {ListAlertsResponse, ListTradesResponse} from "../interfaces";
 
 export default class extends Extension {
     listAlerts = this._makeFetch<{}, ListAlertsResponse[]>("listAlerts", this._defaultPostRequest)
