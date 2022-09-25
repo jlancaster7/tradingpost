@@ -7,6 +7,13 @@ export default class extends Extension {
         bookmarkedOnly?: boolean | undefined;
         data?: Record<string, string | number | (string | number)[]> | undefined;
     }) => Promise<IElasticPostExt[]>;
+    getUpvotes: (settings: {
+        id: string;
+        count: number;
+    }) => Promise<{
+        id: string;
+        count: number;
+    }>;
     setBookmarked: (settings: {
         id: string;
         is_bookmarked: boolean;
@@ -17,9 +24,11 @@ export default class extends Extension {
     setUpvoted: (settings: {
         id: string;
         is_upvoted: boolean;
+        count: number;
     }) => Promise<{
         id: string;
         is_upvoted: boolean;
+        count: number;
     }>;
     create: (settings: {
         title: string;

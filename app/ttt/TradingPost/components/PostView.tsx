@@ -114,6 +114,11 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
 
     const [isBookmarked, setIsBookmarked] = useState(Boolean(post.ext.is_bookmarked));
     const [isUpvoted, setIsUpvoted] = useState(Boolean(post.ext.is_upvoted));
+    const [upvoteCount, setUpvoteCount] = useState(0);
+    Api.Post.extensions.getUpvotes({id: props.post._source.id, count: 0})
+        .then((r) => {
+            setUpvoteCount(r.count);
+        })
 
     const [showStatus, setShowStatus] = useState(false);
     return <View style={{ marginHorizontal: postTotalHorizontalMargin / 2, marginVertical: postTotalVerticalMargin / 2 }} >
@@ -180,16 +185,18 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                                 setShowStatus(true);
                             Api.Post.extensions.setUpvoted({
                                 id: post._id,
-                                is_upvoted: !isUpvoted // return number of upvotes. 
+                                is_upvoted: !isUpvoted,
+                                count: upvoteCount // return number of upvotes. 
                             }).then((r) => {
                                 if (r.is_upvoted)
                                     setTimeout(() => {
                                         setShowStatus(false)
                                     }, 1333);
+                                setUpvoteCount(r.count);
                                 setIsUpvoted(r.is_upvoted);
                             });
                         }}
-                        accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{ height: 24, width: 24, opacity: isUpvoted ? 1 : 0.25 }} />} appearance={"ghost"} >{""}</Button>}
+                        accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{ height: 24, width: 24, opacity: isUpvoted ? 1 : 0.25 }} />} appearance={"ghost"} >{upvoteCount}</Button>}
                 </View>}
         </View>
     </View>

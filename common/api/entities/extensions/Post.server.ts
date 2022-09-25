@@ -171,14 +171,22 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
 
         return rep.body;
     },
+    getUpvotes: async (rep) => {
+        const pool = await getHivePool;
+        const result = await pool.query('SELECT count(post_id) from data_upvote where post_id = $1', [rep.body.id]);
+        rep.body.count = result.rows[0].count;
+        return rep.body;
+    },
     setUpvoted: async (rep) => {
         //TODO:  need to to add incorp into api build in the future 
         const pool = await getHivePool;
         if (rep.body.is_upvoted)
-            await pool.query(`INSERT INTO data_upvote(post_id,user_id) VALUES($1,$2)`, [rep.body.id, rep.extra.userId])
+            await pool.query(`INSERT INTO data_upvote(post_id,user_id) VALUES($1,$2)`, [rep.body.id, rep.extra.userId])        
         else
             await pool.query(`DELETE FROM data_upvote WHERE post_id= $1 and user_id = $2`, [rep.body.id, rep.extra.userId])
-
+        const result = await pool.query('SELECT count(post_id) from data_upvote where post_id = $1', [rep.body.id]);
+        
+        rep.body.count = result.rows[0].count;
         return rep.body;
     },
     create: async (req) => {

@@ -13,6 +13,20 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<IElasticPostExt[]>;
+    getUpvotes: (req: {
+        body: {
+            id: string;
+            count: number;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<{
+        id: string;
+        count: number;
+    }>;
     setBookmarked: (req: {
         body: {
             id: string;
@@ -31,6 +45,7 @@ declare const _default: {
         body: {
             id: string;
             is_upvoted: boolean;
+            count: number;
         };
         extra: {
             userId: string;
@@ -40,6 +55,7 @@ declare const _default: {
     }) => Promise<{
         id: string;
         is_upvoted: boolean;
+        count: number;
     }>;
     create: (req: {
         body: {
