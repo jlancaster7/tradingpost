@@ -238,7 +238,9 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
                 {'Retweet'}
             </Text>
         </View>
-        <HtmlView style={{ height: postInnerHeight(props.post, availWidth), marginTop: props.post._source.postType === 'spotify' ? 8 : 0 }}
+        <HtmlView style={{ height: postInnerHeight(props.post, availWidth), 
+                           marginTop: ['spotify', 'youtube'].includes(props.post._source.postType) ? 8 : 0,
+                           marginBottom: ['youtube'].includes(props.post._source.postType) ? 8 : 0 }}
             isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}>
             {resolvePostContent(props.post, availWidth)}
         </HtmlView>

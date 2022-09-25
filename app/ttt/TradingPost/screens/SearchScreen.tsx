@@ -39,21 +39,25 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
     }, [searchText, searchType])
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#F7f8f8" }}>
-            <SearchBar onTextChange={(v) => {
-                setSearchText(v);
-            }} />
-            <ButtonGroup
-                style={{ margin: sizes.rem1, width: "auto" }}
-                unselectedStyle={{
-                    backgroundColor: "#35A265",
-                }}
-                
-                value={searchType}
-                onValueChange={(value) => {
-                    setSearchType(value);
-                    setPeople(undefined);
-                }} items={[{ label: "Analysts", "value": "people" }, { label: "Posts", value: "posts" }]} />
+        <View style={{ backgroundColor: "#F7f8f8" }}>
+            <SearchBar 
+                onTextChange={(v) => {
+                    setSearchText(v);
+                }} />
+            <View style={{width: '90%'}}>
+                <ButtonGroup
+                    style={{ margin: sizes.rem1}}
+                    unselectedStyle={{
+                        backgroundColor: "#35A265",
+                    }}
+                    value={searchType}
+                    onValueChange={(value) => {
+                        setSearchType(value);
+                        setPeople(undefined);
+                    }} 
+                    items={[{ label: "Analysts", value: "people" }, { label: "Posts", value: "posts" }]} />
+            </View>
+
             {searchType === "posts" && <FeedPart searchText={searchText} />}
             {searchType === "people" && <View
                 style={{ marginHorizontal: sizes.rem1, flex: 1 }}><List
