@@ -59,7 +59,7 @@ export const postInnerHeight = (itm: Interface.IElasticPost | undefined, windowW
 export const resolvePostContent = (itm: Interface.IElasticPost | undefined, windowWidth: number) => {
     switch (itm?._source.postType) {
         case "youtube":
-            return itm._source.postUrl.replace("https://www.youtube.com/watch?v=", "//www.youtube.com/embed/");
+            return "https:" + itm._source.postUrl.replace("https://www.youtube.com/watch?v=", "//www.youtube.com/embed/");
         case 'tweet':
             return `<html><head>
             <style>
@@ -234,19 +234,6 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
 
     if (props.post._source.postType === 'substack') {
         return SubstackView(props)
-    }
-
-    if(props.post._source.postType === 'youtube' && Platform.OS !== "web") {
-        let u = resolvePostContent(props.post, availWidth);
-        u = `https:${u}`
-        console.log(u)
-        return <WebView
-            allowsFullscreenVideo
-            allowsInlineMediaPlayback
-            mediaPlaybackRequiresUserAction
-            style={{flex:1, aspectRatio: 1}}
-            source={{uri: u}}
-        />
     }
 
     return <View>
