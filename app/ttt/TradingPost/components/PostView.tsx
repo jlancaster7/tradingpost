@@ -235,7 +235,7 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
         {<Text key="content" style={{ fontSize: fonts.small }}>
             {parseHtmlEnteties(post._source.content.description).length > 300 ? `${parseHtmlEnteties(post._source.content.description).substring(0,300)}...` : parseHtmlEnteties(post._source.content.description)}
         </Text>}
-        {<Text key="date" style={{ fontSize: fonts.xSmall, fontFamily: "K2D", paddingVertical: 5 }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString()}</Text>}
+        {<Text key="date" style={{ fontSize: fonts.xSmall, fontFamily: "K2D", paddingVertical: 5 }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString('en-US', {dateStyle: 'medium', timeStyle: 'short'})}</Text>}
     </View>
 }
 const parseHtmlEnteties = (str: string) => {
