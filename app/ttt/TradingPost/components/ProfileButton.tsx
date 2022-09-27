@@ -4,7 +4,6 @@ import { Icon } from "@ui-kitten/components"
 import React from "react"
 import { Pressable, Image } from "react-native"
 import { AppColors } from "../constants/Colors"
-import { AllPages } from "../navigation"
 import { sizes } from "../style"
 
 export const ProfileButton = (props: { userId: string, profileUrl: string, size: number, editable?: boolean }) => {

@@ -1,4 +1,5 @@
 process.env.CONFIGURATION_ENV = 'production'
+process.env.FINICITY_CALLBACK_URL ="https://app.tradingpostapp.com"
 import {DefaultConfig} from "../configuration/index";
 import pgPromise from 'pg-promise';
 import Finicity from "../finicity/index";
@@ -40,8 +41,7 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
 
     const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
     const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-    await finicity.init()
-
+    await finicity.init();
 
     // const deleteTables = [
     //     'tradingpost_current_holding',
@@ -59,7 +59,6 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     // }
 
     const tpUserId = "8e787902-f0e9-42aa-a8d8-18e5d7a1a34d";
-    //
     // console.log("Starting...")
     const brokerageService = new Brokerage(pgClient, pgp, finicity);
     // await brokerageService.addNewAccounts("6007115349", "finicity")

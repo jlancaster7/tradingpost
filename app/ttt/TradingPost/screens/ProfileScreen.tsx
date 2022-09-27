@@ -27,6 +27,7 @@ import { PrimaryChip } from "../components/PrimaryChip";
 import { useAppUser } from "../Authentication";
 import InteractiveChart from "../components/InteractiveGraph";
 import { ButtonGroup } from "../components/ButtonGroup";
+import { RootStackScreenProps } from "../navigation/pages";
 //import { screens } from "../navigationComponents";
 //import { getUser } from "../apis/UserApi";
 
@@ -41,7 +42,7 @@ const clampBuffer = 4;
 
 const collapseShift = 2 * ButtonMargin;
 
-export function ProfileScreen(props: TabScreenProps<{ userId: string }>) {
+export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
     const userId = props.route?.params?.userId;
     const [portPeriod, setPortPeriod] = useState("1Y")  
 
