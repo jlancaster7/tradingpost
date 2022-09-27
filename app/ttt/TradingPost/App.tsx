@@ -21,7 +21,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
-import Navigation, { AllPages } from './navigation';
+import Navigation from './navigation';
 import { LogBox, Platform, Text } from 'react-native'
 import WelcomeScreen from './screens/WelcomeScreen';
 import * as eva from '@eva-design/eva';

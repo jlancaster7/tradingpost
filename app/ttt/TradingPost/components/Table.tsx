@@ -72,17 +72,18 @@ export const stringyDate = (dts?: string) => {
 }
 
 
+export type TableProps<T> = {
+    maxPage?: number
+    columns: ITableColumn<T>[],
+    elevated?: boolean,
+    nestedScrollEnabled?: boolean,
+    rowPressed?: EntireRowFunction<T, void>,
+    hideHeader?: boolean,
+    renderAuxItem?: ListRenderItem<T> | null | undefined
+} & ListProps<T>
 
 export function Table<T>(
-    props: {
-        maxPage?: number
-        columns: ITableColumn<T>[],
-        elevated?: boolean,
-        nestedScrollEnabled?: boolean,
-        rowPressed?: EntireRowFunction<T, void>,
-        hideHeader?: boolean,
-        renderAuxItem?: ListRenderItem<T> | null | undefined
-    } & ListProps<T>) {
+    props: TableProps<T>) {
 
     const
         { data, columns, nestedScrollEnabled, elevated, rowPressed } = props,

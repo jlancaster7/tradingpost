@@ -25,7 +25,8 @@ import { useWindowDimensions } from 'react-native'
 import { ProfileButton } from './ProfileButton'
 import { useToast } from 'react-native-toast-notifications'
 import { NavigationProp, useNavigation } from "@react-navigation/native"
-import { AllPages } from '../navigation'
+import { RootStackParamList } from '../navigation/pages'
+
 //import { setBookmarked } from '../apis/PostApi'
 //import { openProfileScreen } from '../screens/ProfileScreen'
 import { WebView } from "react-native-webview";
@@ -112,7 +113,7 @@ export const resolvePostContent = (itm: Interface.IElasticPost | undefined, wind
 }
 export function PostView(props: { post: Interface.IElasticPostExt }) {
     const { post } = props
-    const nav = useNavigation<NavigationProp<AllPages>>();
+    const nav = useNavigation<NavigationProp<RootStackParamList>>();
 
     const [isBookmarked, setIsBookmarked] = useState(Boolean(post.ext.is_bookmarked));
     const [isUpvoted, setIsUpvoted] = useState(Boolean(post.ext.is_upvoted));

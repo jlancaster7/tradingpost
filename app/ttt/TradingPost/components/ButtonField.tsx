@@ -71,7 +71,6 @@ export function PlaidButtonField(props: {
             width: sizes.rem9,
             height: sizes.rem2,
             padding: 0,
-
         },
         // labelStyle:
         // {
@@ -89,8 +88,7 @@ export function PlaidButtonField(props: {
     };
     return <LabeledField compact={props.compact} label={props.label} leftElement={props.leftElement}>
         <Text>BROKEN</Text>
-        {
-        /* <PlaidLink {...props.plaidProps}>
+        {/* <PlaidLink {...props.plaidProps}>
         <View pointerEvents="none">
             {_isActive ?
                 (!props.secondary ? <PrimaryButton {...bProps} /> : <SecondaryButton {...bProps} />) :
