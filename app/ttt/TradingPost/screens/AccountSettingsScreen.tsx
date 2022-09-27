@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react"
-import { ButtonField, PlaidButtonField } from "../components/ButtonField"
 import { IconifyIcon } from "../components/IconfiyIcon"
 import { Section, Subsection } from "../components/Section"
 import { SwitchField } from "../components/SwitchField"
@@ -20,17 +19,19 @@ import { AddButton, EditButton } from "../components/AddButton";
 import { Table } from "../components/Table";
 import { bannerText, flex, paddView, paddViewWhite, sizes, thinBannerText } from "../style";
 import { PrimaryButton } from "../components/PrimaryButton"
-//import { getPlaidLink, setPlaidToken } from "../../apis/PlaidApi"
+import { TabScreenProps } from "../navigation"
+import { useAppUser } from "../Authentication"
 
-export function AccountSettingsScreen(props: any) {
-    const [lockButtons, setLockButtons] = useChangeLock(props),
-        [mentionCheck, setMentionCheck] = useState<boolean>(true),
-        [upvotesCheck, setUpvotesCheck] = useState<boolean>(true),
-        [watchlistChangeCheck, setWatchlistChangeCheck] = useState<boolean>(true),
-        [performanceCheck, setPerformanceCheck] = useState<boolean>(true),
-        [portfolioCheck, setPortfolioCheck] = useState<boolean>(true),
-        [tradesCheck, setTradesCheck] = useState<boolean>(true),
-        
+
+export function AccountSettingsScreen(props: TabScreenProps) {
+    const { appUser, authToken, signIn } = useAppUser();
+    
+    const [mentionCheck, setMentionCheck] = useState<boolean>(appUser?.settings?.push_notifications.mentions === undefined ? true : appUser?.settings?.push_notifications.mentions),
+        [upvotesCheck, setUpvotesCheck] = useState<boolean>(appUser?.settings?.push_notifications.upvotes === undefined ? true : appUser?.settings?.push_notifications.upvotes),
+        [watchlistChangeCheck, setWatchlistChangeCheck] = useState<boolean>(appUser?.settings?.push_notifications.watchlist_changes === undefined ? true : appUser?.settings?.push_notifications.watchlist_changes),
+        [performanceCheck, setPerformanceCheck] = useState<boolean>(appUser?.settings?.portfolio_display.performance === undefined ? false : appUser?.settings?.portfolio_display.performance),
+        [portfolioCheck, setPortfolioCheck] = useState<boolean>(appUser?.settings?.portfolio_display.portfolio === undefined ? false : appUser?.settings?.portfolio_display.portfolio),
+        [tradesCheck, setTradesCheck] = useState<boolean>(appUser?.settings?.portfolio_display.trades === undefined ? false : appUser?.settings?.portfolio_display.trades),
         linkTo = useLinkTo<any>()
     
     const onMentionCheckChanged = (isMentionChecked: boolean) => {
@@ -101,45 +102,48 @@ export function AccountSettingsScreen(props: any) {
             .then((r) => {
                 setAccounts(r);
             })
-        Api.User.update(props.user.data.id, {settings: {}})
     }, [])
 
-    return <ScrollWithButtons buttons={{
-        locked: lockButtons,
-        left: props.saveOnly ? undefined : {
+    return <ScrollWithButtons 
+    buttons={{
+        left:  {
             text: 'Cancel',
             onPress: async () => {
-                setLockButtons(true);
                 try {
                     //      await UpdateUserProfile({ status_setup: true });
                     //    SetDashboardLayout();
                 linkTo('/dash/feed')
                 }
                 catch (ex) {
-                    setLockButtons(false);
                 }
             }
         },
         right: {
             text: 'Save',
             onPress: async () => {
-                setLockButtons(true);
                 try {
-                    // await UpdateUserProfile({
-                    //     status_setup: true,
-                    //     settings: {
-                    //         notifications: notificationEntity.data,
-                    //         broadcasting: broadcastEntity.data
-                    //     }
-                    // });
-                    
-                    // if (!props.saveOnly)
-                    //     SetDashboardLayout();
-                    linkTo('/dash/feed')
+
+                    await Api.User.update(appUser?.id, {
+                        settings: {
+                            push_notifications: {
+                                mentions: mentionCheck,
+                                upvotes: upvotesCheck,
+                                watchlist_changes: watchlistChangeCheck,
+                            },
+                            portfolio_display: {
+                                performance: performanceCheck,
+                                portfolio: portfolioCheck,
+                                trades: tradesCheck
+                            }
+                        }
+                    })
+
+                    authToken ? await signIn("", authToken) : {};
+
+                    linkTo('/dash/feed');
 
                 }
                 catch (ex) {
-                    setLockButtons(false);
                 }
             }
         }

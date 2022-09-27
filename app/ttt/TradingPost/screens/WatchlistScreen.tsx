@@ -29,7 +29,7 @@ export const WatchlistScreen = (props: TabScreenProps) => {
                 if (lists.quick.id) {
                     setQuickWatchlist(await Api.Watchlist.get(lists.quick.id));
                 }
-                else
+                else {
                     setQuickWatchlist({
                         id: 0,
                         items: [],
@@ -39,6 +39,7 @@ export const WatchlistScreen = (props: TabScreenProps) => {
                         user: [],
                         is_saved: false
                     })
+                }
                 setWatchlists(lists);
                 
 

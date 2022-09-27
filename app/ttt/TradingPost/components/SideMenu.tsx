@@ -164,7 +164,7 @@ function MenuItem(props: { navigation: DrawerContentComponentProps["navigation"]
     return <DrawerItem
         style={props.isLast ? { marginTop: "auto" } : undefined}
         label={props.children}
-        icon={(props) => <SvgExpo style={{ height: props.size, width: props.size }}>
+        icon={(props) => <SvgExpo height={props.size} width={props.size} style={{ height: props.size, width: props.size }}>
             <SvgElement />
         </SvgExpo>}
         onPress={() => {

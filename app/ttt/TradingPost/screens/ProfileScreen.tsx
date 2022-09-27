@@ -224,15 +224,17 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                     <Text style={{ color: "black", textAlign: !collapsed ? "center" : "left", fontSize: fonts.medium }}>{user?.display_name}</Text>
                 </View>
                 {appUser && user && <SecondaryButton
-                    style={{
+                    /*style={{
                         width: "50%", marginVertical: ButtonMargin,
                         marginLeft: "auto", marginRight: collapsed ? sizes.rem1 : "auto",
                         backgroundColor: user.subscription.is_subscribed ? '#EC5328' : '#35A265',
                         borderColor: user.subscription.is_subscribed ? '#EC5328' : '#35A265',
                     }}
+                    */
                     {...(() => {
                         let children: string;
                         let onPress: () => void;
+                        let style;
                         if (appUser && user && user?.id !== appUser?.id) {
                             if (!user.subscription?.is_subscribed) {
                                 children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : "(Free)"}`
@@ -245,17 +247,19 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                                     });
                                     setUser(undefined);
                                 }
+                                style={backgroundColor: "#35A265", borderColor: "#35A265"}
                             }
                             else {
                                 children = 'Subscribed',
                                 
-                                    onPress = async () => {
-                                        //Todo:: make this an are you sure
-                                        await Api.Subscriber.extensions.removeSubscription({
-                                            subscriptionId: user.subscription?.id
-                                        });
-                                        setUser(undefined);
-                                    }
+                                onPress = async () => {
+                                    //Todo:: make this an are you sure
+                                    await Api.Subscriber.extensions.removeSubscription({
+                                        subscriptionId: user.subscription?.id
+                                    });
+                                    setUser(undefined);
+                                }
+                                style={backgroundColor: "#EC5328", borderColor: "#EC5328"}
                                     
                             }
 

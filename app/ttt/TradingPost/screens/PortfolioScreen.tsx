@@ -72,7 +72,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                 if (lists.quick.id) {
                     setQuickWatchlist(await Api.Watchlist.get(lists.quick.id));
                 }
-                else
+                else {
                     setQuickWatchlist({
                         id: 0,
                         items: [],
@@ -81,7 +81,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                         type: "primary",
                         user: [],
                         is_saved: false
-                    })
+                    })}
                 setWatchlists(lists);
                 //          setTrades(trades);
                 setHoldings(holdings);

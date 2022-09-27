@@ -192,7 +192,8 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
                         email: info.claims.email,
                         first_name: req.body.first_name,
                         last_name: req.body.last_name,
-                        handle: req.body.handle
+                        handle: req.body.handle,
+                        dummy: req.body.dummy
                     })];
             case 2:
                 login = _a.sent();

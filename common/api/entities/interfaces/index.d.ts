@@ -22,12 +22,20 @@ export interface ICommentList {
     related_type: string;
     related_id: string;
     comment: string;
+    user_id: string;
 }
 export interface ICommentGet {
     comment: string;
     id: number;
     related_type: string;
     related_id: string;
+    user_id: string;
+}
+export interface ICommentInsert {
+    related_type: string;
+    related_id: string;
+    comment: string;
+    user_id: string;
 }
 export interface IPlatformClaimList {
     platform: string;
@@ -171,6 +179,7 @@ export interface IUserGet {
         is_subscribed: boolean;
         count: number;
     };
+    settings?: Statics.IUserSettings;
 }
 export interface IUserUpdate {
     id?: string;
@@ -179,7 +188,7 @@ export interface IUserUpdate {
     analyst_profile?: Statics.IAnalystProfile;
     has_profile_pic?: boolean;
     profile_url?: string;
-    settings?: any;
+    settings?: Statics.IUserSettings;
 }
 export interface IWatchlistList {
     id: number;
@@ -235,4 +244,34 @@ export interface IWatchlistSavedList {
 }
 export interface IWatchlistSavedGet {
 }
+export interface ISecurityPrices {
+    historical: {
+        high: number;
+        low: number;
+        open: number;
+        close: number;
+        date: string;
+    }[];
+    intraday: {
+        high: number;
+        low: number;
+        open: number;
+        close: number;
+        date: string;
+    }[];
+}
+export declare type ListAlertsResponse = {
+    id: number;
+    type: string;
+    dateTime: string;
+    data: Record<string, any>;
+};
+export declare type ListTradesResponse = {
+    id: number;
+    dateTime: string;
+    price: string;
+    type: string;
+    handle: string;
+    symbol: string;
+};
 export * from '../static/interfaces';

@@ -10,6 +10,7 @@ import { View } from "../../components/Themed";
 import { ElevatedSection } from "../../components/Section";
 import { useLinkTo } from "@react-navigation/native";
 import { CreateAccountProps } from "./shared";
+import { Api } from "@tradingpost/common/api"
 
 
 export const AnalystStartSection = (props: CreateAccountProps) => {
@@ -32,14 +33,44 @@ export const AnalystStartSection = (props: CreateAccountProps) => {
         buttons={{
             right: {
                 text: "I'm An Analyst",
-                onPress: () => {
+                onPress: async () => {
+                    const defaultSettings = {
+                        push_notifications: {
+                            mentions: true,
+                            upvotes: true,
+                            watchlist_changes: true,
+                        },
+                        portfolio_display: {
+                            performance: true,
+                            portfolio: true,
+                            trades: true
+                        }
+                    }
+                    await Api.User.update(props.user.data.id, {
+                        settings: defaultSettings
+                    })
                     linkTo("/create/analystinterest");
                 }
             },
             left: {
                 text: "Not Now",
-                onPress: () => {
+                onPress: async () => {
                     //need to change this to skip 2 
+                    const defaultSettings = {
+                        push_notifications: {
+                            mentions: true,
+                            upvotes: true,
+                            watchlist_changes: true,
+                        },
+                        portfolio_display: {
+                            performance: false,
+                            portfolio: false,
+                            trades: false
+                        }
+                    }
+                    await Api.User.update(props.user.data.id, {
+                        settings: defaultSettings
+                    })
                     linkTo("/create/profilepicture");
                 }
             }
