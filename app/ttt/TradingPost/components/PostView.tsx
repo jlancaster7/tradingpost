@@ -179,7 +179,20 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
             {(props.post._source.postType !== "tweet") &&
                 <View style={[row, { alignItems: "center", marginTop: "auto", borderTopColor: "#ccc", borderTopWidth: 1 }]}>
                     {showStatus && <View style={{ position: "absolute", backgroundColor: "black", opacity: 0.6, width: 100, margin: "auto", top: 12, left: 0, borderRadius: 8, right: 0, padding: 4 }}><Text style={{ width: "100%", textAlign: "center", color: "white" }}>Upvoted!</Text></View>}
-                    <Button style={{ marginLeft: "auto", paddingHorizontal: 0 }} appearance={'ghost'} accessoryLeft={(props: any) => <CommentIcon height={24} width={24} style={{ height: 24, width: 24, }} />} >-</Button>
+                    <Button 
+                        style={{ marginLeft: "auto", paddingHorizontal: 0 }} 
+                        appearance={'ghost'} 
+                        accessoryLeft={(props: any) => 
+                            <CommentIcon height={24} width={24} style={{ height: 24, width: 24, }} />
+                            } 
+                        onPress={() => {
+                            nav.navigate("PostScreen", {
+                                post
+                            })
+                        }}
+                        >
+                        {evaProps => <Text {...evaProps} style={{fontWeight: 'normal', paddingHorizontal: sizes.rem1}}>-</Text>}
+                    </Button>
                     {<Button
                         style={{ paddingHorizontal: 0 }}
                         onPress={() => {
@@ -198,7 +211,9 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                                 setIsUpvoted(r.is_upvoted);
                             });
                         }}
-                        accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{ height: 24, width: 24, opacity: isUpvoted ? 1 : 0.25 }} />} appearance={"ghost"} >{upvoteCount}</Button>}
+                        accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{ height: 24, width: 24, opacity: isUpvoted ? 1 : 0.25 }} />} appearance={"ghost"} >
+                            {evaProps => <Text {...evaProps} style={{fontWeight: 'normal', paddingHorizontal: sizes.rem1}}>{upvoteCount}</Text>}
+                        </Button>}
                 </View>}
         </View>
     </View>
@@ -206,18 +221,20 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
 
 const SubstackView = (props: { post: Interface.IElasticPost }) => {
     const { post } = props;
-    return <View style={{ marginVertical: sizes.rem1, marginHorizontal: sizes.rem0_5 }}>
+    return <View style={{ marginVertical: sizes.rem1/2, marginHorizontal: sizes.rem0_5 }}>
         <View key="profile" >
             {/* <Image style={{ aspectRatio: 0.9, marginRight: sizes.rem1 / 2 }} source={{ uri: post.platform_profile_url }} /> */}
             <Pressable onPress={() => {
                 Linking.openURL(post._source.postUrl)
             }}
-                style={{ marginBottom: sizes.rem1, display: "flex", flexDirection: "row" }}>
+                style={{ marginBottom: sizes.rem0_5, display: "flex", flexDirection: "row", alignItems: 'center' }}>
                 <IconifyIcon style={{ width: 30, height: 30, marginTop: 2, marginRight: sizes.rem1 / 1.5 }} svgProps={{ style: { margin: "auto" } }} icon={social.SubstackLogo} currentColor={socialStyle.substackColor} />
-                {<Subheader text={post._source.content.title || ""} style={{ display: "flex", color: "black", fontSize: fonts.medium, fontWeight: "600", fontFamily: "K2D", maxWidth: "85%" }}></Subheader>}
+                {<Subheader text={post._source.content.title || ""} style={{ marginBottom: 0 ,display: "flex", color: "black", fontSize: fonts.medium, fontWeight: "600", fontFamily: "K2D", maxWidth: "85%" }}></Subheader>}
             </Pressable>
         </View>
-        {<Text key="content" style={{ fontSize: fonts.small }}>{parseHtmlEnteties(post._source.content.description)}</Text>}
+        {<Text key="content" style={{ fontSize: fonts.small }}>
+            {parseHtmlEnteties(post._source.content.description).length > 300 ? `${parseHtmlEnteties(post._source.content.description).substring(0,300)}...` : parseHtmlEnteties(post._source.content.description)}
+        </Text>}
         {<Text key="date" style={{ fontSize: fonts.xSmall, fontFamily: "K2D", paddingVertical: 5 }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString()}</Text>}
     </View>
 }

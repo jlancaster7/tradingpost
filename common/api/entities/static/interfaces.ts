@@ -1,6 +1,6 @@
 import { number } from "mathjs"
 import { PriceInfo } from "../../cache"
-import { IUserList, IWatchlistList } from "../interfaces"
+import { ICommentList, IUserList, IWatchlistList } from "../interfaces"
 
 export interface ISecurityGet {
     id: number,
@@ -86,6 +86,14 @@ export interface IElasticPost {
             id: string,
         }
     }
+}
+export interface ICommentPlus extends ICommentList {
+    created_at: Date,
+    updated_at: Date
+    handle: string,
+    display_name: string,
+    profile_url: string,
+    subscription: {[key: string]: string}
 }
 
 export type IElasticPostExt = IElasticPost & {

@@ -22,12 +22,20 @@ export interface ICommentList {
     related_type: string;
     related_id: string;
     comment: string;
+    user_id: string;
 }
 export interface ICommentGet {
     comment: string;
     id: number;
     related_type: string;
     related_id: string;
+    user_id: string;
+}
+export interface ICommentInsert {
+    related_type: string;
+    related_id: string;
+    comment: string;
+    user_id: string;
 }
 export interface IPlatformClaimList {
     platform: string;

@@ -45,12 +45,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_comment_list(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"related_type" text,"related_id" text,"comment" text)
+        RETURNS TABLE("id" BIGINT,"related_type" text,"related_id" text,"comment" text,"user_id" UUID)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."related_type", d."related_id", d."comment" FROM public.data_comment as d;
+  RETURN QUERY SELECT d."id", d."related_type", d."related_id", d."comment", d."user_id" FROM public.data_comment as d;
     END;
     $BODY$;
 
@@ -59,12 +59,26 @@
   
     CREATE OR REPLACE FUNCTION public.view_comment_get(
         request jsonb)
-        RETURNS TABLE("comment" text,"id" BIGINT,"related_type" text,"related_id" text)
+        RETURNS TABLE("comment" text,"id" BIGINT,"related_type" text,"related_id" text,"user_id" UUID)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."comment", d."id", d."related_type", d."related_id" FROM public.data_comment as d;
+  RETURN QUERY SELECT d."comment", d."id", d."related_type", d."related_id", d."user_id" FROM public.data_comment as d;
+    END;
+    $BODY$;
+
+
+    DROP FUNCTION IF EXISTS public.view_comment_insert(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.view_comment_insert(
+        request jsonb)
+        RETURNS TABLE("related_type" text,"related_id" text,"comment" text,"user_id" UUID)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."related_type", d."related_id", d."comment", d."user_id" FROM public.data_comment as d;
     END;
     $BODY$;
 
