@@ -20,7 +20,6 @@ import { WatchlistViewerScreen } from "../screens/WatchlistViewerScreen"
 
 export const ModalStackGroup = () => {
     return <Stack.Group screenOptions={{ presentation: 'modal' }}>
-        <Stack.Screen name="Modal" component={ModalScreen} />
         <Stack.Screen name="ResetPassword" component={ChangePasswordScreen} />
         <Stack.Screen name="VerifyAccount" component={VerificationScreen} />
         <Stack.Screen name="Auth" component={AuthScreen} />
