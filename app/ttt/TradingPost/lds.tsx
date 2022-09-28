@@ -11,6 +11,7 @@ export interface LDS {
     loginResult: LoginResult | undefined
     authToken: string | undefined,
     hasAuthed: boolean | undefined,
+    firstTime: boolean | undefined,
     securities: {
         list: ISecurityList[],
         byId: Record<number, ISecurityList>,

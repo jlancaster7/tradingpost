@@ -118,15 +118,17 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
     const [isBookmarked, setIsBookmarked] = useState(Boolean(post.ext.is_bookmarked));
     const [isUpvoted, setIsUpvoted] = useState(Boolean(post.ext.is_upvoted));
     const [upvoteCount, setUpvoteCount] = useState(0);
-    Api.Post.extensions.getUpvotes({id: props.post._source.id, count: 0})
-        .then((r) => {
-            setUpvoteCount(r.count);
-        })
+    useEffect(() => {
+        Api.Post.extensions.getUpvotes({id: props.post._source.id, count: 0})
+            .then((r) => {
+                setUpvoteCount(r.count);
+            })
 
+    }, [])
     const [showStatus, setShowStatus] = useState(false);
     return <View style={{ marginHorizontal: postTotalHorizontalMargin / 2, marginVertical: postTotalVerticalMargin / 2 }} >
         <View
-            style={[shadow, { backgroundColor: "white", borderRadius: sizes.borderRadius * 4, borderColor: "#ccc", borderWidth: postTotalBorder / 2 }]}>
+            style={[shadow, {backgroundColor: "white", borderRadius: sizes.borderRadius * 4, borderColor: "#ccc", borderWidth: postTotalBorder / 2 }]}>
             <Pressable
                 onPress={() => {
                     //openProfileScreen(props.parentComponentId, props.post.creator.id_creator);
@@ -265,12 +267,14 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
                 {'Retweet'}
             </Text>
         </View>
-        <HtmlView style={{ height: postInnerHeight(props.post, availWidth), 
-                           marginTop: ['spotify', 'youtube'].includes(props.post._source.postType) ? 8 : 0,
-                           marginBottom: ['youtube'].includes(props.post._source.postType) ? 8 : 0 }}
-            isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}>
-            {resolvePostContent(props.post, availWidth)}
-        </HtmlView>
+        <View style={{height: postInnerHeight(props.post, availWidth)}}>
+            <HtmlView style={{ height: postInnerHeight(props.post, availWidth), 
+                            marginTop: ['spotify', 'youtube'].includes(props.post._source.postType) ? 8 : 0,
+                            marginBottom: ['youtube'].includes(props.post._source.postType) ? 8 : 0 }}
+                isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}>
+                {resolvePostContent(props.post, availWidth)}
+            </HtmlView>
+        </View>
     </View>
 
 }

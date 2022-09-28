@@ -134,7 +134,25 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
                 locked: lockButtons,
                 left: props.saveOnly ? undefined : {
                     text: "Nevermind",
-                    onPress: () => linkTo('/create/profilepicture')
+                    onPress: async () => {
+                        const defaultSettings = {
+                            analyst: false,
+                            push_notifications: {
+                                mentions: true,
+                                upvotes: true,
+                                watchlist_changes: true,
+                            },
+                            portfolio_display: {
+                                performance: false,
+                                portfolio: false,
+                                trades: false
+                            }
+                        }
+                        await Api.User.update(props.user.data.id, {
+                            settings: defaultSettings
+                        })
+                        linkTo('/create/profilepicture')
+                    }
                 },
                 right: {
                     text: props.saveOnly ? "Apply" : "Continue",

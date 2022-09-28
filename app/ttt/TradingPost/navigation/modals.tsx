@@ -1,5 +1,5 @@
 import React from "react"
-import { Stack } from "./RootNavigator"
+//import { Stack } from "./RootNavigator"
 import { View } from 'react-native'
 import { ProfileScreen } from "../screens/ProfileScreen"
 import { AccountSettingsScreen } from "../screens/AccountSettingsScreen"
@@ -18,7 +18,7 @@ import { WatchlistEditorScreen } from "../screens/WatchlistEditorScreen"
 import { WatchlistScreen } from "../screens/WatchlistScreen"
 import { WatchlistViewerScreen } from "../screens/WatchlistViewerScreen"
 
-export const ModalStackGroup = () => {
+export const ModalStackGroup = (Stack: any) => {
     return <Stack.Group screenOptions={{ presentation: 'modal' }}>
         <Stack.Screen name="ResetPassword" component={ChangePasswordScreen} />
         <Stack.Screen name="VerifyAccount" component={VerificationScreen} />
@@ -37,8 +37,8 @@ export const ModalStackGroup = () => {
         <Stack.Screen name="NotificationTrade" component={NotificationTradeScreen} />
     </Stack.Group>
 }
-export const TransparentModalStackGroup = () => {
-    <Stack.Group screenOptions={{
+export const TransparentModalStackGroup = (Stack: any) => {
+    return <Stack.Group screenOptions={{
         presentation: "modal",
         headerStyle: {
             backgroundColor: "transparent"

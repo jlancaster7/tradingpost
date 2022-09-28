@@ -116,21 +116,31 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         opacityAnim = useRef(new Animated.Value(0)).current,
         toast = useToast(),
         { appUser, signIn, authToken, loginResult } = useAppUser(),
-        { value: hasAuthed } = useData("hasAuthed")
+        { value: hasAuthed, setValue } = useData("hasAuthed"),
+        {value: firstTime, setValue: setFirstTime} = useData('firstTime');
 
     const linkTo = useLinkTo<any>();
     useLayoutEffect(() => {
-        ///*|| loginResult*
-        if (appUser || loginResult) {
-            console.log("Has authed is ....." + hasAuthed)
-            if (!appUser || !hasAuthed) {
 
-                navigation.navigate("Create", {
-
-                })
-            }
-            else {
-                navigation.navigate("Dash")
+        if (firstTime) {
+        } else {
+            if (appUser || loginResult) {
+                console.log("Has authed is ....." + hasAuthed)
+                if (appUser) {
+                    if (!appUser.settings || !Object.keys(appUser.settings).length) {
+                        linkTo("/create/analyststart");
+                    }
+                    else if (appUser.settings.analyst && !appUser.analyst_profile) {
+                        linkTo("/create/analystinterest")
+                    }
+                    else{
+                        setValue(true);
+                        linkTo('/dash/feed');
+                    }
+                }
+                else {
+                    linkTo("/create/basicinfo");
+                }
             }
         }
     }, [appUser, loginResult])

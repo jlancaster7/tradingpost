@@ -35,6 +35,7 @@ export const AnalystStartSection = (props: CreateAccountProps) => {
                 text: "I'm An Analyst",
                 onPress: async () => {
                     const defaultSettings = {
+                        analyst: true,
                         push_notifications: {
                             mentions: true,
                             upvotes: true,
@@ -55,8 +56,8 @@ export const AnalystStartSection = (props: CreateAccountProps) => {
             left: {
                 text: "Not Now",
                 onPress: async () => {
-                    //need to change this to skip 2 
                     const defaultSettings = {
+                        analyst: false,
                         push_notifications: {
                             mentions: true,
                             upvotes: true,
