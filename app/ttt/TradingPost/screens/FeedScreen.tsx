@@ -6,10 +6,10 @@ import { View, Text } from "react-native";
 import { PlusContentButton } from "../components/PlusContentButton";
 import { PostList } from "../components/PostList";
 import { spaceOnSide, postInnerHeight, PostView } from "../components/PostView";
-import { TabScreenProps } from "../navigation";
+import  {DashTabScreenProps}  from "../navigation/pages";
 
-export const FeedScreen = (props: TabScreenProps<{ bookmarkedOnly?: "true" | "false" }>) => {
-    const [searchText, setSearchText] = useState("");
+export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
+    const [searchText, setSearchText] = useState("")
 
     //useEffect(()=>{
     //props.navigation.setOptions({

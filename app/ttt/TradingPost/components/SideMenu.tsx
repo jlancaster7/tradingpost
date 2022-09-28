@@ -120,6 +120,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
             onPress: () => {
                 setHasAuthed(false);
                 signOut()
+                linkTo('/login') //TODO: this was an attempt to fix the logout going to blank screen, didn't work, but reminder
             },
             icon: sideMenu.LogOut
         }] as { onPress?: () => void, label: string, icon: React.FC<SvgProps> }[]).map((item, index, array) => {

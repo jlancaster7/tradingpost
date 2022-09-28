@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { AllPages } from '../navigation'
+import { RootStackParamList } from '../navigation/pages'
 import { NavigationProp, useNavigation } from "@react-navigation/native"
 import { Alert, Image, ImageBackground, Linking, PixelRatio, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { flex, fonts, paddView, row, shadow, sizes } from '../style'
@@ -15,7 +15,7 @@ const spaceOnSide = commentTotalHorizontalMargin + commentTotalBorder + commentS
 
 export function CommentView(props: {comment: Interface.ICommentPlus}) {
     const { comment } = props;
-    const nav = useNavigation<NavigationProp<AllPages>>();
+    const nav = useNavigation<NavigationProp<RootStackParamList>>();
 
     return <View style={{marginVertical: sizes.rem0_5 / 2}}>
                 <View 
@@ -36,7 +36,7 @@ export function CommentView(props: {comment: Interface.ICommentPlus}) {
                     <Text style={{padding: sizes.rem0_5, fontSize: fonts.small}}>
                         {comment.comment}
                     </Text>
-                    <Text style={{fontSize: fonts.xSmall, fontFamily: "K2D", padding: sizes.rem0_5 }}>
+                    <Text style={{fontSize: fonts.xSmall, padding: sizes.rem0_5 }}>
                         {new Date(comment.created_at).toLocaleString('en-US', {dateStyle: 'medium', timeStyle: 'short'})}
                     </Text>
                 </View>

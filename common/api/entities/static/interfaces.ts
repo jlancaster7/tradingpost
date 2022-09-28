@@ -32,6 +32,7 @@ export interface IAnalystProfile {
     interests: string[]
 }
 export interface IUserSettings {
+    analyst: boolean,
     push_notifications: {
         mentions: boolean,
         upvotes: boolean,

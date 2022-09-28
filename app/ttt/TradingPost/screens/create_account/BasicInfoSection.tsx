@@ -14,7 +14,7 @@ import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators
 import { CreateAccountProps, sideMargin, useChangeLock } from "./shared";
 
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
-
+import { useData } from "../../lds";
 import { Label } from "../../components/Label";
 import { TBI } from "../../utils/misc";
 import { AppColors } from "../../constants/Colors";
@@ -42,6 +42,7 @@ export function BasicInfoSection(props: CreateAccountProps) {
             username: useRef<ITextField>(null),
         },
         linkTo = useLinkTo<any>(),
+        {value: firstTime, setValue: setFirstTime} = useData('firstTime'),
         buttonConfig = {
             locked: lockButtons,
             left: {
@@ -76,6 +77,7 @@ export function BasicInfoSection(props: CreateAccountProps) {
                             setLockButtons(false);
                         }
                         else {
+                            setFirstTime(true);
                             const { token } = await Auth.createUser(props.user.data.first_name, props.user.data.last_name, props.user.data.handle);
                             await signIn("", token);
                             linkTo('/create/watchlist')
