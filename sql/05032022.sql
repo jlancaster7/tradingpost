@@ -660,3 +660,6 @@ ALTER TABLE tradingpost_brokerage_account
     ADD COLUMN error BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE tradingpost_brokerage_account
     ADD COLUMN error_code INT NOT NULL DEFAULT 0;
+
+ALTER TABLE security_price
+    ADD COLUMN is_fake BOOLEAN NOT NULL DEFAULT FALSE;

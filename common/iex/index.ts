@@ -19,6 +19,12 @@ export class RetryError extends Error {
     }
 }
 
+export class PermissionRequiredError extends Error {
+    constructor(msg?: string) {
+        super(msg);
+    }
+}
+
 export const ProductionBaseURL = "https://cloud.iexapis.com/v1";
 export const SandboxBaseURL = "https://sandbox.iexapis.com";
 
@@ -779,6 +785,7 @@ export default class IEX {
                 types: typesJoined,
             });
             if (response.status == 429) throw new RetryError()
+            if(response.status == 451) throw new PermissionRequiredError();
 
             const statusCodeShort = response.status / 100;
             if (statusCodeShort !== 2) throw new IEXError("getting data from iex", response.statusText, response.status)

@@ -43,12 +43,12 @@ provider:
       - subnet-0365b7b01827b2dfe
 
 functions:
-#  trades-notifications:
-#    handler: notifications/trades.handler
-#    description: Dispatches new trades notifications to users
-#    logRetentionInDays: 14
-#    timeout: 900
-#    memorySize: 1024
+  #  trades-notifications:
+  #    handler: notifications/trades.handler
+  #    description: Dispatches new trades notifications to users
+  #    logRetentionInDays: 14
+  #    timeout: 900
+  #    memorySize: 1024
   collect-trades:
     handler: brokerage/collect-trades.handler
     description: Collects Finicity Trades Daily
@@ -92,9 +92,9 @@ functions:
           rate: cron(0 0 1 1 ? *)
           enabled: true
 
-  add-security-pricing:
+  intraday-pricing:
     handler: market-data/add-security-prices.run
-    description: Ingests security prices
+    description: Ingests intraday pricing
     logRetentionInDays: 14
     timeout: 600
     reservedConcurrency: 1
@@ -104,7 +104,22 @@ functions:
           rate: cron(* 12-20 ? * MON-FRI *)
           enabled: true
       - schedule:
-          rate: cron(15 20 ? * MON-FRI *) # 4:15 PM EDT
+          rate: cron(2 20 ? * MON-FRI *)
+          enabled: true
+
+  eod-pricing:
+    handler: market-data/eod-pricing.run
+    description: Ingests pricing for securities after market close & allow for 15min delay to kick in
+    logRetention: 14
+    timeout: 600
+    reservedConcurrency: 1
+    memorySize: 1024
+    events:
+      - schedule:
+          rate: cron(20 20 ? * MON-FRI *)
+          enabled: true
+      - schedule:
+          rate: cron(20 19 ? * MON-FRI *)
           enabled: true
 
   security-pruning:

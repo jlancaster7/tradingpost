@@ -2,7 +2,7 @@ import Repository from "./repository";
 import {DateTime} from "luxon";
 import {getUSExchangeHoliday} from "./interfaces";
 
-export default class MarketTradingHours {
+export default class Holidays {
     private repository: Repository;
     private holidayMap: Record<string, object> = {};
 
