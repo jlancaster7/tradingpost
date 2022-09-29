@@ -7,6 +7,9 @@ export declare class IEXError extends Error {
 export declare class RetryError extends Error {
     constructor(message?: string);
 }
+export declare class PermissionRequiredError extends Error {
+    constructor(msg?: string);
+}
 export declare const ProductionBaseURL = "https://cloud.iexapis.com/v1";
 export declare const SandboxBaseURL = "https://sandbox.iexapis.com";
 export interface HTTPConfiguration {

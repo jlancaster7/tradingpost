@@ -1,12 +1,12 @@
 process.env.CONFIGURATION_ENV = 'production'
 process.env.FINICITY_CALLBACK_URL ="https://app.tradingpostapp.com"
-import {DefaultConfig} from "../configuration/index";
+import {DefaultConfig} from "../configuration";
 import pgPromise from 'pg-promise';
-import Finicity from "../finicity/index";
+import Finicity from "../finicity";
 import FinicityService from "../brokerage/finicity";
 import Repository from "../brokerage/repository"
 import FinicityTransformer from "../brokerage/finicity/transformer";
-import Brokerage from "../brokerage/index";
+import Brokerage from "../brokerage";
 import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
 import pg from "pg";
 

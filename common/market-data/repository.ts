@@ -296,6 +296,13 @@ export default class Repository {
         await this.db.none(query);
     }
 
+    updateSecurityUtp = async (securityId: number, enableUtp: boolean) => {
+        const query = `UPDATE security
+                       SET enable_utp = $1
+                       WHERE id = $2;`
+        await this.db.none(query, [enableUtp, securityId]);
+    }
+
     updateSecurities = async (securities: updateSecurity[]) => {
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'symbol', prop: 'symbol'},

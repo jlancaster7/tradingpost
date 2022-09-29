@@ -1,11 +1,13 @@
 import 'dotenv/config'
 import {Context} from 'aws-lambda';
 import {DefaultConfig} from "@tradingpost/common/configuration";
+import Repository from "@tradingpost/common/market-data/repository";
+import IEX from "@tradingpost/common/iex";
+import Holidays from "@tradingpost/common/market-data/holidays";
+import MarketData from "@tradingpost/common/market-data";
+import {DateTime} from "luxon";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import pg from 'pg';
-import Repository from '@tradingpost/common/brokerage/repository';
-import BrokerageService from '@tradingpost/common/brokerage';
-import Finicity from "@tradingpost/common/finicity";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -25,8 +27,9 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
+let iex: IEX;
 
-const run = async (tokenFile?: string) => {
+const runLambda = async () => {
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
         pgp = pgPromise({});
@@ -40,25 +43,26 @@ const run = async (tokenFile?: string) => {
         await pgClient.connect();
     }
 
-    const finicityCfg = await DefaultConfig.fromCacheOrSSM('finicity');
-    const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey, tokenFile);
-    await finicity.init();
+    if (!iex) {
+        const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
+        iex = new IEX(iexConfiguration.key);
+    }
 
-    // TODO: Run this every 15 mins from 4AM MT -> 6AM MT if an accounts positions have not been updated to today,
-    //      then check
-    const brokerageService = new BrokerageService(pgClient, pgp, finicity);
     const repository = new Repository(pgClient, pgp);
-    const finicityUsers = await repository.getFinicityUsers();
-    for (let i = 0; i < finicityUsers.length; i++) {
-        const finicityUser = finicityUsers[i];
-        await brokerageService.pullNewTransactionsAndHoldings('finicity', finicityUser.customerId);
+    const marketData = new MarketData(repository, iex);
+    const marketHolidays = new Holidays(repository);
+
+    const currentTime = DateTime.now().setZone("America/New_York")
+    if (currentTime.hour > 9 || currentTime.hour > 16) return
+    if (!await marketHolidays.isTradingDay(currentTime)) return
+
+    try {
+        await marketData.ingestPricing();
+    } catch (e) {
+        throw e;
     }
 }
 
-// export const handler = async (event: any, context: Context) => {
-//     await run("/tmp/token-file.json");
-// }
-
-(async () => {
-    await run()
-})()
+export const run = async (event: any, context: Context) => {
+    await runLambda();
+};

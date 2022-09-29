@@ -2,7 +2,7 @@ import {ensureServerExtensions} from ".";
 import Notification from "./Notification";
 import {getHivePool} from "../../../db";
 import {DateTime} from "luxon";
-import {ListTradesResponse, ListAlertsResponse} from "../interfaces/index";
+import {ListTradesResponse, ListAlertsResponse} from "../interfaces";
 
 export default ensureServerExtensions<Notification>({
     listAlerts: async (req): Promise<ListAlertsResponse[]> => {

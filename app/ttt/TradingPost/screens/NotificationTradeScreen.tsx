@@ -1,6 +1,6 @@
 import {View, Text, ScrollView, Pressable} from "react-native";
 import {Api} from "@tradingpost/common/api";
-import {ListTradesResponse} from "@tradingpost/common/api/entities/interfaces/index";
+import {ListTradesResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
 import {NavigationProp, useNavigation} from "@react-navigation/native";
 import {Avatar, Icon, Layout} from "@ui-kitten/components"

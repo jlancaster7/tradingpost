@@ -4,6 +4,8 @@ import {Context} from "aws-lambda";
 import Repository from '@tradingpost/common/market-data/repository';
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import pg from "pg";
+import MarketData from "@tradingpost/common/market-data/index";
+import IEX from "@tradingpost/common/iex/index";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -38,17 +40,13 @@ const runLambda = async () => {
     }
 
     const repository = new Repository(pgClient, pgp);
+    const marketSrv = new MarketData(repository, new IEX(""));
 
     try {
-        await start(repository)
+        await marketSrv.prunePricing()
     } catch (e) {
-        console.error(e)
         throw e
     }
-}
-
-const start = async (repository: Repository) => {
-    await repository.removeSecurityPricesAfter7Days()
 }
 
 export const run = async (event: any, context: Context) => {
