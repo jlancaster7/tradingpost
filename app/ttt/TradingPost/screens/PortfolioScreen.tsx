@@ -59,7 +59,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
             try {
                 const [lists, holdings] = await Promise.all([
                     Api.Watchlist.extensions.getAllWatchlists(),
-                    Api.User.extensions.getHoldings()
+                    Api.User.extensions.getHoldings({})
                 ]);
                 //KEeping apart for now .. seems to have an error
                 try {

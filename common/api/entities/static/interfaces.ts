@@ -40,7 +40,7 @@ export interface IUserSettings {
     },
     portfolio_display: {
         performance: boolean,
-        portfolio: boolean,
+        holdings: boolean,
         trades: boolean
     }
 }

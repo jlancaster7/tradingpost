@@ -15,6 +15,7 @@ import WatchlistApi from "../apis/WatchlistApi";
 import { DateTime } from 'luxon'
 import jwt from 'jsonwebtoken'
 import { sendByTemplate } from '../../../sendGrid'
+import { TradingPostAccountGroupStats } from "../../../brokerage/interfaces";
 export interface ITokenResponse {
     "token_type": "bearer",
     "expires_in": number,
@@ -123,21 +124,79 @@ export default ensureServerExtensions<User>({
             return handle.username;
         } else return "";
     },
-    getTrades: (r) => {
-        return execProc("public.api_trade_list", {
-            limit: r.extra.limit || 5,
-            user_id: r.extra.userId,
-            page: r.extra.page,
-            data: { user_id: r.body.user_id }
-        })
+    getTrades: async (r) => {
+        let requestedUser = {} as IUserGet;
+        let requestedId; 
+        if ( r.body.userId ) {
+            requestedId = r.body.userId;
+            requestedUser = (await execProc("public.api_user_get", {
+                user_id: r.extra.userId,
+                data: {
+                    id: r.body.userId
+                }
+            }))[0];
+        }
+        else {
+            requestedId = r.extra.userId
+        }
+        if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.trades && requestedUser.subscription?.is_subscribed)) {
+            return await execProc("public.api_trade_list", {
+                limit: r.extra.limit || 5,
+                user_id: r.extra.userId,
+                page: r.extra.page,
+                data: { user_id: r.body.userId }
+            })
+        }
+        else {
+            return []
+        }
     },
-    getHoldings: r => execProc("public.api_holding_list", {
-        user_id: r.extra.userId,
-        data: {}
-    }),
+    getHoldings: async (r) => {
+        let requestedUser = {} as IUserGet;
+        let requestedId; 
+        if ( r.body.userId ) {
+            requestedId = r.body.userId;
+            requestedUser = (await execProc("public.api_user_get", {
+                user_id: r.extra.userId,
+                data: {
+                    id: r.body.userId
+                }
+            }))[0];
+        } 
+        else {
+            requestedId = r.extra.userId
+        }
+        if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.holdings && requestedUser.subscription?.is_subscribed)) {
+            const test = await execProc("public.api_holding_list", {
+                user_id: requestedId
+            }) 
+            return test 
+        } 
+        else {
+            return []
+        }
+    },
     getReturns: async r => {
         const { brokerage } = await init;
-        return await brokerage.getUserReturns(r.body.userId || r.extra.userId, DateTime.fromISO(r.body.startDate as any as string), DateTime.fromISO(r.body.endDate as any as string));
+        let requestedUser = {} as IUserGet;
+        let requestedId; 
+        if ( r.body.userId ) {
+            requestedId = r.body.userId;
+            requestedUser = (await execProc("public.api_user_get", {
+                user_id: r.extra.userId,
+                data: {
+                    id: r.body.userId
+                }
+            }))[0];
+        } 
+        else {
+            requestedId = r.extra.userId
+        }
+        if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.performance && requestedUser.subscription?.is_subscribed)) {
+            return await brokerage.getUserReturns(r.body.userId || r.extra.userId, DateTime.fromISO(r.body.startDate as any as string), DateTime.fromISO(r.body.endDate as any as string));
+        } else {
+            return []
+        }
     },
     getWatchlists: async r => {
         const cache = await getUserCache();
@@ -153,7 +212,26 @@ export default ensureServerExtensions<User>({
     },
     getPortfolio: async (r) => {
         const { brokerage } = await init;
-        return await brokerage.portfolioSummaryService.getSummary(r.body.userId || r.extra.userId);
+        let requestedUser = {} as IUserGet;
+        let requestedId; 
+        if ( r.body.userId ) {
+            requestedId = r.body.userId;
+            requestedUser = (await execProc("public.api_user_get", {
+                user_id: r.extra.userId,
+                data: {
+                    id: r.body.userId
+                }
+            }))[0];
+        } 
+        else {
+            requestedId = r.extra.userId
+        }
+        if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.performance && requestedUser.subscription?.is_subscribed)) {
+            return await brokerage.portfolioSummaryService.getSummary(requestedId);
+        }
+        else {
+            return {} as TradingPostAccountGroupStats;
+        }
     },
     search: async (r) => {
         const cache = await getUserCache();

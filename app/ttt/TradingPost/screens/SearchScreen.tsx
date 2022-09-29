@@ -1,5 +1,6 @@
 import {NavigationProp} from "@react-navigation/native";
 import { Api, Interface } from "@tradingpost/common/api";
+import { Text } from "@ui-kitten/components";
 import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { ButtonGroup } from "../components/ButtonGroup";
@@ -7,7 +8,7 @@ import { List } from "../components/List";
 import { ProfileBar } from "../components/ProfileBar";
 import { SearchBar } from "../components/SearchBar";
 import { ElevatedSection } from "../components/Section";
-import { sizes } from "../style";
+import { fonts, sizes } from "../style";
 import { FeedPart } from "./FeedScreen";
 
 
@@ -58,7 +59,12 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                     items={[{ label: "Analysts", value: "people" }, { label: "Posts", value: "posts" }]} />
             </View>
 
-            {searchType === "posts" && <FeedPart searchText={searchText} />}
+            {searchType === "posts" && searchText !== "" && <FeedPart searchText={searchText} />}
+            {searchType === "posts" && searchText === ""  && <View>
+                    <Text style={{fontSize: fonts.large, color: "lightgray", textAlign: "center"}}>
+                        Search for Posts
+                    </Text>
+            </View>}
             {searchType === "people" && <View
                 style={{ marginHorizontal: sizes.rem1, flex: 1 }}><List
                     data={people}

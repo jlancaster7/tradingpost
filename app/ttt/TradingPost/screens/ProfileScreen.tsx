@@ -8,7 +8,7 @@ import { ProfileBanner, profileImageSize, profileImageSmall, useProfileBannerSiz
 //import { } from 'react-native-linear-gradient'
 import { flex, fonts, paddView, row, sizes } from "../style";
 import { Animated, View, ScrollView, NativeScrollEvent, NativeSyntheticEvent, useWindowDimensions, Alert, FlatList, ViewStyle } from "react-native";
-import { AwaitedReturn, DEV_ONLY, toThousands } from "../utils/misc";
+import { AwaitedReturn, DEV_ONLY, toDateMonthYear, toDollarsAndCents, toThousands } from "../utils/misc";
 import { SecondaryButton } from "../components/SecondaryButton";
 import { ElevatedSection, Section, Subsection } from "../components/Section";
 //import { PostList, usePostLoader } from "../components/PostList";
@@ -48,6 +48,9 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
 
     const [user, setUser] = useState<IUserGet>(),
         [watchlists, setWatchlists] = useState<AwaitedReturn<typeof Api.User.extensions.getWatchlists>>(),
+        [holdings, setHoldings] = useState<AwaitedReturn<typeof Api.User.extensions.getHoldings>>([]),
+        [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>([]),
+        [summary, setSummary] = useState<AwaitedReturn<typeof Api.User.extensions.getPortfolio>>(),
         //authedUser = ensureCurrentUser(),
         translateHeaderY = useRef(new Animated.Value(0)).current;
 
@@ -58,7 +61,8 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
         headerHeight = bannerHeight + TabPanelSize + ButtonBarsize + ButtonMargin * 2 + titles + tabBarMargin;
 
     const clampMax = bannerHeight - profileImageSmall;
-    const minViewHeight = dim.height - clampMax - StatusBarsize - headerHeight + bannerHeight + 2 * titles;
+    const minViewHeightCollapsed = dim.height - clampMax - StatusBarsize - headerHeight + bannerHeight + 2 * titles;
+    const minViewHeight = dim.height - headerHeight;
     const [collapsed, setCollapsed] = useState(false);
     const [isMaxed, setIsMaxed] = useState(false);
     const translation = translateHeaderY.interpolate({
@@ -92,16 +96,19 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                         Api.User.get(userId),
                         Api.User.extensions.getWatchlists({ userId: userId as string })
                     ]);//await getUser({ user_id: userId });
-
                     setWatchlists(watchlists);
                     setUser(user);
-
+                    const holdings = await Api.User.extensions.getHoldings({userId: userId as string});
+                    //const trades = await Api.User.extensions.getTrades({$page: 0, $limit: 10, settings: {userId: userId as string}});
+                    const summary = await Api.User.extensions.getPortfolio({userId: userId as string});
+                    setHoldings(holdings);
+                    //setTrades(trades);
+                    setSummary(summary);
                 } catch (ex: any) {
                     toast.show(ex.message);
                 }
             })()
         }
-
     }, [userId, user])
 
     return <View style={[flex]}>
@@ -114,38 +121,70 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                     />
                 </ProfilePage>,
                 <ProfilePage index={1} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
-                     <ElevatedSection title="Performance">
-                    <View style={{ marginBottom: sizes.rem1 }} >
-                        <InteractiveChart performance={true}/>
-                    </View>
-                    <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
+                    <ElevatedSection title="Performance">
+                        <View style={user?.settings?.portfolio_display.performance ? {display: 'none'} : {display: 'flex', justifyContent: "center", alignItems: 'center'} }>
+                            <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
+                                {`@${user?.handle} does not display their investment performance.`}
+                            </Text>
+                        </View>
+                        <View style={user?.settings?.portfolio_display.performance ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
+                        <View style={{ marginBottom: sizes.rem1 } } >
+                            <InteractiveChart performance={true}/>
+                        </View>
+                        <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
+                        </View>
                     </ElevatedSection>
                     <ElevatedSection title="Holdings">
+                        <View style={user?.settings?.portfolio_display.holdings ? {display: 'none'} : {display: 'flex', justifyContent: "center", alignItems: 'center'} }>
+                            <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
+                                {`@${user?.handle} does not display their investment holdings.`}
+                            </Text>
+                        </View>
+                        <View style={user?.settings?.portfolio_display.holdings ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
+                        <Table
+                                keyExtractor={(item, idx) => {
+                                    return item ? "trade_" + idx : "empty";
+                                }}
+                                data={holdings}
+                                columns={[
+                                    ...useMakeSecurityFields((item: any) => {
+                                        return Number(item.security_id)
+                                    }),
+                                    { alias:'Quantity', field: "quantity", stringify: toThousands },
+                                    { alias: 'Price', field: "price", stringify: toDollarsAndCents },
+                                    { alias:'Cost Basis', field: "cost_basis", stringify: toDollarsAndCents }
+                                ]}
+                            />
+                        </View>
                     </ElevatedSection>
                     <WatchlistSection title="Watchlists" watchlists={watchlists} />
                     {/* <WatchlistSection parentComponentId={props.componentId} userId={props.userId} /> */}
                 </ProfilePage>,
                 <ProfilePage index={2} minViewHeight={minViewHeight} manager={manager} currentIndex={tab} >
-                    <ElevatedSection title="">
-                        <Table
-                            keyExtractor={(item, idx) => {
-                                return item ? "trade_" + idx : "empty";
-                            }}
-                            data={(async (a, $page) => {
-                                const newArr = a || [];
-                                newArr.push(... (await Api.User.extensions.getTrades({ $page, $limit: 20, settings: { user_id: userId } })))
-                                console.log(JSON.stringify(newArr))
-                                return newArr;
-                            })}
-                            columns={[
-                                ...useMakeSecurityFields((item: any) => {
-                                    return Number(item.security_id)
-                                }),
-                                { field: "date", stringify: (a, b, c) => String(a) },
-                                { field: "quantity", stringify: toThousands },
-                                { field: "price", stringify: toThousands }
-                            ]}
-
+                    <View style={user?.settings?.portfolio_display.trades ? {display: 'none'} : {display: 'flex', height: '100%', justifyContent: "center", alignItems: 'center'} }>
+                        <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
+                            {`@${user?.handle} does not display their trades.`}
+                        </Text>
+                    </View>
+                    <ElevatedSection title="" style={user?.settings?.portfolio_display.trades ? {display: 'flex'} : {display: 'none'}}>
+                            <Table
+                                keyExtractor={(item, idx) => {
+                                    return item ? "trade_" + idx : "empty";
+                                }}
+                                data={(async (a, $page) => {
+                                    const newArr = a || [];
+                                    newArr.push(... (await Api.User.extensions.getTrades({$page, $limit: 10, settings: {userId: userId as string}})));
+                                    //console.log(JSON.stringify(newArr))
+                                    return newArr;
+                                })}
+                                columns={[
+                                    ...useMakeSecurityFields((item: any) => {
+                                        return Number(item.security_id)
+                                    }),
+                                    { alias: 'Trade Date', field: "date", stringify: (a,b,c) => new Date(a).toLocaleDateString() },
+                                    { alias:'Quantity', field: "quantity", stringify: toThousands },
+                                    { alias: 'Price', field: "price", stringify: toDollarsAndCents }
+                                ]}
                         />
                     </ElevatedSection>
                 </ProfilePage>,
@@ -219,8 +258,8 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
 
             />
             <View style={[collapsed ? row : undefined, { width: "100%", alignItems: "center" }]}>
-                <View style={{ marginLeft: collapsed ? sizes.rem1 : 0 }}>
-                    <Text style={{ color: "black", textAlign: !collapsed ? "center" : "left", fontSize: fonts.xSmall }}>@{user?.handle || ""}</Text>
+                <View style={{ marginHorizontal: collapsed ? sizes.rem1 : 0 }}>
+                    <Text style={{ color: "black", textAlign: !collapsed ? "center" : "left", fontSize: fonts.small }}>@{user?.handle || ""}</Text>
                     <Text style={{ color: "black", textAlign: !collapsed ? "center" : "left", fontSize: fonts.medium }}>{user?.display_name}</Text>
                 </View>
                 {appUser && user && <SecondaryButton
@@ -290,7 +329,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                 <TabBar
                     indicatorStyle={{
                         marginTop: 26,
-                        marginHorizontal: 10
+                        marginHorizontal: 0
                     }}
                     style={{ width: "100%", marginHorizontal: 0 }}
                     key={"tabbar"}

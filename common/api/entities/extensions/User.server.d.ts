@@ -1,5 +1,6 @@
 import { UploadProfilePicBody } from "./User";
 import { IUserList } from '../apis/UserApi';
+import { TradingPostAccountGroupStats } from "../../../brokerage/interfaces";
 export interface ITokenResponse {
     "token_type": "bearer";
     "expires_in": number;
@@ -61,7 +62,7 @@ declare const _default: {
     }) => Promise<string>;
     getTrades: (req: {
         body: {
-            user_id?: string | undefined;
+            userId?: string | undefined;
         };
         extra: {
             userId: string;
@@ -78,7 +79,9 @@ declare const _default: {
         security_id: number;
     }[]>;
     getHoldings: (req: {
-        body: undefined;
+        body: {
+            userId?: string | undefined;
+        };
         extra: {
             userId: string;
             page?: number | undefined;
@@ -124,7 +127,7 @@ declare const _default: {
             page?: number | undefined;
             limit?: number | undefined;
         };
-    }) => Promise<import("../../../brokerage/interfaces").TradingPostAccountGroupStats>;
+    }) => Promise<TradingPostAccountGroupStats>;
     search: (req: {
         body: {
             term: string;

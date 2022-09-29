@@ -25,7 +25,7 @@ export default class User extends Extension {
         $page: number;
         $limit?: number | undefined;
         settings: {
-            user_id?: string | undefined;
+            userId?: string | undefined;
         };
     }) => Promise<{
         date: Date;
@@ -36,7 +36,9 @@ export default class User extends Extension {
         currency: string;
         security_id: number;
     }[]>;
-    getHoldings: (settings?: undefined) => Promise<{
+    getHoldings: (settings: {
+        userId?: string | undefined;
+    }) => Promise<{
         id: number;
         price_as_of: Date;
         quantity: number;
