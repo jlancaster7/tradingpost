@@ -141,7 +141,6 @@ export default class FinicityTransformer {
     holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], holdingDate: DateTime | null, currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<TradingPostCurrentHoldings[]> => {
         let internalAccount = await this.getFinicityToTradingPostAccount(userId, accountId);
         if (internalAccount === undefined || internalAccount === null) throw new Error(`account id(${accountId}) does not exist for holding`)
-
         const securities = await this.repository.getSecuritiesWithIssue();
         const cashSecurities = await this.repository.getTradingpostCashSecurity();
         const securitiesMap: Record<string, SecurityIssue> = {};

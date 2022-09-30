@@ -41,8 +41,6 @@ export default class FinicityService implements IBrokerageService {
         if (brokerageAccountId) {
             const acc = await this.repository.getFinicityAccountByTradingpostBrokerageAccountId(parseInt(brokerageAccountId))
             if (acc === null) throw new Error(`could not fetch finicity trading post account for tradingpost brokerage account id ${brokerageAccountId}`);
-            console.log("DATA: ", acc)
-            console.log("USER ID: ", userId)
             const link = await this.finicity.generateConnectFix({
                 customerId:finicityUser.customerId,
                 language: "en",

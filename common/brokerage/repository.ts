@@ -1508,6 +1508,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertFinicityTransactions = async (transactions: FinicityTransaction[]): Promise<void> => {
+        if(transactions.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'internal_finicity_account_id', prop: 'internalFinicityAccountId'},
             {name: 'transaction_id', prop: 'transactionId'},
@@ -2253,7 +2254,6 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                                          WHERE account_id IN ($1:list)`, [accountIds]);
             let accountGroupIds = accountGroupRes.map((r: { account_group_id: any; }) => r.account_group_id);
             if (accountGroupIds.length > 0) {
-                console.log("Account Group Ids: ", accountGroupIds)
                 await this.db.none(`
                 BEGIN;
                     DELETE FROM ACCOUNT_GROUP_HPR WHERE account_group_id IN ($1:list);
@@ -2269,7 +2269,6 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
         try {
             if (accountIds.length > 0) {
-                console.log("ACCOUNT IDS: ", accountIds)
                 await this.db.none(`
                 BEGIN;            
                     DELETE FROM TRADINGPOST_HISTORICAL_HOLDING WHERE account_id IN ($1:list);
