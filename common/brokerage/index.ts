@@ -56,9 +56,6 @@ export default class Brokerage extends BrokerageService {
         const transactions = await brokerage.importTransactions(brokerageUserId);
         await this.repository.upsertTradingPostTransactions(transactions);
 
-        const start = DateTime.now().setZone("America/New_York");
-        const end = start.minus({month: 24})
-
         // Takes old accounts avail
         // takes new accounts avail
         // Sees where missing and adds to array
@@ -79,7 +76,9 @@ export default class Brokerage extends BrokerageService {
 
         for (let i = 0; i < accountsToProcess.length; i++) {
             const account = accountsToProcess[i];
-            const holdingHistory = await this.computeHoldingsHistory(account.id, end);
+            const oldestTransaction = await this.repository.getOldestTransaction(account.id);
+            if (!oldestTransaction) continue
+            const holdingHistory = await this.computeHoldingsHistory(account.id, oldestTransaction.date);
             await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
         }
 
@@ -93,12 +92,12 @@ export default class Brokerage extends BrokerageService {
         if (!brokerage) throw new Error("no brokerage found")
 
         const tradingPostUser = await brokerage.getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId);
-
         // TODO: Instead of adding error codes at the holding level, we could write a function to pull accoutns
         //  and then return error response for those accounts there... this way we avoid throwing exceptions as well
         //  return accounts in multiple states and validate if its in an error state, according to the service...
 
         const holdings = await brokerage.importHoldings(brokerageUserId);
+
         await this.repository.upsertTradingPostCurrentHoldings(holdings);
 
         let holdingHistory: TradingPostHistoricalHoldings[] = holdings.map(holding => ({
@@ -112,11 +111,13 @@ export default class Brokerage extends BrokerageService {
             costBasis: holding.costBasis,
             quantity: holding.quantity,
             currency: holding.currency,
-            date: DateTime.now()
+            date: DateTime.now().setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0})
         }));
+
         await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
 
         const transactions = await brokerage.importTransactions(brokerageUserId);
+
         await this.repository.upsertTradingPostTransactions(transactions);
 
         await this.portfolioSummaryService.computeAccountGroupSummary(tradingPostUser.id)

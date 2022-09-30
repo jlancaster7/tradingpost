@@ -49,7 +49,6 @@ const run = async () => {
     app.use(cors());
 
     app.get("/", (req: Request, res: Response) => {
-        console.log("HI!")
         res.send({Hello: "World", port: port});
     });
 
@@ -62,17 +61,26 @@ const run = async () => {
             throw new Error("request signature from finicity is invalid");
         }
 
-        console.log(req.body);
-
         if (req.body.eventType === 'added') {
+            console.log("Adding Account")
             const {customerId} = req.body;
             await brokerageService.addNewAccounts(customerId, 'finicity');
+            console.log("Finished Adding An Account")
         }
 
         if (req.body.eventType === 'accountsDeleted') {
+            console.log("Account Deleted")
             const {customerId, eventId, payload} = req.body
             const {accounts} = payload;
             await brokerageService.removeAccounts(customerId, accounts, 'finicity');
+            console.log("Finished Account Deletion")
+        }
+
+        if (req.body.eventType === 'credentialsUpdated') {
+            console.log("Credentials Updating")
+            // TODO: REDO Account
+            const {institutionLoginId} = req.body.payload;
+            console.log("Credentials finished Updating")
         }
 
         return res.send()

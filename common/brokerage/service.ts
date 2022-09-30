@@ -174,20 +174,20 @@ export default class BrokerageService {
 
         for (const holding of currentHoldings) {
             if (holding.symbol === 'USD:CUR') {
-                startDate = holding.priceAsOf;
-                initialHistoricalHolding.date = holding.priceAsOf
+                startDate = holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0});
+                initialHistoricalHolding.date = holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0});
                 initialHistoricalHolding.cash = holding.quantity;
                 continue;
             }
 
-            initialHistoricalHolding.date = holding.priceAsOf
+            initialHistoricalHolding.date = holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0});
             initialHistoricalHolding.holdings.push({
                 price: holding.price,
                 accountId: tpAccountId,
                 costBasis: holding.costBasis,
-                date: holding.priceAsOf,
+                date: holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0}),
                 currency: "USD",
-                priceAsOf: holding.priceAsOf,
+                priceAsOf: holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0}),
                 quantity: holding.quantity,
                 priceSource: holding.priceSource,
                 securityId: holding.securityId,

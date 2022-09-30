@@ -36,8 +36,6 @@ const run = async (tokenFile?: string) => {
             password: postgresConfiguration.password,
             database: postgresConfiguration.database
         })
-
-        await pgClient.connect();
     }
 
     const finicityCfg = await DefaultConfig.fromCacheOrSSM('finicity');
@@ -49,16 +47,13 @@ const run = async (tokenFile?: string) => {
     const brokerageService = new BrokerageService(pgClient, pgp, finicity);
     const repository = new Repository(pgClient, pgp);
     const finicityUsers = await repository.getFinicityUsers();
+
     for (let i = 0; i < finicityUsers.length; i++) {
         const finicityUser = finicityUsers[i];
         await brokerageService.pullNewTransactionsAndHoldings('finicity', finicityUser.customerId);
     }
 }
 
-// export const handler = async (event: any, context: Context) => {
-//     await run("/tmp/token-file.json");
-// }
-
-(async () => {
-    await run()
-})()
+export const handler = async (event: any, context: Context) => {
+    await run("/tmp/token-file.json");
+}
