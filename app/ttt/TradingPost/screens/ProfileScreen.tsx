@@ -182,7 +182,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                                         return Number(item.security_id)
                                     }),
                                     { alias: 'Trade Date', field: "date", stringify: (a,b,c) => new Date(a).toLocaleDateString() },
-                                    { alias:'Quantity', field: "quantity", stringify: toThousands },
+                                    { alias:'Buy/Sell', field: "type", stringify: (a,b,c) => c.type.charAt(0).toUpperCase() + c.type.slice(1)  },
                                     { alias: 'Price', field: "price", stringify: toDollarsAndCents }
                                 ]}
                         />

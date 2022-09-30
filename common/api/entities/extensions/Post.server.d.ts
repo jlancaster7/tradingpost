@@ -1,16 +1,5 @@
 import { IElasticPostExt } from "../interfaces";
 declare const _default: {
-    create: (req: {
-        body: {
-            title: string;
-            content: string;
-        };
-        extra: {
-            userId: string;
-            page?: number | undefined;
-            limit?: number | undefined;
-        };
-    }) => Promise<{}>;
     feed: (req: {
         body: {
             page: number;
@@ -24,6 +13,17 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<IElasticPostExt[]>;
+    create: (req: {
+        body: {
+            title: string;
+            content: string;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<{}>;
     getUpvotes: (req: {
         body: {
             id: string;

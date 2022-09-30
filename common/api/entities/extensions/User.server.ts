@@ -147,13 +147,26 @@ export default ensureServerExtensions<User>({
                 data: { user_id: r.body.userId }
             })
         } else if (requestedUser?.settings?.portfolio_display.trades && requestedUser.subscription?.is_subscribed) {
-            let result =await execProc("public.api_trade_list", {
+            let result = await execProc("public.api_trade_list", {
                 limit: r.extra.limit || 5,
                 user_id: r.extra.userId,
                 page: r.extra.page,
                 data: { user_id: r.body.userId }
-            }) 
-            return result;
+            })
+            let t: any[] = []
+            result.forEach((r, i) => {
+                const o = {
+                    date: r.date,
+                    type: r.type,
+                    quantity: 0,
+                    price: r.price,
+                    fees: r.fees,
+                    currency: r.currency,
+                    security_id: r.security_id
+                }
+                t.push(o);
+            })
+            return t;
         }
         else {
             return [];

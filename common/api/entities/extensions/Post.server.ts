@@ -29,6 +29,12 @@ const feedQuery = (async () => JSON.parse(
             Key: "post-query-templates/feed.json",
         }))).Body)))()
 
+const userQueryTemplate = (async () =>
+    await streamToString((
+        await client.send(new GetObjectCommand({
+            Bucket: s3Bucket,
+            Key: "post-query-templates/userFeed.json",
+        }))).Body))()
 
 const searchQueryTemplate = (async () =>
     await streamToString((
@@ -57,6 +63,7 @@ const bookmarkQuery = (bookmarkItems: string[]) => {
         }
     }
 }
+/*
 const userQuery = (userId: string) => {
     return {
         bool: {
@@ -68,6 +75,22 @@ const userQuery = (userId: string) => {
                 }]
         }
     }
+}
+*/
+const userQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions"]["feed"]>["0"]["data"], undefined>) => {
+    const template = await userQueryTemplate;
+    let queryString = template;
+    Object.keys(data).forEach((k) => {
+        //TODO:::: Probably should do a reverse of this in the future ...and validate object types to make sure nothing bad is pass ... 
+        const dataToReplace = data[k];
+        const dt = typeof dataToReplace;
+        if (dt !== "number" && dt !== "string" && !(dataToReplace instanceof Array))
+            throw new Error("Invalid data passed to userQeury");
+        //console.log("REG EXP:::::\${" + k + "}");
+        queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
+        console.log("New QS:" + queryString);
+    });
+    return JSON.parse(queryString);
 }
 
 const searchQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions"]["feed"]>["0"]["data"], undefined>) => {
@@ -135,7 +158,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             from: page * postsPerPage,
             query: await (async () => {
                 if (req.body.userId) {
-                    return userQuery(req.body.userId)
+                    return userQuery({user_id: req.body.userId})
                 }
                 else if (req.body.bookmarkedOnly)
                     return bookmarkQuery(bookmarkItems)
