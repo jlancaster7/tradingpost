@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { ButtonGroup } from "../components/ButtonGroup";
 import { List } from "../components/List";
+import { NoDataPanel } from "../components/NoDataPanel";
 import { ProfileBar } from "../components/ProfileBar";
 import { SearchBar } from "../components/SearchBar";
 import { ElevatedSection } from "../components/Section";
@@ -59,16 +60,12 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                     items={[{ label: "Analysts", value: "people" }, { label: "Posts", value: "posts" }]} />
             </View>
 
-            {searchType === "posts" && searchText !== "" && <FeedPart searchText={searchText} />}
-            {searchType === "posts" && searchText === ""  && <View>
-                    <Text style={{fontSize: fonts.large, color: "lightgray", textAlign: "center"}}>
-                        Search for Posts
-                    </Text>
-            </View>}
+            {searchType === "posts" && ((searchText !== "") ? <FeedPart searchText={searchText} /> : <NoDataPanel message={'Search for Posts'} />)}
             {searchType === "people" && <View
-                style={{ marginHorizontal: sizes.rem1, flex: 1 }}><List
+                style={{ marginHorizontal: sizes.rem1, display: 'flex'}}><List
                     data={people}
                     loadingMessage={"Search For People"}
+                    noDataMessage={"Search For People"}
                     loadingItem={undefined}
                     renderItem={(item) => {
                         return <ElevatedSection title="">

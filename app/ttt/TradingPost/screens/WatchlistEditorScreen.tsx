@@ -51,7 +51,6 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
 
     return <View style={paddView}>
         {type !== "primary" &&
-
             <ElevatedSection title={(props.route?.params?.watchlistId ? "Edit" : "Create") + " Watchlist"} >
                 <View style={{ flexDirection: "column", margin: sizes.rem0_5 }}>
                     <ButtonGroup value={type} onValueChange={(value) => {
@@ -59,13 +58,11 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
                     }}
                         items={[{ label: "Public", value: "public" }, { label: "Private", value: "private" }]}
                     />
-                    <TextField value={name} onChangeText={(v) => setName(v || "")} placeholder="Watchlist Name" style={{ flex: 1, marginBottom: sizes.rem1 }} />
-                    <TextField value={note} onChangeText={(v) => setNote(v || "")} placeholder="Wathlist Note" style={{ flex: 1 }} />
+                    <TextField value={name} onChangeText={(v) => setName(v || "")} placeholder="Watchlist Name" style={{ marginBottom: sizes.rem0_5 }} />
+                    <TextField value={note} onChangeText={(v) => setNote(v || "")} placeholder="Wathlist Note" style={{}} />
                 </View>
             </ElevatedSection>
-
         }
-
         <ScrollWithButtons
             fillHeight
             buttons={{
