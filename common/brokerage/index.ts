@@ -56,9 +56,6 @@ export default class Brokerage extends BrokerageService {
         const transactions = await brokerage.importTransactions(brokerageUserId);
         await this.repository.upsertTradingPostTransactions(transactions);
 
-        const start = DateTime.now().setZone("America/New_York");
-        const end = start.minus({month: 24})
-
         // Takes old accounts avail
         // takes new accounts avail
         // Sees where missing and adds to array
@@ -79,7 +76,9 @@ export default class Brokerage extends BrokerageService {
 
         for (let i = 0; i < accountsToProcess.length; i++) {
             const account = accountsToProcess[i];
-            const holdingHistory = await this.computeHoldingsHistory(account.id, end);
+            const oldestTransaction = await this.repository.getOldestTransaction(account.id);
+            if (!oldestTransaction) continue
+            const holdingHistory = await this.computeHoldingsHistory(account.id, oldestTransaction.date);
             await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
         }
 

@@ -93,7 +93,7 @@ functions:
           enabled: true
 
   intraday-pricing:
-    handler: market-data/add-security-prices.run
+    handler: market-data/intraday-pricing.run
     description: Ingests intraday pricing
     logRetentionInDays: 14
     timeout: 600
@@ -110,7 +110,7 @@ functions:
   eod-pricing:
     handler: market-data/eod-pricing.run
     description: Ingests pricing for securities after market close & allow for 15min delay to kick in
-    logRetention: 14
+    logRetentionInDays: 14
     timeout: 600
     reservedConcurrency: 1
     memorySize: 1024

@@ -1508,7 +1508,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertFinicityTransactions = async (transactions: FinicityTransaction[]): Promise<void> => {
-        if(transactions.length <= 0) return
+        if (transactions.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'internal_finicity_account_id', prop: 'internalFinicityAccountId'},
             {name: 'transaction_id', prop: 'transactionId'},
@@ -1842,6 +1842,39 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         ], {table: 'tradingpost_transaction'});
         const query = this.pgp.helpers.insert(transactions, cs);
         await this.db.none(query)
+    }
+
+    getOldestTransaction = async (accountId: number): Promise<TradingPostTransactions | null> => {
+        const r = await this.db.oneOrNone(`SELECT id,
+                                                  account_id,
+                                                  security_id,
+                                                  security_type,
+                                                  date,
+                                                  quantity,
+                                                  price,
+                                                  amount,
+                                                  fees,
+                                                  type,
+                                                  currency,
+                                                  updated_at,
+                                                  created_at
+                                           FROM tradingpost_transaction
+                                           WHERE account_id = $1
+                                           ORDER BY date ASC
+                                           LIMIT 1;`, accountId)
+        if (!r) return null
+        return {
+            accountId: r.account_id,
+            amount: r.amount,
+            fees: r.fees,
+            type: r.type,
+            currency: r.currency,
+            date: DateTime.fromJSDate(r.date),
+            quantity: r.quantity,
+            price: r.price,
+            securityId: r.security_id,
+            securityType: r.security_type,
+        }
     }
 
     upsertTradingPostTransactions = async (transactions: TradingPostTransactions[]) => {

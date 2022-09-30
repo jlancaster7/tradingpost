@@ -57,6 +57,8 @@ export interface IBrokerageRepository {
     getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
 
     deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
+
+    getOldestTransaction(accountId: number): Promise<TradingPostTransactions | null>
 }
 
 export interface IFinicityRepository {
