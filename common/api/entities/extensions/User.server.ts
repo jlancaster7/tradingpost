@@ -139,16 +139,24 @@ export default ensureServerExtensions<User>({
         else {
             requestedId = r.extra.userId
         }
-        if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.trades && requestedUser.subscription?.is_subscribed)) {
+        if (r.extra.userId === requestedId) {
             return await execProc("public.api_trade_list", {
                 limit: r.extra.limit || 5,
                 user_id: r.extra.userId,
                 page: r.extra.page,
                 data: { user_id: r.body.userId }
             })
+        } else if (requestedUser?.settings?.portfolio_display.trades && requestedUser.subscription?.is_subscribed) {
+            let result =await execProc("public.api_trade_list", {
+                limit: r.extra.limit || 5,
+                user_id: r.extra.userId,
+                page: r.extra.page,
+                data: { user_id: r.body.userId }
+            }) 
+            return result;
         }
         else {
-            return []
+            return [];
         }
     },
     getHoldings: async (r) => {
@@ -166,14 +174,36 @@ export default ensureServerExtensions<User>({
         else {
             requestedId = r.extra.userId
         }
-        if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.holdings && requestedUser.subscription?.is_subscribed)) {
-            const test = await execProc("public.api_holding_list", {
+        if (r.extra.userId === requestedId ) {
+            return await execProc("public.api_holding_list", {
+                user_id: requestedId
+            });
+        }
+        else if (requestedUser?.settings?.portfolio_display.holdings && requestedUser.subscription?.is_subscribed) {
+            const result = await execProc("public.api_holding_list", {
                 user_id: requestedId
             }) 
-            return test 
-        } 
+            let portValue = 0;
+            result.forEach((r, i) => {
+                portValue += parseFloat(r.value);
+            })
+            let t: any[] = [];
+            result.forEach((r, i) => {
+                const o = { 
+                    id: r.id,
+                    price_as_of: r.price_as_of, 
+                    quantity: 0, 
+                    price: r.price, 
+                    value: parseFloat(r.value) / portValue, 
+                    cost_basis: !r.cost_basis ? 'n/a' : r.cost_basis, 
+                    security_id: r.security_id
+                }
+                t.push(o);
+            })
+            return t;
+        }
         else {
-            return []
+            return [];
         }
     },
     getReturns: async r => {

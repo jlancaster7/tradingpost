@@ -8,16 +8,16 @@ import { ProfileBanner, profileImageSize, profileImageSmall, useProfileBannerSiz
 //import { } from 'react-native-linear-gradient'
 import { flex, fonts, paddView, row, sizes } from "../style";
 import { Animated, View, ScrollView, NativeScrollEvent, NativeSyntheticEvent, useWindowDimensions, Alert, FlatList, ViewStyle } from "react-native";
-import { AwaitedReturn, DEV_ONLY, toDateMonthYear, toDollarsAndCents, toThousands } from "../utils/misc";
+import { AwaitedReturn, DEV_ONLY, toPercent2, toDollarsAndCents, toThousands } from "../utils/misc";
 import { SecondaryButton } from "../components/SecondaryButton";
 import { ElevatedSection, Section, Subsection } from "../components/Section";
 //import { PostList, usePostLoader } from "../components/PostList";
 //import { getCompetitionsPast } from "../apis/CompetitionApi";
 import { stringyDate, Table } from "../components/Table";
-import { ChipPicker } from "../components/ChipBar";
+//import { ChipPicker } from "../components/ChipBar";
 import { PieHolder } from "../components/PieHolder";
 import { WatchlistSection } from "../components/WatchlistSection";
-import { TabScreenProps } from "../navigation";
+//import { TabScreenProps } from "../navigation";
 import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
 import { useToast } from "react-native-toast-notifications";
 import { FeedPart } from "./FeedScreen";
@@ -95,7 +95,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                     const [user, watchlists] = await Promise.all([
                         Api.User.get(userId),
                         Api.User.extensions.getWatchlists({ userId: userId as string })
-                    ]);//await getUser({ user_id: userId });
+                    ]);
                     setWatchlists(watchlists);
                     setUser(user);
                     const holdings = await Api.User.extensions.getHoldings({userId: userId as string});
@@ -122,7 +122,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                 </ProfilePage>,
                 <ProfilePage index={1} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
                     <ElevatedSection title="Performance">
-                        <View style={user?.settings?.portfolio_display.performance ? {display: 'none'} : {display: 'flex', justifyContent: "center", alignItems: 'center'} }>
+                        <View style={user?.settings?.portfolio_display.performance ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
                             <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
                                 {`@${user?.handle} does not display their investment performance.`}
                             </Text>
@@ -135,7 +135,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                         </View>
                     </ElevatedSection>
                     <ElevatedSection title="Holdings">
-                        <View style={user?.settings?.portfolio_display.holdings ? {display: 'none'} : {display: 'flex', justifyContent: "center", alignItems: 'center'} }>
+                        <View style={user?.settings?.portfolio_display.holdings ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
                             <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
                                 {`@${user?.handle} does not display their investment holdings.`}
                             </Text>
@@ -150,9 +150,9 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                                     ...useMakeSecurityFields((item: any) => {
                                         return Number(item.security_id)
                                     }),
-                                    { alias:'Quantity', field: "quantity", stringify: toThousands },
+                                    { alias:'% Owned', field: "value", stringify: toPercent2 },
                                     { alias: 'Price', field: "price", stringify: toDollarsAndCents },
-                                    { alias:'Cost Basis', field: "cost_basis", stringify: toDollarsAndCents }
+                                    { alias:'Cost Basis', field: "cost_basis", stringify: (a,b,c) =>  (String(c.cost_basis) === 'n/a') ? String(c.cost_basis) : toDollarsAndCents(c.cost_basis) }
                                 ]}
                             />
                         </View>
