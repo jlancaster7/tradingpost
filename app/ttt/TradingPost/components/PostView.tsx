@@ -260,17 +260,23 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
         <View style={{display: (props.post._source.postType === 'tweet' && props.post._source.content.body.slice(0,2) === 'RT') ? 'flex': 'none',
                       flexDirection: 'row',
                       alignItems: 'center',
-                      marginTop: 2}}>
+                      marginTop: 2,
+                      marginBottom: -5}}>
             <Retweet width={30} height={30} style={{ width: 30, height: 30}}/>
             <Text style={{fontWeight: '500',
                         marginLeft: 2}}>
                 {'Retweet'}
             </Text>
         </View>
-        <View style={{height: postInnerHeight(props.post, availWidth)}}>
-            <HtmlView style={{ height: postInnerHeight(props.post, availWidth), 
-                            marginTop: ['spotify', 'youtube'].includes(props.post._source.postType) ? 8 : 0,
-                            marginBottom: ['youtube'].includes(props.post._source.postType) ? 8 : 0 }}
+        <View style={{height: postInnerHeight(props.post, availWidth), 
+                      justifyContent: ['spotify', 'youtube'].includes(props.post._source.postType) ? 'center' : undefined
+                      }}>
+            <HtmlView style={{ 
+                            height: ['spotify', 'youtube'].includes(props.post._source.postType) ? postInnerHeight(props.post, availWidth) * 0.95 : postInnerHeight(props.post, availWidth), 
+                            //height: postInnerHeight(props.post, availWidth)
+                            //marginTop: ['spotify', 'youtube'].includes(props.post._source.postType) ? 8 : 0,
+                            //marginBottom: ['youtube', 'spotify'].includes(props.post._source.postType) ? 8 : 0 
+                        }}
                 isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}>
                 {resolvePostContent(props.post, availWidth)}
             </HtmlView>

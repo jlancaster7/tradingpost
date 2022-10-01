@@ -364,6 +364,8 @@ return query SELECT * FROM public.view_subscription_get(request) as v WHERE v."i
 last_name =  tp.prop_or_default(request->'data' ,'last_name',v.last_name), 
 profile_url =  tp.prop_or_default(request->'data' ,'profile_url',v.profile_url), 
 settings =  tp.prop_or_default(request->'data' ,'settings',v.settings), 
+bio =  tp.prop_or_default(request->'data' ,'bio',v.bio), 
+banner_url =  tp.prop_or_default(request->'data' ,'banner_url',v.banner_url), 
 analyst_profile =  tp.prop_or_default(request->'data' ,'analyst_profile',v.analyst_profile), 
 has_profile_pic =  tp.prop_or_default(request->'data' ,'has_profile_pic',v.has_profile_pic) WHERE v."id" = (request->'data'->>'id')::UUID;
 return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (request->'data'->>'id')::UUID;

@@ -42,22 +42,32 @@ const clampBuffer = 4;
 
 const collapseShift = 2 * ButtonMargin;
 
+const periods: {[key: string]: number} = {
+    "1D": 1, 
+    "1W": 5,
+    "1M": 20, 
+    "3M": 60, 
+    "1Y": 252, 
+    "2Y": 504, 
+    "Max": 1000
+}
+
 export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
     const userId = props.route?.params?.userId;
-    const [portPeriod, setPortPeriod] = useState("1Y")  
+    
 
     const [user, setUser] = useState<IUserGet>(),
         [watchlists, setWatchlists] = useState<AwaitedReturn<typeof Api.User.extensions.getWatchlists>>(),
-        [holdings, setHoldings] = useState<AwaitedReturn<typeof Api.User.extensions.getHoldings>>([]),
-        [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>([]),
         [summary, setSummary] = useState<AwaitedReturn<typeof Api.User.extensions.getPortfolio>>(),
+        [returns, setReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>(),
         //authedUser = ensureCurrentUser(),
+        [twReturns, settwReturns] = useState<{x: string, y: number}[]>(),
+        [portPeriod, setPortPeriod] = useState("1Y"),
         translateHeaderY = useRef(new Animated.Value(0)).current;
 
     const dim = useWindowDimensions();
     const scrollRef = useRef<FlatList>(null);
-    const
-        bannerHeight = useProfileBannerSize(),
+    const bannerHeight = useProfileBannerSize(),
         headerHeight = bannerHeight + TabPanelSize + ButtonBarsize + ButtonMargin * 2 + titles + tabBarMargin;
 
     const clampMax = bannerHeight - profileImageSmall;
@@ -98,18 +108,43 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                     ]);
                     setWatchlists(watchlists);
                     setUser(user);
-                    const holdings = await Api.User.extensions.getHoldings({userId: userId as string});
-                    //const trades = await Api.User.extensions.getTrades({$page: 0, $limit: 10, settings: {userId: userId as string}});
+                    let today = new Date();
                     const summary = await Api.User.extensions.getPortfolio({userId: userId as string});
-                    setHoldings(holdings);
-                    //setTrades(trades);
                     setSummary(summary);
+                    const returns = await Api.User.extensions.getReturns({
+                        userId: userId as string,
+                        startDate: new Date(today.setDate(today.getDate() - 1001)),
+                        endDate: new Date()})
+                    setReturns(returns);
+                    if (returns.length) {
+                        let twr: {x: string, y: number}[] = [];
+                        const day = new Date(String(returns.slice(returns.length - periods[portPeriod])[0].date))
+                        twr.push({x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1})
+                        
+                        returns.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
+                            twr.push({x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return)})
+                        })
+                        settwReturns(twr);
+                    }
                 } catch (ex: any) {
                     toast.show(ex.message);
                 }
             })()
         }
     }, [userId, user])
+
+    useEffect(() => {
+        if (returns?.length) {
+            let twr: {x: string, y: number}[] = [];
+            const day = new Date(String(returns.slice(returns.length - periods[portPeriod])[0].date))
+            twr.push({x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1})
+
+            returns?.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
+                twr.push({x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return)})
+            })
+            settwReturns(twr);
+    }
+    }, [portPeriod])
 
     return <View style={[flex]}>
         <Animated.FlatList
@@ -129,7 +164,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                         </View>
                         <View style={user?.settings?.portfolio_display.performance ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
                         <View style={{ marginBottom: sizes.rem1 } } >
-                            <InteractiveChart performance={true}/>
+                            <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
                         </View>
                         <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
                         </View>
@@ -143,9 +178,11 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                         <View style={user?.settings?.portfolio_display.holdings ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
                         <Table
                                 keyExtractor={(item, idx) => {
-                                    return item ? "trade_" + idx : "empty";
+                                    return item ? "holding_" + idx : "empty";
                                 }}
-                                data={holdings}
+                                data={(async () => {
+                                    return await Api.User.extensions.getHoldings({userId: userId as string});
+                                })}
                                 columns={[
                                     ...useMakeSecurityFields((item: any) => {
                                         return Number(item.security_id)
@@ -227,7 +264,11 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                                 }
                             ]} />
                     </ElevatedSection> */}
-                    <ElevatedSection title="Social Analytics"></ElevatedSection>
+                    <ElevatedSection title="Social Analytics">
+                        <Text>
+                            Coming soon!
+                        </Text>
+                    </ElevatedSection>
                 </ProfilePage>
             ]}
             renderItem={(info) => {
