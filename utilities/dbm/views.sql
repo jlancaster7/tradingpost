@@ -213,12 +213,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_user_update(
         request jsonb)
-        RETURNS TABLE("id" UUID,"first_name" text,"last_name" text,"analyst_profile" json,"has_profile_pic" boolean,"profile_url" text,"settings" json)
+        RETURNS TABLE("id" UUID,"first_name" text,"last_name" text,"analyst_profile" json,"has_profile_pic" boolean,"profile_url" text,"settings" json,"banner_url" text,"bio" text)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url", d."settings" FROM public.data_user as d;
+  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url", d."settings", d."banner_url", d."bio" FROM public.data_user as d;
     END;
     $BODY$;
 

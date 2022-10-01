@@ -13,7 +13,7 @@ import { AwaitedReturn } from "../utils/misc";
 
 export function PostScreen(props: TabScreenProps<{ post: Interface.IElasticPostExt }>) {
     const [postCommments, setPostComments]  = useState<AwaitedReturn<typeof Api.Comment.extensions.postList>>([]);
-    const [value, setValue] = useState('');
+    const [newComment, setNewComment] = useState('');
     const [commentAdded, setCommentAdded] = useState(0);
     useEffect(() => {
         Api.Comment.extensions.postList({type: "post", id: props.route.params.post._source.id})
@@ -34,12 +34,14 @@ export function PostScreen(props: TabScreenProps<{ post: Interface.IElasticPostE
                 <CommentsList
                     comments={postCommments ? postCommments : []} />
                <KeyboardAvoidingInput 
-                    value={value} 
+                    value={newComment} 
                     placeholder={'Leave your comment'}
                     rightIcon={(props: any) => <CommentIcon height={24} 
                     width={24}
                     style={{ height: 24, width: 24, alignContent: 'center'}}/>}
-                    setValue={setValue} 
+                    setValue={setNewComment} 
+                    displayButton={true}
+                    numLines={1}
                     item_id={props.route.params.post._source.id}
                     clicked={[commentAdded, setCommentAdded]}
                     onClick={(r: any, s: any, t: any) => {

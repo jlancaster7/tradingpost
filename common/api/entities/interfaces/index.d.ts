@@ -189,6 +189,8 @@ export interface IUserUpdate {
     has_profile_pic?: boolean;
     profile_url?: string;
     settings?: Statics.IUserSettings;
+    banner_url?: string;
+    bio?: string;
 }
 export interface IWatchlistList {
     id: number;
