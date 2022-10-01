@@ -1,11 +1,10 @@
 {
   "name": "tradingpostexpo",
   "version": "1.0.0",
-  "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "npx expo start",
-    "android": "npx expo start --android",
-    "ios": "npx expo start --ios",
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "npx expo start --web",
     "test": "jest --watchAll",
     "install-common": "node ../../../common/_scripts/install"
@@ -55,11 +54,13 @@
     "react-native-reanimated": "~2.9.1",
     "react-native-safe-area-context": "4.3.1",
     "react-native-screens": "~3.15.0",
+    "react-native-svg-transformer": "0.20.0",
     "react-native-toast-notifications": "^3.3.1",
     "react-native-uuid": "^2.0.1",
     "react-native-web": "~0.18.7",
     "recoil": "^0.7.5",
-    "react-native-svg-transformer": "0.20.0"
+    "react-native-svg": "12.3.0",
+    "react-native-gesture-handler": "~2.5.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
