@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 26.0.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1536 1536" style="enable-background:new 0 0 1536 1536;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#FFFFFF;}
+	.st1{fill:url(#SVGID_1_);fill-opacity:0.89;}
+	.st2{fill:url(#SVGID_00000121263026401596071410000013193406956852833690_);fill-opacity:0.89;}
+	.st3{fill:url(#SVGID_00000059994162967796224580000008740740503269832379_);fill-opacity:0.89;}
+</style>
+<rect x="2" y="2.9" class="st0" width="1532.5" height="1533"/>
+<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="700.9077" y1="227.2351" x2="762.4586" y2="707.3243" gradientTransform="matrix(1 5.481399e-04 5.481399e-04 -1 -0.6522 1537.6316)">
+	<stop  offset="0" style="stop-color:#2DADF4"/>
+	<stop  offset="1" style="stop-color:#2DADF4;stop-opacity:0"/>
+</linearGradient>
+<rect x="3" y="0.4" class="st1" width="1534.6" height="1535.2"/>
+<radialGradient id="SVGID_00000097475895734320461830000007061186525359892614_" cx="477.8131" cy="1193.8019" r="24.6743" gradientTransform="matrix(-4.0123 28.982 109.2032 15.1288 -127531.5625 -31263.9961)" gradientUnits="userSpaceOnUse">
+	<stop  offset="0.276" style="stop-color:#F3BB2C"/>
+	<stop  offset="1" style="stop-color:#FFF9F8;stop-opacity:0"/>
+</radialGradient>
+<rect x="3" y="0.4" style="fill:url(#SVGID_00000097475895734320461830000007061186525359892614_);fill-opacity:0.89;" width="1534.6" height="1535.2"/>
+<linearGradient id="SVGID_00000171000299062811738580000008719441447745540010_" gradientUnits="userSpaceOnUse" x1="1028.5299" y1="1238.5812" x2="54.938" y2="-529.2603" gradientTransform="matrix(1 5.481399e-04 5.481399e-04 -1 -0.6522 1537.6316)">
+	<stop  offset="0" style="stop-color:#F5523B"/>
+	<stop  offset="0.3438" style="stop-color:#F4512D;stop-opacity:0"/>
+</linearGradient>
+<rect x="3" y="0.4" style="fill:url(#SVGID_00000171000299062811738580000008719441447745540010_);fill-opacity:0.89;" width="1534.6" height="1535.2"/>
+</svg>
