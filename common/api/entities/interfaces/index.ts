@@ -88,38 +88,42 @@ export interface IPostGet {
 export interface ISubscriberList {
         subscription_id: number,
     user_id: string,
-    start_date: unknown,
-    due_date?: unknown,
+    start_date: Date,
+    due_date?: Date,
     months_subscribed: string,
     payment_source: string,
     id: number,
     subscription: ISubscriptionGet[],
-    user: IUserList[]
+    user: IUserList[],
+    approved: boolean
     };
 
 export interface ISubscriberGet {
         id: number,
     subscription_id: number,
-    start_date: unknown,
+    start_date: Date,
     user_id: string,
-    due_date?: unknown,
+    due_date?: Date,
     payment_source: string,
     months_subscribed: string,
     subscription: ISubscriptionGet[],
-    user: IUserList[]
+    user: IUserList[],
+    approved: boolean
     };
 
 export interface ISubscriberInsert {
         subscription_id: number,
     user_id: string,
-    start_date: unknown
+    start_date: Date,
+    approved: boolean
     };
 
 export interface ISubscriberUpdate {
         id?: number,
     subscription_id?: number,
     user_id?: string,
-    start_date?: unknown
+    start_date?: Date,
+    approved?: boolean
     };
 
 export interface ISubscriptionList {
@@ -180,7 +184,8 @@ export interface IUserList {
     tags: string[],
     display_name: string,
     profile_url?: string,
-    subscription: { cost:string, id:number , is_subscribed:boolean, count:number   }
+    subscription: { cost:string, id:number , is_subscribed:boolean, count:number   },
+    social_analytics?: any
     };
 
 export interface IUserGet {
@@ -197,7 +202,8 @@ export interface IUserGet {
     banner_url?: string,
     analyst_profile?: Statics.IAnalystProfile,
     subscription: { cost:string, id:number , is_subscribed:boolean, count:number   },
-    settings?: Statics.IUserSettings
+    settings?: Statics.IUserSettings,
+    social_analytics?: any
     };
 
 export interface IUserUpdate {
@@ -209,7 +215,8 @@ export interface IUserUpdate {
     profile_url?: string,
     settings?: Statics.IUserSettings,
     banner_url?: string,
-    bio?: string
+    bio?: string,
+    social_analytics?: any
     };
 
 export interface IWatchlistList {

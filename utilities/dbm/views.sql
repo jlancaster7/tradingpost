@@ -129,12 +129,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_user_list(
         request jsonb)
-        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json)
+        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."handle", d."tags", (concat(d."first_name",' ',d."last_name")) as "display_name", d."profile_url", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID ) as "is_subscribed" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription" FROM public.data_user as d;
+  RETURN QUERY SELECT d."id", d."handle", d."tags", (concat(d."first_name",' ',d."last_name")) as "display_name", d."profile_url", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID ) as "is_subscribed" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."social_analytics" FROM public.data_user as d;
     END;
     $BODY$;
 
@@ -143,12 +143,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_subscriber_insert(
         request jsonb)
-        RETURNS TABLE("subscription_id" bigint,"user_id" UUID,"start_date" TIMESTAMP WITH TIME ZONE)
+        RETURNS TABLE("subscription_id" bigint,"user_id" UUID,"start_date" TIMESTAMP WITH TIME ZONE,"approved" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."subscription_id", d."user_id", d."start_date" FROM public.data_subscriber as d;
+  RETURN QUERY SELECT d."subscription_id", d."user_id", d."start_date", d."approved" FROM public.data_subscriber as d;
     END;
     $BODY$;
 
@@ -157,12 +157,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_subscriber_update(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"user_id" UUID,"start_date" TIMESTAMP WITH TIME ZONE)
+        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"user_id" UUID,"start_date" TIMESTAMP WITH TIME ZONE,"approved" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."subscription_id", d."user_id", d."start_date" FROM public.data_subscriber as d;
+  RETURN QUERY SELECT d."id", d."subscription_id", d."user_id", d."start_date", d."approved" FROM public.data_subscriber as d;
     END;
     $BODY$;
 
@@ -213,12 +213,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_user_update(
         request jsonb)
-        RETURNS TABLE("id" UUID,"first_name" text,"last_name" text,"analyst_profile" json,"has_profile_pic" boolean,"profile_url" text,"settings" json,"banner_url" text,"bio" text)
+        RETURNS TABLE("id" UUID,"first_name" text,"last_name" text,"analyst_profile" json,"has_profile_pic" boolean,"profile_url" text,"settings" json,"banner_url" text,"bio" text,"social_analytics" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url", d."settings", d."banner_url", d."bio" FROM public.data_user as d;
+  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url", d."settings", d."banner_url", d."bio", d."social_analytics" FROM public.data_user as d;
     END;
     $BODY$;
 
@@ -297,12 +297,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_subscriber_list(
         request jsonb)
-        RETURNS TABLE("subscription_id" bigint,"user_id" UUID,"start_date" TIMESTAMP WITH TIME ZONE,"due_date" TIMESTAMP WITH TIME ZONE,"id" BIGINT,"subscription" json,"user" json)
+        RETURNS TABLE("subscription_id" bigint,"user_id" UUID,"start_date" TIMESTAMP WITH TIME ZONE,"due_date" TIMESTAMP WITH TIME ZONE,"id" BIGINT,"subscription" json,"user" json,"approved" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."subscription_id", d."user_id", d."start_date", d."due_date", d."id", (SELECT json_agg(t) FROM public.view_subscription_get(request) as t WHERE t.id=d."subscription_id") as "subscription", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user" FROM public.data_subscriber as d;
+  RETURN QUERY SELECT d."subscription_id", d."user_id", d."start_date", d."due_date", d."id", (SELECT json_agg(t) FROM public.view_subscription_get(request) as t WHERE t.id=d."subscription_id") as "subscription", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user", d."approved" FROM public.data_subscriber as d;
     END;
     $BODY$;
 
@@ -325,12 +325,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_subscriber_get(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json)
+        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json,"approved" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."subscription_id", d."start_date", d."user_id", d."due_date", (SELECT json_agg(t) FROM public.view_subscription_get(request) as t WHERE t.id=d."subscription_id") as "subscription", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user" FROM public.data_subscriber as d;
+  RETURN QUERY SELECT d."id", d."subscription_id", d."start_date", d."user_id", d."due_date", (SELECT json_agg(t) FROM public.view_subscription_get(request) as t WHERE t.id=d."subscription_id") as "subscription", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user", d."approved" FROM public.data_subscriber as d;
     END;
     $BODY$;
 
@@ -353,12 +353,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_user_get(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."handle", CASE WHEN d.id = (request->>'user_id')::UUID THEN d."email" END as "email", (SELECT json_agg(t) FROM public.view_platform_claim_list(request) as t WHERE t.user_id=d."id") as "claims", d."bio", d."tags", d."id", (concat(d."first_name",' ',d."last_name")) as "display_name", d."first_name", d."last_name", d."profile_url", d."banner_url", d."analyst_profile", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID ) as "is_subscribed" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."settings" FROM public.data_user as d;
+  RETURN QUERY SELECT d."handle", CASE WHEN d.id = (request->>'user_id')::UUID THEN d."email" END as "email", (SELECT json_agg(t) FROM public.view_platform_claim_list(request) as t WHERE t.user_id=d."id") as "claims", d."bio", d."tags", d."id", (concat(d."first_name",' ',d."last_name")) as "display_name", d."first_name", d."last_name", d."profile_url", d."banner_url", d."analyst_profile", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID ) as "is_subscribed" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."settings", d."social_analytics" FROM public.data_user as d;
     END;
     $BODY$;
 

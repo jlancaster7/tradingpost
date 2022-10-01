@@ -1,15 +1,17 @@
 import { NavigationProp } from "@react-navigation/native";
 import { Api } from "@tradingpost/common/api";
-import { ISubscriberList } from "@tradingpost/common/api/entities/interfaces";
+import { ISubscriberList, IUserGet } from "@tradingpost/common/api/entities/interfaces";
 import { Text, Tab, TabView, Avatar } from "@ui-kitten/components";
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { useToast } from "react-native-toast-notifications";
-import { EditButton } from "../components/AddButton";
+import { useAppUser } from "../Authentication";
+import { EditButton, SettingsButton } from "../components/AddButton";
 import { Picker } from "../components/Picker";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ProfileButton } from "../components/ProfileButton";
 import { ElevatedSection } from "../components/Section";
+import { SwitchField } from "../components/SwitchField";
 import { Table } from "../components/Table";
 import { TextField } from "../components/TextField";
 import { TabScreenProps } from "../navigation";
@@ -25,6 +27,7 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
         mySubscribersCall = Api.Subscriber.extensions.getByOwner,
         [subscriptions, setSubscriptions] = useState<AwaitedReturn<typeof mySubscriptionsCall>>(),
         [subscribers, setSubscribers] = useState<AwaitedReturn<typeof mySubscribersCall>>()
+    const { appUser } = useAppUser();
 
     useEffect(() => {
         (async () => {
@@ -43,13 +46,15 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
     }, [])
 
     return <View style={paddView}><ElevatedSection title="Manage Subscriptions"
-        button={(p) => <EditButton onPress={() => {
-            props.navigation.navigate("SubscriptionSettings");
+        button={(p) => <SettingsButton onPress={() => {
+            if (appUser?.settings?.analyst) {
+                props.navigation.navigate("SubscriptionSettings");
+            }
         }} {...p} />}
     ><TabView
         indicatorStyle={{
             marginTop: 26
-        }} style={{ marginVertical: sizes.rem0_5 }} selectedIndex={index} onSelect={setIndex}>
+        }} style={{ marginVertical: sizes.rem0_5 }} selectedIndex={index} onSelect={ appUser?.settings?.analyst ? setIndex : undefined}>
             <Tab title="Subscriptions">
                 <Table
                     rowPressed={(r) => {
@@ -89,14 +94,14 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                 align: "left",
                                 field: "subscription",
                                 stringify: (k: ISubscriberList["subscription"]) => {
-                                    return String(k[0].cost)
+                                    return String(String(k[0].cost) === '$0.00' ? 'Free': k[0].cost)
                                 }
                             },
                             {
                                 alias: "Since",
                                 field: "start_date",
                                 stringify: (k: ISubscriberList["start_date"]) => {
-                                    return String(k);
+                                    return new Date(k).toLocaleDateString();
                                 }
                             }
                         ]
@@ -138,23 +143,18 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                 }
                             },
                             {
-                                headerStyle: {
-                                    height: 20,
-                                    width: 20,
-                                    flex: 0,
-                                    flexBasis: 22
-                                },
-                                alias: " ",
-                                field: (item) => {
-                                    const user = item.item.user[0];
-                                    return <ProfileButton userId={user.id} size={20} profileUrl={user.profile_url || ""} />
+                                alias: "Status",
+                                field: "approved",
+                                style: {color: '#35A265'},
+                                stringify: (k: ISubscriberList["approved"]) => {
+                                    return String(k ? 'Approved' : 'Pending')
                                 }
                             },
                             {
                                 alias: "Since",
                                 field: "start_date",
                                 stringify: (k: ISubscriberList["start_date"]) => {
-                                    return String(k);
+                                    return new Date(k).toLocaleDateString();
                                 }
                             }
                         ]
@@ -180,6 +180,7 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
     const call = Api.Subscription.extensions.getByUserId;
     const subscription = useReadonlyEntity<AwaitedReturn<typeof call>>(null)
     const toast = useToast();
+    //const [approveSubs, setApproveSubs] = useState(subscription.data?.settings.approve_new === undefined ? false : subscription.data?.settings.approve_new);
 
 
     useEffect(() => {
@@ -196,13 +197,15 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
     const submit = async () => {
         if (subscription.data?.id) {
             await Api.Subscription.update(subscription.data.id, {
-                cost: subscription?.data?.cost || 0
+                cost: subscription?.data?.cost || 0,
+                settings: subscription.data.settings
             })
         }
         else {
             await Api.Subscription.insert({
                 name: "Basic Subscription",
                 cost: subscription?.data?.cost || 0,
+                settings: subscription?.data?.settings || false,
                 user_id: ''
             })
         }
@@ -231,6 +234,12 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
                 }
             })]}
         />
+        <SwitchField label='Approve New Subscribers?' 
+                     checked={subscription.data?.settings.approve_new} 
+                     onChange={() => { subscription.update({settings: {approve_new: !subscription.data?.settings.approve_new}})}} 
+                     viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', padding: 4, paddingVertical: 30}} 
+                     toggleStyle={{}} 
+                     textStyle={{fontSize: 16, fontWeight: '500', alignSelf: 'center'}}/>
         {/* Codes will go here   */}
         {!props.submitRef?.current && <PrimaryButton disabled={!subscription.hasChanged} onPress={submit} >Apply</PrimaryButton>}
     </ElevatedSection>

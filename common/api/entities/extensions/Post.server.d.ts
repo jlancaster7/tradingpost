@@ -13,17 +13,6 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<IElasticPostExt[]>;
-    create: (req: {
-        body: {
-            title: string;
-            content: string;
-        };
-        extra: {
-            userId: string;
-            page?: number | undefined;
-            limit?: number | undefined;
-        };
-    }) => Promise<{}>;
     getUpvotes: (req: {
         body: {
             id: string;
@@ -68,6 +57,17 @@ declare const _default: {
         is_upvoted: boolean;
         count: number;
     }>;
+    create: (req: {
+        body: {
+            title: string;
+            content: string;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<{}>;
 } & {
     get?: ((i: any, extra: {
         userId: string;
