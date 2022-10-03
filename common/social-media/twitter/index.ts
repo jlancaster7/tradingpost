@@ -207,7 +207,9 @@ export default class Twitter {
             }
         } catch (err) {
             this.startDate = '';
-            console.log(err);
+            if (err instanceof Error) {
+                console.warn(err.message);
+            }
             return [];
         }
         this.startDate = '';

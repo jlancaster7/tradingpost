@@ -19,7 +19,8 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tradingpostapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -33,6 +34,7 @@
         "babel": {
           "include": [
             "@ui-kitten/components",
+            "@tradingpost/common",
             "@ptomasroos/react-native-multi-slider"
           ]
         }

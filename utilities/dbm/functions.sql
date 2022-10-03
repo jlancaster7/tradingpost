@@ -174,7 +174,7 @@ return query SELECT * FROM public.view_comment_get(request) as v WHERE v.id = _i
   
     CREATE OR REPLACE FUNCTION public.api_subscriber_insert(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json)
+        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json,"approved" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     DECLARE
@@ -183,10 +183,12 @@ _idField BIGINT;
   INSERT INTO public.data_subscriber(
   subscription_id,
 user_id,
-start_date)
+start_date,
+approved)
 VALUES ((request->'data'->>'subscription_id')::bigint,
 (request->>'user_id')::UUID,
-(request->'data'->>'start_date')::timestamptz)
+(request->'data'->>'start_date')::timestamptz,
+(request->'data'->>'approved')::boolean)
 returning public.data_subscriber.id INTO _idField;
 return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v.id = _idField;
     END;
@@ -197,14 +199,15 @@ return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v.id =
   
     CREATE OR REPLACE FUNCTION public.api_subscriber_update(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json)
+        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json,"approved" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
   UPDATE public.data_subscriber v SET subscription_id =  tp.prop_or_default(request->'data' ,'subscription_id',v.subscription_id), 
 user_id= (request->>'user_id')::UUID, 
-start_date =  tp.prop_or_default(request->'data' ,'start_date',v.start_date) WHERE v."id" = (request->'data'->>'id')::BIGINT;
+start_date =  tp.prop_or_default(request->'data' ,'start_date',v.start_date), 
+approved =  tp.prop_or_default(request->'data' ,'approved',v.approved) WHERE v."id" = (request->'data'->>'id')::BIGINT;
 return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
     END;
     $BODY$;
@@ -214,7 +217,7 @@ return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v."id"
   
     CREATE OR REPLACE FUNCTION public.api_subscriber_get(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json)
+        RETURNS TABLE("id" BIGINT,"subscription_id" bigint,"start_date" TIMESTAMP WITH TIME ZONE,"user_id" UUID,"due_date" TIMESTAMP WITH TIME ZONE,"subscription" json,"user" json,"approved" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -228,7 +231,7 @@ return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v."id"
   
     CREATE OR REPLACE FUNCTION public.api_subscriber_list(
         request jsonb)
-        RETURNS TABLE("subscription_id" bigint,"user_id" UUID,"start_date" TIMESTAMP WITH TIME ZONE,"due_date" TIMESTAMP WITH TIME ZONE,"id" BIGINT,"subscription" json,"user" json)
+        RETURNS TABLE("subscription_id" bigint,"user_id" UUID,"start_date" TIMESTAMP WITH TIME ZONE,"due_date" TIMESTAMP WITH TIME ZONE,"id" BIGINT,"subscription" json,"user" json,"approved" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -355,7 +358,7 @@ return query SELECT * FROM public.view_subscription_get(request) as v WHERE v."i
   
     CREATE OR REPLACE FUNCTION public.api_user_update(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -367,7 +370,8 @@ settings =  tp.prop_or_default(request->'data' ,'settings',v.settings),
 bio =  tp.prop_or_default(request->'data' ,'bio',v.bio), 
 banner_url =  tp.prop_or_default(request->'data' ,'banner_url',v.banner_url), 
 analyst_profile =  tp.prop_or_default(request->'data' ,'analyst_profile',v.analyst_profile), 
-has_profile_pic =  tp.prop_or_default(request->'data' ,'has_profile_pic',v.has_profile_pic) WHERE v."id" = (request->'data'->>'id')::UUID;
+has_profile_pic =  tp.prop_or_default(request->'data' ,'has_profile_pic',v.has_profile_pic), 
+social_analytics =  tp.prop_or_default(request->'data' ,'social_analytics',v.social_analytics) WHERE v."id" = (request->'data'->>'id')::UUID;
 return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (request->'data'->>'id')::UUID;
     END;
     $BODY$;
@@ -377,7 +381,7 @@ return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (re
   
     CREATE OR REPLACE FUNCTION public.api_user_get(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -391,7 +395,7 @@ return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (re
   
     CREATE OR REPLACE FUNCTION public.api_user_list(
         request jsonb)
-        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json)
+        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json)
         LANGUAGE 'plpgsql'
     AS $BODY$
     

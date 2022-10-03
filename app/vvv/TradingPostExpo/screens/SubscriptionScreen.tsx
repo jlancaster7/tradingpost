@@ -1,15 +1,18 @@
 import { NavigationProp } from "@react-navigation/native";
 import { Api } from "@tradingpost/common/api";
-import { ISubscriberList } from "@tradingpost/common/api/entities/interfaces";
+import { ISubscriberList, IUserGet } from "@tradingpost/common/api/entities/interfaces";
 import { Text, Tab, TabView, Avatar } from "@ui-kitten/components";
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import { useToast } from "react-native-toast-notifications";
-import { EditButton } from "../components/AddButton";
+import { useAppUser } from "../Authentication";
+import { DeleteButton, EditButton, SettingsButton } from "../components/AddButton";
 import { Picker } from "../components/Picker";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ProfileButton } from "../components/ProfileButton";
+import { SecondaryButton } from "../components/SecondaryButton";
 import { ElevatedSection } from "../components/Section";
+import { SwitchField } from "../components/SwitchField";
 import { Table } from "../components/Table";
 import { TextField } from "../components/TextField";
 import { TabScreenProps } from "../navigation";
@@ -24,7 +27,9 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
     const mySubscriptionsCall = Api.Subscriber.extensions.getBySubscriber,
         mySubscribersCall = Api.Subscriber.extensions.getByOwner,
         [subscriptions, setSubscriptions] = useState<AwaitedReturn<typeof mySubscriptionsCall>>(),
-        [subscribers, setSubscribers] = useState<AwaitedReturn<typeof mySubscribersCall>>()
+        [subscribers, setSubscribers] = useState<AwaitedReturn<typeof mySubscribersCall>>(),
+        [buttonClick, setButtonClick] = useState(false);
+    const { appUser } = useAppUser();
 
     useEffect(() => {
         (async () => {
@@ -41,15 +46,32 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
         })()
 
     }, [])
+    useEffect(() => {
+        (async () => {
+            try {
+                const subtionTask = mySubscriptionsCall();
+                const suberTask = mySubscribersCall();
+                const [subscriptions, subscribers] = await Promise.all([subtionTask, suberTask])
+                setSubscriptions(subscriptions);
+                setSubscribers(subscribers);
+            }
+            catch (ex) {
+                console.error(ex);
+            }
+        })()
+
+    }, [buttonClick])
 
     return <View style={paddView}><ElevatedSection title="Manage Subscriptions"
-        button={(p) => <EditButton onPress={() => {
-            props.navigation.navigate("SubscriptionSettings");
+        button={(p) => <SettingsButton onPress={() => {
+            if (appUser?.settings?.analyst) {
+                props.navigation.navigate("SubscriptionSettings");
+            }
         }} {...p} />}
     ><TabView
         indicatorStyle={{
             marginTop: 26
-        }} style={{ marginVertical: sizes.rem0_5 }} selectedIndex={index} onSelect={setIndex}>
+        }} style={{ marginVertical: sizes.rem0_5 }} selectedIndex={index} onSelect={ appUser?.settings?.analyst ? setIndex : undefined}>
             <Tab title="Subscriptions">
                 <Table
                     rowPressed={(r) => {
@@ -89,14 +111,14 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                 align: "left",
                                 field: "subscription",
                                 stringify: (k: ISubscriberList["subscription"]) => {
-                                    return String(k[0].cost)
+                                    return String(String(k[0].cost) === '$0.00' ? 'Free': k[0].cost)
                                 }
                             },
                             {
                                 alias: "Since",
                                 field: "start_date",
                                 stringify: (k: ISubscriberList["start_date"]) => {
-                                    return String(k);
+                                    return new Date(k).toLocaleDateString();
                                 }
                             }
                         ]
@@ -138,24 +160,75 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                 }
                             },
                             {
-                                headerStyle: {
-                                    height: 20,
-                                    width: 20,
-                                    flex: 0,
-                                    flexBasis: 22
-                                },
-                                alias: " ",
+                                alias: "Status",
                                 field: (item) => {
-                                    const user = item.item.user[0];
-                                    return <ProfileButton userId={user.id} size={20} profileUrl={user.profile_url || ""} />
+                                    if (item.item.approved) {
+                                        return <Text>Approved</Text>;
+                                    }
+                                    else {
+                                        return <SecondaryButton 
+                                                    children={'Approve'}
+                                                    style={{backgroundColor: "#35A265", borderColor: "#35A265",
+                                                            minHeight: 26,
+                                                            height: 26,
+                                                            minWidth: 70,
+                                                            width: 70
+                                                        }}
+                                                    onPress={async () => {
+                                                        item.item.approved = true;
+                                                        await Api.Subscriber.update(item.item.id, {
+                                                            approved: true
+                                                        })
+                                                        setButtonClick(!buttonClick);
+                                                    }}
+                                                        />
+                                    }
+                                },
+                                style: {color: '#35A265'}
+                                /*
+                                stringify: (k: ISubscriberList["approved"]) => {
+                                    if (k) {
+                                        return 'Approved'
+                                    }
+                                    else {
+
+                                        return ''
+                                    }
                                 }
+                                */
                             },
                             {
                                 alias: "Since",
                                 field: "start_date",
                                 stringify: (k: ISubscriberList["start_date"]) => {
-                                    return String(k);
+                                    return new Date(k).toLocaleDateString();
                                 }
+                            }, 
+                            {
+                                headerStyle: {
+                                    flexGrow: 0,
+                                    flexShrink: 0,
+                                    flexBasis: '9%'
+                                    
+                                },
+                                alias: ' ', 
+                                field: (item) => {
+                                    console.log(item)
+                                    return <DeleteButton 
+                                        onPress={async () => {
+                                            console.log('button press')
+                                            await Api.Subscriber.extensions.removeSubscription({
+                                                userId: item.item.user_id,
+                                                subscriptionId: item.item.subscription_id
+                                            })
+                                            setButtonClick(!buttonClick);
+                                        }}
+                                        width={26}
+                                        height={'auto'}
+                                        color={'#EC5328'}
+                                    />
+                                },
+                                style: {marginLeft: -10}
                             }
                         ]
                     }
@@ -180,6 +253,7 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
     const call = Api.Subscription.extensions.getByUserId;
     const subscription = useReadonlyEntity<AwaitedReturn<typeof call>>(null)
     const toast = useToast();
+    //const [approveSubs, setApproveSubs] = useState(subscription.data?.settings.approve_new === undefined ? false : subscription.data?.settings.approve_new);
 
 
     useEffect(() => {
@@ -196,13 +270,15 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
     const submit = async () => {
         if (subscription.data?.id) {
             await Api.Subscription.update(subscription.data.id, {
-                cost: subscription?.data?.cost || 0
+                cost: subscription?.data?.cost || 0,
+                settings: subscription.data.settings
             })
         }
         else {
             await Api.Subscription.insert({
                 name: "Basic Subscription",
                 cost: subscription?.data?.cost || 0,
+                settings: subscription?.data?.settings || false,
                 user_id: ''
             })
         }
@@ -231,6 +307,12 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
                 }
             })]}
         />
+        <SwitchField label='Approve New Subscribers?' 
+                     checked={subscription.data?.settings.approve_new} 
+                     onChange={() => { subscription.update({settings: {approve_new: !subscription.data?.settings.approve_new}})}} 
+                     viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', padding: 4, paddingVertical: 30}} 
+                     toggleStyle={{}} 
+                     textStyle={{fontSize: 16, fontWeight: '500', alignSelf: 'center'}}/>
         {/* Codes will go here   */}
         {!props.submitRef?.current && <PrimaryButton disabled={!subscription.hasChanged} onPress={submit} >Apply</PrimaryButton>}
     </ElevatedSection>

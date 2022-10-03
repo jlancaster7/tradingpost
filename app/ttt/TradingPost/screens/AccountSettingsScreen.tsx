@@ -30,8 +30,9 @@ export function AccountSettingsScreen(props: TabScreenProps) {
         [upvotesCheck, setUpvotesCheck] = useState<boolean>(appUser?.settings?.push_notifications.upvotes === undefined ? true : appUser?.settings?.push_notifications.upvotes),
         [watchlistChangeCheck, setWatchlistChangeCheck] = useState<boolean>(appUser?.settings?.push_notifications.watchlist_changes === undefined ? true : appUser?.settings?.push_notifications.watchlist_changes),
         [performanceCheck, setPerformanceCheck] = useState<boolean>(appUser?.settings?.portfolio_display.performance === undefined ? false : appUser?.settings?.portfolio_display.performance),
-        [portfolioCheck, setPortfolioCheck] = useState<boolean>(appUser?.settings?.portfolio_display.portfolio === undefined ? false : appUser?.settings?.portfolio_display.portfolio),
+        [portfolioCheck, setPortfolioCheck] = useState<boolean>(appUser?.settings?.portfolio_display.holdings === undefined ? false : appUser?.settings?.portfolio_display.holdings),
         [tradesCheck, setTradesCheck] = useState<boolean>(appUser?.settings?.portfolio_display.trades === undefined ? false : appUser?.settings?.portfolio_display.trades),
+        [analystCheck, setAnalystCheck] = useState<boolean>(appUser?.settings?.analyst === undefined ? false : appUser?.settings?.analyst),
         linkTo = useLinkTo<any>()
     
     const onMentionCheckChanged = (isMentionChecked: boolean) => {
@@ -52,7 +53,9 @@ export function AccountSettingsScreen(props: TabScreenProps) {
     const onTradesCheckChanged = (isTradesChecked: boolean) => {
         setTradesCheck(isTradesChecked);
     }
-
+    const onAnalystCheckChanged = (isAnalystChecked: boolean) => {
+        setAnalystCheck(isAnalystChecked);
+    }
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
     const intervalRef = useRef<any>();
@@ -125,6 +128,7 @@ export function AccountSettingsScreen(props: TabScreenProps) {
 
                     await Api.User.update(appUser?.id, {
                         settings: {
+                            analyst: analystCheck,
                             push_notifications: {
                                 mentions: mentionCheck,
                                 upvotes: upvotesCheck,
@@ -132,7 +136,7 @@ export function AccountSettingsScreen(props: TabScreenProps) {
                             },
                             portfolio_display: {
                                 performance: performanceCheck,
-                                portfolio: portfolioCheck,
+                                holdings: portfolioCheck,
                                 trades: tradesCheck
                             }
                         }
@@ -149,17 +153,13 @@ export function AccountSettingsScreen(props: TabScreenProps) {
         }
     }}>
         <View style={{ margin: sideMargin }}>
-            <Section title='Notifications' style={{padding: 10}}>
-                <Subsection title='Posts'>
-                    <SwitchField label='Mentions' checked={mentionCheck} onChange={onMentionCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
-                    <SwitchField label='Upvotes'checked={upvotesCheck} onChange={onUpvoteCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
-                </Subsection>
-                <Subsection title='Watchlists'>
-                    {/*<SwitchField label='Price Movement' checked={watchlistPxCheck} onChange={onWatchlistPxCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>*/}
-                    <SwitchField label='Changes' checked={watchlistChangeCheck} onChange={onWatchlistChangeCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
-                </Subsection>
-
-
+            <Section title="" style={{padding: 10}}>
+                <SwitchField label='Analyst' checked={analystCheck} onChange={onAnalystCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+            </Section>
+            <Section title='Display' style={{padding: 10}}>
+                <SwitchField label='Performance' checked={performanceCheck} onChange={onPerformanceCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                <SwitchField label='Portfolio' checked={portfolioCheck} onChange={onPortfolioCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
             </Section>
 
             <Section style={{padding: 10}} title="Link Brokerage Accounts" button={(props) => accounts?.length ? <EditButton
@@ -181,11 +181,6 @@ export function AccountSettingsScreen(props: TabScreenProps) {
                 </Text>
             </Section>
             
-            <Section title='Display' style={{padding: 10}}>
-                <SwitchField label='Performance' checked={performanceCheck} onChange={onPerformanceCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
-                <SwitchField label='Portfolio' checked={portfolioCheck} onChange={onPortfolioCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
-                <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
-            </Section>
             <Section title='Management' style={{padding: 10}}>
                 <View style={{flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5}}>
                     <Text style={{fontSize: 14, alignSelf: 'center'}}>
@@ -196,7 +191,16 @@ export function AccountSettingsScreen(props: TabScreenProps) {
                     </PrimaryButton>
                 </View>
             </Section>
-            
+            <Section title='Notifications' style={{padding: 10}}>
+                <Subsection title='Posts'>
+                    <SwitchField label='Mentions' checked={mentionCheck} onChange={onMentionCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                    <SwitchField label='Upvotes'checked={upvotesCheck} onChange={onUpvoteCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
+                </Subsection>
+                <Subsection title='Watchlists'>
+                    {/*<SwitchField label='Price Movement' checked={watchlistPxCheck} onChange={onWatchlistPxCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>*/}
+                    <SwitchField label='Changes' checked={watchlistChangeCheck} onChange={onWatchlistChangeCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
+                </Subsection>
+            </Section>
         </View>
     </ScrollWithButtons>
 }

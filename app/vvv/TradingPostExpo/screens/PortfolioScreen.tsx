@@ -151,7 +151,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
     return <View style={[paddView]}>
         <ScrollView>
             <ElevatedSection key={"portfolio"} title="Portfolio">
-                <Subsection title="Performance">
+                <Subsection alt={true} title="Performance">
                     <View style={{ marginBottom: sizes.rem1 }} >
                         {/*<LineHolder data={twReturns} />*/}
                         <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
@@ -185,7 +185,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                         </View>
                     </View>
                 </Subsection>
-                <Subsection key="holdings" title="Holdings">{
+                <Subsection key="holdings" alt={true} title="Holdings">{
                     <Table
                         data={holdings}
                         columns={[
@@ -199,7 +199,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                         ]}
                          />
                 }</Subsection>
-                <Subsection key="trades" title="Trades">
+                <Subsection key="trades" alt={true} title="Trades">
                     <LimitedTable
                         title="All Trades"
                         maxPage={0}

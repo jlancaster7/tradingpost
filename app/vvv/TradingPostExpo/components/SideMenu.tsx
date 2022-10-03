@@ -64,7 +64,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
                 <Text style={[font("xSmall", "black", true), padSmall]} >@{currentUser.handle}</Text>
                 <Text style={[font("medium", "black", true), padSmall]} >{currentUser.display_name}</Text>
             </Pressable>
-            <Text style={[font("xSmall", "darkgray", true), padSmall]} >subscribers: TBD</Text>
+            <Text style={[font("xSmall", "darkgray", true), padSmall]} >Subscribers: {currentUser.subscription.count}</Text>
             <Link onPress={() => {
                 
                 props.navigation.navigate("Subscription");

@@ -42,22 +42,30 @@ const clampBuffer = 4;
 
 const collapseShift = 2 * ButtonMargin;
 
+const periods: {[key: string]: number} = {
+    "1D": 1, 
+    "1W": 5,
+    "1M": 20, 
+    "3M": 60, 
+    "1Y": 252, 
+    "2Y": 504, 
+    "Max": 1000
+}
+
 export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
     const userId = props.route?.params?.userId;
-    const [portPeriod, setPortPeriod] = useState("1Y")  
 
     const [user, setUser] = useState<IUserGet>(),
         [watchlists, setWatchlists] = useState<AwaitedReturn<typeof Api.User.extensions.getWatchlists>>(),
-        [holdings, setHoldings] = useState<AwaitedReturn<typeof Api.User.extensions.getHoldings>>([]),
-        [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>([]),
         [summary, setSummary] = useState<AwaitedReturn<typeof Api.User.extensions.getPortfolio>>(),
-        //authedUser = ensureCurrentUser(),
+        [returns, setReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>(),
+        [twReturns, settwReturns] = useState<{x: string, y: number}[]>(),
+        [portPeriod, setPortPeriod] = useState("1Y"),
         translateHeaderY = useRef(new Animated.Value(0)).current;
 
     const dim = useWindowDimensions();
     const scrollRef = useRef<FlatList>(null);
-    const
-        bannerHeight = useProfileBannerSize(),
+    const bannerHeight = useProfileBannerSize(),
         headerHeight = bannerHeight + TabPanelSize + ButtonBarsize + ButtonMargin * 2 + titles + tabBarMargin;
 
     const clampMax = bannerHeight - profileImageSmall;
@@ -98,18 +106,43 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                     ]);
                     setWatchlists(watchlists);
                     setUser(user);
-                    const holdings = await Api.User.extensions.getHoldings({userId: userId as string});
-                    //const trades = await Api.User.extensions.getTrades({$page: 0, $limit: 10, settings: {userId: userId as string}});
+                    let today = new Date();
                     const summary = await Api.User.extensions.getPortfolio({userId: userId as string});
-                    setHoldings(holdings);
-                    //setTrades(trades);
                     setSummary(summary);
+                    const returns = await Api.User.extensions.getReturns({
+                        userId: userId as string,
+                        startDate: new Date(today.setDate(today.getDate() - 1001)),
+                        endDate: new Date()})
+                    setReturns(returns);
+                    if (returns.length) {
+                        let twr: {x: string, y: number}[] = [];
+                        const day = new Date(String(returns.slice(returns.length - periods[portPeriod])[0].date))
+                        twr.push({x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1})
+                        
+                        returns.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
+                            twr.push({x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return)})
+                        })
+                        settwReturns(twr);
+                    }
                 } catch (ex: any) {
                     toast.show(ex.message);
                 }
             })()
         }
     }, [userId, user])
+
+    useEffect(() => {
+        if (returns?.length) {
+            let twr: {x: string, y: number}[] = [];
+            const day = new Date(String(returns.slice(returns.length - periods[portPeriod])[0].date))
+            twr.push({x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1})
+
+            returns?.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
+                twr.push({x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return)})
+            })
+            settwReturns(twr);
+    }
+    }, [portPeriod])
 
     return <View style={[flex]}>
         <Animated.FlatList
@@ -129,7 +162,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                         </View>
                         <View style={user?.settings?.portfolio_display.performance ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
                         <View style={{ marginBottom: sizes.rem1 } } >
-                            <InteractiveChart performance={true}/>
+                            <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
                         </View>
                         <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
                         </View>
@@ -143,9 +176,11 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                         <View style={user?.settings?.portfolio_display.holdings ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
                         <Table
                                 keyExtractor={(item, idx) => {
-                                    return item ? "trade_" + idx : "empty";
+                                    return item ? "holding_" + idx : "empty";
                                 }}
-                                data={holdings}
+                                data={(async () => {
+                                    return await Api.User.extensions.getHoldings({userId: userId as string});
+                                })}
                                 columns={[
                                     ...useMakeSecurityFields((item: any) => {
                                         return Number(item.security_id)
@@ -190,18 +225,18 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                 </ProfilePage>,
                 <ProfilePage index={3} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
                     <ElevatedSection title="General">
-                        <Subsection title="Biography">
+                        <Subsection title="Biography" alt={true}>
                             <Text>{user?.bio}</Text>
                         </Subsection>
                         <View style={row} >
-                            <Subsection title="Strategy" style={flex}>
+                            <Subsection title="Strategy" alt={true} style={flex}>
                                 <Text>{user?.analyst_profile?.investment_strategy}</Text>
                             </Subsection>
-                            <Subsection title="Benchmark" style={flex}>
+                            <Subsection title="Benchmark" alt={true} style={flex}>
                                 <Text>{user?.analyst_profile?.benchmark}</Text>
                             </Subsection>
                         </View>
-                        <Subsection title="Interest &amp; Specialities" style={flex}>
+                        <Subsection title="Interest &amp; Specialities" alt={true} style={flex}>
                             <View style={{ flexDirection: "row" }}>
                                 {(user?.analyst_profile?.interests || ["No", "Tags", "Here"]).map((chip, i) =>
                                     <PrimaryChip isAlt key={i} label={chip} style={{ flex: 1 }} />)}
@@ -227,7 +262,11 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                                 }
                             ]} />
                     </ElevatedSection> */}
-                    <ElevatedSection title="Social Analytics"></ElevatedSection>
+                    <ElevatedSection title="Social Analytics">
+                        <Text>
+                            Coming soon!
+                        </Text>
+                    </ElevatedSection>
                 </ProfilePage>
             ]}
             renderItem={(info) => {
@@ -278,12 +317,21 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                             if (!user.subscription?.is_subscribed) {
                                 children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : "(Free)"}`
                                 onPress = async () => {
-                                    await Api.Subscriber.insert({
+                                    console.log({
                                         subscription_id: user.subscription.id,
                                         //TODO: this should be moved to the server side 
                                         start_date: new Date(),
-                                        user_id: appUser?.id
+                                        user_id: appUser?.id,
+                                        approved: !user.subscription.settings.approve_new
+                                    })
+                                    await Api.Subscriber.extensions.insertWithNotification({
+                                        subscription_id: user.subscription.id,
+                                        //TODO: this should be moved to the server side 
+                                        start_date: new Date(),
+                                        user_id: appUser?.id,
+                                        approved: !user.subscription.settings.approve_new
                                     });
+                                    
                                     setUser(undefined);
                                 }
                                 style={backgroundColor: "#35A265", borderColor: "#35A265"}

@@ -100,7 +100,14 @@ export const LinkBrokerageSection = (props: CreateAccountProps) => {
                     height={props.height}
                     width={props.width}
                 />} >
-                    <Table datasetKey={accounts?.map(a => a.id).join(",") || "none"} columns={[{ field: "broker_name", align: "left" }, { field: "account_number", align: "left" }]} data={accounts} noDataMessage="You have no linked accounts" />
+                    <Table datasetKey={accounts?.map(a => a.id).join(",") || "none"} 
+                           columns={[
+                            { alias: "Brokerage",field: "broker_name", align: "left" }, 
+                            { alias: "Account #",field: "account_number", align: "left" }
+                            ]} 
+                            data={accounts} 
+                            noDataMessage="You have no linked accounts" 
+                    />
                 </Section>
             </ElevatedSection>
         </Animated.View>

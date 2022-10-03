@@ -75,35 +75,39 @@ export interface IPostGet {
 export interface ISubscriberList {
     subscription_id: number;
     user_id: string;
-    start_date: unknown;
-    due_date?: unknown;
+    start_date: Date;
+    due_date?: Date;
     months_subscribed: string;
     payment_source: string;
     id: number;
     subscription: ISubscriptionGet[];
     user: IUserList[];
+    approved: boolean;
 }
 export interface ISubscriberGet {
     id: number;
     subscription_id: number;
-    start_date: unknown;
+    start_date: Date;
     user_id: string;
-    due_date?: unknown;
+    due_date?: Date;
     payment_source: string;
     months_subscribed: string;
     subscription: ISubscriptionGet[];
     user: IUserList[];
+    approved: boolean;
 }
 export interface ISubscriberInsert {
     subscription_id: number;
     user_id: string;
-    start_date: unknown;
+    start_date: Date;
+    approved: boolean;
 }
 export interface ISubscriberUpdate {
     id?: number;
     subscription_id?: number;
     user_id?: string;
-    start_date?: unknown;
+    start_date?: Date;
+    approved?: boolean;
 }
 export interface ISubscriptionList {
     id: number;
@@ -158,7 +162,9 @@ export interface IUserList {
         id: number;
         is_subscribed: boolean;
         count: number;
+        settings: any;
     };
+    social_analytics?: any;
 }
 export interface IUserGet {
     handle: string;
@@ -178,8 +184,10 @@ export interface IUserGet {
         id: number;
         is_subscribed: boolean;
         count: number;
+        settings: any;
     };
     settings?: Statics.IUserSettings;
+    social_analytics?: any;
 }
 export interface IUserUpdate {
     id?: string;
@@ -191,6 +199,7 @@ export interface IUserUpdate {
     settings?: Statics.IUserSettings;
     banner_url?: string;
     bio?: string;
+    social_analytics?: any;
 }
 export interface IWatchlistList {
     id: number;
