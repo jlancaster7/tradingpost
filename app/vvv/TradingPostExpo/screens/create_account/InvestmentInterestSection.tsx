@@ -27,6 +27,7 @@ import { AppColors } from "../../constants/Colors"
 import { Api } from "@tradingpost/common/api"
 import { AddButton } from "../../components/AddButton"
 import { useLinkTo } from "@react-navigation/native";
+import { KeyboardAvoidingInput } from "../../components/KeyboardAvoidingInput"
 
 //import { AppConfig } from "../../apis/ApplicationApi"
 
@@ -106,11 +107,12 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
         interests: []
     });
     //props.user.data.investment_interests || { interestLevel: 50 }
-    const { securities: { list: securities } } = useSecuritiesList();
-    const [lockButtons, setLockButtons] = useChangeLock(props, [anaylistProfile]);
-    const [sliderWidth, setSliderWidth] = useState(100);
-    const linkTo = useLinkTo<any>();
-    const [acText, setAcText] = useState("");
+    const { securities: { list: securities } } = useSecuritiesList(),
+        [lockButtons, setLockButtons] = useChangeLock(props, [anaylistProfile]),
+        [bio, setBio] = useState(''),
+        [sliderWidth, setSliderWidth] = useState(100),
+        linkTo = useLinkTo<any>(),
+        [acText, setAcText] = useState("");
     const acValues = useMemo(() => {
         const r = new RegExp(acText, "i");
         return acText ? gicsAC.filter((g, i) => r.test(g)) : [];
@@ -144,7 +146,7 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
                             },
                             portfolio_display: {
                                 performance: false,
-                                portfolio: false,
+                                holdings: false,
                                 trades: false
                             }
                         }
@@ -159,43 +161,45 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
                     onPress: async () => {
                         setLockButtons(true);
                         try {
-                            //await UpdateUserProfile({ investment_interests: interestEntity.data });
-                            //props.user.update({ investment_interests: interestEntity.data })
-
-
                             await Api.User.update(props.user.data.id, {
+                                bio: bio,
                                 analyst_profile: anaylistProfile.data
                             });
-
                             anaylistProfile.resetData(anaylistProfile.data);
                             props.user.resetData(props.user.data);
 
                             if (!props.saveOnly)
                                 linkTo('/create/linkbrokerage')
-
                         } catch (ex: any) {
                             console.error(ex);
                             props.toastMessage("Unable to update profile");
                             setLockButtons(false);
                         }
-
                     }
                 }
             }
         }>
-        <View style={paddView}>
-            <ElevatedSection title="" style={[]}>
+        <View style={[paddView, {paddingBottom: 0}]}>
+            <ElevatedSection title="" style={{paddingVertical: 4}}>
                 <AppearView onLayout={(ev) => {
                     setSliderWidth(ev.nativeEvent.layout.width)
                 }} style={[flex]}>
-                    <Text style={[thinBannerText, { marginHorizontal: 0, marginVertical: sizes.rem0_5 }]}>Welcome Analyst! Tell us a bit about yourself</Text>
+                    <Text style={[thinBannerText, { marginHorizontal: 0, marginTop: sizes.rem0_5 }]}>Welcome Analyst! Tell us a bit about yourself</Text>
+                    <Text style={[questionStyle, {marginTop: sizes.rem0_5}]}>Bio</Text>
+                    <KeyboardAvoidingInput 
+                        value={bio}
+                        displayButton={false}
+                        numLines={3}
+                        placeholder={'Tell people about yourself'}
+                        //rightIcon=
+                        setValue={setBio} 
+                        //item_id={props.route.params.post._source.id}
+                        //clicked={[commentAdded, setCommentAdded]}
+                        //onClick={() => {}}
+                    />
                     <Text style={questionStyle}>What is your investment strategy?</Text>
                     <Picker
                         placeholder='Select Strategy'
-                        //showSearch
-                        // topBarProps={{
-                        //     title: "Portfolio Strategy"
-                        // } as ModalTopBarProps}
                         value={anaylistProfile.data.investment_strategy}
                         items={investmentStrats.map((value) => ({
                             label: value,

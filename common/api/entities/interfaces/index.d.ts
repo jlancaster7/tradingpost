@@ -162,6 +162,7 @@ export interface IUserList {
         id: number;
         is_subscribed: boolean;
         count: number;
+        settings: any;
     };
     social_analytics?: any;
 }
@@ -183,6 +184,7 @@ export interface IUserGet {
         id: number;
         is_subscribed: boolean;
         count: number;
+        settings: any;
     };
     settings?: Statics.IUserSettings;
     social_analytics?: any;

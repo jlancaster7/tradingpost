@@ -43,7 +43,7 @@ export const AnalystStartSection = (props: CreateAccountProps) => {
                         },
                         portfolio_display: {
                             performance: true,
-                            portfolio: true,
+                            holdings: true,
                             trades: true
                         }
                     }
@@ -65,7 +65,7 @@ export const AnalystStartSection = (props: CreateAccountProps) => {
                         },
                         portfolio_display: {
                             performance: false,
-                            portfolio: false,
+                            holdings: false,
                             trades: false
                         }
                     }

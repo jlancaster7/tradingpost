@@ -8,8 +8,7 @@
 
 /* No changes to data_post [post]*/
 
-ALTER TABLE data_subscriber
-ALTER COLUMN approved  SET NOT NULL;
+/* No changes to data_subscriber [subscriber]*/
 
 /* No changes to data_subscription [subscription]*/
 

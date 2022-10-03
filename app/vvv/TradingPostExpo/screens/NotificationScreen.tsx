@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {Pressable} from "react-native";
 import {ScrollView, View} from "react-native";
+import { ProfileButton } from "../components/ProfileButton";
 import {Layout, Text} from '@ui-kitten/components';
 import {List} from "../components/List";
 import {flex, fonts, paddView, sizes} from "../style";
@@ -9,6 +10,7 @@ import {ListAlertsResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
 import {NavigationProp, useNavigation} from "@react-navigation/native";
 import * as Notifications from 'expo-notifications'
+import { SecondaryButton } from "../components/SecondaryButton";
 
 export const NotificationScreen = () => {
     const [code, setCode] = useState('');
@@ -39,7 +41,7 @@ export const NotificationScreen = () => {
                     color: '#11146F',
                 }}>Notifications</Text>
             </Layout>
-            <Text>CODE: {code}</Text>
+            {/*<Text>CODE: {code}</Text>*/}
             <List
                 key={"STATIC"}
                 datasetKey={"__________"}
@@ -79,6 +81,8 @@ export const NotificationScreen = () => {
                             return <UserInteractionNotification response={item.item}/>;
                         case "NEW_TRADES":
                             return <NewTradeNotification response={item.item}/>
+                        case "NEW_SUBSCRIPTION":
+                            return <SubscriptionNotification response={item.item}/>
                         default:
                             console.error(`Follow Type: ${item.item.type} not registered`);
                             return <DefaultNotification response={item.item}/>
@@ -152,6 +156,54 @@ const UserInteractionNotification = (props: { response: ListAlertsResponse }): J
                         <Text
                             style={{fontWeight: "bold"}}>@{props.response.data.handle}</Text>{' '}{props.response.data.message}
                     </Text>
+                </View>
+            </View>
+        </Pressable>
+    </NotificationTab>
+}
+const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.Element => {
+    const nav = useNavigation<NavigationProp<any>>();
+    const openProfile = () => {
+        if (props.response.data?.userId) {
+            nav.navigate("Profile", {
+                userId: props.response.data?.userId
+            });
+        }
+    }
+
+    const dt = new Date(props.response.dateTime);
+    const dtFmt = `${dt.getMonth()}/${dt.getDay()}/${dt.getFullYear() % 100}`
+    return <NotificationTab>
+        <Pressable
+            onPress={openProfile}>
+            <View style={{flex: 1}}>
+                <View style={{flexDirection: 'row'}}>
+                    <Text style={{marginRight: 10}}>
+                        {dtFmt}
+                    </Text>
+                    <Text>
+                        <Text
+                            style={{fontWeight: "bold"}}>@{props.response.data.handle}</Text>{' '}{props.response.data.message}
+                    </Text>
+                    <SecondaryButton 
+                        children={'Approve'}
+                        style={{backgroundColor: "#35A265", borderColor: "#35A265",
+                                minHeight: 26,
+                                height: 26,
+                                minWidth: 70,
+                                width: 70,
+                                justifyContent: 'center'
+                            }}
+                        onPress={async () => {
+                            /*
+                            item.item.approved = true;
+                            await Api.Subscriber.update(item.item.id, {
+                                approved: true
+                            })
+                            */
+                            //setButtonClick(!buttonClick);
+                        }}
+                            />
                 </View>
             </View>
         </Pressable>

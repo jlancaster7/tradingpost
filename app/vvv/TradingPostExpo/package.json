@@ -2,12 +2,17 @@
   "name": "tradingpostexpo",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start --dev-client",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "npx expo start --web",
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "eject": "expo eject",
     "test": "jest --watchAll",
-    "install-common": "node ../../../common/_scripts/install"
+    "install-common": "node ../../../common/_scripts/install",
+    "link-common": "node ../../../common/_scripts/link",
+    "launch": "node ./_scripts/launch",
+    "build-scripts": "tsc -b tsconfig.scripts.json",
+    "deploy": "npm uninstall @tradinpost/common && npm install @tradinpost/common && expo build:web && cd web-server && eb deploy"
   },
   "jest": {
     "preset": "jest-expo"
@@ -25,13 +30,14 @@
     "@react-navigation/drawer": "^6.5.0",
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
-    "@tradingpost/common": "file:tradingpost-common-1.2.2.tgz",
+    "@tradingpost/common": "file:../../../common",
     "@ui-kitten/components": "^5.1.2",
     "@ui-kitten/eva-icons": "^5.1.2",
     "d3-array": "^3.2.0",
     "d3-interpolate-path": "^2.3.0",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.1.0",
+    "dotenv": "^16.0.3",
     "expo": "~46.0.13",
     "expo-asset": "~8.6.1",
     "expo-constants": "~13.2.4",

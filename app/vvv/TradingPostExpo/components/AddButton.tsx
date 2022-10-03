@@ -23,6 +23,25 @@ export const EditButton = (props: Pick<PressableProps, "onPress"> & Pick<ViewSty
         }} /></Pressable>
 }
 
+export const SettingsButton = (props: Pick<PressableProps, "onPress"> & Pick<ViewStyle, "height" | "width"> & { style?: ViewStyle }) => {
+    return <Pressable onPress={props.onPress} style={[{ justifyContent: "center" }, props.style]}><Icon
+        //fill={AppColors.secondary}
+        fill={"#708090"}
+        name="settings-2-outline" style={{
+            height: props.height,
+            width: props.width
+        }} /></Pressable>
+}
+export const DeleteButton = (props: Pick<PressableProps, "onPress"> & Pick<ViewStyle, "height" | "width" > & { style?: ViewStyle, color?: string }) => {
+    return <Pressable onPress={props.onPress} style={[{ justifyContent: "center" }, props.style]}><Icon
+        //fill={AppColors.secondary}
+        fill={props.color ? props.color : "#708090"}
+        name="close-circle-outline" style={{
+            height: props.height,
+            width: props.width
+            
+        }} /></Pressable>
+}
 export const FavButton = (props: Pick<PressableProps, "onPress"> & Pick<ViewStyle, "height" | "width"> & { isSelected?: boolean }) => {
     return <Pressable onPress={props.onPress} style={{ justifyContent: "center" }}><Icon
         //fill={AppColors.secondary}

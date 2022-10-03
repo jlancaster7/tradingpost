@@ -184,7 +184,7 @@ export interface IUserList {
     tags: string[],
     display_name: string,
     profile_url?: string,
-    subscription: { cost:string, id:number , is_subscribed:boolean, count:number   },
+    subscription: { cost:string, id:number , is_subscribed:boolean, count:number, settings:any   },
     social_analytics?: any
     };
 
@@ -201,7 +201,7 @@ export interface IUserGet {
     profile_url?: string,
     banner_url?: string,
     analyst_profile?: Statics.IAnalystProfile,
-    subscription: { cost:string, id:number , is_subscribed:boolean, count:number   },
+    subscription: { cost:string, id:number , is_subscribed:boolean, count:number, settings:any   },
     settings?: Statics.IUserSettings,
     social_analytics?: any
     };
