@@ -177,11 +177,13 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
         const d = async () => Api.Subscriber.get(props.response.data.subscriber_id);
         d().then((r) => {
             setApproved(r.approved)
-        }).catch()
+        }).catch((err) => {
+            setApproved(true)
+        })
     }, [])
 
     const dt = new Date(props.response.dateTime);
-    const dtFmt = `${dt.getMonth()}/${dt.getDay()}/${dt.getFullYear() % 100}`
+    const dtFmt = `${dt.getMonth()+1}/${dt.getDay()}/${dt.getFullYear() % 100}`
     return <NotificationTab>
         <Pressable
             onPress={openProfile}>

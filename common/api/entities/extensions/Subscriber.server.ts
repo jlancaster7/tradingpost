@@ -29,6 +29,7 @@ export default ensureServerExtensions<Subscriber>({
                                                                                    subscriber_id: result[0].id
                                                                                 }]);
         }
+        return {}
     },
     getByOwner: async (req) => {
 

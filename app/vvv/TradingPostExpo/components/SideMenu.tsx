@@ -87,7 +87,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
         {
             label: "Account",
             //onPress: () => props.navigation.navigate("Create"),
-            onPress: () => linkTo('/create/watchlist'),
+            onPress: () => props.navigation.navigate("AccountInformation"),
             icon: sideMenu.Account,
         },
         {

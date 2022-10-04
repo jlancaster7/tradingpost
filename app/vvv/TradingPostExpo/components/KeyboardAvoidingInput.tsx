@@ -16,7 +16,8 @@ export function KeyboardAvoidingInput(props: any) {
             value={props.value}
             multiline={true}
             numberOfLines={props.numLines}
-            style={{flex: 1, 
+            style={{flex: 1,
+                    borderColor: '#ccc',
                     //paddingVertical: sizes.rem0_5, paddingLeft: sizes.rem0_5,
                     padding: sizes.rem0_5
                 }}
