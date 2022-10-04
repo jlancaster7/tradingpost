@@ -22,7 +22,8 @@ export default class ElasticService {
             group.push(item)
             if (group.length === 100 || i === items.length - 1) {
                 const operations = group.flatMap(doc => [{index: {_index: idxName, _id: doc.id}}, doc]);
-                const bulkResponse = await this.client.bulk({refresh: false, operations});
+                const bulkResponse = await this.client.bulk({refresh: false, operations},
+                    {requestTimeout: 500});
                 if (bulkResponse.errors) {
                     const erroredDocs: {
                         // @ts-ignore
