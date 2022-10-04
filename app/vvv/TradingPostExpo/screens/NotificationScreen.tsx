@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {Pressable} from "react-native";
 import {ScrollView, View} from "react-native";
-import { ProfileButton } from "../components/ProfileButton";
+import {ProfileButton} from "../components/ProfileButton";
 import {Layout, Text} from '@ui-kitten/components';
 import {List} from "../components/List";
 import {flex, fonts, paddView, sizes} from "../style";
@@ -10,21 +10,43 @@ import {ListAlertsResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
 import {NavigationProp, useNavigation} from "@react-navigation/native";
 import * as Notifications from 'expo-notifications'
-import { useAppUser } from '../Authentication';
-import { SecondaryButton } from "../components/SecondaryButton";
+import {SecondaryButton} from "../components/SecondaryButton";
+import {Platform} from "react-native";
+
+const registerForPushNotificationsAsync = async () => {
+    if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        const {status: existingStatus} = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+            const {status} = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+            return;
+        }
+
+        if (Platform.OS === 'android') {
+            Notifications.setNotificationChannelAsync('default', {
+                name: 'default',
+                importance: Notifications.AndroidImportance.MAX,
+                vibrationPattern: [0, 250, 250, 250],
+                lightColor: '#FF231F7C',
+            });
+        }
+
+        return (await Notifications.getDevicePushTokenAsync()).data;
+    }
+}
 
 export const NotificationScreen = () => {
     const [code, setCode] = useState('');
-    /*
     useEffect(() => {
         const d = async () => {
-            const token = (await Notifications.getDevicePushTokenAsync()).data;
-            console.log(token)
+            const token = await registerForPushNotificationsAsync();
             setCode(token);
         }
-        d().then().catch()
+        d()
     }, [])
-    */
     return <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
         <View>
             <Layout style={{
@@ -44,7 +66,7 @@ export const NotificationScreen = () => {
                     color: '#11146F',
                 }}>Notifications</Text>
             </Layout>
-            {/*<Text>CODE: {code}</Text>*/}
+            <Text>CODE: {code}</Text>
             <List
                 key={"STATIC"}
                 datasetKey={"__________"}
@@ -194,7 +216,7 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                         <Text
                             style={{fontWeight: "bold"}}>@{props.response.data.handle}</Text>{' '}{props.response.data.message}
                     </Text>
-                    <SecondaryButton 
+                    <SecondaryButton
                         children={'Approve'}
                         style={{display: approved ? 'none' : 'flex',
                                 backgroundColor: "#35A265", borderColor: "#35A265",
@@ -205,12 +227,12 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                                 justifyContent: 'center'
                             }}
                         onPress={async () => {
-                            await Api.Subscriber.update(props.response.data.subscriber_id, {    
+                            await Api.Subscriber.update(props.response.data.subscriber_id, {
                                     approved: true
                             })
                             setApproved(true);
                         }}
-                            />
+                    />
                 </View>
             </View>
         </Pressable>
