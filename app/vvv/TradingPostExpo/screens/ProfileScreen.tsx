@@ -143,7 +143,10 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
             settwReturns(twr);
     }
     }, [portPeriod])
-
+    const displayHoldings = appUser?.id === user?.id || (user?.settings?.portfolio_display.holdings && user.subscription.is_subscribed)
+    const displayTrades = appUser?.id === user?.id || (user?.settings?.portfolio_display.trades && user.subscription.is_subscribed)
+    const displayPerformance = appUser?.id === user?.id || (user?.settings?.portfolio_display.performance && user.subscription.is_subscribed)
+    console.log(user)
     return <View style={[flex]}>
         <Animated.FlatList
             data={[
@@ -155,12 +158,12 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                 </ProfilePage>,
                 <ProfilePage index={1} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
                     <ElevatedSection title="Performance">
-                        <View style={user?.settings?.portfolio_display.performance ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
+                        <View style={displayPerformance ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
                             <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
                                 {`@${user?.handle} does not display their investment performance.`}
                             </Text>
                         </View>
-                        <View style={user?.settings?.portfolio_display.performance ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
+                        <View style={displayPerformance ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
                         <View style={{ marginBottom: sizes.rem1 } } >
                             <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
                         </View>
@@ -168,12 +171,12 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                         </View>
                     </ElevatedSection>
                     <ElevatedSection title="Holdings">
-                        <View style={user?.settings?.portfolio_display.holdings ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
+                        <View style={displayHoldings ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
                             <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
                                 {`@${user?.handle} does not display their investment holdings.`}
                             </Text>
                         </View>
-                        <View style={user?.settings?.portfolio_display.holdings ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
+                        <View style={displayHoldings ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
                         <Table
                                 keyExtractor={(item, idx) => {
                                     return item ? "holding_" + idx : "empty";
@@ -196,12 +199,12 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                     {/* <WatchlistSection parentComponentId={props.componentId} userId={props.userId} /> */}
                 </ProfilePage>,
                 <ProfilePage index={2} minViewHeight={minViewHeight} manager={manager} currentIndex={tab} >
-                    <View style={user?.settings?.portfolio_display.trades ? {display: 'none'} : {display: 'flex', height: '100%', justifyContent: "center", alignItems: 'center'} }>
+                    <View style={displayTrades ? {display: 'none'} : {display: 'flex', height: '100%', justifyContent: "center", alignItems: 'center'} }>
                         <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
                             {`@${user?.handle} does not display their trades.`}
                         </Text>
                     </View>
-                    <ElevatedSection title="" style={user?.settings?.portfolio_display.trades ? {display: 'flex'} : {display: 'none'}}>
+                    <ElevatedSection title="" style={displayTrades ? {display: 'flex'} : {display: 'none'}}>
                             <Table
                                 keyExtractor={(item, idx) => {
                                     return item ? "trade_" + idx : "empty";
@@ -314,30 +317,23 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                         let onPress: () => void;
                         let style;
                         if (appUser && user && user?.id !== appUser?.id) {
-                            if (!user.subscription?.is_subscribed) {
+                            if (!user.subscription?.is_subscribed && !user.subscription?.is_pending) {
                                 children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : "(Free)"}`
                                 onPress = async () => {
-                                    console.log({
+                                
+                                    const test = await Api.Subscriber.extensions.insertWithNotification({
                                         subscription_id: user.subscription.id,
                                         //TODO: this should be moved to the server side 
                                         start_date: new Date(),
-                                        user_id: appUser?.id,
-                                        approved: !user.subscription.settings.approve_new
-                                    })
-                                    await Api.Subscriber.extensions.insertWithNotification({
-                                        subscription_id: user.subscription.id,
-                                        //TODO: this should be moved to the server side 
-                                        start_date: new Date(),
-                                        user_id: appUser?.id,
+                                        user_id: user.id,
                                         approved: !user.subscription.settings.approve_new
                                     });
-                                    
                                     setUser(undefined);
                                 }
                                 style={backgroundColor: "#35A265", borderColor: "#35A265"}
                             }
                             else {
-                                children = 'Subscribed',
+                                children = user.subscription.is_pending ? 'Pending' :'Subscribed',
                                 
                                 onPress = async () => {
                                     //Todo:: make this an are you sure
@@ -346,7 +342,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                                     });
                                     setUser(undefined);
                                 }
-                                style={backgroundColor: "#EC5328", borderColor: "#EC5328"}
+                                style=user.subscription.is_pending ? {backgroundColor: "#FFCE31", borderColor: "#FFCE31"} : {backgroundColor: "#EC5328", borderColor: "#EC5328"}
                                     
                             }
 
@@ -366,7 +362,8 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
 
                         return {
                             children,
-                            onPress
+                            onPress,
+                            style
                         }
 
                     })()}

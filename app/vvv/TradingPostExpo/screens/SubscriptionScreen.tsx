@@ -213,10 +213,8 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                 },
                                 alias: ' ', 
                                 field: (item) => {
-                                    console.log(item)
                                     return <DeleteButton 
                                         onPress={async () => {
-                                            console.log('button press')
                                             await Api.Subscriber.extensions.removeSubscription({
                                                 userId: item.item.user_id,
                                                 subscriptionId: item.item.subscription_id

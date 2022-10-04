@@ -280,8 +280,15 @@ export class PortfolioSummaryService implements ISummaryService {
     }
 
     getSummary = async (userId: string): Promise<TradingPostAccountGroupStats> => {
-        const account_group = await this.getAccountGroupByName(userId, 'default');
-        return await this.repository.getAccountGroupSummary(account_group.accountGroupId)
+        try {
+            const account_group = await this.getAccountGroupByName(userId, 'default');
+            return await this.repository.getAccountGroupSummary(account_group.accountGroupId)
+        }
+        catch (err) {
+            console.error(err);
+            return {} as TradingPostAccountGroupStats;
+        }
+        
     }
 
     getAccountGroupByName = async (userId: string, accountGroupName: string): Promise<TradingPostAccountGroups> => {

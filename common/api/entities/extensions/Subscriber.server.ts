@@ -8,7 +8,7 @@ import Subscriber from './Subscriber';
 export default ensureServerExtensions<Subscriber>({
     insertWithNotification: async (req) => {
         const result = await execProc('public.api_subscriber_insert', {
-            user_id: req.body.user_id,
+            user_id: req.extra.userId,
             data: {
                 subscription_id: req.body.subscription_id,
                 start_date: req.body.start_date,
@@ -17,17 +17,18 @@ export default ensureServerExtensions<Subscriber>({
 
         })
         const user: IUserGet = (await execProc('public.api_user_get', {
-            data: {id: req.body.user_id}
+            data: {id: req.extra.userId}
         }))[0]
-        const pool = await getHivePool;
-        await pool.query(`INSERT INTO notification(user_id, type, date_time, data)
-                          VALUES ($1, $2, $3, $4)`, 
-                          [req.extra.userId, 'NEW_SUBSCRIPTION', new Date(), {userId: req.body.user_id, 
-                                                                               handle: user.handle, 
-                                                                               message: 'has subscribed to you.',
-                                                                               //subscriber_id: result
-                                                                            }])
-
+        if (result[0].subscription[0].settings.approve_new) {
+            const pool = await getHivePool;
+            await pool.query(`INSERT INTO notification(user_id, type, date_time, data)
+                              VALUES ($1, $2, $3, $4)`, 
+                              [req.body.user_id, 'NEW_SUBSCRIPTION', new Date(), {userId: req.extra.userId, 
+                                                                                   handle: user.handle, 
+                                                                                   message: 'has subscribed to you.',
+                                                                                   subscriber_id: result[0].id
+                                                                                }]);
+        }
     },
     getByOwner: async (req) => {
 

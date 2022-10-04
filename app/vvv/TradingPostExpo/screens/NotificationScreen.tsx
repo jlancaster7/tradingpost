@@ -10,10 +10,12 @@ import {ListAlertsResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
 import {NavigationProp, useNavigation} from "@react-navigation/native";
 import * as Notifications from 'expo-notifications'
+import { useAppUser } from '../Authentication';
 import { SecondaryButton } from "../components/SecondaryButton";
 
 export const NotificationScreen = () => {
     const [code, setCode] = useState('');
+    /*
     useEffect(() => {
         const d = async () => {
             const token = (await Notifications.getDevicePushTokenAsync()).data;
@@ -22,6 +24,7 @@ export const NotificationScreen = () => {
         }
         d().then().catch()
     }, [])
+    */
     return <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
         <View>
             <Layout style={{
@@ -57,7 +60,6 @@ export const NotificationScreen = () => {
                     const notifications = (await Api.Notification.extensions.listAlerts({
                         page,
                     }));
-
                     const newNotifications = [...(allItems || []), ...notifications];
                     newNotifications.forEach((item, index) => {
                         if (!sizeCache[index]) {
@@ -82,7 +84,7 @@ export const NotificationScreen = () => {
                         case "NEW_TRADES":
                             return <NewTradeNotification response={item.item}/>
                         case "NEW_SUBSCRIPTION":
-                            return <SubscriptionNotification response={item.item}/>
+                            return <SubscriptionNotification response={item.item} />
                         default:
                             console.error(`Follow Type: ${item.item.type} not registered`);
                             return <DefaultNotification response={item.item}/>
@@ -163,6 +165,7 @@ const UserInteractionNotification = (props: { response: ListAlertsResponse }): J
 }
 const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.Element => {
     const nav = useNavigation<NavigationProp<any>>();
+    const [approved, setApproved] = useState<boolean>()
     const openProfile = () => {
         if (props.response.data?.userId) {
             nav.navigate("Profile", {
@@ -170,6 +173,12 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
             });
         }
     }
+    useEffect(() => {
+        const d = async () => Api.Subscriber.get(props.response.data.subscriber_id);
+        d().then((r) => {
+            setApproved(r.approved)
+        }).catch()
+    }, [])
 
     const dt = new Date(props.response.dateTime);
     const dtFmt = `${dt.getMonth()}/${dt.getDay()}/${dt.getFullYear() % 100}`
@@ -187,7 +196,8 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                     </Text>
                     <SecondaryButton 
                         children={'Approve'}
-                        style={{backgroundColor: "#35A265", borderColor: "#35A265",
+                        style={{display: approved ? 'none' : 'flex',
+                                backgroundColor: "#35A265", borderColor: "#35A265",
                                 minHeight: 26,
                                 height: 26,
                                 minWidth: 70,
@@ -195,13 +205,10 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                                 justifyContent: 'center'
                             }}
                         onPress={async () => {
-                            /*
-                            item.item.approved = true;
-                            await Api.Subscriber.update(item.item.id, {
-                                approved: true
+                            await Api.Subscriber.update(props.response.data.subscriber_id, {    
+                                    approved: true
                             })
-                            */
-                            //setButtonClick(!buttonClick);
+                            setApproved(true);
                         }}
                             />
                 </View>

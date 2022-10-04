@@ -161,8 +161,6 @@ export function AccountSettingsScreen(props: TabScreenProps) {
                 <SwitchField label='Portfolio' checked={holdingsCheck} onChange={onHoldingsCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
                 <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
             </Section>
-            
-
             <Section style={{padding: 10}} title="Link Brokerage Accounts" button={(props) => accounts?.length ? <EditButton
                 onPress={() => {
                     openLink();
@@ -181,7 +179,16 @@ export function AccountSettingsScreen(props: TabScreenProps) {
                     Stripe
                 </Text>
             </Section>
-            
+            <Section title='Notifications' style={{padding: 10}}>
+                <Subsection title='Posts' alt={true}>
+                    <SwitchField label='Mentions' checked={mentionCheck} onChange={onMentionCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                    <SwitchField label='Upvotes'checked={upvotesCheck} onChange={onUpvoteCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
+                </Subsection>
+                <Subsection title='Watchlists' alt={true}>
+                    {/*<SwitchField label='Price Movement' checked={watchlistPxCheck} onChange={onWatchlistPxCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>*/}
+                    <SwitchField label='Changes' checked={watchlistChangeCheck} onChange={onWatchlistChangeCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
+                </Subsection>
+            </Section>
             <Section title='Management' style={{padding: 10}}>
                 <View style={{flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5}}>
                     <Text style={{fontSize: 14, alignSelf: 'center'}}>
@@ -192,19 +199,6 @@ export function AccountSettingsScreen(props: TabScreenProps) {
                     </PrimaryButton>
                 </View>
             </Section>
-            <Section title='Notifications' style={{padding: 10}}>
-                <Subsection title='Posts'>
-                    <SwitchField label='Mentions' checked={mentionCheck} onChange={onMentionCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
-                    <SwitchField label='Upvotes'checked={upvotesCheck} onChange={onUpvoteCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
-                </Subsection>
-                <Subsection title='Watchlists'>
-                    {/*<SwitchField label='Price Movement' checked={watchlistPxCheck} onChange={onWatchlistPxCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>*/}
-                    <SwitchField label='Changes' checked={watchlistChangeCheck} onChange={onWatchlistChangeCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
-                </Subsection>
-
-
-            </Section>
-            
         </View>
     </ScrollWithButtons>
 }

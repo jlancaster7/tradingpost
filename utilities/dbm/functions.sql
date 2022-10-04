@@ -205,8 +205,6 @@ return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v.id =
     
     BEGIN
   UPDATE public.data_subscriber v SET subscription_id =  tp.prop_or_default(request->'data' ,'subscription_id',v.subscription_id), 
-user_id= (request->>'user_id')::UUID, 
-start_date =  tp.prop_or_default(request->'data' ,'start_date',v.start_date), 
 approved =  tp.prop_or_default(request->'data' ,'approved',v.approved) WHERE v."id" = (request->'data'->>'id')::BIGINT;
 return query SELECT * FROM public.view_subscriber_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
     END;

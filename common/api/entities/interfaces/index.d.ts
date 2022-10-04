@@ -105,8 +105,6 @@ export interface ISubscriberInsert {
 export interface ISubscriberUpdate {
     id?: number;
     subscription_id?: number;
-    user_id?: string;
-    start_date?: Date;
     approved?: boolean;
 }
 export interface ISubscriptionList {
@@ -163,6 +161,7 @@ export interface IUserList {
         is_subscribed: boolean;
         count: number;
         settings: any;
+        is_pending: boolean;
     };
     social_analytics?: any;
 }
@@ -185,6 +184,7 @@ export interface IUserGet {
         is_subscribed: boolean;
         count: number;
         settings: any;
+        is_pending: boolean;
     };
     settings?: Statics.IUserSettings;
     social_analytics?: any;

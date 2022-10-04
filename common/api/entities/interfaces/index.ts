@@ -112,7 +112,7 @@ export interface ISubscriberGet {
     };
 
 export interface ISubscriberInsert {
-        subscription_id: number,
+    subscription_id: number,
     user_id: string,
     start_date: Date,
     approved: boolean
@@ -121,8 +121,6 @@ export interface ISubscriberInsert {
 export interface ISubscriberUpdate {
         id?: number,
     subscription_id?: number,
-    user_id?: string,
-    start_date?: Date,
     approved?: boolean
     };
 
@@ -184,7 +182,7 @@ export interface IUserList {
     tags: string[],
     display_name: string,
     profile_url?: string,
-    subscription: { cost:string, id:number , is_subscribed:boolean, count:number, settings:any   },
+    subscription: { cost:string, id:number , is_subscribed:boolean, count:number, settings:any, is_pending:boolean    },
     social_analytics?: any
     };
 
@@ -201,7 +199,7 @@ export interface IUserGet {
     profile_url?: string,
     banner_url?: string,
     analyst_profile?: Statics.IAnalystProfile,
-    subscription: { cost:string, id:number , is_subscribed:boolean, count:number, settings:any   },
+    subscription: { cost:string, id:number , is_subscribed:boolean, count:number, settings:any, is_pending:boolean    },
     settings?: Statics.IUserSettings,
     social_analytics?: any
     };
