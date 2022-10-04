@@ -2,7 +2,7 @@ import { View, Animated, ImageStyle, Pressable, ViewStyle } from "react-native";
 import React, { useEffect, useRef } from "react";
 import { Text, Image } from "react-native";
 import { IconifyIcon } from "./IconfiyIcon";
-import UserLogo from '@iconify/icons-mdi/user'
+import UserLogo from '../../../../assets/node_modules/@iconify/icons-mdi/user'
 import { flex, row, sizes } from "../style";
 import { useWindowDimensions } from "react-native";
 import { social } from "../images";

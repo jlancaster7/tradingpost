@@ -4,8 +4,8 @@ import { Section, Subsection } from "../components/Section"
 import { SwitchField } from "../components/SwitchField"
 import { Api } from "@tradingpost/common/api";
 import { CreateAccountProps, sideMargin, useChangeLock } from "./create_account/shared"
-import StripeLogo from '@iconify/icons-logos/stripe'
-import CheckerLogo from '@iconify/icons-mdi/checkerboard'
+import StripeLogo from '../../../../assets/node_modules/@iconify/icons-logos/stripe'
+import CheckerLogo from '../../../../assets/node_modules/@iconify/icons-mdi/checkerboard'
 //import { SetDashboardLayout } from "../../layouts/DashboardLayout"
 //import { deleteAccount, UpdateUserProfile } from "../../apis/Authenticfation"
 import { /*bindSwitch,*/ useReadonlyEntity } from "../utils/hooks"

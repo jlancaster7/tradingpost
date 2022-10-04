@@ -50,9 +50,6 @@ import { getSecurityList } from './SecurityList'
 
 
 
-LogBox.ignoreAllLogs();
-
-
 
 export default function App() {
   const { isLoadingComplete } = useCachedResources();

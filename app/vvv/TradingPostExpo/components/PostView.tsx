@@ -3,7 +3,7 @@ import { Alert, Image, ImageBackground, Linking, PixelRatio, Platform, Pressable
 import { Button, Icon } from '@ui-kitten/components'
 
 import { flex, fonts, row, shadow, sizes } from '../style'
-import UserLogo from '@iconify/icons-mdi/user'
+import UserLogo from '../../../../assets/node_modules/@iconify/icons-mdi/user'
 import { IconifyIcon } from './IconfiyIcon'
 import { Header, Subheader } from './Headers'
 import { PrimaryChip } from './PrimaryChip'
