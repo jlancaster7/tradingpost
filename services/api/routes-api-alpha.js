@@ -62,7 +62,7 @@ var decodeToken = function (req, disableModelCheck) { return __awaiter(void 0, v
                 if (!(typeof bearerHeader !== 'undefined')) return [3 /*break*/, 2];
                 bearer = bearerHeader.split(' ');
                 if (bearer[0].toLowerCase() !== "bearer")
-                    throw new Error("Invalid authorization type: \"" + bearer[0] + "\".");
+                    throw new Error("Invalid authorization type: \"".concat(bearer[0], "\"."));
                 _a = jsonwebtoken_1.verify;
                 _b = [bearer[1]];
                 return [4 /*yield*/, configuration_1.DefaultConfig.fromCacheOrSSM("authkey")];
@@ -145,7 +145,7 @@ var sharedHandler = function (req, routeDetails) { return __awaiter(void 0, void
                     resolver('@tradingpost/common/api/entities/extensions/' + req.params.entity.substring(0, req.params.entity.length - 3) + ".server");
                 }
                 catch (ex) { }
-                entity = require(resolver(path_1.join("@tradingpost/common/api/entities/apis/" + req.params.entity), path_1.join("@tradingpost/common/api/entities/static/" + req.params.entity)))
+                entity = require(resolver((0, path_1.join)("@tradingpost/common/api/entities/apis/".concat(req.params.entity)), (0, path_1.join)("@tradingpost/common/api/entities/static/".concat(req.params.entity))))
                     .default;
                 return [4 /*yield*/, routeDetails(entity)];
             case 1: return [2 /*return*/, _a.sent()];
@@ -161,9 +161,9 @@ makeRoute("/authapi/login", function (req) { return __awaiter(void 0, void 0, vo
                 throw new EntityApiBase_1.PublicError("Unauthorized...", 401);
             case 1:
                 if (!req.body.email) return [3 /*break*/, 3];
-                return [4 /*yield*/, auth_1.loginPass(req.body.email, req.body.pass, "")];
+                return [4 /*yield*/, (0, auth_1.loginPass)(req.body.email, req.body.pass, "")];
             case 2: return [2 /*return*/, _a.sent()];
-            case 3: return [4 /*yield*/, auth_1.loginToken(req.body.pass)];
+            case 3: return [4 /*yield*/, (0, auth_1.loginToken)(req.body.pass)];
             case 4: return [2 /*return*/, _a.sent()];
         }
     });
@@ -174,7 +174,7 @@ makeRoute("/authapi/create", function (req) { return __awaiter(void 0, void 0, v
             case 0:
                 if (!req.body.email || !req.body.pass)
                     throw new EntityApiBase_1.PublicError("Invalid Request");
-                return [4 /*yield*/, auth_1.createLogin(req.body.email, req.body.pass)];
+                return [4 /*yield*/, (0, auth_1.createLogin)(req.body.email, req.body.pass)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -188,7 +188,7 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
                 info = _a.sent();
                 if (!info.claims.email)
                     throw new Error("Invalid Request");
-                return [4 /*yield*/, auth_1.createUser({
+                return [4 /*yield*/, (0, auth_1.createUser)({
                         email: info.claims.email,
                         first_name: req.body.first_name,
                         last_name: req.body.last_name,
@@ -197,7 +197,7 @@ makeRoute("/authapi/init", function (req) { return __awaiter(void 0, void 0, voi
                     })];
             case 2:
                 login = _a.sent();
-                cache_1.cacheMonitor(UserApi_1.default, "insert", login.user_id, {});
+                (0, cache_1.cacheMonitor)(UserApi_1.default, "insert", login.user_id, {});
                 return [2 /*return*/, login];
         }
     });
@@ -210,7 +210,7 @@ makeRoute("/waitlist/add", function (req) { return __awaiter(void 0, void 0, voi
                     throw new EntityApiBase_1.PublicError("Invalid Request");
                 }
                 console.log(req.body.email);
-                return [4 /*yield*/, waitlist_1.addToWaitlist(req.body.email)];
+                return [4 /*yield*/, (0, waitlist_1.addToWaitlist)(req.body.email)];
             case 1: return [2 /*return*/, _a.sent()];
         }
     });
@@ -257,7 +257,7 @@ makeRoute(baseFormat, function (req) {
                     _b.label = 6;
                 case 6: 
                 //will type better in the future by should not be needed right now
-                return [4 /*yield*/, cache_1.cacheMonitor(entity, req.params.action, token.sub, responseData)];
+                return [4 /*yield*/, (0, cache_1.cacheMonitor)(entity, req.params.action, token.sub, responseData)];
                 case 7:
                     //will type better in the future by should not be needed right now
                     _b.sent();
@@ -267,7 +267,7 @@ makeRoute(baseFormat, function (req) {
                     return [4 /*yield*/, extensionHandler(req)];
                 case 9:
                     responseData = _b.sent();
-                    return [4 /*yield*/, cache_1.cacheMonitor(entity, req.params.action, token.sub, responseData)];
+                    return [4 /*yield*/, (0, cache_1.cacheMonitor)(entity, req.params.action, token.sub, responseData)];
                 case 10:
                     _b.sent();
                     return [2 /*return*/, responseData];

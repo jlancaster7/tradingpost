@@ -2,7 +2,7 @@ import React from "react"
 import { Pressable } from "react-native"
 import { shadow } from "../style"
 import { IconifyIcon } from "./IconfiyIcon"
-import plusCircle from '../../../../assets/node_modules/@iconify/icons-mdi/plus-circle'
+import plusCircle from '@iconify/icons-mdi/plus-circle'
 import { AppColors } from "../constants/Colors"
 
 /**

@@ -1,4 +1,5 @@
-import data from "../../../../assets/node_modules/@iconify/icons-logos/youtube-icon";
+import data from "@iconify/icons-logos/youtube-icon";
+
 import React, { MutableRefObject, useEffect, useRef, useState } from "react";
 import { Pressable, View, ViewStyle, Text } from "react-native";
 import { useSecuritiesList} from '../SecurityList'

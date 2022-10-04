@@ -5,7 +5,7 @@ import _SplashWelcome from './assets/splash-welcome.svg'
 
 
 import Logo from './assets/logo.svg'
-import LogoNoBg from './assets/logo-no-bg.svg' 
+import LogoNoBg from './assets/logo-no-bg.svg'
 
 // import MenuIcon from './assets/side-menu/menu-icon.svg';
 import _PlusIcon from './assets/misc/plus.svg';
@@ -26,12 +26,15 @@ import LogOut from './assets/side-menu/Log Out.svg'
 import Profile from './assets/side-menu/Profile.svg'
 import Watchlist from './assets/side-menu/Watchlist.svg'
 
-import YouTubeLogo from '../../../assets/node_modules/@iconify/icons-logos/youtube-icon'
-import SpotifyLogo from '../../../assets/node_modules/@iconify/icons-logos/spotify-icon'
-import TwitterLogo from '../../../assets/node_modules/@iconify/icons-logos/twitter'
+import YouTubeLogo from '@iconify/icons-logos/youtube-icon'
+import SpotifyLogo from '@iconify/icons-logos/spotify-icon'
 
-import LinkedInLogo from '../../../assets/node_modules/@iconify/icons-logos/linkedin-icon'
-import SubstackLogo from '../../../assets/node_modules/@iconify/icons-simple-icons/substack'
+import TwitterLogo from '@iconify/icons-logos/twitter'
+
+import LinkedInLogo from '@iconify/icons-logos/linkedin-icon'
+
+import SubstackLogo from '@iconify/icons-simple-icons/substack'
+
 import React, {Component} from 'react'
 import {SvgExpo} from './components/SvgExpo'
 import {SvgProps} from 'react-native-svg'
@@ -61,7 +64,7 @@ export const IconBg = makeExpoSvg(_IconBg)
 export const IconNoBg = makeExpoSvg(_IconNoBg)
 export const PlusIcon = makeExpoSvg(_PlusIcon)
 
-export const Retweet = makeExpoSvg(_Retweet); 
+export const Retweet = makeExpoSvg(_Retweet);
 
 
 // IconBg,

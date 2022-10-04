@@ -13,10 +13,10 @@ var healthcheck_1 = require("./healthcheck");
 var node_fetch_1 = __importDefault(require("node-fetch"));
 globalThis["fetch"] = node_fetch_1.default;
 //fromWebToken()
-var app = express_1.default();
+var app = (0, express_1.default)();
 var port = process.env.PORT || 8082; // default port to listen
 app.get("/", healthcheck_1.healthCheck);
-app.use(cors_1.default());
+app.use((0, cors_1.default)());
 app.use(body_parser_1.default.json());
 app.use(function (req, res, next) {
     console.log(req.url);
@@ -28,7 +28,7 @@ app.use("/alpha", routes_api_alpha_1.default);
 // start the express server
 app.listen(port, function () {
     // tslint:disable-next-line:no-console
-    console.log("API Server has been started at http://localhost:" + port);
+    console.log("API Server has been started at http://localhost:".concat(port));
     if (process.env.CONFIGURATION_ENV === "development") {
     }
     console.log(process.env.CONFIGURATION_ENV);
