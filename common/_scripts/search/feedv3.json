@@ -1,0 +1,34 @@
+{
+    "function_score": {
+      "query": {
+        "function_score": {
+          "query": {
+            "function_score": {
+              "query": { "match_all": {} },
+              "gauss": {
+                "platformCreatedAt": {
+                  "origin": "now-1h",
+                  "scale": "1d"
+                }
+              }
+            }
+          },
+          "field_value_factor": {
+            "field": "postTypeValue",
+            "factor": 1,
+            "modifier": "none"
+    
+          }
+        }},
+        "functions": [
+          {
+            "random_score": {
+              "seed": 10,
+              "field": "_seq_no"
+            }}
+        ],
+        "boost": 5
+      
+    }
+    
+  }

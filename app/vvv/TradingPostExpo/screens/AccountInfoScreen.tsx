@@ -18,7 +18,7 @@ import { openBrowserAsync } from 'expo-web-browser';
 import { Autocomplete, AutocompleteItem, Icon, IndexPath, Text, TabView, Tab } from "@ui-kitten/components";
 import { AddButton, EditButton } from "../components/AddButton";
 import { Table } from "../components/Table";
-import { bannerText, flex, paddView, paddViewWhite, sizes, thinBannerText, social as socialStyling, fonts } from "../style";
+import { bannerText,elevated, flex, paddView, paddViewWhite, sizes, thinBannerText, social as socialStyling, fonts } from "../style";
 import { PrimaryButton } from "../components/PrimaryButton"
 import { TabScreenProps } from "../navigation"
 import { useAppUser } from "../Authentication"
@@ -32,18 +32,23 @@ import { useTwitterAuth } from "../utils/third-party/twitter";
 import { social } from "../images";
 import { AppColors } from "../constants/Colors";
 import { useToast } from "react-native-toast-notifications";
-
+import { AccountSettingsScreen } from './AccountSettingsScreen';
 
 export function AccountInfoScreen(props: TabScreenProps) {
-    const { appUser, authToken, signIn } = useAppUser();
-    const [index, setIndex] = useState(0),
-        [inputMessage, setInputMessage] = useState(''),
+    const { appUser, authToken, signIn } = useAppUser(),
+        [index, setIndex] = useState(0),
+        linkTo = useLinkTo<any>(),
+        toast = useToast(),
+        opacityAnim = useRef(new Animated.Value(0)).current;
+    //########################################################################################################################
+    //Logic for the 'Your Content Tab
+    //########################################################################################################################
+    const [inputMessage, setInputMessage] = useState(''),
         [inputPlatform, setInputPlatform] = useState(''),
-        [inputValue, setInputValue] = useState('')
+        [inputValue, setInputValue] = useState('');
+        
 
     const getToken = useTwitterAuth();
-    const toast = useToast();
-    //console.log(appUser?.claims);
     let twitterHandle: any;
     let setTwitterHandle: any;
     let substackUsername: any;
@@ -64,9 +69,96 @@ export function AccountInfoScreen(props: TabScreenProps) {
         [spotifyShow, setSpotifyShow] = useState('');
         [youtubeChannel, setYoutubeChannel] = useState('');
     }
+    //########################################################################################################################
+
+    //########################################################################################################################
+    //Logic for the 'Account Settings' Tab
+    //########################################################################################################################
+    const [mentionCheck, setMentionCheck] = useState<boolean>(appUser?.settings?.push_notifications.mentions === undefined ? true : appUser?.settings?.push_notifications.mentions),
+        [upvotesCheck, setUpvotesCheck] = useState<boolean>(appUser?.settings?.push_notifications.upvotes === undefined ? true : appUser?.settings?.push_notifications.upvotes),
+        [watchlistChangeCheck, setWatchlistChangeCheck] = useState<boolean>(appUser?.settings?.push_notifications.watchlist_changes === undefined ? true : appUser?.settings?.push_notifications.watchlist_changes),
+        [performanceCheck, setPerformanceCheck] = useState<boolean>(appUser?.settings?.portfolio_display.performance === undefined ? false : appUser?.settings?.portfolio_display.performance),
+        [holdingsCheck, setHoldingsCheck] = useState<boolean>(appUser?.settings?.portfolio_display.holdings === undefined ? false : appUser?.settings?.portfolio_display.holdings),
+        [tradesCheck, setTradesCheck] = useState<boolean>(appUser?.settings?.portfolio_display.trades === undefined ? false : appUser?.settings?.portfolio_display.trades),
+        [analystCheck, setAnalystCheck] = useState<boolean>(appUser?.settings?.analyst === undefined ? false : appUser?.settings?.analyst);
+
+    const onMentionCheckChanged = (isMentionChecked: boolean) => {
+        setMentionCheck(isMentionChecked);
+    }
+    const onUpvoteCheckChanged = (isUpvoteChecked: boolean) => {
+        setUpvotesCheck(isUpvoteChecked);
+    }
+    const onWatchlistChangeCheckChanged = (isWatchlistChangeChecked: boolean) => {
+        setWatchlistChangeCheck(isWatchlistChangeChecked);
+    }
+    const onPerformanceCheckChanged = (isPerformanceChecked: boolean) => {
+        setPerformanceCheck(isPerformanceChecked);
+    }
+    const onHoldingsCheckChanged = (isHoldingsChecked: boolean) => {
+        setHoldingsCheck(isHoldingsChecked);
+    }
+    const onTradesCheckChanged = (isTradesChecked: boolean) => {
+        setTradesCheck(isTradesChecked);
+    }
+    const onAnalystCheckChanged = (isAnalystChecked: boolean) => {
+        setAnalystCheck(isAnalystChecked);
+    }
+
+    const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
+    const intervalRef = useRef<any>();
+    const [needsRefresh, setNeedsRefresh] = useState<{}>();
+    const openLink = async () => {
+        const browserName = "finicity_auth";
+        await openBrowserAsync(brokerLink, { "windowName": browserName });
+        clearInterval(intervalRef.current);
+
+        intervalRef.current = setInterval(async () => {
+            console.log("WTF");
+            if (await AsyncStorage.getItem("auth-finicity-code")) {
+                console.log("CODE HAS BEEN FOUND");
+                setAccounts(await Api.User.extensions.getBrokerageAccounts())
+            }
+        }, 5000)
+    }
+    //cleanup
+    useEffect(() => {
+        AsyncStorage.removeItem("auth-finicity-code");
+        return () => {
+            clearInterval(intervalRef.current);
+            AsyncStorage.removeItem("auth-finicity-code");
+        }
+    }, [])
 
 
+    useEffect(() => {
+        Animated.timing(
+            opacityAnim,
+            {
+                delay: 0.75,
+                toValue: 1,
+                duration: 2000,
+                useNativeDriver: true
+            }).start();
+    }, [])
+    const [brokerLink, setLink] = useState("");
+    useEffect(() => {
+        Api.User.extensions.generateBrokerageLink(undefined).then(({ link }) => {
+            setLink(link)
+        })
+    }, [needsRefresh])
 
+    useEffect(() => {
+        Api.User.extensions.getBrokerageAccounts()
+            .then((r: any) => {
+                setAccounts(r);
+            })
+    }, [])
+
+    //########################################################################################################################
+
+    //########################################################################################################################
+    //Logic for the 'Account Information' Tab
+    //########################################################################################################################
     const anaylistProfile = useReadonlyEntity(appUser?.analyst_profile || {
         investment_strategy: "",
         portfolio_concentration: 50,
@@ -75,7 +167,6 @@ export function AccountInfoScreen(props: TabScreenProps) {
     });
     const [bio, setBio] = useState(appUser?.bio),
         [sliderWidth, setSliderWidth] = useState(anaylistProfile.data.portfolio_concentration),
-        linkTo = useLinkTo<any>(),
         [acText, setAcText] = useState(""),
         { securities: { list: securities } } = useSecuritiesList();
 
@@ -97,8 +188,8 @@ ${value.security_name}`,
         value: value.symbol,
         iconUrl: value.logo_url
     }))
-
-    const opacityAnim = useRef(new Animated.Value(0)).current;
+    //########################################################################################################################
+    
 
     return <ScrollWithButtons 
     buttons={{
@@ -122,6 +213,24 @@ ${value.security_name}`,
                         bio: bio,
                         analyst_profile: anaylistProfile.data
                     });
+                    await Api.User.update(appUser?.id || '', {
+                        settings: {
+                            analyst: analystCheck,
+                            push_notifications: {
+                                mentions: mentionCheck,
+                                upvotes: upvotesCheck,
+                                watchlist_changes: watchlistChangeCheck,
+                            },
+                            portfolio_display: {
+                                performance: performanceCheck,
+                                holdings: holdingsCheck,
+                                trades: tradesCheck
+                            }
+                        }
+                    })
+
+                    authToken ? await signIn("", authToken) : {};
+
                     linkTo('/dash/feed')
                     //anaylistProfile.resetData(anaylistProfile.data);
                     //props.toastMessage("Account Information updated!");
@@ -133,14 +242,17 @@ ${value.security_name}`,
             }
         }
     }}>
-        <View style={[flex, { margin: sideMargin }]} onLayout={(ev) => {
+        <View style={[flex, { margin: sideMargin, marginTop: 12 }]} onLayout={(ev) => {
                     setSliderWidth(ev.nativeEvent.layout.width)
                 }} >
-            <ElevatedSection title="" style={{padding: 5}}>
-                <TabView indicatorStyle={{marginTop: 26
-                        }} style={{ marginVertical: sizes.rem0_5 }} selectedIndex={index} onSelect={ setIndex }>
-                <Tab title={'Account Information'}>
-                    <View>
+            <TabView indicatorStyle={{marginTop: 26}} 
+                     style={{ marginVertical: sizes.rem0_5 }} 
+                     tabBarStyle={{backgroundColor: AppColors.background, borderColor: AppColors.background}}
+                     selectedIndex={index} 
+                     onSelect={ setIndex }
+                     >
+                <Tab title={'Account Info'} style={{backgroundColor: AppColors.background, borderColor: AppColors.background}}>
+                    <ElevatedSection title="" style={{padding: 5}}>
                         <Text style={[questionStyle, {marginTop: sizes.rem0_5, textAlign: 'center'}]}>Tap to Modify Profile Picture</Text>
                         <ProfileButton userId={appUser?.id || ''} profileUrl={appUser?.profile_url ? appUser?.profile_url :  ""} size={sizes.rem8} editable />
                         <Text style={[questionStyle, {marginTop: sizes.rem0_5}]}>Bio</Text>
@@ -244,10 +356,10 @@ ${value.security_name}`,
                                     }}><Icon name="close-outline" style={{ height: 24, aspectRatio: 1 }} /></Pressable>
                                 </View>)
                             }
-                        </View>
+                        </ElevatedSection>
                     </Tab>
-                    <Tab title={'Your Content'}>
-                        <View>
+                    <Tab title={'Your Content'} style={{backgroundColor: AppColors.background, borderColor: AppColors.background}}>
+                        <ElevatedSection title="" style={{padding: 5}}>
                             <Text style={[thinBannerText, {fontSize: fonts.medium, lineHeight: fonts.medium * 1.5}]}>TradingPost aggregates content across several social platforms.</Text>
                             <View style={{ flexDirection: "row", marginHorizontal: sizes.rem2, marginBottom: sizes.rem1 }}>
                                 <HandleButton
@@ -309,14 +421,64 @@ ${value.security_name}`,
                                             toast.show(`${inputPlatform} Account Link Failed. Please try again or email contact@tradingpostapp.com for assistance.`)
                                         }
                                         s('')
+                                        authToken ? await signIn("", authToken) : {};
                                     }}
                                     />
                             </View>
-                        </View>
-                        
+                        </ElevatedSection>
+                    </Tab>
+                    <Tab title={'Settings'} style={{backgroundColor: AppColors.background, borderColor: AppColors.background}}>
+                        <ElevatedSection title="" style={{padding: 5}}>
+                            <Section title="" style={{padding: 10}}>
+                                <SwitchField label='Analyst' checked={analystCheck} onChange={onAnalystCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                            </Section>
+                            <Section title='Display' style={{padding: 10}}>
+                                <SwitchField label='Performance' checked={performanceCheck} onChange={onPerformanceCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                                <SwitchField label='Portfolio' checked={holdingsCheck} onChange={onHoldingsCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                                <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                            </Section>
+                            <Section style={{padding: 10}} title="Link Brokerage Accounts" button={(props) => accounts?.length ? <EditButton
+                                onPress={() => {
+                                    openLink();
+                                }}
+                                height={35}
+                                width={35}
+                                /> : <AddButton
+                                onPress={() => openLink()}
+                                height={35}
+                                width={35}
+                                />} >
+                                <Table datasetKey={accounts?.map(a => a.id).join(",") || "none"} columns={[{ alias:"Brokerage", field: "broker_name", align: "left" }, { alias: "Account #", field: "account_number", align: "left" }]} data={accounts} noDataMessage="You have no linked accounts" />
+                            </Section>
+                            <Section title='Payment' style={{padding: 10}}>
+                                <Text>
+                                    Stripe
+                                </Text>
+                            </Section>
+                            <Section title='Notifications' style={{padding: 10}}>
+                                <Subsection title='Posts' alt={true}>
+                                    <SwitchField label='Mentions' checked={mentionCheck} onChange={onMentionCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                                    <SwitchField label='Upvotes'checked={upvotesCheck} onChange={onUpvoteCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
+                                </Subsection>
+                                <Subsection title='Watchlists' alt={true}>
+                                    {/*<SwitchField label='Price Movement' checked={watchlistPxCheck} onChange={onWatchlistPxCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>*/}
+                                    <SwitchField label='Changes' checked={watchlistChangeCheck} onChange={onWatchlistChangeCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
+                                </Subsection>
+                            </Section>
+                            <Section title='Management' style={{padding: 10}}>
+                                <View style={{flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5}}>
+                                    <Text style={{fontSize: 14, alignSelf: 'center'}}>
+                                        Delete Account
+                                    </Text>
+                                    <PrimaryButton style={{ width:  "40%", backgroundColor: "#D81222", borderColor: "#D81222" }} onPress={() => {}}> 
+                                        FOREVER
+                                    </PrimaryButton>
+                                </View>
+                            </Section>
+                        </ElevatedSection>
                     </Tab>
                 </TabView>
-            </ElevatedSection>
+
         </View>
     </ScrollWithButtons>
 }

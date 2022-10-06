@@ -110,12 +110,6 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
             icon: sideMenu.Help,
         },
         {
-            label: "Settings",
-            onPress: () => props.navigation.navigate("AccountSettings"),
-
-            icon: sideMenu.Account,
-        },
-        {
             label: "Logout",
             onPress: () => {
                 setHasAuthed(false);

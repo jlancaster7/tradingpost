@@ -1,0 +1,121 @@
+{
+    "bool": {
+        "should": [
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "must": [
+                        {
+                          "match": {
+                            "postType": "youtube"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                      "must": [
+                        {
+                          "match": {
+                            "postType": "tweet"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                  }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "12h"
+                        }
+                    },
+                    "weight": 1
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                      "must": [
+                        {
+                          "match": {
+                            "postType": "spotify"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                  }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                      "must": [
+                        {
+                          "match": {
+                            "postType": "substack"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                  }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        }
+        ],
+        "minimum_should_match": 1,
+        "boost": 1
+}
+}

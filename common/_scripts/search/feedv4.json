@@ -1,0 +1,102 @@
+{
+    "function_score": {
+        "query": {
+            "bool": {
+                "should": [
+                {
+                    "function_score": {
+                        "query": { 
+                        "match": {
+                            "postType": "youtube"
+                        }},
+                        "functions": [
+                            {
+                            "exp": {
+                                "platformCreatedAt": {
+                                "origin": "now",
+                                "scale": "7d"
+                                }
+                            },
+                            "weight": 1.2
+                            }
+                        ],
+                        "boost_mode": "replace"
+                    }
+                },
+                {
+                    "function_score": {
+                        "query": { 
+                        "match": {
+                            "postType": "tweet"
+                        }},
+                        "functions": [
+                            {
+                            "exp": {
+                                "platformCreatedAt": {
+                                "origin": "now",
+                                "scale": "12h"
+                                }
+                            },
+                            "weight": 1
+                            }
+                        ],
+                        "boost_mode": "replace"
+                    }
+                },
+                {
+                    "function_score": {
+                        "query": { 
+                        "match": {
+                            "postType": "spotify"
+                        }},
+                        "functions": [
+                            {
+                            "exp": {
+                                "platformCreatedAt": {
+                                "origin": "now",
+                                "scale": "7d"
+                                }
+                            },
+                            "weight": 1.2
+                            }
+                        ],
+                        "boost_mode": "replace"
+                    }
+                },
+                {
+                    "function_score": {
+                        "query": { 
+                        "match": {
+                            "postType": "substack"
+                        }},
+                        "functions": [
+                            {
+                            "exp": {
+                                "platformCreatedAt": {
+                                "origin": "now",
+                                "scale": "7d"
+                                }
+                            },
+                            "weight": 1.2
+                            }
+                        ],
+                        "boost_mode": "replace"
+                    }
+                }
+                ],
+                "minimum_should_match": 1,
+                "boost": 1
+        }
+    },
+    "functions": [
+        {
+        "random_score": {
+            "seed": 2,
+            "field": "_seq_no"
+        }
+        }
+    ],
+    "boost": 1,
+    "boost_mode": "avg"
+    }
+}
