@@ -53,7 +53,7 @@ export default class Spotify {
 
         const out = {
             userId: spotifyUsers.userId,
-            platform: 'substack',
+            platform: 'spotify',
             platformUserId: spotifyUsers.showId,
             accessToken: null,
             refreshToken: null,

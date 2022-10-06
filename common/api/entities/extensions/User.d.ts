@@ -18,8 +18,9 @@ export default class User extends Extension {
     initBrokerageAccounts: (settings?: undefined) => Promise<{}[]>;
     linkSocialAccount: (settings: {
         platform: string;
-        code: string;
-        challenge: string;
+        code?: string | undefined;
+        challenge?: string | undefined;
+        platform_idenifier?: string | undefined;
     }) => Promise<string>;
     getTrades: (req: {
         $page: number;

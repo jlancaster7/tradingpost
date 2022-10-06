@@ -51,8 +51,9 @@ declare const _default: {
     linkSocialAccount: (req: {
         body: {
             platform: string;
-            code: string;
-            challenge: string;
+            code?: string | undefined;
+            challenge?: string | undefined;
+            platform_idenifier?: string | undefined;
         };
         extra: {
             userId: string;

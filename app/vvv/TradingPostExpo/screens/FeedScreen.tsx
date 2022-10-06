@@ -52,10 +52,13 @@ export const FeedPart = (props: {
                 userId,
                 data: searchText ? {
                     terms: (() => {
-                        const terms = searchText.split(" ");
-                        if (terms.length === 1)
-                            return terms[0]
-                        else return terms.map(t => `(${t})`).join(" OR ")
+                        if (searchText[0] ==='$'){
+                            console.log('lowercasing')
+                            return searchText.toLowerCase()
+                        }
+                        else{ 
+                            return searchText
+                        }
                     })()
                 } : undefined
             }));

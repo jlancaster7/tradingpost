@@ -127,39 +127,55 @@ const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: stri
     await elasticClient.indices.create({
         index: indexName,
         mappings: esIndexSchema.mappings,
+        master_timeout: '120s',
+        timeout: '120s',
         settings: {
-            "index": {
+                
+                "max_shingle_diff": 5,
                 "analysis": {
                     "filter": {
                         "synonym_filter": {
                             "type": "synonym",
                             "synonyms": synonymList,
                             "updateable": true
-                        }
+                        },
+                        "my_shingle_filter": {
+                            "type": "shingle",
+                            "min_shingle_size": 2,
+                            "max_shingle_size": 5
+                          }
                     },
                     "tokenizer": {
-                        "my_tokenizer": {
+                        "my_syn_tokenizer": {
                             "type": "pattern",
                             "pattern": ","
-                        }
+                        },
+                        "my_pattern_tokenizer":{
+                            "type": "pattern",
+                            "pattern": "((\\$)\\w*)|(\\w*)",
+                            "group": 0,
+                            "lowercase": true
+                            
+                          }
                     },
                     "analyzer": {
                         // @ts-ignore
                         "synonym_analyzer": {
-                            "tokenizer": "my_tokenizer",
-                            "filter": ["synonym_filter"]
+                            "tokenizer": "my_syn_tokenizer",
+                            "filter": ["synonym_filter", "lowercase"]
                         },
                         "default": {
-                            "type": "whitespace"
+                            "tokenizer": "my_pattern_tokenizer",
+                            "filter": ["my_shingle_filter", "lowercase"]
                         },
                         "default_search": {
-                            "type": "keyword"
+                            "type": "whitespace"
                         }
                     }
                 }
             }
         }
-    });
+    );
 }
 
 (async () => {

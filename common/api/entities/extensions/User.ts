@@ -8,7 +8,7 @@ export default class User extends Extension {
     generateBrokerageLink = this._makeFetch<undefined, { link: string }>("generateBrokerageLink", this._defaultPostRequest)
     getBrokerageAccounts = this._makeFetch<undefined, { id: number, broker_name: string, account_number: string, user_id: string }[]>("getBrokerageAccounts", this._defaultPostRequest)
     initBrokerageAccounts = this._makeFetch<undefined, {}[]>("initBrokerageAccounts", this._defaultPostRequest)
-    linkSocialAccount = this._makeFetch<{ platform: string, code: string, challenge: string }, string>("linkSocialAccount", this._defaultPostRequest)
+    linkSocialAccount = this._makeFetch<{ platform: string, code?: string, challenge?: string, platform_idenifier?: string }, string>("linkSocialAccount", this._defaultPostRequest)
     getTrades = this._makePagedFetch<{ userId?: string }, { date: Date, type: string, quantity: number, price: number, fees: number, currency: string, security_id: number }[]>("getTrades", this._defaultPostRequest)
     getHoldings = this._makeFetch<{ userId?: string }, { id: number, price_as_of: Date, quantity: number, price: number, value: number, cost_basis: number, security_id: number }[]>("getHoldings", this._defaultPostRequest)
     getWatchlists = this._makeFetch<{ userId: string }, IWatchlistList[]>("getWatchlists", this._defaultPostRequest)

@@ -5,17 +5,23 @@ import UserApi, { IUserGet, IUserList, IUserUpdate } from '../apis/UserApi'
 import Brokerage from '../../../brokerage'
 import { DefaultConfig } from "../../../configuration";
 import pgPromise from "pg-promise";
+import {Client as ElasticClient} from '@elastic/elasticsearch';
+import ElasticService from "../../../elastic";
 import Finicity from "../../../finicity";
 //import FinicityTransformer from '../../../brokerage/finicity/transformer'
 import { execProc } from '../../../db'
 //import { } from '../../../social-media/twitter/index'
 import { DefaultTwitter } from "../../../social-media/twitter/service";
+import { DefaultSubstack } from "../../../social-media/substack/service";
+import { DefaultSpotify } from "../../../social-media/spotify/service";
 import { getUserCache } from "../../cache";
 import WatchlistApi from "../apis/WatchlistApi";
 import { DateTime } from 'luxon'
 import jwt from 'jsonwebtoken'
 import { sendByTemplate } from '../../../sendGrid'
 import { TradingPostAccountGroupStats } from "../../../brokerage/interfaces";
+import PostPrepper from "../../../post-prepper";
+import { parse } from "url";
 export interface ITokenResponse {
     "token_type": "bearer",
     "expires_in": number,
@@ -122,7 +128,64 @@ export default ensureServerExtensions<User>({
                 userId: req.extra.userId
             })
             return handle.username;
-        } else return "";
+        }
+        else if (req.body.platform === 'substack') {
+            const { pgClient, pgp } = await init;
+            const pp = new PostPrepper();
+            const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
+            const elasticClient = new ElasticClient({
+            cloud: {
+                id: elasticConfiguration.cloudId as string
+            },
+            auth: {
+                apiKey: elasticConfiguration.apiKey as string
+            },
+            maxRetries: 5,
+            })
+
+            const indexName = "tradingpost-search";
+            const elastic = new ElasticService(elasticClient, indexName);
+            if (req.body.platform_idenifier) {
+                await DefaultSubstack(pgClient, pgp, pp, elastic).importUsers({userId: req.extra.userId, username: req.body.platform_idenifier})
+                return req.body.platform_idenifier;
+            }
+            else {
+                return ''
+            }
+        }
+        else if (req.body.platform === 'spotify') {
+            const { pgClient, pgp } = await init;
+            const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
+            const elasticClient = new ElasticClient({
+            cloud: {
+                id: elasticConfiguration.cloudId as string
+            },
+            auth: {
+                apiKey: elasticConfiguration.apiKey as string
+            },
+            maxRetries: 5,
+            })
+            
+            const indexName = "tradingpost-search";
+            const elastic = new ElasticService(elasticClient, indexName);
+            const config = await DefaultConfig.fromCacheOrSSM("spotify");
+            
+            if (req.body.platform_idenifier) {
+                let showId = parse(req.body.platform_idenifier).pathname?.slice(6) || ''
+                console.log(showId);
+                await DefaultSpotify(elastic, pgClient, pgp, config).importSpotifyShows({userId: req.extra.userId, showId: showId})
+                return req.body.platform_idenifier;
+            }
+            else {
+                return ''
+            }
+        }
+        else if (req.body.platform === 'youtube') {
+            return ""
+        }
+        else {
+            return "";
+        }
     },
     getTrades: async (r) => {
         let requestedUser = {} as IUserGet;

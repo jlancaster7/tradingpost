@@ -960,7 +960,7 @@ export default class Repository {
                                                                           html_description = EXCLUDED.html_description,
                                                                           total_episodes = EXCLUDED.total_episodes,
                                                                           external_urls = EXCLUDED.external_urls,
-                                                                          images - EXCLUDED.images
+                                                                          images = EXCLUDED.images
                                                                           `;
             const results = await this.db.result(query);
             if (!results) return 0;
