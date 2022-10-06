@@ -27,7 +27,7 @@ export function HelpScreen(props: any) {
 
     return <View style={flex}>
         <View style={{zIndex: 1, position: 'absolute', top: 10, left: 10, flexDirection: 'row', alignItems: 'center'}}>
-            <ExitButton height={36} width={36} style={{height: 36, width: 36, color: '#708090' }} 
+            <ExitButton height={36} width={36} color={'#708090'} style={{height: 36, width: 36,  }} 
                         onPress={() => {
                             linkTo('/dash/feed')
                         }}/>
