@@ -430,7 +430,7 @@ ${value.security_name}`,
                     <Tab title={'Settings'} style={{backgroundColor: AppColors.background, borderColor: AppColors.background}}>
                         <ElevatedSection title="" style={{padding: 5}}>
                             <Section title="" style={{padding: 10}}>
-                                <SwitchField label='Analyst' checked={analystCheck} onChange={onAnalystCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
+                                <SwitchField label='Analyst' checked={analystCheck} onChange={onAnalystCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: fonts.medium, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }}/>
                             </Section>
                             <Section title='Display' style={{padding: 10}}>
                                 <SwitchField label='Performance' checked={performanceCheck} onChange={onPerformanceCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>

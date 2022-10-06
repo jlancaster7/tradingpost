@@ -2,7 +2,9 @@ import _IconNoBg from './assets/store-front-logo2-alt.svg'
 import _IconBg from './assets/store-front.svg'
 import _AppTitle from './assets/app-title.svg'
 import _SplashWelcome from './assets/splash-welcome.svg'
-
+import _ClimbingMountain from './assets/ClimbingMountain.svg'
+import _Debate from './assets/Debate.svg'
+import _Studying from './assets/Studying.svg'
 
 import Logo from './assets/logo.svg'
 import LogoNoBg from './assets/logo-no-bg.svg'
@@ -59,6 +61,10 @@ function makeExpoSvg(Svg: React.FC<SvgProps>) {
 
 export const AppTitle = makeExpoSvg(_AppTitle)
 export const SplashWelcome = makeExpoSvg(_SplashWelcome)
+
+export const ClimbingMountain = makeExpoSvg(_ClimbingMountain)
+export const Debate = makeExpoSvg(_Debate)
+export const Studying = makeExpoSvg(_Studying)
 
 export const IconBg = makeExpoSvg(_IconBg)
 export const IconNoBg = makeExpoSvg(_IconNoBg)

@@ -91,7 +91,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
             icon: sideMenu.Account,
         },
         {
-            label: "Watchlist",
+            label: "Watchlists",
             onPress: () => props.navigation.navigate("Watchlist"),
             //onPress: () => linkTo('/create/watchlist'),
             icon: sideMenu.Watchlist,
@@ -105,7 +105,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
         },
         {
             label: "Help",
-            onPress: () => props.navigation.navigate("Watchlist"),
+            onPress: () => props.navigation.navigate("Help"),
 
             icon: sideMenu.Help,
         },
