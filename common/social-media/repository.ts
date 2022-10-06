@@ -287,6 +287,7 @@ export default class Repository {
                     accessToken: response[i].access_token,
                     refreshToken: response[i].refresh_token,
                     expiration: response[i].expiration,
+                    claims: response[i].expiration,
                     updatedAt: response[i].updated_at
                 })
             }
@@ -305,7 +306,8 @@ export default class Repository {
             {name: 'access_token', prop: 'accessToken'},
             {name: 'refresh_token', prop: 'refreshToken'},
             {name: 'expiration', prop: 'expiration'},
-            {name: 'updated_at', prop: 'updatedAt'}
+            {name: 'updated_at', prop: 'updatedAt'},
+            {name: 'claims', prop: 'claims'},
         ], {table: 'data_platform_claim'})
         const query = this.pgp.helpers.insert(userTokens, cs) + ` ON CONFLICT ON CONSTRAINT platform_platform_user_id_key DO UPDATE SET
                                                                     access_token = EXCLUDED.access_token,
@@ -313,6 +315,7 @@ export default class Repository {
                                                                     expiration = EXCLUDED.expiration,
                                                                     updated_at = EXCLUDED.updated_at
                                                                     `;
+        console.log(query);                                                                    
         return await this.db.result(query);
     }
 

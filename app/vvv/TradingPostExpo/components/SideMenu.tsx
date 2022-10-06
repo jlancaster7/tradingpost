@@ -104,10 +104,10 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
             icon: sideMenu.BookmarkActiveBlue,
         },
         {
-            label: "Help",
-            onPress: () => props.navigation.navigate("Help"),
+            label: "App Features",
+            onPress: () => props.navigation.navigate("AppInformation"),
 
-            icon: sideMenu.Help,
+            icon: sideMenu.Information,
         },
         {
             label: "Logout",

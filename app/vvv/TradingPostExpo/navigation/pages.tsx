@@ -25,6 +25,7 @@ export type RootStackParamList =
         "AccountSettings" |
         "AccountInformation" |
         "Help" |
+        "AppInformation" |
         "Launch" |
         "Create" |
         "Login" |

@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import { ScrollView, useWindowDimensions, View, Text } from "react-native";
 import { Api, Interface } from "@tradingpost/common/api";
 import { elevated, flex, fonts, sizes } from "../style";
-import { ClimbingMountain, Studying, Debate } from "../images";
+import { ClimbingMountain, Studying, Debate, Analyze } from "../images";
 import { AppColors } from "../constants/Colors";
 import { ExitButton } from "../components/AddButton";
 import { useLinkTo } from "@react-navigation/native";
 
-export function HelpScreen(props: any) {
+export function AppInformationScreen(props: any) {
     const [sliderState, setSliderState] = useState({ currentPage: 0 });
     let { width, height } = useWindowDimensions();
     const linkTo = useLinkTo<any>();
@@ -105,6 +105,26 @@ export function HelpScreen(props: any) {
                     </Text>
                 </View>
             </View>
+            <View style={{ width, height, justifyContent: 'space-between' }}>
+                <Analyze style={{marginTop: '5%',marginHorizontal: 2, height: '45%', width: 'auto'}}/>
+                <View style={[elevated, {
+                    marginHorizontal: sizes.rem1_5,
+                    height: '50%',
+                    justifyContent: 'flex-start',
+                    alignItems: 'center',
+                     paddingVertical: sizes.rem1
+                    //marginVertical: 30,
+                }]}>
+                    <View style={{justifyContent: 'center', alignItems: 'center', height: '15%',}}>
+                        <Text style={{ fontSize: fonts.large, fontFamily: 'K2D', textAlign: 'center', color: AppColors.primary}}>
+                            {"Search for Content\nthat Matters to You"}
+                        </Text>
+                    </View>
+                    <Text style={{padding: sizes.rem1,fontSize: paragraphSize, fontFamily: 'K2D', textAlign: 'center',}}>
+                        {"Explore TradingPost's powerful search tool that utilizes cutting edge tech from industry leader ElasticSearch."}
+                    </Text>
+                </View>
+            </View>
         </ScrollView>
         <View style={{
                 position: 'relative',
@@ -116,7 +136,7 @@ export function HelpScreen(props: any) {
                 flexDirection: 'row',
             }}
         >
-            {Array.from(Array(3).keys()).map((key, index) => (
+            {Array.from(Array(4).keys()).map((key, index) => (
                 <View style={[{
                         height: 10,
                         width: 10,

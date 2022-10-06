@@ -68,6 +68,7 @@ export default class YouTube {
             accessToken: result.access_token,
             refreshToken: result.refresh_token,
             expiration: new Date(today.getTime() + result.expires_in),
+            claims: response[0].claims || {handle: ''},
             updatedAt: new Date()
         };
 
@@ -237,6 +238,9 @@ export default class YouTube {
                 accessToken: youtubeUsers.accessToken,
                 refreshToken: youtubeUsers.refreshToken,
                 expiration: new Date(expiration.getTime() + youtubeUsers.expiration),
+                claims: {
+                    handle: d.title
+                },
                 updatedAt: new Date()
             });
         }

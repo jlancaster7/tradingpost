@@ -58,6 +58,9 @@ export default class Spotify {
             accessToken: null,
             refreshToken: null,
             expiration: null,
+            claims: {
+                handle: shows.name
+            },
             updatedAt: new Date()
         }
 

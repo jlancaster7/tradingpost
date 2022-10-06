@@ -5,6 +5,7 @@ import _SplashWelcome from './assets/splash-welcome.svg'
 import _ClimbingMountain from './assets/ClimbingMountain.svg'
 import _Debate from './assets/Debate.svg'
 import _Studying from './assets/Studying.svg'
+import _Analyze from './assets/analyze.svg'
 
 import Logo from './assets/logo.svg'
 import LogoNoBg from './assets/logo-no-bg.svg'
@@ -23,6 +24,7 @@ import Account from './assets/side-menu/Account.svg'
 import Competition from './assets/side-menu/Competition.svg'
 import Feedback from './assets/side-menu/Feedback.svg'
 import Help from './assets/side-menu/Help.svg'
+import Information from './assets/side-menu/Information.svg'
 import Learn from './assets/side-menu/Learn.svg'
 import LogOut from './assets/side-menu/Log Out.svg'
 import Profile from './assets/side-menu/Profile.svg'
@@ -45,6 +47,7 @@ export const sideMenu = {
     Account,
     Competition,
     Feedback,
+    Information,
     Help,
     Learn,
     LogOut,
@@ -65,6 +68,7 @@ export const SplashWelcome = makeExpoSvg(_SplashWelcome)
 export const ClimbingMountain = makeExpoSvg(_ClimbingMountain)
 export const Debate = makeExpoSvg(_Debate)
 export const Studying = makeExpoSvg(_Studying)
+export const Analyze = makeExpoSvg(_Analyze);
 
 export const IconBg = makeExpoSvg(_IconBg)
 export const IconNoBg = makeExpoSvg(_IconNoBg)
