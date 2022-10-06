@@ -43,6 +43,7 @@ export const NotificationScreen = () => {
     useEffect(() => {
         const d = async () => {
             const token = await registerForPushNotificationsAsync();
+            console.log(token);
             setCode(token);
         }
         d()
