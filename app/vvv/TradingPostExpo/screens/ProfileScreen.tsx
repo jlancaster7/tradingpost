@@ -146,7 +146,6 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
     const displayHoldings = appUser?.id === user?.id || (user?.settings?.portfolio_display.holdings && user.subscription.is_subscribed)
     const displayTrades = appUser?.id === user?.id || (user?.settings?.portfolio_display.trades && user.subscription.is_subscribed)
     const displayPerformance = appUser?.id === user?.id || (user?.settings?.portfolio_display.performance && user.subscription.is_subscribed)
-    console.log(user)
     return <View style={[flex]}>
         <Animated.FlatList
             data={[
@@ -158,45 +157,54 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                 </ProfilePage>,
                 <ProfilePage index={1} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
                     <ElevatedSection title="Performance">
-                        <View style={displayPerformance ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
-                            <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
-                                {`@${user?.handle} does not display their investment performance.`}
-                            </Text>
+                        <View style={( appUser?.id === user?.id && !twReturns) ? {display: 'none'} : { display: 'flex'} }>
+                            <View style={displayPerformance ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
+                                <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
+                                    {`@${user?.handle} does not display their investment performance.`}
+                                </Text>
+                            </View>
+                            <View style={displayPerformance ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
+                            <View style={{ marginBottom: sizes.rem1 } } >
+                                <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
+                            </View>
+                                <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
+                            </View>
                         </View>
-                        <View style={displayPerformance ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
-                        <View style={{ marginBottom: sizes.rem1 } } >
-                            <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
-                        </View>
-                        <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
-                        </View>
+                        <Text style={[!( appUser?.id === user?.id && !twReturns) ? {display: 'none'} : { display: 'flex'}, {fontSize: fonts.medium, fontWeight: '500', color: '#ccc'} ]}>
+                            {"You haven't linked a brokerage to TradingPost. Go to your Account page in the Side Menu and Link one today!"}
+                        </Text>
                     </ElevatedSection>
                     <ElevatedSection title="Holdings">
-                        <View style={displayHoldings ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
-                            <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
-                                {`@${user?.handle} does not display their investment holdings.`}
-                            </Text>
+                        <View style={( appUser?.id === user?.id && !twReturns) ? {display: 'none'} : { display: 'flex'} }>
+                            <View style={displayHoldings ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
+                                <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
+                                    {`@${user?.handle} does not display their investment holdings.`}
+                                </Text>
+                            </View>
+                            <View style={displayHoldings ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
+                            <Table
+                                    keyExtractor={(item, idx) => {
+                                        return item ? "holding_" + idx : "empty";
+                                    }}
+                                    data={(async () => {
+                                        return await Api.User.extensions.getHoldings({userId: userId as string});
+                                    })}
+                                    columns={[
+                                        ...useMakeSecurityFields((item: any) => {
+                                            return Number(item.security_id)
+                                        }),
+                                        { alias:'% Owned', field: "value", stringify: toPercent2 },
+                                        { alias: 'Price', field: "price", stringify: toDollarsAndCents },
+                                        { alias:'Cost Basis', field: "cost_basis", stringify: (a,b,c) =>  (String(c.cost_basis) === 'n/a') ? String(c.cost_basis) : toDollarsAndCents(c.cost_basis) }
+                                    ]}
+                                />
+                            </View>
                         </View>
-                        <View style={displayHoldings ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
-                        <Table
-                                keyExtractor={(item, idx) => {
-                                    return item ? "holding_" + idx : "empty";
-                                }}
-                                data={(async () => {
-                                    return await Api.User.extensions.getHoldings({userId: userId as string});
-                                })}
-                                columns={[
-                                    ...useMakeSecurityFields((item: any) => {
-                                        return Number(item.security_id)
-                                    }),
-                                    { alias:'% Owned', field: "value", stringify: toPercent2 },
-                                    { alias: 'Price', field: "price", stringify: toDollarsAndCents },
-                                    { alias:'Cost Basis', field: "cost_basis", stringify: (a,b,c) =>  (String(c.cost_basis) === 'n/a') ? String(c.cost_basis) : toDollarsAndCents(c.cost_basis) }
-                                ]}
-                            />
-                        </View>
+                        <Text style={[!( appUser?.id === user?.id && !twReturns) ? {display: 'none'} : { display: 'flex'}, {fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}] }>
+                            {"You haven't linked a brokerage to TradingPost. Go to your Account page in the Side Menu and Link one today!"}
+                        </Text>
                     </ElevatedSection>
                     <WatchlistSection title="Watchlists" watchlists={watchlists} />
-                    {/* <WatchlistSection parentComponentId={props.componentId} userId={props.userId} /> */}
                 </ProfilePage>,
                 <ProfilePage index={2} minViewHeight={minViewHeight} manager={manager} currentIndex={tab} >
                     <View style={displayTrades ? {display: 'none'} : {display: 'flex', height: '100%', justifyContent: "center", alignItems: 'center'} }>

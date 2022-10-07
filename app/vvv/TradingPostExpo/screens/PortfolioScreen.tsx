@@ -8,7 +8,7 @@ import { ElevatedSection, Section, Subsection } from "../components/Section";
 import { Table } from "../components/Table";
 import { DataOrQuery } from '../components/List'
 import { DashScreenProps, TabScreenProps } from "../navigation";
-import { flex, paddView, sizes } from "../style";
+import { flex, fonts, paddView, sizes } from "../style";
 import { useToast } from "react-native-toast-notifications";
 import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewerScreen";
 import { AwaitedReturn, toPercent, toPercent2, toThousands, toDollarsAndCents, toDollars, toNumber2 } from "../utils/misc";
@@ -151,13 +151,13 @@ export const PortfolioScreen = (props: TabScreenProps) => {
     return <View style={[paddView]}>
         <ScrollView>
             <ElevatedSection key={"portfolio"} title="Portfolio">
-                <Subsection alt={true} title="Performance">
+                <Subsection alt={true} title="Performance" style={(twReturns === undefined) ? {display: 'none'} : {display: 'flex'}}>
                     <View style={{ marginBottom: sizes.rem1 }} >
                         {/*<LineHolder data={twReturns} />*/}
                         <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
                     </View>
                     <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
-                    <View style={{ borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2 }}>
+                    <View style={[ portfolio ? {display: 'none'} : {display: 'flex'} , { borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2 }]}>
                         <View key={"returns"} style={{ flexDirection: "row" }}>
                             {[
                                 { title: "Total Return", value: toPercent2(cummReturn) },
@@ -172,10 +172,10 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                         </View>
                         <View key="exposures" style={{ flexDirection: "row" }}>
                             {[
-                                { title: "Long", value: portfolio?.exposure.long || 0 },
-                                { title: "Short", value: portfolio?.exposure.short || 0 },
-                                { title: "Gross", value: portfolio?.exposure.gross || 0 },
-                                { title: "Net", value: portfolio?.exposure.net || 0 }]
+                                { title: "Long", value: portfolio?.exposure?.long || 0 },
+                                { title: "Short", value: portfolio?.exposure?.short || 0 },
+                                { title: "Gross", value: portfolio?.exposure?.gross || 0 },
+                                { title: "Net", value: portfolio?.exposure?.net || 0 }]
                                 .map((item, idx) => {
                                     return <View key={"key_" + idx} style={flex}>
                                         <Text style={styles.stateLabel} >{item.title}</Text>
@@ -185,7 +185,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                         </View>
                     </View>
                 </Subsection>
-                <Subsection key="holdings" alt={true} title="Holdings">{
+                <Subsection key="holdings" alt={true} title="Holdings" style={holdings ? {display: 'none'} : {display: 'flex'}}>{
                     <Table
                         data={holdings}
                         columns={[
@@ -199,7 +199,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                         ]}
                          />
                 }</Subsection>
-                <Subsection key="trades" alt={true} title="Trades">
+                <Subsection key="trades" alt={true} title="Trades" style={!(holdings && twReturns && portfolio) ? {display: 'none'} : {display: 'flex'}}>
                     <LimitedTable
                         title="All Trades"
                         maxPage={0}
@@ -225,6 +225,10 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                         }
                     />
                 </Subsection>
+                <Text style={[(holdings && twReturns && portfolio) ? {display: 'none'} : {display: 'flex'},
+                               {fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}]}>
+                        {"You haven't linked a brokerage to TradingPost. Go to your Account page in the Side Menu and Link one today!"}
+                </Text>
             </ElevatedSection>
             <ElevatedSection key={"quick_watch"} title="Quick Watch"
                 button={(_p) => {

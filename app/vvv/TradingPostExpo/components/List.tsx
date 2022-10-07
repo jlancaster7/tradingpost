@@ -39,7 +39,10 @@ export function List<T, U>(props: {
         isLoadingRef = useRef(true),
         [maxItem, setMaxItem] = useState(-1),
         [triggertHack, setTriggerHack] = useState(false),
-        sizeCache = useRef<SizeParts[]>([]).current;
+        sizeCache = useRef<SizeParts[]>([]).current,
+        datasetKeyRef = useRef(props.datasetKey);
+
+    datasetKeyRef.current = props.datasetKey;
 
     useEffect(() => {
         setPagesDone(false);
@@ -47,19 +50,22 @@ export function List<T, U>(props: {
         (async () => {
             if (typeof data == "function") {
                 const result = await data(undefined, 0, sizeCache);
+
                 if (!result.length || props.maxPage === 0) {
                     setPagesDone(true);
                 }
 
-                isLoadingRef.current = false;
-                setInternalData(result);
+                if (datasetKey === datasetKeyRef.current) {
+                    isLoadingRef.current = false;
+                    setInternalData(result);
+                }
+
 
             }
             else {
                 isLoadingRef.current = false;
                 setInternalData(data);
                 setPagesDone(true);
-
             }
         })()
     }, [datasetKey, Boolean(data), props.maxPage])
@@ -73,17 +79,20 @@ export function List<T, U>(props: {
                     setTriggerHack((hack) => !hack);
                     const nextPage = currentPage + 1;
                     const originalLength = internalData.length
-                    data(internalData, nextPage, sizeCache).then((newData) => {
-                        if (newData.length === originalLength || props.maxPage === nextPage) {
-                            isLoadingRef.current = false;
-                            setPagesDone(true);
-                        }
-                        else {
-                            setInternalData(newData);
-                            setCurrentPage(nextPage);
-                            isLoadingRef.current = false;
-                        }
-                    });
+
+                    if (datasetKey === datasetKeyRef.current) {
+                        data(internalData, nextPage, sizeCache).then((newData) => {
+                            if (newData.length === originalLength || props.maxPage === nextPage) {
+                                isLoadingRef.current = false;
+                                setPagesDone(true);
+                            }
+                            else {
+                                setInternalData(newData);
+                                setCurrentPage(nextPage);
+                                isLoadingRef.current = false;
+                            }
+                        });
+                    }
                 }
                 else {
                     //console.log("NOPE");
@@ -94,7 +103,7 @@ export function List<T, U>(props: {
             }
         }
 
-    }, [maxItem, internalData, preloadOffset, currentPage, props.maxPage])
+    }, [maxItem, datasetKey, internalData, preloadOffset, currentPage, props.maxPage])
 
     const vp = useMemo(() => [
         {
@@ -115,8 +124,8 @@ export function List<T, U>(props: {
 
     return !internalData?.length ? <NoDataPanel message={internalData ? props.noDataMessage : (props.loadingMessage || "Loading...")} /> :
         <FlatList
-            style={[{ 
-            //    height: "100%" 
+            style={[{
+                //    height: "100%" 
             }, props.style]}
             // contentContainerStyle={[{ height: "100%" }, props.contentContainerStyle]}
             getItemLayout={props.getItemLayout ? (a, b) => (props.getItemLayout as any)(a, b, sizeCache) : undefined}

@@ -31,8 +31,8 @@ export const ProfileIconSection = (props: CreateAccountProps) => {
                 text: "Go To Trading Post!",
                 onPress: () => {
                     setValue(true);
-                    //props.navigation.navigate("Dash/portfolio");
-                    linkTo('/dash/feed')
+                    props.navigation.navigate("AppInformation");
+                    //linkTo('/dash/feed')
                 }
             },
 
