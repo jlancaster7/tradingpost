@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from "react";
 import {Pressable} from "react-native";
-import {ScrollView, View} from "react-native";
-import {ProfileButton} from "../components/ProfileButton";
+import {View} from "react-native";
 import {Layout, Text} from '@ui-kitten/components';
 import {List} from "../components/List";
-import {flex, fonts, paddView, sizes} from "../style";
+import {flex, fonts, sizes} from "../style";
 import {Api} from '@tradingpost/common/api';
 import {ListAlertsResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
@@ -39,15 +38,6 @@ const registerForPushNotificationsAsync = async () => {
 }
 
 export const NotificationScreen = () => {
-    const [code, setCode] = useState('');
-    useEffect(() => {
-        const d = async () => {
-            const token = await registerForPushNotificationsAsync();
-            console.log(token);
-            setCode(token);
-        }
-        d()
-    }, [])
     return <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
         <View>
             <Layout style={{
@@ -67,7 +57,6 @@ export const NotificationScreen = () => {
                     color: '#11146F',
                 }}>Notifications</Text>
             </Layout>
-            <Text>CODE: {code}</Text>
             <List
                 key={"STATIC"}
                 datasetKey={"__________"}
@@ -206,7 +195,7 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
     }, [])
 
     const dt = new Date(props.response.dateTime);
-    const dtFmt = `${dt.getMonth()+1}/${dt.getDay()}/${dt.getFullYear() % 100}`
+    const dtFmt = `${dt.getMonth() + 1}/${dt.getDay()}/${dt.getFullYear() % 100}`
     return <NotificationTab>
         <Pressable
             onPress={openProfile}>
