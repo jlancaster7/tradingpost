@@ -427,7 +427,7 @@ ${value.security_name}`,
                             </View>
                         </ElevatedSection>
                     </Tab>
-                    <Tab title={'Settings'} style={{backgroundColor: AppColors.background, borderColor: AppColors.background}}>
+                    <Tab title={'Advanced'} style={{backgroundColor: AppColors.background, borderColor: AppColors.background}}>
                         <ElevatedSection title="" style={{padding: 5}}>
                             <Section title="" style={{padding: 10}}>
                                 <SwitchField label='Analyst' checked={analystCheck} onChange={onAnalystCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: fonts.medium, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }}/>
@@ -452,7 +452,7 @@ ${value.security_name}`,
                             </Section>
                             <Section title='Payment' style={{padding: 10}}>
                                 <Text>
-                                    Stripe
+                                    Coming Soon!
                                 </Text>
                             </Section>
                             <Section title='Notifications' style={{padding: 10}}>

@@ -146,7 +146,6 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
     const displayHoldings = appUser?.id === user?.id || (user?.settings?.portfolio_display.holdings && user.subscription.is_subscribed)
     const displayTrades = appUser?.id === user?.id || (user?.settings?.portfolio_display.trades && user.subscription.is_subscribed)
     const displayPerformance = appUser?.id === user?.id || (user?.settings?.portfolio_display.performance && user.subscription.is_subscribed)
-    console.log(user)
     return <View style={[flex]}>
         <Animated.FlatList
             data={[
