@@ -6,10 +6,13 @@ import { ClimbingMountain, Studying, Debate, Analyze } from "../images";
 import { AppColors } from "../constants/Colors";
 import { ExitButton } from "../components/AddButton";
 import { useLinkTo } from "@react-navigation/native";
+import { useData } from "../lds";
+import { SecondaryButton } from "../components/SecondaryButton";
 
 export function AppInformationScreen(props: any) {
     const [sliderState, setSliderState] = useState({ currentPage: 0 });
     let { width, height } = useWindowDimensions();
+    const {value: result, setValue: setResult} = useData('loginResult')
     const linkTo = useLinkTo<any>();
     const setSliderPage = (event: any) => {
       const { currentPage } = sliderState;
@@ -29,11 +32,15 @@ export function AppInformationScreen(props: any) {
         <View style={{zIndex: 1, position: 'absolute', top: 10, left: 10, flexDirection: 'row', alignItems: 'center'}}>
             <ExitButton height={36} width={36} color={'#708090'} style={{height: 36, width: 36,  }} 
                         onPress={() => {
-                            linkTo('/dash/feed')
+                            if (result) {
+                                linkTo('/dash/feed')
+                            }
+                            else {
+                                linkTo('/login')
+                            }
                         }}/>
             <Text style={{color: '#708090', marginLeft: 10}}>{"Exit Introduction"}</Text>
         </View>
-        
         <ScrollView
             style={flex}
             horizontal={true}
@@ -123,6 +130,12 @@ export function AppInformationScreen(props: any) {
                     <Text style={{padding: sizes.rem1,fontSize: paragraphSize, fontFamily: 'K2D', textAlign: 'center',}}>
                         {"Explore TradingPost's powerful search tool that utilizes cutting edge tech from industry leader ElasticSearch."}
                     </Text>
+                    <SecondaryButton style={[result ? {display: 'none'} : {display: 'flex'}, { alignSelf: "center", width: "65%", height: 'auto', marginTop: '8%' }]}
+                                      onPress={() => {
+                                        linkTo("/create/logininfo");
+                                      }}>
+                        {"Create an Account"}
+                    </SecondaryButton>
                 </View>
             </View>
         </ScrollView>
@@ -143,7 +156,7 @@ export function AppInformationScreen(props: any) {
                         borderRadius: 10 / 2,
                         backgroundColor: AppColors.secondary,
                         marginLeft: 10,
-                        opacity: pageIndex === index ? 1 : 0.2 }]} 
+                        opacity: pageIndex === index ? 1 : 0.3 }]} 
                     key={index} 
                 />
                 ))}

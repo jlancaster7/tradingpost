@@ -8,7 +8,7 @@ import { AppTitle, SplashWelcome } from "../images";
 import { bannerText, fonts, paddView, sizes } from '../style'
 import { G, GProps, Path, SvgProps } from "react-native-svg";
 import { Link } from "../components/Link";
-import { Animated, Platform, View, StyleSheet, Alert } from "react-native";
+import { Animated, Platform, View, StyleSheet, Alert, Pressable } from "react-native";
 import { SvgExpo } from "../components/SvgExpo";
 import { LoginButtons } from "../components/LoginButtons";
 import { NavigationProp, useLinkTo } from "@react-navigation/native";
@@ -292,7 +292,14 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         />
 
     </View>
-        {!selectedIndex && <Link style={{ textAlign: "right", position: "absolute", bottom: sizes.rem1, right: sizes.rem1, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>What is TradingPost{">>"}</Link>}
+        {!selectedIndex &&  <Pressable
+                                onPress={() => {
+                                    navigation.navigate('AppInformation')
+                                }}>
+                                <Text style={{ textAlign: "right", position: "absolute", bottom: sizes.rem1, right: sizes.rem1, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>
+                                    What is TradingPost{">>"}
+                                </Text>
+                            </Pressable>}
     </>
 
 
