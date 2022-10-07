@@ -108,6 +108,9 @@ export function AccountInfoScreen(props: TabScreenProps) {
     const intervalRef = useRef<any>();
     const [needsRefresh, setNeedsRefresh] = useState<{}>();
     const openLink = async () => {
+        Api.User.extensions.generateBrokerageLink(undefined).then(({ link }) => {
+            setLink(link)
+        })
         const browserName = "finicity_auth";
         await openBrowserAsync(brokerLink, { "windowName": browserName });
         clearInterval(intervalRef.current);
@@ -142,9 +145,6 @@ export function AccountInfoScreen(props: TabScreenProps) {
     }, [])
     const [brokerLink, setLink] = useState("");
     useEffect(() => {
-        Api.User.extensions.generateBrokerageLink(undefined).then(({ link }) => {
-            setLink(link)
-        })
     }, [needsRefresh])
 
     useEffect(() => {
