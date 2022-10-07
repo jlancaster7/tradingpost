@@ -9,7 +9,7 @@ import { NoDataPanel } from "../components/NoDataPanel";
 import { ProfileBar } from "../components/ProfileBar";
 import { SearchBar } from "../components/SearchBar";
 import { ElevatedSection } from "../components/Section";
-import { fonts, sizes } from "../style";
+import { flex, fonts, sizes } from "../style";
 import { FeedPart } from "./FeedScreen";
 
 
@@ -41,7 +41,7 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
     }, [searchText, searchType])
 
     return (
-        <View style={{ backgroundColor: "#F7f8f8" }}>
+        <View style={[flex, { backgroundColor: "#F7f8f8" }]}>
             <SearchBar 
                 onTextChange={(v) => {
                     setSearchText(v);

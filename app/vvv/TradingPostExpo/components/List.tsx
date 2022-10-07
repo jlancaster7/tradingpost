@@ -115,8 +115,8 @@ export function List<T, U>(props: {
 
     return !internalData?.length ? <NoDataPanel message={internalData ? props.noDataMessage : (props.loadingMessage || "Loading...")} /> :
         <FlatList
-            style={[{ 
-            //    height: "100%" 
+            style={[{
+                //    height: "100%" 
             }, props.style]}
             // contentContainerStyle={[{ height: "100%" }, props.contentContainerStyle]}
             getItemLayout={props.getItemLayout ? (a, b) => (props.getItemLayout as any)(a, b, sizeCache) : undefined}
