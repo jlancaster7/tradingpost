@@ -445,6 +445,7 @@ export type TableInfo = {
 export type TradingPostCurrentHoldings = {
     accountId: number
     securityId: number
+    optionId: number | null
     securityType: SecurityType | null
     price: number
     priceAsOf: DateTime
@@ -466,6 +467,7 @@ export type TradingPostHistoricalHoldings = {
     accountId: number
     securityId: number
     securityType: SecurityType | null
+    optionId: number | null
     price: number
     priceAsOf: DateTime
     priceSource: string
@@ -514,6 +516,7 @@ export type TradingPostTransactions = {
     accountId: number
     securityId: number
     securityType: SecurityType
+    optionId: number | null
     date: DateTime
     quantity: number
     price: number
@@ -665,3 +668,16 @@ export type TradingPostCashSecurity = {
 }
 
 export type TradingPostCashSecurityTable = TradingPostCashSecurity & TableInfo;
+
+export type OptionContract = {
+    securityId: number
+    type: string
+    strikePrice: number
+    expiration: DateTime
+}
+
+export type OptionContractTable = {
+    id: number
+    updatedAt: DateTime
+    createdAt: DateTime
+} & OptionContract

@@ -44,6 +44,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
         if (hIdx === -1) {
             holdings.holdings.push({
+                optionId: tx.optionId,
                 priceAsOf: tx.date,
                 price: tx.price,
                 securityId: tx.securityId,
@@ -174,20 +175,46 @@ export default class BrokerageService {
 
         for (const holding of currentHoldings) {
             if (holding.symbol === 'USD:CUR') {
-                startDate = holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0});
-                initialHistoricalHolding.date = holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0});
+                startDate = holding.priceAsOf.setZone("America/New_York").set({
+                    hour: 16,
+                    minute: 0,
+                    second: 0,
+                    millisecond: 0
+                });
+                initialHistoricalHolding.date = holding.priceAsOf.setZone("America/New_York").set({
+                    hour: 16,
+                    minute: 0,
+                    second: 0,
+                    millisecond: 0
+                });
                 initialHistoricalHolding.cash = holding.quantity;
                 continue;
             }
 
-            initialHistoricalHolding.date = holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0});
+            initialHistoricalHolding.date = holding.priceAsOf.setZone("America/New_York").set({
+                hour: 16,
+                minute: 0,
+                second: 0,
+                millisecond: 0
+            });
             initialHistoricalHolding.holdings.push({
+                optionId: holding.optionId,
                 price: holding.price,
                 accountId: tpAccountId,
                 costBasis: holding.costBasis,
-                date: holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0}),
+                date: holding.priceAsOf.setZone("America/New_York").set({
+                    hour: 16,
+                    minute: 0,
+                    second: 0,
+                    millisecond: 0
+                }),
                 currency: "USD",
-                priceAsOf: holding.priceAsOf.setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0}),
+                priceAsOf: holding.priceAsOf.setZone("America/New_York").set({
+                    hour: 16,
+                    minute: 0,
+                    second: 0,
+                    millisecond: 0
+                }),
                 quantity: holding.quantity,
                 priceSource: holding.priceSource,
                 securityId: holding.securityId,
@@ -239,6 +266,7 @@ export default class BrokerageService {
             // Cash Position
             historicalHoldings.push({
                 id: 0,
+                optionId: null,
                 updated_at: DateTime.now(),
                 created_at: DateTime.now(),
                 price: 1,
@@ -259,6 +287,7 @@ export default class BrokerageService {
                     id: 0,
                     updated_at: DateTime.now(),
                     created_at: DateTime.now(),
+                    optionId: holding.optionId,
                     price: holding.price,
                     securityType: holding.securityType,
                     value: holding.value,
