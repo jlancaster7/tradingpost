@@ -88,8 +88,9 @@ export function YourContent(props: CreateAccountProps) {
                     />
                     <HandleButton title={youtubeChannel} icon={social.YouTubeLogo} iconPadd={sizes.rem1} 
                         onPress={()=> {
-                            setInputMessage('Please enter your Substack username as it appears in your profile URL');
-                            setInputPlatform('youtube')
+                            toast.show("YouTube integration is on its way. Please check back in a future update!")
+                            //setInputMessage('Please enter your Substack username as it appears in your profile URL');
+                            //setInputPlatform('youtube')
                         }}/>
                 </View>
                 <View style={{ flexDirection: "row", marginHorizontal: sizes.rem2, marginBottom: sizes.rem1 }}>
