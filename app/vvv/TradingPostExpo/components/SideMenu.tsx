@@ -87,11 +87,11 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
         {
             label: "Account",
             //onPress: () => props.navigation.navigate("Create"),
-            onPress: () => linkTo('/create/watchlist'),
+            onPress: () => props.navigation.navigate("AccountInformation"),
             icon: sideMenu.Account,
         },
         {
-            label: "Watchlist",
+            label: "Watchlists",
             onPress: () => props.navigation.navigate("Watchlist"),
             //onPress: () => linkTo('/create/watchlist'),
             icon: sideMenu.Watchlist,
@@ -104,16 +104,10 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
             icon: sideMenu.BookmarkActiveBlue,
         },
         {
-            label: "Help",
-            onPress: () => props.navigation.navigate("Watchlist"),
+            label: "App Features",
+            onPress: () => props.navigation.navigate("AppInformation"),
 
-            icon: sideMenu.Help,
-        },
-        {
-            label: "Settings",
-            onPress: () => props.navigation.navigate("AccountSettings"),
-
-            icon: sideMenu.Account,
+            icon: sideMenu.Information,
         },
         {
             label: "Logout",

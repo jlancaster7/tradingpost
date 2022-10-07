@@ -16,7 +16,8 @@ export function KeyboardAvoidingInput(props: any) {
             value={props.value}
             multiline={true}
             numberOfLines={props.numLines}
-            style={{flex: 1, 
+            style={{flex: 1,
+                    borderColor: '#ccc',
                     //paddingVertical: sizes.rem0_5, paddingLeft: sizes.rem0_5,
                     padding: sizes.rem0_5
                 }}
@@ -29,7 +30,9 @@ export function KeyboardAvoidingInput(props: any) {
                     paddingLeft: 0,
                     display: props.displayButton ? 'flex' : 'none'}}
             onPress={() => {
-                props.clicked[1](props.clicked[0] + 1)
+                if (props.clicked) {
+                    props.clicked[1](props.clicked[0] + 1)
+                }
                 props.onClick(props.value, props.setValue, props.item_id)
             }}            
             //onPress={props.onClick(props.value, props.setValue, props.item_id)}

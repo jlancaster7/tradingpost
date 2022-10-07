@@ -43,6 +43,7 @@ export const NotificationScreen = () => {
     useEffect(() => {
         const d = async () => {
             const token = await registerForPushNotificationsAsync();
+            console.log(token);
             setCode(token);
         }
         d()
@@ -106,7 +107,7 @@ export const NotificationScreen = () => {
                         case "NEW_TRADES":
                             return <NewTradeNotification response={item.item}/>
                         case "NEW_SUBSCRIPTION":
-                            return <SubscriptionNotification response={item.item} />
+                            return <SubscriptionNotification response={item.item}/>
                         default:
                             console.error(`Follow Type: ${item.item.type} not registered`);
                             return <DefaultNotification response={item.item}/>
@@ -199,11 +200,13 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
         const d = async () => Api.Subscriber.get(props.response.data.subscriber_id);
         d().then((r) => {
             setApproved(r.approved)
-        }).catch()
+        }).catch((err) => {
+            setApproved(true)
+        })
     }, [])
 
     const dt = new Date(props.response.dateTime);
-    const dtFmt = `${dt.getMonth()}/${dt.getDay()}/${dt.getFullYear() % 100}`
+    const dtFmt = `${dt.getMonth()+1}/${dt.getDay()}/${dt.getFullYear() % 100}`
     return <NotificationTab>
         <Pressable
             onPress={openProfile}>
@@ -218,17 +221,18 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                     </Text>
                     <SecondaryButton
                         children={'Approve'}
-                        style={{display: approved ? 'none' : 'flex',
-                                backgroundColor: "#35A265", borderColor: "#35A265",
-                                minHeight: 26,
-                                height: 26,
-                                minWidth: 70,
-                                width: 70,
-                                justifyContent: 'center'
-                            }}
+                        style={{
+                            display: approved ? 'none' : 'flex',
+                            backgroundColor: "#35A265", borderColor: "#35A265",
+                            minHeight: 26,
+                            height: 26,
+                            minWidth: 70,
+                            width: 70,
+                            justifyContent: 'center'
+                        }}
                         onPress={async () => {
                             await Api.Subscriber.update(props.response.data.subscriber_id, {
-                                    approved: true
+                                approved: true
                             })
                             setApproved(true);
                         }}

@@ -31,6 +31,9 @@ export default class Substack {
             accessToken: null,
             refreshToken: null,
             expiration: null,
+            claims: {
+                handle: data.username
+            },
             updatedAt: new Date()
         }
         formatedUser = this.formatUser(data);

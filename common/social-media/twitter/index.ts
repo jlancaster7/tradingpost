@@ -61,6 +61,7 @@ export default class Twitter {
                 accessToken: result.access_token,
                 refreshToken: result.refresh_token,
                 expiration: new Date(expiration.getTime() + result.expires_in),
+                claims: response[0].claims || {handle: ''},
                 updatedAt: new Date()
             };
 
@@ -288,6 +289,9 @@ export default class Twitter {
             accessToken: twitterUser.accessToken,
             refreshToken: twitterUser.refreshToken,
             expiration: new Date(expiration.getTime() + twitterUser.expiration),
+            claims: {
+                handle: data.username
+            },
             updatedAt: new Date()
         }
 

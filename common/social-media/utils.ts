@@ -28,5 +28,6 @@ export type PlatformToken = {
     accessToken: string | null,
     refreshToken: string | null,
     expiration: Date | null,
-    updatedAt: Date
+    updatedAt: Date,
+    claims?: any
 }

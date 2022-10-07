@@ -23,6 +23,9 @@ export const LinkBrokerageSection = (props: CreateAccountProps) => {
     const intervalRef = useRef<any>();
     const [needsRefresh, setNeedsRefresh] = useState<{}>();
     const openLink = async () => {
+        await Api.User.extensions.generateBrokerageLink(undefined).then(({ link }) => {
+            setLink(link)
+        })
         const browserName = "finicity_auth";
         await openBrowserAsync(brokerLink, { "windowName": browserName });
         clearInterval(intervalRef.current);
@@ -57,9 +60,6 @@ export const LinkBrokerageSection = (props: CreateAccountProps) => {
     }, [])
     const [brokerLink, setLink] = useState("");
     useEffect(() => {
-        Api.User.extensions.generateBrokerageLink(undefined).then(({ link }) => {
-            setLink(link)
-        })
     }, [needsRefresh])
 
     useEffect(() => {

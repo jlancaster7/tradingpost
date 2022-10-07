@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Text } from '@ui-kitten/components'
+import { Icon, Text } from '@ui-kitten/components'
 import { ButtonField } from "../../components/ButtonField"
 import { IconifyIcon, IIconifyIcon } from "../../components/IconfiyIcon"
 import { ElevatedSection, Section } from "../../components/Section"
@@ -10,7 +10,7 @@ import { CreateAccountProps, sideMargin } from "../CreateAccountScreen"
 //import WebsiteLogo from '@iconify/icons-mdi/web'
 import { ScrollWithButtons } from "../../components/ScrollWithButtons"
 import { social } from "../../images"
-
+import { useToast } from "react-native-toast-notifications";
 //import { useIAM } from "../../apis/third-party/twitterApi"
 import { View, Alert, Pressable, PressableProps } from "react-native"
 import { bindTextInput, useOpacityAnim, useReadonlyEntity } from "../../utils/hooks"
@@ -19,19 +19,38 @@ import { TBI } from "../../utils/misc"
 import { useTwitterAuth } from "../../utils/third-party/twitter"
 import { useData } from "../../lds";
 import { useLinkTo } from "@react-navigation/native";
+import { Api } from "@tradingpost/common/api"
+import { AppColors } from "../../constants/Colors"
+import { KeyboardAvoidingInput } from "../../components/KeyboardAvoidingInput"
 //import { claimPlatform, createPlatform, Platform } from "../../apis/UserApi"
 //import { AmiraError } from "../../AmiraError"
 
 export function YourContent(props: CreateAccountProps) {
     //const claims = useReadonlyEntity(props.user.data.claims),
-    const { AppearView } = useOpacityAnim()
+    const { AppearView } = useOpacityAnim(),
+        [inputMessage, setInputMessage] = useState(''),
+        [inputPlatform, setInputPlatform] = useState(''),
+        [inputValue, setInputValue] = useState('')
+    const toast = useToast();
     let twitterHandle: any;
     let setTwitterHandle: any;
+    let substackUsername: any;
+    let setsubstackUsername: any;
+    let spotifyShow: any;
+    let setSpotifyShow: any;
+    let youtubeChannel: any;
+    let setYoutubeChannel: any;
     if (props.user.data.claims) {
-        [twitterHandle, setTwitterHandle] = useState(props.user.data.claims.find(c => c.platform === "twitter")?.platform_user_id)
+        [twitterHandle, setTwitterHandle] = useState(props.user.data.claims.find(c => c.platform === "twitter")?.platform_user_id);
+        [substackUsername, setsubstackUsername] = useState(props.user.data.claims.find(c => c.platform === "substack")?.platform_user_id);
+        [spotifyShow, setSpotifyShow] = useState(props.user.data.claims.find(c => c.platform === "spotify")?.platform_user_id);
+        [youtubeChannel, setYoutubeChannel] = useState(props.user.data.claims.find(c => c.platform === "youtube")?.platform_user_id);
     } 
     else {
         [twitterHandle, setTwitterHandle] = useState('');
+        [substackUsername, setsubstackUsername] = useState('');
+        [spotifyShow, setSpotifyShow] = useState('');
+        [youtubeChannel, setYoutubeChannel] = useState('');
     }
         //useEffect(() => {
     //        if (props.saveOnly)
@@ -67,19 +86,55 @@ export function YourContent(props: CreateAccountProps) {
                         }}
                         iconPadd={sizes.rem1}
                     />
-                    <HandleButton title="" icon={social.YouTubeLogo} iconPadd={sizes.rem1} />
+                    <HandleButton title={youtubeChannel} icon={social.YouTubeLogo} iconPadd={sizes.rem1} 
+                        onPress={()=> {
+                            setInputMessage('Please enter your Substack username as it appears in your profile URL');
+                            setInputPlatform('youtube')
+                        }}/>
                 </View>
                 <View style={{ flexDirection: "row", marginHorizontal: sizes.rem2, marginBottom: sizes.rem1 }}>
-                    <HandleButton title="" icon={social.SubstackLogo}
+                    <HandleButton title={substackUsername} icon={social.SubstackLogo}
                         iconPadd={sizes.rem1}
                         currentColor={socialStyle.substackColor}
+                        onPress={()=> {
+                            setInputMessage('Please enter your Substack username as it appears in your profile URL');
+                            setInputPlatform('substack')
+                            //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
+                        }}
                     />
-                    <HandleButton title="" icon={social.SpotifyLogo}
+                    <HandleButton title={spotifyShow} icon={social.SpotifyLogo}
                         iconPadd={sizes.rem0_5}
-                    // currentColor={socialStyle.substackColor}
+                        onPress={()=> {
+                            setInputMessage("Please enter your Spotify Podcast's Profile URL.\nIn the Spotify App, this can be found by going to your Podcasts's Profile Page, clicking the 'Share' Icon and clicking 'Copy Link'.");
+                            setInputPlatform('spotify')
+                            //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
+                        }}
                     />
                 </View>
                 <Text style={thinBannerText}>Sign in to your account(s) above to claim or add your content.</Text>
+                <View style={inputPlatform === '' ? {display: 'none'} : {display: 'flex'}}>
+                    <Text>
+                        {inputMessage}
+                    </Text>
+                    <KeyboardAvoidingInput 
+                        placeholder={'Enter here'}
+                        value={inputValue}
+                        setValue={setInputValue}
+                        displayButton={true}
+                        numLines={2}
+                        rightIcon={(props: any) => <Icon
+                            fill={AppColors.secondary}
+                            name="plus-square" height={35} width={35} style={{ height: 35, width: 35, padding: 0, alignContent: 'center'}} />}
+                        
+                        onClick={async (r: any, s: any, t: any) => {
+                            const result = await Api.User.extensions.linkSocialAccount({platform: inputPlatform, platform_idenifier: r});
+                            if (result === '') {
+                                toast.show(`${inputPlatform} Account Link Failed. Please try again or email contact@tradingpostapp.com for assistance.`)
+                            }
+                            s('')
+                        }}
+                        />
+                </View>
             </ElevatedSection>
             {/*             
             <Section title={'Your Content'}>
@@ -184,7 +239,7 @@ export function YourContent(props: CreateAccountProps) {
     </ScrollWithButtons>
 }
 
-const HandleButton = (props: { title: string | undefined, icon: IIconifyIcon, currentColor?: string, iconPadd?: number } & Pick<PressableProps, "onPress">) => {
+export const HandleButton = (props: { title: string | undefined, icon: IIconifyIcon, currentColor?: string, iconPadd?: number } & Pick<PressableProps, "onPress">) => {
     return <Pressable onPress={props.onPress} style={{ flex: 1, height: sizes.rem8, opacity: props.title ? 1 : 0.25 }}>
         <IconifyIcon icon={props.icon} style={{ width: "100%", flex: 1, justifyContent: "space-around" }} svgProps={{ style: { paddingVertical: props.iconPadd, height: "100%" } }} currentColor={props.currentColor} />
         <Text numberOfLines={1} style={{ fontStyle: !props.title ? "italic" : undefined, color: "black", textAlign: "center" }}>{props.title || "Unclaimed"}</Text>

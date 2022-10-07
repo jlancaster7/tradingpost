@@ -23,6 +23,9 @@ export type RootStackParamList =
         "Root" |
         "NotFound" |
         "AccountSettings" |
+        "AccountInformation" |
+        "Help" |
+        "AppInformation" |
         "Launch" |
         "Create" |
         "Login" |

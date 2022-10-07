@@ -321,7 +321,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                                 children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : "(Free)"}`
                                 onPress = async () => {
                                 
-                                    const test = await Api.Subscriber.extensions.insertWithNotification({
+                                    await Api.Subscriber.extensions.insertWithNotification({
                                         subscription_id: user.subscription.id,
                                         //TODO: this should be moved to the server side 
                                         start_date: new Date(),

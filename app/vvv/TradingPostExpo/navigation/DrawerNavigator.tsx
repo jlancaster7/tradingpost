@@ -22,7 +22,7 @@ const HeaderTp = () => {
 export function DrawerPart() {
     const { appUser } = useAppUser();
 
-    return appUser ? <Drawer.Navigator drawerContent={(props) => <SideMenu appUser={appUser} {...props} />}
+    return appUser ? <Drawer.Navigator useLegacyImplementation={true} drawerContent={(props) => <SideMenu appUser={appUser} {...props} />}
         screenOptions={({ route, navigation }) => ({
             headerTitleAlign: "center",
             headerTitle: HeaderTp,

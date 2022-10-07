@@ -10,6 +10,7 @@ import { sizes } from "../style";
 import { DrawerPart } from "./DrawerNavigator";
 import { RootStackParamList } from "./pages";
 import { AccountSettingsScreen } from "../screens/AccountSettingsScreen"
+import { AccountInfoScreen } from "../screens/AccountInfoScreen";
 import { AuthScreen } from "../screens/AuthScreen"
 import { ChangePasswordScreen } from "../screens/ChangePasswordScreen"
 import { CompanyScreen } from "../screens/CompanyScreen"
@@ -24,6 +25,7 @@ import { VerificationScreen } from "../screens/VerificationScreen"
 import { WatchlistEditorScreen } from "../screens/WatchlistEditorScreen"
 import { WatchlistScreen } from "../screens/WatchlistScreen"
 import { WatchlistViewerScreen } from "../screens/WatchlistViewerScreen"
+import { AppInformationScreen } from "../screens/AppInformationScreen";
 
 export const Stack = createNativeStackNavigator<RootStackParamList>();
 export function RootNavigator() {
@@ -42,6 +44,8 @@ export function RootNavigator() {
         <Stack.Screen name="Auth" component={AuthScreen} />
         <Stack.Screen name="Subscription" component={SubscriptionScreen} />
         <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+        <Stack.Screen name="AccountInformation" component={AccountInfoScreen} />
+        <Stack.Screen name="AppInformation" component={AppInformationScreen} options={{headerShown: false}}/>
         <Stack.Screen name="SubscriptionSettings" component={SubscriptionSettingsScreen} />
         <Stack.Screen name="WatchlistEditor" component={WatchlistEditorScreen} />
         <Stack.Screen name="PostScreen" component={PostScreen} />

@@ -2,9 +2,9 @@
   "name": "tradingpostexpo",
   "version": "1.0.0",
   "scripts": {
-    "start": "npx expo start",
-    "android": "npx expo start --android",
-    "ios": "npx expo start --ios",
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "npx expo start --web",
     "eject": "npx expo eject",
     "test": "jest --watchAll",

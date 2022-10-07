@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node ./",
     "dev": "tsc -b ../../common && tsc && node ./",
-    "deploy": "tsc && eb deploy"
+    "deploy": "tsc && eb deploy",
+    "install-common": "node ../../common/_scripts/install",
+    "link-common": "node ../../common/_scripts/link"
   },
   "dependencies": {
     "@tradingpost/common": "file:tradingpost-common-1.2.2.tgz",

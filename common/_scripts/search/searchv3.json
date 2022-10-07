@@ -1,0 +1,202 @@
+{
+    "bool": {
+        "should": [
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "must": [
+                        {
+                          "bool": {
+                            "should": [
+                            {
+                              "match": {
+                                "content.body": {
+                                  "analyzer": "synonym_analyzer", 
+                                  "query": ${terms},
+                                  "boost": 1
+                                }
+                                  
+                            }},
+                            {
+                                "match": {
+                                  "content.title": {
+                                  "analyzer": "synonym_analyzer", 
+                                  "query": ${terms},
+                                  "boost": 1
+                                }
+                            }}
+                                ],
+                                "minimum_should_match": 1,
+                                "boost": 1
+                              }
+                            }
+                        ,
+                        {
+                            "match": {
+                              "postType": "tweet"
+                          }}
+                        ]
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                      "must": [
+                        {
+                          "bool": {
+                            "should": [
+                            {
+                              "match": {
+                                "content.body": {
+                                  "analyzer": "synonym_analyzer", 
+                                  "query": ${terms},
+                                  "boost": 1
+                                }
+                            }},
+                            {
+                                "match": {
+                                  "content.title": {
+                                  "analyzer": "synonym_analyzer", 
+                                  "query": ${terms},
+                                  "boost": 1
+                                }
+                            }}
+                                ],
+                                "minimum_should_match": 1,
+                                "boost": 1
+                              }
+                            }
+                        ,
+                        {
+                            "match": {
+                              "postType": "youtube"
+                          }}
+                        ]
+                  }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "12h"
+                        }
+                    },
+                    "weight": 1
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                      "must": [
+                        {
+                          "bool": {
+                            "should": [
+                            {
+                              "match": {
+                                "content.body": {
+                                  "analyzer": "synonym_analyzer", 
+                                  "query": ${terms},
+                                  "boost": 1
+                                }
+                            }},
+                            {
+                                "match": {
+                                  "content.title": {
+                                  "analyzer": "synonym_analyzer", 
+                                  "query": ${terms},
+                                  "boost": 1
+                                }
+                            }}
+                                ],
+                                "minimum_should_match": 1,
+                                "boost": 1
+                              }
+                            }
+                        ,
+                        {
+                            "match": {
+                              "postType": "substack"
+                          }}
+                        ]
+                  }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                      "must": [
+                        {
+                          "bool": {
+                            "should": [
+                            {
+                              "match": {
+                                "content.body": ${terms}
+                            }},
+                            {
+                                "match": {
+                                  "content.title": ${terms}
+                            }}
+                                ],
+                                "minimum_should_match": 1,
+                                "boost": 1
+                              }
+                            }
+                        ,
+                        {
+                            "match": {
+                              "postType": "spotify"
+                          }}
+                        ]
+                  }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        }
+        ],
+        "minimum_should_match": 1,
+        "boost": 1
+}
+}

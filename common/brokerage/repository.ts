@@ -29,8 +29,13 @@ import {
     TradingPostInstitutionTable,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
-    TradingPostTransactionsTable, TradingPostUser,
-    TradingPostCashSecurity, FinicityAccountAndInstitution, FinicityAndTradingpostBrokerageAccount
+    TradingPostTransactionsTable,
+    TradingPostUser,
+    TradingPostCashSecurity,
+    FinicityAccountAndInstitution,
+    FinicityAndTradingpostBrokerageAccount,
+    OptionContract,
+    OptionContractTable
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -178,7 +183,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               open,
                               created_at
                        FROM security_price
-                       WHERE time >= $1
+                       WHERE is_eod = true
+                         AND time >= $1
                          AND time <= $2
                          AND security_id IN ($3:list)
                        ORDER BY time DESC`
@@ -272,13 +278,15 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    tch.currency,
                    tch.updated_at,
                    tch.created_at,
-                   s.symbol
+                   s.symbol,
+                   tch.option_id
             FROM tradingpost_current_holding tch
                      LEFT JOIN security s ON s.id = tch.security_id
             WHERE tch.account_id = $1`
         const result = await this.db.query(query, [accountId]);
         return result.map((row: any) => {
             let o: TradingPostCurrentHoldingsTableWithSecurity = {
+                optionId: row.option_id,
                 symbol: row.symbol,
                 accountId: row.account_id,
                 id: row.id,
@@ -312,12 +320,14 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    quantity,
                    currency,
                    updated_at,
-                   created_at
+                   created_at,
+                   option_id
             FROM tradingpost_current_holding
             WHERE account_id = $1`;
         const result = await this.db.query(query, [accountId]);
         return result.map((row: any) => {
             let o: TradingPostCurrentHoldingsTable = {
+                optionId: row.option_id,
                 accountId: row.account_id,
                 id: row.id,
                 updated_at: DateTime.fromJSDate(row.updated_at),
@@ -350,12 +360,14 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    type,
                    currency,
                    updated_at,
-                   created_at
+                   created_at,
+                   option_id
             FROM tradingpost_transaction
             WHERE account_id = $1;`
         const response = await this.db.query(query, [accountId]);
         return response.map((row: any) => {
             let o: TradingPostTransactionsTable = {
+                optionId: row.option_id,
                 accountId: row.account_id,
                 created_at: DateTime.fromJSDate(row.created_at),
                 updated_at: DateTime.fromJSDate(row.updated_at),
@@ -468,10 +480,6 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             }
             return o
         })
-    }
-
-    getTradingPostInstitutionsWithFinicityId = async (): Promise<TradingPostInstitutionWithFinicityInstitutionId[]> => {
-        return []
     }
 
     upsertInstitutions = async (institutions: TradingPostInstitution[]): Promise<void> => {
@@ -1132,6 +1140,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             createdAt: DateTime.fromJSDate(response.created_at)
         }
     }
+
     getFinicityUserByFinicityUserId = async (userId: string): Promise<FinicityUser | null> => {
         const response = await this.db.oneOrNone(`
             SELECT id,
@@ -1351,6 +1360,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             return o
         })
     }
+
     getFinicityAccountDetails = async (finicityUserId: number): Promise<FinicityAccount[]> => {
         let query = `
             SELECT id,
@@ -1383,7 +1393,6 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             }
         })
     }
-
 
     upsertFinicityHoldings = async (holdings: FinicityHolding[]): Promise<void> => {
         if (holdings.length <= 0) return;
@@ -1757,8 +1766,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'cost_basis', prop: 'costBasis'},
             {name: 'quantity', prop: 'quantity'},
             {name: 'currency', prop: 'currency'},
+            {name: 'option_id', prop: 'optionId'}
         ], {table: 'tradingpost_current_holding'})
-        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id,security_id");
+        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id,security_id,option_id");
         await this.db.none(query);
     }
 
@@ -1775,8 +1785,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'cost_basis', prop: 'costBasis'},
             {name: 'quantity', prop: 'quantity'},
             {name: 'currency', prop: 'currency'},
+            {name: 'option_id', prop: 'optionId'}
         ], {table: 'tradingpost_current_holding'})
-        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id,security_id");
+        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id,security_id,option_id");
         await this.db.none(query);
     }
 
@@ -1793,6 +1804,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'quantity', prop: 'quantity'},
             {name: 'currency', prop: 'currency'},
             {name: 'date', prop: 'date'},
+            {name: 'option_id', prop: 'optionId'}
         ], {table: 'tradingpost_historical_holding'})
         const query = this.pgp.helpers.insert(historicalHoldings, cs)
         await this.db.none(query);
@@ -1812,8 +1824,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'quantity', prop: 'quantity'},
             {name: 'currency', prop: 'currency'},
             {name: 'date', prop: 'date'},
+            {name: 'option_id', prop: 'optionId'}
         ], {table: 'tradingpost_historical_holding'})
-        const query = upsertReplaceQuery(historicalHoldings, cs, this.pgp, 'account_id, security_id, date, quantity')
+        const query = upsertReplaceQuery(historicalHoldings, cs, this.pgp, 'account_id, security_id, option_id, date, quantity')
         await this.db.none(query);
     }
 
@@ -1838,7 +1851,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'amount', prop: 'amount'},
             {name: 'fees', prop: 'fees'},
             {name: 'type', prop: 'type'},
-            {name: 'currency', prop: 'currency'}
+            {name: 'currency', prop: 'currency'},
+            {name: 'option_id', prop: 'optionId'}
         ], {table: 'tradingpost_transaction'});
         const query = this.pgp.helpers.insert(transactions, cs);
         await this.db.none(query)
@@ -1857,13 +1871,15 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                                   type,
                                                   currency,
                                                   updated_at,
-                                                  created_at
+                                                  created_at,
+                                                  option_id
                                            FROM tradingpost_transaction
                                            WHERE account_id = $1
                                            ORDER BY date ASC
                                            LIMIT 1;`, accountId)
         if (!r) return null
         return {
+            optionId: r.option_id,
             accountId: r.account_id,
             amount: r.amount,
             fees: r.fees,
@@ -1889,9 +1905,10 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'amount', prop: 'amount'},
             {name: 'fees', prop: 'fees'},
             {name: 'type', prop: 'type'},
-            {name: 'currency', prop: 'currency'}
+            {name: 'currency', prop: 'currency'},
+            {name: 'option_id', prop: 'optionId'}
         ], {table: 'tradingpost_transaction'});
-        const query = upsertReplaceQuery(transactions, cs, this.pgp, 'account_id, security_id, date, quantity');
+        const query = upsertReplaceQuery(transactions, cs, this.pgp, 'account_id, security_id, option_id, date, quantity');
         await this.db.none(query)
     }
 
@@ -1940,7 +1957,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get current holdings for userId: ${userId} and  accountId: ${accountId}`);
         }
-        ;
+
         let holdings: HistoricalHoldings[] = [];
 
         for (let d of response) {
@@ -2100,7 +2117,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get prices for securityId: ${securityId}`);
         }
-        ;
+
         let prices: SecurityPrices[] = [];
 
         for (let d of response) {
@@ -2314,6 +2331,67 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         } catch (e) {
             console.error(e)
         }
+    }
+
+    addOptionContract = async (optionContract: OptionContract): Promise<number> => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'security_id', prop: 'securityId'},
+            {name: 'type', prop: 'type'},
+            {name: 'strike_price', prop: 'strikePrice'},
+            {name: 'expiration', prop: 'expiration'},
+        ], {table: 'security_option'})
+
+        const query = this.pgp.helpers.insert(optionContract, cs) + ` RETURNING id`;
+        return (await this.db.one(query)).id;
+    }
+
+    getOptionContract = async (securityId: number, expirationDate: DateTime, strikePrice: number, optionType: string): Promise<OptionContractTable | null> => {
+        const s = `SELECT id, security_id, type, strike_price, expiration, updated_at, created_at
+                   FROM security_option
+                   WHERE security_id = $1
+                     AND expiration = $2
+                     and strike_price = $3
+                     and type = $4;`
+        const res = await this.db.oneOrNone(s, [securityId, expirationDate, strikePrice, optionType]);
+        if (!res) return null;
+        return {
+            id: res.id,
+            securityId: res.security_id,
+            type: res.type,
+            strikePrice: res.strike_price,
+            expiration: res.expiration,
+            updatedAt: DateTime.fromJSDate(res.updated_at),
+            createdAt: DateTime.fromJSDate(res.created_at)
+        }
+    }
+
+    getAccountOptionsContractsByTransactions = async (accountId: number, securityId: number, strikePrice: number): Promise<OptionContractTable[]> => {
+        const query = `SELECT so.id,
+                              so.security_id,
+                              so.type,
+                              so.strike_price,
+                              so.expiration
+                       FROM SECURITY_OPTION SO
+                                INNER JOIN TRADINGPOST_TRANSACTION TT ON
+                           so.id = tt.option_id
+                       WHERE tt.account_id = $1
+                         AND so.strike_price = $2
+                         AND so.security_id = $3
+                       ORDER BY expiration DESC`;
+        const res = await this.db.query(query, [accountId, strikePrice, securityId]);
+        if (res.length <= 0) return [];
+        return res.map((r: any) => {
+            let o: OptionContractTable = {
+                id: r.id,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                createdAt: DateTime.fromJSDate(r.created_at),
+                securityId: r.security_id,
+                type: r.type,
+                expiration: r.expiration,
+                strikePrice: r.strike_price
+            }
+            return o;
+        })
     }
 }
 

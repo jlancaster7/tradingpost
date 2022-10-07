@@ -32,7 +32,7 @@ import { KeyboardAvoidingInput } from "../../components/KeyboardAvoidingInput"
 //import { AppConfig } from "../../apis/ApplicationApi"
 
 
-const investmentStrats = [
+export const investmentStrats = [
     'Buy & Hold',
     'Growth-Focused',
     'Swing Trading',
@@ -45,9 +45,9 @@ const investmentStrats = [
     'Concetrated',
     'Diversified'
 ];
-const questionStyle = { fontSize: 16, marginBottom: sizes.rem1, marginTop: sizes.rem1_5 } as TextStyle;
+export const questionStyle = { fontSize: 16, marginBottom: sizes.rem1, marginTop: sizes.rem1_5 } as TextStyle;
 
-const gicsAC = ['SaaS',
+export const gicsAC = ['SaaS',
     'Biotech',
     'AdTech',
     'Tech',
