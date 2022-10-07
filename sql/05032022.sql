@@ -663,3 +663,42 @@ ALTER TABLE tradingpost_brokerage_account
 
 ALTER TABLE security_price
     ADD COLUMN is_fake BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE TABLE security_option
+(
+    id           BIGSERIAL                       NOT NULL,
+    security_id  BIGINT REFERENCES SECURITY (id) NOT NULL,
+    type         TEXT                            NOT NULL,
+    strike_price DECIMAL(24, 4)                  NOT NULL,
+    expiration   TIMESTAMPTZ,
+    PRIMARY KEY (id)
+);
+
+ALTER TABLE TRADINGPOST_TRANSACTION
+    ADD COLUMN option_id BIGINT REFERENCES security_option (id);
+
+ALTER TABLE TRADINGPOST_CURRENT_HOLDING
+    ADD COLUMN option_id BIGINT REFERENCES security_option (id);
+
+ALTER TABLE TRADINGPOST_HISTORICAL_HOLDING
+    ADD COLUMN option_id BIGINT REFERENCES security_option (id);
+
+ALTER TABLE security_option
+    ADD COLUMN updated_at timestamptz NOT NULL DEFAULT current_timestamp;
+ALTER TABLE security_option
+    ADD COLUMN created_at timestamptz NOT NULL DEFAULT current_timestamp;
+
+
+DROP INDEX tradingpost_transaction_idx;
+
+CREATE UNIQUE INDEX tradingpost_transaction_idx ON tradingpost_transaction (account_id, security_id, option_id, date, quantity);
+
+DROP INDEX historical_holding_acc_sec_date_quantity;
+
+CREATE UNIQUE INDEX historical_holding_acc_sec_date_quantity ON tradingpost_historical_holding (account_id, security_id, option_id, date, quantity);
+
+DROP INDEX tradingpost_current_holding_account_id_security_id_idx;
+CREATE UNIQUE INDEX tradingpost_current_holding_account_id_security_id_idx ON tradingpost_current_holding(account_id, security_id, option_id);
+
+DROP INDEX tradingpost_current_holding_idx;
+CREATE UNIQUE INDEX tradingpost_current_holding_idx ON tradingpost_current_holding (account_id, security_id, option_id);

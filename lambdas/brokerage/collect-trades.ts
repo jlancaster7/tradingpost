@@ -57,7 +57,3 @@ const run = async (tokenFile?: string) => {
 export const handler = async (event: any, context: Context) => {
     await run("/tmp/token-file.json");
 }
-
-(async() => {
-   await run();
-})()

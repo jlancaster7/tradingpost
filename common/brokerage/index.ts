@@ -22,6 +22,7 @@ const Default = (pgClient: IDatabase<any>, pgp: IMain, finicity: Finicity): [Rec
     const brokerageMap = {
         "finicity": new FinicityService(finicity, repo, new FinicityTransformer(repo))
     }
+
     return [brokerageMap, repo, portSummary]
 }
 
@@ -92,12 +93,13 @@ export default class Brokerage extends BrokerageService {
         if (!brokerage) throw new Error("no brokerage found")
 
         const tradingPostUser = await brokerage.getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId);
+        const tpAccounts = await this.repository.getTradingPostBrokerageAccounts(tradingPostUser.id)
+        if (tpAccounts.length <= 0) return
+
         // TODO: Instead of adding error codes at the holding level, we could write a function to pull accoutns
         //  and then return error response for those accounts there... this way we avoid throwing exceptions as well
         //  return accounts in multiple states and validate if its in an error state, according to the service...
-
         const holdings = await brokerage.importHoldings(brokerageUserId);
-
         await this.repository.upsertTradingPostCurrentHoldings(holdings);
 
         let holdingHistory: TradingPostHistoricalHoldings[] = holdings.map(holding => ({
@@ -111,30 +113,29 @@ export default class Brokerage extends BrokerageService {
             costBasis: holding.costBasis,
             quantity: holding.quantity,
             currency: holding.currency,
+            optionId: holding.optionId,
             date: DateTime.now().setZone("America/New_York").set({hour: 16, minute: 0, second: 0, millisecond: 0})
         }));
 
         await this.repository.upsertTradingPostHistoricalHoldings(holdingHistory);
-
         const transactions = await brokerage.importTransactions(brokerageUserId);
-
         await this.repository.upsertTradingPostTransactions(transactions);
-
         await this.portfolioSummaryService.computeAccountGroupSummary(tradingPostUser.id)
     }
 
     addNewTransactions = async (brokerageUserId: string, brokerageId: string, accountIds?: string[]) => {
         const brokerage = this.brokerageMap[brokerageId];
 
-        const holdings = await brokerage.importHoldings(brokerageUserId);
-        await this.repository.upsertTradingPostCurrentHoldings(holdings);
-
         const transactions = await brokerage.importTransactions(brokerageUserId);
         await this.repository.upsertTradingPostTransactions(transactions);
+
+        const holdings = await brokerage.importHoldings(brokerageUserId);
+        await this.repository.upsertTradingPostCurrentHoldings(holdings);
 
         let historicalHoldings: TradingPostHistoricalHoldings[] = [];
         holdings.forEach(h => {
             historicalHoldings.push({
+                optionId: h.optionId,
                 accountId: h.accountId,
                 price: h.price,
                 securityId: h.securityId,

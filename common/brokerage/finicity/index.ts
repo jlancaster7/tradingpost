@@ -42,7 +42,7 @@ export default class FinicityService implements IBrokerageService {
             const acc = await this.repository.getFinicityAccountByTradingpostBrokerageAccountId(parseInt(brokerageAccountId))
             if (acc === null) throw new Error(`could not fetch finicity trading post account for tradingpost brokerage account id ${brokerageAccountId}`);
             const link = await this.finicity.generateConnectFix({
-                customerId:finicityUser.customerId,
+                customerId: finicityUser.customerId,
                 language: "en",
                 institutionLoginId: acc.finicityInstitutionLoginId,
                 webhook: "https://worker.tradingpostapp.com/finicity/webhook",
@@ -431,8 +431,10 @@ export default class FinicityService implements IBrokerageService {
             });
 
             await this.repository.upsertFinicityHoldings(finicityHoldings);
+
             const transformedHoldings = await this.transformer.holdings(finicityUser.tpUserId, account.id, finicityHoldings,
                 DateTime.fromSeconds(account.detail.dateAsOf), account.currency, account.detail);
+
             tpHoldings.push(...transformedHoldings)
         }
 
@@ -513,6 +515,7 @@ export default class FinicityService implements IBrokerageService {
             })
         }
 
+        console.log("Upserting transactions")
         await this.repository.upsertFinicityTransactions(finTxs);
         return await this.transformer.transactions(finicityUser.tpUserId, finTxs);
     }
