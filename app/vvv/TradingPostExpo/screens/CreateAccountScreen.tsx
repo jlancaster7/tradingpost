@@ -1,33 +1,44 @@
-import React, { Dispatch, ReactElement, ReactNode, Ref, SetStateAction, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, {
+    Dispatch,
+    ReactElement,
+    ReactNode,
+    Ref,
+    SetStateAction,
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useRef,
+    useState
+} from 'react';
+import {SafeAreaProvider, SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 //import { ScrollView } from 'react-native-gesture-handler';
-import { Tab, TabBar, TabView, Text } from '@ui-kitten/components';
-import { PrimaryButton } from '../components/PrimaryButton';
-import { SecondaryButton } from '../components/SecondaryButton';
-import { flex, font, fonts, sizes } from '../style';
-import { IEntity,/* ToastMessageFunction,*/ useIsKeyboardVisible, useReadonlyEntity,/* useToast*/ } from '../utils/hooks'
+import {Tab, TabBar, TabView, Text} from '@ui-kitten/components';
+import {PrimaryButton} from '../components/PrimaryButton';
+import {SecondaryButton} from '../components/SecondaryButton';
+import {flex, font, fonts, sizes} from '../style';
+import {IEntity,/* ToastMessageFunction,*/ useIsKeyboardVisible, useReadonlyEntity,/* useToast*/} from '../utils/hooks'
 //import { IsAuthenticated, useCurrentUser } from '../apis/Authentication';
-import { AccountInfoSection } from './create_account/AccountInfoSection';
-import { InvestmentInterestSection } from './create_account/InvestmentInterestSection';
+import {AccountInfoSection} from './create_account/AccountInfoSection';
+import {InvestmentInterestSection} from './create_account/InvestmentInterestSection';
 
-import { YourContent } from './create_account/YourContentSection';
-import { Alert, View, ViewStyle } from 'react-native';
+import {YourContent} from './create_account/YourContentSection';
+import {Alert, View, ViewStyle} from 'react-native';
 //import { IDashboard, IDialog, PromptButton, PromptFunc, BaseScreen } from '../layouts/BaseLayout';
-import { useData } from '../lds';
-import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
-import { LoginResult } from '@tradingpost/common/api/entities/static/AuthApi';
-import { NavigationProp } from '@react-navigation/native';
-import { useToast, } from 'react-native-toast-notifications'
-import { BasicInfoSection } from './create_account/BasicInfoSection';
-import { EntityApiBase } from '@tradingpost/common/api/entities/static/EntityApiBase';
-import { ProfileIconSection } from './create_account/ProfileIconSection';
-import { PickWatchlistSection } from './create_account/PickWatchlistSection';
-import { useAppUser } from '../Authentication';
-import { AnalystStartSection } from './create_account/AnalystStartSection';
-import { LinkBrokerageSection } from './create_account/LinkBrokerageSection';
-import { AppColors } from '../constants/Colors';
-import { CreateAccountProps } from './create_account/shared';
-import { SubscriptionCostSection } from './create_account/SubscrpitionCostSection';
+import {useData} from '../lds';
+import {IUserGet} from "@tradingpost/common/api/entities/interfaces";
+import {LoginResult} from '@tradingpost/common/api/entities/static/AuthApi';
+import {NavigationProp} from '@react-navigation/native';
+import {useToast,} from 'react-native-toast-notifications'
+import {BasicInfoSection} from './create_account/BasicInfoSection';
+import {EntityApiBase} from '@tradingpost/common/api/entities/static/EntityApiBase';
+import {ProfileIconSection} from './create_account/ProfileIconSection';
+import {PickWatchlistSection} from './create_account/PickWatchlistSection';
+import {useAppUser} from '../Authentication';
+import {AnalystStartSection} from './create_account/AnalystStartSection';
+import {LinkBrokerageSection} from './create_account/LinkBrokerageSection';
+import {AppColors} from '../constants/Colors';
+import {CreateAccountProps} from './create_account/shared';
+import {SubscriptionCostSection} from './create_account/SubscrpitionCostSection';
 //import { Screen } from './BaseScreen';
 
 export const screens = {
@@ -43,7 +54,7 @@ export const screens = {
     'SubscriptionCost': SubscriptionCostSection,
     'ProfilePicture': ProfileIconSection//,
     //'Content Accounts': YourContent,
-    
+
 }
 
 
@@ -52,11 +63,10 @@ export const screens = {
 // }
 
 
-
 const screenKeys = Object.keys(screens);
 
 function SubScreen(props: { screenIndex: number, caProps: CreateAccountProps }) {
-    const { screenIndex, caProps } = props;
+    const {screenIndex, caProps} = props;
     const Screen = screens[screenKeys[screenIndex] as keyof typeof screens];
     /*Hacky based on assumptions*/
     return (screenIndex === 0) ?
@@ -69,12 +79,11 @@ function SubScreen(props: { screenIndex: number, caProps: CreateAccountProps }) 
 // }
 
 
-
 export default (props: any) => {
     const
         //  { isKeyboardVisible } = useIsKeyboardVisible(),
-        { appUser } = useAppUser(),
-        { value: loginResult } = useData("loginResult"),
+        {appUser} = useAppUser(),
+        {value: loginResult} = useData("loginResult"),
         // resolveIdx = useCallback(() => {
         //     return EntityApiBase.token ? 2 : 0
         // }
@@ -161,13 +170,13 @@ export default (props: any) => {
             paddingTop: 0
         }}
         shouldLoadComponent={(index) => index === resolvedIndex}
-    // onSelect={index => {
-    //     setWizardIndex(index);
-    // }}
+        // onSelect={index => {
+        //     setWizardIndex(index);
+        // }}
     >
         {screenKeys.map((v, i) => {
             const Screen = screens[screenKeys[i] as keyof typeof screens];
-            return <Tab key={"TAB_" + i} >
+            return <Tab key={"TAB_" + i}>
                 <Screen {...caProps} />
             </Tab>
         })}
