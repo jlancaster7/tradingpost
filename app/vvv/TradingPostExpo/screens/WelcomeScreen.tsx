@@ -144,6 +144,9 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
             }
         }
     }, [appUser, loginResult])
+
+
+    
     return <><View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>
         <AppTitle style={{ marginVertical: sizes.rem1, alignSelf: "center", width: "100%", aspectRatio: 5 }} />
 
