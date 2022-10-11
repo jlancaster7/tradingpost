@@ -119,7 +119,14 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         { value: hasAuthed, setValue } = useData("hasAuthed"),
         {value: firstTime, setValue: setFirstTime} = useData('firstTime');
 
-    const linkTo = useLinkTo<any>();
+    const linkTo = useLinkTo<any>();    
+    useLayoutEffect(()=> {
+        if (loginResult) {
+            signIn("", loginResult.token)
+            setValue(true);
+            linkTo('/dash/feed');
+        }
+    },[])
     useLayoutEffect(() => {
 
         if (firstTime) {

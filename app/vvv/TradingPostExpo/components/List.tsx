@@ -17,7 +17,7 @@ export type ListProps<T> = {
     keyExtractor?: FlatListProps<T>["keyExtractor"]
 }
 type HasU<T, U> = U extends undefined | null ? T : (T | U);
-type SizeParts = { index: number, length: number, offset: number };
+export type SizeParts = { index: number, length: number, offset: number };
 export function List<T, U>(props: {
     //    data: ReadonlyArray<T> | null | undefined
     maxPage?: number,
