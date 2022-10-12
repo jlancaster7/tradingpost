@@ -30,7 +30,6 @@ import { AppInformationScreen } from "../screens/AppInformationScreen";
 export const Stack = createNativeStackNavigator<RootStackParamList>();
 export function RootNavigator() {
   return <Stack.Navigator screenOptions={{
-    animation: 'none',
     headerTitle: () => <AppTitle height={"100%"} style={{ marginTop: sizes.rem0_5, height: sizes.rem2, aspectRatio: 5.77 }} />,
     headerTitleAlign: "center",
     headerBackVisible: false
@@ -39,7 +38,7 @@ export function RootNavigator() {
     <Stack.Screen name="Create" component={CreateAccountScreen} options={{ headerShown: false, headerBackVisible: false }} />
     <Stack.Screen name="Dash" component={DrawerPart} options={{ headerShown: false }} />
     <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
-    <Stack.Group screenOptions={{ presentation: 'modal', animation: 'none' }}>
+    <Stack.Group screenOptions={{ presentation: 'modal' }}>
         <Stack.Screen name="ResetPassword" component={ChangePasswordScreen} />
         <Stack.Screen name="VerifyAccount" component={VerificationScreen} />
         <Stack.Screen name="Auth" component={AuthScreen} />
@@ -59,7 +58,6 @@ export function RootNavigator() {
         <Stack.Screen name="NotificationTrade" component={NotificationTradeScreen} />
     </Stack.Group>
     <Stack.Group screenOptions={{
-        animation: 'none',
         presentation: "modal",
         headerStyle: {
             backgroundColor: "transparent"

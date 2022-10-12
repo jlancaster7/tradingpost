@@ -1,9 +1,9 @@
 import { Api, Interface } from "@tradingpost/common/api";
-import React, { useEffect, useState } from "react";
-import { ScrollView, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, FlatList, NativeSyntheticEvent, ScrollView, View, NativeScrollEvent, useWindowDimensions } from "react-native";
 import { useToast } from "react-native-toast-notifications";
 import { Avatar, Text } from '@ui-kitten/components'
-import { flex, paddView, row, sizes } from "../style";
+import { elevated, flex, fonts, paddView, row, sizes } from "../style";
 import { ElevatedSection } from "../components/Section";
 import { Tab, TabBar } from "@ui-kitten/components";
 import { FavButton } from "../components/AddButton";
@@ -12,6 +12,7 @@ import InteractiveChart from "../components/InteractiveGraph";
 import { ButtonGroup } from "../components/ButtonGroup";
 import { FeedPart } from "./FeedScreen";
 import { RootStackScreenProps } from "../navigation/pages";
+import { AppColors } from "../constants/Colors";
 
 const periods: { [key: string]: number } = {
     "1D": 1,
@@ -35,14 +36,37 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
     const [description, setDescription] = useState<string>();
     const [portPeriod, setPortPeriod] = useState("1Y")
     const [tab, setTab] = useState(0);
+    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+    const translateHeaderY = useRef(new Animated.Value(0)).current;
+    const scrollRef = useRef<FlatList>(null);
+    const headerHeight = 680;
+    const minViewHeight = windowHeight - headerHeight;
+    const [collapsed, setCollapsed] = useState(false);
+    const [isMaxed, setIsMaxed] = useState(false);
+    const clampMax = headerHeight - ( Number(elevated.paddingVertical) + Number(elevated.marginBottom) + sizes.rem1 + fonts.large ) ; 
+    //console.log(clampMax);
+    const translation = translateHeaderY.interpolate({
+        inputRange: [0, clampMax],
+        outputRange: [0, -clampMax],
+        extrapolate: 'clamp',
+    });
+    
+    useEffect(() => {
+        translation.addListener((v: { value: number }) => {
+            const c = Math.abs(v.value + clampMax) < 40;
+            const isMaxed = -v.value === clampMax;
+            setCollapsed(c);
+            setIsMaxed(isMaxed);
+        });
+        return () => translation.removeAllListeners();
+    }, [translation, clampMax]);
 
     useEffect(() => {
         Api.Security.get(securityId)
             .then((s) => {
                 setSecurity(s)
-                console.log(s);
-                s.description ? setDescription(s.description.substring(0, 300) + '...') :
-                    setIsFav(s.isOnQuickWatch || false)
+                s.description ? setDescription(s.description.substring(0, 300) + '...') : '';
+                setIsFav(s.isOnQuickWatch || false)
             })
             .catch((ex) => toast.show(ex.message))
         Api.Security.extensions.getPrices({ securityId: securityId, includeIntraday: false, includeHistorical: true })
@@ -58,10 +82,35 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
     }, [securityId, portPeriod])
 
 
-    return <View style={[{ height: "100%" }]}>
-        <ScrollView>
-            <View style={[paddView, { height: "100%" }]}>
-                <ElevatedSection key={"Company"} title="Company"
+    return <View style={flex}>
+        <Animated.FlatList
+            data={[
+                
+                <View style={[{ paddingHorizontal: 0, minHeight: minViewHeight }]}>
+                    {security && <FeedPart searchText={`$${security?.symbol}`} />}
+                </View>
+            ]}
+            renderItem={(info) => {
+                return info.item;
+            }}
+            ref={scrollRef} contentContainerStyle={[{ paddingTop: headerHeight }]} nestedScrollEnabled
+            onMomentumScrollEnd={(ev) => {
+                if (collapsed && !isMaxed) {
+                    scrollRef.current?.scrollToOffset({ offset: clampMax, animated: true });
+                    setIsMaxed(true);
+                }
+            }}
+            
+            onScroll={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
+                { nativeEvent: { contentOffset: { y: translateHeaderY } } }
+            ], { useNativeDriver: true })}
+            >
+        </Animated.FlatList>
+        <Animated.View style={{ position: "absolute", paddingTop: sizes.rem0_5, backgroundColor: AppColors.background, transform: [{ translateY: translation }], alignItems: "stretch", width: "100%" }}>
+            <View style={[
+                //collapsed ? {display: 'none'} : {display: 'flex'}, 
+                { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                <ElevatedSection key={"Company"} title="Company" 
                     button={(p) => {
                         return <FavButton {...p} isSelected={isFav} onPress={() => {
                             if (security) {
@@ -101,21 +150,26 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                         <InteractiveChart data={securityPrices} performance={false} />
                     </View>
 
-                    <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "5Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
+                    <ButtonGroup key={"period"} 
+                        items={["1D", "1W", "1M", "3M", "1Y", "5Y", "Max"].map(v => ({ label: v, value: v }))} 
+                        onValueChange={(v) => setPortPeriod(v)} 
+                        value={portPeriod} 
+                    />
 
-                    <Text style={{ marginTop: sizes.rem1 }}>{description}</Text>
+                    <Text style={{  }}>{description}</Text>
                 </ElevatedSection >
             </View>
-
-            <View >
-                <ElevatedSection title="" style={{ marginHorizontal: sizes.rem1 }} >
+            <View style={[
+                //collapsed ? {display: 'flex'} : {display: 'flex'},
+                { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                <ElevatedSection title=""  >
                     <TabBar
                         key={"company_tabBar"}
                         indicatorStyle={{
                             marginTop: 26,
                             marginHorizontal: 10
                         }}
-                        style={{ width: "100%", marginHorizontal: 0 }}
+                        style={{width: "100%", marginHorizontal: 0 }}
                         selectedIndex={tab}
                         onSelect={t => {
                             setTab(t);
@@ -123,11 +177,8 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                         {["Posts", "Analysts"].map(t => <Tab key={"tab_id" + t} style={{ marginTop: -4 }} title={t} />)}
                     </TabBar>
                 </ ElevatedSection>
-                <FeedPart searchText={`$${security?.symbol}`} />
-
             </View>
-
-        </ScrollView>
+        </Animated.View>
     </View >
 
 

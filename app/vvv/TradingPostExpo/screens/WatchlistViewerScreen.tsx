@@ -4,8 +4,8 @@ import WatchlistApi from "@tradingpost/common/api/entities/apis/WatchlistApi"
 import { IWatchlistGetExt } from "@tradingpost/common/api/entities/extensions/Watchlist"
 import { ISecurityList } from "@tradingpost/common/api/entities/interfaces"
 import { Avatar, Icon } from "@ui-kitten/components"
-import React, { PropsWithChildren, useEffect, useState } from "react"
-import { View, Text, Pressable } from "react-native"
+import React, { PropsWithChildren, useEffect, useRef, useState } from "react"
+import { View, Text, Pressable, ScrollView, useWindowDimensions, Animated, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
 import { useToast } from "react-native-toast-notifications"
 import { useAppUser } from "../Authentication"
 import { EditButton, FavButton } from "../components/AddButton"
@@ -15,9 +15,10 @@ import { ITableColumn, Table } from "../components/Table"
 import { TextField } from "../components/TextField"
 import { AppColors } from "../constants/Colors"
 import { AllPages, TabScreenProps } from "../navigation"
-import { elevated, flex, paddView, paddViewWhite, row, sizes } from "../style"
+import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../style"
 import { useSecuritiesList} from '../SecurityList'
 import { toDollarsAndCents } from "../utils/misc"
+import { MultiTermFeedPart } from "../components/MultiTermFeed"
 
 
 export const useNoteField = (hideEmptyNote?: boolean) => {
@@ -127,7 +128,7 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                         return (new Date(Date.parse(c.price.time))).toLocaleDateString() || "-"
                     }
                     else {
-                        return null;
+                        return "-";
                     }
                 }
             },
@@ -142,59 +143,132 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
     const [watchlist, setWatchlist] = useState<IWatchlistGetExt>()
     const watchlistId = props.route?.params?.watchlistId;
     const [isSaved, setIsFav] = useState(false)
+    const [watchlistTickers, setWatchlistTickers] = useState<string[]>();
     const { appUser } = useAppUser();
+    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const { shownMap, columns } = useWatchlistItemColumns(watchlist?.user[0].id !== appUser?.id);
+    const translateHeaderY = useRef(new Animated.Value(0)).current;
+    const scrollRef = useRef<FlatList>(null);
+    const headerHeight = 154+311+74 + 5;
+    const minViewHeight = windowHeight - headerHeight;
+    const [collapsed, setCollapsed] = useState(false);
+    const [isMaxed, setIsMaxed] = useState(false);
+    const clampMax = headerHeight - ( sizes.rem1 + Number(elevated.paddingVertical) + Number(elevated.marginBottom) + sizes.rem1 + fonts.large ) ; 
+    const translation = translateHeaderY.interpolate({
+        inputRange: [0, clampMax],
+        outputRange: [0, -clampMax],
+        extrapolate: 'clamp',
+    });
+    useEffect(() => {
+        translation.addListener((v: { value: number }) => {
+            const c = Math.abs(v.value + clampMax) < 25;
+            const isMaxed = -v.value === clampMax;
+            setCollapsed(c);
+            setIsMaxed(isMaxed);
+        });
+        return () => translation.removeAllListeners();
+    }, [translation, clampMax]);
 
     const toast = useToast();
     useEffect(() => {
-        if (watchlistId)
-            WatchlistApi.get(watchlistId).then((w) => {
-                setIsFav(w.is_saved)
-                setWatchlist(w as IWatchlistGetExt);
-            })
-    }, [watchlistId])
-    return <View style={paddView}>
-        <ElevatedSection title={watchlist?.name || ""} button={(_p) => {
-            return watchlist?.user[0].id === appUser?.id ? <EditButton {..._p} onPress={() => {
-                props.navigation.navigate("WatchlistEditor", {
-                    watchlistId: watchlistId
-                })
-            }} /> : <FavButton
-                isSelected={isSaved}
-                {..._p}
-                onPress={() => {
-                    if (watchlistId) {
-                        Api.Watchlist.extensions.saveWatchlist({
-                            id: watchlistId,
-                            is_saved: !isSaved
-                        })
-                        setIsFav(f => !f);
-                        toast.show("Watchlist Added")
+        (async () => {
+            try {
+                if (watchlistId) {
+                    const w = await WatchlistApi.get(watchlistId)
+                        setIsFav(w.is_saved)
+                        setWatchlist(w as IWatchlistGetExt);               
                     }
-                }}
-            />
-        }}>
-
-            <ProfileBar user={watchlist?.user[0]} />
-            <Text style={[{ marginVertical: sizes.rem0_5 }, !watchlist?.note ? { color: "#ccc", fontStyle: "italic" } : undefined]}>{watchlist?.note || "No Notes"}</Text>
-        </ElevatedSection>
-        <ElevatedSection title="Items" >
-            <Table
-                data={watchlist?.items}
-                columns={columns}
-                renderAuxItem={(info) => {
-                    return shownMap[info.index] && watchlist ?
-                        <NoteEditor note={info.item.note} onChangeNote={(note) => {
-                            info.item.note = note;
-                        }} canEdit={watchlist?.user[0].id === appUser?.id} ticker={info.item.symbol} watchlistId={watchlist.id} />
-                        : null
-                }}
-
-
-            />
-        </ElevatedSection>
-        <ElevatedSection title="Comments"></ElevatedSection>
-    </View >
+            } catch(err) {
+                console.error(err);
+            }
+        })()
+    }, [watchlistId])
+    useEffect(()=> {
+        if (watchlist) {
+            setWatchlistTickers(watchlist.items.map(a => `$${a.symbol}`))
+        }
+    },[watchlist])
+    return <View style={[flex]}> 
+    <Animated.FlatList
+        data={[
+        <View style={[{ paddingHorizontal: 0, minHeight: minViewHeight }]}>
+            {watchlistTickers && <MultiTermFeedPart key={watchlistTickers ? watchlistTickers.join() : "___"} searchText={watchlistTickers}/>}
+        </View>
+        
+        ]}
+        renderItem={(info) => {
+            return info.item;
+        }}
+        ref={scrollRef} contentContainerStyle={[{ paddingTop: headerHeight }]} nestedScrollEnabled
+        onMomentumScrollEnd={(ev) => {
+            if (collapsed && !isMaxed) {
+                scrollRef.current?.scrollToOffset({ offset: clampMax, animated: true });
+                setIsMaxed(true);
+            }
+        }}
+        onScroll={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
+            { nativeEvent: { contentOffset: { y: translateHeaderY } } }
+        ], { useNativeDriver: true })}>
+        </Animated.FlatList>
+        <Animated.View style={{ position: "absolute", paddingTop: sizes.rem0_5, backgroundColor: AppColors.background, transform: [{ translateY: translation }], alignItems: "stretch", width: "100%" }}>
+            <View style={[
+                //collapsed ? {display: 'none'} : {display: 'flex'}, 
+                { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                <ElevatedSection 
+                    title={watchlist?.name || ""} 
+                    button={(_p) => {
+                        return watchlist?.user[0].id === appUser?.id ? <EditButton {..._p} onPress={() => {
+                            props.navigation.navigate("WatchlistEditor", {
+                                watchlistId: watchlistId
+                            })
+                        }} /> : <FavButton
+                            isSelected={isSaved}
+                            {..._p}
+                            onPress={() => {
+                                try {
+                                    if (watchlistId) {
+                                        Api.Watchlist.extensions.saveWatchlist({
+                                            id: watchlistId,
+                                            is_saved: !isSaved
+                                        })
+                                        setIsFav(f => !f);
+                                        toast.show("Watchlist Added")
+                                    }
+                                } catch (err) {
+                                    console.error(err);
+                                }
+                            }}
+                        />
+                    }}>
+                    <ProfileBar user={watchlist?.user[0]} />
+                    <Text style={[{ marginVertical: sizes.rem0_5 }, !watchlist?.note ? { color: "#ccc", fontStyle: "italic" } : undefined]}>{watchlist?.note || "No Notes"}</Text>
+                </ElevatedSection>
+            </View>
+            <View style={[
+                //collapsed ? {display: 'none'} : {display: 'flex'}, 
+                { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                <ElevatedSection title="Items" >
+                    <Table
+                        listKey="watchlist_items"
+                        data={watchlist?.items}
+                        columns={columns}
+                        renderAuxItem={(info) => {
+                            return shownMap[info.index] && watchlist ?
+                                <NoteEditor note={info.item.note} onChangeNote={(note) => {
+                                    info.item.note = note;
+                                }} canEdit={watchlist?.user[0].id === appUser?.id} ticker={info.item.symbol} watchlistId={watchlist.id} />
+                                : null
+                        }}
+                    />
+                </ElevatedSection>
+            </View>
+            <View style={[
+                //collapsed ? {display: 'flex'} : {display: 'flex'},
+                { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                <ElevatedSection title="Watchlist Posts"></ElevatedSection>
+            </View>
+        </Animated.View>
+    </View>
 }
 
 const NoteEditor = (props: { canEdit: boolean, note: string | undefined, ticker: string, watchlistId: number, onChangeNote: (note: string) => void }) => {

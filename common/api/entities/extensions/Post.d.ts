@@ -7,6 +7,10 @@ export default class extends Extension {
         bookmarkedOnly?: boolean | undefined;
         data?: Record<string, string | number | (string | number)[]> | undefined;
     }) => Promise<IElasticPostExt[]>;
+    multitermfeed: (settings: {
+        page: number;
+        data?: Record<string, string | number | (string | number)[]> | undefined;
+    }) => Promise<IElasticPostExt[]>;
     getUpvotes: (settings: {
         id: string;
         count: number;
