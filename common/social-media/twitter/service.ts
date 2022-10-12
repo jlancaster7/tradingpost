@@ -28,13 +28,13 @@ export default class TwitterService {
     importTweets = async () => {
         if (this.elasticSrv === undefined) throw new Error("initialize elastic")
         const twitterIds = await this.repository.getTwitterUsers();
-        let tweetIds: string[] = [];
+
         for (let i = 0; i < twitterIds.length; i++) {
             const [results] = await this.twitter.importTweets(twitterIds[i].twitter_user_id, twitterIds[i].access_token);
-            results.forEach(result => tweetIds.push(result.tweet_id));
+            const tweetsAndUsers = await this.repository.getTweetsAndUsersByTweetIds(results.map(result => result.tweet_id));
+            if (tweetsAndUsers.length <= 0) continue;
+            await this.elasticSrv.ingest(this.map(tweetsAndUsers));
         }
-        const tweetsAndUsers = await this.repository.getTweetsAndUsersByTweetIds(tweetIds);
-        await this.elasticSrv.ingest(this.map(tweetsAndUsers));
     }
 
     exportTweetsAndUsers = async (lastId: number): Promise<TweetsAndUsersTable[]> => {

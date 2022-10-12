@@ -31,18 +31,15 @@ let browser: Browser;
 
 const runLambda = async () => {
     if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
-        const chromium = require('@sparticuz/chrome-aws-lambda');
+        const chromium = require('@sparticuz/chromium');
+        const puppeteer = require('puppeteer-core');
+
         // @ts-ignore
-        browser = await chromium.puppeteer.launch({
-            // @ts-ignore
+        browser = await puppeteer.launch({
             args: chromium.args,
-            // @ts-ignore
             defaultViewport: chromium.defaultViewport,
-            // @ts-ignore
             executablePath: await chromium.executablePath,
-            // @ts-ignore
             headless: chromium.headless,
-            // @ts-ignore
             ignoreHTTPSErrors: true,
         });
     }

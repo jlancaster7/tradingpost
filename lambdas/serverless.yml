@@ -18,7 +18,8 @@ custom:
     platform: node
     target: 'node16'
     external:
-      - '@sparticuz/chrome-aws-lambda'
+      - '@sparticuz/chromium'
+      - 'puppeteer-core'
     exclude:
       - pg-native
 

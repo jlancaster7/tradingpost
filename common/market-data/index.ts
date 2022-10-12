@@ -68,19 +68,19 @@ export default class MarketData {
         for (let j = 0; j < securityGroup.length; j++) {
             const sec = securityGroup[j];
             let eodPrice = {
-                id: sec.isEodId,
-                price: sec.isEodPrice,
-                low: sec.isEodLow,
-                high: sec.isEodHigh,
-                open: sec.isEodOpen,
+                id: sec.eodId,
+                price: sec.price,
+                low: sec.low,
+                high: sec.high,
+                open: sec.open,
                 isEod: true,
                 isIntraday: false,
-                securityId: sec.id,
+                securityId: sec.securityId,
                 time: todayAt400pm,
                 isNew: true
             }
 
-            if (sec.isEodTime && sec.isEodTime.setZone("America/New_York").toUnixInteger() >= todayAt930am.toUnixInteger()) {
+            if (sec.time && sec.time.setZone("America/New_York").toUnixInteger() >= todayAt930am.toUnixInteger()) {
                 eodPrice.isNew = false;
             }
 
@@ -100,7 +100,7 @@ export default class MarketData {
 
             const close = iexSecurityOhlc.close ? iexSecurityOhlc.close.price : eodPrice.price;
             if (eodPrice.isNew) newEodPrices = [...newEodPrices, {
-                securityId: sec.id,
+                securityId: sec.securityId,
                 price: close!,
                 low: iexSecurityOhlc.low ? iexSecurityOhlc.low : close,
                 isEod: true,
@@ -111,7 +111,7 @@ export default class MarketData {
             }]
             else oldEodPrices = [...oldEodPrices, {
                 id: eodPrice.id!,
-                securityId: sec.id,
+                securityId: sec.securityId,
                 price: close!,
                 low: iexSecurityOhlc.low ? iexSecurityOhlc.low : close,
                 isEod: true,
@@ -203,7 +203,7 @@ export default class MarketData {
                 [newEodPrices, oldEodPrices] = await this.processEndOfDayPricing(response, [sec], newEodPrices, oldEodPrices)
             } catch (err) {
                 if (err instanceof PermissionRequiredError) {
-                    await this.repository.updateSecurityUtp(sec.id, true);
+                    await this.repository.updateSecurityUtp(sec.securityId, true);
                     continue
                 }
                 console.error(`fetching ohlc prices from iex for symbol=${sec.symbol}`)
@@ -225,7 +225,7 @@ export default class MarketData {
                 [newSecurityPrices, newEodPrices, oldEodPrices] = await this.processIntradayPrices(response, [sec], newSecurityPrices, newEodPrices, oldEodPrices)
             } catch (err) {
                 if (err instanceof PermissionRequiredError) {
-                    await this.repository.updateSecurityUtp(sec.id, true);
+                    await this.repository.updateSecurityUtp(sec.securityId, true);
                     continue
                 }
                 console.error(`fetching intraday prices from iex for symbol=${sec.symbol}`)
@@ -246,22 +246,22 @@ export default class MarketData {
         for (let j = 0; j < securityGroup.length; j++) {
             const security = securityGroup[j];
             let eodPrice = {
-                id: security.isEodId,
-                securityId: security.id,
-                price: security.isEodPrice,
+                id: security.eodId,
+                securityId: security.securityId,
+                price: security.price,
                 time: today930,
-                high: security.isEodPrice,
-                low: security.isEodPrice,
-                open: security.isEodPrice,
-                close: security.isEodPrice,
+                high: security.price,
+                low: security.price,
+                open: security.price,
+                close: security.price,
                 isIntraday: false,
                 isEod: true,
                 isNew: true
             }
 
-            if (security.isEodTime && security.isEodTime.setZone("America/New_York").toUnixInteger() >= today930.toUnixInteger()) {
+            if (security.time && security.time.setZone("America/New_York").toUnixInteger() >= today930.toUnixInteger()) {
                 eodPrice.isNew = false;
-                eodPrice.time = security.isEodTime.setZone("America/New_York");
+                eodPrice.time = security.time.setZone("America/New_York");
             }
 
             const iexSecurity = response[security.symbol];
@@ -277,7 +277,7 @@ export default class MarketData {
             }
 
             let latestTime: DateTime | null = null;
-            if (security.latestTime) latestTime = security.latestTime.setZone("America/New_York")
+            if (security.time) latestTime = security.time.setZone("America/New_York")
 
             iexSecurityPrices.forEach(iexSecPrice => {
                 const t = DateTime.fromFormat(`${iexSecPrice.date} ${iexSecPrice.minute}`, "yyyy-LL-dd HH:mm", {
@@ -287,11 +287,11 @@ export default class MarketData {
                 if (!t.isValid) return;
                 if (t.hour === 16) return;
                 if (latestTime && latestTime.toUnixInteger() > t.toUnixInteger()) return;
-                if (security.latestPrice === null && iexSecPrice.close === null) return;
+                if (security.price === null && iexSecPrice.close === null) return;
 
                 let high = iexSecPrice.high,
                     low = iexSecPrice.low,
-                    close = (iexSecPrice.close !== null ? iexSecPrice.close : security.latestPrice)!,
+                    close = (iexSecPrice.close !== null ? iexSecPrice.close : security.price)!,
                     open = iexSecPrice.open;
 
                 if (high === null) high = close
@@ -299,7 +299,7 @@ export default class MarketData {
                 if (open === null) open = close
 
                 newSecurityPrices = [...newSecurityPrices, {
-                    securityId: security.id,
+                    securityId: security.securityId,
                     high: high,
                     low: low,
                     open: open,
