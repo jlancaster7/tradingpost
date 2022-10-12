@@ -73,7 +73,8 @@ export const stringyDate = (dts?: string) => {
 
 
 export type TableProps<T> = {
-    maxPage?: number
+    maxPage?: number,
+    listKey?: string,
     columns: ITableColumn<T>[],
     elevated?: boolean,
     nestedScrollEnabled?: boolean,
@@ -129,6 +130,7 @@ export function Table<T>(
         maxDisaplyCount={props.maxDisaplyCount}
         maxDisaplyText={props.maxDisaplyText}
         keyExtractor={props.keyExtractor}
+        listKey={props.listKey}
         ListHeaderComponent={props.hideHeader ? undefined : () => {
             return <View key={"table_header"} style={{ alignItems: "stretch" }}>
                 <View style={[row, { backgroundColor: "white" }]}>

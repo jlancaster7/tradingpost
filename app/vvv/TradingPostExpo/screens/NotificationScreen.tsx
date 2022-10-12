@@ -204,7 +204,7 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                     <Text style={{marginRight: 10}}>
                         {dtFmt}
                     </Text>
-                    <Text>
+                    <Text style={{flex: 1, flexWrap: 'wrap'}}>
                         <Text
                             style={{fontWeight: "bold"}}>@{props.response.data.handle}</Text>{' '}{props.response.data.message}
                     </Text>
@@ -216,8 +216,12 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                             minHeight: 26,
                             height: 26,
                             minWidth: 70,
-                            width: 70,
-                            justifyContent: 'center'
+                            //width: 70,
+                            alignSelf: "center",
+                            paddingTop: 0,
+                            paddingBottom: 0,
+                            paddingLeft: 0,
+                            paddingRight: 0
                         }}
                         onPress={async () => {
                             await Api.Subscriber.update(props.response.data.subscriber_id, {

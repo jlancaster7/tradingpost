@@ -24,6 +24,7 @@ export function DrawerPart() {
 
     return appUser ? <Drawer.Navigator useLegacyImplementation={true} drawerContent={(props) => <SideMenu appUser={appUser} {...props} />}
         screenOptions={({ route, navigation }) => ({
+            animation: 'none',
             headerTitleAlign: "center",
             headerTitle: HeaderTp,
             headerRight: (() => {

@@ -21,6 +21,7 @@ export type SizeParts = { index: number, length: number, offset: number };
 export function List<T, U>(props: {
     //    data: ReadonlyArray<T> | null | undefined
     maxPage?: number,
+    listKey?: string,
     renderItem: ListRenderItem<HasU<T, U>> | null | undefined
     nestedScrollEnabled?: boolean,
     preloadOffset?: number,
@@ -124,6 +125,7 @@ export function List<T, U>(props: {
 
     return !internalData?.length ? <NoDataPanel message={internalData ? props.noDataMessage : (props.loadingMessage || "Loading...")} /> :
         <FlatList
+            listKey={props.listKey}
             style={[{
                 //    height: "100%" 
             }, props.style]}

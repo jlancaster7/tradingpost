@@ -34,6 +34,7 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
         nav.navigate("WatchlistEditor")
     }} /> : undefined}>
         <Table
+            listKey={props.title}
             noDataMessage={props.shared ? "No Shared Watchlists" : "No Watchlists"}
             columns={[
                 ...fields,

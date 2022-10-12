@@ -1,7 +1,7 @@
 import { Api } from "@tradingpost/common/api";
 import { AllWatchlists, IWatchlistGet, IWatchlistList } from "@tradingpost/common/api/entities/interfaces";
 import React, { useEffect, useState } from "react";
-import { ScrollView, TextStyle, View } from "react-native";
+import { Animated, ScrollView, TextStyle, View } from "react-native";
 import { AddButton, EditButton } from "../components/AddButton";
 import { Icon, Text } from '@ui-kitten/components'
 import { ElevatedSection, Section, Subsection } from "../components/Section";
@@ -149,15 +149,17 @@ export const PortfolioScreen = (props: TabScreenProps) => {
     if (twReturns) cummReturn = twReturns[twReturns.length - 1].y - 1;
     const { columns: watchlistItemColumns } = useWatchlistItemColumns(true)
     return <View style={[paddView]}>
-        <ScrollView>
-            <ElevatedSection key={"portfolio"} title="Portfolio">
-                <Subsection alt={true} title="Performance" style={(twReturns === undefined) ? {display: 'none'} : {display: 'flex'}}>
-                    <View style={{ marginBottom: sizes.rem1 }} >
+       <Animated.FlatList
+            key={'top_level_portfolio_screen'}
+            data={[
+            <ElevatedSection key={"portfolio_"} title="Portfolio">
+                <Subsection key={'pertformance_chart_section'} alt={true} title="Performance" style={(twReturns === undefined) ? {display: 'none'} : {display: 'flex'}}>
+                    <View key={'performance_chart'} style={{ marginBottom: sizes.rem1 }} >
                         {/*<LineHolder data={twReturns} />*/}
                         <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
                     </View>
                     <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
-                    <View style={[ portfolio ? {display: 'none'} : {display: 'flex'} , { borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2 }]}>
+                    <View key={'portfolio_stats'} style={[ portfolio ? {display: 'flex'} : {display: 'none'}  , { borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2 }]}>
                         <View key={"returns"} style={{ flexDirection: "row" }}>
                             {[
                                 { title: "Total Return", value: toPercent2(cummReturn) },
@@ -185,9 +187,11 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                         </View>
                     </View>
                 </Subsection>
-                <Subsection key="holdings" alt={true} title="Holdings" style={holdings ? {display: 'none'} : {display: 'flex'}}>{
+                <Subsection key="holdings" alt={true} title="Holdings" style={holdings ? {display: 'flex'} : {display: 'none'}}>{
                     <Table
+                        listKey="portfolio_holdings_table"
                         data={holdings}
+                        key={'holdings_table'}
                         columns={[
                             ...useMakeSecurityFields((item: Exclude<typeof holdings, undefined>[0]) => {
                                 return Number(item.security_id)
@@ -201,7 +205,9 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                 }</Subsection>
                 <Subsection key="trades" alt={true} title="Trades" style={!(holdings && twReturns && portfolio) ? {display: 'none'} : {display: 'flex'}}>
                     <LimitedTable
+                        listKey="portfolio_trades_table"
                         title="All Trades"
+                        key={'trades_table'}
                         maxPage={0}
                         tableProps={{
                             keyExtractor: (item, idx) => {
@@ -210,7 +216,6 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                             data: (async (a, $page) => {
                                 const newArr = a || [];
                                 newArr.push(... (await Api.User.extensions.getTrades({ $page, settings: {} })))
-                                console.log(JSON.stringify(newArr))
                                 return newArr;
                             }) as DataOrQuery<TradeReturnType[0]>,
                             columns: [
@@ -229,7 +234,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                                {fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}]}>
                         {"You haven't linked a brokerage to TradingPost. Go to your Account page in the Side Menu and Link one today!"}
                 </Text>
-            </ElevatedSection>
+            </ElevatedSection>,
             <ElevatedSection key={"quick_watch"} title="Quick Watch"
                 button={(_p) => {
                     return watchlists?.quick.id ?
@@ -250,37 +255,26 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                     columns={watchlistItemColumns}
                     data={quickWatchlist?.items}
                 />
-            </ElevatedSection>
+            </ElevatedSection>,
             <WatchlistSection
                 title="My Watchlists"
                 key={"my_watchlist"}
                 watchlists={watchlists?.created}
                 showAddButton
                 hideNoteOnEmpty
-            />
+            />,
             <WatchlistSection
                 title="Shared Watchlists"
                 key={"shared_watchlist"}
                 watchlists={watchlists?.saved}
                 shared
             />
-            {/* <ElevatedSection key={"saved_watchlists"} title="Saved Watchlists">
-                <Table
-                    noDataMessage="No saved watchlists"
-                    data={watchlists?.saved}
-                    rowPressed={(info) => {
-                        props.navigation.navigate("Watchlist", {
-                            watchlistId: info.id
-                        })
-                    }}
-                    columns={[
-                        
-                        
-                    ]}
-
-                />
-            </ElevatedSection> */}
-        </ScrollView>
+            ]}
+            renderItem={(info) => {
+                return info.item;
+            }}
+            >
+        </Animated.FlatList>
     </View >
 
 }
