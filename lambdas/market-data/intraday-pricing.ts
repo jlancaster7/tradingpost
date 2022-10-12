@@ -53,7 +53,10 @@ const runLambda = async () => {
     const marketHolidays = new Holidays(repository);
 
     const currentTime = DateTime.now().setZone("America/New_York")
-    if (currentTime.hour > 9 || currentTime.hour > 16) return
+    const time930Am = DateTime.now().setZone("America/New_York").set({minute: 30, second: 0, millisecond: 0, hour: 9})
+    const time400pm = DateTime.now().setZone("America/New_York").set({minute: 0, second: 0, millisecond: 0, hour: 16})
+    if (currentTime.toUnixInteger() < time930Am.toUnixInteger()) return;
+    if (currentTime.toUnixInteger() > time400pm.toUnixInteger()) return;
     if (!await marketHolidays.isTradingDay(currentTime)) return
 
     try {

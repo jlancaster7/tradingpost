@@ -94,61 +94,49 @@ export default class Repository {
 
     getUsExchangeListedSecuritiesWithPricing = async (): Promise<getSecurityWithLatestPrice[]> => {
         const data = await this.db.query(`
-            WITH latest_pricing AS (SELECT sp.security_id,
+            WITH latest_pricing AS (SELECT sp.id,
+                                           sp.security_id,
                                            sp.time,
-                                           sp.price
+                                           sp.price,
+                                           sp."open",
+                                           sp.low,
+                                           sp.high
                                     FROM security_price sp
                                              INNER JOIN (SELECT security_id,
                                                                 max(time) time
                                                          FROM security_price security_price
                                                          WHERE time > NOW() - INTERVAL '5 Days'
-                                                           AND is_eod = true
+                                                           AND is_eod = TRUE
                                                          GROUP BY security_id) AS max_prices
                                                         ON
                                                                     max_prices.security_id = sp.security_id
                                                                 AND max_prices.time = sp.time
-                                    WHERE is_eod = TRUE),
-                 eod_pricing AS (SELECT sp.id,
-                                        sp.security_id,
-                                        sp.high,
-                                        sp.low,
-                                        sp.open,
-                                        sp.price,
-                                        sp.time
-                                 FROM security_price sp
-                                 WHERE sp.time >
-                                       concat(current_date, ' 00:00:00-04')::timestamptz at time zone 'America/New_York'
-                                   AND is_eod = TRUE)
-            SELECT s.id,
+                                    WHERE is_eod = TRUE)
+            SELECT s.id     AS security_id,
                    s.symbol,
-                   lp.time  as latest_time,
-                   lp.price as latest_price,
-                   ep.id    as ep_id,
-                   ep.high  as ep_high,
-                   ep.low   as ep_low,
-                   ep.open  as ep_open,
-                   ep.price as ep_price,
-                   ep.time  as ep_time
+                   lp.time  AS time,
+                   lp.price AS price,
+                   lp.high  AS high,
+                   lp.low   AS low,
+                   lp.open  AS open,
+                   lp.id    AS eod_id
             FROM SECURITY s
-                     left JOIN
+                     LEFT JOIN
                  latest_pricing lp ON
                      s.id = lp.security_id
-                     left JOIN eod_pricing ep ON s.id = ep.security_id
             WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
               AND enable_utp = FALSE;`)
         return data.map((row: any) => {
             let obj: getSecurityWithLatestPrice = {
-                id: row.id,
+                securityId: row.security_id,
                 symbol: row.symbol,
-                latestTime: DateTime.fromJSDate(row.latest_time),
-                latestPrice: row.latest_price,
-                isEodLow: row.ep_low,
-                isEodHigh: row.ep_high,
-                isEodId: row.ep_id,
-                isEodPrice: row.ep_price,
-                isEodOpen: row.ep_open,
-                isEodTime: DateTime.fromJSDate(row.ep_time)
+                time: DateTime.fromJSDate(row.time),
+                price: row.price,
+                high: row.high,
+                low: row.low,
+                open: row.open,
+                eodId: row.eod_id
             }
             return obj
         })

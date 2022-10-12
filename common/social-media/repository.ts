@@ -315,7 +315,7 @@ export default class Repository {
                                                                     expiration = EXCLUDED.expiration,
                                                                     updated_at = EXCLUDED.updated_at
                                                                     `;
-        console.log(query);                                                                    
+        console.log(query);
         return await this.db.result(query);
     }
 
@@ -478,6 +478,7 @@ export default class Repository {
     }
 
     getTweetsAndUsersByTweetIds = async (tweetIds: string[]): Promise<TweetsAndUsers[]> => {
+        if(tweetIds.length <=0) return [];
         let query = `SELECT t.id                  AS id,
                             t.tweet_id            AS tweet_id,
                             t.twitter_user_id,
@@ -578,7 +579,8 @@ export default class Repository {
         });
     }
 
-    upsertTweets = async (formatedTweets: formatedTweet[]) => {
+    upsertTweets = async (formatedTweets: formatedTweet[]): Promise<number> => {
+        if (formatedTweets.length <= 0) return 0
         try {
             const cs = new this.pgp.helpers.ColumnSet([
                 {name: 'tweet_id', prop: 'tweet_id'},
