@@ -1,6 +1,9 @@
 
 import { DefaultConfig } from '../configuration'
 import pg from 'pg'
+import pgPromise from "pg-promise";
+import Finicity from "../finicity";
+import Brokerage from '../brokerage'
 //import { RequestSettings } from './EntityApi';
 
 const debug = true;
@@ -9,7 +12,7 @@ export const getHivePool = (async () => {
     let hive: pg.Pool
 
     const config = await DefaultConfig.fromCacheOrSSM("postgres");
-    hive = new pg.Pool(config);
+    hive = new pg.Pool({...config, max: 10});
     // {
     //     host: process.env.API_DB_HOST || config.host,
     //     user: process.env.API_DB_USER || config.user,
@@ -18,6 +21,35 @@ export const getHivePool = (async () => {
     //     port: process.env.API_DB_PORT ? Number(process.env.API_DB_PORT) : config.port
     // }
     return hive;
+})()
+
+export const init = (async () => {
+    const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
+    const pgp = pgPromise({});
+    const pgClient = pgp({
+        host: pgCfg.host,
+        user: pgCfg.user,
+        password: pgCfg.password,
+        database: pgCfg.database,
+        max: 10
+    });
+    let brokerage: Brokerage;
+
+    const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
+    const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
+    console.log("Start Init ")
+    await finicity.init();
+    brokerage = new Brokerage(pgClient, pgp, finicity);
+
+    console.log("Start Connection ")
+
+    await pgClient.connect();
+    console.log("Returning ");
+    return {
+        brokerage,
+        pgp,
+        pgClient
+    }
 })()
 
 
