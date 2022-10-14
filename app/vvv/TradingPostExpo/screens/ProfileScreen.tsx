@@ -149,13 +149,13 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
     return <View style={[flex]}>
         <Animated.FlatList
             data={[
-                <ProfilePage
-                    style={{ paddingHorizontal: 0 }} index={0} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
+                <ProfilePage key={'top_level_user_feed'} style={{ paddingHorizontal: 0 }} index={0} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
                     <FeedPart
+                        key={'user_feed'}
                         userId={userId}
                     />
                 </ProfilePage>,
-                <ProfilePage index={1} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
+                <ProfilePage key={'top_level_performance_holdings'} index={1} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
                     <ElevatedSection title="Performance">
                         <View style={( appUser?.id === user?.id && !twReturns) ? {display: 'none'} : { display: 'flex'} }>
                             <View style={displayPerformance ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
@@ -183,20 +183,21 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                             </View>
                             <View style={displayHoldings ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
                             <Table
-                                    keyExtractor={(item, idx) => {
-                                        return item ? "holding_" + idx : "empty";
-                                    }}
-                                    data={(async () => {
-                                        return await Api.User.extensions.getHoldings({userId: userId as string});
-                                    })}
-                                    columns={[
-                                        ...useMakeSecurityFields((item: any) => {
-                                            return Number(item.security_id)
-                                        }),
-                                        { alias:'% Owned', field: "value", stringify: toPercent2 },
-                                        { alias: 'Price', field: "price", stringify: toDollarsAndCents },
-                                        { alias:'Cost Basis', field: "cost_basis", stringify: (a,b,c) =>  (String(c.cost_basis) === 'n/a') ? String(c.cost_basis) : toDollarsAndCents(c.cost_basis) }
-                                    ]}
+                                listKey={'holdings_table'}
+                                keyExtractor={(item, idx) => {
+                                    return item ? "holding_" + idx : "empty";
+                                }}
+                                data={(async () => {
+                                    return await Api.User.extensions.getHoldings({userId: userId as string});
+                                })}
+                                columns={[
+                                    ...useMakeSecurityFields((item: any) => {
+                                        return Number(item.security_id)
+                                    }),
+                                    { alias:'% Owned', field: "value", stringify: toPercent2 },
+                                    { alias: 'Price', field: "price", stringify: toDollarsAndCents },
+                                    { alias:'Cost Basis', field: "cost_basis", stringify: (a,b,c) =>  (String(c.cost_basis) === 'n/a') ? String(c.cost_basis) : toDollarsAndCents(c.cost_basis) }
+                                ]}
                                 />
                             </View>
                         </View>
@@ -206,7 +207,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                     </ElevatedSection>
                     <WatchlistSection title="Watchlists" watchlists={watchlists} />
                 </ProfilePage>,
-                <ProfilePage index={2} minViewHeight={minViewHeight} manager={manager} currentIndex={tab} >
+                <ProfilePage key={'top_level_trades'} index={2} minViewHeight={minViewHeight} manager={manager} currentIndex={tab} >
                     <View style={displayTrades ? {display: 'none'} : {display: 'flex', height: '100%', justifyContent: "center", alignItems: 'center'} }>
                         <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
                             {`@${user?.handle} does not display their trades.`}
@@ -214,6 +215,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                     </View>
                     <ElevatedSection title="" style={displayTrades ? {display: 'flex'} : {display: 'none'}}>
                             <Table
+                                listKey={'trades_table'}
                                 keyExtractor={(item, idx) => {
                                     return item ? "trade_" + idx : "empty";
                                 }}
@@ -234,7 +236,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                         />
                     </ElevatedSection>
                 </ProfilePage>,
-                <ProfilePage index={3} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
+                <ProfilePage key={'top_level_about'} index={3} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
                     <ElevatedSection title="General">
                         <Subsection title="Biography" alt={true}>
                             <Text>{user?.bio}</Text>
@@ -286,7 +288,6 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
             ref={scrollRef} contentContainerStyle={[{ paddingTop: headerHeight }]} nestedScrollEnabled
             onMomentumScrollEnd={(ev) => {
                 if (collapsed && !isMaxed) {
-
                     scrollRef.current?.scrollToOffset({ offset: clampMax, animated: true });
                     setIsMaxed(true);
                 }
@@ -351,9 +352,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                                     setUser(undefined);
                                 }
                                 style=user.subscription.is_pending ? {backgroundColor: "#FFCE31", borderColor: "#FFCE31"} : {backgroundColor: "#EC5328", borderColor: "#EC5328"}
-                                    
                             }
-
                         }
                         else {
                             if (user?.subscription?.id) {
@@ -363,21 +362,16 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                             else {
                                 children = 'Become An Analyst'
                                 onPress = () => props.navigation.navigate("SubscriptionSettings")
-
                             }
-
                         }
-
                         return {
                             children,
                             onPress,
                             style
                         }
-
                     })()}
                 />}
             </View>
-            {/* </ElevatedSection> */}
             <ElevatedSection title="" style={{ marginHorizontal: sizes.rem1, marginTop: tabBarMargin }} >
                 <TabBar
                     indicatorStyle={{
@@ -398,9 +392,6 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
             </ElevatedSection>
         </Animated.View>
     </View>
-
-
-    {/* </ScrollView> */ }
 }
 
 function ProfilePage(props: { manager: boolean[], index: number, currentIndex: number, minViewHeight: number, children?: ReactNode, style?: ViewStyle }) {

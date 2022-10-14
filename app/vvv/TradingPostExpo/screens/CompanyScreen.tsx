@@ -37,13 +37,18 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
     const [portPeriod, setPortPeriod] = useState("1Y")
     const [tab, setTab] = useState(0);
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-    const translateHeaderY = useRef(new Animated.Value(0)).current;
     const scrollRef = useRef<FlatList>(null);
-    const headerHeight = 680;
+    const translateHeaderY = useRef(new Animated.Value(0)).current;
+    /*
+    
+    let headerHeight =  sizes.rem0_5 * 3 +  fonts.small * 2 + 
+                        sizes.rem0_5 * 3 + sizes.rem1 * 2 + fonts.small * 2 + ((9 / 16) * windowWidth) + sizes.rem0_5 + sizes.rem1 + 42 +
+                        ( Number(elevated.paddingVertical) + Number(elevated.marginBottom) + sizes.rem1 + fonts.large ) + (description ? 100 : 0) + sizes.rem1 + sizes.rem0_5
+    //const headerHeight = 680;
     const minViewHeight = windowHeight - headerHeight;
     const [collapsed, setCollapsed] = useState(false);
     const [isMaxed, setIsMaxed] = useState(false);
-    const clampMax = headerHeight - ( Number(elevated.paddingVertical) + Number(elevated.marginBottom) + sizes.rem1 + fonts.large ) ; 
+    const clampMax = headerHeight //- ( Number(elevated.paddingVertical) + Number(elevated.marginBottom) + sizes.rem1 + fonts.large ) ; 
     //console.log(clampMax);
     const translation = translateHeaderY.interpolate({
         inputRange: [0, clampMax],
@@ -60,7 +65,7 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
         });
         return () => translation.removeAllListeners();
     }, [translation, clampMax]);
-
+    */
     useEffect(() => {
         Api.Security.get(securityId)
             .then((s) => {
@@ -81,104 +86,101 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
 
     }, [securityId, portPeriod])
 
-
     return <View style={flex}>
         <Animated.FlatList
             data={[
-                
-                <View style={[{ paddingHorizontal: 0, minHeight: minViewHeight }]}>
+                <View style={{ paddingTop: sizes.rem0_5, backgroundColor: AppColors.background, 
+                    //transform: [{ translateY: translation }], 
+                    alignItems: "stretch", width: "100%" }}>
+                    <View style={[
+                        //collapsed ? {display: 'none'} : {display: 'flex'}, 
+                        { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                        <ElevatedSection key={"Company"} title="">
+                            <View style={[row, { marginVertical: sizes.rem0_5 }]}>
+                                <Avatar source={{ uri: security?.logo_url }} style={{ marginRight: sizes.rem0_5 }} />
+                                <View style={flex}>
+                                    <Text>{security?.symbol}</Text>
+                                    <Text>{security?.company_name}</Text>
+                                </View>
+                                <View>
+                                    <FavButton height={24} width={24} isSelected={isFav}  onPress={() => {
+                                    if (security) {
+                                        Api.Security.extensions.quickadd({
+                                            add: !isFav,
+                                            ticker: security?.symbol
+                                        })
+                                        setIsFav(!isFav);
+                                    }
+                                }} />
+                                <Text>{toDollarsAndCents(security?.price?.price)}</Text>
+                                </View>
+                            </View>
+                            <View style={[row, { marginVertical: sizes.rem0_5 }]}>
+                                <Text style={flex} category={"label"}>Open</Text>
+                                <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.price?.open)}</Text>
+                                <Text style={flex} category={"label"}>52 Wk High</Text>
+                                <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.week_52_high)}</Text>
+                            </View>
+                            <View style={[row, { marginBottom: sizes.rem1 }]}>
+                                <Text style={flex} category={"label"}>Close</Text>
+                                <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.price?.price)}</Text>
+                                <Text style={flex} category={"label"}>52 Wk Low</Text>
+                                <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.week_52_low)}</Text>
+                            </View>
+                            <View style={{ marginBottom: sizes.rem1 }} >
+                                <InteractiveChart data={securityPrices} performance={false} />
+                            </View>
+
+                            <ButtonGroup key={"period"} 
+                                items={["1D", "1W", "1M", "3M", "1Y", "5Y", "Max"].map(v => ({ label: v, value: v }))} 
+                                onValueChange={(v) => setPortPeriod(v)} 
+                                value={portPeriod} 
+                            />
+                            <Text numberOfLines={5} style={{}}>{description}</Text>
+                        </ElevatedSection >
+                    </View>
+                    <View style={[
+                        //collapsed ? {display: 'flex'} : {display: 'flex'},
+                        { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                        <ElevatedSection title="" style={{marginBottom: sizes.rem0_5}} >
+                            <TabBar
+                                key={"company_tabBar"}
+                                indicatorStyle={{
+                                    marginTop: 26,
+                                    marginHorizontal: 10
+                                }}
+                                style={{width: "100%", marginHorizontal: 0 }}
+                                selectedIndex={tab}
+                                onSelect={t => {
+                                    setTab(t);
+                                }}>
+                                {["Posts", "Analysts"].map(t => <Tab key={"tab_id" + t} style={{ marginTop: -4 }} title={t} />)}
+                            </TabBar>
+                        </ ElevatedSection>
+                    </View>
+                </View>,
+                <View style={[{ paddingHorizontal: 0 }]}>
                     {security && <FeedPart searchText={`$${security?.symbol}`} />}
                 </View>
             ]}
             renderItem={(info) => {
                 return info.item;
             }}
-            ref={scrollRef} contentContainerStyle={[{ paddingTop: headerHeight }]} nestedScrollEnabled
+            ref={scrollRef} contentContainerStyle={[{ paddingTop: 0 }]} nestedScrollEnabled
+            /*
             onMomentumScrollEnd={(ev) => {
                 if (collapsed && !isMaxed) {
                     scrollRef.current?.scrollToOffset({ offset: clampMax, animated: true });
                     setIsMaxed(true);
                 }
             }}
-            
+            </View>
+            */
             onScroll={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
                 { nativeEvent: { contentOffset: { y: translateHeaderY } } }
             ], { useNativeDriver: true })}
             >
         </Animated.FlatList>
-        <Animated.View style={{ position: "absolute", paddingTop: sizes.rem0_5, backgroundColor: AppColors.background, transform: [{ translateY: translation }], alignItems: "stretch", width: "100%" }}>
-            <View style={[
-                //collapsed ? {display: 'none'} : {display: 'flex'}, 
-                { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
-                <ElevatedSection key={"Company"} title="Company" 
-                    button={(p) => {
-                        return <FavButton {...p} isSelected={isFav} onPress={() => {
-                            if (security) {
-                                Api.Security.extensions.quickadd({
-                                    add: !isFav,
-                                    ticker: security?.symbol
-                                })
-                                setIsFav(!isFav);
-                            }
-                        }} />
-                    }}
-                >
-                    <View style={[row, { marginBottom: sizes.rem0_5 }]}>
-                        <Avatar source={{ uri: security?.logo_url }} style={{ marginRight: sizes.rem0_5 }} />
-                        <View style={flex}>
-                            <Text>{security?.symbol}</Text>
-                            <Text>{security?.company_name}</Text>
-                        </View>
-                        <View>
-                            <Text>{toDollarsAndCents(security?.price?.price)}</Text>
-                            <Text></Text>
-                        </View>
-                    </View>
-                    <View style={[row, { marginVertical: sizes.rem0_5 }]}>
-                        <Text style={flex} category={"label"}>Open</Text>
-                        <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.price?.open)}</Text>
-                        <Text style={flex} category={"label"}>52 Wk High</Text>
-                        <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.week_52_high)}</Text>
-                    </View>
-                    <View style={[row, { marginBottom: sizes.rem1 }]}>
-                        <Text style={flex} category={"label"}>Close</Text>
-                        <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.price?.price)}</Text>
-                        <Text style={flex} category={"label"}>52 Wk Low</Text>
-                        <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.week_52_low)}</Text>
-                    </View>
-                    <View style={{ marginBottom: sizes.rem1 }} >
-                        <InteractiveChart data={securityPrices} performance={false} />
-                    </View>
-
-                    <ButtonGroup key={"period"} 
-                        items={["1D", "1W", "1M", "3M", "1Y", "5Y", "Max"].map(v => ({ label: v, value: v }))} 
-                        onValueChange={(v) => setPortPeriod(v)} 
-                        value={portPeriod} 
-                    />
-
-                    <Text style={{  }}>{description}</Text>
-                </ElevatedSection >
-            </View>
-            <View style={[
-                //collapsed ? {display: 'flex'} : {display: 'flex'},
-                { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
-                <ElevatedSection title=""  >
-                    <TabBar
-                        key={"company_tabBar"}
-                        indicatorStyle={{
-                            marginTop: 26,
-                            marginHorizontal: 10
-                        }}
-                        style={{width: "100%", marginHorizontal: 0 }}
-                        selectedIndex={tab}
-                        onSelect={t => {
-                            setTab(t);
-                        }}>
-                        {["Posts", "Analysts"].map(t => <Tab key={"tab_id" + t} style={{ marginTop: -4 }} title={t} />)}
-                    </TabBar>
-                </ ElevatedSection>
-            </View>
-        </Animated.View>
     </View >
 
 
