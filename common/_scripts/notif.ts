@@ -21,3 +21,23 @@
 //     const res = await apnProvider.send(note, t)
 //     console.log(res.failed);
 // })();
+
+// FCM Notifications
+/////////////////////
+// await fetch('https://fcm.googleapis.com/fcm/send', {
+//     method: 'POST',
+//     headers: {
+//         'Content-Type': 'application/json',
+//         Authorization: `key=<FCM-SERVER-KEY>`,
+//     },
+//     body: JSON.stringify({
+//         to: '<NATIVE-DEVICE-PUSH-TOKEN>',
+//         priority: 'normal',
+//         data: {
+//             experienceId: '@yourExpoUsername/yourProjectSlug',
+//             scopeKey: '@yourExpoUsername/yourProjectSlug',
+//             title: "📧 You've got mail",
+//             message: 'Hello world! 🌐',
+//         },
+//     }),
+// });
