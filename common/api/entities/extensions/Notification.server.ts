@@ -20,7 +20,7 @@ export default ensureServerExtensions<Notification>({
 
         const limit = req.body.limit && req.body.limit > 0 ? req.body.limit : 30;
         const offset = (req.body.page ? req.body.page : 0) * limit;
-        
+
         const results = await
             pool.query<{ id: number, user_id: string, type: string, date_time: Date, data: Record<string, any> }>(
                 query, [req.extra.userId, limit, offset]
@@ -64,7 +64,8 @@ export default ensureServerExtensions<Notification>({
                                 ON
                                     subscriber.subscription_id = SUBSCRIPTION.id
             WHERE subscriber.user_id = $1
-              AND SECURITY_TYPE NOT IN ('cashEquivalent') AND tt.type NOT IN ('cancel')
+              AND SECURITY_TYPE NOT IN ('cashEquivalent')
+              AND tt.type NOT IN ('cancel')
             ORDER BY date DESC
             LIMIT $2 OFFSET $3;`
         const limit = req.body.limit && req.body.limit > 0 ? req.body.limit : 30;
@@ -91,5 +92,25 @@ export default ensureServerExtensions<Notification>({
         });
 
         return res;
+    },
+    registerUserDevice: async (req) => {
+        try {
+            const {userId} = req.extra;
+            const {provider, deviceId, timezone} = req.body;
+            const pool = await getHivePool;
+            await pool.query("INSERT INTO user_device(user_id, provider, device_id, timezone) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING;", [userId, provider, deviceId, timezone]);
+        } catch (e) {
+            console.error(e)
+        }
+
+    },
+    updateUserDeviceTimezone: async (req) => {
+        try {
+            const {deviceId, timezone} = req.body;
+            const pool = await getHivePool;
+            await pool.query("UPDATE user_device SET timezone=$1 WHERE device_id=$2;", [timezone, deviceId])
+        } catch (e) {
+            console.error(e)
+        }
     }
 })

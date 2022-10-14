@@ -1,27 +1,28 @@
-import React, { useState, useRef, useEffect, RefObject, useMemo } from "react";
-import { Alert, TouchableOpacity, Image, ImageStyle, ViewStyle, View, Animated } from "react-native";
+import React, {useState, useRef, useEffect, RefObject, useMemo} from "react";
+import {Alert, TouchableOpacity, Image, ImageStyle, ViewStyle, View, Animated} from "react-native";
 //import { Navigation } from "react-native-navigation";
 //import { Nav } from '@react-navigation/native'
-import { Input, Text, } from "@ui-kitten/components";
+import {Input, Text,} from "@ui-kitten/components";
 //import { signOut, getStoredCreds, CreateAuth0User, UpdateUserProfile, signInStoredCreds } from "../../apis/Authentication";
-import { ButtonField } from "../../components/ButtonField";
-import { IconifyIcon } from "../../components/IconfiyIcon";
-import { Section } from "../../components/Section";
-import { TextField, ITextField } from "../../components/TextField";
-import { bannerText, flex, sizes, textInputWiz } from "../../style";
-import { bindTextInput, IEntity, useReadonlyEntity } from "../../utils/hooks";
-import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators";
+import {ButtonField} from "../../components/ButtonField";
+import {IconifyIcon} from "../../components/IconfiyIcon";
+import {Section} from "../../components/Section";
+import {TextField, ITextField} from "../../components/TextField";
+import {bannerText, flex, sizes, textInputWiz} from "../../style";
+import {bindTextInput, IEntity, useReadonlyEntity} from "../../utils/hooks";
+import {isRequired, isValidEmail, isAlphaNumeric} from "../../utils/validators";
 
-import { ScrollWithButtons } from "../../components/ScrollWithButtons";
+import {ScrollWithButtons} from "../../components/ScrollWithButtons";
 
-import { Label } from "../../components/Label";
-import { TBI } from "../../utils/misc";
-import { AppColors } from "../../constants/Colors";
+import {Label} from "../../components/Label";
+import {TBI} from "../../utils/misc";
+import {AppColors} from "../../constants/Colors";
 import Auth from '@tradingpost/common/api/entities/static/AuthApi'
-import { useAppUser } from "../../Authentication";
-import { useData } from "../../lds";
-import { useLinkTo } from "@react-navigation/native";
-import { CreateAccountProps, useChangeLock, sideMargin } from "./shared";
+import {useAppUser} from "../../Authentication";
+import {useData} from "../../lds";
+import {useLinkTo} from "@react-navigation/native";
+import {CreateAccountProps, useChangeLock, sideMargin} from "./shared";
+import {registerDeviceForNotifications} from "../../utils/notifications";
 
 
 type FieldRefs = {
@@ -39,8 +40,8 @@ export function AccountInfoSection(props: CreateAccountProps) {
         [lockButtons, setLockButtons] = useChangeLock(props),
         //isAuthed = Boolean(props.login), //ensureAuthProps(props),
         isBroken = !useMemo(() => Boolean(props.user.data.first_name), []) || !useMemo(() => Boolean(props.user.data.last_name), []),
-        { value: loginResult, setValue: setLoginResult } = useData("loginResult"),
-        { appUser } = useAppUser(),
+        {value: loginResult, setValue: setLoginResult} = useData("loginResult"),
+        {appUser} = useAppUser(),
         //isUnconfirmed = isAuthed && !isBroken,
         loginEntity = useReadonlyEntity<LoginInfo>({}),
         linkTo = useLinkTo<any>(),
@@ -59,8 +60,7 @@ export function AccountInfoSection(props: CreateAccountProps) {
                 onPress: () => {
                     if (props.navigation.canGoBack()) {
                         props.navigation.goBack()
-                    }
-                    else {
+                    } else {
                         linkTo("/login");
                     }
                 }
@@ -81,19 +81,17 @@ export function AccountInfoSection(props: CreateAccountProps) {
                             errors.unshift("Please fix the following issues:");
                             props.toastMessage(errors.join("\r\n"));
                             setLockButtons(false);
-                        }
-                        else if (!false) {  //create new user
+                        } else if (!false) {  //create new user
                             if (loginEntity.data.email && loginEntity.data.password) {
                                 const login = await Auth.createLogin(loginEntity.data.email, loginEntity.data.password);
-                                setLoginResult(login);
+                                await setLoginResult(login);
+                                await registerDeviceForNotifications();
                                 linkTo('/create/basicinfo')
-                            }
-                            else {
+                            } else {
                                 throw new Error("Something is very wrong." + JSON.stringify(loginEntity.data))
                             }
                             setLockButtons(false);
-                        }
-                        else { //patch authed user
+                        } else { //patch authed user
 
                             //await UpdateUserProfile(props.user.data);
                             TBI();
@@ -106,11 +104,9 @@ export function AccountInfoSection(props: CreateAccountProps) {
                     } catch (ex: any) {
                         if (ex.json) {
                             props.toastMessage(`${ex.json.name}:\r\n${ex.json.policy || ex.json.description}`);
-                        }
-                        else if (typeof ex.message === "string") {
+                        } else if (typeof ex.message === "string") {
                             props.toastMessage(ex.message);
-                        }
-                        else props.toastMessage(JSON.stringify(ex.message));
+                        } else props.toastMessage(JSON.stringify(ex.message));
                         setLockButtons(false);
                     }
 
@@ -129,11 +125,11 @@ export function AccountInfoSection(props: CreateAccountProps) {
         {//isUnconfirmed ? <UnverifiedEmail  {...props} />: 
             <AccountBasicInfo refs={refs} isAuthed={false} loginEntity={loginEntity} {...props} />
         }
-    </ScrollWithButtons >
+    </ScrollWithButtons>
 }
 
 function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthed: boolean, loginEntity: IEntity<LoginInfo> }) {
-    const { refs, isAuthed } = props,
+    const {refs, isAuthed} = props,
         opacityAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -148,9 +144,9 @@ function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthe
     }, [])
 
     return <View>
-        <View style={[flex, { margin: sideMargin }]}>
+        <View style={[flex, {margin: sideMargin}]}>
             <Animated.Text
-                style={[bannerText, { opacity: opacityAnim }]}>
+                style={[bannerText, {opacity: opacityAnim}]}>
                 Let's start with some login information
             </Animated.Text>
             {/* <Section title={'Personal Information'}>
@@ -174,7 +170,8 @@ function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthe
                 errorMessage={"`Email Address` is invalid"}
                 disabled={isAuthed}
                 validate={isValidEmail}
-                validateOnChange placeholder='Email Address' returnKeyType="none" {...bindTextInput(props.loginEntity, "email", null)}
+                validateOnChange placeholder='Email Address'
+                returnKeyType="none" {...bindTextInput(props.loginEntity, "email", null)}
             />
             {/* <TextField 
                     //label='Username'
@@ -218,21 +215,47 @@ function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthe
             }
             {/* </Section> */}
         </View>
-    </View >
+    </View>
 }
 
 function UnverifiedEmail(props: CreateAccountProps) {
-    return <View style={[flex, { margin: sideMargin }]}>
+    return <View style={[flex, {margin: sideMargin}]}>
         <View>
             {/* <Text style={{ fontSize:sizes.rem1_5 }}>Email verification is required for:</Text> */}
-            <Text style={{ fontSize: sizes.rem1 * 1.25, alignSelf: "center" }} >Please verify your account</Text>
-            <View style={{ marginBottom: sizes.rem1, marginTop: sizes.rem1, backgroundColor: "white", borderColor: "#ccc", padding: sizes.rem1, borderWidth: 1, alignSelf: "center", shadowColor: "black", shadowRadius: 10, elevation: 4 }}>
-                <Image source={{ uri: props.user.data.profile_url, height: 120, width: 120 }} height={120} width={120} style={{ marginBottom: sizes.rem1 / 2, borderRadius: 60, alignSelf: "center" }} />
-                <Text style={{ marginBottom: sizes.rem1 / 2, color: AppColors.primary, fontWeight: "bold", fontSize: sizes.rem1, alignSelf: "center" }} >@{props.user.data.handle}</Text>
-                <Text style={{ fontSize: sizes.rem1, alignSelf: "center", color: "black" }} >{props.user.data.display_name}</Text>
+            <Text style={{fontSize: sizes.rem1 * 1.25, alignSelf: "center"}}>Please verify your account</Text>
+            <View style={{
+                marginBottom: sizes.rem1,
+                marginTop: sizes.rem1,
+                backgroundColor: "white",
+                borderColor: "#ccc",
+                padding: sizes.rem1,
+                borderWidth: 1,
+                alignSelf: "center",
+                shadowColor: "black",
+                shadowRadius: 10,
+                elevation: 4
+            }}>
+                <Image source={{uri: props.user.data.profile_url, height: 120, width: 120}} height={120} width={120}
+                       style={{marginBottom: sizes.rem1 / 2, borderRadius: 60, alignSelf: "center"}}/>
+                <Text style={{
+                    marginBottom: sizes.rem1 / 2,
+                    color: AppColors.primary,
+                    fontWeight: "bold",
+                    fontSize: sizes.rem1,
+                    alignSelf: "center"
+                }}>@{props.user.data.handle}</Text>
+                <Text style={{
+                    fontSize: sizes.rem1,
+                    alignSelf: "center",
+                    color: "black"
+                }}>{props.user.data.display_name}</Text>
             </View>
-            <Text style={{ fontSize: sizes.rem1 * 1.25, alignSelf: "center" }} >An email has been sent to:</Text>
-            <Text style={{ fontWeight: "bold", fontSize: sizes.rem1 * 1.25, alignSelf: "center" }} >{props.user.data.email}</Text>
+            <Text style={{fontSize: sizes.rem1 * 1.25, alignSelf: "center"}}>An email has been sent to:</Text>
+            <Text style={{
+                fontWeight: "bold",
+                fontSize: sizes.rem1 * 1.25,
+                alignSelf: "center"
+            }}>{props.user.data.email}</Text>
         </View>
     </View>
 }
