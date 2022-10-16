@@ -3,7 +3,7 @@ import pell, { exec } from 'pell'
 import { useRef } from 'react'
 import { useEffect } from 'react'
 import { MutableRefObject, PropsWithRef, useState } from 'react'
-import "../css/pell.css"
+//import "../css/pell.css"
 // export const TextEditor = (props: {
 //     editorRef: MutableRefObject<any>
 // }) => {
