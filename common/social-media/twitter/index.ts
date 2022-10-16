@@ -30,12 +30,13 @@ export default class Twitter {
 
     refreshTokensbyId = async (idType: string, id: string): Promise<PlatformToken | null> => {
         try {
-            const response = await this.repository.getTokens(idType, [id], 'twitter');
+            const twitterTokens = await this.repository.getTokens(idType, [id], 'twitter');
             const authUrl = '/oauth2/token';
             let data: PlatformToken;
 
-            if (!response.length) {
-                throw new Error("No token was found for this ID");
+            if (twitterTokens.length <= 0) {
+                console.error(`no token was found for twitter user id ${id}`)
+                return null
             }
 
             const refreshParams = {
@@ -44,7 +45,7 @@ export default class Twitter {
                     "content-type": 'application/json'
                 },
                 body: JSON.stringify({
-                    refresh_token: response[0].refreshToken,
+                    refresh_token: twitterTokens[0].refreshToken,
                     grant_type: 'refresh_token',
                     client_id: this.twitterCfg.client_id
                 })
@@ -52,23 +53,27 @@ export default class Twitter {
 
             const fetchUrl = this.twitterUrl + authUrl;
             const result = await (await fetch(fetchUrl, refreshParams)).json();
+            if ('error' in result) {
+                console.error(`fetching refresh token for twitter user ${id} error=${result.error} description=${result.error_description}`)
+                return null;
+            }
 
             const expiration = new Date();
             data = {
-                userId: response[0].userId,
-                platform: response[0].platform,
-                platformUserId: response[0].platformUserId,
+                userId: twitterTokens[0].userId,
+                platform: twitterTokens[0].platform,
+                platformUserId: twitterTokens[0].platformUserId,
                 accessToken: result.access_token,
                 refreshToken: result.refresh_token,
                 expiration: new Date(expiration.getTime() + result.expires_in),
-                claims: response[0].claims || {handle: ''},
+                claims: twitterTokens[0].claims || {handle: ''},
                 updatedAt: new Date()
             };
 
             await this.repository.upsertUserTokens(data);
             return data;
         } catch (err) {
-            console.error(err);
+            console.error(`fetching refresh from twitter token error=${err}`);
             return null;
         }
     }
@@ -88,19 +93,26 @@ export default class Twitter {
         }
 
         const formatedData = await this.formatTweets(data);
-        const jobs = [];
+        let jobs = [];
+        let result = 0;
+
+        console.log("Tweets to Insert: ", formatedData.length);
         for (let i = 0; i < formatedData.length; i++) {
             jobs.push(this.postPrepper.twitter(formatedData[i].embed));
+            if (jobs.length >= 10 || formatedData.length - 1 === i) {
+                const r = await Promise.all(jobs);
+                r.forEach((item, idx) => {
+                    const {maxWidth, aspectRatio} = item;
+                    formatedData[idx].max_width = maxWidth;
+                    formatedData[idx].aspect_ratio = aspectRatio;
+                });
+
+                const resultCnt = await this.repository.upsertTweets(formatedData);
+                result += resultCnt;
+                jobs = [];
+            }
         }
 
-        const r = await Promise.all(jobs);
-        r.forEach((item, idx) => {
-            const {maxWidth, aspectRatio} = item;
-            formatedData[idx].max_width = maxWidth;
-            formatedData[idx].aspect_ratio = aspectRatio;
-        });
-
-        const result = await this.repository.upsertTweets(formatedData);
         return [formatedData, result];
     }
 

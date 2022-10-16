@@ -31,18 +31,15 @@ let browser: Browser;
 
 const runLambda = async () => {
     if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
-        const chromium = require('@sparticuz/chrome-aws-lambda');
+        const chromium = require('@sparticuz/chromium');
+        const puppeteer = require('puppeteer-core');
+
         // @ts-ignore
-        browser = await chromium.puppeteer.launch({
-            // @ts-ignore
+        browser = await puppeteer.launch({
             args: chromium.args,
-            // @ts-ignore
             defaultViewport: chromium.defaultViewport,
-            // @ts-ignore
             executablePath: await chromium.executablePath,
-            // @ts-ignore
             headless: chromium.headless,
-            // @ts-ignore
             ignoreHTTPSErrors: true,
         });
     }
@@ -61,7 +58,8 @@ const runLambda = async () => {
 
     const postPrepper = new PostPrepper()
     const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
-    const elasticService = new ElasticService(new ElasticClient({
+
+    const esClient = new ElasticClient({
         cloud: {
             id: elasticConfiguration.cloudId
         },
@@ -69,7 +67,10 @@ const runLambda = async () => {
             apiKey: elasticConfiguration.apiKey
         },
         maxRetries: 5,
-    }), "tradingpost-search");
+    });
+
+    // @ts-ignore
+    const elasticService = new ElasticService(esClient, "tradingpost-search");
 
     // @ts-ignore
     await postPrepper.init(browser);

@@ -53,7 +53,7 @@ export const ExitButton = (props: Pick<PressableProps, "onPress"> & Pick<ViewSty
         }} /></Pressable>
 }
 export const FavButton = (props: Pick<PressableProps, "onPress"> & Pick<ViewStyle, "height" | "width"> & { isSelected?: boolean }) => {
-    return <Pressable onPress={props.onPress} style={{ justifyContent: "center" }}><Icon
+    return <Pressable onPress={props.onPress} style={{ justifyContent: "center", alignItems: 'center' }}><Icon
         //fill={AppColors.secondary}
         fill={props.isSelected ? "#F6BE00" : "#708090"}
         name={props.isSelected ? "star" : "star-outline"} style={{

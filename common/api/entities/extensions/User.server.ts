@@ -9,7 +9,7 @@ import {Client as ElasticClient} from '@elastic/elasticsearch';
 import ElasticService from "../../../elastic";
 import Finicity from "../../../finicity";
 //import FinicityTransformer from '../../../brokerage/finicity/transformer'
-import { execProc } from '../../../db'
+import { execProc, getHivePool, init } from '../../../db'
 //import { } from '../../../social-media/twitter/index'
 import { DefaultTwitter } from "../../../social-media/twitter/service";
 import { DefaultSubstack } from "../../../social-media/substack/service";
@@ -37,34 +37,7 @@ const client = new S3Client({
 //Really should think about how to default this... we dont need to pass this everywhere all the time... 
 //it just makes it harder to manage .. we should just have settings based on prod vs. dev etc.
 
-const init = (async () => {
-    const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
-    const pgp = pgPromise({});
-    const pgClient = pgp({
-        host: pgCfg.host,
-        user: pgCfg.user,
-        password: pgCfg.password,
-        database: pgCfg.database
-    });
-    let brokerage: Brokerage;
 
-
-    const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
-    const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-    console.log("Start Init ")
-    await finicity.init();
-    brokerage = new Brokerage(pgClient, pgp, finicity);
-
-    console.log("Start Connection ")
-
-    await pgClient.connect();
-    console.log("Returning ");
-    return {
-        brokerage,
-        pgp,
-        pgClient
-    }
-})()
 
 
 export default ensureServerExtensions<User>({

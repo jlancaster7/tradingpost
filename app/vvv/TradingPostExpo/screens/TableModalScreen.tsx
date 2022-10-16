@@ -11,13 +11,14 @@ import { ElevatedSection } from "../components/Section"
 
 export function LimitedTable<T>(props: {
     maxPage: number,
+    listKey: string,
     title: string,
     tableProps: Omit<Parameters<typeof Table<T>>[0], "maxPage">
 }) {
     const nav = useNavigation<NavigationProp<AllPages>>();
     return <View style={[{}]}>
         <View>
-            <Table {...props.tableProps} maxPage={props.maxPage} />
+            <Table {...props.tableProps} listKey={props.listKey} maxPage={props.maxPage} />
         </View>
         <Link
             style={{

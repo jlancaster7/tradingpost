@@ -17,6 +17,7 @@ export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>
     return <List
         //style={{ borderColor: "orange", borderWidth: 5 }}
         // contentContainerStyle={{ height:"auto", borderColor: "blue", borderWidth: 5 }}
+        listKey={props.datasetKey || 'STATIC'}
         getItemLayout={(items, index, sizeCache) => {
             const curItem = items?.[index];
             const output = typeof curItem === "object" ? sizeCache[index] : { index, offset: sizeCache[index - 1].offset + sizeCache[index - 1].length, length: 40 };

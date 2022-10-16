@@ -19,6 +19,7 @@ export default class PostPrepper {
         if (this.browser) return;
         if (puppeteerBrowser) {
             this.browser = puppeteerBrowser;
+            console.log("Setting Browser :D !")
             return
         }
 
@@ -66,12 +67,10 @@ export default class PostPrepper {
                     });
                     return response;
                 });
-
                 if (size.size !== '0px' && size.size !== '0') {
                     resolve(size.size)
                     return
                 }
-
                 await sleep(200)
             }
             resolve('0px')

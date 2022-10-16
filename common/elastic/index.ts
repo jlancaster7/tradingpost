@@ -1,12 +1,12 @@
-import {Client as ElasticClient} from '@elastic/elasticsearch';
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import {Client} from '@elastic/elasticsearch'
+import {S3Client, GetObjectCommand} from "@aws-sdk/client-s3";
 import PostApi from '../api/entities/apis/PostApi';
-import { IElasticPost } from '../api/entities/interfaces';
-import { sleep } from '../utils/sleep';
+import {IElasticPost} from '../api/entities/interfaces';
 
 const client = new S3Client({
     region: "us-east-1"
 });
+
 const s3Bucket = 'tradingpost-app-data'
 const streamToString = (stream: any) =>
     new Promise<string>((resolve, reject) => {
@@ -16,16 +16,20 @@ const streamToString = (stream: any) =>
         stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
     });
 
-
-const searchQueryTemplate = (async () =>
-    await streamToString((
-        await client.send(new GetObjectCommand({
-            Bucket: s3Bucket,
-            Key: "post-query-templates/search.json",
-        }))).Body))()
+let searchQueryTemplateAsync: string;
+const searchQueryTemplate = async () => {
+    if (!searchQueryTemplateAsync) {
+        searchQueryTemplateAsync = await streamToString((
+            await client.send(new GetObjectCommand({
+                Bucket: s3Bucket,
+                Key: "post-query-templates/search.json",
+            }))).Body);
+    }
+    return searchQueryTemplateAsync
+}
 
 export const searchQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions"]["feed"]>["0"]["data"], undefined>) => {
-    const template = await searchQueryTemplate;
+    const template = await searchQueryTemplate();
     let queryString = template;
     Object.keys(data).forEach((k) => {
         //TODO:::: Probably should do a reverse of this in the future ...and validate object types to make sure nothing bad is pass ... 
@@ -38,19 +42,18 @@ export const searchQuery = async (data: Exclude<Parameters<(typeof PostApi)["ext
         queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
         console.log("New QS:" + queryString);
     });
-
     return JSON.parse(queryString);
-
 }
 
 export default class ElasticService {
-    private client: ElasticClient;
-    private indexName: string | undefined;
+    private client: Client;
+    private readonly indexName: string | undefined;
 
-    constructor(client: ElasticClient, indexName?: string) {
+    constructor(client: Client, indexName?: string) {
         this.client = client;
         this.indexName = indexName;
     }
+
     search = async (searchTerm: string, indexName: string) => {
         const postsPerPage = 20;
 
@@ -59,11 +62,12 @@ export default class ElasticService {
             size: postsPerPage,
             from: 0 * postsPerPage,
             query: await (async () => {
-                    return await searchQuery({0: searchTerm});
+                return await searchQuery({0: searchTerm});
             })()
         })
         return result.hits;
     }
+
     ingest = async (items: any[], indexName?: string | null, length?: number): Promise<void> => {
         if (items.length <= 0) return;
         let idxName = '';
@@ -78,7 +82,7 @@ export default class ElasticService {
             group.push(item)
             if (group.length === groupSize || i === items.length - 1) {
                 const operations = group.flatMap(doc => [{index: {_index: idxName, _id: doc.id}}, doc]);
-                
+
                 const bulkResponse = await this.client.bulk({refresh: false, operations, timeout: '900s'});
                 group = []
 

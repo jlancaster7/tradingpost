@@ -222,7 +222,7 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                             setButtonClick(!buttonClick);
                                         }}
                                         width={26}
-                                        height={'auto'}
+                                        height={'100%'}
                                         color={'#EC5328'}
                                     />
                                 },

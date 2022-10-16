@@ -11,7 +11,7 @@ class AnimatedPath extends Component<any, any> {
     component: any
     static propTypes: any
 
-    static defaultProps: { animate: boolean; animationDuration: number; renderPlaceholder: () => null }
+    static defaultProps: { animate: boolean; animationDuration: number; renderplaceholder: () => null }
     constructor(props: any) {
         super(props)
 
@@ -99,14 +99,14 @@ class AnimatedPath extends Component<any, any> {
 AnimatedPath.propTypes = {
     animate: PropTypes.bool,
     animationDuration: PropTypes.number,
-    renderPlaceholder: PropTypes.func,
+    renderplaceholder: PropTypes.func,
     ...Path.propTypes,
 }
 
 AnimatedPath.defaultProps = {
     animate: false,
     animationDuration: 300,
-    renderPlaceholder: () => null,
+    renderplaceholder: () => null,
 }
 
 export default AnimatedPath

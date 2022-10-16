@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#282869"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -23,9 +23,10 @@
       "bundleIdentifier": "com.tradingpostapp"
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#282869"
       },
       "package": "com.tradingpostapp"
     },
@@ -40,6 +41,15 @@
           ]
         }
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/logo/android/logo_96.jpg",
+          "color": "#282869"
+        }
+      ]
+    ]
   }
 }

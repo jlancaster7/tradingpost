@@ -39,7 +39,7 @@ export function useTwitterAuth() {
         authUrl.searchParams.append("client_id", clientId);
         authUrl.searchParams.append("redirect_uri", redirectUriText);
         authUrl.searchParams.append("state", state.current);
-        authUrl.searchParams.append("scope", "users.read tweet.read");
+        authUrl.searchParams.append("scope", "users.read tweet.read offline.access");
         authUrl.searchParams.append("code_challenge", _challenge);
         authUrl.searchParams.append("code_challenge_method", "plain");
 

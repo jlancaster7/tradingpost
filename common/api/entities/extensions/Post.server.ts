@@ -217,5 +217,227 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         const pool = await getHivePool;
         await pool.query(`INSERT INTO data_internal_post(user_id, title, content) VALUES($1,$2,$3)`, [req.extra.userId, req.body.title, req.body.content])
         return {}
+    },
+    multitermfeed: async (req) => {
+        if (req.body.page === null || req.body.page === undefined)
+            throw new PublicError("Invalid Request missing page", 400);
+
+        const page = Number(req.body.page);
+        const userCache = (await getUserCache());
+        const curUserData = userCache[req.extra.userId];
+
+        //TODO::::Need to think through how this is sorted in the future... and make this less stupid..
+        
+        postsPerPage = 10;
+        
+
+        if (page * postsPerPage + 20 > 10000)
+            return [];
+        const indexName = "tradingpost-search";
+        const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
+        const elasticClient = new ElasticClient({
+            cloud: {
+                id: elasticConfiguration['cloudId'] as string
+            },
+            auth: {
+                apiKey: elasticConfiguration['apiKey'] as string
+            },
+            maxRetries: 5,
+        });
+        if (req.body.data) console.log(CreateMultiTermQuery(req.body.data))
+        const response = await elasticClient.search<IElasticPost["_source"]>({
+            index: indexName,
+            size: postsPerPage,
+            from: page * postsPerPage,
+            query: await (async () => {
+                if (req.body.data) {
+                    return CreateMultiTermQuery(req.body.data)
+                }
+                else {
+                    return await feedQuery;
+                }
+            })()
+
+        });
+        //TODO::: Need to limit terms on this 
+        const { hits } = response.hits;
+
+
+        hits.forEach((h) => {
+            (h as IElasticPostExt).ext = {
+                user: userCache[h._source?.user.id || ""]?.profile,
+                is_bookmarked: curUserData.bookmarks[h._id],
+                is_upvoted: curUserData.upvotes[h._id]
+            }
+        });
+        //probably could trim down the responses in the future
+        return hits as IElasticPostExt[]
     }
 })
+
+export const CreateMultiTermQuery = (searchTerms: Record<string, string | number | (string | number)[]>) => {
+    //if (typeof searchTerms === 'string' || typeof searchTerms === 'number') searchTerms = [searchTerms];
+    let multiMatchQueryPart= [];
+    const key = Object.keys(searchTerms)[0]
+    for (let d of Object.values(searchTerms[key])) {
+        const queryPart = {
+            "multi_match": {
+                "fields": ["content.body", "content.title"],
+                "query": `${d}`,
+                "analyzer": "synonym_analyzer",
+                "boost": 1
+            }
+        }
+        //console.log(JSON.stringify(queryPart))
+        multiMatchQueryPart.push(JSON.stringify(queryPart))
+    }
+    let query = `{"bool": {
+        "should": [
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                    "must": [
+                        {
+                        "bool": {
+                            "should": [${multiMatchQueryPart}],
+                                "minimum_should_match": 1,
+                                "boost": 1
+                            }
+                            }
+                        ,
+                        {
+                            "match": {
+                            "postType": "youtube"
+                        }}
+                        ]
+                }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                    "must": [
+                        {
+                        "bool": {
+                            "should": [${multiMatchQueryPart}],
+                                "minimum_should_match": 1,
+                                "boost": 1
+                            }
+                            }
+                        ,
+                        {
+                            "match": {
+                            "postType": "tweet"
+                        }}
+                        ]
+                }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "12h"
+                        }
+                    },
+                    "weight": 1
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                    "must": [
+                        {
+                        "bool": {
+                            "should": [${multiMatchQueryPart}],
+                                "minimum_should_match": 1,
+                                "boost": 1
+                            }
+                            }
+                        ,
+                        {
+                            "match": {
+                            "postType": "substack"
+                        }}
+                        ]
+                }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                    "must": [
+                        {
+                        "bool": {
+                            "should": [${multiMatchQueryPart}],
+                                "minimum_should_match": 1,
+                                "boost": 1
+                            }
+                            }
+                        ,
+                        {
+                            "match": {
+                            "postType": "spotify"
+                        }}
+                        ]
+                }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        }
+        ],
+        "minimum_should_match": 1,
+        "boost": 1
+    }
+    }
+`    
+    //console.log(query)
+    //console.log(query.bool.should[0].function_score.query.bool.must[0].bool?.should)
+    return JSON.parse(query);
+    
+} 
+
+
+
+

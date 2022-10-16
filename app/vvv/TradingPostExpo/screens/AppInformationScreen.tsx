@@ -29,7 +29,7 @@ export function AppInformationScreen(props: any) {
     const { currentPage: pageIndex } = sliderState;
 
     return <View style={flex}>
-        <View style={{zIndex: 1, position: 'absolute', top: 10, left: 10, flexDirection: 'row', alignItems: 'center'}}>
+        <View style={{zIndex: 1, position: 'absolute', top: 30, left: 10, flexDirection: 'row', alignItems: 'center'}}>
             <ExitButton height={36} width={36} color={'#708090'} style={{height: 36, width: 36,  }} 
                         onPress={() => {
                             if (result) {
@@ -52,7 +52,7 @@ export function AppInformationScreen(props: any) {
             }}
         >
             <View style={{ width, height, justifyContent: 'space-between' }}>
-                <ClimbingMountain style={{marginTop: '5%',marginHorizontal: 2, height: '45%', width: 'auto'}}/>
+                <ClimbingMountain height={'45%'}  width={'98%'} style={{marginTop: '5%',marginHorizontal: '1%', height: '45%', width: '100%'}}/>
                 <View style={[elevated, {
                     marginHorizontal: sizes.rem1_5,
                     height: '50%',
@@ -61,7 +61,7 @@ export function AppInformationScreen(props: any) {
                     paddingVertical: sizes.rem1
                     //marginVertical: 30,
                 }]}>
-                    <View style={{justifyContent: 'center', alignItems: 'center', height: '15%',}}>
+                    <View style={{justifyContent: 'center', alignItems: 'center', height: 65,}}>
                         <Text style={{ fontSize: fonts.large, fontFamily: 'K2D', textAlign: 'center', color: AppColors.primary}}>
                             {"Customized Feed"}
                         </Text>
@@ -73,7 +73,7 @@ export function AppInformationScreen(props: any) {
                 </View>
             </View>
             <View style={{ width, height, justifyContent: 'space-between' }}>
-                <Studying style={{marginTop: '15%',marginHorizontal: 2, height: '37%', width: 'auto'}}/>
+                <Studying height={'37%'} width={'98%'} style={{marginTop: '15%',marginHorizontal: '1%', height: '37%', width: '100%'}}/>
                 <View style={[elevated, {
                     marginHorizontal: sizes.rem1_5,
                     height: '50%',
@@ -82,7 +82,7 @@ export function AppInformationScreen(props: any) {
                     paddingVertical: sizes.rem1
                     //marginVertical: 30,
                 }]}>
-                    <View style={{justifyContent: 'center', alignItems: 'center', height: '15%',}}>
+                    <View style={{justifyContent: 'center', alignItems: 'center', height: 65,}}>
                         <Text style={{ fontSize: fonts.large, fontFamily: 'K2D', textAlign: 'center', color: AppColors.primary}}>
                             {"Follow Expert\nTraders and Investors"}
                         </Text>
@@ -93,7 +93,7 @@ export function AppInformationScreen(props: any) {
                 </View>
             </View>
             <View style={{ width, height, justifyContent: 'space-between' }}>
-                <Debate style={{marginTop: '0%',marginHorizontal: 2, height: '45%', width: 'auto'}}/>
+                <Debate height={'45%'} width={'98%'} style={{marginTop: '0%',marginHorizontal: '1%', height: '45%', width: '100%'}}/>
                 <View style={[elevated, {
                     marginHorizontal: sizes.rem1_5,
                     height: '50%',
@@ -102,7 +102,7 @@ export function AppInformationScreen(props: any) {
                      paddingVertical: sizes.rem1
                     //marginVertical: 30,
                 }]}>
-                    <View style={{justifyContent: 'center', alignItems: 'center', height: '15%',}}>
+                    <View style={{justifyContent: 'center', alignItems: 'center', height: 65,}}>
                         <Text style={{ fontSize: fonts.large, fontFamily: 'K2D', textAlign: 'center', color: AppColors.primary}}>
                             {"Connect Your\nInvestment Accounts"}
                         </Text>
@@ -113,7 +113,7 @@ export function AppInformationScreen(props: any) {
                 </View>
             </View>
             <View style={{ width, height, justifyContent: 'space-between' }}>
-                <Analyze style={{marginTop: '5%',marginHorizontal: 2, height: '45%', width: 'auto'}}/>
+                <Analyze height={'45%'} width={'100%'} style={{marginTop: '5%',marginHorizontal: 2, height: '45%', width: '100%'}}/>
                 <View style={[elevated, {
                     marginHorizontal: sizes.rem1_5,
                     height: '50%',
@@ -122,7 +122,7 @@ export function AppInformationScreen(props: any) {
                      paddingVertical: sizes.rem1
                     //marginVertical: 30,
                 }]}>
-                    <View style={{justifyContent: 'center', alignItems: 'center', height: '15%',}}>
+                    <View style={{justifyContent: 'center', alignItems: 'center', height: 65,}}>
                         <Text style={{ fontSize: fonts.large, fontFamily: 'K2D', textAlign: 'center', color: AppColors.primary}}>
                             {"Search for Content\nthat Matters to You"}
                         </Text>
@@ -130,7 +130,7 @@ export function AppInformationScreen(props: any) {
                     <Text style={{padding: sizes.rem1,fontSize: paragraphSize, fontFamily: 'K2D', textAlign: 'center',}}>
                         {"Explore TradingPost's powerful search tool that utilizes cutting edge tech from industry leader ElasticSearch."}
                     </Text>
-                    <SecondaryButton style={[result ? {display: 'none'} : {display: 'flex'}, { alignSelf: "center", width: "65%", height: 'auto', marginTop: '8%' }]}
+                    <SecondaryButton style={[result ? {display: 'none'} : {display: 'flex'}, { alignSelf: "center", width: "65%", height: '100%', marginTop: '8%' }]}
                                       onPress={() => {
                                         linkTo("/create/logininfo");
                                       }}>

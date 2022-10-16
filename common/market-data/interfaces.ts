@@ -134,16 +134,14 @@ export interface getUSExchangeHoliday {
 }
 
 export interface getSecurityWithLatestPrice {
-    id: number
+    securityId: number
     symbol: string
-    latestTime: DateTime | null
-    latestPrice: number | null
-    isEodId: number | null
-    isEodHigh: number | null
-    isEodLow: number | null
-    isEodOpen: number | null
-    isEodPrice: number | null
-    isEodTime: DateTime | null
+    time: DateTime | null
+    price: number | null
+    high: number | null
+    low: number | null
+    open: number | null
+    eodId: number | null
 }
 
 export interface getSecurityBySymbol {

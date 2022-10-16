@@ -6,7 +6,7 @@ import Repository from "../market-data/repository";
 import {buildGroups} from "../../lambdas/market-data/utils";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import {DefaultConfig} from "../configuration/index";
-import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import {PutObjectCommand, S3Client, S3, GetObjectCommand, ListObjectsCommand} from "@aws-sdk/client-s3";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -27,12 +27,14 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
 class PricingFix {
     private repository: Repository;
     private iex: IEX;
-    private s3: S3Client;
+    private s3Client: S3Client;
+    private s3: S3;
 
     constructor(pgClient: IDatabase<any>, pgp: IMain, iexToken: string) {
         this.repository = new Repository(pgClient, pgp);
         this.iex = new IEX(iexToken)
-        this.s3 = new S3Client({});
+        this.s3Client = new S3Client({});
+        this.s3 = new S3({});
     }
 
     iexIntraday = async () => {
@@ -98,6 +100,101 @@ class PricingFix {
         }
     }
 
+    ingestFromS3 = async () => {
+        const securities = await this.repository.getUSExchangeListedSecurities();
+        const securitiesMap: Record<string, getSecurityBySymbol> = {};
+        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+
+        const streamToString = (stream: any): Promise<string> =>
+            new Promise((resolve, reject) => {
+                const chunks: any = [];
+                stream.on("data", (chunk: any) => chunks.push(chunk));
+                stream.on("error", reject);
+                stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+            });
+
+        for (const symbol in securitiesMap) {
+            const security = securitiesMap[symbol];
+            const res = await this.s3Client.send(new ListObjectsCommand({
+                Bucket: "iex-pricing",
+                Prefix: `${security.symbol}-`
+            }));
+
+            let lastModified: DateTime | null = null;
+            let key: string | null = null;
+            res.Contents?.forEach(lm => {
+                if (!lm.LastModified) return;
+                const dtLm = DateTime.fromJSDate(lm.LastModified)
+                if (lastModified === null) {
+                    lastModified = dtLm
+                    key = lm.Key as string
+                }
+
+                if (lastModified.toUnixInteger() < dtLm.toUnixInteger()) {
+                    lastModified = dtLm
+                    key = lm.Key as string
+                }
+            });
+
+            if (!key) {
+                console.error("could not find key for symbol: ", symbol)
+                continue
+            }
+
+            try {
+                const getObjectResponse = await this.s3Client.send(new GetObjectCommand({
+                    Bucket: "iex-pricing",
+                    Key: key
+                }))
+                const bodyContent = await streamToString(getObjectResponse.Body);
+                const prices = JSON.parse(bodyContent) as any[];
+
+                let securityPrices: addSecurityPrice[] = [];
+                let latestPrice: number | null = null;
+                prices.forEach(hp => {
+                    const dt = DateTime.fromFormat(hp.date, 'yyyy-LL-dd', {
+                        zone: "America/New_York"
+                    }).set({minute: 0, hour: 16, second: 0, millisecond: 0});
+
+                    if (!dt.isValid) return;
+
+                    let close = hp.close,
+                        open = hp.open,
+                        high = hp.high,
+                        low = hp.low;
+
+                    if (close === null && latestPrice === null) return
+                    if (close !== null && latestPrice === null) latestPrice = close;
+                    if (close === null && latestPrice !== null) {
+                        close = latestPrice;
+                        open = latestPrice;
+                        high = latestPrice;
+                        low = latestPrice;
+                    }
+
+                    if (open === null) open = close
+                    if (high === null) high = close
+                    if (low === null) low = close
+
+                    securityPrices.push({
+                        securityId: security.id,
+                        price: close,
+                        low: low,
+                        high: high,
+                        open: open,
+                        time: dt.toJSDate(),
+                        isEod: true,
+                        isIntraday: false
+                    });
+                });
+
+                await this.repository.upsertEodPrices(securityPrices)
+            } catch (e) {
+                console.error("could not get body content for symbol ", symbol);
+            }
+        }
+    }
+
     iexHistorical = async () => {
         const securities = await this.repository.getUSExchangeListedSecurities();
         const securitiesMap: Record<string, getSecurityBySymbol> = {};
@@ -108,7 +205,7 @@ class PricingFix {
             const group = groupSecurities[i];
             const symbols = group.map(sec => sec.symbol);
             const response = await this.iex.bulk(symbols, ["chart"], {
-                range: '20100802'
+                range: '20221010'
             });
 
             let securityPrices: addSecurityPrice[] = []
@@ -125,7 +222,7 @@ class PricingFix {
                     continue
                 }
 
-                let latestPrice = historicPrices.length > 0 ? historicPrices[0]?.close || null : null
+                let latestPrice = historicPrices[0]?.close || null
                 let earliestDate: DateTime | null = null,
                     latestDate: DateTime | null = null;
 
@@ -134,18 +231,19 @@ class PricingFix {
                     const dt = DateTime.fromFormat(hp.date, 'yyyy-LL-dd', {
                         zone: "America/New_York"
                     }).set({minute: 0, hour: 16, second: 0, millisecond: 0});
+
                     if (!dt.isValid) continue;
                     if (earliestDate === null) earliestDate = dt;
                     if (latestDate === null) latestDate = dt;
-                    if (dt < earliestDate) earliestDate = dt
-                    if (dt > latestDate) latestDate = dt
+                    if (dt.toUnixInteger() < earliestDate.toUnixInteger()) earliestDate = dt
+                    if (dt.toUnixInteger() > latestDate.toUnixInteger()) latestDate = dt
                 }
 
                 if (earliestDate !== null && earliestDate.isValid && latestDate !== null && latestDate.isValid) {
                     const datefmt = `${earliestDate.year}-${earliestDate.month}-${earliestDate.day}-to-${latestDate.year}-${latestDate.month}-${latestDate.day}`
                     const fmt = `${symbol}-${datefmt}.json`
                     console.log("UPLOADING FILE:::: ", fmt)
-                    await this.s3.send(new PutObjectCommand({
+                    await this.s3Client.send(new PutObjectCommand({
                         Bucket: "iex-pricing",
                         Key: fmt,
                         Body: JSON.stringify(historicPrices)
@@ -218,6 +316,6 @@ class PricingFix {
     const iexCfg = await DefaultConfig.fromCacheOrSSM("iex");
 
     const pricingFix = new PricingFix(pgClient, pgp, iexCfg.key);
-    await pricingFix.iexHistorical();
+    await pricingFix.ingestFromS3();
     console.log("Finished")
 })()

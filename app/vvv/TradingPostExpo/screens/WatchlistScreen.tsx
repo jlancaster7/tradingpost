@@ -1,6 +1,6 @@
 import { Api } from "@tradingpost/common/api";
 import { AllWatchlists, IWatchlistGet, IWatchlistList } from "@tradingpost/common/api/entities/interfaces";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, TextStyle, View } from "react-native";
 import { AddButton, EditButton } from "../components/AddButton";
 import { Icon, Text } from '@ui-kitten/components'
@@ -14,6 +14,7 @@ import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewe
 import { AwaitedReturn, toPercent, toPercent2, toThousands } from "../utils/misc";
 import { WatchlistSection } from "../components/WatchlistSection";
 import Theme from '../theme-light.json'
+import { FlatList } from "react-native-gesture-handler";
 
 export const WatchlistScreen = (props: TabScreenProps) => {
 
@@ -21,6 +22,7 @@ export const WatchlistScreen = (props: TabScreenProps) => {
     const [quickWatchlist, setQuickWatchlist] = useState<IWatchlistGet>()
     const toast = useToast();//const [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>();
 
+    const scrollRef = useRef<FlatList>(null);
     useEffect(() => {
         (async () => {
             try {
@@ -52,8 +54,9 @@ export const WatchlistScreen = (props: TabScreenProps) => {
 
     const { columns: watchlistItemColumns } = useWatchlistItemColumns(true)
     return <View style={[paddView]}>
-        <ScrollView>
-            
+        <FlatList
+            listKey="top_level_watchlist"
+            data={[
             <ElevatedSection key={"quick_watch"} title="Quick Watch"
                 button={(_p) => {
                     return watchlists?.quick.id ?
@@ -70,41 +73,33 @@ export const WatchlistScreen = (props: TabScreenProps) => {
                 }}
             >
                 <Table
+                    listKey="quick_watch_list"
                     noDataMessage="No Companies"
                     columns={watchlistItemColumns}
                     data={quickWatchlist?.items}
                 />
-            </ElevatedSection>
+            </ElevatedSection>,
             <WatchlistSection
                 title="My Watchlists"
                 key={"my_watchlist"}
                 watchlists={watchlists?.created}
                 showAddButton
                 hideNoteOnEmpty
-            />
+            />,
             <WatchlistSection
                 title="Shared Watchlists"
                 key={"shared_watchlist"}
                 watchlists={watchlists?.saved}
                 shared
             />
-            {/* <ElevatedSection key={"saved_watchlists"} title="Saved Watchlists">
-                <Table
-                    noDataMessage="No saved watchlists"
-                    data={watchlists?.saved}
-                    rowPressed={(info) => {
-                        props.navigation.navigate("Watchlist", {
-                            watchlistId: info.id
-                        })
-                    }}
-                    columns={[
-                        
-                        
-                    ]}
+            ]}
+            renderItem={(info) => {
+                return info.item;
+            }}
+            ref={scrollRef} contentContainerStyle={[{ paddingTop: 20}]} nestedScrollEnabled         
 
-                />
-            </ElevatedSection> */}
-        </ScrollView>
+            >
+        </FlatList>
     </View >
 
 }

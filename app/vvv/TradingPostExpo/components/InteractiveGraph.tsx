@@ -163,7 +163,6 @@ function InteractiveChart(props: any) {
         if (positionX < 0) {
             return null;
         }
-        console.log(positionX);
         const date = dateList[positionX];
 
         return (
