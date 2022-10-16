@@ -178,7 +178,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
                 user: userCache[h._source?.user.id || ""]?.profile,
                 is_bookmarked: curUserData.bookmarks[h._id],
                 is_upvoted: curUserData.upvotes[h._id],
-                upvoteCount: postData[h._id].upvotes || 0
+                upvoteCount: postData[h._id]?.upvotes || 0
             }
         });
         //probably could trim down the responses in the future
