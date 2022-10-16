@@ -10,6 +10,7 @@ import { execProc } from "../db"
 import SubscriptionApi from "./entities/apis/SubscriptionApi"
 
 type ExistsRecord = Record<string, true>
+type CountRecord = Record<string, number>
 export type PriceInfo = { id: number, symbol: string, price: { price: number, time: string, open: number, high: number, low: number } };
 const caches: {
     user: Record<string, {
@@ -17,11 +18,14 @@ const caches: {
         bookmarks: ExistsRecord,
         upvotes: ExistsRecord,
         watchlists: number[]
+    }>,
+    post: Record<string, {
+        upvotes: number,
     }>
     price: {
         byTicker: Record<string, PriceInfo["price"]>
     }
-} = { user: {}, price: { byTicker: {} } }
+} = { user: {}, price: { byTicker: {} }, post: {} }
 
 const existsCache = <T, M extends keyof T, C extends keyof T>(allRecords: T[], matchKey: M, matchValue: T[M], cacheKey: C) => {
     const rcd: ExistsRecord = {}
@@ -47,6 +51,7 @@ let userCacheInit = (async () => {
     //console.log(JSON.stringify(watchlists));
     caches.user = {};
 
+
     users.forEach((u) => {
         caches.user[u.id] = {
             profile: u,
@@ -65,16 +70,20 @@ let userCacheInit = (async () => {
             // })(),
         }
     })
+
+    upvotes.forEach((v) => {
+        const record = caches.post[v.post_id] || (caches.post[v.post_id] = { upvotes: 0 })
+        record.upvotes += 1;
+    })
+
 })()
-
-
 
 
 export const getPriceCacheTask = (async () => {
     const updatePriceCache = async () => {
         const priceByTicker: typeof caches.price.byTicker = {}
         const prices = await execProc<PriceInfo>("tp.api_security_prices");
-        //    console.log(JSON.stringify(prices));
+        //console.log(JSON.stringify(prices));
         prices.forEach((p) => {
             priceByTicker[p.symbol] = p.price;
         })
@@ -95,6 +104,11 @@ export const getUserCache = async () => {
     await userCacheInit;
     // console.log(JSON.stringify(caches.user));
     return caches.user;
+}
+export const getPostCache = async () => {
+    await userCacheInit;
+    // console.log(JSON.stringify(caches.user));
+    return caches.post;
 }
 
 //Special Monitor for cachable items
@@ -117,6 +131,7 @@ const ensureWatchlistApi = (test: any): test is (typeof WatchlistApi) | (typeof 
 //make this check based on decorators?
 export const cacheMonitor = async <A extends MotitoredType>(api: A, action: string, currentUserId: string, responseData: any) => {
     const cache = await getUserCache();
+
     if (ensureUserApi(api) || ensureSubscriptionApi(api)) {
         switch (action as "update" | "insert") {
             case "insert":
@@ -146,10 +161,17 @@ export const cacheMonitor = async <A extends MotitoredType>(api: A, action: stri
                     delete user.bookmarks[responseData.id]
                 break;
             case "setUpvoted":
-                if (responseData.is_upvoted)
+                const postCache = await getPostCache();
+                const record = postCache[responseData.id] || (postCache[responseData.id] = { upvotes: 0 })
+
+                if (responseData.is_upvoted) {
+                    record.upvotes += 1;
                     user.upvotes[responseData.id] = true;
-                else
+                }
+                else {
+                    record.upvotes -= 1;
                     delete user.upvotes[responseData.id]
+                }
                 break;
         }
     }

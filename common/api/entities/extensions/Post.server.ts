@@ -4,7 +4,7 @@ import { PublicError } from "../static/EntityApiBase";
 import Post from './Post'
 import { Client as ElasticClient } from '@elastic/elasticsearch';
 import { IElasticPost, IElasticPostExt } from "../interfaces";
-import { getUserCache } from "../../cache";
+import { getPostCache, getUserCache } from "../../cache";
 import { getHivePool } from '../../../db'
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import PostApi from "../apis/PostApi";
@@ -123,7 +123,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         const page = Number(req.body.page);
         const userCache = (await getUserCache());
         const curUserData = userCache[req.extra.userId];
-
+        const postData = (await getPostCache())
 
 
 
@@ -158,7 +158,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             from: page * postsPerPage,
             query: await (async () => {
                 if (req.body.userId) {
-                    return userQuery({user_id: req.body.userId})
+                    return userQuery({ user_id: req.body.userId })
                 }
                 else if (req.body.bookmarkedOnly)
                     return bookmarkQuery(bookmarkItems)
@@ -177,7 +177,8 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             (h as IElasticPostExt).ext = {
                 user: userCache[h._source?.user.id || ""]?.profile,
                 is_bookmarked: curUserData.bookmarks[h._id],
-                is_upvoted: curUserData.upvotes[h._id]
+                is_upvoted: curUserData.upvotes[h._id],
+                upvoteCount: postData[h._id].upvotes || 0
             }
         });
         //probably could trim down the responses in the future
@@ -204,11 +205,11 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         //TODO:  need to to add incorp into api build in the future 
         const pool = await getHivePool;
         if (rep.body.is_upvoted)
-            await pool.query(`INSERT INTO data_upvote(post_id,user_id) VALUES($1,$2)`, [rep.body.id, rep.extra.userId])        
+            await pool.query(`INSERT INTO data_upvote(post_id,user_id) VALUES($1,$2)`, [rep.body.id, rep.extra.userId])
         else
             await pool.query(`DELETE FROM data_upvote WHERE post_id= $1 and user_id = $2`, [rep.body.id, rep.extra.userId])
         const result = await pool.query('SELECT count(post_id) from data_upvote where post_id = $1', [rep.body.id]);
-        
+
         rep.body.count = result.rows[0].count;
         return rep.body;
     },

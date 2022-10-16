@@ -101,7 +101,8 @@ export type IElasticPostExt = IElasticPost & {
     ext: {
         user?: IUserList,
         is_bookmarked?: boolean,
-        is_upvoted?: boolean
+        is_upvoted?: boolean,
+        upvoteCount?: number
     }
 }
 
