@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState } from 'react'
 import {
     Alert,
     Image,
@@ -13,37 +13,37 @@ import {
     TouchableOpacity,
     View
 } from 'react-native'
-import {Button, Icon} from '@ui-kitten/components'
+import { Button, Icon } from '@ui-kitten/components'
 
-import {flex, fonts, row, shadow, sizes} from '../style'
+import { flex, fonts, row, shadow, sizes } from '../style'
 import UserLogo from '@iconify/icons-mdi/user'
 
-import {IconifyIcon} from './IconfiyIcon'
-import {Header, Subheader} from './Headers'
-import {PrimaryChip} from './PrimaryChip'
-import {BookmarkActive, BookmarkIcons, CommentIcon, navIcons, postBg, social, UpvoteIcon, Retweet} from '../images'
-import {social as socialStyle} from '../style'
-import {IconButton} from './IconButton'
+import { IconifyIcon } from './IconfiyIcon'
+import { Header, Subheader } from './Headers'
+import { PrimaryChip } from './PrimaryChip'
+import { BookmarkActive, BookmarkIcons, CommentIcon, navIcons, postBg, social, UpvoteIcon, Retweet } from '../images'
+import { social as socialStyle } from '../style'
+import { IconButton } from './IconButton'
 //import { IPostList } from '../api/entities/interfaces'
-import {LogoImage} from './LogoImage'
+import { LogoImage } from './LogoImage'
 //import { ensureCurrentUser } from '../apis/Authentication'
 //import { WebView } from 'react-native-webview';
-import {color} from 'react-native-reanimated'
+import { color } from 'react-native-reanimated'
 //import { screens } from '../navigationComponents'
 //import { fullDashOptions } from '../layouts/DashboardLayout'
-import {AsyncPressable} from './AsyncPressable'
-import {AppColors} from '../constants/Colors'
-import {Api, Interface} from '@tradingpost/common/api'
-import {HtmlView} from './HtmlView'
-import {useWindowDimensions} from 'react-native'
-import {ProfileButton} from './ProfileButton'
-import {useToast} from 'react-native-toast-notifications'
-import {NavigationProp, useNavigation} from "@react-navigation/native"
-import {RootStackParamList} from '../navigation/pages'
+import { AsyncPressable } from './AsyncPressable'
+import { AppColors } from '../constants/Colors'
+import { Api, Interface } from '@tradingpost/common/api'
+import { HtmlView } from './HtmlView'
+import { useWindowDimensions } from 'react-native'
+import { ProfileButton } from './ProfileButton'
+import { useToast } from 'react-native-toast-notifications'
+import { NavigationProp, useNavigation } from "@react-navigation/native"
+import { RootStackParamList } from '../navigation/pages'
 
 //import { setBookmarked } from '../apis/PostApi'
 //import { openProfileScreen } from '../screens/ProfileScreen'
-import {WebView} from "react-native-webview";
+import { WebView } from "react-native-webview";
 
 
 const postTotalVerticalMargin = sizes.rem1;
@@ -122,21 +122,21 @@ export const resolvePostContent = (itm: Interface.IElasticPost | undefined, wind
 }
 
 export function PostView(props: { post: Interface.IElasticPostExt }) {
-    const {post} = props
+    const { post } = props
     const nav = useNavigation<NavigationProp<RootStackParamList>>();
 
     const [isBookmarked, setIsBookmarked] = useState(Boolean(post.ext.is_bookmarked));
     const [isUpvoted, setIsUpvoted] = useState(Boolean(post.ext.is_upvoted));
-    const [upvoteCount, setUpvoteCount] = useState(0);
-    useEffect(() => {
-        Api.Post.extensions.getUpvotes({id: props.post._source.id, count: 0})
-            .then((r) => {
-                setUpvoteCount(r.count);
-            })
+    const [upvoteCount, setUpvoteCount] = useState(post.ext.upvoteCount || 0);
+    // useEffect(() => {
+    //     Api.Post.extensions.getUpvotes({id: props.post._source.id, count: 0})
+    //         .then((r) => {
+    //             setUpvoteCount(r.count);
+    //         })
 
-    }, [])
+    // }, [])
     const [showStatus, setShowStatus] = useState(false);
-    return <View style={{marginHorizontal: postTotalHorizontalMargin / 2, marginVertical: postTotalVerticalMargin / 2}}>
+    return <View style={{ marginHorizontal: postTotalHorizontalMargin / 2, marginVertical: postTotalVerticalMargin / 2 }}>
         <View
             style={[shadow, {
                 backgroundColor: "white",
@@ -148,17 +148,17 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                 onPress={() => {
                     //openProfileScreen(props.parentComponentId, props.post.creator.id_creator);
                 }} style={[row, {
-                alignItems: "center",
-                overflow: "hidden",
-                borderBottomColor: "#ccc",
-                borderBottomWidth: 1,
-                padding: sizes.rem1 / 2
-            }]}>
+                    alignItems: "center",
+                    overflow: "hidden",
+                    borderBottomColor: "#ccc",
+                    borderBottomWidth: 1,
+                    padding: sizes.rem1 / 2
+                }]}>
                 {
                     <ProfileButton userId={props.post._source.user.id}
-                                   profileUrl={props.post.ext.user?.profile_url || ""} size={48}/>
+                        profileUrl={props.post.ext.user?.profile_url || ""} size={48} />
                 }
-                <View style={[flex, {marginLeft: sizes.rem1}]}>
+                <View style={[flex, { marginLeft: sizes.rem1 }]}>
                     <Pressable onPress={() => {
                         if (props.post._source.user.id)
                             nav.navigate("Profile", {
@@ -167,13 +167,13 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                     }}
                     >
                         <Subheader text={"@" + (props.post.ext.user?.handle || "NoUserAttached")}
-                                   style={{color: "black", fontWeight: "bold"}}/>
+                            style={{ color: "black", fontWeight: "bold" }} />
                     </Pressable>
                     <View>
                         <ScrollView nestedScrollEnabled horizontal>
                             <View style={row}>
                                 {(props.post.ext.user?.tags || ["No", "Tags", "Here"]).map((chip, i) =>
-                                    <PrimaryChip isAlt key={i} label={chip}/>)}
+                                    <PrimaryChip isAlt key={i} label={chip} />)}
                             </View>
                         </ScrollView>
                     </View>
@@ -191,25 +191,25 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         }
                     }}>
                     {!isBookmarked && <IconButton iconSource={BookmarkIcons.inactive}
-                                                  style={{height: 24, width: 24, marginLeft: "auto",}}/>}
+                        style={{ height: 24, width: 24, marginLeft: "auto", }} />}
                     {isBookmarked && <BookmarkActive
-                        style={{height: 16, width: 16, marginLeft: "auto", marginRight: sizes.rem0_5 / 2}}/>}
+                        style={{ height: 16, width: 16, marginLeft: "auto", marginRight: sizes.rem0_5 / 2 }} />}
                 </AsyncPressable>
             </Pressable>
             <Pressable onPress={() => {
                 nav.navigate("PostScreen", {
                     post
                 })
-            }} style={{paddingHorizontal: postSidePad / 2}}>
-                <PostContentView post={post}/>
+            }} style={{ paddingHorizontal: postSidePad / 2 }}>
+                <PostContentView post={post} />
             </Pressable>
             {(props.post._source.postType !== "tweet") &&
                 <View
-                    style={[row, {alignItems: "center", marginTop: "auto", borderTopColor: "#ccc", borderTopWidth: 1}]}>
+                    style={[row, { alignItems: "center", marginTop: "auto", borderTopColor: "#ccc", borderTopWidth: 1 }]}>
                     {showStatus && <View style={{
                         position: "absolute",
                         backgroundColor: "black",
-                        opacity: 0.6,
+                        //   opacity: 0.6,
                         width: 100,
                         margin: "auto",
                         top: 12,
@@ -217,12 +217,12 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         borderRadius: 8,
                         right: 0,
                         padding: 4
-                    }}><Text style={{width: "100%", textAlign: "center", color: "white"}}>Upvoted!</Text></View>}
+                    }}><Text style={{ width: "100%", textAlign: "center", color: "white" }}>Upvoted!</Text></View>}
                     <Button
-                        style={{marginLeft: "auto", paddingHorizontal: 0}}
+                        style={{ marginLeft: "auto", paddingHorizontal: 0 }}
                         appearance={'ghost'}
                         accessoryLeft={(props: any) =>
-                            <CommentIcon height={24} width={24} style={{height: 24, width: 24,}}/>
+                            <CommentIcon height={24} width={24} style={{ height: 24, width: 24, }} />
                         }
                         onPress={() => {
                             nav.navigate("PostScreen", {
@@ -231,10 +231,10 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         }}
                     >
                         {evaProps => <Text {...evaProps}
-                                           style={{fontWeight: 'normal', paddingHorizontal: sizes.rem1}}>-</Text>}
+                            style={{ fontWeight: 'normal', paddingHorizontal: sizes.rem1 }}>-</Text>}
                     </Button>
                     {<Button
-                        style={{paddingHorizontal: 0}}
+                        style={{ paddingHorizontal: 0 }}
                         onPress={() => {
                             if (!isUpvoted)
                                 setShowStatus(true);
@@ -254,8 +254,8 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{
                             height: 24,
                             width: 24,
-                            opacity: isUpvoted ? 1 : 0.25
-                        }}/>} appearance={"ghost"}>
+                            // opacity: isUpvoted ? 1 : 0.25
+                        }} />} appearance={"ghost"}>
                         {evaProps => <Text {...evaProps} style={{
                             fontWeight: 'normal',
                             paddingHorizontal: sizes.rem1
@@ -267,22 +267,22 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
 }
 
 const SubstackView = (props: { post: Interface.IElasticPost }) => {
-    const {post} = props;
-    return <View style={{marginVertical: sizes.rem1 / 2, marginHorizontal: sizes.rem0_5}}>
+    const { post } = props;
+    return <View style={{ marginVertical: sizes.rem1 / 2, marginHorizontal: sizes.rem0_5 }}>
         <View key="profile">
             {/* <Image style={{ aspectRatio: 0.9, marginRight: sizes.rem1 / 2 }} source={{ uri: post.platform_profile_url }} /> */}
             <Pressable onPress={() => {
                 Linking.openURL(post._source.postUrl)
             }}
-                       style={{
-                           marginBottom: sizes.rem0_5,
-                           display: "flex",
-                           flexDirection: "row",
-                           alignItems: 'center'
-                       }}>
-                <IconifyIcon style={{width: 30, height: 30, marginTop: 2, marginRight: sizes.rem1 / 1.5}}
-                             svgProps={{style: {margin: "auto"}}} icon={social.SubstackLogo}
-                             currentColor={socialStyle.substackColor}/>
+                style={{
+                    marginBottom: sizes.rem0_5,
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: 'center'
+                }}>
+                <IconifyIcon style={{ width: 30, height: 30, marginTop: 2, marginRight: sizes.rem1 / 1.5 }}
+                    svgProps={{ style: { margin: "auto" } }} icon={social.SubstackLogo}
+                    currentColor={socialStyle.substackColor} />
                 {<Subheader text={post._source.content.title || ""} style={{
                     marginBottom: 0,
                     display: "flex",
@@ -294,7 +294,7 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
                 }}></Subheader>}
             </Pressable>
         </View>
-        {<Text key="content" style={{fontSize: fonts.small}}>
+        {<Text key="content" style={{ fontSize: fonts.small }}>
             {parseHtmlEnteties(post._source.content.description).length > 300 ? `${parseHtmlEnteties(post._source.content.description).substring(0, 300)}...` : parseHtmlEnteties(post._source.content.description)}
         </Text>}
         {<Text key="date" style={{
@@ -315,7 +315,7 @@ const parseHtmlEnteties = (str: string) => {
 }
 
 const PostContentView = (props: { post: Interface.IElasticPost }) => {
-    const {width: windowWidth, scale} = useWindowDimensions(),
+    const { width: windowWidth, scale } = useWindowDimensions(),
         availWidth = windowWidth - spaceOnSide
 
     if (props.post._source.postType === 'substack') {
@@ -330,7 +330,7 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
             marginTop: 2,
             marginBottom: -5
         }}>
-            <Retweet width={30} height={30} style={{width: 30, height: 30}}/>
+            <Retweet width={30} height={30} style={{ width: 30, height: 30 }} />
             <Text style={{
                 fontWeight: '500',
                 marginLeft: 2
@@ -348,7 +348,7 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
                 //marginTop: ['spotify', 'youtube'].includes(props.post._source.postType) ? 8 : 0,
                 //marginBottom: ['youtube', 'spotify'].includes(props.post._source.postType) ? 8 : 0
             }}
-                      isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}>
+                isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}>
                 {resolvePostContent(props.post, availWidth)}
             </HtmlView>
         </View>
