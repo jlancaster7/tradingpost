@@ -35,6 +35,7 @@
     "@ui-kitten/components": "^5.1.2",
     "@ui-kitten/eva-icons": "^5.1.2",
     "array.prototype.reduce": "^1.0.4",
+    "buffer-alloc-unsafe": "^1.1.0",
     "d3-array": "^3.2.0",
     "d3-interpolate-path": "^2.3.0",
     "d3-scale": "^4.0.2",

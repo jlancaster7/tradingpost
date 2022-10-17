@@ -142,7 +142,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                     }
                     else{
                         setValue(true);
-                        linkTo('/dash/feed');
+                        navigation.navigate("Dash");
                     }
                 }
                 else {

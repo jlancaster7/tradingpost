@@ -295,7 +295,12 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
             </Pressable>
         </View>
         {<Text key="content" style={{ fontSize: fonts.small }}>
-            {parseHtmlEnteties(post._source.content.description).length > 300 ? `${parseHtmlEnteties(post._source.content.description).substring(0, 300)}...` : parseHtmlEnteties(post._source.content.description)}
+            {(() => {
+                const parsedText = parseHtmlEnteties(post._source.content.description);
+                return parsedText?.length > 300 ?
+                    `${parsedText.substring(0, 300)}...` :
+                    parsedText
+            })()}
         </Text>}
         {<Text key="date" style={{
             fontSize: fonts.xSmall,
@@ -308,7 +313,7 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
     </View>
 }
 const parseHtmlEnteties = (str: string) => {
-    return str.replace(/&#([0-9]{1,4});/gi, function (match, numStr) {
+    return str?.replace(/&#([0-9]{1,4});/gi, function (match, numStr) {
         var num = parseInt(numStr, 10); // read num as normal number
         return String.fromCharCode(num);
     });
