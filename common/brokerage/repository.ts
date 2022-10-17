@@ -1787,7 +1787,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'currency', prop: 'currency'},
             {name: 'option_id', prop: 'optionId'}
         ], {table: 'tradingpost_current_holding'})
-        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id,security_id,option_id");
+        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id, security_id, security_type");
         await this.db.none(query);
     }
 
@@ -1908,7 +1908,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'currency', prop: 'currency'},
             {name: 'option_id', prop: 'optionId'}
         ], {table: 'tradingpost_transaction'});
-        const query = upsertReplaceQuery(transactions, cs, this.pgp, 'account_id, security_id, option_id, date, quantity');
+        const query = upsertReplaceQuery(transactions, cs, this.pgp, 'account_id, security_id, security_type, date, quantity');
         await this.db.none(query)
     }
 

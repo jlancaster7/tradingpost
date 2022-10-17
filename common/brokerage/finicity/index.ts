@@ -515,7 +515,6 @@ export default class FinicityService implements IBrokerageService {
             })
         }
 
-        console.log("Upserting transactions")
         await this.repository.upsertFinicityTransactions(finTxs);
         return await this.transformer.transactions(finicityUser.tpUserId, finTxs);
     }
