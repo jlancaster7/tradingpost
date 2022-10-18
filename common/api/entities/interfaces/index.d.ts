@@ -241,12 +241,14 @@ export interface IWatchlistItemList {
     symbol: string;
     watchlist_id: number;
     note?: string;
+    date_added: Date;
 }
 export interface IWatchlistItemGet {
     id: number;
     symbol: string;
     watchlist_id: number;
     note?: string;
+    date_added: Date;
 }
 export interface IWatchlistSavedList {
     id: number;

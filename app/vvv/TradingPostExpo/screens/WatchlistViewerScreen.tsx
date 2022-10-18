@@ -123,10 +123,10 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                 }
             },
             {
-                alias: "Date",
+                alias: "Date Added",
                 stringify: (a, b, c) => {
                     if (c.price?.time) {
-                        return (new Date(Date.parse(c.price.time))).toLocaleDateString() || "-"
+                        return (new Date(c.date_added)).toLocaleDateString() || "-"
                     }
                     else {
                         return "-";

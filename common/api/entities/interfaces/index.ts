@@ -260,14 +260,16 @@ export interface IWatchlistItemList {
         id: number,
     symbol: string,
     watchlist_id: number,
-    note?: string
+    note?: string,
+    date_added: Date
     };
 
 export interface IWatchlistItemGet {
         id: number,
     symbol: string,
     watchlist_id: number,
-    note?: string
+    note?: string,
+    date_added: Date
     };
 
 export interface IWatchlistSavedList {
