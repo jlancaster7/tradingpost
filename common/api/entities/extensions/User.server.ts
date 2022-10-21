@@ -198,7 +198,9 @@ export default ensureServerExtensions<User>({
                     price: r.price,
                     fees: r.fees,
                     currency: r.currency,
-                    security_id: r.security_id
+                    security_id: r.security_id,
+                    option_id: r.option_id,
+                    option_info: r.option_info
                 }
                 t.push(o);
             })
@@ -245,7 +247,9 @@ export default ensureServerExtensions<User>({
                     price: r.price, 
                     value: parseFloat(r.value) / portValue, 
                     cost_basis: !r.cost_basis ? 'n/a' : r.cost_basis, 
-                    security_id: r.security_id
+                    security_id: r.security_id,
+                    option_id: r.option_id,
+                    option_info: r.option_info
                 }
                 t.push(o);
             })

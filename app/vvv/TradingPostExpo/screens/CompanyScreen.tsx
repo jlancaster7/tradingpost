@@ -97,7 +97,7 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                         { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
                         <ElevatedSection key={"Company"} title="">
                             <View style={[row, { marginVertical: sizes.rem0_5 }]}>
-                                <Avatar source={{ uri: security?.logo_url }} style={{ marginRight: sizes.rem0_5 }} />
+                                <Avatar source={{ uri: security?.logo_url }} style={{ marginRight: sizes.rem0_5, overflow: 'visible' }} />
                                 <View style={flex}>
                                     <Text>{security?.symbol}</Text>
                                     <Text>{security?.company_name}</Text>

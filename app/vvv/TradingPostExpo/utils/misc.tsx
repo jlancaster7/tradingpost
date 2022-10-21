@@ -137,6 +137,9 @@ export function toPercent2(number: number) {
 export function toThousands(number: number) {
     return    numeral(number).format('0,0');
 }
+export function toNumber1(number: number) {
+    return (number === undefined || number === null) ? "" : numeral(number).format('0.0')
+}
 export function toNumber2(number: number) {
     return (number === undefined || number === null) ? "" : numeral(number).format('0.00')
 }
