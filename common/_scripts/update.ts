@@ -51,15 +51,8 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     const repository = new Repository(pgClient, pgp);
     const brokerageSrv = new BrokerageService(brokerageMap, repo, portSummary);
 
-    // Accounts:
-    // 8e787902-f0e9-42aa-a8d8-18e5d7a1a34d	6007115349
-    // e96aea04-9a60-4832-9793-f790e60df8eb	6009024980
-    // 6ebe730d-684f-4f62-b3e1-7e2b1c78e184	6011636851
-    // 66da69d3-3ce9-4ec9-83cf-8535c142f9e7	6011712386
-
-
-    const brokerageUserId = "6011712386";
-    const tradingpostUserId = "66da69d3-3ce9-4ec9-83cf-8535c142f9e7"
+    const brokerageUserId = "6011636851";
+    const tradingpostUserId = "6ebe730d-684f-4f62-b3e1-7e2b1c78e184"
 
     console.log("Importing Holdings")
     const holdings = await fin.importHoldings(brokerageUserId);

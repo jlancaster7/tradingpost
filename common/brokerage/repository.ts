@@ -1419,7 +1419,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'option_strike_price', prop: 'optionStrikePrice'},
             {name: 'option_type', prop: 'optionType'},
             {name: 'option_shares_per_contract', prop: 'optionSharesPerContract'},
-            {name: 'options_expire_date', prop: 'optionsExpireDate'},
+            {name: 'options_expire_date', prop: 'optionExpiredate'},
             {name: 'fi_asset_class', prop: 'fiAssetClass'},
             {name: 'asset_class', prop: 'assetClass'},
             {name: 'currency_rate', prop: 'currencyRate'},

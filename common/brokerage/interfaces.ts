@@ -355,7 +355,7 @@ export type FinicityHolding = {
     optionStrikePrice: number
     optionType: string
     optionSharesPerContract: number
-    optionsExpireDate: number
+    optionExpiredate: number
     fiAssetClass: string
     assetClass: string
     currencyRate: number
