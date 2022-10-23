@@ -8,6 +8,7 @@ import { ScrollWithButtons } from "../components/ScrollWithButtons";
 import { ElevatedSection, Section } from "../components/Section";
 import { SwitchField } from "../components/SwitchField";
 import { TextField } from "../components/TextField";
+import { VirtualListWithButtons } from "../components/VirtualListWithButtons";
 import { useWatchlistPicker, WatchlistPicker } from "../components/WatchlistPicker";
 import { setValue } from "../lds";
 import { DashScreenProps, TabScreenProps } from "../navigation";
@@ -50,21 +51,7 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
 
 
     return <View style={paddView}>
-        {type !== "primary" &&
-            <ElevatedSection title={(props.route?.params?.watchlistId ? "Edit" : "Create") + " Watchlist"} >
-                <View style={{ flexDirection: "column", margin: sizes.rem0_5 }}>
-                    <ButtonGroup value={type} onValueChange={(value) => {
-                        setWatchlistType(value);
-                    }}
-                        items={[{ label: "Public", value: "public" }, { label: "Private", value: "private" }]}
-                    />
-                    <TextField value={name} onChangeText={(v) => setName(v || "")} placeholder="Watchlist Name" style={{ marginBottom: sizes.rem0_5 }} />
-                    <TextField value={note} onChangeText={(v) => setNote(v || "")} placeholder="Wathlist Note" style={{}} />
-                </View>
-            </ElevatedSection>
-        }
-        <ScrollWithButtons
-            fillHeight
+        <VirtualListWithButtons
             buttons={{
                 right: {
                     text: props.route?.params?.watchlistId ? "Update Watchlist" : "Create Watchlist",
@@ -97,13 +84,28 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
                     }
                 }
             }}>
-            <ElevatedSection style={{ height: "100%" }} title={type === "primary" ? "Quick Watchlist" : "Watchlist Securities"}>
-                <WatchlistPicker {...pickerProps} securitiesLoaded={() => {
-                    console.log("Securities are available...");
-                    setMagic(m => !m)
-                }} />
-            </ElevatedSection>
-        </ScrollWithButtons>
+            <View>
+                {type !== "primary" &&
+                    <ElevatedSection title={(props.route?.params?.watchlistId ? "Edit" : "Create") + " Watchlist"} >
+                        <View style={{ flexDirection: "column", margin: sizes.rem0_5 }}>
+                            <ButtonGroup value={type} onValueChange={(value) => {
+                                setWatchlistType(value);
+                            }}
+                                items={[{ label: "Public", value: "public" }, { label: "Private", value: "private" }]}
+                            />
+                            <TextField value={name} onChangeText={(v) => setName(v || "")} placeholder="Watchlist Name" style={{ marginBottom: sizes.rem0_5 }} />
+                            <TextField value={note} onChangeText={(v) => setNote(v || "")} placeholder="Wathlist Note" style={{}} />
+                        </View>
+                    </ElevatedSection>
+                }
+                <ElevatedSection style={{ height: "100%" }} title={type === "primary" ? "Quick Watchlist" : "Watchlist Securities"}>
+                    <WatchlistPicker {...pickerProps} securitiesLoaded={() => {
+                        console.log("Securities are available...");
+                        setMagic(m => !m)
+                    }} />
+                </ElevatedSection>
+            </View>
+        </VirtualListWithButtons>
 
     </View >
 

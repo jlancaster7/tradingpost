@@ -9,6 +9,8 @@ import { ISecurityList } from "@tradingpost/common/api/entities/interfaces";
 import { Avatar, Icon } from "@ui-kitten/components";
 import { List } from "./List";
 import { flex } from "../style";
+import { KeyboardAvoidingInput } from "./KeyboardAvoidingInput";
+import { useIsKeyboardVisible } from "../utils/hooks";
 
 const cellStyle = { flexGrow: 1, aspectRatio: 1, justifyContent: "center", marginVertical: 4, alignItems: "center", flexBasis: 20 } as ViewStyle;
 const numItemsPerRow = 4;
@@ -123,9 +125,12 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
         style={flex}
     >
         <View style={{ padding: 8 }}>
-            <SearchBar
-                onTextChange={(text) => setSearchText(text)}
-                onLayout={undefined}
+            <KeyboardAvoidingInput
+                value={searchText}
+                displayButton={false}
+                numLines={1}
+                placeholder={'Searching...'}
+                setValue={setSearchText}
             />
         </View>
         <View style={flex}>
@@ -176,7 +181,7 @@ const SecurityCell = (props: { item: ISecurityList | {}, isSelected: boolean, on
         }}
         style={cellStyle}>
         {isSec(item) ? <><View>
-            <Avatar shape='square' source={{ uri: item.logo_url }} size="giant" />
+            <Avatar shape='square' source={{ uri: item.logo_url }} size="large" style={{overflow: 'visible'} }/>
             {innerSelected && <View style={{ position: "absolute", width: "40%", aspectRatio: 1, zIndex: 50000, right: "-10%", bottom: "-10%" } as ViewStyle}>
                 <View style={{ backgroundColor: "white", position: "absolute", left: "25%", top: "25%", height: "50%", width: "50%" }} />
                 <Icon name="checkmark-circle-2" fill="green" style={{ height: "100%", width: "100%" }} />
