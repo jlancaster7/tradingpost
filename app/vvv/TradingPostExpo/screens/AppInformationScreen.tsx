@@ -68,7 +68,7 @@ export function AppInformationScreen(props: any) {
                     </View>
                     
                     <Text style={{padding: sizes.rem1,fontSize: paragraphSize, fontFamily: 'K2D', textAlign: 'center',}}>
-                        {"Stock market research from every corner of the internet, all in one place.\n\nContent from Twitter, Substack, Spotify and more currated for you based on stocks you own and are interested in."}
+                        {"Stock market research from every corner of the internet, all in one place.\n\nContent from Twitter, Substack, Spotify and more curated for you based on stocks you own and are interested in."}
                     </Text>
                 </View>
             </View>

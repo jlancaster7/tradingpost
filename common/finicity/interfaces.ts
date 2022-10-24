@@ -293,7 +293,7 @@ export interface GetCustomerAccountsResponse {
             optionStrikePrice: number
             optionType: string
             optionSharesPerContract: number
-            optionExpireDate: number
+            optionExpiredate: number
             fiAssetClass: string
             assetClass: string
             currencyRate: number

@@ -241,12 +241,14 @@ export interface IWatchlistItemList {
     symbol: string;
     watchlist_id: number;
     note?: string;
+    date_added: Date;
 }
 export interface IWatchlistItemGet {
     id: number;
     symbol: string;
     watchlist_id: number;
     note?: string;
+    date_added: Date;
 }
 export interface IWatchlistSavedList {
     id: number;
@@ -275,6 +277,7 @@ export declare type ListAlertsResponse = {
     id: number;
     type: string;
     dateTime: string;
+    seen: boolean;
     data: Record<string, any>;
 };
 export declare type ListTradesResponse = {

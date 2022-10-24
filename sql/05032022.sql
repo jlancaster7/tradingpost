@@ -698,7 +698,12 @@ DROP INDEX historical_holding_acc_sec_date_quantity;
 CREATE UNIQUE INDEX historical_holding_acc_sec_date_quantity ON tradingpost_historical_holding (account_id, security_id, option_id, date, quantity);
 
 DROP INDEX tradingpost_current_holding_account_id_security_id_idx;
-CREATE UNIQUE INDEX tradingpost_current_holding_account_id_security_id_idx ON tradingpost_current_holding(account_id, security_id, option_id);
+CREATE UNIQUE INDEX tradingpost_current_holding_account_id_security_id_idx ON tradingpost_current_holding (account_id, security_id, option_id);
 
 DROP INDEX tradingpost_current_holding_idx;
 CREATE UNIQUE INDEX tradingpost_current_holding_idx ON tradingpost_current_holding (account_id, security_id, option_id);
+
+DROP INDEX tradingpost_current_holding_idx;
+CREATE UNIQUE INDEX tradingpost_current_holding_idx ON public.tradingpost_current_holding USING btree (account_id, security_id, security_type);
+DROP INDEX tradingpost_transaction_idx;
+CREATE UNIQUE INDEX tradingpost_transaction_idx ON public.tradingpost_transaction USING btree (account_id, security_id, security_type, date, quantity);

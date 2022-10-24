@@ -7,6 +7,7 @@ import {DefaultConfig} from "../configuration/index";
 import Finicity from "../finicity/index";
 import pgPromise from "pg-promise";
 import pg from 'pg';
+import {TradingPostBrokerageAccountsTable} from "../brokerage/interfaces";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -44,16 +45,39 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     const brokerageMap = {
         "finicity": new FinicityService(finicity, repo, new FinicityTransformer(repo))
     }
+
+    const fin = new FinicityService(finicity, repo, new FinicityTransformer(repo));
+
     const repository = new Repository(pgClient, pgp);
     const brokerageSrv = new BrokerageService(brokerageMap, repo, portSummary);
 
-    const accountId = 340
-    const oldestTransaction = await repository.getOldestTransaction(accountId);
-    console.log(oldestTransaction)
-    if (!oldestTransaction) return
-    console.log(oldestTransaction.date.toString())
-    const holdingHistory = await brokerageSrv.computeHoldingsHistory(accountId, oldestTransaction.date);
-    console.log(holdingHistory)
-    await repository.upsertTradingPostHistoricalHoldings(holdingHistory);
-    console.log("Finished")
+    const brokerageUserId = "6011636851";
+    const tradingpostUserId = "6ebe730d-684f-4f62-b3e1-7e2b1c78e184"
+
+    console.log("Importing Holdings")
+    const holdings = await fin.importHoldings(brokerageUserId);
+    console.log("Upserting Holdings")
+    await repository.upsertTradingPostCurrentHoldings(holdings);
+
+    console.log("Importing Transactions")
+    const transactions = await fin.importTransactions(brokerageUserId);
+
+    console.log("Upserting Transactions")
+    await repository.upsertTradingPostTransactions(transactions);
+
+    console.log("Running Holdings History")
+    const accountsToProcess = await repository.getTradingPostBrokerageAccounts(tradingpostUserId);
+    for (let i = 0; i < accountsToProcess.length; i++) {
+        const account = accountsToProcess[i];
+        const oldestTransaction = await repository.getOldestTransaction(account.id);
+        if (!oldestTransaction) continue
+        const holdingHistory = await brokerageSrv.computeHoldingsHistory(account.id, oldestTransaction.date);
+        await repository.upsertTradingPostHistoricalHoldings(holdingHistory);
+    }
+
+    console.log("Computing Account Group Summaries")
+    // const tpAccountIds = accountsToProcess.map(tp => tp.id)
+    // await repository.addTradingPostAccountGroup(tradingpostUserId, 'default', tpAccountIds, 10117)
+    await portSummary.computeAccountGroupSummary(tradingpostUserId)
+    console.log("Fin")
 })()

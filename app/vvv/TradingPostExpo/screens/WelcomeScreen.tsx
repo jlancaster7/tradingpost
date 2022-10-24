@@ -120,13 +120,7 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         {value: firstTime, setValue: setFirstTime} = useData('firstTime');
 
     const linkTo = useLinkTo<any>();    
-    useLayoutEffect(()=> {
-        if (loginResult) {
-            signIn("", loginResult.token)
-            setValue(true);
-            linkTo('/dash/feed');
-        }
-    },[])
+
     useLayoutEffect(() => {
 
         if (firstTime) {

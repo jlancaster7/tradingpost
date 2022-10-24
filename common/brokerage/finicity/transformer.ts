@@ -182,10 +182,19 @@ export default class FinicityTransformer {
         return security;
     }
 
-    resolveHoldingOptionId = async (accountId: number, strikePrice: number, securityId: number): Promise<number | null> => {
-        const optionContracts = await this.repository.getAccountOptionsContractsByTransactions(accountId, securityId, strikePrice);
-        if (optionContracts.length <= 0) return null;
-        return optionContracts[0].id;
+    resolveHoldingOptionId = async (accountId: number, securityId: number, strikePrice: number, expirationDate: DateTime,
+                                    optionType: string
+    ): Promise<number | null> => {
+        const option = await this.repository.getOptionContract(securityId, expirationDate, strikePrice, optionType)
+        if (!option) {
+            return await this.repository.addOptionContract({
+                strikePrice: strikePrice,
+                securityId: securityId,
+                type: optionType,
+                expiration: expirationDate,
+            });
+        }
+        return option.id;
     }
 
     isTransactionAnOption = async (transaction: FinicityTransaction, securityId: number): Promise<number | null> => {
@@ -249,7 +258,7 @@ export default class FinicityTransformer {
                 let holding = finHoldings[i];
 
                 const security = await this._resolveSecurity(holding, securitiesMap, cashSecuritiesMap);
-                if (security.issueType === 'Cash') isCashSecurity = true;
+                if (security.issueType.toLowerCase() === 'cash') isCashSecurity = true;
 
                 let priceAsOf = holdingDate;
                 if (holding.currentPriceDate) priceAsOf = DateTime.fromSeconds(holding.currentPriceDate)
@@ -265,9 +274,11 @@ export default class FinicityTransformer {
                     // We are making the assumption that the option already exists within our system since we run
                     // transactions first and an option will be created there...(since they have more meta-data
                     // then we do)
-                    const optionId = await this.resolveHoldingOptionId(internalAccount.id, holding.optionStrikePrice, security.id)
-                    if (optionId === null) {
-                        console.error(`could not resolve option id for security=${security.symbol} strikePrice=${holding.optionStrikePrice} expirationDate=${holding.optionsExpireDate}`)
+                    const optionExpireDateTime = DateTime.fromSeconds(holding.optionExpiredate);
+                    const optionId = await this.resolveHoldingOptionId(internalAccount.id, security.id,
+                        holding.optionStrikePrice, optionExpireDateTime, holding.optionType);
+                    if (!optionId) {
+                        console.error(`could not resolve option id for security=${security.symbol} strikePrice=${holding.optionStrikePrice} expirationDate=${holding.optionExpiredate}`)
                         continue
                     }
 

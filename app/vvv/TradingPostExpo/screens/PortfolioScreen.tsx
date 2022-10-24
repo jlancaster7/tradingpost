@@ -199,7 +199,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                             { alias: "# Shares", stringify: (a, b, c) => String(toThousands(c.quantity)), headerStyle: {overflow: 'visible'} },
                             { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.price)) },
                             { alias: "$ Value", stringify: (a, b, c) => String(toDollars(c.value)) },
-                            { alias: "PnL", stringify: (a, b, c) => toDollars(Number(c.value) - Number(c.cost_basis)) }
+                            { alias: "PnL", stringify: (a, b, c) => c.cost_basis ? toDollars(Number(c.value) - Number(c.cost_basis)) : '-'}
                         ]}
                          />
                 }</Subsection>

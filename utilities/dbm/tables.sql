@@ -12,7 +12,20 @@
 
 /* No changes to data_subscription [subscription]*/
 
-/* No changes to tradingpost_transactio [trade]*/
+CREATE  TABLE tradingpost_transactio(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    account_id BIGINT,
+    security_id TEXT,
+    security_type TEXT,
+    date TEXT,
+    quantity MONEY,
+    price MONEY,
+    amount MONEY,
+    fees MONEY,
+    type TEXT,
+    currency TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 
 /* No changes to data_upvote [upvote]*/
 

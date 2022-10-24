@@ -36,6 +36,8 @@ export default class User extends Extension {
         fees: number;
         currency: string;
         security_id: number;
+        option_id: number;
+        option_info: any;
     }[]>;
     getHoldings: (settings: {
         userId?: string | undefined;
@@ -47,6 +49,8 @@ export default class User extends Extension {
         value: number;
         cost_basis: number;
         security_id: number;
+        option_id: number;
+        option_info: any;
     }[]>;
     getWatchlists: (settings: {
         userId: string;

@@ -36,7 +36,6 @@ export const useAppUser = () => {
 }
 
 export const Authentication = {
-
     signIn: async (email: string, pass: string) => {
         const result = await Auth.login(email, pass);
         return {

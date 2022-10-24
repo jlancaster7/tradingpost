@@ -415,7 +415,7 @@ export default class FinicityService implements IBrokerageService {
                     optionStrikePrice: pos.optionStrikePrice,
                     optionType: pos.optionType,
                     optionSharesPerContract: pos.optionSharesPerContract,
-                    optionsExpireDate: pos.optionExpireDate,
+                    optionExpiredate: pos.optionExpiredate,
                     fiAssetClass: pos.fiAssetClass,
                     assetClass: pos.assetClass,
                     currencyRate: pos.currencyRate,
@@ -515,7 +515,6 @@ export default class FinicityService implements IBrokerageService {
             })
         }
 
-        console.log("Upserting transactions")
         await this.repository.upsertFinicityTransactions(finTxs);
         return await this.transformer.transactions(finicityUser.tpUserId, finTxs);
     }

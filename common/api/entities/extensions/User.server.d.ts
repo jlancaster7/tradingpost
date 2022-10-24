@@ -78,6 +78,8 @@ declare const _default: {
         fees: number;
         currency: string;
         security_id: number;
+        option_id: number;
+        option_info: any;
     }[]>;
     getHoldings: (req: {
         body: {
@@ -96,6 +98,8 @@ declare const _default: {
         value: number;
         cost_basis: number;
         security_id: number;
+        option_id: number;
+        option_info: any;
     }[]>;
     getWatchlists: (req: {
         body: {

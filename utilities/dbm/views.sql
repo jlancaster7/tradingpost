@@ -227,12 +227,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_watchlist_item_list(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"symbol" text,"watchlist_id" bigint,"note" text)
+        RETURNS TABLE("id" BIGINT,"symbol" text,"watchlist_id" bigint,"note" text,"date_added" TIMESTAMP WITH TIME ZONE)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."symbol", d."watchlist_id", d."note" FROM public.data_watchlist_item as d;
+  RETURN QUERY SELECT d."id", d."symbol", d."watchlist_id", d."note", (d."created_at") as "date_added" FROM public.data_watchlist_item as d;
     END;
     $BODY$;
 
@@ -255,12 +255,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_watchlist_item_get(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"symbol" text,"watchlist_id" bigint,"note" text)
+        RETURNS TABLE("id" BIGINT,"symbol" text,"watchlist_id" bigint,"note" text,"date_added" TIMESTAMP WITH TIME ZONE)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."symbol", d."watchlist_id", d."note" FROM public.data_watchlist_item as d;
+  RETURN QUERY SELECT d."id", d."symbol", d."watchlist_id", d."note", (d."created_at") as "date_added" FROM public.data_watchlist_item as d;
     END;
     $BODY$;
 

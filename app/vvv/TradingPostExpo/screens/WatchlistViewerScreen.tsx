@@ -8,7 +8,7 @@ import React, { PropsWithChildren, useEffect, useRef, useState, Component } from
 import { View, Text, Pressable, ScrollView, useWindowDimensions, Animated, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
 import { useToast } from "react-native-toast-notifications"
 import { useAppUser } from "../Authentication"
-import { EditButton, FavButton } from "../components/AddButton"
+import { DeleteButton, EditButton, FavButton } from "../components/AddButton"
 import { ProfileBar } from "../components/ProfileBar"
 import { ElevatedSection, Section, Subsection } from "../components/Section"
 import { ITableColumn, Table } from "../components/Table"
@@ -17,7 +17,7 @@ import { AppColors } from "../constants/Colors"
 import { AllPages, TabScreenProps } from "../navigation"
 import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../style"
 import { useSecuritiesList} from '../SecurityList'
-import { toDollarsAndCents } from "../utils/misc"
+import { toDollarsAndCents, toNumber1 } from "../utils/misc"
 import { MultiTermFeedPart } from "../components/MultiTermFeed"
 import { ViewProps } from "react-native"
 
@@ -57,24 +57,34 @@ const SecPressable = (props: PropsWithChildren<{ securityId: number }>) => {
 export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number) => {
     const { securities: { bySymbol, byId } } = useSecuritiesList();
     return [{
-        field: (a: any) => <SecPressable securityId={
-            (() => {
-                const value = getIdValue(a.item);
-                if (typeof value === "string")
-                    return bySymbol[value]?.id || -1
-                else
-                    return byId[value]?.id || -1
-            })()
-        } ><Avatar style={{ marginRight: sizes.rem0_5 }}
-            source={
+        field: (a: any) => {
+        const value = getIdValue(a.item);
+        return (
+            <View style={{overflow: 'visible'}}>
+                <SecPressable securityId={
                 (() => {
-                    const value = getIdValue(a.item);
                     if (typeof value === "string")
-                        return bySymbol[value] ? { uri: bySymbol[value].logo_url } : undefined
+                        return bySymbol[value]?.id || -1
                     else
-                        return byId[value] ? { uri: byId[value].logo_url } : undefined
-                })()}
-            size="tiny" /></SecPressable>,
+                        return byId[value]?.id || -1
+                })()
+                } ><Avatar style={{ marginRight: sizes.rem0_5}}
+                source={
+                    (() => {
+                        
+                        if (typeof value === "string")
+                            return bySymbol[value] ? { uri: bySymbol[value].logo_url } : undefined
+                        else
+                            return byId[value] ? { uri: byId[value].logo_url } : undefined
+                    })()}
+                size="tiny" />
+                    <Text numberOfLines={1} style={[a.item.option_info ? {display: 'flex'} : {display: 'none'}, {fontSize: fonts.xSmall, overflow: 'visible', width: 24}]}> 
+                        {a.item.option_info && `${a.item.option_info[0].type==='Call' ? 'C': 'P'}${toNumber1(a.item.option_info[0].strike_price)} ${new Date(a.item.option_info[0].expiration).toLocaleDateString()}`}
+                    </Text>    
+                </SecPressable>
+            </View>
+            )
+        },
         headerStyle: {
             width: sizes.rem10/2,    
             //marginRight: sizes.rem0_5,
@@ -95,9 +105,9 @@ export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number)
         stringify: (value: any, key: any, item: any) => {
             const v = getIdValue(item);
             if (typeof v === "string")
-                return bySymbol[v]?.symbol || ""
+                return bySymbol[v]?.symbol === 'USD:CUR' ? 'Cash' : bySymbol[v]?.symbol || ""
             else
-                return byId[v]?.symbol || ""
+                return byId[v]?.symbol === 'USD:CUR' ? 'Cash' : byId[v]?.symbol || ""
         }
     }
     ]
@@ -123,10 +133,10 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                 }
             },
             {
-                alias: "Date",
+                alias: "Date Added",
                 stringify: (a, b, c) => {
                     if (c.price?.time) {
-                        return (new Date(Date.parse(c.price.time))).toLocaleDateString() || "-"
+                        return (new Date(c.date_added)).toLocaleDateString() || "-"
                     }
                     else {
                         return "-";
