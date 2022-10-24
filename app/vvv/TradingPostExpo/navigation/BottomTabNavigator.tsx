@@ -2,7 +2,7 @@ import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import {NavigationProp} from "@react-navigation/native";
 import React, {useEffect, useState} from "react";
 import {ImageBackground, ImageSourcePropType} from "react-native";
-import {NavIconKeys, navIcons} from "../images";
+import {NavIconKeys, navIcons, NavIconTypeOverride} from "../images";
 import {FeedScreen} from "../screens/FeedScreen";
 import {NotificationScreen} from "../screens/NotificationScreen";
 import {PortfolioScreen} from "../screens/PortfolioScreen";
@@ -22,15 +22,6 @@ const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any
     },
     Notification: {
         c: NotificationScreen,
-    }
-}
-
-const NavIconTypeOverride: Partial<Record<NavIconKeys, any>> = {
-    Notification: {
-        "notification-active": "",
-        "notification-inactive": "",
-        "no-notification-active": "",
-        "no-notification-inactive": ""
     }
 }
 
@@ -72,13 +63,11 @@ export function BottomTabNavigator() {
                     tabBarIcon: ({color, focused, size}) => {
                         const activeType = focused ? "active" : "inactive";
                         let navIcon: ImageSourcePropType = navIcons[n as keyof typeof navIcons][activeType];
-                        // if (NavIconTypeOverride[n as keyof typeof navIcons]) {
-                        //     if (hasNotifications) {
-                        //         navIcon = NavIconTypeOverride[n as keyof typeof navIcons][`notification-${activeType}`];
-                        //     } else {
-                        //         navIcon = NavIconTypeOverride[n as keyof typeof navIcons][`no-notification-${activeType}`];
-                        //     }
-                        // }
+                        if (NavIconTypeOverride[n as keyof typeof navIcons]) {
+                            if (hasNotifications) {
+                                navIcon = NavIconTypeOverride[n as keyof typeof navIcons]["has"][activeType];
+                            }
+                        }
 
                         return <ImageBackground
                             source={navIcon}
