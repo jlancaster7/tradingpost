@@ -32,7 +32,7 @@
     "@react-navigation/drawer": "^6.5.0",
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
-    "@tradingpost/common": "file:tradingpost-common-1.3.1.tgz",
+    "@tradingpost/common": "file:../../../common",
     "@ui-kitten/components": "^5.1.2",
     "@ui-kitten/eva-icons": "^5.1.2",
     "array.prototype.reduce": "^1.0.4",

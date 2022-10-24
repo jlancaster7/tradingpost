@@ -1,13 +1,13 @@
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationProp } from "@react-navigation/native";
-import React from "react";
-import { ImageBackground, useColorScheme } from "react-native";
-import Colors from '../constants/Colors';
-import { navIcons } from "../images";
-import { FeedScreen } from "../screens/FeedScreen";
-import { NotificationScreen } from "../screens/NotificationScreen";
-import { PortfolioScreen } from "../screens/PortfolioScreen";
-import { SearchScreen } from "../screens/SearchScreen";
+import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
+import {NavigationProp} from "@react-navigation/native";
+import React, {useEffect, useState} from "react";
+import {ImageBackground, ImageSourcePropType} from "react-native";
+import {NavIconKeys, navIcons} from "../images";
+import {FeedScreen} from "../screens/FeedScreen";
+import {NotificationScreen} from "../screens/NotificationScreen";
+import {PortfolioScreen} from "../screens/PortfolioScreen";
+import {SearchScreen} from "../screens/SearchScreen";
+import {Api} from "@tradingpost/common/api";
 
 const BottomTab = createBottomTabNavigator<any>();
 const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any>, p?: any, headerRight?: (props: { navigation: NavigationProp<any>, route: any }) => React.ReactNode }> = {
@@ -24,8 +24,36 @@ const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any
         c: NotificationScreen,
     }
 }
+
+const NavIconTypeOverride: Partial<Record<NavIconKeys, any>> = {
+    Notification: {
+        "notification-active": "",
+        "notification-inactive": "",
+        "no-notification-active": "",
+        "no-notification-inactive": ""
+    }
+}
+
 export function BottomTabNavigator() {
-    const colorScheme = useColorScheme();
+    const [hasNotifications, setHasNotifications] = useState(false);
+    useEffect(() => {
+        const t = async () => {
+            const notificationCount = await Api.Notification.extensions.hasNotifications();
+            setHasNotifications(notificationCount.unseenCount > 0);
+        }
+
+        t();
+
+        const interval = setInterval(async () => {
+            const notificationCount = await Api.Notification.extensions.hasNotifications();
+            setHasNotifications(notificationCount.unseenCount > 0);
+        }, 5000);
+
+        return () => {
+            clearInterval(interval)
+        }
+    }, []);
+
     return <BottomTab.Navigator
         initialRouteName="Feed"
         screenOptions={{
@@ -36,19 +64,29 @@ export function BottomTabNavigator() {
             <BottomTab.Screen
                 key={n}
                 name={n}
-                options={({ navigation, route }) => ({
+                options={({navigation, route}) => ({
                     //TODO: this makes things a bit choppy .. shoudl change in the future
                     unmountOnBlur: true,
                     tabBarShowLabel: false,
                     lazy: true,
-                    tabBarIcon: ({ color, focused, size }) => {
+                    tabBarIcon: ({color, focused, size}) => {
+                        const activeType = focused ? "active" : "inactive";
+                        let navIcon: ImageSourcePropType = navIcons[n as keyof typeof navIcons][activeType];
+                        // if (NavIconTypeOverride[n as keyof typeof navIcons]) {
+                        //     if (hasNotifications) {
+                        //         navIcon = NavIconTypeOverride[n as keyof typeof navIcons][`notification-${activeType}`];
+                        //     } else {
+                        //         navIcon = NavIconTypeOverride[n as keyof typeof navIcons][`no-notification-${activeType}`];
+                        //     }
+                        // }
+
                         return <ImageBackground
-                            source={navIcons[n as keyof typeof navIcons][focused ? "active" : "inactive"]}
-                            resizeMode="contain" style={{ height: size, width: size }} />
+                            source={navIcon}
+                            resizeMode="contain" style={{height: size, width: size}}/>
                     },
                 })}
                 component={DashComponents[n as keyof typeof navIcons].c}
-                initialParams={{ ...DashComponents[n as keyof typeof navIcons]?.p }}
+                initialParams={{...DashComponents[n as keyof typeof navIcons]?.p}}
             />)}
     </BottomTab.Navigator>
 }

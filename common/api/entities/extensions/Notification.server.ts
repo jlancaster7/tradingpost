@@ -5,6 +5,28 @@ import {DateTime} from "luxon";
 import {ListTradesResponse, ListAlertsResponse} from "../interfaces";
 
 export default ensureServerExtensions<Notification>({
+    seenNotifications: async (req): Promise<{}> => {
+        console.log("HERE :D ")
+        if (!req.body.notificationIds || req.body.notificationIds.length <= 0) return {}
+        console.log("HERE")
+        const pool = await getHivePool;
+        const query = `
+            UPDATE notification
+            SET seen = true
+            WHERE id = ANY ($1::bigint[]);`;
+        await pool.query(query, [req.body.notificationIds]);
+        return {}
+    },
+    hasNotifications: async (req): Promise<{ unseenCount: number }> => {
+        const pool = await getHivePool;
+        const query = `SELECT count(*)
+                       FROM notification
+                       WHERE user_id = $1
+                         and seen = FALSE;`
+        const results = await pool.query<{ count: number }>(query, [req.extra.userId])
+        if (results.rows.length <= 0) return {unseenCount: 0}
+        return {unseenCount: results.rows[0].count};
+    },
     listAlerts: async (req): Promise<ListAlertsResponse[]> => {
         const pool = await getHivePool;
         const query = `
@@ -12,7 +34,8 @@ export default ensureServerExtensions<Notification>({
                    user_id,
                    type,
                    date_time,
-                   data
+                   data,
+                   seen
             FROM notification
             WHERE user_id = $1
             ORDER BY date_time DESC
@@ -22,7 +45,7 @@ export default ensureServerExtensions<Notification>({
         const offset = (req.body.page ? req.body.page : 0) * limit;
 
         const results = await
-            pool.query<{ id: number, user_id: string, type: string, date_time: Date, data: Record<string, any> }>(
+            pool.query<{ id: number, user_id: string, type: string, date_time: Date, data: Record<string, any>, seen: boolean }>(
                 query, [req.extra.userId, limit, offset]
             );
 
@@ -35,7 +58,8 @@ export default ensureServerExtensions<Notification>({
                 id: r.id,
                 type: r.type,
                 dateTime: DateTime.fromJSDate(r.date_time).toString(),
-                data: r.data
+                data: r.data,
+                seen: r.seen,
             }
             res.push(y)
         });
