@@ -1,0 +1,18 @@
+{
+  "name": "brokerage-watcher",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./",
+    "dev": "tsc -b ../../common && tsc && node ./",
+    "install-common": "node ../../common/_scripts/install",
+    "link-common": "node ../../common/_scripts/link"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chokidar": "^3.5.3"
+  }
+}
