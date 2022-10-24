@@ -157,7 +157,7 @@ export function Table<T>(
                         rowPressed(info.item, info.index)
                     } : undefined}
                     key={`row_${info.index}`}
-                    style={[props.elevated ? elevatedView : { paddingVertical: 8, marginHorizontal: 4 }]}>
+                    style={[props.elevated ? elevatedView : { paddingVertical: 8, marginHorizontal: 4, overflow: 'visible' }]}>
                     <View style={row}>
                         {
                             props.columns.map((c, i) => {

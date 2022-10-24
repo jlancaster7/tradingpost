@@ -41,7 +41,7 @@ export const PostEditorScreen = (props: TabScreenProps) => {
                 }
 
             }} style={[flex, {}]}
-                contentContainerStyle={{ minHeight: "100%" }} >
+                contentContainerStyle={{  }} >
                 {/* <TextEditor html={postEntity.data.content} onChangeHtml={(html) => {
                     postEntity.update({ content: html });
                 }} /> */}
