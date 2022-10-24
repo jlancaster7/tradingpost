@@ -96,6 +96,20 @@ export const rnui = {
     plus: require('./assets/rnui/plus.png')
 }
 export type NavIconKeys = "Portfolio" | "Search" | "Feed" | "Notification"; //| "Bookmark";
+
+export const NavIconTypeOverride: Partial<Record<NavIconKeys, any>> = {
+    Notification: {
+        no: {
+            active: require('./assets/nav-bar/notification-active.png'),
+            inactive: require('./assets/nav-bar/notification.png'),
+        },
+        has: {
+            active: require('./assets/nav-bar/has-notification-active.png'),
+            inactive: require('./assets/nav-bar/has-notification.png')
+        }
+    }
+}
+
 export const navIcons: Record<NavIconKeys, { active: number, inactive: number }> = {
     "Portfolio": {
         active: require("./assets/nav-bar/portfolio-active.png"),

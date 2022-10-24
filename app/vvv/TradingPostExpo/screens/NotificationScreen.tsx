@@ -8,36 +8,33 @@ import {Api} from '@tradingpost/common/api';
 import {ListAlertsResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
 import {NavigationProp, useNavigation} from "@react-navigation/native";
-import * as Notifications from 'expo-notifications'
 import {SecondaryButton} from "../components/SecondaryButton";
-import {Platform} from "react-native";
 
-const registerForPushNotificationsAsync = async () => {
-    if (Platform.OS === 'ios' || Platform.OS === 'android') {
-        const {status: existingStatus} = await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
-        if (existingStatus !== 'granted') {
-            const {status} = await Notifications.requestPermissionsAsync();
-            finalStatus = status;
-        }
-        if (finalStatus !== 'granted') {
-            return;
-        }
-
-        if (Platform.OS === 'android') {
-            Notifications.setNotificationChannelAsync('default', {
-                name: 'default',
-                importance: Notifications.AndroidImportance.MAX,
-                vibrationPattern: [0, 250, 250, 250],
-                lightColor: '#FF231F7C',
-            });
-        }
-
-        return (await Notifications.getDevicePushTokenAsync()).data;
-    }
-}
+let seen = false;
 
 export const NotificationScreen = () => {
+    const [notifs, setNotifs] = useState([] as ListAlertsResponse[]);
+    useEffect(() => {
+        if (seen) {
+            const run = async () => {
+                const ids = notifs.filter(n => !n.seen).map(n => n.id);
+                const res = await Api.Notification.extensions.seenNotifications({notificationIds: ids});
+            }
+            run();
+            return
+        }
+
+        let timer = setTimeout(async () => {
+            const ids = notifs.filter(n => !n.seen).map(n => n.id);
+            await Api.Notification.extensions.seenNotifications({notificationIds: ids});
+        }, 1500)
+
+        seen = true;
+        return () => {
+            clearTimeout(timer)
+        };
+    }, [notifs])
+
     return <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
         <View>
             <Layout style={{
@@ -73,6 +70,7 @@ export const NotificationScreen = () => {
                         page,
                     }));
                     const newNotifications = [...(allItems || []), ...notifications];
+                    setNotifs(newNotifications);
                     newNotifications.forEach((item, index) => {
                         if (!sizeCache[index]) {
                             sizeCache[index] = {

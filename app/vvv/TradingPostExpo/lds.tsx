@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import { EventRegister } from 'react-native-event-listeners'
-import { LoginResult } from "@tradingpost/common/api/entities/static/AuthApi";
-import { IUserGet, ISecurityList } from "@tradingpost/common/api/entities/interfaces";
-import AsyncStorage, { useAsyncStorage } from '@react-native-async-storage/async-storage'
+import {useCallback, useEffect, useState} from 'react';
+import {EventRegister} from 'react-native-event-listeners'
+import {LoginResult} from "@tradingpost/common/api/entities/static/AuthApi";
+import {IUserGet, ISecurityList} from "@tradingpost/common/api/entities/interfaces";
+import AsyncStorage, {useAsyncStorage} from '@react-native-async-storage/async-storage'
 
 //current_user
 //token 
@@ -16,7 +16,7 @@ export interface LDS {
         list: ISecurityList[],
         byId: Record<number, ISecurityList>,
         bySymbol: Record<string, ISecurityList>
-    } | undefined
+    } | undefined,
 }
 
 
@@ -31,7 +31,6 @@ let isExplirable: Partial<Record<keyof LDS, { duration: number, cachedAt?: numbe
         duration: 4/*hours*/ * 60 * 60 * 1000
     }
 }
-
 
 
 const LDS_CACHE_KEY = "lds"
@@ -53,7 +52,9 @@ export const useData = <T extends keyof LDS>(key: T) => {
             }
 
         });
-        return () => { EventRegister.removeEventListener(sub as string) };
+        return () => {
+            EventRegister.removeEventListener(sub as string)
+        };
     }, [key])
     return {
         value,
@@ -67,19 +68,18 @@ export const useData = <T extends keyof LDS>(key: T) => {
 export const setValue = async <T extends keyof LDS>(key: T, v: LDS[T]) => {
     lds[key] = v;
     if (isCachedMap[key]) {
-        const cachedLds: Partial<LDS> = { ...lds }
+        const cachedLds: Partial<LDS> = {...lds}
         Object.keys(lds).forEach((k) => {
             if (!isCachedMap[k as keyof LDS]) {
                 //console.log("DELETING KEY:" + k);
                 delete cachedLds[k as keyof LDS]
-            }
-            else {
+            } else {
                 //console.log("CACHING KEY" + k)
             }
         })
         await AsyncStorage.setItem(LDS_CACHE_KEY, JSON.stringify(cachedLds));
     }
-    EventRegister.emit(ldsChangedEvenName, { key })
+    EventRegister.emit(ldsChangedEvenName, {key})
 }
 
 export const initLds = async () => {
@@ -90,7 +90,7 @@ export const initLds = async () => {
         console.log("Results" + result);
         lds = JSON.parse(result);
         Object.keys(lds).forEach((k) =>
-            EventRegister.emit(ldsChangedEvenName, { k }));
+            EventRegister.emit(ldsChangedEvenName, {k}));
     }
     return lds;
 };
