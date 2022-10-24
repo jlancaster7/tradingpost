@@ -63,26 +63,22 @@ export interface IPlatformClaimGet {
 
 export interface IPostList {
         id: number,
-    platform_post_url: string,
-    platform: string,
-    body: any,
+    body: string,
     upvoted_count: number,
-    is_upvoted: boolean,
-    is_bookmarked: boolean,
     subscription_level: string,
-    user: IUserList[]
+    user: IUserList[],
+    comment_count: number,
+    title: string
     };
 
 export interface IPostGet {
         id: number,
     subscription_level: string,
-    platform: string,
-    platform_post_url: string,
-    body: any,
+    body: string,
     upvoted_count: number,
-    is_upvoted: boolean,
-    is_bookmarked: boolean,
-    user: IUserList[]
+    user: IUserList[],
+    comment_count: number,
+    title: string
     };
 
 export interface ISubscriberList {
