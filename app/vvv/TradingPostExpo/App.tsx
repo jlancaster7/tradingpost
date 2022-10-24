@@ -1,6 +1,7 @@
 import { configApi } from '@tradingpost/common/api/entities/static/EntityApiBase'
 import Constants, { AppOwnership } from 'expo-constants'
 
+
 if (!__DEV__) {
   configApi({
     apiBaseUrl: "https://api.tradingpostapp.com"
@@ -9,15 +10,15 @@ if (!__DEV__) {
 else if (__DEV__ && AppOwnership.Expo === Constants.appOwnership) {
   console.log("BUNLDE URL IS " + Constants.manifest?.hostUri);
   configApi({
-
     apiBaseUrl: `http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
   })
-
 }
 
 import { StatusBar } from 'expo-status-bar';
 //import { SafeAreaProvider } from 'react-native-safe-area-context';
 //import { Colors } from 'react-native-ui-lib';
+import { Logs } from 'expo'
+Logs.enableExpoCliLogging()
 
 import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
