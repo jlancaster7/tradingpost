@@ -18,13 +18,16 @@ import { useData } from "../lds";
 import { SvgExpo } from "./SvgExpo";
 //import { useEnsureUser } from "./EnsureUser";
 import { useRef } from "react";
-import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
+
 import { useAppUser } from '../Authentication';
 import { NavigationProp } from "@react-navigation/native";
 import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { DashScreenProps } from "../navigation";
 import { ProfileButton } from "./ProfileButton";
 import { useLinkTo } from "@react-navigation/native";
+import { versionCode } from "@tradingpost/common/api/entities/static/EntityApiBase";
+
+
 
 const padSmall = { marginBottom: sizes.rem1 / 8 };
 
@@ -66,7 +69,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
             </Pressable>
             <Text style={[font("xSmall", "darkgray", true), padSmall]} >Subscribers: {currentUser.subscription?.count}</Text>
             <Link onPress={() => {
-                
+
                 props.navigation.navigate("Subscription");
 
             }} style={{ fontSize: fonts.xSmall, fontWeight: "bold" }}
@@ -127,6 +130,7 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
                 isLast={index === array.length - 1}
             >{item.label}</MenuItem>
         })}
+        <Text style={{ textAlign: "center" }}>Api Version: {versionCode}</Text>
         {/* <MenuItem
             onPress={() => props.navigation.navigate("Watchlist")}
             icon={sideMenu.Watchlist}>Watchlists</MenuItem> */}

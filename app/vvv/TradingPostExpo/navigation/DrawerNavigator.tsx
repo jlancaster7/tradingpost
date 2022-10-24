@@ -22,45 +22,44 @@ const HeaderTp = () => {
 export function DrawerPart() {
     const { appUser } = useAppUser();
 
-    return appUser ? <Drawer.Navigator  useLegacyImplementation={true} drawerContent={(props) => <SideMenu appUser={appUser} {...props} />}
-        screenOptions={({ route, navigation }) => ({            
+    return appUser ? <Drawer.Navigator useLegacyImplementation={true} drawerContent={(props) => <SideMenu appUser={appUser} {...props} />}
+        screenOptions={({ route, navigation }) => ({
             headerTitleAlign: "center",
             headerTitle: HeaderTp,
             headerRight: (() => {
                 const routeName = getFocusedRouteNameFromRoute(route);
+                const state = useNavigationState((state) => {
+                    return (((state.routes[0]?.state?.routes as any[])?.find(r => r.name === "Feed").params as any)?.bookmarkedOnly || "false") as "true" | "false"
+                });
                 switch (routeName) {
                     case "Feed":
-                        return () => {
-                            const state = useNavigationState((state) => {
-                                return (((state.routes[0]?.state?.routes as any[])?.find(r => r.name === "Feed").params as any)?.bookmarkedOnly || "false") as "true" | "false"
-                            });
-                            const isMarked = state === "true";
-                            return <Pressable onPress={() => {
-                                navigation.navigate("Feed", {
-                                    bookmarkedOnly: isMarked ? "false" : "true"
-                                })
-                            }}>
-                                {!isMarked ? <IconButton
-                                    iconSource={isMarked ? BookmarkIcons.active : BookmarkIcons.inactive}
-                                    style={{
-                                        height: 24,
-                                        width: 24,
-                                        marginRight: sizes.rem1
-                                    }} />
-                                    : <BookmarkActiveBlue style={{
-                                        height: 16,
-                                        width: 16,
-                                        marginLeft: "auto",
-                                        marginRight: (sizes.rem1_5 + sizes.rem1) / 2
-                                    }} />
-                                }
-                            </Pressable>
-                        }
+                        const isMarked = state === "true";
+                        return <Pressable onPress={() => {
+                            navigation.navigate("Feed", {
+                                bookmarkedOnly: isMarked ? "false" : "true"
+                            })
+                        }}>
+                            {!isMarked ? <IconButton
+                                iconSource={isMarked ? BookmarkIcons.active : BookmarkIcons.inactive}
+                                style={{
+                                    height: 24,
+                                    width: 24,
+                                    marginRight: sizes.rem1
+                                }} />
+                                : <BookmarkActiveBlue style={{
+                                    height: 16,
+                                    width: 16,
+                                    marginLeft: "auto",
+                                    marginRight: (sizes.rem1_5 + sizes.rem1) / 2
+                                }} />
+                            }
+                        </Pressable>
+
                     default:
                         console.log(routeName);
                         return undefined;
                 }
-            })()
+            })
         })}>
         <Drawer.Screen name="Root" component={BottomTabNavigator} initialParams={{ appUser }} />
     </Drawer.Navigator> : null;

@@ -300,6 +300,7 @@ export type ListAlertsResponse = {
     id: number
     type: string
     dateTime: string
+    seen: boolean
     data: Record<string, any>
 }
 

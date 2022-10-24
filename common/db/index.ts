@@ -1,10 +1,24 @@
-
-import { DefaultConfig } from '../configuration'
+import {DefaultConfig} from '../configuration'
 import pg from 'pg'
 import pgPromise from "pg-promise";
 import Finicity from "../finicity";
 import Brokerage from '../brokerage'
-//import { RequestSettings } from './EntityApi';
+
+pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
+    return parseInt(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
+    return parseFloat(value);
+});
+
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
+    return parseFloat(value);
+});
 
 const debug = true;
 
@@ -56,8 +70,10 @@ export const init = (async () => {
 export const execProc = async <Result = any, Count extends number = 0, T = any>(proc: string, prms?: T, ensureCount?: Count, ensureCountMessage?: string): Promise<Count extends 1 ? Result : Result[]> => {
     const hive = await getHivePool;
 
-    const result = prms ? await hive.query(`SELECT * FROM ${proc}($1)`, [JSON.stringify(prms)]) :
-        await hive.query(`SELECT * FROM ${proc}('{}')`)
+    const result = prms ? await hive.query(`SELECT *
+                                            FROM ${proc}($1)`, [JSON.stringify(prms)]) :
+        await hive.query(`SELECT *
+                          FROM ${proc}('{}')`)
     if (ensureCount && result.rowCount !== ensureCount) {
 
         const defaultError = `Invalid number of results. Expected ${ensureCount} Received:${result.rowCount}`;

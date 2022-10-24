@@ -7,7 +7,11 @@ const {
 module.exports = (() => {
     const config = getDefaultConfig(__dirname);
 
+
+
     const { transformer, resolver } = config;
+
+    console.log("###################TEST######:" + resolver.blacklistRE);
     return applyConfigForLinkedDependencies({
         projectRoot: __dirname,
         transformer: {
@@ -17,8 +21,7 @@ module.exports = (() => {
         resolver: {
             ...resolver,
             assetExts: resolver.assetExts.filter((ext) => ext !== "svg"),
-            sourceExts: [...resolver.sourceExts, "svg"],
-        },
+            sourceExts: [...resolver.sourceExts, "svg"]
+        }
     })
-
 })();

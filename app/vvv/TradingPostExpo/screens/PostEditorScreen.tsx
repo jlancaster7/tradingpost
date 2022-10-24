@@ -1,6 +1,7 @@
 import { Api } from "@tradingpost/common/api";
 import React, { useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
+import { RichEditor, RichToolbar } from "react-native-pell-rich-editor";
 import { useToast } from "react-native-toast-notifications";
 import { Header } from "../components/Headers";
 import { Label } from "../components/Label";
@@ -22,9 +23,8 @@ export const PostEditorScreen = (props: TabScreenProps) => {
     }),
         [locked, setLocked] = useState(false),
         editorRef = useRef<any>(null),
-        toast = useToast()
-
-    //[contentFocused, setContentFocused] = useState(false)
+        toast = useToast(),
+        [contentFocused, setContentFocused] = useState(false)
 
     return <View style={{ backgroundColor: "white", flexGrow: 1 }}>
         <Header text='+ New Post' style={{ marginBottom: 0, marginTop: 4, marginLeft: sizes.rem1, color: "black" }} />
@@ -35,22 +35,23 @@ export const PostEditorScreen = (props: TabScreenProps) => {
         </View>
         <View style={{ flex: 1, marginHorizontal: sizes.rem1 / 5 }}>
             <ScrollView onTouchEnd={(ev) => {
-                //if (!contentFocused) {
+                if (!contentFocused) {
 
-                //editorRef.current?.focusContentEditor();
-                //}
+                    editorRef.current?.focusContentEditor();
+                }
 
             }} style={[flex, {}]}
                 contentContainerStyle={{ minHeight: "100%" }} >
-                <TextEditor html={postEntity.data.content} onChangeHtml={(html) => {
+                {/* <TextEditor html={postEntity.data.content} onChangeHtml={(html) => {
                     postEntity.update({ content: html });
-                }} />
-                {/* <RichEditor onFocus={() => {
+                }} /> */}
+                <RichEditor onFocus={() => {
                     setContentFocused(true)
                 }} onBlur={() => setContentFocused(false)} containerStyle={{ minHeight: 1 }} initialContentHTML={postEntity.data.content} ref={editorRef} placeholder={"Add content to your post"}
-                    {...bindTextInputBase(postEntity, "content", null, { "onChangeTextKey": "onChange" })} /> */}
+                    {...bindTextInputBase(postEntity, "content", null, { "onChangeTextKey": "onChange" })} />
             </ScrollView>
         </View>
+        <RichToolbar editor={editorRef} />
         {/* //TODO: add are you sure if dirty  */}
         <ButtonPanel
 
