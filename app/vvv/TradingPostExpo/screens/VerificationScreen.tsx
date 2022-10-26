@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { View } from "react-native"
 import { useAppUser } from "../Authentication"
 import { PrimaryButton } from "../components/PrimaryButton"
@@ -17,7 +17,14 @@ export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">)
     const { appUser } = useAppUser();
     const { signIn } = useAppUser();
     const { value: authToken, setValue: setAuthToken } = useData("authToken");
-
+    const verificationToken = props.route.params?.token;
+    useEffect(()=>{
+        if(verificationToken){
+            Api.User.extensions.validateUser({
+                verificationToken
+            })
+        }
+    },[verificationToken])
     return <View style={paddView}>
         <ElevatedSection title="Verify Your Email">
             <Text style={{ textAlign: "center", paddingVertical: sizes.rem1 }}>{appUser?.email}</Text>
