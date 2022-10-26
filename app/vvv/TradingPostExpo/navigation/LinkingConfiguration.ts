@@ -46,7 +46,7 @@ const ConfigOverride: Partial<Record<NavIconKeys, any>> = {
 // };
 
 const linking: LinkingOptions<any> = {
-    prefixes: [Linking.createURL('/')],
+    prefixes: [Linking.createURL('/'), "https://m.tradingpostapp.com"],
     config: {
         screens: {
             Root: "login",
@@ -76,6 +76,7 @@ const linking: LinkingOptions<any> = {
                     }
                 }
             },
+            VerifyAccount: "verifyaccount",
             NotificationTrade: "dash/notification/trade",
             Auth: "auth/:platform",
             WatchlistViewer: "WatchlistViewer/:watchlistId",

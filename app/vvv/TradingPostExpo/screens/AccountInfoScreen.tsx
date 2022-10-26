@@ -49,6 +49,7 @@ export function AccountInfoScreen(props: TabScreenProps) {
         
 
     const getToken = useTwitterAuth();
+    const getGoogleToken = useGoogleAuth();
     let twitterHandle: any;
     let setTwitterHandle: any;
     let substackUsername: any;

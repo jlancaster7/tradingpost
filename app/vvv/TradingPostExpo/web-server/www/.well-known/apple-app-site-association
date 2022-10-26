@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "25L2ZZWUPA.com.tradingpostapp",
+        "paths": ["*"]
+      }
+    ]
+  }
+}
