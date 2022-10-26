@@ -72,6 +72,7 @@ declare const _default: {
         body: {
             title: string;
             content: string;
+            subscription_level: string;
         };
         extra: {
             userId: string;

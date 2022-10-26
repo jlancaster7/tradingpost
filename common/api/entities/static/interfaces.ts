@@ -73,7 +73,7 @@ export interface IElasticPost {
         ,
         platformCreatedAt: string,
         platformUpdatedAt: null,
-        postType: 'tweet' | 'spotify' | 'substack' | 'youtube',
+        postType: 'tweet' | 'spotify' | 'substack' | 'youtube' | 'tradingpost',
         postTypeValue: number,
         postUrl: string,
         ratingsCount: 0,

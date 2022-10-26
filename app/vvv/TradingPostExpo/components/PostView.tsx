@@ -312,6 +312,44 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
         })}</Text>}
     </View>
 }
+
+const TradingPostView = (props: { post: Interface.IElasticPost }) => {
+    const { post } = props;
+    return <View style={{ marginVertical: sizes.rem1 / 2, marginHorizontal: sizes.rem0_5 }}>
+        <View key="profile">
+            {/* <Image style={{ aspectRatio: 0.9, marginRight: sizes.rem1 / 2 }} source={{ uri: post.platform_profile_url }} /> */}
+            
+                <Subheader text={post._source.content.title || ""} style={{
+                    marginBottom: 0,
+                    display: "flex",
+                    color: "black",
+                    fontSize: fonts.medium,
+                    fontWeight: "600",
+                    fontFamily: "K2D",
+                    maxWidth: "85%"
+                }}></Subheader>
+            
+        </View>
+        <HtmlView key="content" isUrl={false} style={{height: 50}}>
+            {`<html><meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <body style="font-size: ${fonts.small}px">${post._source.content.body}</body></html>`}
+            {/*(() => {
+                const parsedText = parseHtmlEnteties(post._source.content.body);
+                return parsedText?.length > 300 ?
+                    `${parsedText.substring(0, 300)}...` :
+                    parsedText
+            })()*/}
+        </HtmlView>
+        {<Text key="date" style={{
+            fontSize: fonts.xSmall,
+            fontFamily: "K2D",
+            paddingVertical: 5
+        }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        })}</Text>}
+    </View>
+}
 const parseHtmlEnteties = (str: string) => {
     return str?.replace(/&#([0-9]{1,4});/gi, function (match, numStr) {
         var num = parseInt(numStr, 10); // read num as normal number
@@ -326,6 +364,8 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
     if (props.post._source.postType === 'substack') {
         return SubstackView(props)
     }
+    else if (props.post._source.postType === 'tradingpost')
+        return TradingPostView(props)
 
     return <View>
         <View style={{

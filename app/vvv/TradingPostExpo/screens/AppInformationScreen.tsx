@@ -130,7 +130,7 @@ export function AppInformationScreen(props: any) {
                     <Text style={{padding: sizes.rem1,fontSize: paragraphSize, fontFamily: 'K2D', textAlign: 'center',}}>
                         {"Explore TradingPost's powerful search tool that utilizes cutting edge tech from industry leader ElasticSearch."}
                     </Text>
-                    <SecondaryButton style={[result ? {display: 'none'} : {display: 'flex'}, { alignSelf: "center", width: "65%", height: '100%', marginTop: '8%' }]}
+                    <SecondaryButton style={[result ? {display: 'none'} : {display: 'flex'}, { alignSelf: "center", width: "65%", height: '15%', marginTop: '8%' }]}
                                       onPress={() => {
                                         linkTo("/create/logininfo");
                                       }}>

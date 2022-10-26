@@ -3,11 +3,15 @@ import { DefaultConfig } from "../../../configuration";
 import { PublicError } from "../static/EntityApiBase";
 import Post from './Post'
 import { Client as ElasticClient } from '@elastic/elasticsearch';
-import { IElasticPost, IElasticPostExt } from "../interfaces";
+import { IElasticPost, IElasticPostExt, IUserGet } from "../interfaces";
 import { getPostCache, getUserCache } from "../../cache";
-import { getHivePool } from '../../../db'
+import { execProc, getHivePool } from '../../../db'
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import PostApi from "../apis/PostApi";
+import ElasticService from "../../../elastic"
+import TradingPostsService from "../../../social-media/tradingposts/service"
+import { TradingPostsAndUsers, TradingPostsAndUsersTable } from "../../../social-media/tradingposts/interfaces"
+import { DateTime } from "luxon";
 
 const client = new S3Client({
     region: "us-east-1"
@@ -215,7 +219,38 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
     },
     create: async (req) => {
         const pool = await getHivePool;
-        await pool.query(`INSERT INTO data_internal_post(user_id, title, content) VALUES($1,$2,$3)`, [req.extra.userId, req.body.title, req.body.content])
+        const result = await pool.query(`INSERT INTO data_post(user_id, title, body, subscription_level) VALUES($1,$2,$3,$4) RETURNING id, created_at, updated_at`, [req.extra.userId, req.body.title, req.body.content, req.body.subscription_level])
+        console.log(result.rows[0]);
+        const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
+        const elasticClient = new ElasticClient({
+            cloud: {
+                id: elasticConfiguration.cloudId as string
+            },
+            auth: {
+                apiKey: elasticConfiguration.apiKey as string
+            },
+            maxRetries: 5,
+        })
+        const indexName = "tradingpost-search";
+        const user: IUserGet = (await execProc('public.api_user_get', {
+            data: {id: req.extra.userId}
+        }))[0]
+        const elasticService = new ElasticService(elasticClient, indexName);
+        const usersAndTradingPosts: TradingPostsAndUsersTable = {
+            id: result.rows[0].id,
+            user_id: req.extra.userId,
+            subscription_level: req.body.subscription_level,
+            title: req.body.title,
+            body: req.body.content,
+            tradingpost_user_handle: user.handle,
+            tradingpost_user_email: user.email,
+            tradingpost_user_profile_url: user.profile_url || '',
+            created_at: DateTime.fromJSDate(result.rows[0].created_at),
+            updated_at: DateTime.fromJSDate(result.rows[0].updated_at)
+        }
+        await elasticService.ingest(TradingPostsService.map([usersAndTradingPosts]))
+        
+
         return {}
     },
     multitermfeed: async (req) => {

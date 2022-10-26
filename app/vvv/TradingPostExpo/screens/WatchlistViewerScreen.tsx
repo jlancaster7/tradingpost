@@ -78,9 +78,7 @@ export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number)
                             return byId[value] ? { uri: byId[value].logo_url } : undefined
                     })()}
                 size="tiny" />
-                    <Text numberOfLines={1} style={[a.item.option_info ? {display: 'flex'} : {display: 'none'}, {fontSize: fonts.xSmall, overflow: 'visible', width: 24}]}> 
-                        {a.item.option_info && `${a.item.option_info[0].type==='Call' ? 'C': 'P'}${toNumber1(a.item.option_info[0].strike_price)} ${new Date(a.item.option_info[0].expiration).toLocaleDateString()}`}
-                    </Text>    
+                    
                 </SecPressable>
             </View>
             )
