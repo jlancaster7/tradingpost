@@ -5,7 +5,7 @@ import UserApi, { IUserGet, IUserList, IUserUpdate } from '../apis/UserApi'
 import Brokerage from '../../../brokerage'
 import { DefaultConfig } from "../../../configuration";
 import pgPromise from "pg-promise";
-import {Client as ElasticClient} from '@elastic/elasticsearch';
+import { Client as ElasticClient } from '@elastic/elasticsearch';
 import ElasticService from "../../../elastic";
 import Finicity from "../../../finicity";
 //import FinicityTransformer from '../../../brokerage/finicity/transformer'
@@ -22,6 +22,7 @@ import { sendByTemplate } from '../../../sendGrid'
 import { TradingPostAccountGroupStats } from "../../../brokerage/interfaces";
 import PostPrepper from "../../../post-prepper";
 import { parse } from "url";
+import { i } from "mathjs";
 export interface ITokenResponse {
     "token_type": "bearer",
     "expires_in": number,
@@ -38,9 +39,14 @@ const client = new S3Client({
 //it just makes it harder to manage .. we should just have settings based on prod vs. dev etc.
 
 
-
-
 export default ensureServerExtensions<User>({
+    validateUser: async (req) => {
+        //to do need to id match
+        const data = jwt.verify(req.body.verificationToken, await DefaultConfig.fromCacheOrSSM("authkey")) as jwt.JwtPayload;
+        const pool = await getHivePool;
+        await pool.query(`update tp.local_login set verified = true where user_id = $1`, [req.extra.userId])
+        return {}
+    },
     generateBrokerageLink: async (req) => {
         const { brokerage } = await init;
         const test = await brokerage.generateBrokerageAuthenticationLink(req.extra.userId, "finicity");
@@ -107,19 +113,19 @@ export default ensureServerExtensions<User>({
             const pp = new PostPrepper();
             const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
             const elasticClient = new ElasticClient({
-            cloud: {
-                id: elasticConfiguration.cloudId as string
-            },
-            auth: {
-                apiKey: elasticConfiguration.apiKey as string
-            },
-            maxRetries: 5,
+                cloud: {
+                    id: elasticConfiguration.cloudId as string
+                },
+                auth: {
+                    apiKey: elasticConfiguration.apiKey as string
+                },
+                maxRetries: 5,
             })
 
             const indexName = "tradingpost-search";
             const elastic = new ElasticService(elasticClient, indexName);
             if (req.body.platform_idenifier) {
-                await DefaultSubstack(pgClient, pgp, pp, elastic).importUsers({userId: req.extra.userId, username: req.body.platform_idenifier})
+                await DefaultSubstack(pgClient, pgp, pp, elastic).importUsers({ userId: req.extra.userId, username: req.body.platform_idenifier })
                 return req.body.platform_idenifier;
             }
             else {
@@ -130,23 +136,23 @@ export default ensureServerExtensions<User>({
             const { pgClient, pgp } = await init;
             const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
             const elasticClient = new ElasticClient({
-            cloud: {
-                id: elasticConfiguration.cloudId as string
-            },
-            auth: {
-                apiKey: elasticConfiguration.apiKey as string
-            },
-            maxRetries: 5,
+                cloud: {
+                    id: elasticConfiguration.cloudId as string
+                },
+                auth: {
+                    apiKey: elasticConfiguration.apiKey as string
+                },
+                maxRetries: 5,
             })
-            
+
             const indexName = "tradingpost-search";
             const elastic = new ElasticService(elasticClient, indexName);
             const config = await DefaultConfig.fromCacheOrSSM("spotify");
-            
+
             if (req.body.platform_idenifier) {
                 let showId = parse(req.body.platform_idenifier).pathname?.slice(6) || ''
                 console.log(showId);
-                await DefaultSpotify(elastic, pgClient, pgp, config).importSpotifyShows({userId: req.extra.userId, showId: showId})
+                await DefaultSpotify(elastic, pgClient, pgp, config).importSpotifyShows({ userId: req.extra.userId, showId: showId })
                 return req.body.platform_idenifier;
             }
             else {
@@ -154,7 +160,29 @@ export default ensureServerExtensions<User>({
             }
         }
         else if (req.body.platform === 'youtube') {
-            return ""
+            const info = await fetch("https://accounts.google.com/o/oauth2/token", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    code: req.body.code,
+                    grant_type: "authorization_code",
+                    client_id: "",
+                    redirect_uri: 'http://m.tradingpostapp.com/auth/youtube',
+                    code_verifier: req.body.challenge
+                }),
+
+            })
+            if (info.ok) {
+                const username = ((await info.json()).claims.username);
+                execProc("tp.update_youtube_social", {
+                    user_id: req.extra.userId
+                })
+                return username;
+            }
+            else
+                throw new Error(await info.text());
         }
         else {
             return "";
@@ -162,8 +190,8 @@ export default ensureServerExtensions<User>({
     },
     getTrades: async (r) => {
         let requestedUser = {} as IUserGet;
-        let requestedId; 
-        if ( r.body.userId ) {
+        let requestedId;
+        if (r.body.userId) {
             requestedId = r.body.userId;
             requestedUser = (await execProc("public.api_user_get", {
                 user_id: r.extra.userId,
@@ -212,8 +240,8 @@ export default ensureServerExtensions<User>({
     },
     getHoldings: async (r) => {
         let requestedUser = {} as IUserGet;
-        let requestedId; 
-        if ( r.body.userId ) {
+        let requestedId;
+        if (r.body.userId) {
             requestedId = r.body.userId;
             requestedUser = (await execProc("public.api_user_get", {
                 user_id: r.extra.userId,
@@ -221,11 +249,11 @@ export default ensureServerExtensions<User>({
                     id: r.body.userId
                 }
             }))[0];
-        } 
+        }
         else {
             requestedId = r.extra.userId
         }
-        if (r.extra.userId === requestedId ) {
+        if (r.extra.userId === requestedId) {
             return await execProc("public.api_holding_list", {
                 user_id: requestedId
             });
@@ -233,20 +261,20 @@ export default ensureServerExtensions<User>({
         else if (requestedUser?.settings?.portfolio_display.holdings && requestedUser.subscription?.is_subscribed) {
             const result = await execProc("public.api_holding_list", {
                 user_id: requestedId
-            }) 
+            })
             let portValue = 0;
             result.forEach((r, i) => {
                 portValue += parseFloat(r.value);
             })
             let t: any[] = [];
             result.forEach((r, i) => {
-                const o = { 
+                const o = {
                     id: r.id,
-                    price_as_of: r.price_as_of, 
-                    quantity: 0, 
-                    price: r.price, 
-                    value: parseFloat(r.value) / portValue, 
-                    cost_basis: !r.cost_basis ? 'n/a' : r.cost_basis, 
+                    price_as_of: r.price_as_of,
+                    quantity: 0,
+                    price: r.price,
+                    value: parseFloat(r.value) / portValue,
+                    cost_basis: !r.cost_basis ? 'n/a' : r.cost_basis,
                     security_id: r.security_id,
                     option_id: r.option_id,
                     option_info: r.option_info
@@ -262,8 +290,8 @@ export default ensureServerExtensions<User>({
     getReturns: async r => {
         const { brokerage } = await init;
         let requestedUser = {} as IUserGet;
-        let requestedId; 
-        if ( r.body.userId ) {
+        let requestedId;
+        if (r.body.userId) {
             requestedId = r.body.userId;
             requestedUser = (await execProc("public.api_user_get", {
                 user_id: r.extra.userId,
@@ -271,7 +299,7 @@ export default ensureServerExtensions<User>({
                     id: r.body.userId
                 }
             }))[0];
-        } 
+        }
         else {
             requestedId = r.extra.userId
         }
@@ -296,8 +324,8 @@ export default ensureServerExtensions<User>({
     getPortfolio: async (r) => {
         const { brokerage } = await init;
         let requestedUser = {} as IUserGet;
-        let requestedId; 
-        if ( r.body.userId ) {
+        let requestedId;
+        if (r.body.userId) {
             requestedId = r.body.userId;
             requestedUser = (await execProc("public.api_user_get", {
                 user_id: r.extra.userId,
@@ -305,7 +333,7 @@ export default ensureServerExtensions<User>({
                     id: r.body.userId
                 }
             }))[0];
-        } 
+        }
         else {
             requestedId = r.extra.userId
         }
@@ -344,13 +372,15 @@ export default ensureServerExtensions<User>({
 
         //TODO: make this token expire faster and attach this to a code ( to prevent multiple tokens from working)
         const token = jwt.sign({ verified: true }, authKey, { subject: r.extra.userId });
+        console.log("About to send email..." + user.email)
         await sendByTemplate({
             to: user.email,
             templateId: "d-23c8fc09ded942d386d7c888a95a0653",
             dynamicTemplateData: {
-                Weblink: (process.env.WEBLINK_BASE_URL || "https://app.tradingpostapp.com") + `/verifyaccount?token=${token}`
+                Weblink: (process.env.WEBLINK_BASE_URL || "https://m.tradingpostapp.com") + `/verifyaccount?token=${token}`
             }
         })
+        console.log("Sent email...")
         return {}
     }
 })

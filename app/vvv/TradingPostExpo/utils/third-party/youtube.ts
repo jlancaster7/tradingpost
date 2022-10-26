@@ -5,13 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking } from "react-native";
 import { EventRegister } from "react-native-event-listeners";
 import uuid from 'react-native-uuid';
-import { initLds } from "../../lds";
+import { makeRedirectUrl } from "./shared";
+
 //TODO: SHould put this all in the app later as a generate link 
-const clientId = "cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ";
-const platform = "twitter",
-    redirectUriText = `http://localhost:19006/auth/${platform}`,
+const clientId = "408632420955-7gsbtielmra10pj4sdccgml20tphfujk.apps.googleusercontent.com";
+const platform = "youtube",
+    redirectUriText = makeRedirectUrl(platform),// `http://localhost:19006/auth/${platform}`,
     redirectUri = new URL(redirectUriText),
-    authUrlText = "https://twitter.com/i/oauth2/authorize"
+    authUrlText = "https://accounts.google.com/o/oauth2/auth"
 //state = `amira_${platform}`;
 
 export interface ITokenResponse {
@@ -32,14 +33,14 @@ export function useTwitterAuth() {
     let intervalHandler = useRef<any>()
     
     const openAuth = useCallback(async () => {
-        await AsyncStorage.removeItem("auth-twitter-code");
+        await AsyncStorage.removeItem("auth-youtube-code");
         const _challenge = Math.random().toString().substring(2, 10);
         const authUrl = new URL(authUrlText);
         authUrl.searchParams.append("response_type", "code");
         authUrl.searchParams.append("client_id", clientId);
         authUrl.searchParams.append("redirect_uri", redirectUriText);
         authUrl.searchParams.append("state", state.current);
-        authUrl.searchParams.append("scope", "users.read tweet.read offline.access");
+        authUrl.searchParams.append("scope", "https://www.googleapis.com/auth/youtube");
         authUrl.searchParams.append("code_challenge", _challenge);
         authUrl.searchParams.append("code_challenge_method", "plain");
 
@@ -50,11 +51,9 @@ export function useTwitterAuth() {
             //TODO: Also need to check state here just in case no matter what ... 
             clearInterval(intervalHandler.current);       
             intervalHandler.current =setInterval(async ()=>{
-                const code = await AsyncStorage.getItem("auth-twitter-code");
-                if(code){{
+                const code = await AsyncStorage.getItem("auth-youtube-code");
+                if(code){
                     res(code);
-                    console.log("########## I FOUND THE CODE ##########");
-                }
                 clearInterval(intervalHandler.current);
                 }
             },1000);

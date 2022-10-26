@@ -33,16 +33,17 @@ export type RootStackParamList =
         "WatchlistViewer" |
         "WatchlistEditor" |
         "Watchlist" |
-        "Auth" |
         "ImagePicker" |
         "ResetPassword" |
-        "VerifyAccount" |
+
         "Subscription" |
         "SubscriptionSettings" |
         "NotificationTrade"
     > &
     {
+        "Auth": { platform: "twitter" | "youtube" | "spotify" | "finicity", code: string }
         "Company": { securityId: number },
+        "VerifyAccount": { token?: string },
         "PostEditor": undefined,
         "TableModal": { title: string, tableProps: TableProps<any> },
         "PostScreen": { post: Interface.IElasticPostExt },

@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "tp",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -20,7 +20,8 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tradingpostapp"
+      "bundleIdentifier": "com.tradingpostapp",
+      "associatedDomains": ["applinks:expo.dev"]
     },
     "android": {
       "googleServicesFile": "./google-services.json",
@@ -28,6 +29,22 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#282869"
       },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "m.tradingpostapp.com",
+              "pathPattern": "*"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "package": "com.tradingpostapp"
     },
     "web": {
@@ -43,6 +60,7 @@
       }
     },
     "plugins": [
+      "./plugins/withAndroidVerifiedLinksWorkaround",
       [
         "expo-notifications",
         {

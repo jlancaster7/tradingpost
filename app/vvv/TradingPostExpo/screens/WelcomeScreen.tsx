@@ -31,6 +31,7 @@ import { useAppUser } from "../Authentication";
 import { useData } from "../lds";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Api } from "@tradingpost/common/api";
+import { RootStackParamList, RootStackScreenProps } from "../navigation/pages";
 //import { resetEnsureUser } from "../components/EnsureUser";
 
 
@@ -94,7 +95,7 @@ const SvgMagic: React.FC<{ children: ReactElement<SvgProps> }> = (props) => {
 // }
 //console.log("MY app type is " + typeof AppTitle)
 
-export default ({ navigation }: { navigation: NavigationProp<any> }) => {
+export default ({ navigation }: RootStackScreenProps<"Root">) => {
     const cleanUp = useRef<number>(),
         [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -116,17 +117,17 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         opacityAnim = useRef(new Animated.Value(0)).current,
         toast = useToast(),
         { appUser, signIn, authToken, loginResult } = useAppUser(),
-        { value: hasAuthed, setValue } = useData("hasAuthed"),
-        {value: firstTime, setValue: setFirstTime} = useData('firstTime');
+        //{ value: hasAuthed, setValue } = useData("hasAuthed"),
+        { value: firstTime, setValue: setFirstTime } = useData('firstTime');
 
-    const linkTo = useLinkTo<any>();    
+    const linkTo = useLinkTo<any>();
 
     useLayoutEffect(() => {
 
         if (firstTime) {
         } else {
             if (appUser || loginResult) {
-                console.log("Has authed is ....." + hasAuthed)
+                //console.log("Has authed is ....." + hasAuthed)
                 if (appUser) {
                     if (!appUser.settings || !Object.keys(appUser.settings).length) {
                         linkTo("/create/analyststart");
@@ -134,20 +135,28 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
                     else if (appUser.settings.analyst && !appUser.analyst_profile) {
                         linkTo("/create/analystinterest")
                     }
-                    else{
-                        setValue(true);
-                        navigation.navigate("Dash");
+                    else {
+
+                        //setValue(true);
+                        if (!loginResult?.verified)
+                            navigation.navigate("VerifyAccount", {});
+                        else
+                            navigation.navigate("Dash");
+
+
                     }
                 }
                 else {
-                    linkTo("/create/basicinfo");
+                    setTimeout(() => {
+                        linkTo("/create/basicinfo");
+                    })
                 }
             }
         }
-    }, [appUser, loginResult])
+    }, [appUser, loginResult, linkTo])
 
 
-    
+
     return <><View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>
         <AppTitle style={{ marginVertical: sizes.rem1, alignSelf: "center", width: "100%", aspectRatio: 5 }} />
 
@@ -296,14 +305,14 @@ export default ({ navigation }: { navigation: NavigationProp<any> }) => {
         />
 
     </View>
-        {!selectedIndex &&  <Pressable
-                                onPress={() => {
-                                    navigation.navigate('AppInformation')
-                                }}>
-                                <Text style={{ textAlign: "right", position: "absolute", bottom: sizes.rem1, right: sizes.rem1, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>
-                                    What is TradingPost{">>"}
-                                </Text>
-                            </Pressable>}
+        {!selectedIndex && <Pressable
+            onPress={() => {
+                navigation.navigate('AppInformation')
+            }}>
+            <Text style={{ textAlign: "right", position: "absolute", bottom: sizes.rem1, right: sizes.rem1, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>
+                What is TradingPost{">>"}
+            </Text>
+        </Pressable>}
     </>
 
 

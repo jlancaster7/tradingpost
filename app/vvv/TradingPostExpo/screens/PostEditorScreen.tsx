@@ -36,18 +36,17 @@ export const PostEditorScreen = (props: TabScreenProps) => {
         <View style={{ flex: 1, marginHorizontal: sizes.rem1 / 5 }}>
             <ScrollView onTouchEnd={(ev) => {
                 if (!contentFocused) {
-
                     editorRef.current?.focusContentEditor();
                 }
-
             }} style={[flex, {}]}
-                contentContainerStyle={{ minHeight: "100%" }} >
+                contentContainerStyle={{ minHeight: "100%", maxHeight: "100%", height: "100%" }} >
                 {/* <TextEditor html={postEntity.data.content} onChangeHtml={(html) => {
                     postEntity.update({ content: html });
                 }} /> */}
                 <RichEditor onFocus={() => {
                     setContentFocused(true)
-                }} onBlur={() => setContentFocused(false)} containerStyle={{ minHeight: 1 }} initialContentHTML={postEntity.data.content} ref={editorRef} placeholder={"Add content to your post"}
+                }} onBlur={() =>
+                    setContentFocused(false)} containerStyle={{ minHeight: 1 }} initialContentHTML={postEntity.data.content} ref={editorRef} placeholder={"Add content to your post"}
                     {...bindTextInputBase(postEntity, "content", null, { "onChangeTextKey": "onChange" })} />
             </ScrollView>
         </View>
