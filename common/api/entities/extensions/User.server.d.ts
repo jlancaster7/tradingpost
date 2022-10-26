@@ -143,6 +143,16 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<IUserList[]>;
+    validateUser: (req: {
+        body: {
+            verificationToken: string;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<{}>;
     sendEmailValidation: (req: {
         body: undefined;
         extra: {
