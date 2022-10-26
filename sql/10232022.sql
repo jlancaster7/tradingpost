@@ -1,24 +1,28 @@
 ALTER TABLE notification
     ADD COLUMN seen BOOLEAN NOT NULL DEFAULT FALSE;
 
-CREATE TYPE brokerage_to_process_status AS ENUM ('PENDING', 'FAILED', 'SUCCESSFUL');
+CREATE TYPE brokerage_to_process_status AS ENUM ('PENDING', 'FAILED', 'RUNNING', 'SUCCESSFUL');
 
 
 CREATE TABLE brokerage_to_process
 (
-    id              BIGSERIAL                      NOT NULL,
-    user_id         UUID REFERENCES data_user (id) NOT NULL,
-    brokerage       TEXT                           NOT NULL,
-    date_to_process TIMESTAMPTZ                    NOT NULL,
-    status          brokerage_to_process_status    NOT NULL DEFAULT 'PENDING',
-    data            JSONB,
-    updated_at      TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at      TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id                BIGSERIAL                   NOT NULL,
+    brokerage         TEXT                        NOT NULL,
+    brokerage_user_id TEXT                        NOT NULL,
+    date_to_process   TIMESTAMPTZ                 NOT NULL,
+    status            brokerage_to_process_status NOT NULL DEFAULT 'PENDING',
+    data              JSONB,
+    updated_at        TIMESTAMPTZ                 NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at        TIMESTAMPTZ                 NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
 );
+
+CREATE UNIQUE INDEX brokerage_to_process_user_id_brokerage ON brokerage_to_process (brokerage, brokerage_user_id);
 
 CREATE TABLE ibkr_account
 (
-    id                     BIGSERIAL   NOT NULL,
+    id                     BIGSERIAL                      NOT NULL,
+    user_id                UUID REFERENCES data_user (id) NOT NULL,
     type                   TEXT,
     account_id             TEXT UNIQUE,
     account_title          TEXT,
@@ -40,8 +44,9 @@ CREATE TABLE ibkr_account
     date_closed            DATE,
     date_funded            DATE,
     account_representative TEXT,
-    updated_at             TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at             TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    account_process_date   DATE,
+    updated_at             TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at             TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
 
