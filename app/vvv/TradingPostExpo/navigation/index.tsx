@@ -25,7 +25,7 @@ import LinkingConfiguration from './LinkingConfiguration';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from './RootNavigator';
 
-export default function Navigation({ colorScheme, whenReady }: { colorScheme: ColorSchemeName, whenReady: () => void }) {
+export default function Navigation({ colorScheme, whenReady , url}: { url:string, colorScheme: ColorSchemeName, whenReady: () => void }) {
   return (
     <SafeAreaProvider>
       <NavigationContainer
@@ -34,7 +34,7 @@ export default function Navigation({ colorScheme, whenReady }: { colorScheme: Co
         }}
         linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <RootNavigator />
+        <RootNavigator url={url} />
       </NavigationContainer>
     </SafeAreaProvider>
   );

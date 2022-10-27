@@ -95,8 +95,6 @@ export default function App() {
   const url = useURL();
   console.log(url);
   const linkTo = useLinkTo();
-  const ltRef = useRef(linkTo);
-  ltRef.current = linkTo;
   const [urlToGoTo, setUrlToGoTo] = useState("");
   if (__DEV__ && url) {
 
@@ -108,7 +106,7 @@ export default function App() {
     }
     else {
       if (!urlToGoTo) {
-        console.log("GOING TO URL :::::::: " + urlToGoTo);
+        console.log("GOING TO URL :::::::: " + url);
         setUrlToGoTo(url);
       }
     }
@@ -139,11 +137,11 @@ export default function App() {
   return <ApplicationProvider {...eva} theme={{ ...eva.light, ...theme }}>
     <IconRegistry icons={EvaIconsPack} />
     <ToastProvider>
-      <Navigation whenReady={() => {
-        console.log("Nav Container says its ready");
+      <Navigation url={urlToGoTo} whenReady={() => {
         if (urlToGoTo) {
-          linkTo(urlToGoTo)
+          //linkTo(urlToGoTo);
         }
+
       }} colorScheme={colorScheme} />
       <StatusBar />
     </ToastProvider>

@@ -20,7 +20,6 @@ type PagesWithoutParams<T extends keyof any> = {
 }
 export type RootStackParamList =
     PagesWithoutParams<
-        "Root" |
         "NotFound" |
         "AccountSettings" |
         "AccountInformation" |
@@ -41,6 +40,9 @@ export type RootStackParamList =
         "NotificationTrade"
     > &
     {
+        "Root": {
+            baseUrl?: string
+        }
         "Auth": { platform: "twitter" | "youtube" | "spotify" | "finicity", code: string }
         "Company": { securityId: number },
         "VerifyAccount": { token?: string },

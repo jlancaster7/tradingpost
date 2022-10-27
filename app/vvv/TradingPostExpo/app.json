@@ -21,7 +21,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tradingpostapp",
-      "associatedDomains": ["applinks:expo.dev"]
+      "associatedDomains": ["applinks:m.tradingpostapp.com"]
     },
     "android": {
       "googleServicesFile": "./google-services.json",

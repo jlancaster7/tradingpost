@@ -97,25 +97,25 @@ const SvgMagic: React.FC<{ children: ReactElement<SvgProps> }> = (props) => {
 // }
 //console.log("MY app type is " + typeof AppTitle)
 
-export default ({ navigation }: RootStackScreenProps<"Root">) => {
+export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
 
 
-    const url = useURL();
-    console.log(url);
+    //const url = useURL();
+    // console.log(url);
     const linkTo = useLinkTo();
-    const ltRef = useRef(linkTo);
-    ltRef.current = linkTo;
-    const [urlToGoTo, setUrlToGoTo] = useState("");
+    // const ltRef = useRef(linkTo);
+    // ltRef.current = linkTo;
+    // const [urlToGoTo, setUrlToGoTo] = useState("");
 
-    useEffect(() => {
-        if (url) {
-            const urlParsed = parse(url, true);
-            if (urlParsed.hostname?.toString() === "m.tradingpostapp.com" && !urlToGoTo) {
-                console.log("Sending you to");
-                setUrlToGoTo(url);
-            }
-        }
-    }, [url])
+    // useEffect(() => {
+    //     if (url) {
+    //         const urlParsed = parse(url, true);
+    //         if (urlParsed.hostname?.toString() === "m.tradingpostapp.com" && !urlToGoTo) {
+    //             console.log("Sending you to");
+    //             setUrlToGoTo(url);
+    //         }
+    //     }
+    // }, [url])
 
     const cleanUp = useRef<number>(),
         [selectedIndex, setSelectedIndex] = useState(0);
