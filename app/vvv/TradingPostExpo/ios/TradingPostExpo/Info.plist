@@ -40,7 +40,7 @@
       <true/>
       <key>NSExceptionDomains</key>
       <dict>
-        <key>localhost</key>
+        <key>169.254.187.158</key>
         <dict>
           <key>NSExceptionAllowsInsecureHTTPLoads</key>
           <true/>

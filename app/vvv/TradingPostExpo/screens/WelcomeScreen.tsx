@@ -1,23 +1,22 @@
-
-import { parse } from 'url'
-import React, { Children, FC, PropsWithChildren, ReactElement, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import {parse} from 'url'
+import React, {Children, FC, PropsWithChildren, ReactElement, useEffect, useLayoutEffect, useMemo, useRef} from "react";
 //import { Text, View } from "react-native-ui-lib";
 //import { LoginButtons } from "../components/LoginButtons";
-import { AppTitle, SplashWelcome } from "../images";
+import {AppTitle, SplashWelcome} from "../images";
 //import { Screen } from "./BaseScreen";
 //import CreateAccountScreen from "./CreateAccountScreen";
-import { bannerText, fonts, paddView, sizes } from '../style'
-import { G, GProps, Path, SvgProps } from "react-native-svg";
-import { Link } from "../components/Link";
-import { Animated, Platform, View, StyleSheet, Alert, Pressable } from "react-native";
-import { SvgExpo } from "../components/SvgExpo";
-import { LoginButtons } from "../components/LoginButtons";
-import { NavigationProp, useLinkTo } from "@react-navigation/native";
-import { Text, Layout, ViewPager, TabView, Tab } from "@ui-kitten/components";
-import { useState } from "react";
-import { ITextField, TextField } from "../components/TextField";
-import { Header } from "../components/Headers";
-import { Section } from "../components/Section";
+import {bannerText, fonts, paddView, sizes} from '../style'
+import {G, GProps, Path, SvgProps} from "react-native-svg";
+import {Link} from "../components/Link";
+import {Animated, Platform, View, StyleSheet, Alert, Pressable} from "react-native";
+import {SvgExpo} from "../components/SvgExpo";
+import {LoginButtons} from "../components/LoginButtons";
+import {NavigationProp, useLinkTo} from "@react-navigation/native";
+import {Text, Layout, ViewPager, TabView, Tab} from "@ui-kitten/components";
+import {useState} from "react";
+import {ITextField, TextField} from "../components/TextField";
+import {Header} from "../components/Headers";
+import {Section} from "../components/Section";
 //import { BaseScreenProps } from "../layouts/BaseLayout";
 //import LoginScreen from "./LoginScreen";
 //import { LoginButtons } from "../components/LoginButtons";
@@ -25,15 +24,15 @@ import { Section } from "../components/Section";
 //import UserApi from '@tradingpost/common/api/entities/apis/UserApi'
 
 
-import { useToast } from "react-native-toast-notifications";
+import {useToast} from "react-native-toast-notifications";
 //import { PublicPages } from "../navigation";
 //import { EntityApiBase } from "@tradingpost/common/api/entities/static/EntityApiBase";
-import { useAppUser } from "../Authentication";
-import { useData } from "../lds";
-import { PrimaryButton } from "../components/PrimaryButton";
-import { Api } from "@tradingpost/common/api";
-import { RootStackParamList, RootStackScreenProps } from "../navigation/pages";
-import { useURL } from "expo-linking";
+import {useAppUser} from "../Authentication";
+import {useData} from "../lds";
+import {PrimaryButton} from "../components/PrimaryButton";
+import {Api} from "@tradingpost/common/api";
+import {RootStackParamList, RootStackScreenProps} from "../navigation/pages";
+import {useURL} from "expo-linking";
 //import { resetEnsureUser } from "../components/EnsureUser";
 
 
@@ -97,7 +96,7 @@ const SvgMagic: React.FC<{ children: ReactElement<SvgProps> }> = (props) => {
 // }
 //console.log("MY app type is " + typeof AppTitle)
 
-export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
+export default ({navigation, route}: RootStackScreenProps<"Root">) => {
 
 
     //const url = useURL();
@@ -137,9 +136,9 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
         intervalRef = useRef<any>(),
         opacityAnim = useRef(new Animated.Value(0)).current,
         toast = useToast(),
-        { appUser, signIn, authToken, loginResult, isSignInComplete } = useAppUser(),
+        {appUser, signIn, authToken, loginResult, isSignInComplete} = useAppUser(),
         //{ value: hasAuthed, setValue } = useData("hasAuthed"),
-        { value: firstTime, setValue: setFirstTime } = useData('firstTime');
+        {value: firstTime, setValue: setFirstTime} = useData('firstTime');
 
     // const linkTo = useLinkTo<any>();
 
@@ -151,11 +150,9 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
                 if (appUser) {
                     if (!appUser.settings || !Object.keys(appUser.settings).length) {
                         linkTo("/create/analyststart");
-                    }
-                    else if (appUser.settings.analyst && !appUser.analyst_profile) {
+                    } else if (appUser.settings.analyst && !appUser.analyst_profile) {
                         linkTo("/create/analystinterest")
-                    }
-                    else {
+                    } else {
                         if (!loginResult?.verified)
                             linkTo("/verifyaccount")
                         //navigation.navigate("VerifyAccount", {});
@@ -165,8 +162,7 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
 
 
                     }
-                }
-                else if (isSignInComplete) {
+                } else if (isSignInComplete) {
                     linkTo("/create/basicinfo");
                 }
             }
@@ -174,9 +170,8 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
     }, [appUser, loginResult])
 
 
-
-    return <><View style={[...paddView, { justifyContent: "center", backgroundColor: "white" }]}>
-        <AppTitle style={{ marginVertical: sizes.rem1, alignSelf: "center", width: "100%", aspectRatio: 5 }} />
+    return <><View style={[...paddView, {justifyContent: "center", backgroundColor: "white"}]}>
+        <AppTitle style={{marginVertical: sizes.rem1, alignSelf: "center", width: "100%", aspectRatio: 5}}/>
 
         <TabView
             selectedIndex={selectedIndex}
@@ -238,15 +233,15 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
             <Tab>
                 <Section title="Login">
                     <TextField placeholder='Username' returnKeyType="next"
-                        onChangeText={(name) => setUsername(name)}
+                               onChangeText={(name) => setUsername(name)}
                         //validateOnChange
-                        textInputRef={userRef}
-                        style={{ marginVertical: sizes.rem1 }}
-                    //validate={isValidEmail}
-                    //errorMessage={"Invalid Email Address"}
-                    //validateOnChange
-                    //onSubmitEditing={() => passRef.current?.focus()}
-                    //error={userError}
+                               textInputRef={userRef}
+                               style={{marginVertical: sizes.rem1}}
+                        //validate={isValidEmail}
+                        //errorMessage={"Invalid Email Address"}
+                        //validateOnChange
+                        //onSubmitEditing={() => passRef.current?.focus()}
+                        //error={userError}
                     />
 
                     <TextField
@@ -255,11 +250,11 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
                         //validate={isRequired}
                         onChangeText={(pass) => setPassword(pass)}
                         placeholder='Password'
-                        style={{ marginVertical: sizes.rem1 }}
+                        style={{marginVertical: sizes.rem1}}
                         //errorMessage="Invalid Password"
                         //validateOnChange
-                        secureTextEntry textInputRef={passRef} />
-                    <Link style={{ paddingTop: 4, paddingBottom: 16, alignSelf: "flex-end" }} onPress={() => {
+                        secureTextEntry textInputRef={passRef}/>
+                    <Link style={{paddingTop: 4, paddingBottom: 16, alignSelf: "flex-end"}} onPress={() => {
                         //setResetMode(true);
                         setSelectedIndex(2)
 
@@ -269,25 +264,25 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
             <Tab>
                 <View>
                     <Text>Please enter your email address to recover your password:</Text>
-                    <TextField style={{ marginVertical: sizes.rem1 }} value={username} placeholder="Email Address" onChangeText={(t) => {
-                        setUsername(t);
-                    }} />
+                    <TextField style={{marginVertical: sizes.rem1}} value={username} placeholder="Email Address"
+                               onChangeText={(t) => {
+                                   setUsername(t);
+                               }}/>
                     <PrimaryButton onPress={async () => {
                         if (username && /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/.test(username)) {
                             Api.Auth.forgotPassword(username);
                             toast.show("Recovery Email has been sent");
-                        }
-                        else {
+                        } else {
                             toast.show("Please enter a valid email address");
                         }
-                    }} >Recover Password</PrimaryButton>
+                    }}>Recover Password</PrimaryButton>
                 </View>
             </Tab>
         </TabView>
 
         <Animated.Text style={[bannerText, {
             opacity: !selectedIndex ? 1 : opacityAnim
-        }]}> {!selectedIndex ? "Welcome to the team!" : "Hey!!!!!... Welcome Back!"}</Animated.Text>
+        }]}> {!selectedIndex ? "Welcome to the team!" : "Hey... Welcome Back!"}</Animated.Text>
         <LoginButtons
             createAccountProps={{
                 onPress: () => {
@@ -308,12 +303,10 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
                                 duration: 2000,
                                 useNativeDriver: true
                             }).start();
-                    }
-                    else {
+                    } else {
                         try {
                             await signIn(username, password);
-                        }
-                        catch (ex: any) {
+                        } catch (ex: any) {
                             toast.show(ex.message);
                         }
                     }
@@ -327,7 +320,14 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
             onPress={() => {
                 navigation.navigate('AppInformation')
             }}>
-            <Text style={{ textAlign: "right", position: "absolute", bottom: sizes.rem1, right: sizes.rem1, fontSize: fonts.large, lineHeight: fonts.large * 1.5 }}>
+            <Text style={{
+                textAlign: "right",
+                position: "absolute",
+                bottom: sizes.rem1,
+                right: sizes.rem1,
+                fontSize: fonts.large,
+                lineHeight: fonts.large * 1.5
+            }}>
                 What is TradingPost{">>"}
             </Text>
         </Pressable>}
@@ -341,7 +341,7 @@ const WTF_View = (props: {
     onReady: (item: any) => void
 
 }) => {
-    return <View style={{ width: "100%", aspectRatio: 1.5 }}>
+    return <View style={{width: "100%", aspectRatio: 1.5}}>
         <SplashWelcome
             onReady={props.onReady}
         />
