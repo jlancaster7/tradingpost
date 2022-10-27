@@ -764,6 +764,49 @@ export type IbkrAccountTable = {
     createdAt: DateTime
 } & IbkrAccount
 
+export type IbkrActivityCsv = {
+    Type: string
+    AccountID: string
+    ConID: string
+    SecurityID: string
+    Symbol: string
+    BBTicker: string
+    BBGlobalID: string
+    SecurityDescription: string
+    AssetType: string
+    Currency: string
+    BaseCurrency: string
+    TradeDate: string
+    TradeTime: string
+    SettleDate: string
+    OrderTime: string
+    TransactionType: string
+    Quantity: string
+    UnitPrice: string
+    GrossAmount: string
+    SECFee: string
+    Commission: string
+    Tax: string
+    Net: string
+    NetInBase: string
+    TradeID: string
+    TaxBasisElection: string
+    Description: string
+    FxRateToBase: string
+    ContraPartyName: string
+    ClrFirmID: string
+    Exchange: string
+    MasterAccountID: string
+    Van: string
+    AwayBrokerCommission: string
+    OrderID: string
+    ClientReference: string
+    TransactionID: string
+    ExecutionID: string
+    CostBasis: string
+    Flag: string
+}
+
 export type IbkrActivity = {
     type: string | null
     accountId: string
@@ -977,7 +1020,7 @@ export type IbkrSecurity = {
     underlyingPrimaryExchange: string | null
     underlyingConId: string | null
     multiplier: number | null
-    expirationDate: string | null
+    expirationDate: DateTime | null
     optionType: string | null
     optionStrike: number | null
     maturityDate: DateTime | null

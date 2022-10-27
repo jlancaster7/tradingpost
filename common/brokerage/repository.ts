@@ -2463,7 +2463,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                created_at
                         FROM ibkr_account
                         WHERE account_id = $1
-                          OR master_account_id = $1;`
+                           OR master_account_id = $1;`
         const results = await this.db.query(query, [accountId]);
         if (results.length <= 0) return [];
         return results.map((result: any) => ({
@@ -2558,6 +2558,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertIbkrAccounts = async (accounts: IbkrAccount[]): Promise<void> => {
+        if (accounts.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'user_id', prop: 'userId'},
             {name: 'account_id', prop: 'accountId'},
@@ -2588,6 +2589,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertIbkrSecurities = async (securities: IbkrSecurity[]): Promise<void> => {
+        if (securities.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'type', prop: 'type'},
             {name: 'con_id', prop: 'conId'},
@@ -2621,6 +2623,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertIbkrActivity = async (activities: IbkrActivity[]): Promise<void> => {
+        if (activities.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'type', prop: 'type'},
             {name: 'account_id', prop: 'accountId'},
@@ -2668,6 +2671,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertIbkrCashReport = async (cashReports: IbkrCashReport[]): Promise<void> => {
+        if (cashReports.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'type', prop: 'type'},
             {name: 'account_id', prop: 'accountId'},
@@ -2686,6 +2690,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertIbkrNav = async (navs: IbkrNav[]): Promise<void> => {
+        if (navs.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'type', prop: 'type'},
             {name: 'account_id', prop: 'accountId'},
@@ -2714,6 +2719,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertIbkrPls = async (pls: IbkrPl[]): Promise<void> => {
+        if (pls.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_id', prop: 'accountId'},
             {name: 'internal_asset_id', prop: 'internalAssetId'},
@@ -2743,6 +2749,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertIbkrPositions = async (positions: IbkrPosition[]): Promise<void> => {
+        if (positions.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'type', prop: 'type'},
             {name: 'account_id', prop: 'accountId'},

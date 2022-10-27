@@ -90,14 +90,15 @@ export default class Ibkr {
         console.log("Importing From Account")
         const [tpUserId, newerDateAlreadyProcessed] = await this._importAccount(pendingJob);
 
-        await this._importSecurity()
+        console.log("Import Securities")
+        await this._importSecurity(pendingJob);
 
         // do not perform update if date > last ingested date for some tables(e.g., account)
         // run tradingpost brokerage transformer
     }
 
     _formatFileName = (brokerageUserId: string, fileType: string, date: DateTime): string => {
-        return `${brokerageUserId}_Account_${date.toFormat("yyyyMMdd")}.csv`
+        return `${brokerageUserId}_${fileType}_${date.toFormat("yyyyMMdd")}.csv`
     }
 
     _importAccount = async (pendingJob: BrokerageJobStatusTable): Promise<[string, boolean]> => {
@@ -168,8 +169,44 @@ export default class Ibkr {
         return [masterAccount.userId, newerDateAlreadyProcessed];
     }
 
-    _importActivity = async () => {
-
+    _importActivity = async (pendingJob: BrokerageJobStatusTable) => {
+        const activities = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Activity", pendingJob.dateToProcess), (data: IbkrAccountCsv) => {
+            let x: IbkrSecurityCsv = {
+                AssetType: data.AssetType,
+                BBGlobalID: data.BBGlobalID,
+                BBTicker: data.BBTicker,
+                BBTickerAndExchangeCode: data.BBTickerAndExchangeCode,
+                ConID: data.ConID,
+                Currency: data.Currency,
+                CUSIP: data.CUSIP,
+                DeliveryMonth: data.DeliveryMonth,
+                Description: data.Description,
+                ExpirationDate: data.ExpirationDate,
+                IssueDate: data.IssueDate,
+                Issuer: data.Issuer,
+                SecurityID: data.SecurityID,
+                MaturityDate: data.MaturityDate,
+                Multiplier: data.Multiplier,
+                OptionStrike: data.OptionStrike,
+                OptionType: data.OptionType,
+                PrimaryExchange: data.PrimaryExchange,
+                SubCategory: data.SubCategory,
+                Symbol: data.Symbol,
+                Type: data.Type,
+                UnderlyingCategory: data.UnderlyingCategory,
+                UnderlyingSecurityId: data.UnderlyingSecurityId,
+                UnderlyingConID: data.UnderlyingConID,
+                UnderlyingPrimaryExchange: data.UnderlyingPrimaryExchange,
+                UnderlyingSymbol: data.UnderlyingSymbol,
+            }
+            return x;
+        });
+        await this._repo.upsertIbkrActivity(activities.map((s: IbkrAccountCsv) => {
+            let x: IbkrActivity = {
+                accountId: s
+            }
+            return x;
+        }))
     }
 
     _importCashReport = async () => {
@@ -220,9 +257,34 @@ export default class Ibkr {
             }
             return x;
         });
-        await this._repo.upsertIbkrSecurities(securities.map((security: IbkrSecurityCsv) => {
+        await this._repo.upsertIbkrSecurities(securities.map((s: IbkrSecurityCsv) => {
             let x: IbkrSecurity = {
-                
+                assetType: s.AssetType,
+                bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,
+                bbTicker: s.BBTicker !== '' ? s.BBTicker : null,
+                securityId: s.SecurityID,
+                bbTickerAndExchangeCode: s.BBTickerAndExchangeCode !== '' ? s.BBTickerAndExchangeCode : null,
+                conId: s.ConID,
+                currency: s.Currency !== '' ? s.Currency : null,
+                cusip: s.CUSIP,
+                deliveryMonth: s.DeliveryMonth !== '' ? s.DeliveryMonth : null,
+                description: s.Description !== '' ? s.Description : null,
+                expirationDate: s.ExpirationDate !== '' ? DateTime.fromFormat(s.ExpirationDate, "yyyyMMdd") : null,
+                issueDate: s.IssueDate !== '' ? DateTime.fromFormat(s.IssueDate, "yyyyMMdd") : null,
+                issuer: s.Issuer !== '' ? s.Issuer : null,
+                maturityDate: s.MaturityDate !== '' ? DateTime.fromFormat(s.MaturityDate, "yyyyMMdd") : null,
+                multiplier: s.Multiplier !== '' ? parseFloat(s.Multiplier) : null,
+                type: s.Type,
+                optionStrike: s.OptionStrike !== '' ? parseFloat(s.OptionStrike) : null,
+                optionType: s.OptionType !== '' ? s.OptionType : null,
+                primaryExchange: s.PrimaryExchange !== '' ? s.PrimaryExchange : null,
+                subCategory: s.SubCategory !== '' ? s.SubCategory : null,
+                symbol: s.Symbol,
+                underlyingCategory: s.UnderlyingCategory !== '' ? s.UnderlyingCategory : null,
+                underlyingSecurityId: s.UnderlyingSecurityId !== '' ? s.UnderlyingSecurityId : null,
+                underlyingConId: s.UnderlyingConID !== '' ? s.UnderlyingConID : null,
+                underlyingPrimaryExchange: s.UnderlyingPrimaryExchange !== '' ? s.UnderlyingPrimaryExchange : null,
+                underlyingSymbol: s.UnderlyingSymbol !== '' ? s.UnderlyingSymbol : null,
             }
             return x;
         }));
