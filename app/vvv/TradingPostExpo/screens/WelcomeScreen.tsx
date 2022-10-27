@@ -137,7 +137,7 @@ export default ({ navigation }: RootStackScreenProps<"Root">) => {
         intervalRef = useRef<any>(),
         opacityAnim = useRef(new Animated.Value(0)).current,
         toast = useToast(),
-        { appUser, signIn, authToken, loginResult } = useAppUser(),
+        { appUser, signIn, authToken, loginResult, isSignInComplete } = useAppUser(),
         //{ value: hasAuthed, setValue } = useData("hasAuthed"),
         { value: firstTime, setValue: setFirstTime } = useData('firstTime');
 
@@ -148,7 +148,6 @@ export default ({ navigation }: RootStackScreenProps<"Root">) => {
         if (firstTime) {
         } else {
             if (appUser || loginResult) {
-                //console.log("Has authed is ....." + hasAuthed)
                 if (appUser) {
                     if (!appUser.settings || !Object.keys(appUser.settings).length) {
                         linkTo("/create/analyststart");
@@ -157,8 +156,6 @@ export default ({ navigation }: RootStackScreenProps<"Root">) => {
                         linkTo("/create/analystinterest")
                     }
                     else {
-
-                        //setValue(true);
                         if (!loginResult?.verified)
                             linkTo("/verifyaccount")
                         //navigation.navigate("VerifyAccount", {});
@@ -169,7 +166,7 @@ export default ({ navigation }: RootStackScreenProps<"Root">) => {
 
                     }
                 }
-                else {
+                else if (isSignInComplete) {
                     linkTo("/create/basicinfo");
                 }
             }
