@@ -287,7 +287,7 @@ export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
 
         <Animated.Text style={[bannerText, {
             opacity: !selectedIndex ? 1 : opacityAnim
-        }]}> {!selectedIndex ? "Welcome to the team!" : "Hey... Welcome Back!"}</Animated.Text>
+        }]}> {!selectedIndex ? "Welcome to the team!" : "Hey!!!!!... Welcome Back!"}</Animated.Text>
         <LoginButtons
             createAccountProps={{
                 onPress: () => {
