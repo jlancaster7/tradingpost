@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { View } from "react-native"
 import { useAppUser } from "../Authentication"
 import { PrimaryButton } from "../components/PrimaryButton"
@@ -11,43 +11,73 @@ import { Api } from '@tradingpost/common/api'
 import { useData } from "../lds"
 import { ButtonPanel } from "../components/ScrollWithButtons"
 import { paddView, sizes } from "../style"
+import { useToast } from "react-native-toast-notifications"
+import { useLinkTo } from "@react-navigation/native"
 
 
 export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">) => {
-    const { appUser } = useAppUser();
+    const { appUser, loginResult } = useAppUser();
     const { signIn } = useAppUser();
     const { value: authToken, setValue: setAuthToken } = useData("authToken");
     const verificationToken = props.route.params?.token;
-    useEffect(()=>{
-        if(verificationToken){
+    const toast = useToast();
+    const linkTo = useLinkTo();
+    const [imVerified, setImVerified] = useState(false);
+
+    useEffect(() => {
+        if (imVerified) {
+            if (loginResult?.verified)
+                linkTo("/dash/feed");
+            else {
+                toast.show("You account is still unverified. Please check your email for details.")
+                setImVerified(false);
+            }
+        }
+    }, [imVerified, loginResult])
+
+    useEffect(() => {
+        if (verificationToken) {
             Api.User.extensions.validateUser({
                 verificationToken
+            }).then(() => {
+                if (authToken)
+                    signIn("", authToken);
+            }).catch((ex) => {
+                toast.show(ex.message);
             })
         }
-    },[verificationToken])
+    }, [verificationToken, toast, authToken])
     return <View style={paddView}>
         <ElevatedSection title="Verify Your Email">
             <Text style={{ textAlign: "center", paddingVertical: sizes.rem1 }}>{appUser?.email}</Text>
             <ButtonPanel
                 left={{
                     onPress: () => {
-                        props.navigation.navigate("Dash");
+                        linkTo("/dash/feed")
+                        //props.navigation.navigate("Dash");
                     },
                     text: "Skip"
                 }}
                 right={{
-                    onPress: () => {
+                    onPress: async () => {
                         //try auth signin
                         if (authToken)
-                            signIn("", authToken);
+                            await signIn("", authToken);
+                        setImVerified(true);
                     },
                     text: "I'm Verified"
                 }}
             />
             <Link
                 style={{ textAlign: "center", paddingVertical: sizes.rem1 }}
-                onPress={() => {
-                    Api.User.extensions.sendEmailValidation();
+                onPress={async () => {
+                    try {
+                        await Api.User.extensions.sendEmailValidation();
+                        toast.show("Verification Email has been sent")
+                    }
+                    catch (ex:any) {
+                        console.log(ex.message);
+                    }
                 }}>[Resend Verification Email]</Link>
             <Text>{props.route.params?.token}</Text>
         </ElevatedSection>

@@ -42,6 +42,7 @@ const client = new S3Client({
 export default ensureServerExtensions<User>({
     validateUser: async (req) => {
         //to do need to id match
+        console.log("Validating User");
         const data = jwt.verify(req.body.verificationToken, await DefaultConfig.fromCacheOrSSM("authkey")) as jwt.JwtPayload;
         const pool = await getHivePool;
         await pool.query(`update tp.local_login set verified = true where user_id = $1`, [req.extra.userId])
@@ -92,7 +93,7 @@ export default ensureServerExtensions<User>({
                     code: req.body.code,
                     grant_type: "authorization_code",
                     client_id: "cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ",
-                    redirect_uri: 'http://localhost:19006/auth/twitter',
+                    redirect_uri: 'https://m.tradingpostapp.com/auth/twitter',
                     code_verifier: req.body.challenge
                 }),
 
@@ -100,12 +101,13 @@ export default ensureServerExtensions<User>({
             const authResp = (await info.json()) as ITokenResponse;
             const { pgClient, pgp } = await init;
             const config = await DefaultConfig.fromCacheOrSSM("twitter");
+            console.log("TWITTER Auth Response: " + JSON.stringify(authResp))
             const handle = await DefaultTwitter(config, pgClient, pgp).addTwitterUsersByToken({
                 accessToken: authResp.access_token,
                 expiration: authResp.expires_in,
                 refreshToken: authResp.refresh_token,
                 userId: req.extra.userId
-            })
+            });
             return handle.username;
         }
         else if (req.body.platform === 'substack') {

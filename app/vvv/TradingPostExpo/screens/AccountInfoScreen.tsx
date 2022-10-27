@@ -12,15 +12,14 @@ import { /*bindSwitch,*/ useReadonlyEntity, bindPicker } from "../utils/hooks"
 import { ScrollWithButtons } from "../components/ScrollWithButtons"
 import { View, Animated, Pressable } from "react-native"
 import { useLinkTo } from "@react-navigation/native"
-import { useSecuritiesList} from '../SecurityList'
+import { useSecuritiesList } from '../SecurityList'
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { openBrowserAsync } from 'expo-web-browser';
 import { Autocomplete, AutocompleteItem, Icon, IndexPath, Text, TabView, Tab } from "@ui-kitten/components";
 import { AddButton, EditButton } from "../components/AddButton";
 import { Table } from "../components/Table";
-import { bannerText,elevated, flex, paddView, paddViewWhite, sizes, thinBannerText, social as socialStyling, fonts } from "../style";
+import { bannerText, elevated, flex, paddView, paddViewWhite, sizes, thinBannerText, social as socialStyling, fonts } from "../style";
 import { PrimaryButton } from "../components/PrimaryButton"
-import { TabScreenProps } from "../navigation"
 import { useAppUser } from "../Authentication"
 import { investmentStrats, questionStyle, gicsAC } from './create_account/InvestmentInterestSection'
 import { KeyboardAvoidingInput } from "../components/KeyboardAvoidingInput";
@@ -33,8 +32,9 @@ import { social } from "../images";
 import { AppColors } from "../constants/Colors";
 import { useToast } from "react-native-toast-notifications";
 import { AccountSettingsScreen } from './AccountSettingsScreen';
+import { useGoogleAuth } from "../utils/third-party/youtube";
 
-export function AccountInfoScreen(props: TabScreenProps) {
+export function AccountInfoScreen() {
     const { appUser, authToken, signIn } = useAppUser(),
         [index, setIndex] = useState(0),
         linkTo = useLinkTo<any>(),
@@ -46,9 +46,9 @@ export function AccountInfoScreen(props: TabScreenProps) {
     const [inputMessage, setInputMessage] = useState(''),
         [inputPlatform, setInputPlatform] = useState(''),
         [inputValue, setInputValue] = useState('');
-        
 
-    const getToken = useTwitterAuth();
+
+    const getTwitterToken = useTwitterAuth();
     const getGoogleToken = useGoogleAuth();
     let twitterHandle: any;
     let setTwitterHandle: any;
@@ -58,12 +58,13 @@ export function AccountInfoScreen(props: TabScreenProps) {
     let setSpotifyShow: any;
     let youtubeChannel: any;
     let setYoutubeChannel: any;
+    //TODO: we need to fix this... it could theoretically be very problematic.... react cant tell because 
     if (appUser?.claims) {
         [twitterHandle, setTwitterHandle] = useState(appUser?.claims.find(c => c.platform === "twitter")?.claims?.handle);
         [substackUsername, setsubstackUsername] = useState(appUser?.claims.find(c => c.platform === "substack")?.claims?.handle);
         [spotifyShow, setSpotifyShow] = useState(appUser?.claims.find(c => c.platform === "spotify")?.claims?.handle);
         [youtubeChannel, setYoutubeChannel] = useState(appUser?.claims.find(c => c.platform === "youtube")?.claims?.handle);
-    } 
+    }
     else {
         [twitterHandle, setTwitterHandle] = useState('');
         [substackUsername, setsubstackUsername] = useState('');
@@ -190,73 +191,73 @@ ${value.security_name}`,
         iconUrl: value.logo_url
     }))
     //########################################################################################################################
-    
 
-    return <ScrollWithButtons 
-    buttons={{
-        left:  {
-            text: 'Cancel',
-            onPress: async () => {
-                try {
-                    //      await UpdateUserProfile({ status_setup: true });
-                    //    SetDashboardLayout();
-                linkTo('/dash/feed')
+
+    return <ScrollWithButtons
+        buttons={{
+            left: {
+                text: 'Cancel',
+                onPress: async () => {
+                    try {
+                        //      await UpdateUserProfile({ status_setup: true });
+                        //    SetDashboardLayout();
+                        linkTo('/dash/feed')
+                    }
+                    catch (ex) {
+                    }
                 }
-                catch (ex) {
-                }
-            }
-        },
-        right: {
-            text: 'Save',
-            onPress: async () => {
-                try {
-                    await Api.User.update(appUser?.id || '', {
-                        bio: bio,
-                        analyst_profile: anaylistProfile.data
-                    });
-                    await Api.User.update(appUser?.id || '', {
-                        settings: {
-                            analyst: analystCheck,
-                            push_notifications: {
-                                mentions: mentionCheck,
-                                upvotes: upvotesCheck,
-                                watchlist_changes: watchlistChangeCheck,
-                            },
-                            portfolio_display: {
-                                performance: performanceCheck,
-                                holdings: holdingsCheck,
-                                trades: tradesCheck
+            },
+            right: {
+                text: 'Save',
+                onPress: async () => {
+                    try {
+                        await Api.User.update(appUser?.id || '', {
+                            bio: bio,
+                            analyst_profile: anaylistProfile.data
+                        });
+                        await Api.User.update(appUser?.id || '', {
+                            settings: {
+                                analyst: analystCheck,
+                                push_notifications: {
+                                    mentions: mentionCheck,
+                                    upvotes: upvotesCheck,
+                                    watchlist_changes: watchlistChangeCheck,
+                                },
+                                portfolio_display: {
+                                    performance: performanceCheck,
+                                    holdings: holdingsCheck,
+                                    trades: tradesCheck
+                                }
                             }
-                        }
-                    })
+                        })
 
-                    authToken ? await signIn("", authToken) : {};
+                        authToken ? await signIn("", authToken) : {};
 
-                    linkTo('/dash/feed')
-                    //anaylistProfile.resetData(anaylistProfile.data);
-                    //props.toastMessage("Account Information updated!");
-                }
-                catch (ex) {
-                    console.error(ex);
-                    //props.toastMessage("Unable to update profile.");
+                        linkTo('/dash/feed')
+                        //anaylistProfile.resetData(anaylistProfile.data);
+                        //props.toastMessage("Account Information updated!");
+                    }
+                    catch (ex) {
+                        console.error(ex);
+                        //props.toastMessage("Unable to update profile.");
+                    }
                 }
             }
-        }
-    }}>
+        }}>
         <View style={[flex, { margin: sideMargin, marginTop: 12 }]} onLayout={(ev) => {
-                    setSliderWidth(ev.nativeEvent.layout.width)
-                }} >
-            <TabView indicatorStyle={{marginTop: 26}} 
-                     style={{ marginVertical: sizes.rem0_5 }} 
-                     tabBarStyle={{backgroundColor: AppColors.background, borderColor: AppColors.background}}
-                     selectedIndex={index} 
-                     onSelect={ setIndex }
-                     >
-                <Tab title={'Account Info'} style={{backgroundColor: AppColors.background, borderColor: AppColors.background}}>
-                    <ElevatedSection title="" style={{padding: 5}}>
-                        <Text style={[questionStyle, {marginTop: sizes.rem0_5, textAlign: 'center'}]}>Tap to Modify Profile Picture</Text>
-                        <ProfileButton userId={appUser?.id || ''} profileUrl={appUser?.profile_url ? appUser?.profile_url :  ""} size={sizes.rem8} editable />
-                        <Text style={[questionStyle, {marginTop: sizes.rem0_5}]}>Bio</Text>
+            setSliderWidth(ev.nativeEvent.layout.width)
+        }} >
+            <TabView indicatorStyle={{ marginTop: 26 }}
+                style={{ marginVertical: sizes.rem0_5 }}
+                tabBarStyle={{ backgroundColor: AppColors.background, borderColor: AppColors.background }}
+                selectedIndex={index}
+                onSelect={setIndex}
+            >
+                <Tab title={'Account Info'} style={{ backgroundColor: AppColors.background, borderColor: AppColors.background }}>
+                    <ElevatedSection title="" style={{ padding: 5 }}>
+                        <Text style={[questionStyle, { marginTop: sizes.rem0_5, textAlign: 'center' }]}>Tap to Modify Profile Picture</Text>
+                        <ProfileButton userId={appUser?.id || ''} profileUrl={appUser?.profile_url ? appUser?.profile_url : ""} size={sizes.rem8} editable />
+                        <Text style={[questionStyle, { marginTop: sizes.rem0_5 }]}>Bio</Text>
                         <KeyboardAvoidingInput
                             value={bio}
                             displayButton={false}
@@ -264,9 +265,9 @@ ${value.security_name}`,
                             placeholder={'Tell people about yourself'}
                             //rightIcon=
                             setValue={setBio}
-                            //item_id={props.route.params.post._source.id}
-                            //clicked={[commentAdded, setCommentAdded]}
-                            //onClick={() => {}}
+                        //item_id={props.route.params.post._source.id}
+                        //clicked={[commentAdded, setCommentAdded]}
+                        //onClick={() => {}}
                         />
                         <Text style={questionStyle}>What is your investment strategy?</Text>
                         <Picker
@@ -347,138 +348,140 @@ ${value.security_name}`,
                             </Autocomplete>
                         </View>
                         {
-                                anaylistProfile.data.interests.map((v, i) => <View style={{ padding: sizes.rem0_5, flexDirection: "row" }}>
-                                    <Text style={{ textAlign: "left", flex: 1 }}>{v}</Text><Pressable onPress={() => {
-                                        const newInterest = [...anaylistProfile.data.interests];
-                                        newInterest.splice(i, 1);
-                                        anaylistProfile.update({
-                                            interests: newInterest
-                                        })
-                                    }}><Icon name="close-outline" style={{ height: 24, aspectRatio: 1 }} /></Pressable>
-                                </View>)
-                            }
-                        </ElevatedSection>
-                    </Tab>
-                    <Tab title={'Your Content'} style={{backgroundColor: AppColors.background, borderColor: AppColors.background}}>
-                        <ElevatedSection title="" style={{padding: 5}}>
-                            <Text style={[thinBannerText, {fontSize: fonts.medium, lineHeight: fonts.medium * 1.5}]}>TradingPost aggregates content across several social platforms.</Text>
-                            <View style={{ flexDirection: "row", marginHorizontal: sizes.rem2, marginBottom: sizes.rem1 }}>
-                                <HandleButton
-                                    title={twitterHandle}
-                                    icon={social.TwitterLogo}
-                                    onPress={() => {
-                                        getToken().then((handle) => {
-                                            setTwitterHandle(handle)
-                                        })
-                                    }}
-                                    iconPadd={sizes.rem1}
-                                />
-                                <HandleButton title={youtubeChannel} icon={social.YouTubeLogo} 
-                                    iconPadd={sizes.rem1} 
-                                    onPress={()=> {
-                                        setInputMessage('Please enter your Substack username as it appears in your profile URL');
-                                        setInputPlatform('youtube')
-                                        //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
-                                    }}
-                                />
-                            </View>
-                            <View style={{ flexDirection: "row", marginHorizontal: sizes.rem2, marginBottom: sizes.rem1 }}>
-                                <HandleButton title={substackUsername} icon={social.SubstackLogo}
-                                    iconPadd={sizes.rem1}
-                                    currentColor={socialStyling.substackColor}
-                                    onPress={()=> {
-                                        setInputMessage('Please enter your Substack username as it appears in your profile URL');
-                                        setInputPlatform('substack')
-                                        //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
-                                    }}
-                                />
-                                <HandleButton title={spotifyShow} icon={social.SpotifyLogo}
-                                    iconPadd={sizes.rem0_5}
-                                    onPress={()=> {
-                                        setInputMessage("Please enter your Spotify Podcast's Profile URL.\nIn the Spotify App, this can be found by going to your Podcasts's Profile Page, clicking the 'Share' Icon and clicking 'Copy Link'.");
-                                        setInputPlatform('spotify')
-                                        //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
-                                    }}
-                                />
-                            </View>
-                            <Text style={[thinBannerText, {fontSize: fonts.medium, lineHeight: fonts.medium * 1.5}]}>Sign in to your account(s) above to claim or add your content.</Text>
-                            <View style={inputPlatform === '' ? {display: 'none'} : {display: 'flex'}}>
-                                <Text>
-                                    {inputMessage}
-                                </Text>
-                                <KeyboardAvoidingInput
-                                    placeholder={'Enter here'}
-                                    value={inputValue}
-                                    setValue={setInputValue}
-                                    displayButton={true}
-                                    numLines={2}
-                                    rightIcon={(props: any) => <Icon
-                                        fill={AppColors.secondary}
-                                        name="plus-square" height={35} width={35} style={{ height: 35, width: 35, padding: 0, alignContent: 'center'}} />}
-                                
-                                    onClick={async (r: any, s: any, t: any) => {
-                                        const result = await Api.User.extensions.linkSocialAccount({platform: inputPlatform, platform_idenifier: r});
-                                        if (result === '') {
-                                            toast.show(`${inputPlatform} Account Link Failed. Please try again or email contact@tradingpostapp.com for assistance.`)
-                                        }
-                                        s('')
-                                        authToken ? await signIn("", authToken) : {};
-                                    }}
-                                    />
-                            </View>
-                        </ElevatedSection>
-                    </Tab>
-                    <Tab title={'Advanced'} style={{backgroundColor: AppColors.background, borderColor: AppColors.background}}>
-                        <ElevatedSection title="" style={{padding: 5}}>
-                            <Section title="" style={{padding: 10}}>
-                                <SwitchField label='Analyst' checked={analystCheck} onChange={onAnalystCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: fonts.medium, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }}/>
-                            </Section>
-                            <Section title='Display' style={{padding: 10}}>
-                                <SwitchField label='Performance' checked={performanceCheck} onChange={onPerformanceCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
-                                <SwitchField label='Portfolio' checked={holdingsCheck} onChange={onHoldingsCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
-                                <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
-                            </Section>
-                            <Section style={{padding: 10}} title="Link Brokerage Accounts" button={(props) => accounts?.length ? <EditButton
+                            anaylistProfile.data.interests.map((v, i) => <View style={{ padding: sizes.rem0_5, flexDirection: "row" }}>
+                                <Text style={{ textAlign: "left", flex: 1 }}>{v}</Text><Pressable onPress={() => {
+                                    const newInterest = [...anaylistProfile.data.interests];
+                                    newInterest.splice(i, 1);
+                                    anaylistProfile.update({
+                                        interests: newInterest
+                                    })
+                                }}><Icon name="close-outline" style={{ height: 24, aspectRatio: 1 }} /></Pressable>
+                            </View>)
+                        }
+                    </ElevatedSection>
+                </Tab>
+                <Tab title={'Your Content'} style={{ backgroundColor: AppColors.background, borderColor: AppColors.background }}>
+                    <ElevatedSection title="" style={{ padding: 5 }}>
+                        <Text style={[thinBannerText, { fontSize: fonts.medium, lineHeight: fonts.medium * 1.5 }]}>TradingPost aggregates content across several social platforms.</Text>
+                        <View style={{ flexDirection: "row", marginHorizontal: sizes.rem2, marginBottom: sizes.rem1 }}>
+                            <HandleButton
+                                title={twitterHandle}
+                                icon={social.TwitterLogo}
                                 onPress={() => {
-                                    openLink();
+                                    getTwitterToken().then((handle) => {
+                                        setTwitterHandle(handle)
+                                    })
                                 }}
-                                height={35}
-                                width={35}
-                                /> : <AddButton
-                                onPress={() => openLink()}
-                                height={35}
-                                width={35}
-                                />} >
-                                <Table datasetKey={accounts?.map(a => a.id).join(",") || "none"} columns={[{ alias:"Brokerage", field: "broker_name", align: "left" }, { alias: "Account #", field: "account_number", align: "left" }]} data={accounts} noDataMessage="You have no linked accounts" />
-                            </Section>
-                            <Section title='Payment' style={{padding: 10}}>
-                                <Text>
-                                    Coming Soon!
+                                iconPadd={sizes.rem1}
+                            />
+                            <HandleButton title={youtubeChannel} icon={social.YouTubeLogo}
+                                iconPadd={sizes.rem1}
+                                onPress={() => {
+                                    getGoogleToken().then((handle) => {
+                                        setYoutubeChannel(handle)
+                                    })
+                                    setInputPlatform('youtube')
+                                    //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
+                                }}
+                            />
+                        </View>
+                        <View style={{ flexDirection: "row", marginHorizontal: sizes.rem2, marginBottom: sizes.rem1 }}>
+                            <HandleButton title={substackUsername} icon={social.SubstackLogo}
+                                iconPadd={sizes.rem1}
+                                currentColor={socialStyling.substackColor}
+                                onPress={() => {
+                                    setInputMessage('Please enter your Substack username as it appears in your profile URL');
+                                    setInputPlatform('substack')
+                                    //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
+                                }}
+                            />
+                            <HandleButton title={spotifyShow} icon={social.SpotifyLogo}
+                                iconPadd={sizes.rem0_5}
+                                onPress={() => {
+                                    setInputMessage("Please enter your Spotify Podcast's Profile URL.\nIn the Spotify App, this can be found by going to your Podcasts's Profile Page, clicking the 'Share' Icon and clicking 'Copy Link'.");
+                                    setInputPlatform('spotify')
+                                    //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
+                                }}
+                            />
+                        </View>
+                        <Text style={[thinBannerText, { fontSize: fonts.medium, lineHeight: fonts.medium * 1.5 }]}>Sign in to your account(s) above to claim or add your content.</Text>
+                        <View style={inputPlatform === '' ? { display: 'none' } : { display: 'flex' }}>
+                            <Text>
+                                {inputMessage}
+                            </Text>
+                            <KeyboardAvoidingInput
+                                placeholder={'Enter here'}
+                                value={inputValue}
+                                setValue={setInputValue}
+                                displayButton={true}
+                                numLines={2}
+                                rightIcon={(props: any) => <Icon
+                                    fill={AppColors.secondary}
+                                    name="plus-square" height={35} width={35} style={{ height: 35, width: 35, padding: 0, alignContent: 'center' }} />}
+
+                                onClick={async (r: any, s: any, t: any) => {
+                                    const result = await Api.User.extensions.linkSocialAccount({ platform: inputPlatform, platform_idenifier: r });
+                                    if (result === '') {
+                                        toast.show(`${inputPlatform} Account Link Failed. Please try again or email contact@tradingpostapp.com for assistance.`)
+                                    }
+                                    s('')
+                                    authToken ? await signIn("", authToken) : {};
+                                }}
+                            />
+                        </View>
+                    </ElevatedSection>
+                </Tab>
+                <Tab title={'Advanced'} style={{ backgroundColor: AppColors.background, borderColor: AppColors.background }}>
+                    <ElevatedSection title="" style={{ padding: 5 }}>
+                        <Section title="" style={{ padding: 10 }}>
+                            <SwitchField label='Analyst' checked={analystCheck} onChange={onAnalystCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: fonts.medium, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }} />
+                        </Section>
+                        <Section title='Display' style={{ padding: 10 }}>
+                            <SwitchField label='Performance' checked={performanceCheck} onChange={onPerformanceCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+                            <SwitchField label='Portfolio' checked={holdingsCheck} onChange={onHoldingsCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+                            <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+                        </Section>
+                        <Section style={{ padding: 10 }} title="Link Brokerage Accounts" button={(props) => accounts?.length ? <EditButton
+                            onPress={() => {
+                                openLink();
+                            }}
+                            height={35}
+                            width={35}
+                        /> : <AddButton
+                            onPress={() => openLink()}
+                            height={35}
+                            width={35}
+                        />} >
+                            <Table datasetKey={accounts?.map(a => a.id).join(",") || "none"} columns={[{ alias: "Brokerage", field: "broker_name", align: "left" }, { alias: "Account #", field: "account_number", align: "left" }]} data={accounts} noDataMessage="You have no linked accounts" />
+                        </Section>
+                        <Section title='Payment' style={{ padding: 10 }}>
+                            <Text>
+                                Coming Soon!
+                            </Text>
+                        </Section>
+                        <Section title='Notifications' style={{ padding: 10 }}>
+                            <Subsection title='Posts' alt={true}>
+                                <SwitchField label='Mentions' checked={mentionCheck} onChange={onMentionCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+                                <SwitchField label='Upvotes' checked={upvotesCheck} onChange={onUpvoteCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+                            </Subsection>
+                            <Subsection title='Watchlists' alt={true}>
+                                {/*<SwitchField label='Price Movement' checked={watchlistPxCheck} onChange={onWatchlistPxCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>*/}
+                                <SwitchField label='Changes' checked={watchlistChangeCheck} onChange={onWatchlistChangeCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+                            </Subsection>
+                        </Section>
+                        <Section title='Management' style={{ padding: 10 }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 }}>
+                                <Text style={{ fontSize: 14, alignSelf: 'center' }}>
+                                    Delete Account
                                 </Text>
-                            </Section>
-                            <Section title='Notifications' style={{padding: 10}}>
-                                <Subsection title='Posts' alt={true}>
-                                    <SwitchField label='Mentions' checked={mentionCheck} onChange={onMentionCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>
-                                    <SwitchField label='Upvotes'checked={upvotesCheck} onChange={onUpvoteCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
-                                </Subsection>
-                                <Subsection title='Watchlists' alt={true}>
-                                    {/*<SwitchField label='Price Movement' checked={watchlistPxCheck} onChange={onWatchlistPxCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>*/}
-                                    <SwitchField label='Changes' checked={watchlistChangeCheck} onChange={onWatchlistChangeCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}}  toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}} />
-                                </Subsection>
-                            </Section>
-                            <Section title='Management' style={{padding: 10}}>
-                                <View style={{flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5}}>
-                                    <Text style={{fontSize: 14, alignSelf: 'center'}}>
-                                        Delete Account
-                                    </Text>
-                                    <PrimaryButton style={{ width:  "40%", backgroundColor: "#D81222", borderColor: "#D81222" }} onPress={() => {}}> 
-                                        FOREVER
-                                    </PrimaryButton>
-                                </View>
-                            </Section>
-                        </ElevatedSection>
-                    </Tab>
-                </TabView>
+                                <PrimaryButton style={{ width: "40%", backgroundColor: "#D81222", borderColor: "#D81222" }} onPress={() => { }}>
+                                    FOREVER
+                                </PrimaryButton>
+                            </View>
+                        </Section>
+                    </ElevatedSection>
+                </Tab>
+            </TabView>
 
         </View>
     </ScrollWithButtons>

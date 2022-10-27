@@ -108,10 +108,17 @@ export default function App() {
     if (urlParsed.hostname === "expo-development-client") {
       configApi({ apiBaseUrl: "http://" + (urlParsed.query["url"] as string)?.split(":")[1] + ":8082" });
     }
-    else if (urlParsed.hostname?.toString() === "m.tradingpostapp.com" && !urlToGoTo) {
-      console.log("Sending you to");
-      setUrlToGoTo(url);
+    else {
+      if (!urlToGoTo) {
+        console.log("GOING TO URL :::::::: " + urlToGoTo);
+        setUrlToGoTo(url);
+        
+      }
     }
+    // else if (urlParsed.hostname?.toString() === "m.tradingpostapp.com" && !urlToGoTo) {
+    //   console.log("Sending you to");
+    //   setUrlToGoTo(url);
+    // }
   }
 
   // useEffect(() => {

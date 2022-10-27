@@ -41,7 +41,7 @@ export const loginPass = async (email: string, pass: string, csrf: string) => {
         //const userResult = await execProcOne("public.api_api_user_get", { user_id: login.user_id, data: { id: login.user_id } });
         //TODO DISCUSS payload options CSRF, expire, etc. etc.
         //res.cookie("oj-csrf-token", crsfToken, { path: '/' });
-        token = jwt.sign({verified: login.verified }, authKey, { subject: login.user_id });
+        token = jwt.sign({ verified: login.verified }, authKey, { subject: login.user_id });
     }
     else {
         token = jwt.sign({ claims: { email } }, authKey)
@@ -55,13 +55,20 @@ export const loginPass = async (email: string, pass: string, csrf: string) => {
 
 export const loginToken = async (token: string) => {
     const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
-    const info = jwt.verify(token, authKey) as JwtPayload;
+    let info = jwt.verify(token, authKey) as JwtPayload;
+    let verified = info.verified;
+    let user_id = info.sub;
+    if (!info.verified) {
+        const pool = await getHivePool;
+        verified = (await pool.query("SELECT verified from tp.local_login where user_id = $1", [user_id])).rows[0]?.verified;
+        token = jwt.sign({ verified }, authKey, { subject: user_id });
+    }
     //TODO move to UserAPI class instead
     //TODO check CSRF token
     return {
-        verified: info.verified,
+        verified,
         token,
-        user_id: info.sub
+        user_id
     } as LoginResult
 
     //await execProcOne("public.api_api_user_get", { user_id: info.sub, data: { id: info.sub } });
@@ -145,6 +152,6 @@ export const resetPassword = async (email: string, tokenOrPass: string, isPass: 
         hash = hashPass(newPassword, salt);
 
     (await getHivePool).query("UPDATE tp.local_login set hash=$1 where user_id=$2", [hash, userId])
-    
+
     return {};
 }

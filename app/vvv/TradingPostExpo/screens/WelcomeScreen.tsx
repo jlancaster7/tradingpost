@@ -1,4 +1,5 @@
 
+import { parse } from 'url'
 import React, { Children, FC, PropsWithChildren, ReactElement, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 //import { Text, View } from "react-native-ui-lib";
 //import { LoginButtons } from "../components/LoginButtons";
@@ -32,6 +33,7 @@ import { useData } from "../lds";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Api } from "@tradingpost/common/api";
 import { RootStackParamList, RootStackScreenProps } from "../navigation/pages";
+import { useURL } from "expo-linking";
 //import { resetEnsureUser } from "../components/EnsureUser";
 
 
@@ -96,6 +98,25 @@ const SvgMagic: React.FC<{ children: ReactElement<SvgProps> }> = (props) => {
 //console.log("MY app type is " + typeof AppTitle)
 
 export default ({ navigation }: RootStackScreenProps<"Root">) => {
+
+
+    const url = useURL();
+    console.log(url);
+    const linkTo = useLinkTo();
+    const ltRef = useRef(linkTo);
+    ltRef.current = linkTo;
+    const [urlToGoTo, setUrlToGoTo] = useState("");
+
+    useEffect(() => {
+        if (url) {
+            const urlParsed = parse(url, true);
+            if (urlParsed.hostname?.toString() === "m.tradingpostapp.com" && !urlToGoTo) {
+                console.log("Sending you to");
+                setUrlToGoTo(url);
+            }
+        }
+    }, [url])
+
     const cleanUp = useRef<number>(),
         [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -120,7 +141,7 @@ export default ({ navigation }: RootStackScreenProps<"Root">) => {
         //{ value: hasAuthed, setValue } = useData("hasAuthed"),
         { value: firstTime, setValue: setFirstTime } = useData('firstTime');
 
-    const linkTo = useLinkTo<any>();
+    // const linkTo = useLinkTo<any>();
 
     useLayoutEffect(() => {
 
@@ -139,21 +160,21 @@ export default ({ navigation }: RootStackScreenProps<"Root">) => {
 
                         //setValue(true);
                         if (!loginResult?.verified)
-                            navigation.navigate("VerifyAccount", {});
+                            linkTo("/verifyaccount")
+                        //navigation.navigate("VerifyAccount", {});
                         else
-                            navigation.navigate("Dash");
+                            linkTo("/dash/feed")
+                        //navigation.navigate("Dash");
 
 
                     }
                 }
                 else {
-                    setTimeout(() => {
-                        linkTo("/create/basicinfo");
-                    })
+                    linkTo("/create/basicinfo");
                 }
             }
         }
-    }, [appUser, loginResult, linkTo])
+    }, [appUser, loginResult])
 
 
 

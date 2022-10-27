@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
-import { View } from "react-native";
+import { Keyboard, Pressable, View } from "react-native";
 import { AppTitle } from "../images";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 import NotFoundScreen from "../screens/NotFoundScreen";
@@ -58,15 +58,21 @@ export function RootNavigator() {
         <Stack.Group screenOptions={{
             presentation: 'modal',
             headerRight: (() => {
+                console.log("IM SHOWING A KEYBOARD ICON HERE!!!!!");
                 const { isKeyboardVisible } = useIsKeyboardVisible();
                 if (isKeyboardVisible) {
-                    return <IconifyIcon
-                        icon={KeyboardClose}
-                        style={{
-                            height: 24,
-                            width: 24,
-                            marginRight: sizes.rem1
-                        }} />
+                    return <Pressable
+                        onPress={() => {
+                            Keyboard.dismiss();
+                        }}
+                    ><IconifyIcon
+                            icon={KeyboardClose}
+                            style={{
+                                height: 24,
+                                width: 24,
+                                marginRight: sizes.rem1
+                            }} />
+                    </Pressable>
                 }
                 else return null;
             })

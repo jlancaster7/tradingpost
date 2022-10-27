@@ -1,13 +1,13 @@
 import Auth from '@tradingpost/common/api/entities/static/AuthApi';
-import {useCallback} from "react";
+import { useCallback } from "react";
 import User from '@tradingpost/common/api/entities/apis/UserApi';
-import {useData} from "./lds";
-import {registerDeviceForNotifications} from "./utils/notifications";
+import { useData } from "./lds";
+import { registerDeviceForNotifications } from "./utils/notifications";
 
 export const useAppUser = () => {
-    const {value: appUser, setValue: setAppUser} = useData("currentUser");
-    const {value: loginResult, setValue: setLoginResult} = useData("loginResult");
-    const {value: authToken, setValue: setAuthToken} = useData("authToken");
+    const { value: appUser, setValue: setAppUser } = useData("currentUser");
+    const { value: loginResult, setValue: setLoginResult } = useData("loginResult");
+    const { value: authToken, setValue: setAuthToken } = useData("authToken");
 
     return {
         appUser,
@@ -19,7 +19,12 @@ export const useAppUser = () => {
             setAppUser(value.currentUser);
 
             if (email !== '') {
-                await registerDeviceForNotifications();
+                try {
+                    await registerDeviceForNotifications();
+                }
+                catch (ex) {
+                    console.error(ex);
+                }
             }
 
             if (value.loginResult.user_id)
@@ -44,5 +49,4 @@ export const Authentication = {
         }
     }
 }
-  
-  
+

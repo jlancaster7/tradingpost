@@ -9,7 +9,7 @@ import { initLds } from "../../lds";
 //TODO: SHould put this all in the app later as a generate link 
 const clientId = "cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ";
 const platform = "twitter",
-    redirectUriText = `http://localhost:19006/auth/${platform}`,
+    redirectUriText = `https://m.tradingpostapp.com/auth/${platform}`,
     redirectUri = new URL(redirectUriText),
     authUrlText = "https://twitter.com/i/oauth2/authorize"
 //state = `amira_${platform}`;
@@ -42,7 +42,7 @@ export function useTwitterAuth() {
         authUrl.searchParams.append("scope", "users.read tweet.read offline.access");
         authUrl.searchParams.append("code_challenge", _challenge);
         authUrl.searchParams.append("code_challenge_method", "plain");
-
+        console.log("OPENING BRWOSER")
         const openResult = await openBrowserAsync(authUrl.toString());
         
         const code = await new Promise<string>((res,rej)=>{
@@ -51,6 +51,7 @@ export function useTwitterAuth() {
             clearInterval(intervalHandler.current);       
             intervalHandler.current =setInterval(async ()=>{
                 const code = await AsyncStorage.getItem("auth-twitter-code");
+                console.log("########## LOOKING FOR THE CODE ##########");
                 if(code){{
                     res(code);
                     console.log("########## I FOUND THE CODE ##########");
