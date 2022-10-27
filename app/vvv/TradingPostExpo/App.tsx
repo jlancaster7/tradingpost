@@ -20,10 +20,8 @@ else if (__DEV__ && (AppOwnership.Expo === Constants.appOwnership || AppOwnershi
   else
     //manual ip for api server... have been trying to find a way to avoid this...
     configApi({
-      apiBaseUrl: `http://10.229.201.27:8082`
+      apiBaseUrl: `http://10.0.0.94:8082`
     })
-
-
 }
 else {
   console.log("THIS IS A DIFFERENT CONDITION DEV: " + __DEV__ + " OWNER: " + Constants.appOwnership)
@@ -35,7 +33,7 @@ import { StatusBar } from 'expo-status-bar';
 //import { SafeAreaProvider } from 'react-native-safe-area-context';
 //import { Colors } from 'react-native-ui-lib';
 import { Logs } from 'expo'
-Logs.enableExpoCliLogging()
+//Logs.enableExpoCliLogging()
 import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
@@ -112,7 +110,6 @@ export default function App() {
       if (!urlToGoTo) {
         console.log("GOING TO URL :::::::: " + urlToGoTo);
         setUrlToGoTo(url);
-        
       }
     }
     // else if (urlParsed.hostname?.toString() === "m.tradingpostapp.com" && !urlToGoTo) {
