@@ -3,7 +3,6 @@ ALTER TABLE notification
 
 CREATE TYPE brokerage_to_process_status AS ENUM ('PENDING', 'FAILED', 'RUNNING', 'SUCCESSFUL');
 
-
 CREATE TABLE brokerage_to_process
 (
     id                BIGSERIAL                   NOT NULL,
@@ -23,8 +22,9 @@ CREATE TABLE ibkr_account
 (
     id                     BIGSERIAL                      NOT NULL,
     user_id                UUID REFERENCES data_user (id) NOT NULL,
+    account_id             TEXT UNIQUE                    NOT NULL,
+    account_process_date   DATE                           NOT NULL,
     type                   TEXT,
-    account_id             TEXT UNIQUE,
     account_title          TEXT,
     street                 TEXT,
     street2                TEXT,
@@ -44,9 +44,42 @@ CREATE TABLE ibkr_account
     date_closed            DATE,
     date_funded            DATE,
     account_representative TEXT,
-    account_process_date   DATE,
     updated_at             TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at             TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE ibkr_security
+(
+    id                          BIGSERIAL   NOT NULL,
+    type                        TEXT        NOT NULL,
+    con_id                      TEXT        NOT NULL,
+    asset_type                  TEXT        NOT NULL,
+    security_id                 TEXT        NOT NULL UNIQUE,
+    cusip                       TEXT        NOT NULL UNIQUE,
+    symbol                      TEXT        NOT NULL UNIQUE,
+    bb_ticker                   TEXT,
+    bb_ticker_and_exchange_code TEXT,
+    bb_global_id                TEXT,
+    description                 TEXT,
+    underlying_symbol           TEXT,
+    underlying_category         TEXT,
+    underlying_security_id      TEXT,
+    underlying_primary_exchange TEXT,
+    underlying_con_id           TEXT,
+    multiplier                  BIGINT,
+    expiration_date             TEXT,
+    option_type                 TEXT,
+    option_strike               DECIMAL(24, 4),
+    maturity_date               DATE,
+    issue_date                  DATE,
+    primary_exchange            TEXT,
+    currency                    TEXT        NOT NULL,
+    sub_category                TEXT,
+    issuer                      TEXT,
+    delivery_month              TEXT,
+    updated_at                  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at                  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
 
@@ -210,39 +243,5 @@ CREATE TABLE ibkr_position
     multiplier               DECIMAL(24, 4),
     updated_at               TIMESTAMPTZ                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at               TIMESTAMPTZ                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE ibkr_security
-(
-    id                          BIGSERIAL   NOT NULL,
-    type                        TEXT        NOT NULL,
-    con_id                      TEXT        NOT NULL,
-    asset_type                  TEXT        NOT NULL,
-    security_id                 TEXT        NOT NULL UNIQUE,
-    cusip                       TEXT        NOT NULL UNIQUE,
-    symbol                      TEXT        NOT NULL UNIQUE,
-    bb_ticker                   TEXT,
-    bb_ticker_and_exchange_code TEXT,
-    bb_global_id                TEXT,
-    description                 TEXT,
-    underlying_symbol           TEXT,
-    underlying_category         TEXT,
-    underlying_security_id      TEXT,
-    underlying_primary_exchange TEXT,
-    underlying_con_id           TEXT,
-    multiplier                  BIGINT,
-    expiration_date             TEXT,
-    option_type                 TEXT,
-    option_strike               DECIMAL(24, 4),
-    maturity_date               DATE,
-    issue_date                  DATE,
-    primary_exchange            TEXT,
-    currency                    TEXT        NOT NULL,
-    sub_category                TEXT,
-    issuer                      TEXT,
-    delivery_month              TEXT,
-    updated_at                  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_at                  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );

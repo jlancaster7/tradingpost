@@ -7,7 +7,6 @@ import fs from "fs";
 import chokidar from 'chokidar';
 import {DateTime} from "luxon";
 
-
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
 });

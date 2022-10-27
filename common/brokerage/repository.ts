@@ -35,7 +35,13 @@ import {
     FinicityAccountAndInstitution,
     FinicityAndTradingpostBrokerageAccount,
     OptionContract,
-    OptionContractTable
+    OptionContractTable,
+    BrokerageJobStatusTable,
+    BrokerageJobStatusType,
+    IbkrAccountTable,
+    IbkrAccount,
+    IbkrSecurity,
+    IbkrActivity, IbkrCashReport, IbkrNav, IbkrPl, IbkrPosition
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -2392,6 +2398,384 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             }
             return o;
         })
+    }
+
+    getPendingJobs = async (brokerage: string): Promise<BrokerageJobStatusTable[]> => {
+        const query = `
+            SELECT id,
+                   brokerage,
+                   brokerage_user_id,
+                   date_to_process,
+                   status,
+                   data,
+                   updated_at,
+                   created_at
+            FROM brokerage_to_process
+            WHERE brokerage = $1
+              AND status = 'PENDING'`;
+        const results = await this.db.query(query, [brokerage]);
+        if (results.length <= 0) return [];
+        return results.map((result: any) => ({
+            id: result.id,
+            brokerage: result.brokerage,
+            brokerageUserId: result.brokerage_user_id,
+            dateToProcess: DateTime.fromJSDate(result.date_to_process),
+            status: result.status,
+            data: result.data,
+            updatedAt: DateTime.fromJSDate(result.updated_at),
+            createdAt: DateTime.fromJSDate(result.created_at),
+        }));
+    }
+
+    updateJobStatus = async (jobId: number, status: BrokerageJobStatusType): Promise<void> => {
+        const query = `UPDATE brokerage_to_process
+                       SET status = $1
+                       WHERE id = $2`;
+        await this.db.none(query, [status, jobId]);
+    }
+
+    getIbkrMasterAndSubAccounts = async (accountId: string): Promise<IbkrAccountTable[]> => {
+        const query = ` SELECT id,
+                               user_id,
+                               account_id,
+                               account_process_date,
+                               type,
+                               account_title,
+                               street,
+                               street2,
+                               city,
+                               state,
+                               zip,
+                               country,
+                               account_type,
+                               customer_type,
+                               base_currency,
+                               master_account_id,
+                               van,
+                               capabilities,
+                               alias,
+                               primary_email,
+                               date_opened,
+                               date_closed,
+                               date_funded,
+                               account_representative,
+                               updated_at,
+                               created_at
+                        FROM ibkr_account
+                        WHERE account_id = $1
+                          OR master_account_id = $1;`
+        const results = await this.db.query(query, [accountId]);
+        if (results.length <= 0) return [];
+        return results.map((result: any) => ({
+            id: result.id,
+            van: result.van,
+            accountId: result.account_id,
+            userId: result.user_id,
+            street2: result.stree2,
+            type: result.type,
+            updatedAt: DateTime.fromJSDate(result.updated_at),
+            createdAt: DateTime.fromJSDate(result.created_at),
+            street: result.street,
+            state: result.state,
+            zip: result.zip,
+            country: result.country,
+            masterAccountId: result.master_account_id,
+            primaryEmail: result.primary_email,
+            dateOpened: DateTime.fromJSDate(result.date_opened),
+            dateFunded: !result.date_funded ? DateTime.fromJSDate(result.date_funded) : null,
+            dateClosed: !result.date_closed ? DateTime.fromJSDate(result.date_closed) : null,
+            city: result.city,
+            customerType: result.customer_type,
+            capabilities: result.capabilities,
+            accountType: result.account_type,
+            accountTitle: result.account_title,
+            baseCurrency: result.base_currency,
+            alias: result.alias,
+            accountRepresentative: result.account_representative,
+            accountProcessDate: DateTime.fromJSDate(result.account_process_date)
+        }))
+    }
+
+    getIbkrAccount = async (accountId: string): Promise<IbkrAccountTable | null> => {
+        const query = ` SELECT id,
+                               user_id,
+                               account_id,
+                               account_process_date,
+                               type,
+                               account_title,
+                               street,
+                               street2,
+                               city,
+                               state,
+                               zip,
+                               country,
+                               account_type,
+                               customer_type,
+                               base_currency,
+                               master_account_id,
+                               van,
+                               capabilities,
+                               alias,
+                               primary_email,
+                               date_opened,
+                               date_closed,
+                               date_funded,
+                               account_representative,
+                               updated_at,
+                               created_at
+                        FROM ibkr_account
+                        WHERE account_id = $1;`
+        const result = await this.db.oneOrNone(query, [accountId]);
+        if (!result) return null;
+        return {
+            id: result.id,
+            van: result.van,
+            accountId: result.account_id,
+            userId: result.user_id,
+            street2: result.stree2,
+            type: result.type,
+            updatedAt: DateTime.fromJSDate(result.updated_at),
+            createdAt: DateTime.fromJSDate(result.created_at),
+            street: result.street,
+            state: result.state,
+            zip: result.zip,
+            country: result.country,
+            masterAccountId: result.master_account_id,
+            primaryEmail: result.primary_email,
+            dateOpened: DateTime.fromJSDate(result.date_opened),
+            dateFunded: !result.date_funded ? DateTime.fromJSDate(result.date_funded) : null,
+            dateClosed: !result.date_closed ? DateTime.fromJSDate(result.date_closed) : null,
+            city: result.city,
+            customerType: result.customer_type,
+            capabilities: result.capabilities,
+            accountType: result.account_type,
+            accountTitle: result.account_title,
+            baseCurrency: result.base_currency,
+            alias: result.alias,
+            accountRepresentative: result.account_representative,
+            accountProcessDate: DateTime.fromJSDate(result.account_process_date)
+        }
+    }
+
+    upsertIbkrAccounts = async (accounts: IbkrAccount[]): Promise<void> => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'user_id', prop: 'userId'},
+            {name: 'account_id', prop: 'accountId'},
+            {name: 'account_process_date', prop: 'accountProcessDate'},
+            {name: 'type', prop: 'type'},
+            {name: 'account_title', prop: 'accountTitle'},
+            {name: 'street', prop: 'street'},
+            {name: 'street2', prop: 'street2'},
+            {name: 'city', prop: 'city'},
+            {name: 'state', prop: 'state'},
+            {name: 'zip', prop: 'zip'},
+            {name: 'country', prop: 'country'},
+            {name: 'account_type', prop: 'accountType'},
+            {name: 'customer_type', prop: 'customerType'},
+            {name: 'base_currency', prop: 'baseCurrency'},
+            {name: 'master_account_id', prop: 'masterAccountId'},
+            {name: 'van', prop: 'van'},
+            {name: 'capabilities', prop: 'capabilities'},
+            {name: 'alias', prop: 'alias'},
+            {name: 'primary_email', prop: 'primaryEmail'},
+            {name: 'date_opened', prop: 'dateOpened'},
+            {name: 'date_closed', prop: 'dateClosed'},
+            {name: 'date_funded', prop: 'dateFunded'},
+            {name: 'account_representative', prop: 'accountRepresentative'}
+        ], {table: 'ibkr_account'})
+        const query = upsertReplaceQuery(accounts, cs, this.pgp, "account_id");
+        await this.db.none(query);
+    }
+
+    upsertIbkrSecurities = async (securities: IbkrSecurity[]): Promise<void> => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'type', prop: 'type'},
+            {name: 'con_id', prop: 'conId'},
+            {name: 'asset_type', prop: 'assetType'},
+            {name: 'security_id', prop: 'securityId'},
+            {name: 'cusip', prop: 'cusip'},
+            {name: 'symbol', prop: 'symbol'},
+            {name: 'bb_ticker', prop: 'bbTicker'},
+            {name: 'bb_ticker_and_exchange_code', prop: 'bbTickerAndExchangeCode'},
+            {name: 'bb_global_id', prop: 'bbGlobalId'},
+            {name: 'description', prop: 'description'},
+            {name: 'underlying_symbol', prop: 'underlyingSymbol'},
+            {name: 'underlying_category', prop: 'underlyingCategory'},
+            {name: 'underlying_security_id', prop: 'underlyingSecurityId'},
+            {name: 'underlying_primary_exchange', prop: 'underlyingPrimaryExchange'},
+            {name: 'underlying_con_id', prop: 'underlyingConId'},
+            {name: 'multiplier', prop: 'multiplier'},
+            {name: 'expiration_date', prop: 'expirationDate'},
+            {name: 'option_type', prop: 'optionType'},
+            {name: 'option_strike', prop: 'optionStrike'},
+            {name: 'maturity_date', prop: 'maturityDate'},
+            {name: 'issue_date', prop: 'issueDate'},
+            {name: 'primary_exchange', prop: 'primaryExchange'},
+            {name: 'currency', prop: 'currency'},
+            {name: 'sub_category', prop: 'subCategory'},
+            {name: 'issuer', prop: 'issuer'},
+            {name: 'delivery_month', prop: 'deliveryMonth'}
+        ], {table: 'ibkr_security'})
+        const query = upsertReplaceQuery(securities, cs, this.pgp, "security_id");
+        await this.db.none(query);
+    }
+
+    upsertIbkrActivity = async (activities: IbkrActivity[]): Promise<void> => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'type', prop: 'type'},
+            {name: 'account_id', prop: 'accountId'},
+            {name: 'con_id', prop: 'conId'},
+            {name: 'security_id', prop: 'securityId'},
+            {name: 'symbol', prop: 'symbol'},
+            {name: 'bb_ticker', prop: 'bbTicker'},
+            {name: 'bb_global_id', prop: 'bbGlobalId'},
+            {name: 'security_description', prop: 'securityDescription'},
+            {name: 'asset_type', prop: 'assetType'},
+            {name: 'currency', prop: 'currency'},
+            {name: 'base_currency', prop: 'baseCurrency'},
+            {name: 'trade_date', prop: 'tradeDate'},
+            {name: 'trade_time', prop: 'tradeTime'},
+            {name: 'settle_date', prop: 'settleDate'},
+            {name: 'order_time', prop: 'orderTime'},
+            {name: 'transaction_type', prop: 'transactionType'},
+            {name: 'quantity', prop: 'quantity'},
+            {name: 'unit_price', prop: 'unitPrice'},
+            {name: 'gross_amount', prop: 'grossAmount'},
+            {name: 'sec_fee', prop: 'secFee'},
+            {name: 'commission', prop: 'commission'},
+            {name: 'tax', prop: 'tax'},
+            {name: 'net', prop: 'net'},
+            {name: 'net_in_base', prop: 'netInBase'},
+            {name: 'trade_id', prop: 'tradeId'},
+            {name: 'tax_basis_election', prop: 'taxBasisElection'},
+            {name: 'description', prop: 'description'},
+            {name: 'fx_rate_to_base', prop: 'fxRateToBase'},
+            {name: 'contra_party_name', prop: 'contraPartyName'},
+            {name: 'clr_firm_id', prop: 'clrFirmId'},
+            {name: 'exchange', prop: 'exchange'},
+            {name: 'master_account_id', prop: 'masterAccountId'},
+            {name: 'van', prop: 'van'},
+            {name: 'away_broker_commission', prop: 'away_broker_commission'},
+            {name: 'order_id', prop: 'orderId'},
+            {name: 'client_reference', prop: 'clientReference'},
+            {name: 'transaction_id', prop: 'transactionId'},
+            {name: 'execution_id', prop: 'executionId'},
+            {name: 'cost_basis', prop: 'costBasis'},
+            {name: 'flag', prop: 'flag'}
+        ], {table: 'ibkr_activity'})
+        const query = upsertReplaceQuery(activities, cs, this.pgp, "");
+        await this.db.none(query);
+    }
+
+    upsertIbkrCashReport = async (cashReports: IbkrCashReport[]): Promise<void> => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'type', prop: 'type'},
+            {name: 'account_id', prop: 'accountId'},
+            {name: 'report_date', prop: 'reportDate'},
+            {name: 'currency', prop: 'currency'},
+            {name: 'base_summary', prop: 'baseSummary'},
+            {name: 'label', prop: 'label'},
+            {name: 'total', prop: 'total'},
+            {name: 'securities', prop: 'securities'},
+            {name: 'futures', prop: 'futures'},
+            {name: 'ibukl', prop: 'ibukl'},
+            {name: 'paxos', prop: 'paxos'},
+        ], {table: 'ibkr_cash_report'})
+        const query = upsertReplaceQuery(cashReports, cs, this.pgp, "");
+        await this.db.none(query);
+    }
+
+    upsertIbkrNav = async (navs: IbkrNav[]): Promise<void> => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'type', prop: 'type'},
+            {name: 'account_id', prop: 'accountId'},
+            {name: 'base_currency', prop: 'baseCurrency'},
+            {name: 'cash', prop: 'cash'},
+            {name: 'cash_collateral', prop: 'cashCollateral'},
+            {name: 'stocks', prop: 'stocks'},
+            {name: 'ipo_subscription', prop: 'ipoSubscription'},
+            {name: 'securities_borrowed', prop: 'securitiesBorrowed'},
+            {name: 'securities_lent', prop: 'securitiesLent'},
+            {name: 'options', prop: 'options'},
+            {name: 'bonds', prop: 'bonds'},
+            {name: 'commodities', prop: 'commodities'},
+            {name: 'funds', prop: 'funds'},
+            {name: 'notes', prop: 'notes'},
+            {name: 'dividend_accruals', prop: 'dividendAccruals'},
+            {name: 'soft_dollars', prop: 'softDollars'},
+            {name: 'crypto', prop: 'crypto'},
+            {name: 'totals', prop: 'totals'},
+            {name: 'twr', prop: 'twr'},
+            {name: 'cfd_unrealized_pl', prop: 'cfdUnrealizedPl'},
+            {name: 'forex_cfd_unrealized_pl', prop: 'forexCfdUnrealizedPl'},
+        ], {table: 'ibkr_nav'})
+        const query = upsertReplaceQuery(navs, cs, this.pgp, "");
+        await this.db.none(query);
+    }
+
+    upsertIbkrPls = async (pls: IbkrPl[]): Promise<void> => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'account_id', prop: 'accountId'},
+            {name: 'internal_asset_id', prop: 'internalAssetId'},
+            {name: 'security_id', prop: 'securityId'},
+            {name: 'symbol', prop: 'symbol'},
+            {name: 'bb_ticker', prop: 'bbTicker'},
+            {name: 'bb_global_id', prop: 'bbGlobalId'},
+            {name: 'security_description', prop: 'securityDescription'},
+            {name: 'asset_type', prop: 'assetType'},
+            {name: 'currency', prop: 'currency'},
+            {name: 'report_date', prop: 'reportDate'},
+            {name: 'position_mtm', prop: 'positionMtm'},
+            {name: 'position_mtm_in_base', prop: 'positionMtmInBase'},
+            {name: 'transaction_mtm', prop: 'transactionMtm'},
+            {name: 'transaction_mtm_in_base', prop: 'transactionMtmInBase'},
+            {name: 'realized_st', prop: 'realizedSt'},
+            {name: 'realized_st_in_base', prop: 'realizedStInBase'},
+            {name: 'realized_lt', prop: 'realizedLt'},
+            {name: 'realized_lt_in_base', prop: 'realizedLtInBase'},
+            {name: 'unrealized_st', prop: 'unrealizedSt'},
+            {name: 'unrealized_st_in_base', prop: 'unrealizedStInBase'},
+            {name: 'unrealized_lt', prop: 'unrealizedLt'},
+            {name: 'unrealized_lt_in_base', prop: 'unrealizedLtInBase'},
+        ], {table: 'ibkr_pl'})
+        const query = upsertReplaceQuery(pls, cs, this.pgp, "");
+        await this.db.none(query);
+    }
+
+    upsertIbkrPositions = async (positions: IbkrPosition[]): Promise<void> => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'type', prop: 'type'},
+            {name: 'account_id', prop: 'accountId'},
+            {name: 'con_id', prop: 'conId'},
+            {name: 'security_id', prop: 'securityId'},
+            {name: 'symbol', prop: 'symbol'},
+            {name: 'bb_ticker', prop: 'bbTicker'},
+            {name: 'bb_global_id', prop: 'bbGlobalId'},
+            {name: 'security_description', prop: 'securityDescription'},
+            {name: 'asset_type', prop: 'assetType'},
+            {name: 'currency', prop: 'currency'},
+            {name: 'base_currency', prop: 'baseCurrency'},
+            {name: 'quantity', prop: 'quantity'},
+            {name: 'quantity_in_base', prop: 'quantityInBase'},
+            {name: 'cost_price', prop: 'costPrice'},
+            {name: 'cost_basis', prop: 'costBasis'},
+            {name: 'cost_basis_in_base', prop: 'costBasisInBase'},
+            {name: 'market_price', prop: 'marketPrice'},
+            {name: 'market_value', prop: 'marketValue'},
+            {name: 'market_value_in_base', prop: 'marketValueInBase'},
+            {name: 'open_date_time', prop: 'openDateTime'},
+            {name: 'fx_rate_to_base', prop: 'openRateToBase'},
+            {name: 'report_date', prop: 'reportDate'},
+            {name: 'settled_quantity', prop: 'settledQuantity'},
+            {name: 'settled_quantity_in_base', prop: 'settledQuantityInBase'},
+            {name: 'master_account_id', prop: 'masterAccountId'},
+            {name: 'van', prop: 'van'},
+            {name: 'accrued_int', prop: 'accruedInt'},
+            {name: 'originating_order_id', prop: 'originatingOrderId'},
+            {name: 'multiplier', prop: 'multiplier'},
+        ], {table: 'ibkr_position'})
+        const query = upsertReplaceQuery(positions, cs, this.pgp, "");
+        await this.db.none(query);
     }
 }
 
