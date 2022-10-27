@@ -123,8 +123,10 @@ export default ensureServerExtensions<Notification>({
             const {provider, deviceId, timezone} = req.body;
             const pool = await getHivePool;
             await pool.query("INSERT INTO user_device(user_id, provider, device_id, timezone) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING;", [userId, provider, deviceId, timezone]);
+            return {}
         } catch (e) {
             console.error(e)
+            return {}
         }
 
     },
@@ -133,8 +135,10 @@ export default ensureServerExtensions<Notification>({
             const {deviceId, timezone} = req.body;
             const pool = await getHivePool;
             await pool.query("UPDATE user_device SET timezone=$1 WHERE device_id=$2;", [timezone, deviceId])
+            return {}
         } catch (e) {
             console.error(e)
+            return {}
         }
     }
 })

@@ -171,8 +171,8 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                     </Pressable>
                     <View>
                         <ScrollView nestedScrollEnabled horizontal>
-                            <View style={row}>
-                                {(props.post.ext.user?.tags || ["No", "Tags", "Here"]).map((chip, i) =>
+                            <View style={[row, props.post.ext.user?.tags ? {display: 'flex'} : {display: 'none'}]}>
+                                {props.post.ext.user?.tags && (props.post.ext.user?.tags).map((chip, i) =>
                                     <PrimaryChip isAlt key={i} label={chip} />)}
                             </View>
                         </ScrollView>
