@@ -13,7 +13,6 @@ import {sizes, flex} from "../style";
 import {bindTextInput, bindTextInputBase, useReadonlyEntity} from "../utils/hooks";
 
 export const PostEditorScreen = (props: TabScreenProps) => {
-
     const postEntity = useReadonlyEntity({
             content: "",
             title: "",
@@ -24,8 +23,6 @@ export const PostEditorScreen = (props: TabScreenProps) => {
         editorRef = useRef<any>(null),
         toast = useToast(),
         [contentFocused, setContentFocused] = useState(false)
-
-    toast.show("HELLO THIS A TEST TOAST!!");
 
     return <View style={{backgroundColor: "white", flexGrow: 1}}>
         <Header text='+ New Post' style={{marginBottom: 0, marginTop: 4, marginLeft: sizes.rem1, color: "black"}}/>

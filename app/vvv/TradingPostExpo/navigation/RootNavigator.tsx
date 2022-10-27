@@ -46,9 +46,7 @@ Notifications.setNotificationHandler({
 export const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator(props: { url: string }) {
-
     const url = props.url;
-
 
     return <Stack.Navigator
         screenOptions={{
