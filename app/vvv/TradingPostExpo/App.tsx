@@ -17,11 +17,13 @@ else if (__DEV__ && (AppOwnership.Expo === Constants.appOwnership || AppOwnershi
     configApi({
       apiBaseUrl: `http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
     })
-  else
+  else {
+
     //manual ip for api server... have been trying to find a way to avoid this...
     configApi({
-      apiBaseUrl: `http://10.0.0.94:8082`
+      apiBaseUrl: `http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
     })
+  }
 }
 else {
   console.log("THIS IS A DIFFERENT CONDITION DEV: " + __DEV__ + " OWNER: " + Constants.appOwnership)
@@ -71,7 +73,7 @@ export default function App() {
   const colorScheme = useColorScheme();
   const { appUser, signIn } = useAppUser();
   const { value: authToken, setValue: setAuthToken } = useData("authToken");
-
+  console.log(Constants.expoConfig?.extra?.localIp);
   //try auth signin
   useEffect(() => {
     if (authToken) {
@@ -94,8 +96,6 @@ export default function App() {
   }, [isLoadingComplete])
   const url = useURL();
   console.log(url);
-  const linkTo = useLinkTo();
-  const [urlToGoTo, setUrlToGoTo] = useState("");
   if (__DEV__ && url) {
 
     const urlParsed = parse(url, true);
@@ -105,10 +105,7 @@ export default function App() {
       configApi({ apiBaseUrl: "http://" + (urlParsed.query["url"] as string)?.split(":")[1] + ":8082" });
     }
     else {
-      if (!urlToGoTo) {
-        console.log("GOING TO URL :::::::: " + url);
-        setUrlToGoTo(url);
-      }
+
     }
     // else if (urlParsed.hostname?.toString() === "m.tradingpostapp.com" && !urlToGoTo) {
     //   console.log("Sending you to");
@@ -137,10 +134,8 @@ export default function App() {
   return <ApplicationProvider {...eva} theme={{ ...eva.light, ...theme }}>
     <IconRegistry icons={EvaIconsPack} />
     <ToastProvider>
-      <Navigation url={urlToGoTo} whenReady={() => {
-        if (urlToGoTo) {
-          //linkTo(urlToGoTo);
-        }
+      <Navigation whenReady={() => {
+
 
       }} colorScheme={colorScheme} />
       <StatusBar />

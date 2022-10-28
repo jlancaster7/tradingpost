@@ -65,7 +65,8 @@ export function RootNavigator(props: { url: string }) {
         <Stack.Screen name="Dash" component={DrawerPart} options={{ headerShown: false }} />
         <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
         <Stack.Group screenOptions={{
-            presentation: 'modal',
+            
+            headerBackVisible:true
             // headerRight: (() => {
             //     console.log("IM SHOWING A KEYBOARD ICON HERE!!!!!");
             //     const { isKeyboardVisible } = useIsKeyboardVisible();

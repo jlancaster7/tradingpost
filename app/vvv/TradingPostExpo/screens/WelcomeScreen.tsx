@@ -99,7 +99,6 @@ const SvgMagic: React.FC<{ children: ReactElement<SvgProps> }> = (props) => {
 
 export default ({ navigation, route }: RootStackScreenProps<"Root">) => {
 
-
     //const url = useURL();
     // console.log(url);
     const linkTo = useLinkTo();
