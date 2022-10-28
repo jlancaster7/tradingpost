@@ -11,8 +11,10 @@ import {
     IbkrCashReportCsv,
     IbkrNav,
     IbkrNavCsv,
-    IbkrPl, IbkrPlCsv,
-    IbkrPosition, IbkrPositionCsv,
+    IbkrPl,
+    IbkrPlCsv,
+    IbkrPosition,
+    IbkrPositionCsv,
     IbkrSecurity,
     IbkrSecurityCsv
 } from "../interfaces";
@@ -87,36 +89,45 @@ export default class Ibkr {
     run = async () => {
         console.log("Fetching pending jobs")
         const pendingJobs = await this._repo.getPendingJobs("ibkr");
-        if (pendingJobs.length <= 0) return;
+        if (pendingJobs.length <= 0) return false;
 
         console.log("finding jobs with file length")
         const pendingJob = pendingJobs.find(j => j.data.filenames.length === 7);
-        if (!pendingJob) return;
+        if (!pendingJob) return false;
 
-        console.log("Updating Job Status")
-        // await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.RUNNING);
+        try {
+            console.log("Updating Job Status")
+            await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.RUNNING);
 
-        // const fileTypes = ['Position']
-        console.log("Importing From Account")
-        const [tpUserId, newerDateAlreadyProcessed, newAccountIds] = await this._importAccount(pendingJob);
+            console.log("Importing From Account")
+            const [tpUserId, newerDateAlreadyProcessed, newAccountIds] = await this._importAccount(pendingJob);
 
-        console.log("Import Securities")
-        await this._importSecurity(pendingJob);
+            console.log("Import Securities")
+            await this._importSecurity(pendingJob);
 
-        console.log("Importing Activity")
-        await this._importActivity(pendingJob);
+            console.log("Importing Activity")
+            await this._importActivity(pendingJob);
 
-        console.log("Importing Cash Reports")
-        await this._importCashReport(pendingJob);
+            console.log("Importing Cash Reports")
+            await this._importCashReport(pendingJob);
 
-        console.log("Importing Nav")
-        await this._importNav(pendingJob);
+            console.log("Importing Nav")
+            await this._importNav(pendingJob);
 
-        console.log("Importing PLs")
-        await this._importPl(pendingJob);
+            console.log("Importing PLs")
+            await this._importPl(pendingJob);
 
-        console.log("Importing Positions")
-        await this._importPosition(pendingJob);
+            console.log("Importing Positions")
+            await this._importPosition(pendingJob);
+
+            await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.SUCCESSFUL)
+        } catch (e) {
+            await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.FAILED)
+            console.error(e)
+            console.error("pending job date: ", pendingJob.dateToProcess.toString());
+        }
+
+        return true
     }
 
     _formatFileName = (brokerageUserId: string, fileType: string, date: DateTime): string => {
@@ -157,6 +168,7 @@ export default class Ibkr {
             }
             return x;
         });
+
         const filteredAccounts = newerDateAlreadyProcessed ? accounts.filter(acc =>
             !currentAccounts.find(ca => ca.accountId === acc.AccountID)) : accounts;
         await this._repo.upsertIbkrAccounts(filteredAccounts.map((acc: IbkrAccountCsv) => {
@@ -304,6 +316,18 @@ export default class Ibkr {
         });
 
         await this._repo.upsertIbkrActivity(activities.map((s: IbkrActivityCsv) => {
+            let orderTime: DateTime | null = DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss");
+            if (!orderTime.isValid) orderTime = null;
+
+            let settleDate: DateTime | null = DateTime.fromFormat(s.SettleDate, "yyyyMMdd")
+            if (!settleDate.isValid) settleDate = null;
+
+            let tradeDate: DateTime | null = DateTime.fromFormat(s.TradeDate, "yyyyMMdd");
+            if (!tradeDate.isValid) tradeDate = null;
+
+            let tradeTimeDt: DateTime = DateTime.fromFormat(s.TradeTime, "hh:mm:ss")
+            let tradeTime: string | null = tradeTimeDt.isValid ? tradeTimeDt.toSQLTime() : null;
+
             let x: IbkrActivity = {
                 accountId: s.AccountID,
                 assetType: s.AssetType !== '' ? s.AssetType : null,
@@ -328,19 +352,19 @@ export default class Ibkr {
                 net: s.Net !== '' ? parseFloat(s.Net) : null,
                 netInBase: s.NetInBase !== '' ? parseFloat(s.NetInBase) : null,
                 orderId: s.OrderID !== '' ? s.OrderID : null,
-                orderTime: s.OrderTime !== '' ? DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss") : null,
+                orderTime: orderTime,
                 secFee: s.SECFee !== '' ? parseFloat(s.SECFee) : null,
                 type: s.Type !== '' ? s.Type : null,
                 quantity: s.Quantity !== '' ? parseFloat(s.Quantity) : null,
                 securityDescription: s.SecurityDescription !== '' ? s.SecurityDescription : null,
                 securityId: s.SecurityID !== '' ? s.SecurityID : null,
                 tax: s.Tax !== '' ? parseFloat(s.Tax) : null,
-                settleDate: s.SettleDate !== '' ? DateTime.fromFormat(s.SettleDate, "yyyyMMdd") : null,
+                settleDate: settleDate,
                 symbol: s.Symbol !== '' ? s.Symbol : null,
                 taxBasisElection: s.TaxBasisElection !== '' ? s.TaxBasisElection : null,
-                tradeDate: s.TradeDate !== '' ? DateTime.fromFormat(s.TradeDate, "yyyyMMdd") : null,
+                tradeDate: null,
                 tradeId: s.TradeID !== '' ? s.TradeID : null,
-                tradeTime: s.TradeTime !== '' ? DateTime.fromFormat(s.TradeTime, "hh:mm:ss").toSQLTime() : null,
+                tradeTime: tradeTime,
                 van: s.Van !== '' ? s.Van : null,
                 transactionId: s.TransactionID !== '' ? s.TransactionID : null,
                 transactionType: s.TransactionType !== '' ? s.TransactionType : null,
@@ -593,5 +617,9 @@ export default class Ibkr {
 
     const ibkr = new Ibkr(repo, s3Client);
     console.log("Running")
-    await ibkr.run();
+
+    let keepProcessing = true;
+    while (keepProcessing) {
+        keepProcessing = await ibkr.run();
+    }
 })()

@@ -50,6 +50,16 @@ functions:
   #    logRetentionInDays: 14
   #    timeout: 900
   #    memorySize: 1024
+  collect-ibkr-trades:
+    handler: brokerage/collect-ibkr-trades.handler
+    description: Collects Ibkr Trades
+    logRetentionInDays: 14
+    timeout: 900
+    memorySize: 1024
+    events:
+      - schedule:
+          rate: cron(*/10 * ? * MON-FRI *) # Every 10 minutes
+          enabled: true
   collect-trades:
     handler: brokerage/collect-trades.handler
     description: Collects Finicity Trades Daily

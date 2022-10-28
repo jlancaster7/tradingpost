@@ -2618,7 +2618,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'issuer', prop: 'issuer'},
             {name: 'delivery_month', prop: 'deliveryMonth'}
         ], {table: 'ibkr_security'})
-        const query = upsertReplaceQuery(securities, cs, this.pgp, "security_id");
+        const query = upsertReplaceQuery(securities, cs, this.pgp, "con_id");
         await this.db.none(query);
     }
 
@@ -2666,7 +2666,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'cost_basis', prop: 'costBasis'},
             {name: 'flag', prop: 'flag'}
         ], {table: 'ibkr_activity'})
-        const query = upsertReplaceQuery(activities, cs, this.pgp, "account_id, security_id, trade_date, transaction_type, quantity");
+        const query = upsertReplaceQuery(activities, cs, this.pgp, "account_id, con_id, trade_date, transaction_type, quantity");
         await this.db.none(query);
     }
 
@@ -2783,7 +2783,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'originating_order_id', prop: 'originatingOrderId'},
             {name: 'multiplier', prop: 'multiplier'},
         ], {table: 'ibkr_position'})
-        const query = upsertReplaceQuery(positions, cs, this.pgp, "account_id, security_id, asset_type, report_date");
+        const query = upsertReplaceQuery(positions, cs, this.pgp, "account_id, con_id, asset_type, report_date");
         await this.db.none(query);
     }
 }
