@@ -16,7 +16,7 @@ CREATE TABLE brokerage_to_process
     PRIMARY KEY (id)
 );
 
-CREATE UNIQUE INDEX brokerage_to_process_user_id_brokerage ON brokerage_to_process (brokerage, brokerage_user_id);
+CREATE UNIQUE INDEX brokerage_to_process_user_id_brokerage ON brokerage_to_process (brokerage, brokerage_user_id, date_to_process);
 
 CREATE TABLE ibkr_account
 (

@@ -103,8 +103,8 @@ class Repository {
             {name: 'status', prop: 'status'},
             {name: 'data', prop: 'data', mod: ':json'}
         ], {table: 'brokerage_to_process'});
-        const query = upsertReplaceQuery(jobStatus, cs, this._pgp, "brokerage, brokerage_user_id")
-        await this._db.oneOrNone(query);
+        const query = upsertReplaceQuery(jobStatus, cs, this._pgp, "brokerage, brokerage_user_id, date_to_process")
+        await this._db.none(query);
     }
 }
 
@@ -136,39 +136,67 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
     const s3Client = new S3Client({region: "us-east-1"});
 
     const ibkrWatchDirectory = process.env.IBKR_DIRECTORY as string;
-    chokidar.watch(ibkrWatchDirectory).on('add', async (path, stats) => {
-        const splitPath = path.split("/");
-        const filename = splitPath[splitPath.length - 1];
-        const filenameWithoutExt = filename.replace(".csv", "")
-        const [ibkrUserId, fileType, date] = filenameWithoutExt.split("_");
-        const dateDateTime = DateTime.fromFormat(date, "yyyyMMdd", {
-            zone: "America/New_York"
-        });
-        const brokerageJobStatus = await repo.getExistingJobStatus("ibkr", ibkrUserId, dateDateTime)
-        let newBrokerageJobStatus = {
-            status: BrokerageJobStatusType.PENDING,
-            data: {
-                filenames: [fileType],
-            },
-            brokerage: "ibkr",
-            dateToProcess: dateDateTime,
-            brokerageUserId: ibkrUserId
-        }
 
-        if (brokerageJobStatus === null) {
+    let filesToProcess: string[] = [];
+    chokidar.watch(ibkrWatchDirectory).on('add', (path) => filesToProcess.push(path));
+
+    const run = async () => {
+        while (true) {
+            if (filesToProcess.length <= 0) {
+                await sleepAsync(1000)
+                continue
+            }
+
+            const path = filesToProcess.pop();
+            if (!path) continue
+
+            console.log("NEW FILE: ", path)
+            const splitPath = path.split("/");
+            const filename = splitPath[splitPath.length - 1];
+            const filenameWithoutExt = filename.replace(".csv", "")
+            const [ibkrUserId, fileType, date] = filenameWithoutExt.split("_");
+            const dateDateTime = DateTime.fromFormat(date, "yyyyMMdd", {
+                zone: "America/New_York"
+            });
+
+            const brokerageJobStatus = await repo.getExistingJobStatus("ibkr", ibkrUserId, dateDateTime)
+            let newBrokerageJobStatus = {
+                status: BrokerageJobStatusType.PENDING,
+                data: {
+                    filenames: [fileType],
+                },
+                brokerage: "ibkr",
+                dateToProcess: dateDateTime,
+                brokerageUserId: ibkrUserId
+            }
+
+            if (brokerageJobStatus === null) {
+                await repo.upsertBrokerageJobStatus(newBrokerageJobStatus)
+                await uploadFileToS3(path, filename, s3Client)
+                continue
+            }
+
+            if (brokerageJobStatus.status === BrokerageJobStatusType.RUNNING
+                || brokerageJobStatus.status === BrokerageJobStatusType.FAILED
+                || brokerageJobStatus.status === BrokerageJobStatusType.SUCCESSFUL) continue;
+
+            if (brokerageJobStatus.data?.filenames.includes(fileType)) continue;
+
+            newBrokerageJobStatus.data.filenames = [...brokerageJobStatus.data?.filenames, fileType];
+
             await repo.upsertBrokerageJobStatus(newBrokerageJobStatus)
             await uploadFileToS3(path, filename, s3Client)
-            return
         }
+    }
 
-        if (brokerageJobStatus.status === BrokerageJobStatusType.RUNNING || brokerageJobStatus.status === BrokerageJobStatusType.FAILED || brokerageJobStatus.status === BrokerageJobStatusType.SUCCESSFUL) return;
-
-
-        if (brokerageJobStatus.data?.filenames.includes(fileType)) return;
-
-        newBrokerageJobStatus.data.filenames = [...brokerageJobStatus.data?.filenames, fileType];
-        await repo.upsertBrokerageJobStatus(newBrokerageJobStatus)
-        await uploadFileToS3(path, filename, s3Client)
-    });
+    run().then();
 })()
+
+const sleepAsync = (time: number) => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(null);
+        }, time);
+    })
+}
 
