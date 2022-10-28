@@ -6,12 +6,10 @@ const {
 
 module.exports = (() => {
     const config = getDefaultConfig(__dirname);
-
-
-
     const { transformer, resolver } = config;
 
-    console.log("###################TEST######:" + resolver.blacklistRE);
+    //console.log("###################TEST###########:" + resolver.blacklistRE);
+
     return applyConfigForLinkedDependencies({
         projectRoot: __dirname,
         transformer: {

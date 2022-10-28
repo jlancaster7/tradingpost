@@ -17,13 +17,13 @@ else if (__DEV__ && (AppOwnership.Expo === Constants.appOwnership || AppOwnershi
     configApi({
       apiBaseUrl: `http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
     })
-  else
+  else {
+
     //manual ip for api server... have been trying to find a way to avoid this...
     configApi({
-      apiBaseUrl: `http://10.229.201.27:8082`
+      apiBaseUrl: `http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
     })
-
-
+  }
 }
 else {
   console.log("THIS IS A DIFFERENT CONDITION DEV: " + __DEV__ + " OWNER: " + Constants.appOwnership)
@@ -35,7 +35,7 @@ import { StatusBar } from 'expo-status-bar';
 //import { SafeAreaProvider } from 'react-native-safe-area-context';
 //import { Colors } from 'react-native-ui-lib';
 import { Logs } from 'expo'
-Logs.enableExpoCliLogging()
+//Logs.enableExpoCliLogging()
 import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
@@ -73,7 +73,7 @@ export default function App() {
   const colorScheme = useColorScheme();
   const { appUser, signIn } = useAppUser();
   const { value: authToken, setValue: setAuthToken } = useData("authToken");
-
+  console.log(Constants.expoConfig?.extra?.localIp);
   //try auth signin
   useEffect(() => {
     if (authToken) {
@@ -96,10 +96,6 @@ export default function App() {
   }, [isLoadingComplete])
   const url = useURL();
   console.log(url);
-  const linkTo = useLinkTo();
-  const ltRef = useRef(linkTo);
-  ltRef.current = linkTo;
-  const [urlToGoTo, setUrlToGoTo] = useState("");
   if (__DEV__ && url) {
 
     const urlParsed = parse(url, true);
@@ -109,11 +105,7 @@ export default function App() {
       configApi({ apiBaseUrl: "http://" + (urlParsed.query["url"] as string)?.split(":")[1] + ":8082" });
     }
     else {
-      if (!urlToGoTo) {
-        console.log("GOING TO URL :::::::: " + urlToGoTo);
-        setUrlToGoTo(url);
-        
-      }
+
     }
     // else if (urlParsed.hostname?.toString() === "m.tradingpostapp.com" && !urlToGoTo) {
     //   console.log("Sending you to");
@@ -143,10 +135,8 @@ export default function App() {
     <IconRegistry icons={EvaIconsPack} />
     <ToastProvider>
       <Navigation whenReady={() => {
-        console.log("Nav Container says its ready");
-        if (urlToGoTo) {
-          linkTo(urlToGoTo)
-        }
+
+
       }} colorScheme={colorScheme} />
       <StatusBar />
     </ToastProvider>

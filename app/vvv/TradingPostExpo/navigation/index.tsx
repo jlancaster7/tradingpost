@@ -34,7 +34,7 @@ export default function Navigation({ colorScheme, whenReady }: { colorScheme: Co
         }}
         linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <RootNavigator />
+        <RootNavigator  />
       </NavigationContainer>
     </SafeAreaProvider>
   );
