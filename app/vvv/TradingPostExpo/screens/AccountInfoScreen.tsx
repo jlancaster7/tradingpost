@@ -50,15 +50,24 @@ export function AccountInfoScreen() {
 
     const getTwitterToken = useTwitterAuth();
     const getGoogleToken = useGoogleAuth();
-    let twitterHandle: any;
-    let setTwitterHandle: any;
-    let substackUsername: any;
-    let setsubstackUsername: any;
-    let spotifyShow: any;
-    let setSpotifyShow: any;
-    let youtubeChannel: any;
-    let setYoutubeChannel: any;
+    //let twitterHandle: any;
+    //let setTwitterHandle: any;
+    //let substackUsername: any;
+    //let setsubstackUsername: any;
+    //let spotifyShow: any;
+    //let setSpotifyShow: any;
+    //let youtubeChannel: any;
+    //let setYoutubeChannel: any;
+
+    let userClaims = appUser?.claims;
+    
+    let [twitterHandle, setTwitterHandle] = useState(userClaims ? userClaims.find(c => c.platform === "twitter")?.claims.handle : '')
+    let [substackUsername, setsubstackUsername] = useState(userClaims ? userClaims.find(c => c.platform === "substack")?.claims.handle : '')
+    let [spotifyShow, setSpotifyShow] = useState(userClaims ? userClaims.find(c => c.platform === "spotify")?.claims.handle : '')
+    let [youtubeChannel, setYoutubeChannel] = useState(userClaims ? userClaims.find(c => c.platform === "youtube")?.claims.handle : '')
+    
     //TODO: we need to fix this... it could theoretically be very problematic.... react cant tell because 
+    /*
     if (appUser?.claims) {
         [twitterHandle, setTwitterHandle] = useState(appUser?.claims.find(c => c.platform === "twitter")?.claims?.handle);
         [substackUsername, setsubstackUsername] = useState(appUser?.claims.find(c => c.platform === "substack")?.claims?.handle);
@@ -71,6 +80,7 @@ export function AccountInfoScreen() {
         [spotifyShow, setSpotifyShow] = useState('');
         [youtubeChannel, setYoutubeChannel] = useState('');
     }
+    */
     //########################################################################################################################
 
     //########################################################################################################################
