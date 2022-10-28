@@ -820,7 +820,7 @@ export type IbkrActivity = {
     currency: string | null
     baseCurrency: string | null
     tradeDate: DateTime | null
-    tradeTime: DateTime | null
+    tradeTime: string | null
     settleDate: DateTime | null
     orderTime: DateTime | null
     transactionType: string | null
@@ -856,6 +856,20 @@ export type IbkrActivityTable = {
     createdAt: DateTime
 } & IbkrActivity
 
+export type IbkrCashReportCsv = {
+    Type: string
+    AccountID: string
+    ReportDate: string
+    Currency: string
+    BaseSummary: string
+    Label: string
+    Total: string
+    Securities: string
+    Futures: string
+    IBUKL: string
+    PAXOS: string
+}
+
 export type IbkrCashReport = {
     type: string | null
     accountId: string
@@ -863,11 +877,11 @@ export type IbkrCashReport = {
     currency: string | null
     baseSummary: boolean | null
     label: string | null
-    total: DateTime | null
-    securities: DateTime | null
-    futures: DateTime | null
-    ibukl: DateTime | null
-    paxos: DateTime | null
+    total: number | null
+    securities: number | null
+    futures: number | null
+    ibukl: number | null
+    paxos: number | null
 }
 
 export type IbkrCashReportTable = {
@@ -875,6 +889,31 @@ export type IbkrCashReportTable = {
     updatedAt: DateTime
     createdAt: DateTime
 } & IbkrCashReport
+
+export type IbkrNavCsv = {
+    Type: string
+    AccountID: string
+    BaseCurrency: string
+    Cash: string
+    CashCollateral: string
+    Stocks: string
+    IPOSubscription: string
+    SecuritiesBorrowed: string
+    SecuritiesLent: string
+    Options: string
+    Bonds: string
+    Commodities: string
+    Funds: string
+    Notes: string
+    Accruals: string
+    DividendAccruals: string
+    SoftDollars: string
+    Crypto: string
+    Totals: string
+    TWR: string
+    CFDUnrealizedPL: string
+    ForexCFDUnrealizedPL: string
+}
 
 export type IbkrNav = {
     type: string | null
@@ -891,13 +930,15 @@ export type IbkrNav = {
     commodities: number | null
     funds: number | null
     notes: number | null
+    accruals: number | null
     dividendAccruals: number | null
     softDollars: number | null
     crypto: number | null
     totals: number | null
     twr: number | null
     cfdUnrealizedPl: number | null
-    forexCfUnrealizedPl: number | null
+    forexCfdUnrealizedPl: number | null
+    processedDate: DateTime
 }
 
 export type IbkrNavTable = {
@@ -906,9 +947,34 @@ export type IbkrNavTable = {
     createdAt: DateTime
 } & IbkrNav
 
+export type IbkrPlCsv = {
+    AccountID: string
+    InternalAssetID: string
+    SecurityID: string
+    Symbol: string
+    BBTicker: string
+    BBGlobalID: string
+    SecurityDescription: string
+    AssetType: string
+    Currency: string
+    ReportDate: string
+    PositionMTM: string
+    PositionMTMInBase: string
+    TransactionMTM: string
+    TransactionMTMInBase: string
+    RealizedST: string
+    RealizedSTInBase: string
+    RealizedLT: string
+    RealizedLTInBase: string
+    UnrealizedST: string
+    UnrealizedSTInBase: string
+    UnrealizedLT: string
+    UnrealizedLTInBase: string
+}
+
 export type IbkrPl = {
     accountId: string
-    internalAssetId: string | null
+    internalAssetId: string
     securityId: string | null
     symbol: string | null
     bbTicker: string | null
@@ -916,7 +982,7 @@ export type IbkrPl = {
     securityDescription: string | null
     assetType: string | null
     currency: string | null
-    reportDate: DateTime | null
+    reportDate: DateTime
     positionMtm: number | null
     positionMtmInBase: number | null
     transactionMtm: number | null
@@ -936,6 +1002,38 @@ export type IbkrPlTable = {
     updatedAt: DateTime
     creaetdAt: DateTime
 } & IbkrPl
+
+export type IbkrPositionCsv = {
+    Type: string
+    AccountID: string
+    ConID: string
+    SecurityID: string
+    Symbol: string
+    BBTicker: string
+    BBGlobalID: string
+    SecurityDescription: string
+    AssetType: string
+    Currency: string
+    BaseCurrency: string
+    Quantity: string
+    QuantityInBase: string
+    CostPrice: string
+    CostBasis: string
+    CostBasisInBase: string
+    MarketPrice: string
+    MarketValue: string
+    MarketValueInBase: string
+    OpenDateTime: string
+    FxRateToBase: string
+    ReportDate: string
+    SettledQuantity: string
+    SettledQuantityInBase: string
+    MasterAccountID: string
+    Van: string
+    AccruedInt: string
+    OriginatingOrderID: string
+    Multiplier: string
+}
 
 export type IbkrPosition = {
     accountId: string
@@ -959,6 +1057,7 @@ export type IbkrPosition = {
     marketValueInBase: number | null
     openDateTime: DateTime | null
     fxRateToBase: number | null
+    reportDate: DateTime
     settledQuantity: number | null
     settledQuantityInBase: number | null
     masterAccountId: string | null

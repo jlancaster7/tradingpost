@@ -2,9 +2,19 @@ import IbkrTransformer, {TransformerRepository} from "./transformer";
 import {
     BrokerageJobStatusTable,
     BrokerageJobStatusType,
-    IbkrAccount, IbkrAccountCsv,
-    IbkrAccountTable, IbkrActivity, IbkrCashReport, IbkrNav, IbkrPl, IbkrPosition,
-    IbkrSecurity, IbkrSecurityCsv
+    IbkrAccount,
+    IbkrAccountCsv,
+    IbkrAccountTable,
+    IbkrActivity,
+    IbkrActivityCsv,
+    IbkrCashReport,
+    IbkrCashReportCsv,
+    IbkrNav,
+    IbkrNavCsv,
+    IbkrPl, IbkrPlCsv,
+    IbkrPosition, IbkrPositionCsv,
+    IbkrSecurity,
+    IbkrSecurityCsv
 } from "../interfaces";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {DateTime} from "luxon";
@@ -86,22 +96,34 @@ export default class Ibkr {
         console.log("Updating Job Status")
         // await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.RUNNING);
 
-        // const fileTypes = ['Activity', 'CashReport', 'NAV', 'PL', 'Position', 'Security']
+        // const fileTypes = ['Position']
         console.log("Importing From Account")
-        const [tpUserId, newerDateAlreadyProcessed] = await this._importAccount(pendingJob);
+        const [tpUserId, newerDateAlreadyProcessed, newAccountIds] = await this._importAccount(pendingJob);
 
         console.log("Import Securities")
         await this._importSecurity(pendingJob);
 
-        // do not perform update if date > last ingested date for some tables(e.g., account)
-        // run tradingpost brokerage transformer
+        console.log("Importing Activity")
+        await this._importActivity(pendingJob);
+
+        console.log("Importing Cash Reports")
+        await this._importCashReport(pendingJob);
+
+        console.log("Importing Nav")
+        await this._importNav(pendingJob);
+
+        console.log("Importing PLs")
+        await this._importPl(pendingJob);
+
+        console.log("Importing Positions")
+        await this._importPosition(pendingJob);
     }
 
     _formatFileName = (brokerageUserId: string, fileType: string, date: DateTime): string => {
         return `${brokerageUserId}_${fileType}_${date.toFormat("yyyyMMdd")}.csv`
     }
 
-    _importAccount = async (pendingJob: BrokerageJobStatusTable): Promise<[string, boolean]> => {
+    _importAccount = async (pendingJob: BrokerageJobStatusTable): Promise<[string, boolean, string[]]> => {
         const currentAccounts = await this._repo.getIbkrMasterAndSubAccounts(pendingJob.brokerageUserId);
         const masterAccount = currentAccounts.find(acc => acc.masterAccountId === null)
         if (currentAccounts.length <= 0 || !masterAccount) throw new Error(`no ibkr account found for id ${pendingJob.brokerageUserId}`);
@@ -166,63 +188,7 @@ export default class Ibkr {
             return n;
         }));
 
-        return [masterAccount.userId, newerDateAlreadyProcessed];
-    }
-
-    _importActivity = async (pendingJob: BrokerageJobStatusTable) => {
-        const activities = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Activity", pendingJob.dateToProcess), (data: IbkrAccountCsv) => {
-            let x: IbkrSecurityCsv = {
-                AssetType: data.AssetType,
-                BBGlobalID: data.BBGlobalID,
-                BBTicker: data.BBTicker,
-                BBTickerAndExchangeCode: data.BBTickerAndExchangeCode,
-                ConID: data.ConID,
-                Currency: data.Currency,
-                CUSIP: data.CUSIP,
-                DeliveryMonth: data.DeliveryMonth,
-                Description: data.Description,
-                ExpirationDate: data.ExpirationDate,
-                IssueDate: data.IssueDate,
-                Issuer: data.Issuer,
-                SecurityID: data.SecurityID,
-                MaturityDate: data.MaturityDate,
-                Multiplier: data.Multiplier,
-                OptionStrike: data.OptionStrike,
-                OptionType: data.OptionType,
-                PrimaryExchange: data.PrimaryExchange,
-                SubCategory: data.SubCategory,
-                Symbol: data.Symbol,
-                Type: data.Type,
-                UnderlyingCategory: data.UnderlyingCategory,
-                UnderlyingSecurityId: data.UnderlyingSecurityId,
-                UnderlyingConID: data.UnderlyingConID,
-                UnderlyingPrimaryExchange: data.UnderlyingPrimaryExchange,
-                UnderlyingSymbol: data.UnderlyingSymbol,
-            }
-            return x;
-        });
-        await this._repo.upsertIbkrActivity(activities.map((s: IbkrAccountCsv) => {
-            let x: IbkrActivity = {
-                accountId: s
-            }
-            return x;
-        }))
-    }
-
-    _importCashReport = async () => {
-
-    }
-
-    _importNav = async () => {
-
-    }
-
-    _importPl = async () => {
-
-    }
-
-    _importPosition = async () => {
-
+        return [masterAccount.userId, newerDateAlreadyProcessed, currentAccounts.map(ca => ca.accountId)];
     }
 
     _importSecurity = async (pendingJob: BrokerageJobStatusTable) => {
@@ -285,6 +251,326 @@ export default class Ibkr {
                 underlyingConId: s.UnderlyingConID !== '' ? s.UnderlyingConID : null,
                 underlyingPrimaryExchange: s.UnderlyingPrimaryExchange !== '' ? s.UnderlyingPrimaryExchange : null,
                 underlyingSymbol: s.UnderlyingSymbol !== '' ? s.UnderlyingSymbol : null,
+            }
+            return x;
+        }));
+    }
+
+    _importActivity = async (pendingJob: BrokerageJobStatusTable) => {
+        const activities = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Activity", pendingJob.dateToProcess), (s: IbkrActivityCsv) => {
+            let x: IbkrActivityCsv = {
+                UnitPrice: s.UnitPrice,
+                TransactionType: s.TransactionType,
+                Van: s.Van,
+                TransactionID: s.TransactionID,
+                TradeTime: s.TradeTime,
+                TradeID: s.TradeID,
+                TradeDate: s.TradeDate,
+                Tax: s.Tax,
+                Symbol: s.Symbol,
+                Type: s.Type,
+                TaxBasisElection: s.TaxBasisElection,
+                SettleDate: s.SettleDate,
+                SecurityID: s.SecurityID,
+                SecurityDescription: s.SecurityDescription,
+                Quantity: s.Quantity,
+                SECFee: s.SECFee,
+                OrderTime: s.OrderTime,
+                OrderID: s.OrderID,
+                Net: s.Net,
+                NetInBase: s.NetInBase,
+                MasterAccountID: s.MasterAccountID,
+                GrossAmount: s.GrossAmount,
+                FxRateToBase: s.FxRateToBase,
+                ExecutionID: s.ExecutionID,
+                Exchange: s.Exchange,
+                Flag: s.Flag,
+                Description: s.Description,
+                Currency: s.Currency,
+                CostBasis: s.CostBasis,
+                ContraPartyName: s.ContraPartyName,
+                ConID: s.ConID,
+                Commission: s.Commission,
+                ClrFirmID: s.ClrFirmID,
+                ClientReference: s.ClientReference,
+                BBTicker: s.BBTicker,
+                BBGlobalID: s.BBGlobalID,
+                BaseCurrency: s.BaseCurrency,
+                AssetType: s.AssetType,
+                AwayBrokerCommission: s.AwayBrokerCommission,
+                AccountID: s.AccountID
+            }
+            return x;
+        });
+
+        await this._repo.upsertIbkrActivity(activities.map((s: IbkrActivityCsv) => {
+            let x: IbkrActivity = {
+                accountId: s.AccountID,
+                assetType: s.AssetType !== '' ? s.AssetType : null,
+                awayBrokerCommission: s.AwayBrokerCommission !== '' ? parseFloat(s.AwayBrokerCommission) : null,
+                baseCurrency: s.BaseCurrency !== '' ? s.BaseCurrency : null,
+                bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,
+                bbTicker: s.BBTicker !== '' ? s.BBTicker : null,
+                clientReferences: s.ClientReference !== '' ? s.ClientReference : null,
+                clrFirmId: s.ClrFirmID !== '' ? s.ClrFirmID : null,
+                commission: s.Commission !== '' ? parseFloat(s.Commission) : null,
+                conId: s.ConID !== '' ? s.ConID : null,
+                contraPartyName: s.ContraPartyName !== '' ? s.ContraPartyName : null,
+                costBasis: s.CostBasis !== '' ? parseFloat(s.CostBasis) : null,
+                currency: s.Currency !== '' ? s.Currency : null,
+                description: s.Description !== '' ? s.Description : null,
+                flag: s.Flag !== '' ? s.Flag : null,
+                exchange: s.Exchange !== '' ? s.Exchange : null,
+                executionId: s.ExecutionID !== '' ? s.ExecutionID : null,
+                fxRateToBase: s.FxRateToBase !== '' ? parseFloat(s.FxRateToBase) : null,
+                grossAmount: s.GrossAmount !== '' ? parseFloat(s.GrossAmount) : null,
+                masterAccountId: s.MasterAccountID !== '' ? s.MasterAccountID : null,
+                net: s.Net !== '' ? parseFloat(s.Net) : null,
+                netInBase: s.NetInBase !== '' ? parseFloat(s.NetInBase) : null,
+                orderId: s.OrderID !== '' ? s.OrderID : null,
+                orderTime: s.OrderTime !== '' ? DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss") : null,
+                secFee: s.SECFee !== '' ? parseFloat(s.SECFee) : null,
+                type: s.Type !== '' ? s.Type : null,
+                quantity: s.Quantity !== '' ? parseFloat(s.Quantity) : null,
+                securityDescription: s.SecurityDescription !== '' ? s.SecurityDescription : null,
+                securityId: s.SecurityID !== '' ? s.SecurityID : null,
+                tax: s.Tax !== '' ? parseFloat(s.Tax) : null,
+                settleDate: s.SettleDate !== '' ? DateTime.fromFormat(s.SettleDate, "yyyyMMdd") : null,
+                symbol: s.Symbol !== '' ? s.Symbol : null,
+                taxBasisElection: s.TaxBasisElection !== '' ? s.TaxBasisElection : null,
+                tradeDate: s.TradeDate !== '' ? DateTime.fromFormat(s.TradeDate, "yyyyMMdd") : null,
+                tradeId: s.TradeID !== '' ? s.TradeID : null,
+                tradeTime: s.TradeTime !== '' ? DateTime.fromFormat(s.TradeTime, "hh:mm:ss").toSQLTime() : null,
+                van: s.Van !== '' ? s.Van : null,
+                transactionId: s.TransactionID !== '' ? s.TransactionID : null,
+                transactionType: s.TransactionType !== '' ? s.TransactionType : null,
+                unitPrice: s.UnitPrice !== '' ? parseFloat(s.UnitPrice) : null
+            }
+            return x;
+        }));
+    }
+
+    _importCashReport = async (pendingJob: BrokerageJobStatusTable) => {
+        const cashReports = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "CashReport", pendingJob.dateToProcess), (s: IbkrCashReportCsv) => {
+            let x: IbkrCashReportCsv = {
+                AccountID: s.AccountID,
+                Currency: s.Currency,
+                Type: s.Type,
+                BaseSummary: s.BaseSummary,
+                Futures: s.Futures,
+                IBUKL: s.IBUKL,
+                Label: s.Label,
+                ReportDate: s.ReportDate,
+                PAXOS: s.PAXOS,
+                Securities: s.Securities,
+                Total: s.Total
+            }
+            return x;
+        });
+
+        await this._repo.upsertIbkrCashReport(cashReports.map((s: IbkrCashReportCsv) => {
+            let x: IbkrCashReport = {
+                accountId: s.AccountID,
+                currency: s.Currency !== '' ? s.Currency : null,
+                baseSummary: s.BaseSummary === 'Y',
+                futures: s.Futures !== '' ? parseFloat(s.Futures) : null,
+                ibukl: s.IBUKL !== '' ? parseFloat(s.IBUKL) : null,
+                type: s.Type !== '' ? s.Type : null,
+                label: s.Label !== '' ? s.Label : null,
+                reportDate: s.ReportDate !== '' ? DateTime.fromFormat(s.ReportDate, "yyyyMMdd") : null,
+                paxos: s.PAXOS !== '' ? parseFloat(s.PAXOS) : null,
+                securities: s.Securities !== '' ? parseFloat(s.Securities) : null,
+                total: s.Total !== '' ? parseFloat(s.Total) : null
+            }
+            return x;
+        }));
+    }
+
+    _importNav = async (pendingJob: BrokerageJobStatusTable) => {
+        const navs = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "NAV", pendingJob.dateToProcess), (s: IbkrNavCsv) => {
+            let x: IbkrNavCsv = {
+                AccountID: s.AccountID,
+                Options: s.Options,
+                CFDUnrealizedPL: s.CFDUnrealizedPL,
+                Cash: s.Cash,
+                Type: s.Type,
+                Accruals: s.Accruals,
+                BaseCurrency: s.BaseCurrency,
+                Bonds: s.Bonds,
+                CashCollateral: s.CashCollateral,
+                Commodities: s.Commodities,
+                Crypto: s.Crypto,
+                DividendAccruals: s.DividendAccruals,
+                ForexCFDUnrealizedPL: s.ForexCFDUnrealizedPL,
+                Funds: s.Funds,
+                IPOSubscription: s.IPOSubscription,
+                Notes: s.Notes,
+                SecuritiesBorrowed: s.SecuritiesBorrowed,
+                SecuritiesLent: s.SecuritiesLent,
+                SoftDollars: s.SoftDollars,
+                Stocks: s.Stocks,
+                TWR: s.TWR,
+                Totals: s.Totals
+            }
+            return x;
+        });
+        await this._repo.upsertIbkrNav(navs.map((s: IbkrNavCsv) => {
+            let x: IbkrNav = {
+                accountId: s.AccountID,
+                baseCurrency: s.BaseCurrency,
+                bonds: s.Bonds !== '' ? parseFloat(s.Bonds) : null,
+                cash: s.Cash !== '' ? parseFloat(s.Cash) : null,
+                type: s.Type !== '' ? s.Type : null,
+                cashCollateral: s.CashCollateral !== '' ? parseFloat(s.CashCollateral) : null,
+                cfdUnrealizedPl: s.CFDUnrealizedPL !== '' ? parseFloat(s.CFDUnrealizedPL) : null,
+                commodities: s.Commodities !== '' ? parseFloat(s.Commodities) : null,
+                crypto: s.Crypto !== '' ? parseFloat(s.Crypto) : null,
+                dividendAccruals: s.DividendAccruals !== '' ? parseFloat(s.DividendAccruals) : null,
+                forexCfdUnrealizedPl: s.ForexCFDUnrealizedPL !== '' ? parseFloat(s.ForexCFDUnrealizedPL) : null,
+                funds: s.Funds !== '' ? parseFloat(s.Funds) : null,
+                ipoSubscription: s.IPOSubscription !== '' ? parseFloat(s.IPOSubscription) : null,
+                notes: s.Notes !== '' ? parseFloat(s.Notes) : null,
+                options: s.Options !== '' ? parseFloat(s.Options) : null,
+                securitiesBorrowed: s.SecuritiesBorrowed !== '' ? parseFloat(s.SecuritiesBorrowed) : null,
+                securitiesLent: s.SecuritiesLent !== '' ? parseFloat(s.SecuritiesLent) : null,
+                softDollars: s.SoftDollars !== '' ? parseFloat(s.SoftDollars) : null,
+                stocks: s.Stocks !== '' ? parseFloat(s.Stocks) : null,
+                twr: s.TWR !== '' ? parseFloat(s.TWR) : null,
+                totals: s.Totals !== '' ? parseFloat(s.Totals) : null,
+                processedDate: pendingJob.dateToProcess,
+                accruals: s.Accruals !== '' ? parseFloat(s.Accruals) : null
+            }
+            return x;
+        }));
+    }
+
+    _importPl = async (pendingJob: BrokerageJobStatusTable) => {
+        const pls = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "PL", pendingJob.dateToProcess), (s: IbkrPlCsv) => {
+            let x: IbkrPlCsv = {
+                AccountID: s.AccountID,
+                AssetType: s.AssetType,
+                BBGlobalID: s.BBGlobalID,
+                BBTicker: s.BBTicker,
+                Currency: s.Currency,
+                InternalAssetID: s.InternalAssetID,
+                PositionMTM: s.PositionMTM,
+                PositionMTMInBase: s.PositionMTMInBase,
+                RealizedLT: s.RealizedLT,
+                RealizedLTInBase: s.RealizedLTInBase,
+                ReportDate: s.ReportDate,
+                RealizedST: s.RealizedST,
+                SecurityDescription: s.SecurityDescription,
+                RealizedSTInBase: s.RealizedSTInBase,
+                SecurityID: s.SecurityID,
+                Symbol: s.Symbol,
+                TransactionMTM: s.TransactionMTM,
+                TransactionMTMInBase: s.TransactionMTMInBase,
+                UnrealizedLT: s.UnrealizedLT,
+                UnrealizedLTInBase: s.UnrealizedLTInBase,
+                UnrealizedST: s.UnrealizedST,
+                UnrealizedSTInBase: s.UnrealizedSTInBase
+            }
+            return x;
+        });
+        await this._repo.upsertIbkrPls(pls.map((s: IbkrPlCsv) => {
+            if (s.ReportDate === '') throw new Error("no report date available for pls");
+            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
+            let x: IbkrPl = {
+                accountId: s.AccountID,
+                assetType: s.AssetType !== '' ? s.AssetType : null,
+                bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,
+                bbTicker: s.BBTicker !== '' ? s.BBTicker : null,
+                currency: s.Currency !== '' ? s.Currency : null,
+                internalAssetId: s.InternalAssetID,
+                positionMtm: s.PositionMTM !== '' ? parseFloat(s.PositionMTM) : null,
+                positionMtmInBase: s.PositionMTMInBase !== '' ? parseFloat(s.PositionMTMInBase) : null,
+                realizedLt: s.RealizedLT !== '' ? parseFloat(s.RealizedLT) : null,
+                realizedLtInBase: s.RealizedLTInBase !== '' ? parseFloat(s.RealizedLTInBase) : null,
+                realizedSt: s.RealizedST !== '' ? parseFloat(s.RealizedST) : null,
+                reportDate: reportDate,
+                securityDescription: s.SecurityDescription !== '' ? s.SecurityDescription : null,
+                symbol: s.Symbol !== '' ? s.Symbol : null,
+                realizedStInBase: s.RealizedSTInBase !== '' ? parseFloat(s.RealizedSTInBase) : null,
+                securityId: s.SecurityID !== '' ? s.SecurityID : null,
+                transactionMtm: s.TransactionMTM !== '' ? parseFloat(s.TransactionMTM) : null,
+                transactionMtmInBase: s.TransactionMTMInBase !== '' ? parseFloat(s.TransactionMTMInBase) : null,
+                unrealizedLt: s.UnrealizedLT !== '' ? parseFloat(s.UnrealizedLT) : null,
+                unrealizedLtInBase: s.UnrealizedLTInBase !== '' ? parseFloat(s.UnrealizedLTInBase) : null,
+                unrealizedSt: s.UnrealizedST !== '' ? parseFloat(s.UnrealizedST) : null,
+                unrealizedStInBase: s.UnrealizedSTInBase !== '' ? parseFloat(s.UnrealizedSTInBase) : null
+            }
+            return x;
+        }));
+    }
+
+    _importPosition = async (pendingJob: BrokerageJobStatusTable) => {
+        const positions = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Position", pendingJob.dateToProcess), (s: IbkrPositionCsv) => {
+            let x: IbkrPositionCsv = {
+                AccountID: s.AccountID,
+                AssetType: s.AssetType,
+                BBGlobalID: s.BBGlobalID,
+                BBTicker: s.BBTicker,
+                AccruedInt: s.AccruedInt,
+                CostBasis: s.CostBasis,
+                BaseCurrency: s.BaseCurrency,
+                ConID: s.ConID,
+                Currency: s.Currency,
+                Type: s.Type,
+                FxRateToBase: s.FxRateToBase,
+                CostBasisInBase: s.CostBasisInBase,
+                CostPrice: s.CostPrice,
+                MarketPrice: s.MarketPrice,
+                MarketValue: s.MarketValue,
+                MarketValueInBase: s.MarketValueInBase,
+                MasterAccountID: s.MasterAccountID,
+                Multiplier: s.Multiplier,
+                Quantity: s.Quantity,
+                OpenDateTime: s.OpenDateTime,
+                ReportDate: s.ReportDate,
+                SecurityDescription: s.SecurityDescription,
+                OriginatingOrderID: s.OriginatingOrderID,
+                QuantityInBase: s.QuantityInBase,
+                SecurityID: s.SecurityID,
+                Van: s.Van,
+                Symbol: s.Symbol,
+                SettledQuantity: s.SettledQuantity,
+                SettledQuantityInBase: s.SettledQuantityInBase
+            }
+            return x;
+        });
+        await this._repo.upsertIbkrPositions(positions.map((s: IbkrPositionCsv) => {
+            if (s.ReportDate === '') throw new Error("no report date available for pls");
+            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
+            let x: IbkrPosition = {
+                accountId: s.AccountID,
+                accruedInt: s.AccruedInt !== '' ? parseFloat(s.AccruedInt) : null,
+                assetType: s.AssetType !== '' ? s.AssetType : null,
+                bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,
+                baseCurrency: s.BaseCurrency !== '' ? s.BaseCurrency : null,
+                bbTicker: s.BBTicker !== '' ? s.BBTicker : null,
+                conId: s.ConID !== '' ? s.ConID : null,
+                costBasis: s.CostBasis !== '' ? parseFloat(s.CostBasis) : null,
+                costBasisInBase: s.CostBasisInBase !== '' ? parseFloat(s.CostBasisInBase) : null,
+                costPrice: s.CostPrice !== '' ? parseFloat(s.CostPrice) : null,
+                currency: s.Currency !== '' ? s.Currency : null,
+                fxRateToBase: s.FxRateToBase !== '' ? parseFloat(s.FxRateToBase) : null,
+                marketPrice: s.MarketPrice !== '' ? parseFloat(s.MarketPrice) : null,
+                marketValue: s.MarketValue !== '' ? parseFloat(s.MarketValue) : null,
+                marketValueInBase: s.MarketValueInBase !== '' ? parseFloat(s.MarketValueInBase) : null,
+                masterAccountId: s.MasterAccountID !== '' ? s.MasterAccountID : null,
+                multiplier: s.Multiplier !== '' ? parseFloat(s.Multiplier) : null,
+                openDateTime: s.OpenDateTime !== '' ? DateTime.fromFormat(s.OpenDateTime, "yyyyMMdd;hh:mm:ss") : null,
+                quantity: s.Quantity !== '' ? parseFloat(s.Quantity) : null,
+                securityDescription: s.SecurityDescription !== '' ? s.SecurityDescription : null,
+                originatingOrderId: s.OriginatingOrderID !== '' ? s.OriginatingOrderID : null,
+                securityId: s.SecurityID !== '' ? s.SecurityID : null,
+                quantityInBase: s.QuantityInBase !== '' ? parseFloat(s.QuantityInBase) : null,
+                symbol: s.Symbol !== '' ? s.Symbol : null,
+                settledQuantity: s.SettledQuantity !== '' ? parseFloat(s.SettledQuantity) : null,
+                type: s.Type !== '' ? s.Type : null,
+                van: s.Van !== '' ? s.Van : null,
+                settledQuantityInBase: s.SettledQuantityInBase !== '' ? parseFloat(s.SettledQuantityInBase) : null,
+                reportDate: reportDate
             }
             return x;
         }));

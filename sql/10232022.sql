@@ -121,7 +121,7 @@ CREATE TABLE ibkr_activity
     van                    TEXT,
     away_broker_commission DECIMAL(24, 4),
     order_id               TEXT,
-    client_reference       TEXT,
+    client_references      TEXT,
     transaction_id         TEXT,
     execution_id           TEXT,
     cost_basis             DECIMAL(24, 4),
@@ -130,6 +130,8 @@ CREATE TABLE ibkr_activity
     created_at             TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
+
+CREATE UNIQUE INDEX ibkr_activity_unique_idx ON ibkr_activity (account_id, security_id, trade_date, transaction_type, quantity);
 
 CREATE TABLE ibkr_cash_report
 (
@@ -150,6 +152,8 @@ CREATE TABLE ibkr_cash_report
     PRIMARY KEY (id)
 );
 
+CREATE UNIQUE INDEX ibkr_cash_report_unique_idx ON ibkr_cash_report (account_id, report_date, base_summary, label);
+
 CREATE TABLE ibkr_nav
 (
     id                      BIGSERIAL   NOT NULL,
@@ -167,6 +171,7 @@ CREATE TABLE ibkr_nav
     commodities             DECIMAL(24, 4),
     funds                   DECIMAL(24, 4),
     notes                   DECIMAL(24, 4),
+    accruals                DECIMAL(24, 4),
     dividend_accruals       DECIMAL(24, 4),
     soft_dollars            DECIMAL(24, 4),
     crypto                  DECIMAL(24, 4),
@@ -174,24 +179,27 @@ CREATE TABLE ibkr_nav
     twr                     DECIMAL(24, 4),
     cfd_unrealized_pl       DECIMAL(24, 4),
     forex_cfd_unrealized_pl DECIMAL(24, 4),
+    processed_date          TIMESTAMPTZ NOT NULL,
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at              TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
 
+CREATE UNIQUE INDEX ibkr_nav_unique_idx ON ibkr_nav (account_id, processed_date);
+
 CREATE TABLE ibkr_pl
 (
     id                      BIGSERIAL                                 NOT NULL,
     account_id              TEXT REFERENCES ibkr_account (account_id) NOT NULL,
-    internal_asset_id       TEXT,
+    internal_asset_id       TEXT                                      NOT NULL,
     security_id             TEXT REFERENCES ibkr_security (security_id),
     symbol                  TEXT,
     bb_ticker               TEXT,
     bb_global_id            TEXT,
     security_description    TEXT,
     asset_type              TEXT,
-    currency                TEXT                                      NOT NULL,
-    report_date             DATE,
+    currency                TEXT,
+    report_date             DATE                                      NOT NULL,
     position_mtm            DECIMAL(24, 4),
     position_mtm_in_base    DECIMAL(24, 4),
     transaction_mtm         DECIMAL(24, 4),
@@ -208,6 +216,8 @@ CREATE TABLE ibkr_pl
     created_at              TIMESTAMPTZ                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
+
+CREATE UNIQUE INDEX ibkr_pl_unique_idx ON ibkr_pl (account_id, internal_asset_id, report_date);
 
 CREATE TABLE ibkr_position
 (
@@ -245,3 +255,5 @@ CREATE TABLE ibkr_position
     created_at               TIMESTAMPTZ                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
+
+CREATE UNIQUE INDEX ibkr_position_unique_idx ON ibkr_position (account_id, security_id, asset_type, report_date);

@@ -2658,15 +2658,15 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'exchange', prop: 'exchange'},
             {name: 'master_account_id', prop: 'masterAccountId'},
             {name: 'van', prop: 'van'},
-            {name: 'away_broker_commission', prop: 'away_broker_commission'},
+            {name: 'away_broker_commission', prop: 'awayBrokerCommission'},
             {name: 'order_id', prop: 'orderId'},
-            {name: 'client_reference', prop: 'clientReference'},
+            {name: 'client_references', prop: 'clientReferences'},
             {name: 'transaction_id', prop: 'transactionId'},
             {name: 'execution_id', prop: 'executionId'},
             {name: 'cost_basis', prop: 'costBasis'},
             {name: 'flag', prop: 'flag'}
         ], {table: 'ibkr_activity'})
-        const query = upsertReplaceQuery(activities, cs, this.pgp, "");
+        const query = upsertReplaceQuery(activities, cs, this.pgp, "account_id, security_id, trade_date, transaction_type, quantity");
         await this.db.none(query);
     }
 
@@ -2685,7 +2685,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'ibukl', prop: 'ibukl'},
             {name: 'paxos', prop: 'paxos'},
         ], {table: 'ibkr_cash_report'})
-        const query = upsertReplaceQuery(cashReports, cs, this.pgp, "");
+        const query = upsertReplaceQuery(cashReports, cs, this.pgp, "account_id, report_date, base_summary, label");
         await this.db.none(query);
     }
 
@@ -2706,6 +2706,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'commodities', prop: 'commodities'},
             {name: 'funds', prop: 'funds'},
             {name: 'notes', prop: 'notes'},
+            {name: 'accruals', prop: 'accruals'},
             {name: 'dividend_accruals', prop: 'dividendAccruals'},
             {name: 'soft_dollars', prop: 'softDollars'},
             {name: 'crypto', prop: 'crypto'},
@@ -2713,8 +2714,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'twr', prop: 'twr'},
             {name: 'cfd_unrealized_pl', prop: 'cfdUnrealizedPl'},
             {name: 'forex_cfd_unrealized_pl', prop: 'forexCfdUnrealizedPl'},
+            {name: 'processed_date', prop: 'processedDate'}
         ], {table: 'ibkr_nav'})
-        const query = upsertReplaceQuery(navs, cs, this.pgp, "");
+        const query = upsertReplaceQuery(navs, cs, this.pgp, "account_id, processed_date");
         await this.db.none(query);
     }
 
@@ -2744,7 +2746,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'unrealized_lt', prop: 'unrealizedLt'},
             {name: 'unrealized_lt_in_base', prop: 'unrealizedLtInBase'},
         ], {table: 'ibkr_pl'})
-        const query = upsertReplaceQuery(pls, cs, this.pgp, "");
+        const query = upsertReplaceQuery(pls, cs, this.pgp, "account_id, internal_asset_id, report_date");
         await this.db.none(query);
     }
 
@@ -2771,7 +2773,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'market_value', prop: 'marketValue'},
             {name: 'market_value_in_base', prop: 'marketValueInBase'},
             {name: 'open_date_time', prop: 'openDateTime'},
-            {name: 'fx_rate_to_base', prop: 'openRateToBase'},
+            {name: 'fx_rate_to_base', prop: 'fxRateToBase'},
             {name: 'report_date', prop: 'reportDate'},
             {name: 'settled_quantity', prop: 'settledQuantity'},
             {name: 'settled_quantity_in_base', prop: 'settledQuantityInBase'},
@@ -2781,7 +2783,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'originating_order_id', prop: 'originatingOrderId'},
             {name: 'multiplier', prop: 'multiplier'},
         ], {table: 'ibkr_position'})
-        const query = upsertReplaceQuery(positions, cs, this.pgp, "");
+        const query = upsertReplaceQuery(positions, cs, this.pgp, "account_id, security_id, asset_type, report_date");
         await this.db.none(query);
     }
 }
