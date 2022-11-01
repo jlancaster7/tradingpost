@@ -2,9 +2,13 @@
 /* base styles */
 * {
     margin: 0;
-    font-family: "K2D";
+    font-family: "K2D", sans-serif;
     font-weight: 400;
     color: #333;
+}
+
+#__next {
+    height: 100%
 }
 
 html {
@@ -65,10 +69,11 @@ body {
     .navbar .links {
         display: none
     }
+
     .navbar .loginButton {
         display: none;
         position: absolute;
-        right: 7%;   
+        right: 7%;
     }
 
 
@@ -122,24 +127,24 @@ body {
     }
 
     .twitter {
-        content: url('./assets/twitter.svg');
+        content: url('/twitter.svg');
     }
 
     .linkdin {
-        content: url('./assets/linkedin.svg');
+        content: url('/linkedin.svg');
     }
 
     .tiktok {
-        content: url('./assets/TikTok.svg');
+        content: url('/TikTok.svg');
     }
 
     .instagram {
-        content: url('./assets/Instagram.svg')
+        content: url('/Instagram.svg')
     }
 
     .home {
         background-color: #050B2C;
-        background-image: url('./assets/MobileClouds.svg');
+        background-image: url('/MobileClouds.svg');
         background-size: 60%;
         background-repeat: no-repeat;
         background-position-y: 1%;
@@ -219,7 +224,7 @@ body {
 
     .home .emailForm .emailButton {
         background-color: #EC5328;
-        background-image: url('./assets/Arrow.svg');
+        background-image: url('/Arrow.svg');
         background-size: 15%;
         background-repeat: no-repeat;
         background-position: center;
@@ -236,7 +241,7 @@ body {
     }
 
     .home .appStoreIcons {
-        
+
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -248,14 +253,14 @@ body {
     }
 
     .home .appStoreIcons .playstore {
-        content: url('./assets/MobilePlaystore.svg');
+        content: url('/MobilePlaystore.svg');
         min-width: 100%;
         min-height: 100%;
         margin-bottom: 5%;
     }
 
     .home .appStoreIcons .appstore {
-        content: url('./assets/MobileAppstore.svg');
+        content: url('/MobileAppstore.svg');
         min-width: 100%;
         min-height: 100%;
         margin-bottom: 5%;
@@ -272,7 +277,7 @@ body {
     .home .illustrations .illustrationImg {
         width: 87%;
         height: auto;
-        content: url('./assets/MobileIllustration.svg');
+        content: url('/MobileIllustration.svg');
     }
 
     .blockone {
@@ -498,7 +503,7 @@ body {
         padding-top: 2vh;
         padding-bottom: 2vh;
         background-color: #050B2C;
-        background-image: url('./assets/AboutClouds.svg');
+        background-image: url('/AboutClouds.svg');
         background-size: 90%;
         background-repeat: no-repeat;
         background-position-y: 10%;
@@ -629,6 +634,7 @@ body {
         height: auto;
         margin-right: 30px;
     }
+
     .menu-item p {
         width: 50%;
         color: #050B2C;
@@ -637,6 +643,7 @@ body {
         font-weight: 600;
         text-align: left;
     }
+
     /* Styling of overlay */
     .bm-overlay {
         background: rgba(0, 0, 0, 0.3);
@@ -697,21 +704,23 @@ body {
         margin-left: 16px;
         font-size: 1.5vw;
         font-size: 18px;
-    
+
         text-decoration: none;
         padding: 1vw;
     }
+
     .navbar .loginButton {
         display: block;
         position: absolute;
-        right: 7%;   
+        right: 7%;
     }
+
     .navbar .loginButton button {
         background: none;
         border-style: solid;
         border-width: 3px;
         border-color: white;
-        
+
         width: 8vw;
         height: 3vw;
         color: white;
@@ -772,26 +781,26 @@ body {
     }
 
     .twitter {
-        content: url('./assets/twitter.svg');
+        content: url('/twitter.svg');
     }
 
     .linkdin {
-        content: url('./assets/linkedin.svg');
+        content: url('/linkedin.svg');
     }
 
     .tiktok {
-        content: url('./assets/TikTok.svg');
+        content: url('/TikTok.svg');
     }
 
     .instagram {
-        content: url('./assets/Instagram.svg')
+        content: url('/Instagram.svg')
     }
 
 
     /* Home/Landing Page Stylings */
     .home {
         background-color: #050B2C;
-        background-image: url('./assets/Clouds.png');
+        background-image: url('/Clouds.png');
         background-size: 90%;
         background-repeat: no-repeat;
         background-position-y: 0%;
@@ -802,7 +811,7 @@ body {
     .home .centralPromise {
         text-align: center;
         font-size: 46px;
-        
+
         font-weight: 600;
         margin-left: 25%;
         margin-right: 25%;
@@ -821,7 +830,7 @@ body {
         text-align: center;
         color: white;
         font-size: 20px;
-        
+
         margin-left: 29%;
         margin-right: 29%;
         padding: 1vw;
@@ -831,7 +840,7 @@ body {
         text-align: center;
         color: white;
         font-size: 20px;
-        
+
         font-weight: 700;
         padding: 1vw;
     }
@@ -840,7 +849,7 @@ body {
         text-align: center;
         color: white;
         font-size: 20px;
-        
+
         font-weight: 600;
         margin-left: 32%;
         margin-right: 32%;
@@ -859,7 +868,7 @@ body {
         padding: 1vw;
         border-radius: 10px;
         width: 20vw;
-        
+
         font-size: 1vw;
         height: 1.2vw;
         margin-right: 1%;
@@ -870,7 +879,7 @@ body {
         padding: 1vw;
         width: 8vw;
         color: white;
-        
+
         font-size: 14px;
         font-size: 1.2vw;
         font-weight: 600;
@@ -885,14 +894,14 @@ body {
     }
 
     .home .appStoreIcons .playstore {
-        content: url('./assets/Playstore.svg');
+        content: url('/Playstore.svg');
         padding: 0.5vw;
         width: 12vw;
         height: auto;
     }
 
     .home .appStoreIcons .appstore {
-        content: url('./assets/Appstore.svg');
+        content: url('/Appstore.svg');
         padding: 0.5vw;
         width: 12vw;
         height: auto;
@@ -909,7 +918,7 @@ body {
     .home .illustrations .illustrationImg {
         width: 87%;
         height: auto;
-        content: url('./assets/DesktopIllustration.svg');
+        content: url('/DesktopIllustration.svg');
         alt: '';
     }
 
@@ -1010,7 +1019,7 @@ body {
 
     .grid-item-left-b3 h1 {
         color: white;
-        
+
         font-size: 2.5vw;
         font-size: 36px;
         font-weight: 400;
@@ -1020,7 +1029,7 @@ body {
 
     .grid-item-left-b3 p {
         color: white;
-        
+
         font-size: 1.5vw;
         font-size: 20px;
         font-weight: 300;
@@ -1053,7 +1062,7 @@ body {
 
     .discovery h1 {
         color: white;
-        
+
         font-size: 3.25vw;
         font-size: 40px;
         font-weight: 400;
@@ -1062,7 +1071,7 @@ body {
 
     .discovery p {
         color: white;
-        
+
         font-size: 1.5vw;
         font-size: 20px;
         font-weight: 300;
@@ -1166,7 +1175,7 @@ body {
         padding-top: 2vw;
         padding-bottom: 2vw;
         background-color: #050B2C;
-        background-image: url('./assets/AboutClouds.svg');
+        background-image: url('/AboutClouds.svg');
         background-size: 80%;
         background-repeat: no-repeat;
         background-position-y: 30%;
@@ -1209,7 +1218,7 @@ body {
         justify-content: center;
         flex-direction: column;
         margin: 2% 0% 2%;
-        
+
     }
 
     .aboutStory h2 {

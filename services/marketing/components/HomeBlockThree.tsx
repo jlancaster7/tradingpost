@@ -1,5 +1,6 @@
 import React from "react";
-import ItsYourDataSvg from '../assets/Itsyourdata.svg'
+import ItsYourDataSvg from '../public/Itsyourdata.svg'
+import Image from 'next/image'
 
 const HomeBlockThree = () => {
     return (
@@ -14,7 +15,7 @@ const HomeBlockThree = () => {
                     </p>
                 </div>
                 <div className='grid-item-right-b3'>
-                    <img src={ItsYourDataSvg} alt="image letting you know its your data, we do not sell it"/>
+                    <Image src={ItsYourDataSvg} alt="image letting you know its your data, we do not sell it"/>
                 </div>
             </div>
 

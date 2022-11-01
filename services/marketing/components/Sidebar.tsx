@@ -1,9 +1,9 @@
 import React from "react";
 import {slide as Menu} from 'react-burger-menu';
-import HomeIconSvg from '../assets/HomeIcon.svg';
-import AboutSvg from '../assets/AboutIcon.svg';
-import LoginSvg from '../assets/LoginIcon.svg';
-
+import HomeIconSvg from '../public/HomeIcon.svg';
+import AboutSvg from '../public/AboutIcon.svg';
+import LoginSvg from '../public/LoginIcon.svg';
+import Image from 'next/image';
 
 type SideMenuProps = {
     pageWrapId: string
@@ -14,15 +14,15 @@ const SideMenu: React.FunctionComponent<SideMenuProps> = ({pageWrapId, outerCont
     return (
         <Menu className="side-menu">
             <a className="menu-item" href="/">
-                <img src={HomeIconSvg} alt="home icon" />
+                <Image src={HomeIconSvg} alt="home icon"/>
                 <p>Home</p>
             </a>
             <a className="menu-item" href="/about">
-                <img src={AboutSvg} alt="about icon" />
+                <Image src={AboutSvg} alt="about icon"/>
                 About
             </a>
             <a className="menu-item" href="https://m.tradingpostapp.com">
-                <img src={LoginSvg} alt="login icon" />
+                <Image src={LoginSvg} alt="login icon"/>
                 Login
             </a>
         </Menu>
