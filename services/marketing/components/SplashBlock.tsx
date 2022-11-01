@@ -1,4 +1,5 @@
 import React, {useState} from "react";
+import Image from 'next/image'
 
 const baseUrl = process.env.API_URL || 'http://localhost:8082';
 
@@ -40,14 +41,14 @@ const SplashBlock = () => {
             />
             <div className="appStoreIcons">
                 <a href="https://play.google.com/store/" target="_blank" rel="noreferrer">
-                    <img className="playstore" alt=''/>
+                    <span className="playstore"/>
                 </a>
                 <a href="https://www.apple.com/app-store/" target="_blank" rel="noreferrer">
-                    <img className="appstore" alt=''/>
+                    <span className="appstore" />
                 </a>
             </div>
             <div className="illustrations">
-                <img className="illustrationImg" alt=''/>
+                <span className="illustrationImg"/>
             </div>
 
         </div>

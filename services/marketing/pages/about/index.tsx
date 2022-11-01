@@ -1,5 +1,5 @@
 import React from "react";
-import AboutBlockOne from "../components/AboutBlockOne";
+import AboutBlockOne from "../../components/AboutBlockOne";
 
 function About() {
     return (
