@@ -15,7 +15,7 @@ export default class PostPrepper {
     constructor() {
     }
 
-    init = async (puppeteerBrowser: Browser): Promise<void> => {
+    init = async (puppeteerBrowser: Browser | null): Promise<void> => {
         if (this.browser) return;
         if (puppeteerBrowser) {
             this.browser = puppeteerBrowser;

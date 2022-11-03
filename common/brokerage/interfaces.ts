@@ -58,6 +58,8 @@ export interface IBrokerageRepository {
 
     deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
 
+    deleteTradingPostAccountCurrentHoldings(accountIds: number[]): Promise<void>
+
     getOldestTransaction(accountId: number): Promise<TradingPostTransactions | null>
 }
 
@@ -436,6 +438,12 @@ export interface GetSecurityBySymbol {
     createdAt: Date
 }
 
+export type TableInfoV2 = {
+    id: number
+    updatedAt: DateTime
+    createdAt: DateTime
+}
+
 export type TableInfo = {
     id: number
     created_at: DateTime
@@ -453,7 +461,8 @@ export type TradingPostCurrentHoldings = {
     value: number
     costBasis: number | null
     quantity: number
-    currency: string | null
+    currency: string | null,
+    holdingDate: DateTime
 }
 
 export type TradingPostCurrentHoldingsTable = TradingPostCurrentHoldings & TableInfo;
@@ -598,7 +607,7 @@ export type TradingPostBrokerageAccounts = {
     errorCode: number
 }
 
-export type TradingPostBrokerageAccountsTable = TradingPostBrokerageAccounts & TableInfo;
+export type TradingPostBrokerageAccountsTable = TradingPostBrokerageAccounts & TableInfoV2;
 
 export type TradingPostAccountGroups = {
     name: string // all accounts under 'default'
@@ -674,6 +683,7 @@ export type OptionContract = {
     type: string
     strikePrice: number
     expiration: DateTime
+    externalId: string | null
 }
 
 export type OptionContractTable = {

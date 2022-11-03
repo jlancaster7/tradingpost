@@ -17,7 +17,8 @@ import {
 import {CustomerAccountsDetail} from '../../finicity/interfaces'
 import {DateTime} from "luxon";
 import {addSecurity} from "../../market-data/interfaces";
-import {abs} from "mathjs";
+import {transformTransactionTypeAmount} from "../utils/utils";
+
 
 interface TransformerRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>
@@ -192,6 +193,7 @@ export default class FinicityTransformer {
                 securityId: securityId,
                 type: optionType,
                 expiration: expirationDate,
+                externalId: null
             });
         }
         return option.id;
@@ -227,6 +229,7 @@ export default class FinicityTransformer {
                 securityId: securityId,
                 type: optionType,
                 expiration: expirationDate,
+                externalId: null
             });
         }
 
@@ -293,7 +296,8 @@ export default class FinicityTransformer {
                         costBasis: holding.costBasis,
                         quantity: holding.units,
                         currency: cur,
-                        optionId: optionId
+                        optionId: optionId,
+                        holdingDate: DateTime.now()
                     })
                     continue
                 }
@@ -309,7 +313,8 @@ export default class FinicityTransformer {
                     costBasis: holding.costBasis,
                     quantity: holding.units,
                     currency: cur,
-                    optionId: null
+                    optionId: null,
+                    holdingDate: DateTime.now()
                 })
             } catch (err) {
                 console.error(err)
@@ -393,23 +398,7 @@ export default class FinicityTransformer {
             if (optionId) securityType = SecurityType.option
 
             let transactionType = transformTransactionType(transaction.investmentTransactionType);
-
-            switch (transactionType) {
-                case "buy":
-                    transaction.amount = abs(transaction.amount);
-                    break;
-                case "sell":
-                    transaction.amount = -1 * abs(transaction.amount);
-                    break;
-                case "short":
-                    transaction.amount = -1 * abs(transaction.amount);
-                    break;
-                case "cover":
-                    transaction.amount = abs(transaction.amount);
-                    break;
-            }
-
-            tpTransactions.push({
+            let newTpTx: TradingPostTransactions = {
                 optionId: optionId,
                 accountId: internalTpAccountId,
                 securityId: security.id,
@@ -420,8 +409,11 @@ export default class FinicityTransformer {
                 amount: transaction.amount,
                 fees: transaction.feeAmount,
                 type: transactionType,
-                currency: null
-            })
+                currency: null,
+            };
+
+            newTpTx = transformTransactionTypeAmount(transactionType, newTpTx);
+            tpTransactions.push(newTpTx)
         }
         return tpTransactions
     }

@@ -56,7 +56,7 @@ type RepositoryInterface = {
     upsertIbkrPositions(positions: IbkrPosition[]): Promise<void>
 } & TransformerRepository
 
-export default class Ibkr {
+export default class IbkrService {
     private _transformer: IbkrTransformer;
     private _repo: RepositoryInterface;
     private _s3Client: S3Client;
@@ -99,14 +99,25 @@ export default class Ibkr {
             console.log("Updating Job Status")
             await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.RUNNING);
 
+            const {dateToProcess} = pendingJob;
+            console.log("Processing Job for Date: ", dateToProcess.toString())
+
             console.log("Importing From Account")
-            const [tpUserId, newerDateAlreadyProcessed, newAccountIds] = await this._importAccount(pendingJob);
+            const [tpUserId, newerDateAlreadyProcessed, newAccounts] = await this._importAccount(pendingJob);
+            await this._transformer.importTradingPostBrokerageAccounts(dateToProcess, tpUserId, newAccounts);
 
             console.log("Import Securities")
-            await this._importSecurity(pendingJob);
+            const securities = await this._importSecurity(pendingJob);
+            console.log("Doing Other security stuf...");
+            await this._transformer.importTradingPostSecurities(dateToProcess, tpUserId, securities);
 
             console.log("Importing Activity")
-            await this._importActivity(pendingJob);
+            const activity = await this._importActivity(pendingJob);
+            await this._transformer.importTradingPostTransactions(dateToProcess, tpUserId, activity);
+
+            console.log("Importing Positions")
+            const positions = await this._importPosition(pendingJob);
+            await this._transformer.importTradingPostHoldings(dateToProcess, tpUserId, positions);
 
             console.log("Importing Cash Reports")
             await this._importCashReport(pendingJob);
@@ -116,9 +127,6 @@ export default class Ibkr {
 
             console.log("Importing PLs")
             await this._importPl(pendingJob);
-
-            console.log("Importing Positions")
-            await this._importPosition(pendingJob);
 
             await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.SUCCESSFUL)
         } catch (e) {
@@ -134,7 +142,7 @@ export default class Ibkr {
         return `${brokerageUserId}_${fileType}_${date.toFormat("yyyyMMdd")}.csv`
     }
 
-    _importAccount = async (pendingJob: BrokerageJobStatusTable): Promise<[string, boolean, string[]]> => {
+    _importAccount = async (pendingJob: BrokerageJobStatusTable): Promise<[string, boolean, IbkrAccount[]]> => {
         const currentAccounts = await this._repo.getIbkrMasterAndSubAccounts(pendingJob.brokerageUserId);
         const masterAccount = currentAccounts.find(acc => acc.masterAccountId === null)
         if (currentAccounts.length <= 0 || !masterAccount) throw new Error(`no ibkr account found for id ${pendingJob.brokerageUserId}`);
@@ -200,10 +208,10 @@ export default class Ibkr {
             return n;
         }));
 
-        return [masterAccount.userId, newerDateAlreadyProcessed, currentAccounts.map(ca => ca.accountId)];
+        return [masterAccount.userId, newerDateAlreadyProcessed, currentAccounts];
     }
 
-    _importSecurity = async (pendingJob: BrokerageJobStatusTable) => {
+    _importSecurity = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrSecurity[]> => {
         const securities = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Security", pendingJob.dateToProcess), (data: IbkrSecurityCsv) => {
             let x: IbkrSecurityCsv = {
                 AssetType: data.AssetType,
@@ -235,7 +243,8 @@ export default class Ibkr {
             }
             return x;
         });
-        await this._repo.upsertIbkrSecurities(securities.map((s: IbkrSecurityCsv) => {
+
+        const securitiesMapped = securities.map((s: IbkrSecurityCsv) => {
             let x: IbkrSecurity = {
                 assetType: s.AssetType,
                 bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,
@@ -265,10 +274,12 @@ export default class Ibkr {
                 underlyingSymbol: s.UnderlyingSymbol !== '' ? s.UnderlyingSymbol : null,
             }
             return x;
-        }));
+        });
+        await this._repo.upsertIbkrSecurities(securitiesMapped);
+        return securitiesMapped;
     }
 
-    _importActivity = async (pendingJob: BrokerageJobStatusTable) => {
+    _importActivity = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrActivity[]> => {
         const activities = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Activity", pendingJob.dateToProcess), (s: IbkrActivityCsv) => {
             let x: IbkrActivityCsv = {
                 UnitPrice: s.UnitPrice,
@@ -314,8 +325,7 @@ export default class Ibkr {
             }
             return x;
         });
-
-        await this._repo.upsertIbkrActivity(activities.map((s: IbkrActivityCsv) => {
+        const activitiesMapped = activities.map((s: IbkrActivityCsv) => {
             let orderTime: DateTime | null = DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss");
             if (!orderTime.isValid) orderTime = null;
 
@@ -371,10 +381,12 @@ export default class Ibkr {
                 unitPrice: s.UnitPrice !== '' ? parseFloat(s.UnitPrice) : null
             }
             return x;
-        }));
+        });
+        await this._repo.upsertIbkrActivity(activitiesMapped);
+        return activitiesMapped;
     }
 
-    _importCashReport = async (pendingJob: BrokerageJobStatusTable) => {
+    _importCashReport = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrCashReport[]> => {
         const cashReports = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "CashReport", pendingJob.dateToProcess), (s: IbkrCashReportCsv) => {
             let x: IbkrCashReportCsv = {
                 AccountID: s.AccountID,
@@ -391,8 +403,7 @@ export default class Ibkr {
             }
             return x;
         });
-
-        await this._repo.upsertIbkrCashReport(cashReports.map((s: IbkrCashReportCsv) => {
+        const cashReportsMapped = cashReports.map((s: IbkrCashReportCsv) => {
             let x: IbkrCashReport = {
                 accountId: s.AccountID,
                 currency: s.Currency !== '' ? s.Currency : null,
@@ -407,10 +418,12 @@ export default class Ibkr {
                 total: s.Total !== '' ? parseFloat(s.Total) : null
             }
             return x;
-        }));
+        });
+        await this._repo.upsertIbkrCashReport(cashReportsMapped);
+        return cashReportsMapped;
     }
 
-    _importNav = async (pendingJob: BrokerageJobStatusTable) => {
+    _importNav = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrNav[]> => {
         const navs = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "NAV", pendingJob.dateToProcess), (s: IbkrNavCsv) => {
             let x: IbkrNavCsv = {
                 AccountID: s.AccountID,
@@ -438,7 +451,7 @@ export default class Ibkr {
             }
             return x;
         });
-        await this._repo.upsertIbkrNav(navs.map((s: IbkrNavCsv) => {
+        const navsMapped = navs.map((s: IbkrNavCsv) => {
             let x: IbkrNav = {
                 accountId: s.AccountID,
                 baseCurrency: s.BaseCurrency,
@@ -465,10 +478,12 @@ export default class Ibkr {
                 accruals: s.Accruals !== '' ? parseFloat(s.Accruals) : null
             }
             return x;
-        }));
+        });
+        await this._repo.upsertIbkrNav(navsMapped);
+        return navsMapped
     }
 
-    _importPl = async (pendingJob: BrokerageJobStatusTable) => {
+    _importPl = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrPl[]> => {
         const pls = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "PL", pendingJob.dateToProcess), (s: IbkrPlCsv) => {
             let x: IbkrPlCsv = {
                 AccountID: s.AccountID,
@@ -496,7 +511,7 @@ export default class Ibkr {
             }
             return x;
         });
-        await this._repo.upsertIbkrPls(pls.map((s: IbkrPlCsv) => {
+        const plsMapped = pls.map((s: IbkrPlCsv) => {
             if (s.ReportDate === '') throw new Error("no report date available for pls");
             const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
             let x: IbkrPl = {
@@ -524,10 +539,12 @@ export default class Ibkr {
                 unrealizedStInBase: s.UnrealizedSTInBase !== '' ? parseFloat(s.UnrealizedSTInBase) : null
             }
             return x;
-        }));
+        });
+        await this._repo.upsertIbkrPls(plsMapped);
+        return plsMapped;
     }
 
-    _importPosition = async (pendingJob: BrokerageJobStatusTable) => {
+    _importPosition = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrPosition[]> => {
         const positions = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Position", pendingJob.dateToProcess), (s: IbkrPositionCsv) => {
             let x: IbkrPositionCsv = {
                 AccountID: s.AccountID,
@@ -562,7 +579,7 @@ export default class Ibkr {
             }
             return x;
         });
-        await this._repo.upsertIbkrPositions(positions.map((s: IbkrPositionCsv) => {
+        const positionsMapped = positions.map((s: IbkrPositionCsv) => {
             if (s.ReportDate === '') throw new Error("no report date available for pls");
             const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
             let x: IbkrPosition = {
@@ -597,7 +614,9 @@ export default class Ibkr {
                 reportDate: reportDate
             }
             return x;
-        }));
+        });
+        await this._repo.upsertIbkrPositions(positionsMapped);
+        return positionsMapped;
     }
 }
 
@@ -615,11 +634,13 @@ export default class Ibkr {
     await pgClient.connect()
     const repo = new Repository(pgClient, pgp);
 
-    const ibkr = new Ibkr(repo, s3Client);
-    console.log("Running")
+    const ibkrSrv = new IbkrService(repo, s3Client);
 
-    let keepProcessing = true;
-    while (keepProcessing) {
-        keepProcessing = await ibkr.run();
-    }
+    console.log("Running...");
+    await ibkrSrv.run();
+    console.log("Finished...");
+    // let keepProcessing = true;
+    // while (keepProcessing) {
+    //
+    // }
 })()

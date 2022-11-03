@@ -257,3 +257,12 @@ CREATE TABLE ibkr_position
 );
 
 CREATE UNIQUE INDEX ibkr_position_unique_idx ON ibkr_position (account_id, security_id, asset_type, report_date);
+
+CREATE UNIQUE INDEX security_option_unique_idx ON security_option (security_id, TYPE, strike_price, expiration);
+
+ALTER TABLE SECURITY_OPTION
+    ADD COLUMN external_id TEXT;
+CREATE INDEX security_option_external_id_idx ON security_option (external_id);
+
+ALTER TABLE tradingpost_current_holding
+    ADD COLUMN holding_date TIMESTAMPTZ NOT NULL DEFAULT NOW();
