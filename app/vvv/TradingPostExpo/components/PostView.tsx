@@ -56,6 +56,8 @@ export const postInnerHeight = (itm: Interface.IElasticPost | undefined, windowW
     const size = (itm as Interface.IElasticPost | undefined)?._source.size
     if (itm?._source.postType === "substack") {
         return 200;
+    } else if (itm?._source.postType === "tradingpost" && size){
+        return (windowWidth / size.aspectRatio) * (fonts.small / fonts.xSmall) + fonts.medium
     } else if (size) {
         return windowWidth / size.aspectRatio + (itm?._source.postType === "tweet" ? 20 * windowWidth / itm._source.size.maxWidth : 0);
     } else if (itm?._source.postType === "youtube") {
@@ -107,6 +109,15 @@ export const resolvePostContent = (itm: Interface.IElasticPost | undefined, wind
         case 'spotify':
             const matches = /src="(.*)"/.exec(itm._source.content.body);
             return matches?.[1] || "";
+        case 'tradingpost':
+                return `
+                <html><meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <body>
+                        <div style="font-size: ${fonts.medium}px; font-weight: 600px; line-height: ${fonts.medium * 1}px; margin-bottom: 10px">${itm._source.content.title}</div>
+                        <div style="font-size: ${fonts.small}px; margin: 0px 3px 0px">${itm._source.content.body}</div>
+                    </body>    
+                </html>
+                `
         case 'substack':
         //return SubstackView({post: itm});
         /*
@@ -330,7 +341,7 @@ const TradingPostView = (props: { post: Interface.IElasticPost }) => {
                 }}></Subheader>
             
         </View>
-        <HtmlView key="content" isUrl={false} style={{height: 50}}>
+        <HtmlView key="content" isUrl={false} style={{height: props.post._source.size.aspectRatio}}>
             {`<html><meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <body style="font-size: ${fonts.small}px">${post._source.content.body}</body></html>`}
             {/*(() => {
@@ -364,8 +375,6 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
     if (props.post._source.postType === 'substack') {
         return SubstackView(props)
     }
-    else if (props.post._source.postType === 'tradingpost')
-        return TradingPostView(props)
 
     return <View>
         <View style={{

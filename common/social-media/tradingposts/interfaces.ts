@@ -8,6 +8,8 @@ export type TradingPostsAndUsers = {
     tradingpost_user_handle: string,
     tradingpost_user_email: string,
     tradingpost_user_profile_url: string,
+    max_width: number,
+    aspect_ratio: number
 }
 export type TableInfo = {
     id: number,

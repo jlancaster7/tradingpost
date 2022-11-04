@@ -14,10 +14,10 @@ import { ElevatedSection, Section, Subsection } from "../components/Section"
 import { ITableColumn, Table } from "../components/Table"
 import { TextField } from "../components/TextField"
 import { AppColors } from "../constants/Colors"
-import { AllPages, TabScreenProps } from "../navigation"
+//import { AllPages, TabScreenProps } from "../navigation"
 import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../style"
 import { useSecuritiesList} from '../SecurityList'
-import { toDollarsAndCents, toNumber1 } from "../utils/misc"
+import { toDollarsAndCents, toNumber1, toPercent, toPercent1, toPercent2 } from "../utils/misc"
 import { MultiTermFeedPart } from "../components/MultiTermFeed"
 import { ViewProps } from "react-native"
 
@@ -36,7 +36,7 @@ export const useNoteField = (hideEmptyNote?: boolean) => {
                         })
                     }
                 }}>
-                    <Icon style={{ opacity: (info.item.note || !hideEmptyNote) ? (info.item.note ? 1 : 0.25) : 0, height: 16, width: 32 }} name={!shownMap[info.index] ? "file-text-outline" : "close-outline"}
+                    <Icon style={{ opacity: (info.item.note || !hideEmptyNote) ? (info.item.note ? 1 : 0.25) : 0, height: 16, width: 22 }} name={!shownMap[info.index] ? "file-text-outline" : "close-outline"}
                         fill={AppColors.primary}
                     /></Pressable>
             }, alias: " ", width: 32
@@ -122,6 +122,19 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
             secField,
             {
                 alias: "Price",
+                field: (a) => {
+                    const change = a.item.price?.price || a.item.price?.open ? (a.item.price?.price - a.item.price?.open) / a.item.price?.open : 0
+                    return (
+                            <View style={{justifyContent: 'space-around', flexDirection: 'row', flex: 1}}>
+                                <Text>{toDollarsAndCents(a.item.price?.price)}</Text>
+                                <Text style={[change ? change >= 0 ? { color: 'green'} : {color: 'red'} : {} ,{marginLeft: sizes.rem0_5/2}]}>{`(${toPercent2(change)})`}</Text>
+                                
+                            </View>
+                    )
+                },
+                //align: 'left' as 'left',
+                //width: sizes.rem6
+                /*
                 stringify: (a, b, c) => {
                     if (c.price?.price) {
                         return toDollarsAndCents(c.price.price);
@@ -129,6 +142,7 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                     else
                         return "-"
                 }
+                */
             },
             {
                 alias: "Date Added",

@@ -229,7 +229,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                                     return Number(item.security_id)
                                 }),
                                 { alias: "Date", stringify: (a, b, c) => new Date(Date.parse(String(c.date))).toLocaleDateString() },
-                                { alias: "Type", stringify: (a, b, c) => String(c.type).toLowerCase()[0].toUpperCase() + String(c.type).toLowerCase().slice(1)},
+                                { alias: "Type", stringify: (a, b, c) => String(c.type).toLowerCase()[0].toUpperCase()},
                                 { alias: "# Shares", stringify: (a, b, c) => String(toThousands(c.quantity)) },
                                 { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.price)) }
                             ],

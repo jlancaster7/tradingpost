@@ -8,15 +8,19 @@ import {Label} from "../components/Label";
 import {ButtonPanel} from "../components/ScrollWithButtons";
 import {TextEditor, TextEditorToolbar} from "../components/TextEditor";
 import {TextField} from "../components/TextField";
-import Navigation, {DashScreenProps, TabScreenProps} from "../navigation";
+//import Navigation, {DashScreenProps, TabScreenProps} from "../navigation";
 import {sizes, flex} from "../style";
 import {bindTextInput, bindTextInputBase, useReadonlyEntity} from "../utils/hooks";
 
-export const PostEditorScreen = (props: TabScreenProps) => {
+export const PostEditorScreen = (props: any) => {
+    const [postHeight, setPostHeight] = useState(0),
+        [postWidth, setPostWidth] = useState(0)
     const postEntity = useReadonlyEntity({
             content: "",
             title: "",
             subscription_level: "standard",
+            height: 0,
+            width: 0,
             photos: []
         }),
         [locked, setLocked] = useState(false),
@@ -33,7 +37,9 @@ export const PostEditorScreen = (props: TabScreenProps) => {
             <Label>Content</Label>
         </View>
         <View style={{flex: 1, marginHorizontal: sizes.rem1 / 5}}>
-            <ScrollView onTouchEnd={(ev) => {
+            <ScrollView 
+            
+            onTouchEnd={(ev) => {
                 if (!contentFocused) {
                     editorRef.current?.focusContentEditor();
                 }
@@ -42,7 +48,11 @@ export const PostEditorScreen = (props: TabScreenProps) => {
                 {/* <TextEditor html={postEntity.data.content} onChangeHtml={(html) => {
                     postEntity.update({ content: html });
                 }} /> */}
-                <RichEditor onFocus={() => {
+                <RichEditor 
+                onLayout={(event) => {
+                    postEntity.update({height: event.nativeEvent.layout.width / event.nativeEvent.layout.height , width: event.nativeEvent.layout.width})
+                }}
+                onFocus={() => {
                     setContentFocused(true)
                 }} onBlur={() =>
                     setContentFocused(false)} containerStyle={{minHeight: 1}}
