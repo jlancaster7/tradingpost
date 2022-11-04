@@ -269,12 +269,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_post_list(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"platform_post_url" text,"platform" text,"body" json,"upvoted_count" bigint,"is_upvoted" boolean,"is_bookmarked" boolean,"subscription_level" text,"user" json)
+        RETURNS TABLE("id" BIGINT,"body" text,"upvoted_count" bigint,"subscription_level" text,"user" json,"comment_count" integer,"title" text,"max_width" money,"aspect_ratio" money)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."platform_post_url", d."platform", d."body", (SELECT count(*) FROM public.view_upvote_get(request) as t WHERE t."post_id"=d."id") as "upvoted_count", EXISTS(SELECT * FROM public.view_upvote_get(request) as t WHERE t.post_id=d."id" and t.user_id = (request->>'user_id')::UUID) as "is_upvoted", EXISTS(SELECT * FROM public.view_bookmark_get(request) as t WHERE t.post_id=d."id" and t.user_id = (request->>'user_id')::UUID) as "is_bookmarked", d."subscription_level", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user" FROM public.data_post as d;
+  RETURN QUERY SELECT d."id", d."body", (SELECT count(*) FROM public.view_upvote_get(request) as t WHERE t."post_id"=d."id") as "upvoted_count", d."subscription_level", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user", (SELECT count(*) FROM public.view_comment_get(request) as t WHERE t."related_id"=d."id") as "comment_count", d."title", d."max_width", d."aspect_ratio" FROM public.data_post as d;
     END;
     $BODY$;
 
@@ -283,12 +283,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_post_get(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"subscription_level" text,"platform" text,"platform_post_url" text,"body" json,"upvoted_count" bigint,"is_upvoted" boolean,"is_bookmarked" boolean,"user" json)
+        RETURNS TABLE("id" BIGINT,"subscription_level" text,"body" text,"upvoted_count" bigint,"user" json,"comment_count" integer,"title" text,"aspect_ratio" money,"max_width" money)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."subscription_level", d."platform", d."platform_post_url", d."body", (SELECT count(*) FROM public.view_upvote_get(request) as t WHERE t."post_id"=d."id") as "upvoted_count", EXISTS(SELECT * FROM public.view_upvote_get(request) as t WHERE t.post_id=d."id" and t.user_id = (request->>'user_id')::UUID) as "is_upvoted", EXISTS(SELECT * FROM public.view_bookmark_get(request) as t WHERE t.post_id=d."id" and t.user_id = (request->>'user_id')::UUID) as "is_bookmarked", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user" FROM public.data_post as d;
+  RETURN QUERY SELECT d."id", d."subscription_level", d."body", (SELECT count(*) FROM public.view_upvote_get(request) as t WHERE t."post_id"=d."id") as "upvoted_count", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user", (SELECT count(*) FROM public.view_comment_get(request) as t WHERE t."related_id"=d."id") as "comment_count", d."title", d."aspect_ratio", d."max_width" FROM public.data_post as d;
     END;
     $BODY$;
 

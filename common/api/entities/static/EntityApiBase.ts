@@ -1,6 +1,11 @@
-let apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8082";
-let versionCode = process.env.API_VERSION_CODE || "alpha"
+import { version } from '../../../package.json'
 
+let apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8082";
+
+export let versionCode =
+    process.env.API_VERSION_CODE ||
+    version ||
+    "alpha"
 
 export const configApi = (settings: { versionCode?: string, apiBaseUrl?: string }) => {
     apiBaseUrl = settings.apiBaseUrl || apiBaseUrl;

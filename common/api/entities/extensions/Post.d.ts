@@ -37,5 +37,8 @@ export default class extends Extension {
     create: (settings: {
         title: string;
         content: string;
+        subscription_level: string;
+        width: number;
+        height: number;
     }) => Promise<{}>;
 }

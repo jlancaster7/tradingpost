@@ -11,6 +11,7 @@ var routes_api_alpha_1 = __importDefault(require("./routes-api-alpha"));
 var cors_1 = __importDefault(require("cors"));
 var healthcheck_1 = require("./healthcheck");
 var node_fetch_1 = __importDefault(require("node-fetch"));
+var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 globalThis["fetch"] = node_fetch_1.default;
 //fromWebToken()
 var app = (0, express_1.default)();
@@ -24,7 +25,8 @@ app.use(function (req, res, next) {
 });
 //app.use("/api", api);
 // define a route handler for the default home page
-app.use("/alpha", routes_api_alpha_1.default);
+//app.use("/alpha", api);
+app.use("/" + EntityApiBase_1.versionCode, routes_api_alpha_1.default);
 // start the express server
 app.listen(port, function () {
     // tslint:disable-next-line:no-console

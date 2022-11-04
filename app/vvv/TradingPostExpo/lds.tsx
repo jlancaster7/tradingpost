@@ -84,10 +84,10 @@ export const setValue = async <T extends keyof LDS>(key: T, v: LDS[T]) => {
 
 export const initLds = async () => {
     //load all cached values
-    console.log("Initing LDS");
+    //console.log("Initing LDS");
     const result = await AsyncStorage.getItem(LDS_CACHE_KEY);
     if (result) {
-        console.log("Results" + result);
+        //console.log("Results" + result);
         lds = JSON.parse(result);
         Object.keys(lds).forEach((k) =>
             EventRegister.emit(ldsChangedEvenName, {k}));

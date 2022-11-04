@@ -11,6 +11,7 @@ import PostPrepper from "../../post-prepper";
 import {DefaultTwitter} from "../../social-media/twitter/service";
 import {DefaultSubstack} from "../../social-media/substack/service";
 import {DefaultSpotify} from "../../social-media/spotify/service";
+import TradingPostsService, { DefaultTradingPost } from '../../social-media/tradingposts/service';
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -64,6 +65,8 @@ const run = async () => {
 
     const substack = DefaultSubstack(pgClient, pgp, postPrepper, elasticService)
 
+    const tradingpost = DefaultTradingPost(pgClient, pgp, elasticService)
+    
     const spotifyConfiguration = await DefaultConfig.fromCacheOrSSM("spotify");
     const spotify = DefaultSpotify(elasticService, pgClient, pgp, spotifyConfiguration)
 
@@ -106,6 +109,14 @@ const run = async () => {
         if (usersAndTweets.length <= 0) break
         lastTwitterId = usersAndTweets[usersAndTweets.length - 1].id
         await elasticService.ingest(twitter.map(usersAndTweets))
+    }
+    console.log("Processing TradingPosts")
+    let lastTradingPostId = 0;
+    while (true) {
+        const usersAndTradingPosts = await tradingpost.exportTradingPostsAndUsers(lastTradingPostId);
+        if (usersAndTradingPosts.length <= 0) break
+        lastTwitterId = usersAndTradingPosts[usersAndTradingPosts.length - 1].id
+        await elasticService.ingest(TradingPostsService.map(usersAndTradingPosts))
     }
 
     await pgp.end();

@@ -1,6 +1,6 @@
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import React from "react";
-import {View} from "react-native";
+import {Keyboard, Pressable, View} from "react-native";
 import {AppTitle} from "../images";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 import NotFoundScreen from "../screens/NotFoundScreen";
@@ -27,30 +27,65 @@ import {WatchlistScreen} from "../screens/WatchlistScreen"
 import {WatchlistViewerScreen} from "../screens/WatchlistViewerScreen"
 import {AppInformationScreen} from "../screens/AppInformationScreen";
 import * as Notifications from 'expo-notifications';
+import {useIsKeyboardVisible} from "../utils/hooks";
+import {IconButton} from "../components/IconButton";
+import {IconifyIcon} from "../components/IconfiyIcon";
+import KeyboardClose from '@iconify/icons-mdi/keyboard-close'
+import {useLinkTo} from "@react-navigation/native";
+import {useEffect} from "react";
+
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
         shouldShowAlert: true,
         shouldPlaySound: false,
-        shouldSetBadge: false,
+        shouldSetBadge: false
     }),
 });
 
 export const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export function RootNavigator() {
-    return <Stack.Navigator screenOptions={{
-        headerTitle: () => <AppTitle height={"100%"}
-                                     style={{marginTop: sizes.rem0_5, height: sizes.rem2, aspectRatio: 5.77}}/>,
-        headerTitleAlign: "center",
-        headerBackVisible: false
-    }}>
-        <Stack.Screen name="Root" component={WelcomeScreen} options={{headerShown: false}}/>
+export function RootNavigator(props: { url: string }) {
+    const url = props.url;
+
+    return <Stack.Navigator
+        screenOptions={{
+            headerTitle: () => <AppTitle height={"100%"}
+                                         style={{marginTop: sizes.rem0_5, height: sizes.rem2, aspectRatio: 5.77}}
+            />,
+            headerTitleAlign: "center",
+            headerBackVisible: false
+        }}>
+        <Stack.Screen name="Root" component={WelcomeScreen} options={{headerShown: false}} initialParams={{
+            baseUrl: url
+        }}/>
         <Stack.Screen name="Create" component={CreateAccountScreen}
                       options={{headerShown: false, headerBackVisible: false}}/>
         <Stack.Screen name="Dash" component={DrawerPart} options={{headerShown: false}}/>
         <Stack.Screen name="NotFound" component={NotFoundScreen} options={{title: 'Oops!'}}/>
-        <Stack.Group screenOptions={{presentation: 'modal'}}>
+        <Stack.Group screenOptions={{
+            
+            headerBackVisible:true
+            // headerRight: (() => {
+            //     console.log("IM SHOWING A KEYBOARD ICON HERE!!!!!");
+            //     const { isKeyboardVisible } = useIsKeyboardVisible();
+            //     if (isKeyboardVisible) {
+            //         return <Pressable
+            //             onPress={() => {
+            //                 Keyboard.dismiss();
+            //             }}
+            //         ><IconifyIcon
+            //                 icon={KeyboardClose}
+            //                 style={{
+            //                     height: 24,
+            //                     width: 24,
+            //                     marginRight: sizes.rem1
+            //                 }} />
+            //         </Pressable>
+            //     }
+            //     else return null;
+            // })
+        }}>
             <Stack.Screen name="ResetPassword" component={ChangePasswordScreen}/>
             <Stack.Screen name="VerifyAccount" component={VerificationScreen}/>
             <Stack.Screen name="Auth" component={AuthScreen}/>

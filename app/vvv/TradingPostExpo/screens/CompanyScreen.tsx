@@ -7,7 +7,7 @@ import { elevated, flex, fonts, paddView, row, sizes } from "../style";
 import { ElevatedSection } from "../components/Section";
 import { Tab, TabBar } from "@ui-kitten/components";
 import { FavButton } from "../components/AddButton";
-import { toDollarsAndCents } from "../utils/misc";
+import { toDollarsAndCents, toPercent2 } from "../utils/misc";
 import InteractiveChart from "../components/InteractiveGraph";
 import { ButtonGroup } from "../components/ButtonGroup";
 import { FeedPart } from "./FeedScreen";
@@ -85,7 +85,7 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
             .catch((ex) => toast.show(ex.message))
 
     }, [securityId, portPeriod])
-
+    const pxChange =  security?.price?.price || security?.price?.open ? (security?.price?.price - security?.price?.open) / security?.price?.open : 0
     return <View style={flex}>
         <Animated.FlatList
             data={[
@@ -112,7 +112,10 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                                         setIsFav(!isFav);
                                     }
                                 }} />
-                                <Text>{toDollarsAndCents(security?.price?.price)}</Text>
+                                <View style={{flexDirection: 'row'}}>
+                                    <Text style={[pxChange ? pxChange >= 0 ? { color: 'green'} : {color: 'red'} : {} ,{marginRight: sizes.rem0_5}]}>{toPercent2(pxChange)}</Text>
+                                    <Text>{toDollarsAndCents(security?.price?.price)}</Text>
+                                </View>
                                 </View>
                             </View>
                             <View style={[row, { marginVertical: sizes.rem0_5 }]}>

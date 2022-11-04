@@ -66,5 +66,8 @@ export default class User extends Extension {
     search: (settings: {
         term: string;
     }) => Promise<IUserList[]>;
+    validateUser: (settings: {
+        verificationToken: string;
+    }) => Promise<{}>;
     sendEmailValidation: (settings?: undefined) => Promise<{}>;
 }

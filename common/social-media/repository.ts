@@ -3,6 +3,7 @@ import {formatedTweet, formatedTwitterUser, TweetsAndUsers, TweetsAndUsersTable}
 import {PlatformToken} from './utils';
 import {SubstackAndNewsletter, SubstackAndNewsletterTable, SubstackArticles, SubstackUser} from './substack/interfaces';
 import {spotifyShow, spotifyEpisode, SpotifyEpisodeAndUser, SpotifyEpisodeAndUserTable} from './spotify/interfaces';
+import { TradingPostsAndUsers, TradingPostsAndUsersTable } from "./tradingposts/interfaces";
 import {
     formatedYoutubeVideo,
     formatedChannelInfo,
@@ -1174,6 +1175,48 @@ export default class Repository {
         } catch (e) {
             console.error(e);
             throw e;
+        }
+    }
+    getTradingPostsAndUsers = async (lastId: number): Promise<TradingPostsAndUsersTable[]> => {
+        try {
+            let query = `SELECT dp.id,
+                                dp.user_id,
+                                dp.subscription_level,
+                                dp.title, 
+                                dp.body,
+                                dp.created_at,
+                                dp.updated_at,
+                                du.handle AS tradingpost_user_handle,
+                                du.email AS tradingpost_user_email,
+                                du.profile_url AS tradingpost_user_profile_url
+                         FROM data_post dp
+                         INNER JOIN data_user du
+                                ON dp.user_id = du.id
+                         WHERE dp.id > $1
+                         ORDER BY dp.id;
+                         `;
+            const response = await this.db.query(query, [lastId]);
+            if (response.length <= 0) return [];
+            return response.map((row: any) => {
+                let o: TradingPostsAndUsersTable = {
+                    id: row.id,
+                    user_id: row.user_id,
+                    subscription_level: row.subscription_level,
+                    title: row.title,
+                    body: row.body,
+                    tradingpost_user_handle: row.handle,
+                    tradingpost_user_email: row.email,
+                    aspect_ratio: row.aspect_ratio,
+                    max_width: row.max_width,
+                    tradingpost_user_profile_url: row.tradingpost_user_profile_url,
+                    created_at: row.created_at,
+                    updated_at: row.updated_at
+                }
+                return o;
+            })
+        } catch (e) {
+            console.error(e)
+            throw e
         }
     }
 }

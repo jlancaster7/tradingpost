@@ -56,6 +56,8 @@ export const postInnerHeight = (itm: Interface.IElasticPost | undefined, windowW
     const size = (itm as Interface.IElasticPost | undefined)?._source.size
     if (itm?._source.postType === "substack") {
         return 200;
+    } else if (itm?._source.postType === "tradingpost" && size){
+        return (windowWidth / size.aspectRatio) * (fonts.small / fonts.xSmall) + fonts.medium
     } else if (size) {
         return windowWidth / size.aspectRatio + (itm?._source.postType === "tweet" ? 20 * windowWidth / itm._source.size.maxWidth : 0);
     } else if (itm?._source.postType === "youtube") {
@@ -107,6 +109,15 @@ export const resolvePostContent = (itm: Interface.IElasticPost | undefined, wind
         case 'spotify':
             const matches = /src="(.*)"/.exec(itm._source.content.body);
             return matches?.[1] || "";
+        case 'tradingpost':
+                return `
+                <html><meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <body>
+                        <div style="font-size: ${fonts.medium}px; font-weight: 600px; line-height: ${fonts.medium * 1}px; margin-bottom: 10px">${itm._source.content.title}</div>
+                        <div style="font-size: ${fonts.small}px; margin: 0px 3px 0px">${itm._source.content.body}</div>
+                    </body>    
+                </html>
+                `
         case 'substack':
         //return SubstackView({post: itm});
         /*
@@ -171,8 +182,8 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                     </Pressable>
                     <View>
                         <ScrollView nestedScrollEnabled horizontal>
-                            <View style={row}>
-                                {(props.post.ext.user?.tags || ["No", "Tags", "Here"]).map((chip, i) =>
+                            <View style={[row, props.post.ext.user?.tags ? {display: 'flex'} : {display: 'none'}]}>
+                                {props.post.ext.user?.tags && (props.post.ext.user?.tags).map((chip, i) =>
                                     <PrimaryChip isAlt key={i} label={chip} />)}
                             </View>
                         </ScrollView>
@@ -302,6 +313,44 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
                     parsedText
             })()}
         </Text>}
+        {<Text key="date" style={{
+            fontSize: fonts.xSmall,
+            fontFamily: "K2D",
+            paddingVertical: 5
+        }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        })}</Text>}
+    </View>
+}
+
+const TradingPostView = (props: { post: Interface.IElasticPost }) => {
+    const { post } = props;
+    return <View style={{ marginVertical: sizes.rem1 / 2, marginHorizontal: sizes.rem0_5 }}>
+        <View key="profile">
+            {/* <Image style={{ aspectRatio: 0.9, marginRight: sizes.rem1 / 2 }} source={{ uri: post.platform_profile_url }} /> */}
+            
+                <Subheader text={post._source.content.title || ""} style={{
+                    marginBottom: 0,
+                    display: "flex",
+                    color: "black",
+                    fontSize: fonts.medium,
+                    fontWeight: "600",
+                    fontFamily: "K2D",
+                    maxWidth: "85%"
+                }}></Subheader>
+            
+        </View>
+        <HtmlView key="content" isUrl={false} style={{height: props.post._source.size.aspectRatio}}>
+            {`<html><meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <body style="font-size: ${fonts.small}px">${post._source.content.body}</body></html>`}
+            {/*(() => {
+                const parsedText = parseHtmlEnteties(post._source.content.body);
+                return parsedText?.length > 300 ?
+                    `${parsedText.substring(0, 300)}...` :
+                    parsedText
+            })()*/}
+        </HtmlView>
         {<Text key="date" style={{
             fontSize: fonts.xSmall,
             fontFamily: "K2D",

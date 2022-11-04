@@ -11,7 +11,7 @@ import { DashScreenProps, TabScreenProps } from "../navigation";
 import { flex, fonts, paddView, sizes } from "../style";
 import { useToast } from "react-native-toast-notifications";
 import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewerScreen";
-import { AwaitedReturn, toPercent, toPercent2, toThousands, toDollarsAndCents, toDollars, toNumber2 } from "../utils/misc";
+import { AwaitedReturn, toPercent, toPercent2, toThousands, toDollarsAndCents, toDollars, toNumber2, toNumber1 } from "../utils/misc";
 import { WatchlistSection } from "../components/WatchlistSection";
 import Theme from '../theme-light.json'
 import { LimitedTable } from "./TableModalScreen";
@@ -61,6 +61,7 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                     Api.Watchlist.extensions.getAllWatchlists(),
                     Api.User.extensions.getHoldings({})
                 ]);
+                console.log(holdings)
                 //KEeping apart for now .. seems to have an error
                 try {
                     const portfolio = await Api.User.extensions.getPortfolio({});
@@ -197,10 +198,15 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                                 return Number(item.security_id)
                             }),
                             { alias: "# Shares", stringify: (a, b, c) => String(toThousands(c.quantity)), headerStyle: {overflow: 'visible'} },
-                            { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.price)) },
-                            { alias: "$ Value", stringify: (a, b, c) => String(toDollars(c.value)) },
-                            { alias: "PnL", stringify: (a, b, c) => c.cost_basis ? toDollars(Number(c.value) - Number(c.cost_basis)) : '-'}
+                            { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.price)), headerStyle: {overflow: 'visible'} },
+                            { alias: "$ Value", stringify: (a, b, c) => String(toDollars(c.value)), headerStyle: {overflow: 'visible'} },
+                            { alias: "PnL", stringify: (a, b, c) => c.cost_basis ? toDollars(Number(c.value) - Number(c.cost_basis)) : '-', headerStyle: {overflow: 'visible'}}
                         ]}
+                        renderAuxItem={(info) => {
+                            return <Text numberOfLines={1} style={[info.item.option_info ? {display: 'flex'} : {display: 'none'}, {fontSize: fonts.xSmall}]}> 
+                                        {info.item.option_info && `${String(info.item.option_info[0].type).toLowerCase() ==='call' ? 'C': 'P'}${toNumber1(info.item.option_info[0].strike_price)} ${new Date(info.item.option_info[0].expiration).toLocaleDateString()}`}
+                                   </Text>    
+                        }}
                          />
                 }</Subsection>
                 <Subsection key="trades" alt={true} title="Trades" style={!(holdings && twReturns && portfolio) ? {display: 'none'} : {display: 'flex'}}>
@@ -223,11 +229,18 @@ export const PortfolioScreen = (props: TabScreenProps) => {
                                     return Number(item.security_id)
                                 }),
                                 { alias: "Date", stringify: (a, b, c) => new Date(Date.parse(String(c.date))).toLocaleDateString() },
+                                { alias: "Type", stringify: (a, b, c) => String(c.type).toLowerCase()[0].toUpperCase()},
                                 { alias: "# Shares", stringify: (a, b, c) => String(toThousands(c.quantity)) },
                                 { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.price)) }
-                            ]
+                            ],
+                            renderAuxItem: (info) => {
+                                return <Text numberOfLines={1} style={[info.item.option_info ? {display: 'flex'} : {display: 'none'}, {fontSize: fonts.xSmall}]}> 
+                                            {info.item.option_info && `${String(info.item.option_info[0].type).toLowerCase() ==='call' ? 'C': 'P'}${toNumber1(info.item.option_info[0].strike_price)} ${new Date(info.item.option_info[0].expiration).toLocaleDateString()}`}
+                                       </Text>    
+                            }
                         }
                         }
+                        
                     />
                 </Subsection>
                 <Text style={[(holdings && twReturns && portfolio) ? {display: 'none'} : {display: 'flex'},

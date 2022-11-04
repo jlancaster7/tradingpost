@@ -1,20 +1,14 @@
-import React, {useState, useRef, useEffect, RefObject, useMemo} from "react";
-import {Alert, TouchableOpacity, Image, ImageStyle, ViewStyle, View, Animated} from "react-native";
-//import { Navigation } from "react-native-navigation";
-//import { Nav } from '@react-navigation/native'
-import {Input, Text,} from "@ui-kitten/components";
-//import { signOut, getStoredCreds, CreateAuth0User, UpdateUserProfile, signInStoredCreds } from "../../apis/Authentication";
+import React, {useRef, useEffect, RefObject, useMemo} from "react";
+import {Image, View, Animated} from "react-native";
+import {Text} from "@ui-kitten/components";
 import {ButtonField} from "../../components/ButtonField";
-import {IconifyIcon} from "../../components/IconfiyIcon";
-import {Section} from "../../components/Section";
 import {TextField, ITextField} from "../../components/TextField";
 import {bannerText, flex, sizes, textInputWiz} from "../../style";
 import {bindTextInput, IEntity, useReadonlyEntity} from "../../utils/hooks";
-import {isRequired, isValidEmail, isAlphaNumeric} from "../../utils/validators";
+import {isRequired, isValidEmail} from "../../utils/validators";
 
 import {ScrollWithButtons} from "../../components/ScrollWithButtons";
 
-import {Label} from "../../components/Label";
 import {TBI} from "../../utils/misc";
 import {AppColors} from "../../constants/Colors";
 import Auth from '@tradingpost/common/api/entities/static/AuthApi'
@@ -22,7 +16,6 @@ import {useAppUser} from "../../Authentication";
 import {useData} from "../../lds";
 import {useLinkTo} from "@react-navigation/native";
 import {CreateAccountProps, useChangeLock, sideMargin} from "./shared";
-import {registerDeviceForNotifications} from "../../utils/notifications";
 
 
 type FieldRefs = {
@@ -85,7 +78,6 @@ export function AccountInfoSection(props: CreateAccountProps) {
                             if (loginEntity.data.email && loginEntity.data.password) {
                                 const login = await Auth.createLogin(loginEntity.data.email, loginEntity.data.password);
                                 await setLoginResult(login);
-                                await registerDeviceForNotifications();
                                 linkTo('/create/basicinfo')
                             } else {
                                 throw new Error("Something is very wrong." + JSON.stringify(loginEntity.data))
@@ -99,7 +91,6 @@ export function AccountInfoSection(props: CreateAccountProps) {
 
                             if (!props.saveOnly)
                                 linkTo('/create/basicinfo')
-
                         }
                     } catch (ex: any) {
                         if (ex.json) {

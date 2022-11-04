@@ -52,25 +52,25 @@ export interface IPlatformClaimGet {
 }
 export interface IPostList {
     id: number;
-    platform_post_url: string;
-    platform: string;
-    body: any;
+    body: string;
     upvoted_count: number;
-    is_upvoted: boolean;
-    is_bookmarked: boolean;
     subscription_level: string;
     user: IUserList[];
+    comment_count: number;
+    title: string;
+    max_width?: number;
+    aspect_ratio?: number;
 }
 export interface IPostGet {
     id: number;
     subscription_level: string;
-    platform: string;
-    platform_post_url: string;
-    body: any;
+    body: string;
     upvoted_count: number;
-    is_upvoted: boolean;
-    is_bookmarked: boolean;
     user: IUserList[];
+    comment_count: number;
+    title: string;
+    aspect_ratio?: number;
+    max_width?: number;
 }
 export interface ISubscriberList {
     subscription_id: number;

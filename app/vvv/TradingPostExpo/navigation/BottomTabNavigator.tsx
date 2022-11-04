@@ -34,7 +34,9 @@ export function BottomTabNavigator() {
         }
 
         t();
-
+        //We should just use the notification networks... either a notification is received when the app is open...
+        // or when the app opens it checks for notifications 
+            
         const interval = setInterval(async () => {
             const notificationCount = await Api.Notification.extensions.hasNotifications();
             setHasNotifications(notificationCount.unseenCount > 0);
