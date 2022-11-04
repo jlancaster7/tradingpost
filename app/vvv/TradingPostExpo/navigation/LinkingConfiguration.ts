@@ -4,10 +4,10 @@
  * https://reactnavigation.org/docs/configuring-links
  */
 
-import {LinkingOptions} from '@react-navigation/native';
+import { getActionFromState, getStateFromPath, LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
-import {NavIconKeys, navIcons} from '../images';
-import {screens} from '../screens/CreateAccountScreen';
+import { NavIconKeys, navIcons } from '../images';
+import { screens } from '../screens/CreateAccountScreen';
 
 const ConfigOverride: Partial<Record<NavIconKeys, any>> = {
     Notification: {
@@ -84,6 +84,23 @@ const linking: LinkingOptions<any> = {
             NotFound: '*',
         },
     },
+    getStateFromPath: (path, options) => {
+        let isReplace = false;
+        if (/~r$/.test(path)) {
+            path = path.substring(0, path.length - 2);
+            isReplace = true;
+        }
+        const state = getStateFromPath(path, options);
+        //// replace if you link to use a treplace 
+        if (state?.history) {
+            state.
+        }
+        return state;
+    },
+    getActionFromState: (state, options) => {
+        const action = getActionFromState(state, options);
+        return action;
+    }
 };
 
 export default linking;

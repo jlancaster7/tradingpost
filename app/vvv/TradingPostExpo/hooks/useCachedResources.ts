@@ -1,10 +1,12 @@
-import {FontAwesome} from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import {useEffect, useState} from 'react';
-import {initLds, setValue} from '../lds';
-import {Authentication} from '../Authentication';
-import {Api} from "@tradingpost/common/api";
+import { useEffect, useState } from 'react';
+import { initLds, setValue } from '../lds';
+import { Authentication } from '../Authentication';
+import { Api } from "@tradingpost/common/api";
+import { registerDeviceForNotifications } from "../utils/notifications";
+
 import '../SecurityList'
 
 export default function useCachedResources() {
@@ -12,7 +14,7 @@ export default function useCachedResources() {
 
     // Load any resources or data that we need prior to rendering the app
     useEffect(() => {
-        async function loadResourcesAndDataAsync() {
+        (async () => {
             try {
 
                 SplashScreen.preventAutoHideAsync();
@@ -25,12 +27,13 @@ export default function useCachedResources() {
                 });
 
                 const lds = await initLds();
-
                 if (lds.authToken) {
                     try {
                         const results = await Authentication.signIn("", lds.authToken);
                         setValue("loginResult", results.loginResult);
                         setValue("currentUser", results.currentUser);
+                        if (results.currentUser?.email)
+                            await registerDeviceForNotifications();
                     } catch (ex) {
                         setValue("authToken", undefined);
                         console.error(ex);
@@ -45,9 +48,7 @@ export default function useCachedResources() {
                 setLoadingComplete(true);
                 SplashScreen.hideAsync();
             }
-        }
-
-        loadResourcesAndDataAsync();
+        })()
     }, []);
 
 
