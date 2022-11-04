@@ -266,3 +266,6 @@ CREATE INDEX security_option_external_id_idx ON security_option (external_id);
 
 ALTER TABLE tradingpost_current_holding
     ADD COLUMN holding_date TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE UNIQUE INDEX tradingpost_transaction_unique_idx ON public.tradingpost_transaction USING btree (account_id, security_id, security_type, type, date, quantity, price);
+DROP INDEX tradingpost_transaction_idx;

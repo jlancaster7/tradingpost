@@ -25,6 +25,7 @@ import Repository from "../repository";
 import {DefaultConfig} from "../../configuration";
 import pgPromise from 'pg-promise';
 import pg from 'pg';
+import {PortfolioSummaryService} from "../portfolio-summary";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -54,17 +55,21 @@ type RepositoryInterface = {
     upsertIbkrNav(navs: IbkrNav[]): Promise<void>
     upsertIbkrPls(pls: IbkrPl[]): Promise<void>
     upsertIbkrPositions(positions: IbkrPosition[]): Promise<void>
+    getBrokerageJobsPerUser(brokerage: string, brokerageUserId: string): Promise<BrokerageJobStatusTable[]>
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 } & TransformerRepository
 
 export default class IbkrService {
     private _transformer: IbkrTransformer;
     private _repo: RepositoryInterface;
     private _s3Client: S3Client;
+    private _portfolioSummaryService: PortfolioSummaryService;
 
-    constructor(repo: RepositoryInterface, s3Client: S3Client) {
+    constructor(repo: RepositoryInterface, s3Client: S3Client, portfolioSummaryService: PortfolioSummaryService) {
         this._repo = repo;
         this._transformer = new IbkrTransformer(repo);
         this._s3Client = s3Client;
+        this._portfolioSummaryService = portfolioSummaryService;
     }
 
     _getFileFromS3 = async <T>(key: string, mapFn?: (data: T) => T): Promise<T[]> => {
@@ -95,6 +100,7 @@ export default class IbkrService {
         const pendingJob = pendingJobs.find(j => j.data.filenames.length === 7);
         if (!pendingJob) return false;
 
+        let tpUserId: string | null = null;
         try {
             console.log("Updating Job Status")
             await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.RUNNING);
@@ -103,8 +109,10 @@ export default class IbkrService {
             console.log("Processing Job for Date: ", dateToProcess.toString())
 
             console.log("Importing From Account")
-            const [tpUserId, newerDateAlreadyProcessed, newAccounts] = await this._importAccount(pendingJob);
-            await this._transformer.importTradingPostBrokerageAccounts(dateToProcess, tpUserId, newAccounts);
+            const [uId, newerDateAlreadyProcessed, newAccounts] = await this._importAccount(pendingJob);
+            tpUserId = uId
+            const newTpAccountIds = await this._transformer.importTradingPostBrokerageAccounts(dateToProcess, tpUserId, newAccounts);
+            await this._repo.addTradingPostAccountGroup(tpUserId, 'default', newTpAccountIds, 10117)
 
             console.log("Import Securities")
             const securities = await this._importSecurity(pendingJob);
@@ -133,6 +141,10 @@ export default class IbkrService {
             await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.FAILED)
             console.error(e)
             console.error("pending job date: ", pendingJob.dateToProcess.toString());
+        } finally {
+            const cnt = await this._repo.getBrokerageJobsPerUser("ibkr", pendingJob.brokerageUserId);
+            if ((!cnt || cnt.length <= 0) && tpUserId !== null)
+                await this._portfolioSummaryService.computeAccountGroupSummary(tpUserId)
         }
 
         return true
@@ -633,14 +645,14 @@ export default class IbkrService {
 
     await pgClient.connect()
     const repo = new Repository(pgClient, pgp);
+    const portfolioSummarySrv = new PortfolioSummaryService(repo);
 
-    const ibkrSrv = new IbkrService(repo, s3Client);
+    const ibkrSrv = new IbkrService(repo, s3Client, portfolioSummarySrv);
 
     console.log("Running...");
-    await ibkrSrv.run();
+    let keepProcessing = true;
+    while (keepProcessing) {
+        await ibkrSrv.run();
+    }
     console.log("Finished...");
-    // let keepProcessing = true;
-    // while (keepProcessing) {
-    //
-    // }
 })()

@@ -315,7 +315,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         })
     }
 
-    getTradingPostBrokerageAccountCurrentHoldings = async (accountId: string): Promise<TradingPostCurrentHoldingsTable[]> => {
+    getTradingPostBrokerageAccountCurrentHoldings = async (accountId: number): Promise<TradingPostCurrentHoldingsTable[]> => {
         const query = `
             SELECT id,
                    account_id,
@@ -1676,8 +1676,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         await this.db.none(query);
     }
 
-    upsertTradingPostBrokerageAccounts = async (accounts: TradingPostBrokerageAccounts[]): Promise<void> => {
-        if (accounts.length <= 0) return
+    upsertTradingPostBrokerageAccounts = async (accounts: TradingPostBrokerageAccounts[]): Promise<number[]> => {
+        if (accounts.length <= 0) return [];
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'user_id', prop: 'userId'},
             {name: 'institution_id', prop: 'institutionId'},
@@ -1692,8 +1692,10 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: "updated_at", prop: "updatedAt"}
         ], {table: 'tradingpost_brokerage_account'})
         const newAccounts = accounts.map(acc => ({...acc, updatedAt: DateTime.now()}));
-        const query = upsertReplaceQuery(newAccounts, cs, this.pgp, "user_id,institution_id,account_number");
-        await this.db.none(query);
+        const query = upsertReplaceQuery(newAccounts, cs, this.pgp, "user_id,institution_id,account_number") + ` RETURNING id`;
+        const response = await this.db.query(query);
+        if (!response || response.length <= 0) return [];
+        return response.map((r: any) => r.id);
     }
 
     addTradingPostAccountGroups = async (accountGroups: TradingPostAccountGroups[]) => {
@@ -1792,7 +1794,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'option_id', prop: 'optionId'},
             {name: 'holding_date', prop: 'holdingDate'}
         ], {table: 'tradingpost_current_holding'})
-        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id,security_id,option_id");
+
+        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id, security_id, security_type");
         await this.db.none(query);
     }
 
@@ -1933,7 +1936,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'currency', prop: 'currency'},
             {name: 'option_id', prop: 'optionId'}
         ], {table: 'tradingpost_transaction'});
-        const query = upsertReplaceQuery(transactions, cs, this.pgp, 'account_id, security_id, security_type, date, quantity');
+        const query = upsertReplaceQuery(transactions, cs, this.pgp, 'account_id, security_id, security_type, type, date, quantity, price');
         await this.db.none(query)
     }
 
@@ -2621,6 +2624,35 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
               AND status = 'PENDING'
             ORDER BY date_to_process`;
         const results = await this.db.query(query, [brokerage]);
+        if (results.length <= 0) return [];
+        return results.map((result: any) => ({
+            id: result.id,
+            brokerage: result.brokerage,
+            brokerageUserId: result.brokerage_user_id,
+            dateToProcess: DateTime.fromJSDate(result.date_to_process),
+            status: result.status,
+            data: result.data,
+            updatedAt: DateTime.fromJSDate(result.updated_at),
+            createdAt: DateTime.fromJSDate(result.created_at),
+        }));
+    }
+
+    getBrokerageJobsPerUser = async (brokerage: string, brokerageUserId: string): Promise<BrokerageJobStatusTable[]> => {
+        const query = `
+            SELECT id,
+                   brokerage,
+                   brokerage_user_id,
+                   date_to_process,
+                   status,
+                   data,
+                   updated_at,
+                   created_at
+            FROM brokerage_to_process
+            WHERE brokerage = $1
+              AND brokerage_user_id = $2
+              AND (status = 'PENDING' OR status = 'RUNNING')
+            ORDER BY date_to_process`;
+        const results = await this.db.query(query, [brokerage, brokerageUserId]);
         if (results.length <= 0) return [];
         return results.map((result: any) => ({
             id: result.id,
