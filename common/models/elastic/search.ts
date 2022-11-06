@@ -11,6 +11,7 @@ export interface SearchBody {
     },
     ratingsCount: number | null
     postType: string | null
+    subscription_level: string | null
     postTypeValue: number
     imageUrl: string | null
     postUrl: string | null

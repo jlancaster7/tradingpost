@@ -72,6 +72,7 @@ export default class YouTubeService {
                 platformCreatedAt: yv.youtube_created_at.toISO(),
                 platformUpdatedAt: yv.youtube_created_at.toISO(),
                 postType: "youtube",
+                subscription_level: "standard",
                 postTypeValue: 3,
                 postUrl: yv.video_url,
                 ratingsCount: 0,

@@ -7,7 +7,7 @@ import { Icon, Text } from '@ui-kitten/components'
 import { ElevatedSection, Section, Subsection } from "../components/Section";
 import { Table } from "../components/Table";
 import { DataOrQuery } from '../components/List'
-import { DashScreenProps, TabScreenProps } from "../navigation";
+//import { DashScreenProps, TabScreenProps } from "../navigation";
 import { flex, paddView, sizes } from "../style";
 import { useToast } from "react-native-toast-notifications";
 import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewerScreen";
@@ -16,7 +16,7 @@ import { WatchlistSection } from "../components/WatchlistSection";
 import Theme from '../theme-light.json'
 import { FlatList } from "react-native-gesture-handler";
 
-export const WatchlistScreen = (props: TabScreenProps) => {
+export const WatchlistScreen = (props: any) => {
 
     const [watchlists, setWatchlists] = useState<AllWatchlists>()
     const [quickWatchlist, setQuickWatchlist] = useState<IWatchlistGet>()

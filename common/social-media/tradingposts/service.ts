@@ -38,6 +38,7 @@ export default class TradingPostsService {
                 platformCreatedAt: n.created_at.toISO(),
                 platformUpdatedAt: n.updated_at.toISO(),
                 postType: "tradingpost",
+                subscription_level: n.subscription_level,
                 postTypeValue: 3,
                 postUrl: null,
                 ratingsCount: 0,
@@ -55,6 +56,7 @@ export default class TradingPostsService {
                     username: n.tradingpost_user_handle
                 }
             };
+            console.log(obj.size)
             return obj;
         })
     }

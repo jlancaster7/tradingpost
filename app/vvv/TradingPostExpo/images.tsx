@@ -7,6 +7,7 @@ import _Debate from './assets/Debate.svg'
 import _Studying from './assets/Studying.svg'
 import _Analyze from './assets/analyze.svg'
 
+
 import Logo from './assets/logo.svg'
 import LogoNoBg from './assets/logo-no-bg.svg'
 
@@ -18,6 +19,7 @@ import _BookmarkActive from './assets/post-feed/bookmark-active.svg'
 import _BookmarkActiveBlue from './assets/post-feed/bookmark-active-blue.svg'
 import _BookmarkInactive from './assets/post-feed/bookmark.svg'
 import _Retweet from './assets/post-feed/ei_retweet.svg'
+import _PremiumStar from './assets/post-feed/PremiumStar.svg'
 
 // /** Side Menu Icons */
 import Account from './assets/side-menu/Account.svg'
@@ -85,6 +87,7 @@ export const UpvoteIcon = makeExpoSvg(_UpvoteIcon);
 export const CommentIcon = makeExpoSvg(_CommentIcon);
 export const BookmarkActive = makeExpoSvg(_BookmarkActive);
 export const BookmarkActiveBlue = makeExpoSvg(_BookmarkActiveBlue);
+export const PremiumStar = makeExpoSvg(_PremiumStar);
 
 
 export {Logo, LogoNoBg};

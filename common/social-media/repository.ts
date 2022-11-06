@@ -1186,6 +1186,8 @@ export default class Repository {
                                 dp.body,
                                 dp.created_at,
                                 dp.updated_at,
+                                (dp.max_width::numeric(24,4)) AS max_width,
+                                (dp.aspect_ratio::numeric(24,4)) AS aspect_ratio,
                                 du.handle AS tradingpost_user_handle,
                                 du.email AS tradingpost_user_email,
                                 du.profile_url AS tradingpost_user_profile_url
@@ -1209,9 +1211,10 @@ export default class Repository {
                     aspect_ratio: row.aspect_ratio,
                     max_width: row.max_width,
                     tradingpost_user_profile_url: row.tradingpost_user_profile_url,
-                    created_at: row.created_at,
-                    updated_at: row.updated_at
+                    created_at: DateTime.fromJSDate(row.created_at),
+                    updated_at: DateTime.fromJSDate(row.updated_at)
                 }
+                console.log()
                 return o;
             })
         } catch (e) {

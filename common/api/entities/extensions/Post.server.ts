@@ -3,7 +3,7 @@ import { DefaultConfig } from "../../../configuration";
 import { PublicError } from "../static/EntityApiBase";
 import Post from './Post'
 import { Client as ElasticClient } from '@elastic/elasticsearch';
-import { IElasticPost, IElasticPostExt, IUserGet } from "../interfaces";
+import { IElasticPost, IElasticPostExt, ISubscriptionGet, IUserGet } from "../interfaces";
 import { getPostCache, getUserCache } from "../../cache";
 import { execProc, getHivePool } from '../../../db'
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
@@ -130,9 +130,15 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         const userCache = (await getUserCache());
         const curUserData = userCache[req.extra.userId];
         const postData = (await getPostCache())
-
-
-
+        const pool = await getHivePool;
+        const results = await pool.query<{analyst_user_id: string}>(`SELECT dsp.user_id AS "analyst_user_id" 
+                                                                    FROM data_subscriber dsr
+                                                                    LEFT JOIN data_subscription dsp
+                                                                    ON dsp.id = dsr.subscription_id
+                                                                    WHERE dsr.user_id = $1`, [req.extra.userId]
+                                                                    )
+        const subscriptions = results.rows.map(a => a.analyst_user_id);
+        subscriptions.push(req.extra.userId)
         //TODO::::Need to think through how this is sorted in the future... and make this less stupid..
         const bookmarkItems: string[] = []
         if (req.body.bookmarkedOnly) {
@@ -164,14 +170,15 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             from: page * postsPerPage,
             query: await (async () => {
                 if (req.body.userId) {
-                    return userQuery({ user_id: req.body.userId })
+                    //return searchQuery({user_id: req.body.userId})  
+                    return newUserTest({ user_id: req.body.userId, subscriptions: subscriptions })
                 }
                 else if (req.body.bookmarkedOnly)
                     return bookmarkQuery(bookmarkItems)
                 else if (req.body.data)
-                    return await searchQuery(req.body.data);
+                    return newSearchTest({terms: String(req.body.data.terms), subscriptions: subscriptions});
                 else
-                    return await feedQuery;
+                    return newFeedTest(subscriptions);
             })()
 
         });
@@ -264,6 +271,16 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         const userCache = (await getUserCache());
         const curUserData = userCache[req.extra.userId];
 
+        const pool = await getHivePool;
+        const results = await pool.query<{analyst_user_id: string}>(`SELECT dsp.user_id AS "analyst_user_id" 
+                                                                    FROM data_subscriber dsr
+                                                                    LEFT JOIN data_subscription dsp
+                                                                    ON dsp.id = dsr.subscription_id
+                                                                    WHERE dsr.user_id = $1`, [req.extra.userId]
+                                                                    )
+        const subscriptions = results.rows.map(a => a.analyst_user_id);
+        subscriptions.push(req.extra.userId)
+
         //TODO::::Need to think through how this is sorted in the future... and make this less stupid..
         
         postsPerPage = 10;
@@ -282,17 +299,17 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             },
             maxRetries: 5,
         });
-        if (req.body.data) console.log(CreateMultiTermQuery(req.body.data))
+        if (req.body.data) console.log(CreateMultiTermQuery(req.body.data, subscriptions))
         const response = await elasticClient.search<IElasticPost["_source"]>({
             index: indexName,
             size: postsPerPage,
             from: page * postsPerPage,
             query: await (async () => {
                 if (req.body.data) {
-                    return CreateMultiTermQuery(req.body.data)
+                    return CreateMultiTermQuery(req.body.data, subscriptions)
                 }
                 else {
-                    return await feedQuery;
+                    return newFeedTest(subscriptions);
                 }
             })()
 
@@ -313,7 +330,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
     }
 })
 
-export const CreateMultiTermQuery = (searchTerms: Record<string, string | number | (string | number)[]>) => {
+export const CreateMultiTermQuery = (searchTerms: Record<string, string | number | (string | number)[]>, subscriptions: string[]) => {
     let multiMatchQueryPart= [];
     const key = Object.keys(searchTerms)[0]
     for (let d of Object.values(searchTerms[key])) {
@@ -332,22 +349,53 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
         {
             "function_score": {
                 "query": { 
-                "bool": {
-                    "must": [
-                        {
-                        "bool": {
-                            "should": [${multiMatchQueryPart}],
-                                "minimum_should_match": 1,
-                                "boost": 1
+                  "bool": {
+                    "should": [
+                      "bool": {
+                        "must": [
+                            {
+                            "bool": {
+                                "should": [${multiMatchQueryPart}],
+                                    "minimum_should_match": 1,
+                                    "boost": 1
+                                }
+                                }
+                            ,
+                            {
+                                "match": {
+                                "postType": "youtube"
+                            }}
+                            ]
+                          },
+                            {
+                              "terms": {
+                                "subscription_level": [
+                              
+                                  "standard"
+                                  ]
+                              }
+                            },
+                            {
+                              "bool": {
+                                "must": [
+                                {
+                                  "terms": {
+                                    "user.id": 
+                                          ${JSON.stringify(subscriptions)}
+                                      
+                                  }
+                                },
+                                {
+                                  "match": {
+                                    "subscription_level": "premium"
+                                  }
+                                }
+                                ]
+                              }
                             }
-                            }
-                        ,
-                        {
-                            "match": {
-                            "postType": "youtube"
-                        }}
-                        ]
-                }
+                    ]
+                  }
+                
                 },
                 "functions": [
                     {
@@ -473,7 +521,1007 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
     return JSON.parse(query);
     
 } 
+export const newFeedTest = (subscriptions: string[]): string => {
+    
+    const query = `{
+        "function_score": {
+            "query": {
+                "bool": {
+                    "should": [
+                    {
+                        "function_score": {
+                            "query": { 
+                            "bool": {
+                                "should": [
+                                  {
+                                    "match": {
+                                      "postType": "youtube"
+                                      }
+                                  },
+                                  {
+                                    "terms": {
+                                      "subscription_level": [
+                                   
+                                        "standard"
+                                        ]
+                                    }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must": [
+                                      {
+                                        "terms": {
+                                          "user.id": 
+                                                ${JSON.stringify(subscriptions)}
+                                            
+                                        }
+                                      },
+                                      {
+                                        "match": {
+                                          "subscription_level": "premium"
+                                        }
+                                      }
+                                      ]
+                                    }
+                                  }
+                                  
+                                ],
+                                "minimum_should_match": 2,
+                                "boost": 1
+                              }},
+                            "functions": [
+                                {
+                                "exp": {
+                                    "platformCreatedAt": {
+                                    "origin": "now",
+                                    "scale": "7d"
+                                    }
+                                },
+                                "weight": 1.2
+                                }
+                            ],
+                            "boost_mode": "replace"
+                        }
+                    },
+                    {
+                        "function_score": {
+                            "query": { "bool": {
+                                "should": [
+                                  {
+                                    "match": {
+                                      "postType": "tweet"
+                                      }
+                                  },
+                                  {
+                                    "terms": {
+                                      "subscription_level": [
+                                    
+                                        "standard"
+                                        ]
+                                    }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must": [
+                                      {
+                                        "terms": {
+                                          "user.id": 
+                                                ${JSON.stringify(subscriptions)}
+                                            
+                                        }
+                                      },
+                                      {
+                                        "match": {
+                                          "subscription_level": "premium"
+                                        }
+                                      }
+                                      ]
+                                    }
+                                  }
+                                  
+                                ],
+                                "minimum_should_match": 2,
+                                "boost": 1
+                              }},
+                            "functions": [
+                                {
+                                "exp": {
+                                    "platformCreatedAt": {
+                                    "origin": "now",
+                                    "scale": "12h"
+                                    }
+                                },
+                                "weight": 1
+                                }
+                            ],
+                            "boost_mode": "replace"
+                        }
+                    },
+                    {
+                        "function_score": {
+                            "query": { 
+                              "bool": {
+                                "should": [
+                                  {
+                                    "match": {
+                                      "postType": "spotify"
+                                      }
+                                  },
+                                  {
+                                    "terms": {
+                                      "subscription_level": [
+                                     
+                                        "standard"
+                                        ]
+                                    }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must": [
+                                      {
+                                        "terms": {
+                                          "user.id": 
+                                            ${JSON.stringify(subscriptions)}
+                                            
+                                        }
+                                      },
+                                      {
+                                        "match": {
+                                          "subscription_level": "premium"
+                                        }
+                                      }
+                                      ]
+                                    }
+                                  }
+                                  
+                                ],
+                                "minimum_should_match": 2,
+                                "boost": 1
+                              }
+                            },
+                            "functions": [
+                                {
+                                "exp": {
+                                    "platformCreatedAt": {
+                                    "origin": "now",
+                                    "scale": "7d"
+                                    }
+                                },
+                                "weight": 1.2
+                                }
+                            ],
+                            "boost_mode": "replace"
+                        }
+                    },
+                    {
+                        "function_score": {
+                            "query": {
+                            "bool": {
+                                "should": [
+                                  {
+                                    "match": {
+                                      "postType": "substack"
+                                      }
+                                  },
+                                  {
+                                    "terms": {
+                                      "subscription_level": [
+                                   
+                                        "standard"
+                                        ]
+                                    }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must": [
+                                      {
+                                        "terms": {
+                                          "user.id": ${JSON.stringify(subscriptions)}
+                                            
+                                        }
+                                      },
+                                      {
+                                        "match": {
+                                          "subscription_level": "premium"
+                                        }
+                                      }
+                                      ]
+                                    }
+                                  }
+                                  
+                                ],
+                                "minimum_should_match": 2,
+                                "boost": 1
+                              }}
+                            ,
+                            "functions": [
+                                {
+                                "exp": {
+                                    "platformCreatedAt": {
+                                    "origin": "now",
+                                    "scale": "7d"
+                                    }
+                                },
+                                "weight": 1.2
+                                }
+                            ],
+                            "boost_mode": "replace"
+                        }
+                    },
+                    {
+                        "function_score": {
+                            "query": { 
+                            "bool": {
+                                "should": [
+                                  {
+                                    "match": {
+                                      "postType": "tradingpost"
+                                      }
+                                  },
+                                  {
+                                    "terms": {
+                                      "subscription_level": [
+                                
+                                        "standard"
+                                        ]
+                                    }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must": [
+                                      {
+                                        "terms": {
+                                          "user.id": 
+                                              ${JSON.stringify(subscriptions)}
+                                            
+                                        }
+                                      },
+                                      {
+                                        "match": {
+                                          "subscription_level": "premium"
+                                        }
+                                      }
+                                      ]
+                                    }
+                                  }
+                                  
+                                ],
+                                "minimum_should_match": 2,
+                                "boost": 1
+                              }},
+                            "functions": [
+                                {
+                                "exp": {
+                                    "platformCreatedAt": {
+                                    "origin": "now",
+                                    "scale": "7d"
+                                    }
+                                },
+                                "weight": 1.5
+                                }
+                            ],
+                            "boost_mode": "replace"
+                        }
+                    }
+                    ],
+                    "minimum_should_match": 1,
+                    "boost": 1
+            }
+        },
+        "functions": [
+              {
+              "random_score": {
+                  "seed": 2,
+                  "field": "_seq_no"
+              }
+            }
+        ],
+        "boost": 1,
+        "boost_mode": "avg"
+        }
+    }`
+    console.log(query);
+    return JSON.parse(query);
+    
+}
 
-
-
-
+export const newSearchTest = (props: {terms: string, subscriptions: string[]}): string => {
+    const query = `{
+        "bool": {
+            "should": [
+            {
+                "function_score": {
+                    "query": { 
+                      "bool": {
+                          "must": [
+                            {
+                              "bool": {
+                                "should": [
+                                {
+                                  "match": {
+                                    "content.body": {
+                                      "analyzer": "synonym_analyzer", 
+                                      "query": ${JSON.stringify(props.terms)},
+                                      "boost": 1
+                                    }
+                                      
+                                }},
+                                {
+                                    "match": {
+                                      "content.title": {
+                                      "analyzer": "synonym_analyzer", 
+                                      "query": ${JSON.stringify(props.terms)},
+                                      "boost": 1
+                                    }
+                                }},
+                                {
+                                  "terms": {
+                                    "subscription_level": [
+                              
+                                      "standard"
+                                      ]
+                                  }
+                                },
+                                {
+                                  "bool": {
+                                    "must": [
+                                    {
+                                      "terms": {
+                                        "user.id": 
+                                            ${JSON.stringify(props.subscriptions)}
+                                          
+                                      }
+                                    },
+                                    {
+                                      "match": {
+                                        "subscription_level": "premium"
+                                      }
+                                    }
+                                    ]
+                                  }
+                                }
+                                    ],
+                                    "minimum_should_match": 2,
+                                    "boost": 1
+                                  }
+                                }
+                            ,
+                            {
+                                "match": {
+                                  "postType": "tweet"
+                              }}
+                            ]
+                      }
+                    },
+                    "functions": [
+                        {
+                        "exp": {
+                            "platformCreatedAt": {
+                            "origin": "now",
+                            "scale": "7d"
+                            }
+                        },
+                        "weight": 1.2
+                        }
+                    ],
+                    "boost_mode": "replace"
+                }
+            },
+            {
+                "function_score": {
+                    "query": { 
+                    "bool": {
+                          "must": [
+                            {
+                              "bool": {
+                                "should": [
+                                {
+                                  "match": {
+                                    "content.body": {
+                                      "analyzer": "synonym_analyzer", 
+                                      "query": ${JSON.stringify(props.terms)},
+                                      "boost": 1
+                                    }
+                                }},
+                                {
+                                    "match": {
+                                      "content.title": {
+                                      "analyzer": "synonym_analyzer", 
+                                      "query": ${JSON.stringify(props.terms)},
+                                      "boost": 1
+                                    }
+                                }},
+                                {
+                                  "terms": {
+                                    "subscription_level": [
+                              
+                                      "standard"
+                                      ]
+                                  }
+                                },
+                                {
+                                  "bool": {
+                                    "must": [
+                                    {
+                                      "terms": {
+                                        "user.id": 
+                                            ${JSON.stringify(props.subscriptions)}
+                                          
+                                      }
+                                    },
+                                    {
+                                      "match": {
+                                        "subscription_level": "premium"
+                                      }
+                                    }
+                                    ]
+                                  }
+                                }
+                                    ],
+                                    "minimum_should_match": 2,
+                                    "boost": 1
+                                  }
+                                }
+                            ,
+                            {
+                                "match": {
+                                  "postType": "youtube"
+                              }}
+                            ]
+                      }},
+                    "functions": [
+                        {
+                        "exp": {
+                            "platformCreatedAt": {
+                            "origin": "now",
+                            "scale": "12h"
+                            }
+                        },
+                        "weight": 1
+                        }
+                    ],
+                    "boost_mode": "replace"
+                }
+            },
+            {
+                "function_score": {
+                    "query": { 
+                    "bool": {
+                          "must": [
+                            {
+                              "bool": {
+                                "should": [
+                                {
+                                  "match": {
+                                    "content.body": {
+                                      "analyzer": "synonym_analyzer", 
+                                      "query": ${JSON.stringify(props.terms)},
+                                      "boost": 1
+                                    }
+                                }},
+                                {
+                                    "match": {
+                                      "content.title": {
+                                      "analyzer": "synonym_analyzer", 
+                                      "query": ${JSON.stringify(props.terms)},
+                                      "boost": 1
+                                    }
+                                }},
+                                {
+                                  "terms": {
+                                    "subscription_level": [
+                              
+                                      "standard"
+                                      ]
+                                  }
+                                },
+                                {
+                                  "bool": {
+                                    "must": [
+                                    {
+                                      "terms": {
+                                        "user.id": 
+                                            ${JSON.stringify(props.subscriptions)}
+                                          
+                                      }
+                                    },
+                                    {
+                                      "match": {
+                                        "subscription_level": "premium"
+                                      }
+                                    }
+                                    ]
+                                  }
+                                }
+                                    ],
+                                    "minimum_should_match": 2,
+                                    "boost": 1
+                                  }
+                                }
+                            ,
+                            {
+                                "match": {
+                                  "postType": "substack"
+                              }}
+                            ]
+                      }},
+                    "functions": [
+                        {
+                        "exp": {
+                            "platformCreatedAt": {
+                            "origin": "now",
+                            "scale": "7d"
+                            }
+                        },
+                        "weight": 1.2
+                        }
+                    ],
+                    "boost_mode": "replace"
+                }
+            },
+            {
+                "function_score": {
+                    "query": { 
+                    "bool": {
+                          "must": [
+                            {
+                              "bool": {
+                                "should": [
+                                {
+                                  "match": {
+                                    "content.body": ${JSON.stringify(props.terms)}
+                                }},
+                                {
+                                    "match": {
+                                      "content.title": ${JSON.stringify(props.terms)}
+                                }},
+                                {
+                                  "terms": {
+                                    "subscription_level": [
+                              
+                                      "standard"
+                                      ]
+                                  }
+                                },
+                                {
+                                  "bool": {
+                                    "must": [
+                                    {
+                                      "terms": {
+                                        "user.id": 
+                                            ${JSON.stringify(props.subscriptions)}
+                                          
+                                      }
+                                    },
+                                    {
+                                      "match": {
+                                        "subscription_level": "premium"
+                                      }
+                                    }
+                                    ]
+                                  }
+                                }
+                                    ],
+                                    "minimum_should_match": 2,
+                                    "boost": 1
+                                  }
+                                }
+                            ,
+                            {
+                                "match": {
+                                  "postType": "spotify"
+                              }}
+                            ]
+                      }},
+                    "functions": [
+                        {
+                        "exp": {
+                            "platformCreatedAt": {
+                            "origin": "now",
+                            "scale": "7d"
+                            }
+                        },
+                        "weight": 1.2
+                        }
+                    ],
+                    "boost_mode": "replace"
+                }
+            },
+            {
+                "function_score": {
+                    "query": { 
+                    "bool": {
+                          "must": [
+                            {
+                              "bool": {
+                                "should": [
+                                {
+                                  "match": {
+                                    "content.body": ${JSON.stringify(props.terms)}
+                                }},
+                                {
+                                    "match": {
+                                      "content.title": ${JSON.stringify(props.terms)}
+                                }},
+                                {
+                                  "terms": {
+                                    "subscription_level": [
+                              
+                                      "standard"
+                                      ]
+                                  }
+                                },
+                                {
+                                  "bool": {
+                                    "must": [
+                                    {
+                                      "terms": {
+                                        "user.id": 
+                                            ${JSON.stringify(props.subscriptions)}
+                                          
+                                      }
+                                    },
+                                    {
+                                      "match": {
+                                        "subscription_level": "premium"
+                                      }
+                                    }
+                                    ]
+                                  }
+                                }
+                                    ],
+                                    "minimum_should_match": 2,
+                                    "boost": 1
+                                  }
+                                }
+                            ,
+                            {
+                                "match": {
+                                  "postType": "tradingpost"
+                              }}
+                            ]
+                      }},
+                    "functions": [
+                        {
+                        "exp": {
+                            "platformCreatedAt": {
+                            "origin": "now",
+                            "scale": "7d"
+                            }
+                        },
+                        "weight": 1.2
+                        }
+                    ],
+                    "boost_mode": "replace"
+                }
+            }
+            ],
+            "minimum_should_match": 1,
+            "boost": 1
+    }
+    }`
+    console.log(query);
+    return JSON.parse(query);
+}
+export const newUserTest = (props: {user_id: string, subscriptions: string[]}): any => {
+  const query = `{
+    "bool": {
+        "should": [
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "youtube"
+                        }},
+                        {"match": {
+                          "user.id": ${JSON.stringify(props.user_id)}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                  ${JSON.stringify(props.subscriptions)}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "tweet"
+                        }},
+                        {"match": {
+                          "user.id": ${JSON.stringify(props.user_id)}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                  ${JSON.stringify(props.subscriptions)}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "12h"
+                        }
+                    },
+                    "weight": 1
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "spotify"
+                        }},
+                        {"match": {
+                          "user.id": ${JSON.stringify(props.user_id)}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                  ${JSON.stringify(props.subscriptions)}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "substack"
+                        }},
+                        {"match": {
+                          "user.id": ${JSON.stringify(props.user_id)}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                  ${JSON.stringify(props.subscriptions)}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "tradingpost"
+                        }},
+                        {"match": {
+                          "user.id": ${JSON.stringify(props.user_id)}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                      ${JSON.stringify(props.subscriptions)}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        }
+        ],
+        "minimum_should_match": 1,
+        "boost": 1
+}
+}`
+  console.log(query);
+  return JSON.parse(query);
+}

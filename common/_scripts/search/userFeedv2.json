@@ -1,0 +1,318 @@
+{
+    "bool": {
+        "should": [
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "youtube"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                  ${subscriptions}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "tweet"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                  ${subscriptions}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "12h"
+                        }
+                    },
+                    "weight": 1
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "spotify"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                  ${subscriptions}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "substack"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                  ${subscriptions}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        },
+        {
+            "function_score": {
+                "query": { 
+                  "bool": {
+                      "should": [
+                        {"bool": {
+                          "must": [
+                        {
+                          "match": {
+                            "postType": "tradingpost"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                        }},
+                          {
+                            "terms": {
+                              "subscription_level": [
+                        
+                                "standard"
+                                ]
+                            }
+                          },
+                          {
+                            "bool": {
+                              "must": [
+                              {
+                                "terms": {
+                                  "user.id": 
+                                      ${subscriptions}
+                                    
+                                }
+                              },
+                              {
+                                "match": {
+                                  "subscription_level": "premium"
+                                }
+                              }
+                              ]
+                            }
+                          }
+                              ],
+                              "minimum_should_match": 2,
+                              "boost": 1  
+                      
+                  }
+                },
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
+        }
+        ],
+        "minimum_should_match": 1,
+        "boost": 1
+}
+}
