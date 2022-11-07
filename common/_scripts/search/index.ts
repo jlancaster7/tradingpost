@@ -115,7 +115,7 @@ const run = async () => {
     while (true) {
         const usersAndTradingPosts = await tradingpost.exportTradingPostsAndUsers(lastTradingPostId);
         if (usersAndTradingPosts.length <= 0) break
-        lastTwitterId = usersAndTradingPosts[usersAndTradingPosts.length - 1].id
+        lastTradingPostId = usersAndTradingPosts[usersAndTradingPosts.length - 1].id
         await elasticService.ingest(TradingPostsService.map(usersAndTradingPosts))
     }
 
@@ -124,6 +124,7 @@ const run = async () => {
 }
 
 const rebuildElasticIndex = async (elasticClient: ElasticClient, indexName: string) => {
+    console.log('rebuilding!')
     try {
         await elasticClient.indices.delete({index: indexName});
     } catch (e) {

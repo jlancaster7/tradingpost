@@ -20,7 +20,6 @@ import { toDollarsAndCents, toNumber1, toPercent, toPercent1, toPercent2 } from 
 import { MultiTermFeedPart } from "../components/MultiTermFeed"
 
 
-
 export const useNoteField = (hideEmptyNote?: boolean) => {
     const [shownMap, setShownMap] = useState<Record<string, boolean>>({})
     return {
@@ -124,11 +123,10 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                 field: (a) => {
                     const change = a.item.price?.price || a.item.price?.open ? (a.item.price?.price - a.item.price?.open) / a.item.price?.open : 0
                     return (
-                        <View style={{ justifyContent: 'space-around', flexDirection: 'row', flex: 1 }}>
-                            <Text>{toDollarsAndCents(a.item.price?.price)}</Text>
-                            <Text style={[change ? change >= 0 ? { color: 'green' } : { color: 'red' } : {}, { marginLeft: sizes.rem0_5 / 2 }]}>{`(${toPercent2(change)})`}</Text>
-
-                        </View>
+                            <View style={{justifyContent: 'space-around', flexDirection: 'row', flex: 1}}>
+                                <Text style={[change ? change >= 0 ? { color: 'green'} : {color: 'red'} : {} ,{marginLeft: sizes.rem0_5/2}]}>{`(${toPercent2(change)})`}</Text>
+                                <Text>{toDollarsAndCents(a.item.price?.price)}</Text>                                
+                            </View>
                     )
                 },
                 //align: 'left' as 'left',

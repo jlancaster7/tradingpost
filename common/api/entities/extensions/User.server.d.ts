@@ -50,6 +50,7 @@ declare const _default: {
     }) => Promise<{}[]>;
     linkSocialAccount: (req: {
         body: {
+            callbackUrl: string;
             platform: string;
             code?: string | undefined;
             challenge?: string | undefined;

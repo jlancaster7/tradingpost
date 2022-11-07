@@ -2,6 +2,7 @@ import {Client} from '@elastic/elasticsearch'
 import {S3Client, GetObjectCommand} from "@aws-sdk/client-s3";
 import PostApi from '../api/entities/apis/PostApi';
 import {IElasticPost} from '../api/entities/interfaces';
+import { SearchBody } from '../models/elastic/search';
 
 const client = new S3Client({
     region: "us-east-1"
@@ -40,7 +41,7 @@ export const searchQuery = async (data: Exclude<Parameters<(typeof PostApi)["ext
 
         //console.log("REG EXP:::::\${" + k + "}");
         queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
-        console.log("New QS:" + queryString);
+        //console.log("New QS:" + queryString);
     });
     return JSON.parse(queryString);
 }
@@ -54,21 +55,21 @@ export default class ElasticService {
         this.indexName = indexName;
     }
 
-    search = async (searchTerm: string, indexName: string) => {
-        const postsPerPage = 20;
+    search = async (searchTerm: string) => {
+        const postsPerPage = 10000;
 
         const result = await this.client.search<IElasticPost["_source"]>({
-            index: indexName,
+            index: this.indexName,
             size: postsPerPage,
-            from: 0 * postsPerPage,
+            //from: 0 * postsPerPage,
             query: await (async () => {
-                return await searchQuery({0: searchTerm});
+                return await searchQuery({'terms': searchTerm});
             })()
         })
         return result.hits;
     }
 
-    ingest = async (items: any[], indexName?: string | null, length?: number): Promise<void> => {
+    ingest = async (items: SearchBody[], indexName?: string | null, length?: number): Promise<void> => {
         if (items.length <= 0) return;
         let idxName = '';
         if (indexName) idxName = indexName

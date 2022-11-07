@@ -113,6 +113,34 @@
                 ],
                 "boost_mode": "replace"
             }
+        },
+        {
+            "function_score": {
+                "query": { 
+                "bool": {
+                      "must": [
+                        {
+                          "match": {
+                            "postType": "tradingpost"
+                        }},
+                        {"match": {
+                          "user.id": ${user_id}
+                        }}
+                        ]
+                  }},
+                "functions": [
+                    {
+                    "exp": {
+                        "platformCreatedAt": {
+                        "origin": "now",
+                        "scale": "7d"
+                        }
+                    },
+                    "weight": 1.2
+                    }
+                ],
+                "boost_mode": "replace"
+            }
         }
         ],
         "minimum_should_match": 1,

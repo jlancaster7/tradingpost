@@ -8,13 +8,16 @@ import {Label} from "../components/Label";
 import {ButtonPanel} from "../components/ScrollWithButtons";
 import {TextEditor, TextEditorToolbar} from "../components/TextEditor";
 import {TextField} from "../components/TextField";
+import { Text } from "@ui-kitten/components";
+import { ButtonGroup } from "../components/ButtonGroup";
 //import Navigation, {DashScreenProps, TabScreenProps} from "../navigation";
-import {sizes, flex} from "../style";
+import {sizes, flex, fonts} from "../style";
 import {bindTextInput, bindTextInputBase, useReadonlyEntity} from "../utils/hooks";
 
 export const PostEditorScreen = (props: any) => {
     const [postHeight, setPostHeight] = useState(0),
         [postWidth, setPostWidth] = useState(0)
+    const [subLevel, setSubLevel] = useState('standard')
     const postEntity = useReadonlyEntity({
             content: "",
             title: "",
@@ -30,35 +33,47 @@ export const PostEditorScreen = (props: any) => {
 
     return <View style={{backgroundColor: "white", flexGrow: 1}}>
         <Header text='+ New Post' style={{marginBottom: 0, marginTop: 4, marginLeft: sizes.rem1, color: "black"}}/>
+        <View style={{width: '90%'}}>
+            <ButtonGroup
+                        style={{ margin: sizes.rem1}}
+                        unselectedStyle={{
+                            backgroundColor: "#35A265",
+                        }}
+                        value={subLevel}
+                        onValueChange={(value) => {
+                            setSubLevel(value);
+                            postEntity.update({subscription_level: value})
+                            
+                        }} 
+                        items={[{ label: "Free", value: "standard" }, { label: "Premium", value: "premium" }]} />
+        </View>
         <View style={{marginHorizontal: sizes.rem1, marginTop: sizes.rem1}}>
             <TextField
                 label='Post Title' placeholder='Add a title to your post'  {...bindTextInput(postEntity, "title", null)}
                 markRequired/>
-            <Label>Content</Label>
         </View>
         <View style={{flex: 1, marginHorizontal: sizes.rem1 / 5}}>
             <ScrollView 
-            
-            onTouchEnd={(ev) => {
-                if (!contentFocused) {
-                    editorRef.current?.focusContentEditor();
-                }
-            }} style={[flex, {}]}
-                        contentContainerStyle={{minHeight: "100%", maxHeight: "100%", height: "100%"}}>
-                {/* <TextEditor html={postEntity.data.content} onChangeHtml={(html) => {
-                    postEntity.update({ content: html });
-                }} /> */}
+                onTouchEnd={(ev) => {
+                    if (!contentFocused) {
+                        editorRef.current?.focusContentEditor();
+                    }
+                }} 
+                style={[flex, {}]}
+                contentContainerStyle={{minHeight: "100%", maxHeight: "100%", height: "100%"}}>
+                <Text style={{ fontSize: fonts.medium, marginHorizontal: sizes.rem1, marginVertical: sizes.rem1 }}>Post</Text>
+                
                 <RichEditor 
-                onLayout={(event) => {
-                    postEntity.update({height: event.nativeEvent.layout.width / event.nativeEvent.layout.height , width: event.nativeEvent.layout.width})
-                }}
-                onFocus={() => {
-                    setContentFocused(true)
-                }} onBlur={() =>
-                    setContentFocused(false)} containerStyle={{minHeight: 1}}
-                            initialContentHTML={postEntity.data.content} ref={editorRef}
-                            placeholder={"Add content to your post"}
-                            {...bindTextInputBase(postEntity, "content", null, {"onChangeTextKey": "onChange"})} />
+                    onLayout={(event) => {
+                        postEntity.update({height: event.nativeEvent.layout.width / event.nativeEvent.layout.height , width: event.nativeEvent.layout.width})
+                    }}
+                    onFocus={() => {
+                        setContentFocused(true)
+                    }} onBlur={() =>
+                        setContentFocused(false)} containerStyle={{minHeight: 1}}
+                                initialContentHTML={postEntity.data.content} ref={editorRef}
+                                placeholder={"Add content to your post"}
+                                {...bindTextInputBase(postEntity, "content", null, {"onChangeTextKey": "onChange"})} />
             </ScrollView>
         </View>
         <RichToolbar editor={editorRef}/>

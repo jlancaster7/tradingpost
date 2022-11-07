@@ -32,7 +32,6 @@ export type RootStackParamList =
         "WatchlistViewer" |
         "Watchlist" |
         "ImagePicker" |
-
         "Subscription" |
         "SubscriptionSettings" |
         "NotificationTrade"

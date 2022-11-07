@@ -108,6 +108,12 @@ export function SideMenu(props: DrawerContentComponentProps) {
             icon: sideMenu.Account,
         },
         {
+            label: "Link Brokerage!",
+            //onPress: () => props.navigation.navigate("Create"),
+            onPress: () => props.navigation.navigate("BrokeragePicker"),
+            icon: sideMenu.Bank_Link,
+        },
+        {
             label: "Logout",
             onPress: () => {
                 signOut();

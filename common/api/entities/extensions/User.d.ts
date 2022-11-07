@@ -17,6 +17,7 @@ export default class User extends Extension {
     }[]>;
     initBrokerageAccounts: (settings?: undefined) => Promise<{}[]>;
     linkSocialAccount: (settings: {
+        callbackUrl: string;
         platform: string;
         code?: string | undefined;
         challenge?: string | undefined;

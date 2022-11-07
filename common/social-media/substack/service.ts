@@ -63,6 +63,7 @@ class SubstackService {
                 platformCreatedAt: n.substack_article_created_at.toISO(),
                 platformUpdatedAt: n.substack_article_created_at.toISO(),
                 postType: "substack",
+                subscription_level: "standard",
                 postTypeValue: 3,
                 postUrl: n.link,
                 ratingsCount: 0,

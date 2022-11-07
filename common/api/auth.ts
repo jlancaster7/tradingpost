@@ -18,7 +18,6 @@ const makeUserToken = async (user_id: string) => {
 
 //return token
 export const loginPass = async (email: string, pass: string, csrf: string) => {
-    console.log(`${email}::::${pass}`);
     const saltResult = await execProc<LoginResult>("tp.api_local_login_get", { data: { email } })
 
     if (!saltResult.length)
@@ -142,7 +141,6 @@ export const resetPassword = async (email: string, tokenOrPass: string, isPass: 
     }
     else {
         const data = jwt.verify(tokenOrPass, await DefaultConfig.fromCacheOrSSM("authkey")) as jwt.JwtPayload;
-        console.log(data);
         userId = data.resetUserId;
     }
 

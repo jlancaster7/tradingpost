@@ -19,6 +19,7 @@ export const functionNames = {
 export const dtExchange: Record<string, string> = {
     "bigserial": "BIGINT",
     "timestamptz":"TIMESTAMP WITH TIME ZONE",
+    "date": "date",
     "MONEY":"decimal"
 }
 

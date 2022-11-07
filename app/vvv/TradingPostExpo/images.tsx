@@ -6,6 +6,10 @@ import _ClimbingMountain from './assets/ClimbingMountain.svg'
 import _Debate from './assets/Debate.svg'
 import _Studying from './assets/Studying.svg'
 import _Analyze from './assets/analyze.svg'
+import _Bank from './assets/bank.svg'
+import _IBKR from './assets/IBKR.svg'
+
+
 
 import Logo from './assets/logo.svg'
 import LogoNoBg from './assets/logo-no-bg.svg'
@@ -18,6 +22,7 @@ import _BookmarkActive from './assets/post-feed/bookmark-active.svg'
 import _BookmarkActiveBlue from './assets/post-feed/bookmark-active-blue.svg'
 import _BookmarkInactive from './assets/post-feed/bookmark.svg'
 import _Retweet from './assets/post-feed/ei_retweet.svg'
+import _PremiumStar from './assets/post-feed/PremiumStar.svg'
 
 // /** Side Menu Icons */
 import Account from './assets/side-menu/Account.svg'
@@ -29,6 +34,7 @@ import Learn from './assets/side-menu/Learn.svg'
 import LogOut from './assets/side-menu/Log Out.svg'
 import Profile from './assets/side-menu/Profile.svg'
 import Watchlist from './assets/side-menu/Watchlist.svg'
+import Bank_Link from './assets/bank-link-icon.svg'
 
 import YouTubeLogo from './assets/@iconify/youtube-icon'
 import SpotifyLogo from './assets/@iconify/spotify-icon'
@@ -53,6 +59,7 @@ export const sideMenu = {
     LogOut,
     Profile,
     Watchlist,
+    Bank_Link,
     BookmarkActive: _BookmarkActive,
     BookmarkInactive: _BookmarkInactive,
     BookmarkActiveBlue: _BookmarkActiveBlue
@@ -69,6 +76,9 @@ export const ClimbingMountain = makeExpoSvg(_ClimbingMountain)
 export const Debate = makeExpoSvg(_Debate)
 export const Studying = makeExpoSvg(_Studying)
 export const Analyze = makeExpoSvg(_Analyze);
+export const Bank = makeExpoSvg(_Bank);
+export const IBKR = makeExpoSvg(_IBKR);
+//export const Bank_Link = makeExpoSvg(_Bank_Link);
 
 export const IconBg = makeExpoSvg(_IconBg)
 export const IconNoBg = makeExpoSvg(_IconNoBg)
@@ -85,6 +95,7 @@ export const UpvoteIcon = makeExpoSvg(_UpvoteIcon);
 export const CommentIcon = makeExpoSvg(_CommentIcon);
 export const BookmarkActive = makeExpoSvg(_BookmarkActive);
 export const BookmarkActiveBlue = makeExpoSvg(_BookmarkActiveBlue);
+export const PremiumStar = makeExpoSvg(_PremiumStar);
 
 
 export { Logo, LogoNoBg };

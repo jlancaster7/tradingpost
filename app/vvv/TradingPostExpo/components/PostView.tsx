@@ -20,7 +20,7 @@ import { flex, fonts, row, shadow, sizes } from '../style'
 import { IconifyIcon } from './IconfiyIcon'
 import { Header, Subheader } from './Headers'
 import { PrimaryChip } from './PrimaryChip'
-import { BookmarkActive, BookmarkIcons, CommentIcon, navIcons, postBg, social, UpvoteIcon, Retweet } from '../images'
+import { BookmarkActive, BookmarkIcons, CommentIcon, navIcons, postBg, social, UpvoteIcon, Retweet, PremiumStar } from '../images'
 import { social as socialStyle } from '../style'
 import { IconButton } from './IconButton'
 //import { IPostList } from '../api/entities/interfaces'
@@ -30,6 +30,7 @@ import { LogoImage } from './LogoImage'
 import { color } from 'react-native-reanimated'
 //import { screens } from '../navigationComponents'
 //import { fullDashOptions } from '../layouts/DashboardLayout'
+import { toFormatedDateTime } from '../utils/misc'
 import { AsyncPressable } from './AsyncPressable'
 import { AppColors } from '../constants/Colors'
 import { Api, Interface } from '@tradingpost/common/api'
@@ -179,7 +180,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         <Subheader text={"@" + (props.post.ext.user?.handle || "NoUserAttached")}
                             style={{ color: "black", fontWeight: "bold" }} />
                     </Pressable>
-                    <View>
+                    <View style={{ marginRight: 10 }}>
                         <ScrollView nestedScrollEnabled horizontal>
                             <View style={[row, props.post.ext.user?.tags ? { display: 'flex' } : { display: 'none' }]}>
                                 {props.post.ext.user?.tags && (props.post.ext.user?.tags).map((chip, i) =>
@@ -201,9 +202,9 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         }
                     }}>
                     {!isBookmarked && <IconButton iconSource={BookmarkIcons.inactive}
-                        style={{ height: 24, width: 24, marginLeft: "auto", }} />}
+                        style={{ height: 28, width: 28, marginLeft: "auto" }} />}
                     {isBookmarked && <BookmarkActive
-                        style={{ height: 16, width: 16, marginLeft: "auto", marginRight: sizes.rem0_5 / 2 }} />}
+                        style={{ height: 28, width: 28, marginLeft: "auto", marginRight: sizes.rem0_5 / 2 }} />}
                 </AsyncPressable>
             </Pressable>
             <Pressable onPress={() => {
@@ -316,10 +317,7 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
             fontSize: fonts.xSmall,
             fontFamily: "K2D",
             paddingVertical: 5
-        }}>{new Date(Date.parse(post._source.platformCreatedAt)).toLocaleString('en-US', {
-            dateStyle: 'medium',
-            timeStyle: 'short'
-        })}</Text>}
+        }}>{toFormatedDateTime(post._source.platformCreatedAt)}</Text>}
     </View>
 }
 
@@ -391,6 +389,9 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
                 {'Retweet'}
             </Text>
         </View>
+        <View>
+            {props.post._source.subscription_level === 'premium' && <PremiumStar style={{ height: 24, width: 24, marginBottom: 5, marginTop: 10 }} />}
+        </View>
         <View style={{
             height: postInnerHeight(props.post, availWidth),
             justifyContent: ['spotify', 'youtube'].includes(props.post._source.postType) ? 'center' : undefined
@@ -404,6 +405,13 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
                 isUrl={props.post._source.postType === "youtube" || props.post._source.postType === "spotify"}>
                 {resolvePostContent(props.post, availWidth)}
             </HtmlView>
+        </View>
+        <View>
+            {props.post._source.postType === 'tradingpost' &&
+                <Text style={{ fontSize: fonts.xSmall, marginVertical: 10, marginLeft: 10 }}>
+                    {toFormatedDateTime(props.post._source.tradingpostCreatedAt)}
+                </Text>}
+
         </View>
     </View>
 

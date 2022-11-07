@@ -24,6 +24,7 @@ import { AppColors } from "../constants/Colors";
 import { YourContentComponent } from "../components/YourContentComponent";
 import { IUserUpdate } from "@tradingpost/common/api/entities/interfaces";
 import { Log } from "../utils/logger";
+import { LinkBrokerageComponent } from "../components/LinkBrokerageComponent";
 
 export function AccountInfoScreen() {
     const { loginState, signIn } = useAppUser(),
@@ -101,9 +102,7 @@ export function AccountInfoScreen() {
                     onSelect={(idx) => {
                         console.log("Setting index " + idx);
                         setIndex(idx);
-                    }}
-
-                >
+                    }}>
                     <Tab key={"A"} title={'Account Info'} style={{ backgroundColor: AppColors.background, borderColor: AppColors.background }} >
                         <AccountInfoContent setUpdates={setAccountUpdates} updates={accountUpdates} />
                     </Tab>
@@ -341,6 +340,7 @@ const AdvancedTabContent = () => {
         />} >
             <Table datasetKey={accounts?.map(a => a.id).join(",") || "none"} columns={[{ alias: "Brokerage", field: "broker_name", align: "left" }, { alias: "Account #", field: "account_number", align: "left" }]} data={accounts} noDataMessage="You have no linked accounts" />
         </Section>
+        <LinkBrokerageComponent props={props} />
         <Section title='Payment' style={{ padding: 10 }}>
             <Text>
                 Coming Soon!

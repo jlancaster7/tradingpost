@@ -154,6 +154,25 @@ export function toNumber2(number: number) {
 export function isoToDate(dateString: string) {
     return dateString.split("T")[0];
 }
+export function toFormatedDateTime(dateTimeString: string) {
+    const m = new Date(dateTimeString).getMonth() + 1;
+    const d = new Date(dateTimeString).getDate();
+    const y = new Date(dateTimeString).getFullYear() % 100;
+    let h = new Date(dateTimeString).getHours();
+    let min: string | number = new Date(dateTimeString).getMinutes();
+    let ampm = 'am'
+    if ( h > 12 ) {
+        ampm = 'pm';
+        h = h === 12 ? h : h - 12;
+    }
+    if ( h === 0 ) {
+        h = 12
+    }
+    if ( min < 10 ) {
+        min = String(`0${min}`)
+    }
+    return `${h}:${min} ${ampm} ${m}/${d}/${y}`
+}
 export function toDateMonthYear(dateString: string) {
     const m = (new Date(dateString).toDateString().slice(4,7));
     const y = String((new Date(dateString).getFullYear())).slice(2);

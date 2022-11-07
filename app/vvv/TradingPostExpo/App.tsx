@@ -20,9 +20,13 @@ if (!__DEV__) {
       apiBaseUrl: `http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
     })
   }
-} else {
-  console.log("THIS IS A DIFFERENT CONDITION DEV: " + __DEV__ + " OWNER: " + Constants.appOwnership)
 }
+if(__DEV__ && Platform.OS === "web")
+  configApi({
+    callbackUrl:"http://localhost:8082"
+  })
+
+
 
 
 import { StatusBar } from 'expo-status-bar';
@@ -39,6 +43,7 @@ import React, { useEffect, } from 'react';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
 
 import { getSecurityList } from './SecurityList'
+import { Platform } from 'react-native'
 
 export default function App() {
   const { isLoadingComplete } = useCachedResources();

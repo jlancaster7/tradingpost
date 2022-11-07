@@ -17,7 +17,6 @@ const baseFormat = '/:entity/:action';
 const decodeToken = async (req: Express.Request, disableModelCheck?: boolean) => {
 
     const bearerHeader = req.headers['authorization'];
-    console.log("AUTH HEADER IS " + req.headers.authorization);
 
     //check if bearer is undefined
     if (typeof bearerHeader !== 'undefined') {
@@ -66,7 +65,6 @@ function resolver(...path: string[]) {
             const resolveKey = require.resolve(p)
             //NEED TO DISABLE FOR PROD and make this a lil less hacky 
             if (require.cache[resolveKey]) {
-                console.log("clearing... " + resolveKey);
                 delete require.cache[resolveKey];
             }
 
@@ -147,7 +145,6 @@ makeRoute("/waitlist/add", async (req) => {
     if (!req.body.email) {
         throw new PublicError("Invalid Request");
     }
-    console.log(req.body.email);
     return await addToWaitlist(req.body.email);
 });
 

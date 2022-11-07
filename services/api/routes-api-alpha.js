@@ -158,11 +158,11 @@ makeRoute("/authapi/forgotpassword", function (req) { return __awaiter(void 0, v
             case 0:
                 if (!!req.body.email) return [3 /*break*/, 1];
                 throw new EntityApiBase_1.PublicError("Email is required", 400);
-            case 1: return [4 /*yield*/, (0, auth_1.forgotPassword)(req.body.email)];
+            case 1: return [4 /*yield*/, (0, auth_1.forgotPassword)(req.body.email, req.body.callbackUrl)];
             case 2:
                 _a.sent();
                 _a.label = 3;
-            case 3: return [2 /*return*/];
+            case 3: return [2 /*return*/, {}];
         }
     });
 }); });

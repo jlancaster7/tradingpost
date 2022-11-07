@@ -26,7 +26,7 @@ type RuleSetFunction = (holdings: historicalAccount, tx: TradingPostTransactions
 // We do not recompute value in the rulesets since we are using the latest EOD price avail for a security to calculate
 // value at the end of each day
 let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
-    "buy": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.buy]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         holdings.cash = holdings.cash + tx.amount;
         // Roll back buy,
         // get transaction from holding
@@ -38,7 +38,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         holdings.holdings[hIdx] = h;
         return holdings
     },
-    "sell": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.sell]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         // sell amount is going to be negative, hence why we can "add" it back
         holdings.cash = holdings.cash + tx.amount
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
@@ -66,7 +66,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         holdings.holdings[hIdx] = h;
         return holdings
     },
-    "short": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.short]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         holdings.cash = holdings.cash + tx.amount;
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
 
@@ -79,7 +79,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         holdings.holdings[hIdx] = h
         return holdings
     },
-    "cover": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.cover]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         holdings.cash = holdings.cash + tx.amount;
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
 
@@ -92,20 +92,20 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         holdings.holdings[hIdx] = h
         return holdings
     },
-    "cancel": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.cancel]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         // TODO: ... should investigate but we werent processing "pending" transactions to begin with
         //  so, in theory, this shouldnt happen
         return holdings;
     },
-    "fee": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.fee]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         holdings.cash = holdings.cash + tx.amount;
         return holdings
     },
-    "cash": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.cash]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         holdings.cash = holdings.cash - tx.amount;
         return holdings
     },
-    "transfer": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.transfer]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         // TODO: Assuming this is a transfer from another brokerage... we should just allocate holding in history...
         //  or de-allocate if it was transferred to another institution
         if (tx.securityType === 'cashEquivalent') {
@@ -120,7 +120,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         holdings.holdings[hIdx] = h;
         return holdings
     },
-    "dividendOrInterest": (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.dividendOrInterest]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
         holdings.cash = holdings.cash - tx.amount;
         return holdings
     },

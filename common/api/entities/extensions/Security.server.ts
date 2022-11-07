@@ -18,7 +18,7 @@ export default ensureServerExtensions<Security>({
         sec.isOnQuickWatch = Boolean(item.rows.length)
     },
     quickadd: async (r) => {
-        console.log(r.extra.userId);
+        
         await execProc("tp.api_security_quickadd", {
             user_id: r.extra.userId,
             data: r.body

@@ -74,6 +74,7 @@ export interface IElasticPost {
         platformCreatedAt: string,
         platformUpdatedAt: null,
         postType: 'tweet' | 'spotify' | 'substack' | 'youtube' | 'tradingpost',
+        subscription_level: 'standard' | 'premium',
         postTypeValue: number,
         postUrl: string,
         ratingsCount: 0,

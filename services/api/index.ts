@@ -20,7 +20,6 @@ app.use(cors())
 app.use(bodyParser.json())
 
 app.use((req, res, next) => {
-    console.log(req.url);
     next();
 })
 //app.use("/api", api);

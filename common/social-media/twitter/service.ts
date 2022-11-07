@@ -63,6 +63,7 @@ export default class TwitterService {
                 platformCreatedAt: tw.tweetTwitterCreatedAt.toISO(),
                 platformUpdatedAt: null,
                 postType: "tweet",
+                subscription_level: "standard",
                 postTypeValue: 1.75,
                 postUrl: tw.tweetURL,
                 ratingsCount: 0,

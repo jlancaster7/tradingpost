@@ -15,7 +15,6 @@ import { AuthScreen } from "../screens/AuthScreen"
 import { ChangePasswordScreen } from "../screens/ChangePasswordScreen"
 import { CompanyScreen } from "../screens/CompanyScreen"
 import { ImagePickerScreen } from "../screens/ImagePicker"
-import ModalScreen from "../screens/ModalScreen"
 import { NotificationTradeScreen } from "../screens/NotificationTradeScreen"
 import { PostEditorScreen } from "../screens/PostEditorScreen"
 import { PostScreen } from "../screens/PostScreen"
@@ -28,12 +27,8 @@ import { WatchlistViewerScreen } from "../screens/WatchlistViewerScreen"
 import { AppInformationScreen } from "../screens/AppInformationScreen";
 import * as Notifications from 'expo-notifications';
 import { useIsKeyboardVisible } from "../utils/hooks";
-import { IconButton } from "../components/IconButton";
 import { IconifyIcon } from "../components/IconfiyIcon";
 import KeyboardClose from '../assets/@iconify/keyboard-close'
-import { useLinkTo } from "@react-navigation/native";
-import { useEffect, } from "react";
-import { Text } from 'react-native'
 import { useAppUser } from "../Authentication";
 import { Log } from "../utils/logger";
 
@@ -81,6 +76,29 @@ export function RootNavigator() {
             />,
             headerTitleAlign: "center",
             headerBackVisible: false,
+            headerRight: () => {
+                const { isKeyboardVisible } = useIsKeyboardVisible();
+                if (isKeyboardVisible) {
+                    return <Pressable
+                        onPress={() => {
+                            Keyboard.dismiss();
+                        }}
+                    ><IconifyIcon
+                            currentColor="black"
+                            icon={KeyboardClose}
+                            svgProps={{
+                                height: 24,
+                                width: 24,
+                            }}
+                            style={{
+                                height: 24,
+                                width: 24,
+                                marginRight: sizes.rem1
+                            }} />
+                    </Pressable>
+                }
+                else return undefined;
+            }
         }}>
         <Stack.Screen name="Root" component={WelcomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Create" component={CreateAccountScreen}

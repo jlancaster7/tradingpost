@@ -63,6 +63,7 @@ class SpotifyService {
                 platformCreatedAt: si.episode_release_date.toISO(),
                 platformUpdatedAt: si.episode_release_date.toISO(),
                 postType: "spotify",
+                subscription_level: "standard",
                 postTypeValue: 2,
                 postUrl: si.episode_embed.provider_url,
                 ratingsCount: 0,

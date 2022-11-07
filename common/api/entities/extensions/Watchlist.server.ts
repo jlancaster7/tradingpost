@@ -13,7 +13,7 @@ export default ensureServerExtensions<Watchlist>({
         (watchlist as IWatchlistGetExt).items.forEach((wi) => {
             const found = prices.byTicker[wi.symbol]
 
-            console.log(JSON.stringify(found));
+            
             wi.price = found;
         })
 
