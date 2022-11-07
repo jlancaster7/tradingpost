@@ -42,7 +42,7 @@ const client = new S3Client({
 export default ensureServerExtensions<User>({
     validateUser: async (req) => {
         //to do need to id match
-        console.log("Validating User");
+        
         const data = jwt.verify(req.body.verificationToken, await DefaultConfig.fromCacheOrSSM("authkey")) as jwt.JwtPayload;
         const pool = await getHivePool;
         await pool.query(`update tp.local_login set verified = true where user_id = $1`, [req.extra.userId])
@@ -51,7 +51,7 @@ export default ensureServerExtensions<User>({
     generateBrokerageLink: async (req) => {
         const { brokerage } = await init;
         const test = await brokerage.generateBrokerageAuthenticationLink(req.extra.userId, "finicity");
-        console.log(JSON.stringify(test));
+        
         return {
             link: test
         }
@@ -83,6 +83,7 @@ export default ensureServerExtensions<User>({
         return [];
     },
     linkSocialAccount: async (req) => {
+
         if (req.body.platform === "twitter") {
             const info = await fetch("https://api.twitter.com/2/oauth2/token", {
                 method: "POST",
@@ -93,7 +94,7 @@ export default ensureServerExtensions<User>({
                     code: req.body.code,
                     grant_type: "authorization_code",
                     client_id: "cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ",
-                    redirect_uri: 'https://m.tradingpostapp.com/auth/twitter',
+                    redirect_uri: `${req.body.callbackUrl}/auth/twitter`,
                     code_verifier: req.body.challenge
                 }),
 
@@ -101,7 +102,7 @@ export default ensureServerExtensions<User>({
             const authResp = (await info.json()) as ITokenResponse;
             const { pgClient, pgp } = await init;
             const config = await DefaultConfig.fromCacheOrSSM("twitter");
-            console.log("TWITTER Auth Response: " + JSON.stringify(authResp))
+            
             const handle = await DefaultTwitter(config, pgClient, pgp).addTwitterUsersByToken({
                 accessToken: authResp.access_token,
                 expiration: authResp.expires_in,
@@ -153,7 +154,7 @@ export default ensureServerExtensions<User>({
 
             if (req.body.platform_idenifier) {
                 let showId = parse(req.body.platform_idenifier).pathname?.slice(6) || ''
-                console.log(showId);
+                
                 await DefaultSpotify(elastic, pgClient, pgp, config).importSpotifyShows({ userId: req.extra.userId, showId: showId })
                 return req.body.platform_idenifier;
             }
@@ -171,7 +172,7 @@ export default ensureServerExtensions<User>({
                     code: req.body.code,
                     grant_type: "authorization_code",
                     client_id: "",
-                    redirect_uri: 'http://m.tradingpostapp.com/auth/youtube',
+                    redirect_uri: `${req.body.callbackUrl}/auth/youtube`,
                     code_verifier: req.body.challenge
                 }),
 
@@ -374,7 +375,7 @@ export default ensureServerExtensions<User>({
 
         //TODO: make this token expire faster and attach this to a code ( to prevent multiple tokens from working)
         const token = jwt.sign({ verified: true }, authKey, { subject: r.extra.userId });
-        console.log("About to send email..." + user.email)
+        
         await sendByTemplate({
             to: user.email,
             templateId: "d-23c8fc09ded942d386d7c888a95a0653",
@@ -382,7 +383,7 @@ export default ensureServerExtensions<User>({
                 Weblink: (process.env.WEBLINK_BASE_URL || "https://m.tradingpostapp.com") + `/verifyaccount?token=${token}`
             }
         })
-        console.log("Sent email...")
+        
         return {}
     }
 })

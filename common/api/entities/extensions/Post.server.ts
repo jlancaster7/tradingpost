@@ -92,9 +92,9 @@ const userQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions"]
         const dt = typeof dataToReplace;
         if (dt !== "number" && dt !== "string" && !(dataToReplace instanceof Array))
             throw new Error("Invalid data passed to userQeury");
-        //console.log("REG EXP:::::\${" + k + "}");
+        
         queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
-        console.log("New QS:" + queryString);
+        
     });
     return JSON.parse(queryString);
 }
@@ -109,9 +109,9 @@ const searchQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions
         if (dt !== "number" && dt !== "string" && !(dataToReplace instanceof Array))
             throw new Error("Invalid data passed to searchQeury");
 
-        //console.log("REG EXP:::::\${" + k + "}");
+        
         queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
-        console.log("New QS:" + queryString);
+        
     });
 
     return JSON.parse(queryString);
@@ -199,7 +199,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
     },
     setBookmarked: async (rep) => {
         //TODO:  need to to add incorp into api build in the future 
-        //console.log("BOOK MARK BODY" + JSON.stringify(rep.body));
+        
         const pool = await getHivePool;
         if (rep.body.is_bookmarked)
             await pool.query(`INSERT INTO  data_bookmark(post_id,user_id) VALUES($1,$2)`, [rep.body.id, rep.extra.userId])
@@ -516,8 +516,7 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
     }
     }
 `    
-    //console.log(query)
-    //console.log(query.bool.should[0].function_score.query.bool.must[0].bool?.should)
+    
     return JSON.parse(query);
     
 } 
@@ -820,7 +819,7 @@ export const newFeedTest = (subscriptions: string[]): string => {
         "boost_mode": "avg"
         }
     }`
-    console.log(query);
+    
     return JSON.parse(query);
     
 }
@@ -1200,7 +1199,7 @@ export const newSearchTest = (props: {terms: string, subscriptions: string[]}): 
             "boost": 1
     }
     }`
-    console.log(query);
+    
     return JSON.parse(query);
 }
 export const newUserTest = (props: {user_id: string, subscriptions: string[]}): any => {
@@ -1522,6 +1521,6 @@ export const newUserTest = (props: {user_id: string, subscriptions: string[]}): 
         "boost": 1
 }
 }`
-  console.log(query);
+  
   return JSON.parse(query);
 }

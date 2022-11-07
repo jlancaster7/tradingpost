@@ -4,46 +4,16 @@
  * https://reactnavigation.org/docs/configuring-links
  */
 
-import {LinkingOptions} from '@react-navigation/native';
+import { getActionFromState, getStateFromPath, LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
-import {NavIconKeys, navIcons} from '../images';
-import {screens} from '../screens/CreateAccountScreen';
+import { NavIconKeys, navIcons } from '../images';
+import { screens } from '../screens/CreateAccountScreen';
 
 const ConfigOverride: Partial<Record<NavIconKeys, any>> = {
     Notification: {
         path: "dash/notification",
-        // screens: {
-        //     NotificationTrade: "dash/notification/trade"
-        // },
     }
 };
-
-//import { RootStackParamList } from '../types';
-
-// const linking: LinkingOptions<any> = {
-//   prefixes: [Linking.createURL('/')],
-//   config: {
-//     screens: {
-//       Root: {
-//         screens: {
-//           TabOne: {
-//             screens: {
-//               TabOneScreen: 'one',
-//             },
-//           },
-//           TabTwo: {
-//             screens: {
-//               TabTwoScreen: 'two',
-//             },
-//           },
-//         },
-//       },
-
-//       Modal: 'modal',
-//       NotFound: '*',
-//     },
-//   },
-// };
 
 const linking: LinkingOptions<any> = {
     prefixes: [Linking.createURL('/'), "https://m.tradingpostapp.com"],
@@ -76,6 +46,7 @@ const linking: LinkingOptions<any> = {
                     }
                 }
             },
+            AccountInformation:"account",
             VerifyAccount: "verifyaccount",
             NotificationTrade: "dash/notification/trade",
             Auth: "auth/:platform",
@@ -84,6 +55,24 @@ const linking: LinkingOptions<any> = {
             NotFound: '*',
         },
     },
+    getStateFromPath: (path, options) => {
+        const state = getStateFromPath(path, options);
+        // Replaces the current screen if $replace is in the parameter
+        // ...not sure if this will work properly in all navigation situations
+        // maybe need to make this only work if the navigator is a dash? or look for the last dash navigator
+        if (state && (state.routes?.[state.routes.length - 1]?.params as any)?.$replace && state.routes.length > 1) {
+            console.log("Running a replace ....");
+            delete (state.routes?.[state.routes.length - 1]?.params as any).$replace;
+            state.routes.splice(state.routes.length - 2, 1);
+        }
+
+        return state;
+
+    },
+    getActionFromState: (state, options) => {
+        const action = getActionFromState(state, options);
+        return action;
+    }
 };
 
 export default linking;

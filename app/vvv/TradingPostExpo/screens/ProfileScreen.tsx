@@ -42,24 +42,24 @@ const clampBuffer = 4;
 
 const collapseShift = 2 * ButtonMargin;
 
-const periods: {[key: string]: number} = {
-    "1D": 1, 
+const periods: { [key: string]: number } = {
+    "1D": 1,
     "1W": 5,
-    "1M": 20, 
-    "3M": 60, 
-    "1Y": 252, 
-    "2Y": 504, 
+    "1M": 20,
+    "3M": 60,
+    "1Y": 252,
+    "2Y": 504,
     "Max": 1000
 }
 
-export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
+export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
     const userId = props.route?.params?.userId;
 
     const [user, setUser] = useState<IUserGet>(),
         [watchlists, setWatchlists] = useState<AwaitedReturn<typeof Api.User.extensions.getWatchlists>>(),
         [summary, setSummary] = useState<AwaitedReturn<typeof Api.User.extensions.getPortfolio>>(),
         [returns, setReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>(),
-        [twReturns, settwReturns] = useState<{x: string, y: number}[]>(),
+        [twReturns, settwReturns] = useState<{ x: string, y: number }[]>(),
         [portPeriod, setPortPeriod] = useState("1Y"),
         translateHeaderY = useRef(new Animated.Value(0)).current;
 
@@ -79,7 +79,9 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
         extrapolate: 'clamp',
     });
     const manager = useRef<boolean[]>([]).current;
-    const { appUser } = useAppUser();
+    const { loginState } = useAppUser(),
+        appUser = loginState?.appUser
+
 
     useEffect(() => {
         translation.addListener((v: { value: number }) => {
@@ -107,20 +109,21 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                     setWatchlists(watchlists);
                     setUser(user);
                     let today = new Date();
-                    const summary = await Api.User.extensions.getPortfolio({userId: userId as string});
+                    const summary = await Api.User.extensions.getPortfolio({ userId: userId as string });
                     setSummary(summary);
                     const returns = await Api.User.extensions.getReturns({
                         userId: userId as string,
                         startDate: new Date(today.setDate(today.getDate() - 1001)),
-                        endDate: new Date()})
+                        endDate: new Date()
+                    })
                     setReturns(returns);
                     if (returns.length) {
-                        let twr: {x: string, y: number}[] = [];
+                        let twr: { x: string, y: number }[] = [];
                         const day = new Date(String(returns.slice(returns.length - periods[portPeriod])[0].date))
-                        twr.push({x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1})
-                        
+                        twr.push({ x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1 })
+
                         returns.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
-                            twr.push({x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return)})
+                            twr.push({ x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return) })
                         })
                         settwReturns(twr);
                     }
@@ -133,15 +136,15 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
 
     useEffect(() => {
         if (returns?.length) {
-            let twr: {x: string, y: number}[] = [];
+            let twr: { x: string, y: number }[] = [];
             const day = new Date(String(returns.slice(returns.length - periods[portPeriod])[0].date))
-            twr.push({x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1})
+            twr.push({ x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1 })
 
             returns?.slice(returns.length - periods[portPeriod]).forEach((r, i) => {
-                twr.push({x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return)})
+                twr.push({ x: new Date(String(r.date)).toUTCString(), y: twr[i].y * (1 + r.return) })
             })
             settwReturns(twr);
-    }
+        }
     }, [portPeriod])
     const displayHoldings = appUser?.id === user?.id || (user?.settings?.portfolio_display.holdings && user.subscription.is_subscribed)
     const displayTrades = appUser?.id === user?.id || (user?.settings?.portfolio_display.trades && user.subscription.is_subscribed)
@@ -157,82 +160,82 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                 </ProfilePage>,
                 <ProfilePage key={'top_level_performance_holdings'} index={1} minViewHeight={minViewHeight} manager={manager} currentIndex={tab}>
                     <ElevatedSection title="Performance">
-                        <View style={( appUser?.id === user?.id && !twReturns) ? {display: 'none'} : { display: 'flex'} }>
-                            <View style={displayPerformance ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
-                                <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
+                        <View style={(appUser?.id === user?.id && !twReturns) ? { display: 'none' } : { display: 'flex' }}>
+                            <View style={displayPerformance ? { display: 'none' } : { justifyContent: "center", alignItems: 'center' }}>
+                                <Text style={{ fontSize: fonts.medium, fontWeight: '500', color: '#ccc' }}>
                                     {`@${user?.handle} does not display their investment performance.`}
                                 </Text>
                             </View>
-                            <View style={displayPerformance ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
-                            <View style={{ marginBottom: sizes.rem1 } } >
-                                <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
-                            </View>
+                            <View style={displayPerformance ? { display: 'flex', marginBottom: sizes.rem1 } : { display: 'none' }}>
+                                <View style={{ marginBottom: sizes.rem1 }} >
+                                    <InteractiveChart data={twReturns} period={portPeriod} performance={true} />
+                                </View>
                                 <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
                             </View>
                         </View>
-                        <Text style={[!( appUser?.id === user?.id && !twReturns) ? {display: 'none'} : { display: 'flex'}, {fontSize: fonts.medium, fontWeight: '500', color: '#ccc'} ]}>
+                        <Text style={[!(appUser?.id === user?.id && !twReturns) ? { display: 'none' } : { display: 'flex' }, { fontSize: fonts.medium, fontWeight: '500', color: '#ccc' }]}>
                             {"You haven't linked a brokerage to TradingPost. Go to your Account page in the Side Menu and Link one today!"}
                         </Text>
                     </ElevatedSection>
                     <ElevatedSection title="Holdings">
-                        <View style={( appUser?.id === user?.id && !twReturns) ? {display: 'none'} : { display: 'flex'} }>
-                            <View style={displayHoldings ? {display: 'none'} : { justifyContent: "center", alignItems: 'center'} }>
-                                <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
+                        <View style={(appUser?.id === user?.id && !twReturns) ? { display: 'none' } : { display: 'flex' }}>
+                            <View style={displayHoldings ? { display: 'none' } : { justifyContent: "center", alignItems: 'center' }}>
+                                <Text style={{ fontSize: fonts.medium, fontWeight: '500', color: '#ccc' }}>
                                     {`@${user?.handle} does not display their investment holdings.`}
                                 </Text>
                             </View>
-                            <View style={displayHoldings ? {display: 'flex',  marginBottom: sizes.rem1 } : {display: 'none'}}>
-                            <Table
-                                listKey={'holdings_table'}
-                                keyExtractor={(item, idx) => {
-                                    return item ? "holding_" + idx : "empty";
-                                }}
-                                data={(async () => {
-                                    return await Api.User.extensions.getHoldings({userId: userId as string});
-                                })}
-                                columns={[
-                                    ...useMakeSecurityFields((item: any) => {
-                                        return Number(item.security_id)
-                                    }),
-                                    { alias:'% Owned', field: "value", stringify: toPercent2 },
-                                    { alias: 'Price', field: "price", stringify: toDollarsAndCents },
-                                    { alias:'Cost Basis', field: "cost_basis", stringify: (a,b,c) =>  (String(c.cost_basis) === 'n/a') ? String(c.cost_basis) : toDollarsAndCents(c.cost_basis) }
-                                ]}
+                            <View style={displayHoldings ? { display: 'flex', marginBottom: sizes.rem1 } : { display: 'none' }}>
+                                <Table
+                                    listKey={'holdings_table'}
+                                    keyExtractor={(item, idx) => {
+                                        return item ? "holding_" + idx : "empty";
+                                    }}
+                                    data={(async () => {
+                                        return await Api.User.extensions.getHoldings({ userId: userId as string });
+                                    })}
+                                    columns={[
+                                        ...useMakeSecurityFields((item: any) => {
+                                            return Number(item.security_id)
+                                        }),
+                                        { alias: '% Owned', field: "value", stringify: toPercent2 },
+                                        { alias: 'Price', field: "price", stringify: toDollarsAndCents },
+                                        { alias: 'Cost Basis', field: "cost_basis", stringify: (a, b, c) => (String(c.cost_basis) === 'n/a') ? String(c.cost_basis) : toDollarsAndCents(c.cost_basis) }
+                                    ]}
                                 />
                             </View>
                         </View>
-                        <Text style={[!( appUser?.id === user?.id && !twReturns) ? {display: 'none'} : { display: 'flex'}, {fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}] }>
+                        <Text style={[!(appUser?.id === user?.id && !twReturns) ? { display: 'none' } : { display: 'flex' }, { fontSize: fonts.medium, fontWeight: '500', color: '#ccc' }]}>
                             {"You haven't linked a brokerage to TradingPost. Go to your Account page in the Side Menu and Link one today!"}
                         </Text>
                     </ElevatedSection>
                     <WatchlistSection title="Watchlists" watchlists={watchlists} />
                 </ProfilePage>,
                 <ProfilePage key={'top_level_trades'} index={2} minViewHeight={minViewHeight} manager={manager} currentIndex={tab} >
-                    <View style={displayTrades ? {display: 'none'} : {display: 'flex', height: '100%', justifyContent: "center", alignItems: 'center'} }>
-                        <Text style={{fontSize: fonts.medium, fontWeight: '500', color: '#ccc'}}>
+                    <View style={displayTrades ? { display: 'none' } : { display: 'flex', height: '100%', justifyContent: "center", alignItems: 'center' }}>
+                        <Text style={{ fontSize: fonts.medium, fontWeight: '500', color: '#ccc' }}>
                             {`@${user?.handle} does not display their trades.`}
                         </Text>
                     </View>
-                    <ElevatedSection title="" style={displayTrades ? {display: 'flex'} : {display: 'none'}}>
-                            <Table
-                                listKey={'trades_table'}
-                                keyExtractor={(item, idx) => {
-                                    return item ? "trade_" + idx : "empty";
-                                }}
-                                data={(async (a, $page) => {
-                                    const newArr = a || [];
-                                    newArr.push(... (await Api.User.extensions.getTrades({$page, $limit: 10, settings: {userId: userId as string}})));
-                                    //console.log(JSON.stringify(newArr))
-                                    return newArr;
-                                })}
-                                columns={[
-                                    ...useMakeSecurityFields((item: any) => {
-                                        return Number(item.security_id)
-                                    }),
-                                    { alias: 'Trade Date', field: "date", stringify: (a,b,c) => new Date(a).toLocaleDateString() },
-                                    { alias:'Buy/Sell', field: "type", stringify: (a,b,c) => c.type.charAt(0).toUpperCase() + c.type.slice(1)  },
-                                    { alias: 'Price', field: "price", stringify: toDollarsAndCents }
-                                ]}
+                    <ElevatedSection title="" style={displayTrades ? { display: 'flex' } : { display: 'none' }}>
+                        <Table
+                            listKey={'trades_table'}
+                            keyExtractor={(item, idx) => {
+                                return item ? "trade_" + idx : "empty";
+                            }}
+                            data={(async (a, $page) => {
+                                const newArr = a || [];
+                                newArr.push(... (await Api.User.extensions.getTrades({ $page, $limit: 10, settings: { userId: userId as string } })));
+                                //console.log(JSON.stringify(newArr))
+                                return newArr;
+                            })}
+                            columns={[
+                                ...useMakeSecurityFields((item: any) => {
+                                    return Number(item.security_id)
+                                }),
+                                { alias: 'Trade Date', field: "date", stringify: (a, b, c) => new Date(a).toLocaleDateString() },
+                                { alias: 'Buy/Sell', field: "type", stringify: (a, b, c) => c.type.charAt(0).toUpperCase() + c.type.slice(1) },
+                                { alias: 'Price', field: "price", stringify: toDollarsAndCents }
+                            ]}
                         />
                     </ElevatedSection>
                 </ProfilePage>,
@@ -329,7 +332,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                             if (!user.subscription?.is_subscribed && !user.subscription?.is_pending) {
                                 children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : "(Free)"}`
                                 onPress = async () => {
-                                
+
                                     await Api.Subscriber.extensions.insertWithNotification({
                                         subscription_id: user.subscription.id,
                                         //TODO: this should be moved to the server side 
@@ -339,19 +342,19 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'> ) {
                                     });
                                     setUser(undefined);
                                 }
-                                style={backgroundColor: "#35A265", borderColor: "#35A265"}
+                                style = { backgroundColor: "#35A265", borderColor: "#35A265" }
                             }
                             else {
-                                children = user.subscription.is_pending ? 'Pending' :'Subscribed',
-                                
-                                onPress = async () => {
-                                    //Todo:: make this an are you sure
-                                    await Api.Subscriber.extensions.removeSubscription({
-                                        subscriptionId: user.subscription?.id
-                                    });
-                                    setUser(undefined);
-                                }
-                                style=user.subscription.is_pending ? {backgroundColor: "#FFCE31", borderColor: "#FFCE31"} : {backgroundColor: "#EC5328", borderColor: "#EC5328"}
+                                children = user.subscription.is_pending ? 'Pending' : 'Subscribed',
+
+                                    onPress = async () => {
+                                        //Todo:: make this an are you sure
+                                        await Api.Subscriber.extensions.removeSubscription({
+                                            subscriptionId: user.subscription?.id
+                                        });
+                                        setUser(undefined);
+                                    }
+                                style = user.subscription.is_pending ? { backgroundColor: "#FFCE31", borderColor: "#FFCE31" } : { backgroundColor: "#EC5328", borderColor: "#EC5328" }
                             }
                         }
                         else {

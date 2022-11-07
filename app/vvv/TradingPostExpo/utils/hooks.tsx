@@ -1,17 +1,13 @@
-import { Api, Interface } from '@tradingpost/common/api'
+import { getActionFromState, getStateFromPath, LinkingContext, NavigationContainerRefContext, useLinkTo } from "@react-navigation/native";
+import { To } from "@react-navigation/native/lib/typescript/src/useLinkTo";
 import { IndexPath } from "@ui-kitten/components";
-import { PropsWithChildren, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Alert, Animated, Keyboard, TextInputProps, TextProps, ViewProps } from "react-native";
+import React from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Animated, Keyboard, TextProps, ViewProps } from "react-native";
 import { PickerProps } from "../components/Picker";
-import { LDS, useData } from '../lds';
+
 import { bannerText } from "../style";
-import { AwaitedReturn } from './misc';
-//import { ToastProps } from "react-native-ui-lib/typings/components/Toast";
-//import { ITempUser } from "../interfaces/IUser";
-//import { PickerProps } from '../components/Picker'
-//import { PickerItemLabeledValue } from "react-native-ui-lib/typings";
-//import { SwitchProps } from "react-native-ui-lib";
-//import { Navigation } from "react-native-navigation";
+
 
 export interface IEntity<T> {
     data: Readonly<T>,
@@ -24,10 +20,6 @@ export interface IEntity<T> {
 const ensureIterable = (value: any): value is Iterable<any> => {
     return Symbol.iterator in Object(value);
 }
-
-
-
-
 
 
 export const useOpacityAnim = () => {
@@ -214,39 +206,49 @@ export function useIsKeyboardVisible() {
     }
 }
 
+export default function useLinkToExt<
+    ParamList extends ReactNavigation.RootParamList
+>() {
+    const navigation = React.useContext(NavigationContainerRefContext);
+    const linking = React.useContext(LinkingContext);
+    const _linkTo = useLinkTo();
+    const linkTo = useCallback((to: To<ParamList>, replace?: boolean) => {
 
-//export type ToastMessageFunction = (message: string, duration?: number, override?: ToastProps) => void
-// export function useToast() {
-//     const [toastProps, setToastProps] = useState<ToastProps>()
-//     const toastMessage = useCallback((message: string, duration = 2500, override?: ToastProps) => {
-//         setToastProps({
-//             autoDismiss: duration,
-//             message,
-//             showDismiss: true,
-//             visible: true,
-//             //    color: "red",
-//             //  backgroundColor: "white",
-//             onDismiss: () => setToastProps((existing) => ({ ...existing, visible: false })),
-//             ...override
-//         })
-//     }, []);
+        if (navigation === undefined) {
+            throw new Error(
+                "Couldn't find a navigation object. Is your component inside NavigationContainer?"
+            );
+        }
 
-//     return {
-//         toastProps,
-//         //setToastProps,
-//         toastMessage
-//     }
-// }
+        if (typeof to !== 'string') {
+            // @ts-expect-error: This is fine
+            navigation.navigate(to.screen, to.params);
+            return;
+        }
+
+        if (!to.startsWith('/')) {
+            throw new Error(`The path must start with '/' (${to}).`);
+        }
+
+        const { options } = linking;
+
+        const state = options?.getStateFromPath
+            ? options.getStateFromPath(to, options.config)
+            : getStateFromPath(to, options?.config);
+
+        if (state) {
+            const action = getActionFromState(state, options?.config);
+            if (action !== undefined) {
+                navigation.dispatch(action);
+            } else {
+                navigation.reset(state);
+            }
+        } else {
+            throw new Error('Failed to parse the path to a navigation state.');
+        }
+
+    }, [linking, navigation])
 
 
-
-// export function useOnComponentAppeared(mainComponentId: string, memoizedAction: () => void) {
-//     useEffect(() => {
-//         const sub = Navigation.events().registerComponentDidAppearListener(
-//             ({ componentId }) => {
-//                 if (componentId === mainComponentId)
-//                     memoizedAction()
-//             })
-//         return () => sub.remove();
-//     }, [memoizedAction])
-// }
+    return linkTo;
+}

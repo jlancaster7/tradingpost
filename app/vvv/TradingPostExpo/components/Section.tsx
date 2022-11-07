@@ -10,13 +10,14 @@ interface SecitonProps {
     children?: ReactNode,
     button?: (props: { height: number, width: number }) => ReactElement,
     alt?: boolean
-    style?: ViewProps["style"]
+    style?: ViewProps["style"],
+    
 }
 
 export function Section(props: SecitonProps) {
-    const { title, children, useSubHeading } = props;
+    const { title, children, useSubHeading} = props;
     return (
-        <View style={[{ backgroundColor: "white", marginBottom: sizes.rem1 }, props.style]}>
+        <View  style={[{ backgroundColor: "white", marginBottom: sizes.rem1 }, props.style]}>
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
                 {Boolean(title) && (useSubHeading ? <Subheader text={title} style={{ color: props.alt ? "#434343" : undefined }} /> : <Header text={title} />)}
                 {props.button && props.button({ height: sizes.rem1_5, width: sizes.rem1_5 })}

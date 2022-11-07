@@ -22,7 +22,7 @@ import { useRef } from "react";
 import { useAppUser } from '../Authentication';
 import { NavigationProp } from "@react-navigation/native";
 import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
-import { DashScreenProps } from "../navigation";
+
 import { ProfileButton } from "./ProfileButton";
 import { useLinkTo } from "@react-navigation/native";
 import { versionCode } from "@tradingpost/common/api/entities/static/EntityApiBase";
@@ -31,7 +31,7 @@ import { versionCode } from "@tradingpost/common/api/entities/static/EntityApiBa
 
 const padSmall = { marginBottom: sizes.rem1 / 8 };
 
-export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
+export function SideMenu(props: DrawerContentComponentProps) {
     //const { value: currentUser } = useData("currentUser");
     //const { value: loginResult } = useData("loginResult");
     const [activeTabIndex, setActiveTab] = useState(2);
@@ -42,27 +42,22 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
     //     })
     //     return () => sub1.remove();
     // }, [])
-    const { setValue: setHasAuthed } = useData("hasAuthed");
+    //const { setValue: setHasAuthed } = useData("hasAuthed");
     const activeTabId = `BottomTabs_${activeTabIndex}`
-    const { signOut } = useAppUser();
+    const { signOut, loginState } = useAppUser();
     const linkTo = useLinkTo<any>();
     //Not sure if the issue here but this seems to work for now.
     //const { EnsureUser, appUser, signOut } = useEnsureUser(props.navigation as any as NavigationProp<any>);
-    const currentUser = props.appUser;
+    const currentUser = loginState!.appUser!;
+
     return <DrawerContentScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ flexGrow: 1, backgroundColor: "white" }}>
         <View style={{ alignSelf: "center", alignItems: "center", backgroundColor: "transparent" }}>
             <Pressable
-                style={{ alignItems: "center" }}
-            // onPress={() => screens.push(activeTabId, "CreateAccount", {
-            //     //                options: fullDashOptions,
-            //     passProps: { asProfile: true }
-            // })}
-
-            >
+                style={{ alignItems: "center" }}>
                 <View
                     style={[{ marginTop: sizes.rem1 }, padSmall]}
                 >
-                    <ProfileButton size={80} profileUrl={currentUser.profile_url || ""} userId={currentUser.id} />
+                    <ProfileButton size={80} profileUrl={currentUser?.profile_url || ""} userId={currentUser?.id} />
                 </View>
                 <Text style={[font("xSmall", "black", true), padSmall]} >@{currentUser.handle}</Text>
                 <Text style={[font("medium", "black", true), padSmall]} >{currentUser.display_name}</Text>
@@ -121,9 +116,10 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
         {
             label: "Logout",
             onPress: () => {
-                setHasAuthed(false);
-                signOut()
-                linkTo('/login') //TODO: this was an attempt to fix the logout going to blank screen, didn't work, but reminder
+                signOut();
+                //TODO: Investigate why this is needed and linkto doesn't seem to work.
+                props.navigation.getParent()?.replace("Root");
+
             },
             icon: sideMenu.LogOut
         }] as { onPress?: () => void, label: string, icon: React.FC<SvgProps> }[]).map((item, index, array) => {
@@ -137,30 +133,6 @@ export function SideMenu(props: DrawerContentComponentProps & DashScreenProps) {
             >{item.label}</MenuItem>
         })}
         <Text style={{ textAlign: "center" }}>Api Version: {versionCode}</Text>
-        {/* <MenuItem
-            onPress={() => props.navigation.navigate("Watchlist")}
-            icon={sideMenu.Watchlist}>Watchlists</MenuItem> */}
-        {/*
-        <MenuItem
-            onPress={() => screens.push(activeTabId, "Feedback", {
-                options: fullDashOptions,
-                passProps: { isFullscreen: true }
-            })}
-            icon={sideMenu.Feedback}>Feedback</MenuItem>
-        <MenuItem
-            onPress={() => screens.push(activeTabId, "Competitions", {
-                options: fullDashOptions,
-                passProps: { isFullscreen: true }
-            })}
-            icon={sideMenu.Competition}>Competitions</MenuItem>
-        <MenuItem
-            icon={sideMenu.Help}>Help</MenuItem> */}
-
-        {/* <MenuItem
-                onPress={() => {
-                    //Clipboard.setString(log);
-                }}
-                icon={sideMenu.LogOut}>Token</MenuItem> */}
     </DrawerContentScrollView>
 }
 

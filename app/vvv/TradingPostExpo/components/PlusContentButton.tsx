@@ -2,7 +2,7 @@ import React from "react"
 import { Pressable } from "react-native"
 import { shadow } from "../style"
 import { IconifyIcon } from "./IconfiyIcon"
-import plusCircle from '@iconify/icons-mdi/plus-circle'
+import plusCircle from '../assets/@iconify/plus-circle'
 import { AppColors } from "../constants/Colors"
 
 /**
@@ -15,20 +15,20 @@ export const PlusContentButton = (props: {
 }) => {
 
     return <Pressable style={[shadow, {
-        position: "absolute", 
-        bottom: 10, 
+        position: "absolute",
+        bottom: 10,
         right: 10,
         backgroundColor: "blue",
         height: 62, aspectRatio: 1,
         borderRadius: 34,
         overflow: "hidden"
     }]} onPress={props.onPress}>
-        <IconifyIcon icon={plusCircle} currentColor="green" style={{ height:64*1.2, width:64*1.2,  aspectRatio: 1, margin: 0, padding: 0, backgroundColor:"white" }} svgProps={{
+        <IconifyIcon icon={plusCircle} currentColor="green" style={{ height: 64 * 1.2, width: 64 * 1.2, aspectRatio: 1, margin: 0, padding: 0, backgroundColor: "white" }} svgProps={{
             style: {
-                height:64 * 1.2,
-                width:64* 1.2,
-                marginTop:"-10%",
-                marginLeft:"-10%"
+                height: 64 * 1.2,
+                width: 64 * 1.2,
+                marginTop: "-10%",
+                marginLeft: "-10%"
             }
         }} />
     </Pressable>

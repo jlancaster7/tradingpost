@@ -9,11 +9,13 @@ import { Api } from "@tradingpost/common/api";
 import { ProfileButton } from "../../components/ProfileButton";
 import { ElevatedSection } from "../../components/Section";
 import { useData } from "../../lds";
-import { useLinkTo } from "@react-navigation/native";
+import { useLinkTo, useNavigation } from "@react-navigation/native";
+import React from "react";
 export const ProfileIconSection = (props: CreateAccountProps) => {
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const { value: hasAuthed, setValue } = useData("hasAuthed");
-    const linkTo = useLinkTo<any>();
+
+    const nav = useNavigation();
     useEffect(() => {
         Animated.timing(
             opacityAnim,
@@ -31,7 +33,8 @@ export const ProfileIconSection = (props: CreateAccountProps) => {
                 text: "Go To Trading Post!",
                 onPress: () => {
                     setValue(true);
-                    props.navigation.navigate("AppInformation");
+                    nav.navigate("AppInformation");
+
                     //linkTo('/dash/feed')
                 }
             },

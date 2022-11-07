@@ -47,7 +47,7 @@ export class AuthApi {
             headers: EntityApiBase.makeHeaders()
         });
         const result = await EntityApiBase.handleFetchResponse<LoginResult>(resp);
-        //console.log("MY TOKEN IS BEING SET AS" + result.token);
+        
         EntityApiBase.token = result.token;
         return result;
     }
@@ -66,11 +66,12 @@ export class AuthApi {
         return result;
     }
 
-    async forgotPassword(email: string) {
-        const resp = await fetch(apiUrl("AuthApi", "resetpassword"), {
+    async forgotPassword(email: string, callbackUrl: string) {
+        const resp = await fetch(apiUrl("AuthApi", "forgotpassword"), {
             method: "POST",
             body: JSON.stringify({
-                email
+                email,
+                callbackUrl
             }),
             headers: EntityApiBase.makeHeaders()
         });

@@ -1,14 +1,17 @@
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { getFocusedRouteNameFromRoute, useNavigationState } from "@react-navigation/native";
 import React from "react";
-import { Pressable } from "react-native";
+import { Keyboard, Pressable } from "react-native";
 import { useAppUser } from "../Authentication";
 import { IconButton } from "../components/IconButton";
+import { IconifyIcon } from "../components/IconfiyIcon";
 import { SideMenu } from "../components/SideMenu";
 import { SvgExpo } from "../components/SvgExpo";
 import { BookmarkActiveBlue, BookmarkIcons, LogoNoBg } from "../images";
 import { sizes } from "../style";
+import { useIsKeyboardVisible } from "../utils/hooks";
 import { BottomTabNavigator } from "./BottomTabNavigator";
+import KeyboardClose from '../assets/@iconify/keyboard-close'
 
 export const Drawer = createDrawerNavigator();
 
@@ -20,9 +23,10 @@ const HeaderTp = () => {
 }
 
 export function DrawerPart() {
-    const { appUser } = useAppUser();
+    const { loginState } = useAppUser();
 
-    return appUser ? <Drawer.Navigator useLegacyImplementation={true} drawerContent={(props) => <SideMenu appUser={appUser} {...props} />}
+    console.log("Running Drawer Navigation")
+    return loginState?.appUser ? <Drawer.Navigator useLegacyImplementation={true} drawerContent={(props) => <SideMenu  {...props} />}
         screenOptions={({ route, navigation }) => ({
             headerTitleAlign: "center",
             headerTitle: HeaderTp,
@@ -31,6 +35,29 @@ export function DrawerPart() {
                 const state = useNavigationState((state) => {
                     return (((state.routes[0]?.state?.routes as any[])?.find(r => r.name === "Feed").params as any)?.bookmarkedOnly || "false") as "true" | "false"
                 });
+
+                const { isKeyboardVisible } = useIsKeyboardVisible();
+
+                if (isKeyboardVisible) {
+                    return <Pressable
+                        onPress={() => {
+                            Keyboard.dismiss();
+                        }}
+                    ><IconifyIcon
+                            currentColor="black"
+                            icon={KeyboardClose}
+                            svgProps={{
+                                height: 24,
+                                width: 24,
+                            }}
+                            style={{
+                                height: 24,
+                                width: 24,
+                                marginRight: sizes.rem1
+                            }} />
+                    </Pressable>
+                }
+
                 switch (routeName) {
                     case "Feed":
                         const isMarked = state === "true";
@@ -54,13 +81,12 @@ export function DrawerPart() {
                                 }} />
                             }
                         </Pressable>
-
                     default:
                         console.log(routeName);
                         return undefined;
                 }
             })
         })}>
-        <Drawer.Screen name="Root" component={BottomTabNavigator} initialParams={{ appUser }} />
+        <Drawer.Screen name="Root" component={BottomTabNavigator} />
     </Drawer.Navigator> : null;
 }

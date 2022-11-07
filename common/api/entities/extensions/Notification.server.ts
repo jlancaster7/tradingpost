@@ -6,9 +6,9 @@ import {ListTradesResponse, ListAlertsResponse} from "../interfaces";
 
 export default ensureServerExtensions<Notification>({
     seenNotifications: async (req): Promise<{}> => {
-        console.log("HERE :D ")
+        
         if (!req.body.notificationIds || req.body.notificationIds.length <= 0) return {}
-        console.log("HERE")
+
         const pool = await getHivePool;
         const query = `
             UPDATE notification

@@ -1,46 +1,41 @@
-import React, {useEffect, useState} from "react"
-import {View} from "react-native"
-import {useAppUser} from "../Authentication"
-import {PrimaryButton} from "../components/PrimaryButton"
-import {SecondaryButton} from "../components/SecondaryButton"
-import {ElevatedSection} from "../components/Section"
-import {Text} from '@ui-kitten/components'
-import {RootStackScreenProps} from "../navigation/pages"
-import {Link} from "../components/Link"
-import {Api} from '@tradingpost/common/api'
-import {useData} from "../lds"
-import {ButtonPanel} from "../components/ScrollWithButtons"
-import {paddView, sizes} from "../style"
-import {useToast} from "react-native-toast-notifications"
-import {useLinkTo} from "@react-navigation/native"
+import React, { useEffect, useState } from "react"
+import { View } from "react-native"
+import { useAppUser } from "../Authentication"
+import { ElevatedSection } from "../components/Section"
+import { Text } from '@ui-kitten/components'
+import { RootStackScreenProps } from "../navigation/pages"
+import { Link } from "../components/Link"
+import { Api } from '@tradingpost/common/api'
+import { ButtonPanel } from "../components/ScrollWithButtons"
+import { paddView, sizes } from "../style"
+import { useToast } from "react-native-toast-notifications"
+import { useLinkTo } from "@react-navigation/native"
 
 
 export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">) => {
-    const {appUser, loginResult} = useAppUser();
-    const {signIn, isSignInComplete} = useAppUser();
-    const {value: authToken, setValue: setAuthToken} = useData("authToken");
+    const { loginState, signIn } = useAppUser();
     const verificationToken = props.route.params?.token;
     const toast = useToast();
     const linkTo = useLinkTo();
     const [imVerified, setImVerified] = useState(false);
     useEffect(() => {
         if (imVerified) {
-            if (loginResult?.verified)
+            if (loginState?.loginResult?.verified)
                 linkTo("/dash/feed");
             else {
                 toast.show("You account is still unverified. Please check your email for details.")
                 setImVerified(false);
             }
         }
-    }, [imVerified, loginResult])
+    }, [imVerified, loginState?.loginResult])
 
     useEffect(() => {
         (async () => {
-            if (verificationToken && !appUser) {
-                if (authToken) {
+            if (verificationToken && !loginState?.appUser) {
+                if (loginState?.authToken) {
                     try {
                         console.log("SIGNING IN.....");
-                        await signIn("", authToken);
+                        await signIn("", loginState.authToken);
                         setImVerified(true);
 
                     } catch (ex: any) {
@@ -53,19 +48,21 @@ export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">)
             }
         })()
     }, [
-        authToken,
-        verificationToken, appUser
+        loginState?.authToken,
+        verificationToken, loginState?.appUser
     ])
 
     useEffect(() => {
         (async () => {
-            if (verificationToken && appUser) {
+
+            if (verificationToken && loginState?.appUser) {
                 try {
+
                     await Api.User.extensions.validateUser({
                         verificationToken
                     })
-                    if (authToken)
-                        await signIn("", authToken);
+                    if (loginState?.authToken)
+                        await signIn("", loginState?.authToken);
 
 
                 } catch (ex: any) {
@@ -73,10 +70,10 @@ export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">)
                 }
             }
         })()
-    }, [verificationToken, toast, authToken, appUser, isSignInComplete, imVerified])
+    }, [verificationToken, toast, loginState?.authToken, loginState?.appUser, imVerified])
     return <View style={paddView}>
         <ElevatedSection title="Verify Your Email">
-            <Text style={{textAlign: "center", paddingVertical: sizes.rem1}}>{appUser?.email}</Text>
+            <Text style={{ textAlign: "center", paddingVertical: sizes.rem1 }}>{loginState?.appUser?.email}</Text>
             <ButtonPanel
                 left={{
                     onPress: () => {
@@ -88,15 +85,15 @@ export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">)
                 right={{
                     onPress: async () => {
                         //try auth signin
-                        if (authToken)
-                            await signIn("", authToken);
+                        if (loginState?.authToken)
+                            await signIn("", loginState?.authToken);
                         setImVerified(true);
                     },
                     text: "I'm Verified"
                 }}
             />
             <Link
-                style={{textAlign: "center", paddingVertical: sizes.rem1}}
+                style={{ textAlign: "center", paddingVertical: sizes.rem1 }}
                 onPress={async () => {
                     try {
                         await Api.User.extensions.sendEmailValidation();

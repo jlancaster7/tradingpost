@@ -36,18 +36,18 @@ import Profile from './assets/side-menu/Profile.svg'
 import Watchlist from './assets/side-menu/Watchlist.svg'
 import Bank_Link from './assets/bank-link-icon.svg'
 
-import YouTubeLogo from '@iconify/icons-logos/youtube-icon'
-import SpotifyLogo from '@iconify/icons-logos/spotify-icon'
+import YouTubeLogo from './assets/@iconify/youtube-icon'
+import SpotifyLogo from './assets/@iconify/spotify-icon'
 
-import TwitterLogo from '@iconify/icons-logos/twitter'
+import TwitterLogo from './assets/@iconify/twitter'
 
-import LinkedInLogo from '@iconify/icons-logos/linkedin-icon'
+import LinkedInLogo from './assets/@iconify/linkedin-icon'
 
-import SubstackLogo from '@iconify/icons-simple-icons/substack'
+import SubstackLogo from './assets/@iconify/substack'
 
-import React, {Component} from 'react'
-import {SvgExpo} from './components/SvgExpo'
-import {SvgProps} from 'react-native-svg'
+import React, { Component } from 'react'
+import { SvgExpo } from './components/SvgExpo'
+import { SvgProps } from 'react-native-svg'
 
 export const sideMenu = {
     Account,
@@ -66,7 +66,7 @@ export const sideMenu = {
 }
 
 function makeExpoSvg(Svg: React.FC<SvgProps>) {
-    return (props: SvgProps & { onReady?: (parent: any) => void }) => <SvgExpo {...props}><Svg/></SvgExpo>
+    return (props: SvgProps & { onReady?: (parent: any) => void }) => <SvgExpo {...props}><Svg /></SvgExpo>
 }
 
 export const AppTitle = makeExpoSvg(_AppTitle)
@@ -98,7 +98,7 @@ export const BookmarkActiveBlue = makeExpoSvg(_BookmarkActiveBlue);
 export const PremiumStar = makeExpoSvg(_PremiumStar);
 
 
-export {Logo, LogoNoBg};
+export { Logo, LogoNoBg };
 
 
 export const rnui = {

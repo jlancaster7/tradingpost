@@ -1,0 +1,269 @@
+_scripts/launch.ts(6,19): error TS7016: Could not find a declaration file for module 'node-fetch'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/node-fetch/lib/index.js' implicitly has an 'any' type.
+  If the 'node-fetch' package actually exposes this module, consider sending a pull request to amend 'https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/node-fetch'
+app.config.ts(4,21): error TS2571: Object is of type 'unknown'.
+app.config.ts(4,90): error TS2571: Object is of type 'unknown'.
+app.config.ts(4,99): error TS2571: Object is of type 'unknown'.
+app.config.ts(4,112): error TS7006: Parameter 'rr' implicitly has an 'any' type.
+app.config.ts(4,116): error TS7006: Parameter 'i' implicitly has an 'any' type.
+app.config.ts(7,5): error TS2322: Type '{ extra: { localIp: any; }; name?: string | undefined; description?: string | undefined; slug?: string | undefined; owner?: string | undefined; currentFullName?: string | undefined; originalFullName?: string | undefined; ... 38 more ...; _internal?: { ...; } | undefined; }' is not assignable to type 'ExpoConfig'.
+  Types of property 'name' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+charts/animated-path.tsx(5,30): error TS7016: Could not find a declaration file for module 'd3-interpolate-path'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-interpolate-path/build/d3-interpolate-path.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-interpolate-path` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-interpolate-path';`
+charts/chart/chart-grouped.tsx(2,24): error TS7016: Could not find a declaration file for module 'd3-array'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-array/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-array` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-array';`
+charts/chart/chart-grouped.tsx(3,24): error TS7016: Could not find a declaration file for module 'd3-scale'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-scale/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-scale` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-scale';`
+charts/chart/chart-grouped.tsx(209,57): error TS7006: Parameter 'item' implicitly has an 'any' type.
+charts/chart/chart-grouped.tsx(210,57): error TS7006: Parameter 'item' implicitly has an 'any' type.
+charts/chart/chart.tsx(1,24): error TS7016: Could not find a declaration file for module 'd3-array'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-array/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-array` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-array';`
+charts/chart/chart.tsx(2,24): error TS7016: Could not find a declaration file for module 'd3-scale'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-scale/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-scale` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-scale';`
+charts/chart/chart.tsx(3,24): error TS7016: Could not find a declaration file for module 'd3-shape'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-shape/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-shape` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-shape';`
+charts/line-chart/line-chart-grouped.tsx(2,24): error TS7016: Could not find a declaration file for module 'd3-shape'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-shape/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-shape` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-shape';`
+charts/line-chart/line-chart-grouped.tsx(43,25): error TS7006: Parameter 'd' implicitly has an 'any' type.
+charts/line-chart/line-chart-grouped.tsx(44,25): error TS7006: Parameter 'd' implicitly has an 'any' type.
+charts/line-chart/line-chart-grouped.tsx(45,31): error TS7006: Parameter 'item' implicitly has an 'any' type.
+charts/line-chart/line-chart.tsx(2,24): error TS7016: Could not find a declaration file for module 'd3-shape'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-shape/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-shape` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-shape';`
+charts/line-chart/line-chart.tsx(3,24): error TS7016: Could not find a declaration file for module 'd3-scale'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-scale/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-scale` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-scale';`
+charts/line-chart/line-chart.tsx(40,17): error TS7006: Parameter 'd' implicitly has an 'any' type.
+charts/line-chart/line-chart.tsx(41,17): error TS7006: Parameter 'd' implicitly has an 'any' type.
+charts/line-chart/line-chart.tsx(42,23): error TS7006: Parameter 'item' implicitly has an 'any' type.
+charts/pie-chart.tsx(4,24): error TS7016: Could not find a declaration file for module 'd3-shape'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-shape/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-shape` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-shape';`
+charts/pie-chart.tsx(351,17): error TS7006: Parameter 'd' implicitly has an 'any' type.
+charts/pie-chart.tsx(351,20): error TS7006: Parameter 'i' implicitly has an 'any' type.
+charts/pie-chart.tsx(351,23): error TS7006: Parameter 'dd' implicitly has an 'any' type.
+charts/pie-chart.tsx(356,35): error TS7006: Parameter 'slice' implicitly has an 'any' type.
+charts/pie-chart.tsx(356,42): error TS7006: Parameter 'index' implicitly has an 'any' type.
+charts/pie-chart.tsx(375,27): error TS2322: Type '{ children: any[]; x: number; y: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+charts/pie-chart.tsx(385,48): error TS7006: Parameter 'slice' implicitly has an 'any' type.
+charts/pie-chart.tsx(385,55): error TS7006: Parameter 'index' implicitly has an 'any' type.
+charts/x-axis.tsx(4,26): error TS7016: Could not find a declaration file for module 'd3-scale'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-scale/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-scale` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-scale';`
+charts/x-axis.tsx(5,24): error TS7016: Could not find a declaration file for module 'd3-array'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-array/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-array` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-array';`
+charts/x-axis.tsx(15,15): error TS7006: Parameter 'event' implicitly has an 'any' type.
+charts/x-axis.tsx(27,11): error TS7006: Parameter 'domain' implicitly has an 'any' type.
+charts/x-axis.tsx(29,13): error TS2339: Property 'scale' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(30,13): error TS2339: Property 'spacingInner' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(31,13): error TS2339: Property 'spacingOuter' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(32,13): error TS2339: Property 'contentInset' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(45,21): error TS7006: Parameter 'value' implicitly has an 'any' type.
+charts/x-axis.tsx(52,17): error TS2339: Property 'style' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(52,24): error TS2339: Property 'scale' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(52,31): error TS2339: Property 'data' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(52,37): error TS2339: Property 'xAccessor' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(52,48): error TS2339: Property 'formatLabel' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(52,61): error TS2339: Property 'numberOfTicks' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(52,76): error TS2339: Property 'svg' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(52,81): error TS2339: Property 'children' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(52,91): error TS2339: Property 'min' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(52,96): error TS2339: Property 'max' does not exist on type 'Readonly<{}>'.
+charts/x-axis.tsx(60,34): error TS7006: Parameter 'item' implicitly has an 'any' type.
+charts/x-axis.tsx(60,40): error TS7006: Parameter 'index' implicitly has an 'any' type.
+charts/x-axis.tsx(99,30): error TS2559: Type '{ children: any[]; }' has no properties in common with type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+charts/x-axis.tsx(106,48): error TS7006: Parameter 'value' implicitly has an 'any' type.
+charts/x-axis.tsx(106,55): error TS7006: Parameter 'index' implicitly has an 'any' type.
+charts/x-axis.tsx(154,19): error TS7031: Binding element 'index' implicitly has an 'any' type.
+charts/x-axis.tsx(156,19): error TS7006: Parameter 'value' implicitly has an 'any' type.
+charts/x-axis.tsx(195,9): error TS2339: Property 'children' does not exist on type 'XAxisProps<D>'.
+charts/x-axis.tsx(210,15): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+charts/x-axis.tsx(223,64): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+charts/x-axis.tsx(226,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps | Readonly<TextProps>): Text', gave the following error.
+    Type '{ opacity: number; fontSize: NumberProp | undefined; fontFamily: string | undefined; fontWeight: FontWeight | undefined; }' is not assignable to type 'StyleProp<TextStyle>'.
+      Types of property 'fontSize' are incompatible.
+        Type 'NumberProp | undefined' is not assignable to type 'number | undefined'.
+          Type 'string' is not assignable to type 'number'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type '{ opacity: number; fontSize: NumberProp | undefined; fontFamily: string | undefined; fontWeight: FontWeight | undefined; }' is not assignable to type 'StyleProp<TextStyle>'.
+      Types of property 'fontSize' are incompatible.
+        Type 'NumberProp | undefined' is not assignable to type 'number | undefined'.
+charts/x-axis.tsx(233,22): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+charts/x-axis.tsx(233,34): error TS2554: Expected 0 arguments, but got 2.
+charts/x-axis.tsx(235,18): error TS2532: Object is possibly 'undefined'.
+charts/x-axis.tsx(235,32): error TS2532: Object is possibly 'undefined'.
+charts/x-axis.tsx(245,26): error TS2559: Type '{ children: any[]; }' has no properties in common with type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+charts/x-axis.tsx(251,33): error TS2532: Object is possibly 'undefined'.
+charts/x-axis.tsx(252,44): error TS7006: Parameter 'value' implicitly has an 'any' type.
+charts/x-axis.tsx(252,51): error TS7006: Parameter 'index' implicitly has an 'any' type.
+charts/x-axis.tsx(253,45): error TS2339: Property 'svg' does not exist on type '{}'.
+charts/x-axis.tsx(265,46): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+charts/x-axis.tsx(265,58): error TS2554: Expected 0 arguments, but got 2.
+components/CommentList.tsx(12,6): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/CommentList.tsx(13,10): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/CommentList.tsx(36,29): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/CommentList.tsx(39,29): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/EditScreenInfo.tsx(10,6): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/EditScreenInfo.tsx(11,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/EditScreenInfo.tsx(12,10): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/EditScreenInfo.tsx(19,10): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/EditScreenInfo.tsx(23,12): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/EditScreenInfo.tsx(26,10): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/EditScreenInfo.tsx(34,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/EditScreenInfo.tsx(35,10): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/EditScreenInfo.tsx(36,12): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/InteractiveGraph.tsx(24,24): error TS7016: Could not find a declaration file for module 'd3-shape'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/d3-shape/src/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/d3-shape` if it exists or add a new declaration (.d.ts) file containing `declare module 'd3-shape';`
+components/InteractiveGraph.tsx(105,10): error TS2559: Type '{ children: any; }' has no properties in common with type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+components/InteractiveGraph.tsx(151,10): error TS2322: Type '{ children: Element; key: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<{}, any, any>> & Readonly<{}>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<{}, any, any>> & Readonly<{}>'.
+components/InteractiveGraph.tsx(152,14): error TS2322: Type '{ children: Element[]; id: string; x1: string; x2: string; y2: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<LinearGradientProps, any, any>> & Readonly<...>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<LinearGradientProps, any, any>> & Readonly<...>'.
+components/InteractiveGraph.tsx(169,14): error TS2322: Type '{ children: Element[]; x: any; key: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+components/InteractiveGraph.tsx(170,18): error TS2322: Type '{ children: Element[]; x: number; y: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+components/InteractiveGraph.tsx(183,22): error TS2322: Type '{ children: string; x: number; fill: string; opacity: number; fontSize: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<TextProps, any, any>> & Readonly<TextProps>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<TextProps, any, any>> & Readonly<TextProps>'.
+components/InteractiveGraph.tsx(186,22): error TS2322: Type '{ children: any; x: number; y: number; fontSize: number; fontWeight: string; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<TextProps, any, any>> & Readonly<TextProps>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<TextProps, any, any>> & Readonly<TextProps>'.
+components/InteractiveGraph.tsx(196,18): error TS2322: Type '{ children: Element[]; x: any; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<GProps, any, any>> & Readonly<GProps>'.
+components/LineChart.tsx(28,18): error TS2741: Property 'direction' is missing in type '{}' but required in type '{ [x: string]: any; direction: any; }'.
+components/PieHolder.tsx(19,21): error TS2322: Type '{ children: string | undefined; key: number; x: number; y: number; textAnchor: "middle"; alignmentBaseline: "center"; fontSize: number; stroke: string; strokeWidth: number; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<TextProps, any, any>> & Readonly<TextProps>'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Component<TextProps, any, any>> & Readonly<TextProps>'.
+components/PieHolder.tsx(80,14): error TS2741: Property 'yAccessor' is missing in type '{ children: Element; svg: { stroke: string; }; style: { flex: number; }; data: any; contentInset: { top: number; bottom: number; right: number; left: number; }; }' but required in type 'Omit<ChartProps<unknown>, "createPaths">'.
+components/PressableButton.tsx(6,13): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/PressableButton.tsx(14,22): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/SideMenu.tsx(115,47): error TS2339: Property 'replace' does not exist on type 'NavigationHelpers<ParamListBase, {}>'.
+components/StyledText.tsx(4,11): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/Table.tsx(172,102): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps | Readonly<TextProps>): Text', gave the following error.
+    Type 'string | NonNullable<T>[keyof T] | undefined' is not assignable to type 'ReactNode'.
+      Type 'NonNullable<T>[keyof T]' is not assignable to type 'ReactNode'.
+        Type 'NonNullable<T>[string] | NonNullable<T>[number] | NonNullable<T>[symbol]' is not assignable to type 'ReactNode'.
+          Type 'NonNullable<T>[string]' is not assignable to type 'ReactNode'.
+            Type 'T[string]' is not assignable to type 'ReactNode'.
+              Type 'T[string]' is not assignable to type 'ReactPortal'.
+                Type 'NonNullable<T>[string]' is not assignable to type 'ReactPortal'.
+                  Type 'NonNullable<T>[keyof T]' is not assignable to type 'ReactPortal'.
+                    Type 'NonNullable<T>[string] | NonNullable<T>[number] | NonNullable<T>[symbol]' is not assignable to type 'ReactPortal'.
+                      Type 'NonNullable<T>[string]' is not assignable to type 'ReactPortal'.
+                        Type 'T[string]' is not assignable to type 'ReactPortal'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type 'string | NonNullable<T>[keyof T] | undefined' is not assignable to type 'ReactNode'.
+components/TextEditor.tsx(11,13): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/TextEditor.tsx(18,13): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/TextEditor.web.tsx(2,28): error TS7016: Could not find a declaration file for module 'pell'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/pell/dist/pell.min.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/pell` if it exists or add a new declaration (.d.ts) file containing `declare module 'pell';`
+components/TextEditor.web.tsx(24,28): error TS7006: Parameter 'html' implicitly has an 'any' type.
+components/TextEditor.web.tsx(61,13): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/Themed.tsx(37,11): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/Themed.tsx(44,11): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+components/YourContentComponent.tsx(19,13): error TS2339: Property 'appUser' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+components/YourContentComponent.tsx(19,22): error TS2339: Property 'authToken' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+components/YourContentComponent.tsx(31,83): error TS7006: Parameter 'c' implicitly has an 'any' type.
+components/YourContentComponent.tsx(32,89): error TS7006: Parameter 'c' implicitly has an 'any' type.
+components/YourContentComponent.tsx(33,79): error TS7006: Parameter 'c' implicitly has an 'any' type.
+components/YourContentComponent.tsx(34,85): error TS7006: Parameter 'c' implicitly has an 'any' type.
+components/YourContentComponent.tsx(97,76): error TS2345: Argument of type '{ platform: string; platform_idenifier: any; }' is not assignable to parameter of type '{ callbackUrl: string; platform: string; code?: string | undefined; challenge?: string | undefined; platform_idenifier?: string | undefined; }'.
+  Property 'callbackUrl' is missing in type '{ platform: string; platform_idenifier: any; }' but required in type '{ callbackUrl: string; platform: string; code?: string | undefined; challenge?: string | undefined; platform_idenifier?: string | undefined; }'.
+screens/AccountSettingsScreen.tsx(20,10): error TS2614: Module '"../navigation"' has no exported member 'TabScreenProps'. Did you mean to use 'import TabScreenProps from "../navigation"' instead?
+screens/AccountSettingsScreen.tsx(25,13): error TS2339: Property 'appUser' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+screens/AccountSettingsScreen.tsx(25,22): error TS2339: Property 'authToken' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+screens/AuthScreen.tsx(26,13): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/ChangePasswordScreen.tsx(43,42): error TS2554: Expected 2 arguments, but got 1.
+screens/create_account/AccountInfoSection.tsx(108,19): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/AccountInfoSection.tsx(110,15): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/AccountInfoSection.tsx(228,95): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ImageProps | Readonly<ImageProps>): Image', gave the following error.
+    Type '{ source: { uri: string | undefined; height: number; width: number; }; height: number; width: number; style: { marginBottom: number; borderRadius: number; alignSelf: "center"; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Image> & Readonly<ImageProps>'.
+      Property 'height' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Image> & Readonly<ImageProps>'.
+  Overload 2 of 2, '(props: ImageProps, context: any): Image', gave the following error.
+    Type '{ source: { uri: string | undefined; height: number; width: number; }; height: number; width: number; style: { marginBottom: number; borderRadius: number; alignSelf: "center"; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Image> & Readonly<ImageProps>'.
+      Property 'height' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Image> & Readonly<ImageProps>'.
+screens/create_account/AnalystStartSection.tsx(31,13): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/AnalystStartSection.tsx(80,10): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/AnalystStartSection.tsx(81,14): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/AnalystStartSection.tsx(82,18): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/AnalystStartSection.tsx(83,22): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/AnalystStartSection.tsx(84,22): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/AnalystStartSection.tsx(85,26): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/AnalystStartSection.tsx(86,30): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/AnalystStartSection.tsx(89,22): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/BasicInfoSection.tsx(39,18): error TS2339: Property 'appUser' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+screens/create_account/BasicInfoSection.tsx(53,27): error TS2339: Property 'navigation' does not exist on type 'CreateAccountProps'.
+screens/create_account/BasicInfoSection.tsx(62,29): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/BasicInfoSection.tsx(102,10): error TS2339: Property 'navigation' does not exist on type 'CreateAccountProps'.
+screens/create_account/BasicInfoSection.tsx(115,19): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/BasicInfoSection.tsx(117,15): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/InvestmentInterestSection.tsx(4,28): error TS2306: File 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/components/ChipBar.tsx' is not a module.
+screens/create_account/InvestmentInterestSection.tsx(22,31): error TS2306: File 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/components/ChipTextField.tsx' is not a module.
+screens/create_account/InvestmentInterestSection.tsx(137,29): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/InvestmentInterestSection.tsx(160,33): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/InvestmentInterestSection.tsx(171,40): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/PickWatchlistSection.tsx(53,33): error TS2322: Type '{ symbol: string; }[]' is not assignable to type 'Omit<IWatchlistItemList, "id" | "watchlist_id">[]'.
+  Property 'date_added' is missing in type '{ symbol: string; }' but required in type 'Omit<IWatchlistItemList, "id" | "watchlist_id">'.
+screens/create_account/PickWatchlistSection.tsx(85,19): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/PickWatchlistSection.tsx(87,15): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/PickWatchlistSection.tsx(99,31): error TS2339: Property 'navigation' does not exist on type 'CreateAccountProps'.
+screens/create_account/ProfileIconSection.tsx(28,13): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/ProfileIconSection.tsx(34,27): error TS2339: Property 'navigation' does not exist on type 'CreateAccountProps'.
+screens/create_account/ProfileIconSection.tsx(41,10): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/ProfileIconSection.tsx(42,14): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/ProfileIconSection.tsx(43,18): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/ProfileIconSection.tsx(44,18): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/ProfileIconSection.tsx(45,18): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/create_account/shared.ts(15,37): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/shared.ts(18,21): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/create_account/shared.ts(22,17): error TS2339: Property 'saveOnly' does not exist on type 'CreateAccountProps'.
+screens/CreateAccountScreen.tsx(42,13): error TS2339: Property 'appUser' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+screens/CreateAccountScreen.tsx(42,22): error TS2339: Property 'userState' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+screens/FeedScreen.tsx(31,43): error TS2345: Argument of type 'string' is not assignable to parameter of type '{ key: string; params?: undefined; merge?: boolean | undefined; } | { name: string; key?: string | undefined; params: never; merge?: boolean | undefined; } | { key: string; params?: undefined; merge?: boolean | undefined; } | { ...; } | { ...; } | { ...; }'.
+screens/ImagePicker.tsx(5,10): error TS2614: Module '"../navigation"' has no exported member 'TabScreenProps'. Did you mean to use 'import TabScreenProps from "../navigation"' instead?
+screens/ModalScreen.tsx(9,6): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/ModalScreen.tsx(10,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/ModalScreen.tsx(11,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/ModalScreen.tsx(12,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/ModalScreen.tsx(15,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/NotFoundScreen.tsx(8,6): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/NotFoundScreen.tsx(9,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/NotFoundScreen.tsx(10,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/NotFoundScreen.tsx(11,10): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/PortfolioScreen.tsx(10,10): error TS2614: Module '"../navigation"' has no exported member 'DashScreenProps'. Did you mean to use 'import DashScreenProps from "../navigation"' instead?
+screens/PortfolioScreen.tsx(10,27): error TS2614: Module '"../navigation"' has no exported member 'TabScreenProps'. Did you mean to use 'import TabScreenProps from "../navigation"' instead?
+screens/PortfolioScreen.tsx(268,21): error TS2322: Type 'ITableColumn<IWatchlistItemList & { price: { price: number; time: string; open: number; high: number; low: number; } | null; }>[]' is not assignable to type 'ITableColumn<IWatchlistItemList>[]'.
+  Type 'ITableColumn<IWatchlistItemList & { price: { price: number; time: string; open: number; high: number; low: number; } | null; }>' is not assignable to type 'ITableColumn<IWatchlistItemList>'.
+    Type 'ITableColumn<IWatchlistItemList & { price: { price: number; time: string; open: number; high: number; low: number; } | null; }>' is not assignable to type '{ field?: keyof IWatchlistItemList | FieldElement<IWatchlistItemList> | undefined; style?: TextStyle | undefined; headerStyle?: TextStyle | undefined; dynamicStyle?: RowFunction<...> | undefined; stringify?: RowFunction<...> | undefined; }'.
+      Types of property 'field' are incompatible.
+        Type '"price" | keyof IWatchlistItemList | FieldElement<IWatchlistItemList & { price: { price: number; time: string; open: number; high: number; low: number; } | null; }> | undefined' is not assignable to type 'keyof IWatchlistItemList | FieldElement<IWatchlistItemList> | undefined'.
+          Type '"price"' is not assignable to type 'keyof IWatchlistItemList | FieldElement<IWatchlistItemList> | undefined'.
+screens/PostScreen.tsx(9,10): error TS2614: Module '"../navigation"' has no exported member 'TabScreenProps'. Did you mean to use 'import TabScreenProps from "../navigation"' instead?
+screens/ProfileScreen.tsx(82,13): error TS2339: Property 'appUser' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+screens/SubscriptionScreen.tsx(18,10): error TS2614: Module '"../navigation"' has no exported member 'TabScreenProps'. Did you mean to use 'import TabScreenProps from "../navigation"' instead?
+screens/SubscriptionScreen.tsx(32,13): error TS2339: Property 'appUser' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+screens/TableModalScreen.tsx(5,10): error TS2614: Module '"../navigation"' has no exported member 'AllPages'. Did you mean to use 'import AllPages from "../navigation"' instead?
+screens/TableModalScreen.tsx(5,20): error TS2614: Module '"../navigation"' has no exported member 'TabScreenProps'. Did you mean to use 'import TabScreenProps from "../navigation"' instead?
+screens/TabOneScreen.tsx(9,6): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/TabOneScreen.tsx(10,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/TabTwoScreen.tsx(8,6): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/TabTwoScreen.tsx(9,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/TabTwoScreen.tsx(10,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/TabTwoScreen.tsx(11,8): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+screens/WatchlistEditorScreen.tsx(14,10): error TS2614: Module '"../navigation"' has no exported member 'DashScreenProps'. Did you mean to use 'import DashScreenProps from "../navigation"' instead?
+screens/WatchlistEditorScreen.tsx(14,27): error TS2614: Module '"../navigation"' has no exported member 'TabScreenProps'. Did you mean to use 'import TabScreenProps from "../navigation"' instead?
+screens/WatchlistEditorScreen.tsx(74,96): error TS2345: Argument of type '{ items: { symbol: string; }[]; name: string; note: string | undefined; type: WLTypes; }' is not assignable to parameter of type 'IWatchlistUpdate'.
+  Types of property 'items' are incompatible.
+    Type '{ symbol: string; }[]' is not assignable to type 'Omit<IWatchlistItemList, "id" | "watchlist_id">[]'.
+      Property 'date_added' is missing in type '{ symbol: string; }' but required in type 'Omit<IWatchlistItemList, "id" | "watchlist_id">'.
+screens/WatchlistEditorScreen.tsx(76,64): error TS2345: Argument of type '{ items: { symbol: string; }[]; name: string; note: string | undefined; type: WLTypes; }' is not assignable to parameter of type 'IWatchlistInsert'.
+  Types of property 'items' are incompatible.
+    Type '{ symbol: string; }[]' is not assignable to type 'Omit<IWatchlistItemList, "id" | "watchlist_id">[]'.
+screens/WatchlistScreen.tsx(10,10): error TS2614: Module '"../navigation"' has no exported member 'DashScreenProps'. Did you mean to use 'import DashScreenProps from "../navigation"' instead?
+screens/WatchlistScreen.tsx(10,27): error TS2614: Module '"../navigation"' has no exported member 'TabScreenProps'. Did you mean to use 'import TabScreenProps from "../navigation"' instead?
+screens/WatchlistScreen.tsx(78,21): error TS2322: Type 'ITableColumn<IWatchlistItemList & { price: { price: number; time: string; open: number; high: number; low: number; } | null; }>[]' is not assignable to type 'ITableColumn<IWatchlistItemList>[]'.
+screens/WatchlistViewerScreen.tsx(49,46): error TS2304: Cannot find name 'AllPages'.
+screens/WatchlistViewerScreen.tsx(165,46): error TS2304: Cannot find name 'TabScreenProps'.
+screens/WatchlistViewerScreen.tsx(170,13): error TS2339: Property 'appUser' does not exist on type '{ loginState: LoginState | undefined; signIn: (email: string, pass: string) => Promise<void>; signOut: () => void; }'.
+utils/misc.tsx(3,25): error TS7016: Could not find a declaration file for module 'numeral'. 'C:/Users/lever/Documents/Hive/repo2/tradingpost/app/vvv/TradingPostExpo/node_modules/numeral/numeral.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/numeral` if it exists or add a new declaration (.d.ts) file containing `declare module 'numeral';`
+../../../common/api/entities/extensions/index.ts(74,5): error TS2503: Cannot find namespace 'Express'.

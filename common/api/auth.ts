@@ -18,7 +18,6 @@ const makeUserToken = async (user_id: string) => {
 
 //return token
 export const loginPass = async (email: string, pass: string, csrf: string) => {
-    console.log(`${email}::::${pass}`);
     const saltResult = await execProc<LoginResult>("tp.api_local_login_get", { data: { email } })
 
     if (!saltResult.length)
@@ -114,7 +113,7 @@ export const createUser = async (data: {
     } as LoginResult
 }
 
-export const forgotPassword = async (email: string) => {
+export const forgotPassword = async (email: string, callbackUrl: string) => {
     //generate reset token 
     const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
 
@@ -128,7 +127,7 @@ export const forgotPassword = async (email: string) => {
             to: email,
             templateId: "d-f232bafc8eb04bd99986991c71ab15cd",
             dynamicTemplateData: {
-                Weblink: (process.env.WEBLINK_BASE_URL || "https://app.tradingpostapp.com") + `/resetpassword?token=${token}`
+                Weblink: callbackUrl + `/resetpassword?token=${token}`
             }
         })
     }
@@ -142,7 +141,6 @@ export const resetPassword = async (email: string, tokenOrPass: string, isPass: 
     }
     else {
         const data = jwt.verify(tokenOrPass, await DefaultConfig.fromCacheOrSSM("authkey")) as jwt.JwtPayload;
-        console.log(data);
         userId = data.resetUserId;
     }
 

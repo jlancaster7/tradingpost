@@ -48,7 +48,7 @@ let userCacheInit = (async () => {
         WatchlistSavedApi.internal.list()
         ])
 
-    //console.log(JSON.stringify(watchlists));
+    
     caches.user = {};
 
 
@@ -83,16 +83,15 @@ export const getPriceCacheTask = (async () => {
     const updatePriceCache = async () => {
         const priceByTicker: typeof caches.price.byTicker = {}
         const prices = await execProc<PriceInfo>("tp.api_security_prices");
-        //console.log(JSON.stringify(prices));
         prices.forEach((p) => {
             priceByTicker[p.symbol] = p.price;
         })
         caches.price.byTicker = priceByTicker;
     }
-    console.log("Updating Prices");
+    
     await updatePriceCache();
     setInterval(() => {
-        console.log("Updating Prices")
+        
         updatePriceCache();
     }, 5 * 60 * 1000)
     return caches.price
@@ -102,12 +101,12 @@ export const getPriceCacheTask = (async () => {
 
 export const getUserCache = async () => {
     await userCacheInit;
-    // console.log(JSON.stringify(caches.user));
+
     return caches.user;
 }
 export const getPostCache = async () => {
     await userCacheInit;
-    // console.log(JSON.stringify(caches.user));
+    
     return caches.post;
 }
 
