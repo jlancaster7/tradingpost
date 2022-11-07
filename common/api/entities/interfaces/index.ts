@@ -46,6 +46,14 @@ export interface ICommentInsert {
     user_id: string
     };
 
+export interface IIbkrList {
+    
+    };
+
+export interface IIbkrGet {
+    
+    };
+
 export interface IPlatformClaimList {
         platform: string,
     claims?: any,

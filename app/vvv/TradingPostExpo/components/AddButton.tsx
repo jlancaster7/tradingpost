@@ -7,6 +7,8 @@ export const AddButton = (props: Pick<PressableProps, "onPress"> & Pick<ViewStyl
     return <Pressable onPress={props.onPress} style={{ justifyContent: "center" }} ><Icon
         //fill={AppColors.secondary}
         fill={AppColors.secondary}
+        height={props.height}
+        width={props.width}
         name="plus-square" style={{
             height: props.height,
             width: props.width

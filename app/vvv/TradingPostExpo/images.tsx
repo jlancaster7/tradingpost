@@ -6,6 +6,9 @@ import _ClimbingMountain from './assets/ClimbingMountain.svg'
 import _Debate from './assets/Debate.svg'
 import _Studying from './assets/Studying.svg'
 import _Analyze from './assets/analyze.svg'
+import _Bank from './assets/bank.svg'
+import _IBKR from './assets/IBKR.svg'
+
 
 
 import Logo from './assets/logo.svg'
@@ -31,6 +34,7 @@ import Learn from './assets/side-menu/Learn.svg'
 import LogOut from './assets/side-menu/Log Out.svg'
 import Profile from './assets/side-menu/Profile.svg'
 import Watchlist from './assets/side-menu/Watchlist.svg'
+import Bank_Link from './assets/bank-link-icon.svg'
 
 import YouTubeLogo from '@iconify/icons-logos/youtube-icon'
 import SpotifyLogo from '@iconify/icons-logos/spotify-icon'
@@ -55,6 +59,7 @@ export const sideMenu = {
     LogOut,
     Profile,
     Watchlist,
+    Bank_Link,
     BookmarkActive: _BookmarkActive,
     BookmarkInactive: _BookmarkInactive,
     BookmarkActiveBlue: _BookmarkActiveBlue
@@ -71,6 +76,9 @@ export const ClimbingMountain = makeExpoSvg(_ClimbingMountain)
 export const Debate = makeExpoSvg(_Debate)
 export const Studying = makeExpoSvg(_Studying)
 export const Analyze = makeExpoSvg(_Analyze);
+export const Bank = makeExpoSvg(_Bank);
+export const IBKR = makeExpoSvg(_IBKR);
+//export const Bank_Link = makeExpoSvg(_Bank_Link);
 
 export const IconBg = makeExpoSvg(_IconBg)
 export const IconNoBg = makeExpoSvg(_IconNoBg)

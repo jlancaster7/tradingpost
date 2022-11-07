@@ -35,6 +35,9 @@
       "postType": {
         "type": "keyword"
       },
+      "subscription_level": {
+        "type": "text"
+      },
       "postTypeValue": {
         "type": "integer"
       },

@@ -34,7 +34,8 @@ export type RootStackParamList =
         "Watchlist" |
         "ImagePicker" |
         "ResetPassword" |
-
+        "BrokeragePicker" |
+        "IbkrInfo" |
         "Subscription" |
         "SubscriptionSettings" |
         "NotificationTrade"

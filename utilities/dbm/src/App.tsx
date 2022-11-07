@@ -114,6 +114,7 @@ export const DataTypes: DependantRecord = {
   "UUID": () => null,
   "money": () => null,
   "timestamptz": () => null,
+  "date": ()=> null,
   "boolean": () => null,
   "text": (data) => {
 

@@ -34,33 +34,14 @@ import { useToast } from "react-native-toast-notifications";
 import { AccountSettingsScreen } from './AccountSettingsScreen';
 import { useGoogleAuth } from "../utils/third-party/youtube";
 import { YourContentComponent } from "../components/YourContentComponent";
+import { LinkBrokerageComponent } from "../components/LinkBrokerageComponent";
 
-export function AccountInfoScreen() {
+export function AccountInfoScreen(props: any) {
     const { appUser, authToken, signIn } = useAppUser(),
         [index, setIndex] = useState(0),
         linkTo = useLinkTo<any>(),
         toast = useToast(),
         opacityAnim = useRef(new Animated.Value(0)).current;
-    //########################################################################################################################
-    //Logic for the 'Your Content Tab
-    //########################################################################################################################
-    /*
-    const [inputMessage, setInputMessage] = useState(''),
-        [inputPlatform, setInputPlatform] = useState(''),
-        [inputValue, setInputValue] = useState('');
-
-
-    const getTwitterToken = useTwitterAuth();
-    const getGoogleToken = useGoogleAuth();
-
-    let userClaims = appUser?.claims;
-    
-    let [twitterHandle, setTwitterHandle] = useState(userClaims ? userClaims.find(c => c.platform === "twitter")?.claims.handle : '')
-    let [substackUsername, setsubstackUsername] = useState(userClaims ? userClaims.find(c => c.platform === "substack")?.claims.handle : '')
-    let [spotifyShow, setSpotifyShow] = useState(userClaims ? userClaims.find(c => c.platform === "spotify")?.claims.handle : '')
-    let [youtubeChannel, setYoutubeChannel] = useState(userClaims ? userClaims.find(c => c.platform === "youtube")?.claims.handle : '')
-    */
-    //########################################################################################################################
 
     //########################################################################################################################
     //Logic for the 'Account Settings' Tab
@@ -95,35 +76,6 @@ export function AccountInfoScreen() {
         setAnalystCheck(isAnalystChecked);
     }
 
-    const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
-    const intervalRef = useRef<any>();
-    const [needsRefresh, setNeedsRefresh] = useState<{}>();
-    const openLink = async () => {
-        await Api.User.extensions.generateBrokerageLink(undefined).then(({ link }) => {
-            setLink(link)
-        })
-        const browserName = "finicity_auth";
-        await openBrowserAsync(brokerLink, { "windowName": browserName });
-        clearInterval(intervalRef.current);
-
-        intervalRef.current = setInterval(async () => {
-            console.log("WTF");
-            if (await AsyncStorage.getItem("auth-finicity-code")) {
-                console.log("CODE HAS BEEN FOUND");
-                setAccounts(await Api.User.extensions.getBrokerageAccounts())
-            }
-        }, 5000)
-    }
-    //cleanup
-    useEffect(() => {
-        AsyncStorage.removeItem("auth-finicity-code");
-        return () => {
-            clearInterval(intervalRef.current);
-            AsyncStorage.removeItem("auth-finicity-code");
-        }
-    }, [])
-
-
     useEffect(() => {
         Animated.timing(
             opacityAnim,
@@ -134,17 +86,6 @@ export function AccountInfoScreen() {
                 useNativeDriver: true
             }).start();
     }, [])
-    const [brokerLink, setLink] = useState("");
-    useEffect(() => {
-    }, [needsRefresh])
-
-    useEffect(() => {
-        Api.User.extensions.getBrokerageAccounts()
-            .then((r: any) => {
-                setAccounts(r);
-            })
-    }, [])
-
     //########################################################################################################################
 
     //########################################################################################################################
@@ -362,19 +303,7 @@ ${value.security_name}`,
                             <SwitchField label='Portfolio' checked={holdingsCheck} onChange={onHoldingsCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
                             <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
                         </Section>
-                        <Section style={{ padding: 10 }} title="Link Brokerage Accounts" button={(props) => accounts?.length ? <EditButton
-                            onPress={() => {
-                                openLink();
-                            }}
-                            height={35}
-                            width={35}
-                        /> : <AddButton
-                            onPress={() => openLink()}
-                            height={35}
-                            width={35}
-                        />} >
-                            <Table datasetKey={accounts?.map(a => a.id).join(",") || "none"} columns={[{ alias: "Brokerage", field: "broker_name", align: "left" }, { alias: "Account #", field: "account_number", align: "left" }]} data={accounts} noDataMessage="You have no linked accounts" />
-                        </Section>
+                       <LinkBrokerageComponent props={props} />
                         <Section title='Payment' style={{ padding: 10 }}>
                             <Text>
                                 Coming Soon!

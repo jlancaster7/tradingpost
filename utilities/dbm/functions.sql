@@ -110,6 +110,14 @@ return query SELECT * FROM public.view_comment_get(request) as v WHERE v.id = _i
 
 
 
+
+
+
+
+
+
+
+
     DROP FUNCTION IF EXISTS public.api_platform_claim_get(jsonb);
   
     CREATE OR REPLACE FUNCTION public.api_platform_claim_get(

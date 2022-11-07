@@ -4,11 +4,11 @@
 
 /* No changes to data_comment [comment]*/
 
+/* No changes to ibkr_account [ibkr]*/
+
 /* No changes to data_platform_claim [platform_claim]*/
 
-ALTER TABLE data_post
-ADD COLUMN max_width MONEY,
-ADD COLUMN aspect_ratio MONEY;
+/* No changes to data_post [post]*/
 
 /* No changes to data_subscriber [subscriber]*/
 

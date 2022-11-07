@@ -193,7 +193,7 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
     }, [])
 
     const dt = new Date(props.response.dateTime);
-    const dtFmt = `${dt.getMonth() + 1}/${dt.getDay()}/${dt.getFullYear() % 100}`
+    const dtFmt = `${dt.getMonth() + 1}/${dt.getDate()}/${dt.getFullYear() % 100}`
     return <NotificationTab>
         <Pressable
             onPress={openProfile}>

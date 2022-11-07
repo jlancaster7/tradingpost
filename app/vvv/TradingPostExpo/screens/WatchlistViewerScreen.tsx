@@ -19,7 +19,6 @@ import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../s
 import { useSecuritiesList} from '../SecurityList'
 import { toDollarsAndCents, toNumber1, toPercent, toPercent1, toPercent2 } from "../utils/misc"
 import { MultiTermFeedPart } from "../components/MultiTermFeed"
-import { ViewProps } from "react-native"
 
 
 export const useNoteField = (hideEmptyNote?: boolean) => {
@@ -126,9 +125,8 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                     const change = a.item.price?.price || a.item.price?.open ? (a.item.price?.price - a.item.price?.open) / a.item.price?.open : 0
                     return (
                             <View style={{justifyContent: 'space-around', flexDirection: 'row', flex: 1}}>
-                                <Text>{toDollarsAndCents(a.item.price?.price)}</Text>
                                 <Text style={[change ? change >= 0 ? { color: 'green'} : {color: 'red'} : {} ,{marginLeft: sizes.rem0_5/2}]}>{`(${toPercent2(change)})`}</Text>
-                                
+                                <Text>{toDollarsAndCents(a.item.price?.price)}</Text>                                
                             </View>
                     )
                 },

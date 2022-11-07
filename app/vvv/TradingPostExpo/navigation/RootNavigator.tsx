@@ -33,6 +33,8 @@ import {IconifyIcon} from "../components/IconfiyIcon";
 import KeyboardClose from '@iconify/icons-mdi/keyboard-close'
 import {useLinkTo} from "@react-navigation/native";
 import {useEffect} from "react";
+import { BrokeragePickerScreen } from "../screens/BrokeragePickerScreen";
+import { IbkrInfoScreen } from "../screens/IbkrInfoScreen";
 
 
 Notifications.setNotificationHandler({
@@ -93,6 +95,8 @@ export function RootNavigator(props: { url: string }) {
             <Stack.Screen name="AccountSettings" component={AccountSettingsScreen}/>
             <Stack.Screen name="AccountInformation" component={AccountInfoScreen}/>
             <Stack.Screen name="AppInformation" component={AppInformationScreen} options={{headerShown: false}}/>
+            <Stack.Screen name="BrokeragePicker" component={BrokeragePickerScreen} />
+            <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen}/>
             <Stack.Screen name="SubscriptionSettings" component={SubscriptionSettingsScreen}/>
             <Stack.Screen name="WatchlistEditor" component={WatchlistEditorScreen}/>
             <Stack.Screen name="PostScreen" component={PostScreen}/>

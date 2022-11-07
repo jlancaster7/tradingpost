@@ -54,26 +54,26 @@ export const PostEditorScreen = (props: any) => {
         </View>
         <View style={{flex: 1, marginHorizontal: sizes.rem1 / 5}}>
             <ScrollView 
-            
-            onTouchEnd={(ev) => {
-                if (!contentFocused) {
-                    editorRef.current?.focusContentEditor();
-                }
-            }} style={[flex, {}]}
-                        contentContainerStyle={{minHeight: "100%", maxHeight: "100%", height: "100%"}}>
+                onTouchEnd={(ev) => {
+                    if (!contentFocused) {
+                        editorRef.current?.focusContentEditor();
+                    }
+                }} 
+                style={[flex, {}]}
+                contentContainerStyle={{minHeight: "100%", maxHeight: "100%", height: "100%"}}>
                 <Text style={{ fontSize: fonts.medium, marginHorizontal: sizes.rem1, marginVertical: sizes.rem1 }}>Post</Text>
                 
                 <RichEditor 
-                onLayout={(event) => {
-                    postEntity.update({height: event.nativeEvent.layout.width / event.nativeEvent.layout.height , width: event.nativeEvent.layout.width})
-                }}
-                onFocus={() => {
-                    setContentFocused(true)
-                }} onBlur={() =>
-                    setContentFocused(false)} containerStyle={{minHeight: 1}}
-                            initialContentHTML={postEntity.data.content} ref={editorRef}
-                            placeholder={"Add content to your post"}
-                            {...bindTextInputBase(postEntity, "content", null, {"onChangeTextKey": "onChange"})} />
+                    onLayout={(event) => {
+                        postEntity.update({height: event.nativeEvent.layout.width / event.nativeEvent.layout.height , width: event.nativeEvent.layout.width})
+                    }}
+                    onFocus={() => {
+                        setContentFocused(true)
+                    }} onBlur={() =>
+                        setContentFocused(false)} containerStyle={{minHeight: 1}}
+                                initialContentHTML={postEntity.data.content} ref={editorRef}
+                                placeholder={"Add content to your post"}
+                                {...bindTextInputBase(postEntity, "content", null, {"onChangeTextKey": "onChange"})} />
             </ScrollView>
         </View>
         <RichToolbar editor={editorRef}/>

@@ -157,7 +157,7 @@ export function isoToDate(dateString: string) {
 export function toFormatedDateTime(dateTimeString: string) {
     const m = new Date(dateTimeString).getMonth() + 1;
     const d = new Date(dateTimeString).getDate();
-    const y = new Date(dateTimeString).getFullYear();
+    const y = new Date(dateTimeString).getFullYear() % 100;
     let h = new Date(dateTimeString).getHours();
     let min: string | number = new Date(dateTimeString).getMinutes();
     let ampm = 'am'
