@@ -41,7 +41,7 @@ import {
     IbkrAccountTable,
     IbkrAccount,
     IbkrSecurity,
-    IbkrActivity, IbkrCashReport, IbkrNav, IbkrPl, IbkrPosition
+    IbkrActivity, IbkrCashReport, IbkrNav, IbkrPl, IbkrPosition, TradingPostCurrentHoldingsTableWithMostRecentHolding
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -310,6 +310,53 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 quantity: row.quantity,
                 securityType: row.security_type,
                 value: row.value
+            }
+            return o
+        })
+    }
+
+    getTradingPostBrokerageWithMostRecentHolding = async (tpUserId: string, brokerage: string): Promise<TradingPostCurrentHoldingsTableWithMostRecentHolding[]> => {
+        const query = `
+            SELECT id,
+                   user_id,
+                   INSTITUTION_ID,
+                   BROKER_NAME,
+                   STATUS,
+                   ACCOUNT_NUMBER,
+                   mask,
+                   name,
+                   OFFICIAL_NAME,
+                   TYPE,
+                   subtype,
+                   updated_at,
+                   created_at,
+                   error,
+                   error_code,
+                   (SELECT max(holding_date)
+                    FROM TRADINGPOST_CURRENT_HOLDING TCH
+                    WHERE ACCOUNT_ID = tba.id) as most_recent_holding
+            FROM TRADINGPOST_BROKERAGE_ACCOUNT TBA
+            WHERE user_id = $1
+              AND BROKER_NAME = $2;`;
+        const result = await this.db.query(query, [tpUserId, brokerage]);
+        return result.map((row: any) => {
+            let o: TradingPostCurrentHoldingsTableWithMostRecentHolding = {
+                mostRecentHolding: DateTime.fromJSDate(row.most_recent_holding),
+                id: row.id,
+                name: row.name,
+                status: row.status,
+                createdAt: DateTime.fromJSDate(row.created_at),
+                userId: row.user_id,
+                mask: row.mask,
+                accountNumber: row.account_number,
+                type: row.type,
+                updatedAt: DateTime.fromJSDate(row.updated_at),
+                error: row.error,
+                brokerName: row.broker_name,
+                errorCode: row.error_code,
+                subtype: row.subtype,
+                institutionId: row.institution_id,
+                officialName: row.official_name
             }
             return o
         })
@@ -1795,7 +1842,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'holding_date', prop: 'holdingDate'}
         ], {table: 'tradingpost_current_holding'})
 
-        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id, security_id, security_type");
+        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id, security_id, option_id, security_type");
         await this.db.none(query);
     }
 
@@ -1815,7 +1862,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'option_id', prop: 'optionId'},
             {name: 'holding_date', prop: 'holdingDate'}
         ], {table: 'tradingpost_current_holding'})
-        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id, security_id, security_type");
+        const query = upsertReplaceQuery(currentHoldings, cs, this.pgp, "account_id, security_id, option_id, security_type");
         await this.db.none(query);
     }
 

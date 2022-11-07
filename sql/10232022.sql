@@ -269,3 +269,6 @@ ALTER TABLE tradingpost_current_holding
 
 CREATE UNIQUE INDEX tradingpost_transaction_unique_idx ON public.tradingpost_transaction USING btree (account_id, security_id, security_type, type, date, quantity, price);
 DROP INDEX tradingpost_transaction_idx;
+
+CREATE UNIQUE INDEX tradingpost_current_holding_unique_idx ON public.tradingpost_current_holding USING btree(account_id, security_id, option_id, security_type);
+DROP INDEX tradingpost_current_holding_idx;

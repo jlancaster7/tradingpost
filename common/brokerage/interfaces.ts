@@ -454,7 +454,7 @@ export type TradingPostCurrentHoldings = {
     accountId: number
     securityId: number
     optionId: number | null
-    securityType: SecurityType | null
+    securityType: SecurityType
     price: number
     priceAsOf: DateTime
     priceSource: string
@@ -466,6 +466,26 @@ export type TradingPostCurrentHoldings = {
 }
 
 export type TradingPostCurrentHoldingsTable = TradingPostCurrentHoldings & TableInfo;
+
+export type TradingPostCurrentHoldingsTableWithMostRecentHolding = {
+    id: number
+    userId: string
+    institutionId: number
+    brokerName: string
+    status: string
+    accountNumber: string
+    mask: string
+    name: string
+    officialName: string
+    type: string
+    subtype: string
+    updatedAt: DateTime
+    createdAt: DateTime
+    error: boolean
+    errorCode: number
+    mostRecentHolding: DateTime | null
+}
+
 
 export type TradingPostCurrentHoldingsTableWithSecurity = {
     symbol: string

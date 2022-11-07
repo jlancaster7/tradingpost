@@ -11,14 +11,13 @@ import {
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountsTable,
     TradingPostCurrentHoldings,
-    TradingPostCurrentHoldingsTable,
+    TradingPostCurrentHoldingsTableWithMostRecentHolding,
     TradingPostHistoricalHoldings,
     TradingPostTransactions
 } from "../interfaces";
 import {DateTime} from "luxon";
 import {addSecurity} from "../../market-data/interfaces";
 import {transformTransactionTypeAmount} from "../utils/utils";
-import {option} from "yargs";
 import fs from "fs";
 
 export interface TransformerRepository {
@@ -44,7 +43,7 @@ export interface TransformerRepository {
 
     deleteTradingPostAccountCurrentHoldings(accountIds: number[]): Promise<void>
 
-    getTradingPostBrokerageAccountCurrentHoldings(accountId: number): Promise<TradingPostCurrentHoldingsTable[]>
+    getTradingPostBrokerageWithMostRecentHolding(tpUserId: string, brokerage: string): Promise<TradingPostCurrentHoldingsTableWithMostRecentHolding[]>
 
     getOptionContractsByExternalIds(externalIds: string[]): Promise<OptionContractTable[]>
 }
@@ -306,9 +305,7 @@ export default class IbkrTransformer {
             if (tx.grossAmount === null) throw new Error("gross amount is null");
             let date = tx.orderTime
             if (date === null) {
-                if (tx.settleDate === null)
-                    throw new Error("order time and settle date is null")
-                date = tx.settleDate;
+                date = processDate;
             }
 
             let optionId = null;
@@ -360,11 +357,17 @@ export default class IbkrTransformer {
         });
 
         tpTransactions.sort(function (a, b) {
-            return a.accountId - b.accountId ||
-                a.securityId - b.securityId ||
-                a.securityType.localeCompare(b.securityType) ||
-                a.type.localeCompare(b.type) ||
-                a.date.toUnixInteger() - b.date.toUnixInteger()
+            try {
+                return a.accountId - b.accountId ||
+                    a.securityId - b.securityId ||
+                    a.securityType.localeCompare(b.securityType) ||
+                    a.type.localeCompare(b.type) ||
+                    a.date.toUnixInteger() - b.date.toUnixInteger()
+            } catch (e) {
+                console.error("HERE!!!")
+                console.error(e)
+                throw e
+            }
         })
 
         let rollupTxs: TradingPostTransactions[] = [];
@@ -467,17 +470,14 @@ export default class IbkrTransformer {
 
         await this._repository.upsertTradingPostHistoricalHoldings(historicalHoldings)
 
-        // Get an accounts last process time
-        const tpAccountMapKeys = Object.keys(tpAccountIdMap)
-        for (let i = 0; i < tpAccountMapKeys.length; i++) {
-            const tpAccount = tpAccountIdMap[tpAccountMapKeys[i]];
-            const holdings = await this._repository.getTradingPostBrokerageAccountCurrentHoldings(tpAccount.id);
-            if (holdings.length <= 0) continue;
-            if (holdings[0].holdingDate.toUnixInteger() < processDate.toUnixInteger()) return
-            else break
+        const currentTpHoldings = await this._repository.getTradingPostBrokerageWithMostRecentHolding(tpUserId, "ibkr");
+        if (currentTpHoldings.length > 0) {
+            const {mostRecentHolding} = currentTpHoldings[0];
+            if (mostRecentHolding !== null && mostRecentHolding.isValid && mostRecentHolding.toUnixInteger() > processDate.toUnixInteger()) {
+                return
+            }
         }
 
-        let cashEquivalentPerAccount: Record<number, TradingPostCurrentHoldings> = {};
         let currentHoldings: TradingPostCurrentHoldings[] = [];
         ibkrHoldings.forEach(h => {
             if (h.assetType === null) throw new Error("no type for ibkr holding");
@@ -510,34 +510,69 @@ export default class IbkrTransformer {
                 costBasis: h.costBasis,
                 securityType: securityType,
                 securityId: securitiesMapBySymbol[symbol].id,
-                holdingDate: processDate
-            }
-
-            if (x.securityType === SecurityType.cashEquivalent) {
-                let cae = cashEquivalentPerAccount[x.accountId];
-                if (!cae) {
-                    cashEquivalentPerAccount[x.accountId] = x
-                    return
-                }
-
-                cae = {
-                    ...cae,
-                    value: cae.value + x.value,
-                    quantity: cae.quantity + x.quantity,
-                }
-
-                cashEquivalentPerAccount[x.accountId] = cae;
-                return
+                holdingDate: h.reportDate
             }
             currentHoldings.push(x)
         });
 
-        Object.keys(cashEquivalentPerAccount).forEach(cae => {
-            currentHoldings.push(cashEquivalentPerAccount[parseInt(cae)])
+        currentHoldings.sort(function (a, b) {
+            try {
+                return a.accountId - b.accountId ||
+                    a.securityId - b.securityId ||
+                    a.securityType.localeCompare(b.securityType)
+            } catch (e) {
+                console.error("HERE!!!")
+                console.error(e)
+                throw e
+            }
         })
 
-        await this._repository.deleteTradingPostAccountCurrentHoldings(tpAccountMapKeys.map((k) => tpAccountIdMap[k].id));
-        await this._repository.addTradingPostCurrentHoldings(currentHoldings);
+        let rollupTxs: TradingPostCurrentHoldings[] = [];
+        let latestTx: TradingPostCurrentHoldings | null = null;
+        currentHoldings.forEach(tx => {
+            if (!latestTx) {
+                latestTx = tx;
+                return
+            }
+
+            if (latestTx.accountId === tx.accountId &&
+                latestTx.securityId === tx.securityId &&
+                latestTx.securityType === tx.securityType &&
+                latestTx.optionId === tx.optionId
+            ) {
+                latestTx.quantity += tx.quantity
+                latestTx.value += tx.value
+                latestTx.costBasis !== null && tx.costBasis ? latestTx.costBasis += tx.costBasis : null
+                return
+            }
+
+            rollupTxs.push(latestTx);
+            latestTx = tx;
+        });
+
+        latestTx !== null ? rollupTxs.push(latestTx) : null;
+
+        const tpAccountIds = currentTpHoldings.map(tp => tp.id);
+        try {
+            await this._repository.deleteTradingPostAccountCurrentHoldings(tpAccountIds);
+            await this._repository.addTradingPostCurrentHoldings(rollupTxs);
+        } catch (e) {
+            let data: any[] = [];
+            rollupTxs.forEach(tx => {
+                data.push({
+                    "accountId": tx.accountId,
+                    "securityType": tx.securityType,
+                    "securityId": tx.securityId,
+                    "optionId": tx.optionId,
+                    "quantity": tx.quantity,
+                    "holdingDate": tx.holdingDate,
+                })
+
+            })
+            fs.writeFileSync("data.json", JSON.stringify(data));
+            console.error(e)
+            throw e
+        }
     }
 
     _getAccounts = async <T extends { accountId: string }>(tpUserId: string, ibkrWithAccount: T[]): Promise<Record<string, TradingPostBrokerageAccountsTable>> => {

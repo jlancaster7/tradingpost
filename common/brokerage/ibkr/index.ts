@@ -16,7 +16,7 @@ import {
     IbkrPosition,
     IbkrPositionCsv,
     IbkrSecurity,
-    IbkrSecurityCsv
+    IbkrSecurityCsv, TradingPostCurrentHoldings
 } from "../interfaces";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {DateTime} from "luxon";
@@ -92,48 +92,40 @@ export default class IbkrService {
     }
 
     run = async () => {
-        console.log("Fetching pending jobs")
         const pendingJobs = await this._repo.getPendingJobs("ibkr");
         if (pendingJobs.length <= 0) return false;
 
-        console.log("finding jobs with file length")
         const pendingJob = pendingJobs.find(j => j.data.filenames.length === 7);
         if (!pendingJob) return false;
 
         let tpUserId: string | null = null;
         try {
-            console.log("Updating Job Status")
             await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.RUNNING);
 
             const {dateToProcess} = pendingJob;
-            console.log("Processing Job for Date: ", dateToProcess.toString())
-
-            console.log("Importing From Account")
             const [uId, newerDateAlreadyProcessed, newAccounts] = await this._importAccount(pendingJob);
             tpUserId = uId
             const newTpAccountIds = await this._transformer.importTradingPostBrokerageAccounts(dateToProcess, tpUserId, newAccounts);
             await this._repo.addTradingPostAccountGroup(tpUserId, 'default', newTpAccountIds, 10117)
 
-            console.log("Import Securities")
             const securities = await this._importSecurity(pendingJob);
-            console.log("Doing Other security stuf...");
             await this._transformer.importTradingPostSecurities(dateToProcess, tpUserId, securities);
 
-            console.log("Importing Activity")
+            // console.log("Importing Activity")
             const activity = await this._importActivity(pendingJob);
             await this._transformer.importTradingPostTransactions(dateToProcess, tpUserId, activity);
 
-            console.log("Importing Positions")
+            // console.log("Importing Positions")
             const positions = await this._importPosition(pendingJob);
             await this._transformer.importTradingPostHoldings(dateToProcess, tpUserId, positions);
 
-            console.log("Importing Cash Reports")
+            // console.log("Importing Cash Reports")
             await this._importCashReport(pendingJob);
 
-            console.log("Importing Nav")
+            // console.log("Importing Nav")
             await this._importNav(pendingJob);
 
-            console.log("Importing PLs")
+            // console.log("Importing PLs")
             await this._importPl(pendingJob);
 
             await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.SUCCESSFUL)
@@ -592,7 +584,7 @@ export default class IbkrService {
             return x;
         });
         const positionsMapped = positions.map((s: IbkrPositionCsv) => {
-            if (s.ReportDate === '') throw new Error("no report date available for pls");
+            if (s.ReportDate === '') throw new Error("no report date available for position");
             const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
             let x: IbkrPosition = {
                 accountId: s.AccountID,
@@ -652,7 +644,7 @@ export default class IbkrService {
     console.log("Running...");
     let keepProcessing = true;
     while (keepProcessing) {
-        await ibkrSrv.run();
+        keepProcessing = await ibkrSrv.run();
     }
     console.log("Finished...");
 })()
