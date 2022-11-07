@@ -152,6 +152,7 @@ export class PortfolioSummaryService implements ISummaryService {
         for (let d of holdings) {
             sum += d.value;
             if (d.securityId === 26830) { continue; }
+            if (d.optionId) { continue; }
             beta.push([await this.computeSecurityBeta(d.securityId, benchmarkId, daysPrior), d.value]);
             
         }
