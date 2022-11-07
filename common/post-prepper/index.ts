@@ -83,7 +83,7 @@ export default class PostPrepper {
         }
     }
 
-    tradingpost = async (html: string): Promise<SizeResponse> => { 
+    tradingpost = async (html: string): Promise<SizeResponse> => {
         if (this.browser === undefined) throw new Error("post-prepper not inited");
         const pageContent = `<html><body><div style="width:${MAX_WIDTH}px;">
                     <div class="tracker" data-tracker-id="tweet-tracker">

@@ -28,7 +28,7 @@ export interface IBrokerageRepository {
 
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>
 
-    upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<void>
+    upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<number[]>
 
     addTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
 
@@ -57,6 +57,8 @@ export interface IBrokerageRepository {
     getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
 
     deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
+
+    deleteTradingPostAccountCurrentHoldings(accountIds: number[]): Promise<void>
 
     getOldestTransaction(accountId: number): Promise<TradingPostTransactions | null>
 }
@@ -436,6 +438,12 @@ export interface GetSecurityBySymbol {
     createdAt: Date
 }
 
+export type TableInfoV2 = {
+    id: number
+    updatedAt: DateTime
+    createdAt: DateTime
+}
+
 export type TableInfo = {
     id: number
     created_at: DateTime
@@ -446,17 +454,38 @@ export type TradingPostCurrentHoldings = {
     accountId: number
     securityId: number
     optionId: number | null
-    securityType: SecurityType | null
+    securityType: SecurityType
     price: number
     priceAsOf: DateTime
     priceSource: string
     value: number
     costBasis: number | null
     quantity: number
-    currency: string | null
+    currency: string | null,
+    holdingDate: DateTime
 }
 
 export type TradingPostCurrentHoldingsTable = TradingPostCurrentHoldings & TableInfo;
+
+export type TradingPostCurrentHoldingsTableWithMostRecentHolding = {
+    id: number
+    userId: string
+    institutionId: number
+    brokerName: string
+    status: string
+    accountNumber: string
+    mask: string
+    name: string
+    officialName: string
+    type: string
+    subtype: string
+    updatedAt: DateTime
+    createdAt: DateTime
+    error: boolean
+    errorCode: number
+    mostRecentHolding: DateTime | null
+}
+
 
 export type TradingPostCurrentHoldingsTableWithSecurity = {
     symbol: string
@@ -598,7 +627,7 @@ export type TradingPostBrokerageAccounts = {
     errorCode: number
 }
 
-export type TradingPostBrokerageAccountsTable = TradingPostBrokerageAccounts & TableInfo;
+export type TradingPostBrokerageAccountsTable = TradingPostBrokerageAccounts & TableInfoV2;
 
 export type TradingPostAccountGroups = {
     name: string // all accounts under 'default'
@@ -674,6 +703,7 @@ export type OptionContract = {
     type: string
     strikePrice: number
     expiration: DateTime
+    externalId: string | null
 }
 
 export type OptionContractTable = {
@@ -681,3 +711,458 @@ export type OptionContractTable = {
     updatedAt: DateTime
     createdAt: DateTime
 } & OptionContract
+
+export enum BrokerageJobStatusType {
+    PENDING = "PENDING",
+    RUNNING = "RUNNING",
+    FAILED = "FAILED",
+    SUCCESSFUL = "SUCCESSFUL"
+}
+
+export type BrokerageJobStatus = {
+    brokerage: string
+    brokerageUserId: string
+    dateToProcess: DateTime
+    status: BrokerageJobStatusType
+    data?: any
+}
+
+export type BrokerageJobStatusTable = {
+    id: number
+    brokerage: string
+    brokerageUserId: string
+    dateToProcess: DateTime
+    status: BrokerageJobStatusType
+    data?: any
+    updatedAt: DateTime
+    createdAt: DateTime
+}
+
+export interface IbkrAccountCsv {
+    Type: string
+    AccountID: string
+    AccountTitle: string
+    Street: string
+    Street2: string
+    City: string
+    State: string
+    Zip: string
+    Country: string
+    AccountType: string
+    CustomerType: string
+    BaseCurrency: string
+    MasterAccountID: string
+    Van: string
+    Capabilities: string
+    Alias: string
+    PrimaryEmail: string
+    DateOpened: string
+    DateClosed: string
+    DateFunded: string
+    AccountRepresentative: string
+}
+
+export type IbkrAccount = {
+    userId: string
+    accountId: string
+    accountProcessDate: DateTime
+    type: string | null
+    accountTitle: string | null
+    street: string | null
+    street2: string | null
+    city: string | null
+    state: string | null
+    zip: string | null
+    country: string | null
+    accountType: string | null
+    customerType: string | null
+    baseCurrency: string | null
+    masterAccountId: string | null
+    van: string | null
+    capabilities: string | null
+    alias: string | null
+    primaryEmail: string | null
+    dateOpened: DateTime
+    dateClosed: DateTime | null
+    dateFunded: DateTime | null
+    accountRepresentative: string | null
+}
+
+export type IbkrAccountTable = {
+    id: number
+    updatedAt: DateTime
+    createdAt: DateTime
+} & IbkrAccount
+
+export type IbkrActivityCsv = {
+    Type: string
+    AccountID: string
+    ConID: string
+    SecurityID: string
+    Symbol: string
+    BBTicker: string
+    BBGlobalID: string
+    SecurityDescription: string
+    AssetType: string
+    Currency: string
+    BaseCurrency: string
+    TradeDate: string
+    TradeTime: string
+    SettleDate: string
+    OrderTime: string
+    TransactionType: string
+    Quantity: string
+    UnitPrice: string
+    GrossAmount: string
+    SECFee: string
+    Commission: string
+    Tax: string
+    Net: string
+    NetInBase: string
+    TradeID: string
+    TaxBasisElection: string
+    Description: string
+    FxRateToBase: string
+    ContraPartyName: string
+    ClrFirmID: string
+    Exchange: string
+    MasterAccountID: string
+    Van: string
+    AwayBrokerCommission: string
+    OrderID: string
+    ClientReference: string
+    TransactionID: string
+    ExecutionID: string
+    CostBasis: string
+    Flag: string
+}
+
+export type IbkrActivity = {
+    type: string | null
+    accountId: string
+    conId: string | null
+    securityId: string | null
+    symbol: string | null
+    bbTicker: string | null
+    bbGlobalId: string | null
+    securityDescription: string | null
+    assetType: string | null
+    currency: string | null
+    baseCurrency: string | null
+    tradeDate: DateTime | null
+    tradeTime: string | null
+    settleDate: DateTime | null
+    orderTime: DateTime | null
+    transactionType: string | null
+    quantity: number | null
+    unitPrice: number | null
+    grossAmount: number | null
+    secFee: number | null
+    commission: number | null
+    tax: number | null
+    net: number | null
+    netInBase: number | null
+    tradeId: string | null
+    taxBasisElection: string | null
+    description: string | null
+    fxRateToBase: number | null
+    contraPartyName: string | null
+    clrFirmId: string | null
+    exchange: string | null
+    masterAccountId: string | null
+    van: string | null
+    awayBrokerCommission: number | null
+    orderId: string | null
+    clientReferences: string | null
+    transactionId: string | null
+    executionId: string | null
+    costBasis: number | null
+    flag: string | null
+}
+
+export type IbkrActivityTable = {
+    id: number
+    updatedAt: DateTime
+    createdAt: DateTime
+} & IbkrActivity
+
+export type IbkrCashReportCsv = {
+    Type: string
+    AccountID: string
+    ReportDate: string
+    Currency: string
+    BaseSummary: string
+    Label: string
+    Total: string
+    Securities: string
+    Futures: string
+    IBUKL: string
+    PAXOS: string
+}
+
+export type IbkrCashReport = {
+    type: string | null
+    accountId: string
+    reportDate: DateTime | null
+    currency: string | null
+    baseSummary: boolean | null
+    label: string | null
+    total: number | null
+    securities: number | null
+    futures: number | null
+    ibukl: number | null
+    paxos: number | null
+}
+
+export type IbkrCashReportTable = {
+    id: number
+    updatedAt: DateTime
+    createdAt: DateTime
+} & IbkrCashReport
+
+export type IbkrNavCsv = {
+    Type: string
+    AccountID: string
+    BaseCurrency: string
+    Cash: string
+    CashCollateral: string
+    Stocks: string
+    IPOSubscription: string
+    SecuritiesBorrowed: string
+    SecuritiesLent: string
+    Options: string
+    Bonds: string
+    Commodities: string
+    Funds: string
+    Notes: string
+    Accruals: string
+    DividendAccruals: string
+    SoftDollars: string
+    Crypto: string
+    Totals: string
+    TWR: string
+    CFDUnrealizedPL: string
+    ForexCFDUnrealizedPL: string
+}
+
+export type IbkrNav = {
+    type: string | null
+    accountId: string
+    baseCurrency: string | null
+    cash: number | null
+    cashCollateral: number | null
+    stocks: number | null
+    ipoSubscription: number | null
+    securitiesBorrowed: number | null
+    securitiesLent: number | null
+    options: number | null
+    bonds: number | null
+    commodities: number | null
+    funds: number | null
+    notes: number | null
+    accruals: number | null
+    dividendAccruals: number | null
+    softDollars: number | null
+    crypto: number | null
+    totals: number | null
+    twr: number | null
+    cfdUnrealizedPl: number | null
+    forexCfdUnrealizedPl: number | null
+    processedDate: DateTime
+}
+
+export type IbkrNavTable = {
+    id: number
+    updatedAt: DateTime
+    createdAt: DateTime
+} & IbkrNav
+
+export type IbkrPlCsv = {
+    AccountID: string
+    InternalAssetID: string
+    SecurityID: string
+    Symbol: string
+    BBTicker: string
+    BBGlobalID: string
+    SecurityDescription: string
+    AssetType: string
+    Currency: string
+    ReportDate: string
+    PositionMTM: string
+    PositionMTMInBase: string
+    TransactionMTM: string
+    TransactionMTMInBase: string
+    RealizedST: string
+    RealizedSTInBase: string
+    RealizedLT: string
+    RealizedLTInBase: string
+    UnrealizedST: string
+    UnrealizedSTInBase: string
+    UnrealizedLT: string
+    UnrealizedLTInBase: string
+}
+
+export type IbkrPl = {
+    accountId: string
+    internalAssetId: string
+    securityId: string | null
+    symbol: string | null
+    bbTicker: string | null
+    bbGlobalId: string | null
+    securityDescription: string | null
+    assetType: string | null
+    currency: string | null
+    reportDate: DateTime
+    positionMtm: number | null
+    positionMtmInBase: number | null
+    transactionMtm: number | null
+    transactionMtmInBase: number | null
+    realizedSt: number | null
+    realizedStInBase: number | null
+    realizedLt: number | null
+    realizedLtInBase: number | null
+    unrealizedSt: number | null
+    unrealizedStInBase: number | null
+    unrealizedLt: number | null
+    unrealizedLtInBase: number | null
+}
+
+export type IbkrPlTable = {
+    id: number
+    updatedAt: DateTime
+    creaetdAt: DateTime
+} & IbkrPl
+
+export type IbkrPositionCsv = {
+    Type: string
+    AccountID: string
+    ConID: string
+    SecurityID: string
+    Symbol: string
+    BBTicker: string
+    BBGlobalID: string
+    SecurityDescription: string
+    AssetType: string
+    Currency: string
+    BaseCurrency: string
+    Quantity: string
+    QuantityInBase: string
+    CostPrice: string
+    CostBasis: string
+    CostBasisInBase: string
+    MarketPrice: string
+    MarketValue: string
+    MarketValueInBase: string
+    OpenDateTime: string
+    FxRateToBase: string
+    ReportDate: string
+    SettledQuantity: string
+    SettledQuantityInBase: string
+    MasterAccountID: string
+    Van: string
+    AccruedInt: string
+    OriginatingOrderID: string
+    Multiplier: string
+}
+
+export type IbkrPosition = {
+    accountId: string
+    type: string | null
+    conId: string | null
+    securityId: string | null
+    symbol: string | null
+    bbTicker: string | null
+    bbGlobalId: string | null
+    securityDescription: string | null
+    assetType: string | null
+    currency: string | null
+    baseCurrency: string | null
+    quantity: number | null
+    quantityInBase: number | null
+    costPrice: number | null
+    costBasis: number | null
+    costBasisInBase: number | null
+    marketPrice: number | null
+    marketValue: number | null
+    marketValueInBase: number | null
+    openDateTime: DateTime | null
+    fxRateToBase: number | null
+    reportDate: DateTime
+    settledQuantity: number | null
+    settledQuantityInBase: number | null
+    masterAccountId: string | null
+    van: string | null
+    accruedInt: number | null
+    originatingOrderId: string | null
+    multiplier: number | null
+}
+
+export type IbkrPositionTable = {
+    id: number
+    updatedAt: DateTime
+    createdAt: DateTime
+} & IbkrPosition
+
+export type IbkrSecurityCsv = {
+    Type: string
+    ConID: string
+    AssetType: string
+    SecurityID: string
+    CUSIP: string
+    Symbol: string
+    BBTicker: string
+    BBTickerAndExchangeCode: string
+    BBGlobalID: string
+    Description: string
+    UnderlyingSymbol: string
+    UnderlyingCategory: string
+    UnderlyingSecurityId: string
+    UnderlyingPrimaryExchange: string
+    UnderlyingConID: string
+    Multiplier: string
+    ExpirationDate: string
+    OptionType: string
+    OptionStrike: string
+    MaturityDate: string
+    IssueDate: string
+    PrimaryExchange: string
+    Currency: string
+    SubCategory: string
+    Issuer: string
+    DeliveryMonth: string
+}
+
+export type IbkrSecurity = {
+    type: string
+    conId: string
+    assetType: string
+    securityId: string
+    cusip: string
+    symbol: string
+    bbTicker: string | null
+    bbTickerAndExchangeCode: string | null
+    bbGlobalId: string | null
+    description: string | null
+    underlyingSymbol: string | null
+    underlyingCategory: string | null
+    underlyingSecurityId: string | null
+    underlyingPrimaryExchange: string | null
+    underlyingConId: string | null
+    multiplier: number | null
+    expirationDate: DateTime | null
+    optionType: string | null
+    optionStrike: number | null
+    maturityDate: DateTime | null
+    issueDate: DateTime | null
+    primaryExchange: string | null
+    currency: string | null
+    subCategory: string | null
+    issuer: string | null
+    deliveryMonth: string | null
+}
+
+export type IbkrSecurityTable = {
+    id: number
+    updatedAt: DateTime
+    createdAt: DateTime
+} & IbkrSecurity

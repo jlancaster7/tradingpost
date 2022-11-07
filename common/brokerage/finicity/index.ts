@@ -16,7 +16,6 @@ import {AddCustomerResponse, AddCustomerResponseError, GetInstitutionsInstitutio
 import {DateTime} from "luxon";
 import FinicityTransformer from "./transformer";
 
-
 export default class FinicityService implements IBrokerageService {
     private finicity: Finicity;
     private repository: IFinicityRepository;

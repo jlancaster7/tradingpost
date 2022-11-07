@@ -13,14 +13,14 @@ import {
     TradingPostBrokerageAccountsTable,
     TradingPostHistoricalHoldings,
     IBrokerageService,
-    IBrokerageRepository, TradingPostBrokerageAccounts
+    IBrokerageRepository
 } from './interfaces';
 
 const Default = (pgClient: IDatabase<any>, pgp: IMain, finicity: Finicity): [Record<string, IBrokerageService>, IBrokerageRepository, PortfolioSummaryService] => {
     const repo = new Repository(pgClient, pgp)
     const portSummary = new PortfolioSummaryService(repo);
     const brokerageMap = {
-        "finicity": new FinicityService(finicity, repo, new FinicityTransformer(repo))
+        "finicity": new FinicityService(finicity, repo, new FinicityTransformer(repo)),
     }
 
     return [brokerageMap, repo, portSummary]
@@ -100,6 +100,13 @@ export default class Brokerage extends BrokerageService {
         //  and then return error response for those accounts there... this way we avoid throwing exceptions as well
         //  return accounts in multiple states and validate if its in an error state, according to the service...
         const holdings = await brokerage.importHoldings(brokerageUserId);
+        const accountIds = (() => {
+            let idMap: Record<number, null> = {}
+            holdings.forEach(h => idMap[h.accountId] = null)
+            return Object.keys(idMap).map(id => parseInt(id));
+        })()
+
+        await this.repository.deleteTradingPostAccountCurrentHoldings(accountIds)
         await this.repository.upsertTradingPostCurrentHoldings(holdings);
 
         let holdingHistory: TradingPostHistoricalHoldings[] = holdings.map(holding => ({
