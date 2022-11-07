@@ -146,7 +146,7 @@ return query SELECT * FROM public.view_comment_get(request) as v WHERE v.id = _i
   
     CREATE OR REPLACE FUNCTION public.api_post_get(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"subscription_level" text,"body" text,"upvoted_count" bigint,"user" json,"comment_count" integer,"title" text)
+        RETURNS TABLE("id" BIGINT,"subscription_level" text,"body" text,"upvoted_count" bigint,"user" json,"comment_count" integer,"title" text,"aspect_ratio" money,"max_width" money)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -160,7 +160,7 @@ return query SELECT * FROM public.view_comment_get(request) as v WHERE v.id = _i
   
     CREATE OR REPLACE FUNCTION public.api_post_list(
         request jsonb)
-        RETURNS TABLE("id" BIGINT,"body" text,"upvoted_count" bigint,"subscription_level" text,"user" json,"comment_count" integer,"title" text)
+        RETURNS TABLE("id" BIGINT,"body" text,"upvoted_count" bigint,"subscription_level" text,"user" json,"comment_count" integer,"title" text,"max_width" money,"aspect_ratio" money)
         LANGUAGE 'plpgsql'
     AS $BODY$
     

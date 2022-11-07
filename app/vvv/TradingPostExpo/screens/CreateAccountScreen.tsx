@@ -39,8 +39,8 @@ export default (props: any) => {
     /**
      * State & hooks
      */
-    const { appUser, userState } = useAppUser(),
-        [wizardIndex, setWizardIndex] = useState(0),
+    const { loginState } = useAppUser(),
+        appUser = loginState?.appUser, userState = loginState?.setupStatus,
         user = useReadonlyEntity<IUserGet>(appUser || {
             profile_url: "",
             first_name: "",

@@ -128,6 +128,9 @@ export function fromAmiraDate(date: string) {
 export function toPercent(number: number) {
     return (number === undefined || number === null) ? "" : numeral(number).format('0%')
 }
+export function toPercent1(number: number) {
+    return (number === undefined || number === null) ? "" : numeral(number).format('0.0%')
+}
 export function toPercent2(number: number) {
     return (number === undefined || number === null) ? "" : numeral(number).format('0.00%')
 }

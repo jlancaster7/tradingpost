@@ -5,18 +5,18 @@ import { useToast } from "react-native-toast-notifications";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { ElevatedSection } from "../components/Section";
 import { TextField } from "../components/TextField";
-import { DashScreenProps } from "../navigation";
 import { Api } from '@tradingpost/common/api'
 import { useAppUser } from "../Authentication";
+import { RootStackScreenProps } from "../navigation/pages";
 
-export const ChangePasswordScreen = (props: DashScreenProps<{ token?: string }>) => {
+export const ChangePasswordScreen = (props: RootStackScreenProps<"ResetPassword">) => {
     const
         [oldPass, setOldPass] = useState<string>(),
         [newPass, setNewPass] = useState<string>(),
         [confirm, setConfirm] = useState<string>(),
         toast = useToast(),
         hasToken = Boolean(props.route.params.token),
-        appUser = useAppUser()
+        { loginState } = useAppUser()
 
     return <View>
         <ElevatedSection title={"Reset Password"}>
@@ -35,12 +35,12 @@ export const ChangePasswordScreen = (props: DashScreenProps<{ token?: string }>)
 
 
                         await Api.Auth.resetPassword(
-                            appUser.appUser?.email || "",
+                            loginState?.appUser?.email || "",
                             props.route.params.token || oldPass || "",
                             !hasToken,
                             newPass || "")
 
-                        props.navigation.goBack();
+                        props.navigation.replace("Root");
 
                     }
                     catch (ex: any) {

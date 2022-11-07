@@ -1,8 +1,10 @@
 import Auth from '@tradingpost/common/api/entities/static/AuthApi';
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import User from '@tradingpost/common/api/entities/apis/UserApi';
 import { useData } from "./lds";
 import { useState } from 'react';
+import { EventRegister } from 'react-native-event-listeners';
+import { Log } from './utils/logger';
 
 
 // if (email !== '') {
@@ -14,32 +16,64 @@ import { useState } from 'react';
 //     }
 // }
 
+
+const loginStateChangedEventName = "LOGIN_STATE_CAHNGED";
+
+
+
 export const useAppUser = () => {
 
-    const { value: appUser, setValue: setAppUser } = useData("currentUser");
-    const { value: loginResult, setValue: setLoginResult } = useData("loginResult");
-    const { value: authToken, setValue: setAuthToken } = useData("authToken");
+    const { value: _appUser, setValue: setAppUser } = useData("currentUser");
+    const { value: _loginResult, setValue: setLoginResult } = useData("loginResult");
+    const { value: _authToken, setValue: setAuthToken } = useData("authToken");
 
+    type LoginState = {
+        appUser: typeof _appUser,
+        loginResult: typeof _loginResult,
+        authToken: typeof _authToken,
+        //TODO: stop gap... but we should make this resolved on the server probably 
+        setupStatus?: {
+            needsSettings: boolean,
+            needsAnalystSettings: boolean
+        }
+    };
 
+    const createLoginState = (currentUser: typeof _appUser, loginResult: typeof _loginResult): LoginState => {
+        return {
+            appUser: currentUser,
+            authToken: loginResult?.user_id ? loginResult.token : undefined,
+            loginResult: loginResult,
+            setupStatus: currentUser ? {
+                needsSettings: !currentUser.settings || !Object.keys(currentUser.settings).length,
+                needsAnalystSettings: Boolean(currentUser.settings?.analyst) && !currentUser.analyst_profile
+            } : undefined
+        }
+    }
+
+    const [loginState, setLoginState] = useState(_appUser ? createLoginState(_appUser, _loginResult) : undefined)
+
+    useEffect(() => {
+        const sub = EventRegister.addEventListener(loginStateChangedEventName, (data) => {
+            console.log("Setting a new login state")
+            console.log("New State is : " + JSON.stringify(data))
+            setLoginState(data);
+        });
+        return () => {
+            EventRegister.removeEventListener(sub as string)
+        };
+    }, [])
 
     return {
-        appUser,
-        authToken,
-        loginResult,
-        //TODO: stop gap... but we should make this resolved on the server probably 
-        userState: appUser ? {
-            needsSettings: !appUser.settings || !Object.keys(appUser.settings).length,
-            needsAnalystSettings: appUser.settings?.analyst && !appUser.analyst_profile
-        } : undefined,
+        loginState,
         signIn: useCallback(async (email: string, pass: string) => {
-
+            setLoginState(undefined);
             const value = await Authentication.signIn(email, pass)
             setLoginResult(value.loginResult);
             setAppUser(value.currentUser);
             if (value.loginResult.user_id)
                 setAuthToken(value.loginResult.token);
 
-
+            EventRegister.emit(loginStateChangedEventName, createLoginState(value.currentUser, value.loginResult))
 
         }, []),
         signOut: useCallback(() => {
@@ -47,6 +81,8 @@ export const useAppUser = () => {
             setAuthToken(undefined);
             setLoginResult(undefined);
             setAppUser(undefined);
+            setLoginState(undefined);
+            EventRegister.emit(loginStateChangedEventName, undefined);
         }, [])
     }
 }

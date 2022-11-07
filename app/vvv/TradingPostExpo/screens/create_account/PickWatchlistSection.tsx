@@ -81,12 +81,6 @@ export function PickWatchlistSection(props: CreateAccountProps) {
     }, [])
 
 
-    useEffect(() => {
-        if (props.saveOnly)
-            setLockButtons(!props.user.hasChanged);
-    }, [props.saveOnly, props.user.hasChanged]);
-
-
     return <ScrollWithButtons
         fillHeight
         buttons={buttonConfig}

@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Api } from "@tradingpost/common/api";
+import { getCallBackUrl } from "@tradingpost/common/api/entities/static/EntityApiBase";
 import { openBrowserAsync, WebBrowserResultType } from "expo-web-browser";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking } from "react-native";
@@ -75,7 +76,7 @@ export function useGoogleAuth() {
         //     console.log(respTest);
         // }
         //const auth    //: ITokenResponse =  JSON.parse(respTest);  //await resp.json();
-        return await Api.User.extensions.linkSocialAccount({platform,code, challenge:_challenge});
+        return await Api.User.extensions.linkSocialAccount({platform,code, challenge:_challenge, callbackUrl:getCallBackUrl()});
     }, []);
 
     //Clean up interval if its dangling 

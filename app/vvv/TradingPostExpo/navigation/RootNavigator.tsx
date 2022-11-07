@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React from "react";
-import { Keyboard, Pressable, View } from "react-native";
+import { Button, Keyboard, Pressable, View } from "react-native";
 import { AppTitle } from "../images";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 import NotFoundScreen from "../screens/NotFoundScreen";
@@ -30,10 +30,12 @@ import * as Notifications from 'expo-notifications';
 import { useIsKeyboardVisible } from "../utils/hooks";
 import { IconButton } from "../components/IconButton";
 import { IconifyIcon } from "../components/IconfiyIcon";
-import KeyboardClose from '@iconify/icons-mdi/keyboard-close'
+import KeyboardClose from '../assets/@iconify/keyboard-close'
 import { useLinkTo } from "@react-navigation/native";
-import { useEffect } from "react";
+import { useEffect, } from "react";
+import { Text } from 'react-native'
 import { useAppUser } from "../Authentication";
+import { Log } from "../utils/logger";
 
 
 Notifications.setNotificationHandler({
@@ -48,29 +50,29 @@ export const Stack = createNativeStackNavigator<RootStackParamList>();
 
 
 
-const useInitialRoute = () => {
-    let { appUser, loginResult, userState } = useAppUser();
+export const useInitialRoute = () => {
+    let { loginState } = useAppUser();
     let initialRoute: keyof RootStackParamList;
-    if (appUser)
+    if (loginState?.appUser)
         //TODO: Should refactor this so that it is more related... settings + settings.analyst + analyst_profile
-        if (userState?.needsAnalystSettings || userState?.needsSettings)
+        if (loginState.setupStatus?.needsAnalystSettings || loginState.setupStatus?.needsSettings)
             initialRoute = "Create"
-        else if (loginResult?.verified!)
+        else if (!loginState.loginResult?.verified)
             initialRoute = "VerifyAccount"
         else
             initialRoute = "Dash"
-    else if (loginResult)
+    else if (loginState?.loginResult)
         initialRoute = "Create"
 
     else
         initialRoute = "Root"
 
+    Log.verbose(`Initial Route Is : '${initialRoute}'`);
     return initialRoute;
 }
 
-export function RootNavigator(props: { url: string }) {
-
-
+export function RootNavigator() {
+    console.log("Running Root Navigation");
     return <Stack.Navigator
         initialRouteName={useInitialRoute()}
         screenOptions={{
@@ -78,34 +80,17 @@ export function RootNavigator(props: { url: string }) {
                 style={{ marginTop: sizes.rem0_5, height: sizes.rem2, aspectRatio: 5.77 }}
             />,
             headerTitleAlign: "center",
-            headerBackVisible: false
+            headerBackVisible: false,
         }}>
         <Stack.Screen name="Root" component={WelcomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Create" component={CreateAccountScreen}
             options={{ headerShown: false, headerBackVisible: false }} />
-        <Stack.Screen name="Dash" component={DrawerPart} options={{ headerShown: false }} />
+        <Stack.Screen name="Dash" component={DrawerPart} options={{
+            headerShown: false,
+        }} />
         <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
         <Stack.Group screenOptions={{
-            headerBackVisible: true
-            // headerRight: (() => {
-            //     console.log("IM SHOWING A KEYBOARD ICON HERE!!!!!");
-            //     const { isKeyboardVisible } = useIsKeyboardVisible();
-            //     if (isKeyboardVisible) {
-            //         return <Pressable
-            //             onPress={() => {
-            //                 Keyboard.dismiss();
-            //             }}
-            //         ><IconifyIcon
-            //                 icon={KeyboardClose}
-            //                 style={{
-            //                     height: 24,
-            //                     width: 24,
-            //                     marginRight: sizes.rem1
-            //                 }} />
-            //         </Pressable>
-            //     }
-            //     else return null;
-            // })
+            headerBackVisible: true,
         }}>
             <Stack.Screen name="ResetPassword" component={ChangePasswordScreen} />
             <Stack.Screen name="VerifyAccount" component={VerificationScreen} />

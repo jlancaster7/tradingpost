@@ -1,8 +1,6 @@
-import data from "@iconify/icons-logos/youtube-icon";
-
 import React, { MutableRefObject, useEffect, useRef, useState } from "react";
 import { Pressable, View, ViewStyle, Text } from "react-native";
-import { useSecuritiesList} from '../SecurityList'
+import { useSecuritiesList } from '../SecurityList'
 import { SearchBar } from "./SearchBar";
 import { Interface } from "@tradingpost/common/api"
 import { ISecurityList } from "@tradingpost/common/api/entities/interfaces";
@@ -181,7 +179,7 @@ const SecurityCell = (props: { item: ISecurityList | {}, isSelected: boolean, on
         }}
         style={cellStyle}>
         {isSec(item) ? <><View>
-            <Avatar shape='square' source={{ uri: item.logo_url }} size="large" style={{overflow: 'visible'} }/>
+            <Avatar shape='square' source={{ uri: item.logo_url }} size="large" style={{ overflow: 'visible' }} />
             {innerSelected && <View style={{ position: "absolute", width: "40%", aspectRatio: 1, zIndex: 50000, right: "-10%", bottom: "-10%" } as ViewStyle}>
                 <View style={{ backgroundColor: "white", position: "absolute", left: "25%", top: "25%", height: "50%", width: "50%" }} />
                 <Icon name="checkmark-circle-2" fill="green" style={{ height: "100%", width: "100%" }} />

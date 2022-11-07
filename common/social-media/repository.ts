@@ -1206,6 +1206,8 @@ export default class Repository {
                     body: row.body,
                     tradingpost_user_handle: row.handle,
                     tradingpost_user_email: row.email,
+                    aspect_ratio: row.aspect_ratio,
+                    max_width: row.max_width,
                     tradingpost_user_profile_url: row.tradingpost_user_profile_url,
                     created_at: row.created_at,
                     updated_at: row.updated_at

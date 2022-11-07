@@ -44,8 +44,8 @@ export default class TradingPostsService {
                 tradingpostCreatedAt: n.created_at.toISO(),
                 tradingpostUpdatedAt: n.updated_at.toISO(),
                 size: {
-                    maxWidth: 0,
-                    aspectRatio: 16/9,
+                    maxWidth: n.max_width,
+                    aspectRatio: n.aspect_ratio,
                 },
                 user: {
                     id: n.user_id,

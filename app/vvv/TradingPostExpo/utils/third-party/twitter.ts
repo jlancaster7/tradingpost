@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Api } from "@tradingpost/common/api";
+import { getCallBackUrl } from "@tradingpost/common/api/entities/static/EntityApiBase";
 import { openBrowserAsync, WebBrowserResultType } from "expo-web-browser";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking } from "react-native";
@@ -9,7 +10,7 @@ import { initLds } from "../../lds";
 //TODO: SHould put this all in the app later as a generate link 
 const clientId = "cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ";
 const platform = "twitter",
-    redirectUriText = `https://m.tradingpostapp.com/auth/${platform}`,
+    redirectUriText = `${getCallBackUrl()}/auth/${platform}`,
     redirectUri = new URL(redirectUriText),
     authUrlText = "https://twitter.com/i/oauth2/authorize"
 //state = `amira_${platform}`;
@@ -69,7 +70,7 @@ export function useTwitterAuth() {
         //     console.log(respTest);
         // }
         //const auth    //: ITokenResponse =  JSON.parse(respTest);  //await resp.json();
-        return  await Api.User.extensions.linkSocialAccount({platform,code, challenge:_challenge}) ;        
+        return  await Api.User.extensions.linkSocialAccount({ callbackUrl: getCallBackUrl(), platform,code, challenge:_challenge}) ;        
     }, []);
 
     //Clean up interval if its dangling 

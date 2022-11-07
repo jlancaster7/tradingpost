@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { Autocomplete, AutocompleteItem, Button, Icon, IndexPath, Text, Layout } from "@ui-kitten/components"
 //import { referenceData } from "../../apis/ReferenceData"
-import { ChipPicker } from "../../components/ChipBar"
 import { ElevatedSection, Section } from "../../components/Section"
 import { PlusIcon } from "../../images"
 import { bannerText, flex, noMargin, paddView, sizes, thinBannerText } from "../../style"
@@ -17,9 +16,8 @@ import {
     useOpacityAnim,
     useReadonlyEntity
 } from "../../utils/hooks"
-import { useSecuritiesList} from '../../SecurityList'
+import { useSecuritiesList } from '../../SecurityList'
 //import { UpdateUserProfile } from "../../apis/Authentication"
-import { ChipTextField } from "../../components/ChipTextField"
 import { ScrollWithButtons } from "../../components/ScrollWithButtons"
 import { Alert, Pressable, TextStyle, View } from "react-native"
 import { Slider } from "../../components/Slider"
@@ -134,7 +132,7 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
         buttons={
             {
                 locked: lockButtons,
-                left: props.saveOnly ? undefined : {
+                left: {
                     text: "Nevermind",
                     onPress: async () => {
                         const defaultSettings = {
@@ -157,7 +155,7 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
                     }
                 },
                 right: {
-                    text: props.saveOnly ? "Apply" : "Continue",
+                    text: "Continue",
                     onPress: async () => {
                         setLockButtons(true);
                         try {
@@ -168,8 +166,8 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
                             anaylistProfile.resetData(anaylistProfile.data);
                             props.user.resetData(props.user.data);
 
-                            if (!props.saveOnly)
-                                linkTo('/create/linkbrokerage')
+
+                            linkTo('/create/linkbrokerage')
                         } catch (ex: any) {
                             console.error(ex);
                             props.toastMessage("Unable to update profile");
@@ -179,23 +177,23 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
                 }
             }
         }>
-        <View style={[paddView, {paddingBottom: 0}]}>
-            <ElevatedSection title="" style={{paddingVertical: 4}}>
+        <View style={[paddView, { paddingBottom: 0 }]}>
+            <ElevatedSection title="" style={{ paddingVertical: 4 }}>
                 <AppearView onLayout={(ev) => {
                     setSliderWidth(ev.nativeEvent.layout.width)
                 }} style={[flex]}>
                     <Text style={[thinBannerText, { marginHorizontal: 0, marginTop: sizes.rem0_5 }]}>Welcome Analyst! Tell us a bit about yourself</Text>
-                    <Text style={[questionStyle, {marginTop: sizes.rem0_5}]}>Bio</Text>
-                    <KeyboardAvoidingInput 
+                    <Text style={[questionStyle, { marginTop: sizes.rem0_5 }]}>Bio</Text>
+                    <KeyboardAvoidingInput
                         value={bio}
                         displayButton={false}
                         numLines={3}
                         placeholder={'Tell people about yourself'}
                         //rightIcon=
-                        setValue={setBio} 
-                        //item_id={props.route.params.post._source.id}
-                        //clicked={[commentAdded, setCommentAdded]}
-                        //onClick={() => {}}
+                        setValue={setBio}
+                    //item_id={props.route.params.post._source.id}
+                    //clicked={[commentAdded, setCommentAdded]}
+                    //onClick={() => {}}
                     />
                     <Text style={questionStyle}>What is your investment strategy?</Text>
                     <Picker

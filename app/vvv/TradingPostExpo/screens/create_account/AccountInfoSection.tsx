@@ -104,12 +104,6 @@ export function AccountInfoSection(props: CreateAccountProps) {
             }
         }
 
-    useEffect(() => {
-        if (props.saveOnly)
-            setLockButtons(!props.user.hasChanged);
-    }, [props.saveOnly, props.user.hasChanged]);
-
-
     return <ScrollWithButtons
         buttons={buttonConfig}>
         {//isUnconfirmed ? <UnverifiedEmail  {...props} />: 

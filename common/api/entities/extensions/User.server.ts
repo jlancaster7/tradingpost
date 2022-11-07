@@ -83,6 +83,7 @@ export default ensureServerExtensions<User>({
         return [];
     },
     linkSocialAccount: async (req) => {
+
         if (req.body.platform === "twitter") {
             const info = await fetch("https://api.twitter.com/2/oauth2/token", {
                 method: "POST",
@@ -93,7 +94,7 @@ export default ensureServerExtensions<User>({
                     code: req.body.code,
                     grant_type: "authorization_code",
                     client_id: "cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ",
-                    redirect_uri: 'https://m.tradingpostapp.com/auth/twitter',
+                    redirect_uri: `${req.body.callbackUrl}/auth/twitter`,
                     code_verifier: req.body.challenge
                 }),
 
@@ -171,7 +172,7 @@ export default ensureServerExtensions<User>({
                     code: req.body.code,
                     grant_type: "authorization_code",
                     client_id: "",
-                    redirect_uri: 'http://m.tradingpostapp.com/auth/youtube',
+                    redirect_uri: `${req.body.callbackUrl}/auth/youtube`,
                     code_verifier: req.body.challenge
                 }),
 

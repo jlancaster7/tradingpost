@@ -25,13 +25,10 @@ import LinkingConfiguration from './LinkingConfiguration';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RootNavigator } from './RootNavigator';
 
-export default function Navigation({ colorScheme, whenReady }: { colorScheme: ColorSchemeName, whenReady: () => void }) {
+export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
   return (
     <SafeAreaProvider>
       <NavigationContainer
-        onReady={() => {
-          whenReady();
-        }}
         linking={LinkingConfiguration}
         theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
       ><RootNavigator />
@@ -39,18 +36,3 @@ export default function Navigation({ colorScheme, whenReady }: { colorScheme: Co
     </SafeAreaProvider>
   );
 }
-
-{/* <Stack.Screen name="OverlayModal" options={{
-        presentation: "transparentModal",
-        headerStyle: {
-          backgroundColor: "transparent"
-        },
-        headerTintColor: "white",
-        headerShown: false,
-        // headerBackground: () => <View></View>,
-        headerTitle: "",
-        contentStyle: {
-          //marginTop: -64
-        }
-      }} component={OverlayScreen} />
-       */}

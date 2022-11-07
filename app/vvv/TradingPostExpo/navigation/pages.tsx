@@ -30,22 +30,24 @@ export type RootStackParamList =
         "Login" |
         "Dash" |
         "WatchlistViewer" |
-        "WatchlistEditor" |
         "Watchlist" |
         "ImagePicker" |
-        "ResetPassword" |
 
         "Subscription" |
         "SubscriptionSettings" |
         "NotificationTrade"
     > &
     {
+        "WatchlistEditor": {
+            watchlistId?: number
+        }
         "Root": {
             baseUrl?: string
         }
         "Auth": { platform: "twitter" | "youtube" | "spotify" | "finicity", code: string }
         "Company": { securityId: number },
         "VerifyAccount": { token?: string },
+        "ResetPassword": { token?: string },
         "PostEditor": undefined,
         "TableModal": { title: string, tableProps: TableProps<any> },
         "PostScreen": { post: Interface.IElasticPostExt },

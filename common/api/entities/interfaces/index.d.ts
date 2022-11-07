@@ -58,6 +58,8 @@ export interface IPostList {
     user: IUserList[];
     comment_count: number;
     title: string;
+    max_width?: number;
+    aspect_ratio?: number;
 }
 export interface IPostGet {
     id: number;
@@ -67,6 +69,8 @@ export interface IPostGet {
     user: IUserList[];
     comment_count: number;
     title: string;
+    aspect_ratio?: number;
+    max_width?: number;
 }
 export interface ISubscriberList {
     subscription_id: number;

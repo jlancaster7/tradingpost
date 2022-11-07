@@ -7,7 +7,8 @@
 /* No changes to data_platform_claim [platform_claim]*/
 
 ALTER TABLE data_post
-ALTER COLUMN body TYPE TEXT;
+ADD COLUMN max_width MONEY,
+ADD COLUMN aspect_ratio MONEY;
 
 /* No changes to data_subscriber [subscriber]*/
 

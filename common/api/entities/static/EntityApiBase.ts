@@ -6,11 +6,15 @@ export let versionCode =
     process.env.API_VERSION_CODE ||
     version ||
     "alpha"
+let callbackUrl = "https://m.tradinpostapp.com"
 
-export const configApi = (settings: { versionCode?: string, apiBaseUrl?: string }) => {
+export const configApi = (settings: { versionCode?: string, apiBaseUrl?: string, callbackUrl?: string }) => {
     apiBaseUrl = settings.apiBaseUrl || apiBaseUrl;
     versionCode = settings.versionCode || versionCode;
+    callbackUrl = settings.callbackUrl || callbackUrl
 }
+
+export const getCallBackUrl = () => callbackUrl;
 
 type ValidationErrorData<T> = Record<Partial<keyof T>, string>;
 

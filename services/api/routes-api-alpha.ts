@@ -1,7 +1,7 @@
 import Express, { RequestHandler, response } from "express";
 import { join } from "path";
 import { EntityApi, RequestSettings } from '@tradingpost/common/api/entities/static/EntityApi'
-import { createLogin, createUser, loginPass, loginToken, } from '@tradingpost/common/api/auth'
+import { createLogin, createUser, forgotPassword, loginPass, loginToken, } from '@tradingpost/common/api/auth'
 import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 import { DefaultConfig } from "@tradingpost/common/configuration";
 import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
@@ -15,7 +15,7 @@ const baseFormat = '/:entity/:action';
 
 //TODO: need to throw errros that will set the status number. (401 in this case)
 const decodeToken = async (req: Express.Request, disableModelCheck?: boolean) => {
-    
+
     const bearerHeader = req.headers['authorization'];
     console.log("AUTH HEADER IS " + req.headers.authorization);
 
@@ -98,6 +98,14 @@ const sharedHandler = async (req: Express.Request, routeDetails: (entity: Entity
             .default;
     return await routeDetails(entity);
 }
+
+makeRoute("/authapi/forgotpassword", async (req) => {
+    if (!req.body.email)
+        throw new PublicError("Email is required", 400)
+    else
+        await forgotPassword(req.body.email, req.body.callbackUrl);
+    return {};
+})
 
 //AUTH
 makeRoute("/authapi/login", async (req) => {

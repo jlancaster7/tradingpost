@@ -114,7 +114,7 @@ export const createUser = async (data: {
     } as LoginResult
 }
 
-export const forgotPassword = async (email: string) => {
+export const forgotPassword = async (email: string, callbackUrl: string) => {
     //generate reset token 
     const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
 
@@ -128,7 +128,7 @@ export const forgotPassword = async (email: string) => {
             to: email,
             templateId: "d-f232bafc8eb04bd99986991c71ab15cd",
             dynamicTemplateData: {
-                Weblink: (process.env.WEBLINK_BASE_URL || "https://app.tradingpostapp.com") + `/resetpassword?token=${token}`
+                Weblink: callbackUrl + `/resetpassword?token=${token}`
             }
         })
     }

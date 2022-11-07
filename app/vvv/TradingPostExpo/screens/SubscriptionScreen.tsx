@@ -14,13 +14,12 @@ import { SecondaryButton } from "../components/SecondaryButton";
 import { ElevatedSection } from "../components/Section";
 import { SwitchField } from "../components/SwitchField";
 import { Table } from "../components/Table";
-import { TextField } from "../components/TextField";
-import { TabScreenProps } from "../navigation";
+import { RootStackScreenProps } from "../navigation/pages";
 import { paddView, sizes } from "../style";
 import { useReadonlyEntity } from "../utils/hooks";
 import { AwaitedReturn } from "../utils/misc";
 
-export const SubscriptionScreen = (props: TabScreenProps) => {
+export const SubscriptionScreen = (props: RootStackScreenProps<"Subscription">) => {
     const [index, setIndex] = useState(0);
     //const [] = useState<  >()
     //  useEffect(()=>{},[])
@@ -29,7 +28,8 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
         [subscriptions, setSubscriptions] = useState<AwaitedReturn<typeof mySubscriptionsCall>>(),
         [subscribers, setSubscribers] = useState<AwaitedReturn<typeof mySubscribersCall>>(),
         [buttonClick, setButtonClick] = useState(false);
-    const { appUser } = useAppUser();
+    const { loginState } = useAppUser();
+    const appUser = loginState?.appUser;
 
     useEffect(() => {
         (async () => {
@@ -71,7 +71,7 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
     ><TabView
         indicatorStyle={{
             marginTop: 26
-        }} style={{ marginVertical: sizes.rem0_5 }} selectedIndex={index} onSelect={ appUser?.settings?.analyst ? setIndex : undefined}>
+        }} style={{ marginVertical: sizes.rem0_5 }} selectedIndex={index} onSelect={appUser?.settings?.analyst ? setIndex : undefined}>
             <Tab title="Subscriptions">
                 <Table
                     rowPressed={(r) => {
@@ -111,7 +111,7 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                 align: "left",
                                 field: "subscription",
                                 stringify: (k: ISubscriberList["subscription"]) => {
-                                    return String(String(k[0].cost) === '$0.00' ? 'Free': k[0].cost)
+                                    return String(String(k[0].cost) === '$0.00' ? 'Free' : k[0].cost)
                                 }
                             },
                             {
@@ -166,25 +166,26 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                         return <Text>Approved</Text>;
                                     }
                                     else {
-                                        return <SecondaryButton 
-                                                    children={'Approve'}
-                                                    style={{backgroundColor: "#35A265", borderColor: "#35A265",
-                                                            minHeight: 26,
-                                                            height: 26,
-                                                            minWidth: 70,
-                                                            width: 70
-                                                        }}
-                                                    onPress={async () => {
-                                                        item.item.approved = true;
-                                                        await Api.Subscriber.update(item.item.id, {
-                                                            approved: true
-                                                        })
-                                                        setButtonClick(!buttonClick);
-                                                    }}
-                                                        />
+                                        return <SecondaryButton
+                                            children={'Approve'}
+                                            style={{
+                                                backgroundColor: "#35A265", borderColor: "#35A265",
+                                                minHeight: 26,
+                                                height: 26,
+                                                minWidth: 70,
+                                                width: 70
+                                            }}
+                                            onPress={async () => {
+                                                item.item.approved = true;
+                                                await Api.Subscriber.update(item.item.id, {
+                                                    approved: true
+                                                })
+                                                setButtonClick(!buttonClick);
+                                            }}
+                                        />
                                     }
                                 },
-                                style: {color: '#35A265'}
+                                style: { color: '#35A265' }
                                 /*
                                 stringify: (k: ISubscriberList["approved"]) => {
                                     if (k) {
@@ -203,17 +204,17 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                 stringify: (k: ISubscriberList["start_date"]) => {
                                     return new Date(k).toLocaleDateString();
                                 }
-                            }, 
+                            },
                             {
                                 headerStyle: {
                                     flexGrow: 0,
                                     flexShrink: 0,
                                     flexBasis: '9%'
-                                    
+
                                 },
-                                alias: ' ', 
+                                alias: ' ',
                                 field: (item) => {
-                                    return <DeleteButton 
+                                    return <DeleteButton
                                         onPress={async () => {
                                             await Api.Subscriber.extensions.removeSubscription({
                                                 userId: item.item.user_id,
@@ -226,7 +227,7 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
                                         color={'#EC5328'}
                                     />
                                 },
-                                style: {marginLeft: -10}
+                                style: { marginLeft: -10 }
                             }
                         ]
                     }
@@ -238,7 +239,7 @@ export const SubscriptionScreen = (props: TabScreenProps) => {
     </View>
 }
 
-export const SubscriptionSettingsScreen = (props: TabScreenProps) => {
+export const SubscriptionSettingsScreen = (props: RootStackScreenProps<"SubscriptionSettings">) => {
 
 
     return <View style={paddView}>
@@ -305,12 +306,12 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
                 }
             })]}
         />
-        <SwitchField label='Approve New Subscribers?' 
-                     checked={subscription.data?.settings.approve_new} 
-                     onChange={() => { subscription.update({settings: {approve_new: !subscription.data?.settings.approve_new}})}} 
-                     viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', padding: 4, paddingVertical: 30}} 
-                     toggleStyle={{}} 
-                     textStyle={{fontSize: 16, fontWeight: '500', alignSelf: 'center'}}/>
+        <SwitchField label='Approve New Subscribers?'
+            checked={subscription.data?.settings.approve_new}
+            onChange={() => { subscription.update({ settings: { approve_new: !subscription.data?.settings.approve_new } }) }}
+            viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', padding: 4, paddingVertical: 30 }}
+            toggleStyle={{}}
+            textStyle={{ fontSize: 16, fontWeight: '500', alignSelf: 'center' }} />
         {/* Codes will go here   */}
         {!props.submitRef?.current && <PrimaryButton disabled={!subscription.hasChanged} onPress={submit} >Apply</PrimaryButton>}
     </ElevatedSection>
