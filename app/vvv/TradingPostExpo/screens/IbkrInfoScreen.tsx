@@ -136,7 +136,7 @@ Best,
 [Enter your legal name here]`
 }
 
-const instructions = `In order to link your IBKR account to TradingPost, we need you to send an email to IBKR indicating that you would give TradingPost permission to reports on your historical positions and trades.`
+const instructions = `In order to link your IBKR account to TradingPost, we need you to send an email to IBKR indicating that you would give TradingPost permission to reports on your historical positions and trades.\n\nPlease enter the Account IDs that you would like to link to TradingPost below. \n\nAfter entering them in, when you click "Continue" we will generate the necessary email for you to send to IBKR's Reporting Integration Team.`
 
 const note = `Note:
 Granting us this access in no way gives us any authority over your account.
