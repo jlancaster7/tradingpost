@@ -110,24 +110,13 @@ export default class IbkrService {
 
             const securities = await this._importSecurity(pendingJob);
             await this._transformer.importTradingPostSecurities(dateToProcess, tpUserId, securities);
-
-            // console.log("Importing Activity")
             const activity = await this._importActivity(pendingJob);
             await this._transformer.importTradingPostTransactions(dateToProcess, tpUserId, activity);
-
-            // console.log("Importing Positions")
             const positions = await this._importPosition(pendingJob);
             await this._transformer.importTradingPostHoldings(dateToProcess, tpUserId, positions);
-
-            // console.log("Importing Cash Reports")
             await this._importCashReport(pendingJob);
-
-            // console.log("Importing Nav")
             await this._importNav(pendingJob);
-
-            // console.log("Importing PLs")
             await this._importPl(pendingJob);
-
             await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.SUCCESSFUL)
         } catch (e) {
             await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.FAILED)
@@ -216,7 +205,7 @@ export default class IbkrService {
     }
 
     _importSecurity = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrSecurity[]> => {
-        const securities = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Security", pendingJob.dateToProcess), (data: IbkrSecurityCsv) => {
+        const ibkrSecurities = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Security", pendingJob.dateToProcess), (data: IbkrSecurityCsv) => {
             let x: IbkrSecurityCsv = {
                 AssetType: data.AssetType,
                 BBGlobalID: data.BBGlobalID,
@@ -248,7 +237,7 @@ export default class IbkrService {
             return x;
         });
 
-        const securitiesMapped = securities.map((s: IbkrSecurityCsv) => {
+        const securitiesMapped = ibkrSecurities.map((s: IbkrSecurityCsv) => {
             let x: IbkrSecurity = {
                 assetType: s.AssetType,
                 bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,

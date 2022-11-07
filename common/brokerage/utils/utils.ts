@@ -1,5 +1,10 @@
 import {abs} from "mathjs";
-import {InvestmentTransactionType, TradingPostTransactions} from "../interfaces";
+import {
+    InvestmentTransactionType,
+    TradingPostCurrentHoldings,
+    TradingPostHistoricalHoldings,
+    TradingPostTransactions
+} from "../interfaces";
 
 export const transformTransactionTypeAmount = (txType: InvestmentTransactionType, transaction: TradingPostTransactions): TradingPostTransactions => {
     switch (txType) {
@@ -18,4 +23,16 @@ export const transformTransactionTypeAmount = (txType: InvestmentTransactionType
         default:
             return transaction
     }
+}
+
+export const rollUpTransactions = (txs: TradingPostTransactions[]): TradingPostTransactions[] => {
+    return [];
+}
+
+export const rollUpHistoricalHoldings = (holdings: TradingPostHistoricalHoldings[]): TradingPostHistoricalHoldings[] => {
+    return [];
+}
+
+export const rollUpCurrentHoldings = (holdings: TradingPostCurrentHoldings[]): TradingPostCurrentHoldings[] => {
+    return [];
 }
