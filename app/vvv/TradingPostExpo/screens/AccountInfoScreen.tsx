@@ -327,20 +327,7 @@ const AdvancedTabContent = () => {
             <SwitchField label='Portfolio' checked={holdingsCheck} onChange={onHoldingsCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
             <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
         </Section>
-        <Section style={{ padding: 10 }} title="Link Brokerage Accounts" button={(props) => accounts?.length ? <EditButton
-            onPress={() => {
-                openLink();
-            }}
-            height={35}
-            width={35}
-        /> : <AddButton
-            onPress={() => openLink()}
-            height={35}
-            width={35}
-        />} >
-            <Table datasetKey={accounts?.map(a => a.id).join(",") || "none"} columns={[{ alias: "Brokerage", field: "broker_name", align: "left" }, { alias: "Account #", field: "account_number", align: "left" }]} data={accounts} noDataMessage="You have no linked accounts" />
-        </Section>
-        <LinkBrokerageComponent props={props} />
+        <LinkBrokerageComponent />
         <Section title='Payment' style={{ padding: 10 }}>
             <Text>
                 Coming Soon!

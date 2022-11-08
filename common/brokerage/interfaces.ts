@@ -510,9 +510,10 @@ export type TradingPostHistoricalHoldings = {
 export type TradingPostHistoricalHoldingsTable = TradingPostHistoricalHoldings & TableInfo;
 
 export type HistoricalHoldings = {
-    accountId?: number,
-    accountGroupId?: number,
+    accountId?: number
+    accountGroupId?: number
     securityId: number
+    optionId: number | null
     price: number
     value: number
     costBasis: number

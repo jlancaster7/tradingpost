@@ -10,9 +10,10 @@ import { Table } from "./Table";
 import { AddButton, EditButton } from "./AddButton";
 import { openBrowserAsync } from 'expo-web-browser';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
 export const LinkBrokerageComponent = (props: any) => {
-    
+    const nav = useNavigation();
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
     const intervalRef = useRef<any>();
@@ -72,7 +73,7 @@ export const LinkBrokerageComponent = (props: any) => {
         height={buttonProps.height}
         width={buttonProps.width}
         /> : <AddButton
-        onPress={() => props.props.navigation.navigate("BrokeragePicker")}
+        onPress={() => nav.navigate("BrokeragePicker")}
         height={buttonProps.height}
         width={buttonProps.width}
         />} >

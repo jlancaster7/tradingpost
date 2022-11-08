@@ -1870,6 +1870,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_id', prop: 'accountId'},
             {name: 'security_id', prop: 'securityId'},
+            {name: 'option_id', prop: 'optionId'},
             {name: 'security_type', prop: 'securityType'},
             {name: 'price', prop: 'price'},
             {name: 'price_as_of', prop: 'priceAsOf'},
@@ -1890,6 +1891,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_id', prop: 'accountId'},
             {name: 'security_id', prop: 'securityId'},
+            {name: 'option_id', prop: 'optionId'},
             {name: 'security_type', prop: 'securityType'},
             {name: 'price', prop: 'price'},
             {name: 'price_as_of', prop: 'priceAsOf'},
@@ -2013,6 +2015,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getTradingPostHoldingsByAccount = async (userId: string, accountId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]> => {
         let query = `SELECT account_id,
                             security_id,
+                            option_id,
                             price,
                             value,
                             cost_basis,
@@ -2039,6 +2042,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             holdings.push({
                 accountId: d.account_id,
                 securityId: parseInt(d.security_id),
+                optionId: parseInt(d.option_id),
                 price: parseFloat(d.price),
                 value: parseFloat(d.value),
                 costBasis: parseFloat(d.cost_basis),
@@ -2054,6 +2058,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getTradingPostHoldingsByAccountGroup = async (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
         let query = `SELECT atg.account_group_id AS account_group_id,
                             ht.security_id       AS security_id,
+                            ht.option_id         AS option_id,
                             AVG(ht.price)        AS price,
                             SUM(ht.value)        AS value,
                             CASE
@@ -2086,6 +2091,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             holdings.push({
                 accountGroupId: parseInt(d.account_group_id),
                 securityId: parseInt(d.security_id),
+                optionId: parseInt(d.option_id),
                 price: parseFloat(d.price),
                 value: parseFloat(d.value),
                 costBasis: parseFloat(d.cost_basis),
@@ -2101,6 +2107,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getTradingPostCurrentHoldingsByAccountGroup = async (accountGroupId: number): Promise<HistoricalHoldings[]> => {
         let query = `SELECT atg.account_group_id AS account_group_id,
                             ch.security_id       AS security_id,
+                            ch.option_id         AS option_id,
                             AVG(ch.price)        AS price,
                             SUM(ch.value)        AS value,
                             CASE
@@ -2132,6 +2139,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             holdings.push({
                 accountGroupId: parseInt(d.account_group_id),
                 securityId: parseInt(d.security_id),
+                optionId: parseInt(d.option_id),
                 price: parseFloat(d.price),
                 value: parseFloat(d.value),
                 costBasis: parseFloat(d.cost_basis),

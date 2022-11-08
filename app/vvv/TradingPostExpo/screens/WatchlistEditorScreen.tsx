@@ -63,7 +63,8 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
                             else {
                                 const watchlistData = {
                                     items: items.map(i => ({
-                                        symbol: i.symbol
+                                        symbol: i.symbol,
+                                        date_added: new Date()
                                     })),
                                     name: name,
                                     note,
