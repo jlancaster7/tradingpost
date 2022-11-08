@@ -1,7 +1,7 @@
 import Express, { RequestHandler, response } from "express";
 import { join } from "path";
 import { EntityApi, RequestSettings } from '@tradingpost/common/api/entities/static/EntityApi'
-import { createLogin, createUser, forgotPassword, loginPass, loginToken, } from '@tradingpost/common/api/auth'
+import { createLogin, createUser, forgotPassword, loginPass, loginToken, resetPassword, } from '@tradingpost/common/api/auth'
 import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 import { DefaultConfig } from "@tradingpost/common/configuration";
 import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
@@ -82,7 +82,6 @@ function resolver(...path: string[]) {
 const sharedHandler = async (req: Express.Request, routeDetails: (entity: EntityApi<any, any, any, any>) => Promise<void>) => {
     //For efficiency I will generate everything in "/api". For now doing a lookup to both
     ///... this can already be changed.. will do it later.....
-
     //This should be set to only happen in dev mode... 
     try {
         resolver('@tradingpost/common/api/entities/extensions/' + req.params.entity.substring(0, req.params.entity.length - 3) + ".server")
@@ -105,6 +104,15 @@ makeRoute("/authapi/forgotpassword", async (req) => {
     return {};
 })
 
+
+makeRoute("/authapi/resetpassword", async (req) => {
+    if (!req.body.email && req.body.isPass)
+        throw new PublicError("Email is required", 400)
+    else
+        await resetPassword(req.body.email, req.body.tokenOrPass, req.body.isPass, req.body.newPassword);
+    return {};
+})
+
 //AUTH
 makeRoute("/authapi/login", async (req) => {
     if (!req.body.pass)
@@ -117,6 +125,7 @@ makeRoute("/authapi/login", async (req) => {
             return await loginToken(req.body.pass);
     }
 });
+
 makeRoute("/authapi/create", async (req) => {
     if (!req.body.email || !req.body.pass)
         throw new PublicError("Invalid Request");

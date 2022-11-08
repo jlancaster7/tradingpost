@@ -11,6 +11,7 @@ import { ElevatedSection } from "../../components/Section";
 import { useLinkTo } from "@react-navigation/native";
 import { CreateAccountProps } from "./shared";
 import { Api } from "@tradingpost/common/api"
+import React from "react";
 
 
 export const AnalystStartSection = (props: CreateAccountProps) => {

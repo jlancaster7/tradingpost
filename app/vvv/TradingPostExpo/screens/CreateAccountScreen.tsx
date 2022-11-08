@@ -39,7 +39,7 @@ export default (props: any) => {
     /**
      * State & hooks
      */
-    const { loginState } = useAppUser(),
+    const { loginState } = useAppUser("CREATE_ACCOUNT_SCREEN"),
         appUser = loginState?.appUser, userState = loginState?.setupStatus,
         user = useReadonlyEntity<IUserGet>(appUser || {
             profile_url: "",
@@ -65,16 +65,27 @@ export default (props: any) => {
     /**
      * Sub Screen resolution based on parameters 
      */
-    let subScreen: keyof typeof screens = (props?.route?.params?.params?.screen) || "LoginInfo";
-    if (userState?.needsSettings)
+    let subScreen: keyof typeof screens;
+
+
+    if (props?.route?.params?.params?.screen)
+        subScreen = props?.route?.params?.params?.screen
+
+    else if (userState?.needsSettings)
         subScreen = "AnalystStart"
     else if (userState?.needsAnalystSettings)
         subScreen = "AnalystInterest"
+    else if (loginState?.loginResult)
+        subScreen = "BasicInfo"
+    else subScreen = "LoginInfo"
+
     let resolvedIndex = screenKeys.findIndex((k) => k === subScreen);
     if (resolvedIndex < 0) {
         resolvedIndex = 0;
         Log.error(new Error(`Invalid create subscreen key :'${subScreen}'. Defaulting to index 0`));
     }
+
+
 
 
     const caProps = {
@@ -97,7 +108,7 @@ export default (props: any) => {
             maxHeight: "100%",
         }}
         swipeEnabled={false}
-        selectedIndex={screenKeys.findIndex((k) => k === props?.route?.params?.params?.screen)}
+        selectedIndex={resolvedIndex}
         indicatorStyle={{
             height: 0
         }}

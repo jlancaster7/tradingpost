@@ -58,7 +58,6 @@ var decodeToken = function (req, disableModelCheck) { return __awaiter(void 0, v
         switch (_c.label) {
             case 0:
                 bearerHeader = req.headers['authorization'];
-                console.log("AUTH HEADER IS " + req.headers.authorization);
                 if (!(typeof bearerHeader !== 'undefined')) return [3 /*break*/, 2];
                 bearer = bearerHeader.split(' ');
                 if (bearer[0].toLowerCase() !== "bearer")
@@ -120,7 +119,6 @@ function resolver() {
             var resolveKey = require.resolve(p);
             //NEED TO DISABLE FOR PROD and make this a lil less hacky 
             if (require.cache[resolveKey]) {
-                console.log("clearing... " + resolveKey);
                 delete require.cache[resolveKey];
             }
             return true;
@@ -159,6 +157,20 @@ makeRoute("/authapi/forgotpassword", function (req) { return __awaiter(void 0, v
                 if (!!req.body.email) return [3 /*break*/, 1];
                 throw new EntityApiBase_1.PublicError("Email is required", 400);
             case 1: return [4 /*yield*/, (0, auth_1.forgotPassword)(req.body.email, req.body.callbackUrl)];
+            case 2:
+                _a.sent();
+                _a.label = 3;
+            case 3: return [2 /*return*/, {}];
+        }
+    });
+}); });
+makeRoute("/authapi/resetpassword", function (req) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                if (!(!req.body.email && req.body.isPass)) return [3 /*break*/, 1];
+                throw new EntityApiBase_1.PublicError("Email is required", 400);
+            case 1: return [4 /*yield*/, (0, auth_1.resetPassword)(req.body.email, req.body.tokenOrPass, req.body.isPass, req.body.newPassword)];
             case 2:
                 _a.sent();
                 _a.label = 3;
@@ -223,7 +235,6 @@ makeRoute("/waitlist/add", function (req) { return __awaiter(void 0, void 0, voi
                 if (!req.body.email) {
                     throw new EntityApiBase_1.PublicError("Invalid Request");
                 }
-                console.log(req.body.email);
                 return [4 /*yield*/, (0, waitlist_1.addToWaitlist)(req.body.email)];
             case 1: return [2 /*return*/, _a.sent()];
         }

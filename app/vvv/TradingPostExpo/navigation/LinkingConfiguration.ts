@@ -46,8 +46,9 @@ const linking: LinkingOptions<any> = {
                     }
                 }
             },
-            AccountInformation:"account",
+            AccountInformation: "account",
             VerifyAccount: "verifyaccount",
+            ResetPassword: "resetpassword",
             NotificationTrade: "dash/notification/trade",
             Auth: "auth/:platform",
             WatchlistViewer: "WatchlistViewer/:watchlistId",

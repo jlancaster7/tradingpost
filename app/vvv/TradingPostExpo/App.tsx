@@ -21,9 +21,9 @@ if (!__DEV__) {
     })
   }
 }
-if(__DEV__ && Platform.OS === "web")
+if (__DEV__ && Platform.OS === "web")
   configApi({
-    callbackUrl:"http://localhost:8082"
+    callbackUrl: "http://localhost:19006"
   })
 
 

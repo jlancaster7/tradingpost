@@ -102,9 +102,8 @@ export const createUser = async (data: {
     dummy: boolean
 }) => {
 
-    const [newUser] = await execProc<{ user_id: string }>("tp.api_local_login_create_user", {
-        data
-    });
+    const [newUser] =
+        await execProc<{ user_id: string }>("tp.api_local_login_create_user", { data });
 
     return {
         verified: false,
@@ -122,7 +121,7 @@ export const forgotPassword = async (email: string, callbackUrl: string) => {
     if (user) {
 
         //TODO: make this token expire faster and attach this to a code ( to prevent multiple tokens from working)
-        const token = jwt.sign({ resetUserId: user.user_id }, await DefaultConfig.fromCacheOrSSM("authkey"));
+        const token = jwt.sign({ resetUserId: user.user_id, resetEmail: email }, await DefaultConfig.fromCacheOrSSM("authkey"));
         await sendByTemplate({
             to: email,
             templateId: "d-f232bafc8eb04bd99986991c71ab15cd",
@@ -135,6 +134,7 @@ export const forgotPassword = async (email: string, callbackUrl: string) => {
 
 export const resetPassword = async (email: string, tokenOrPass: string, isPass: boolean, newPassword: string) => {
     let userId = null;
+
     if (isPass) {
         const result = await loginPass(email, tokenOrPass, '');
         userId = result.user_id;
@@ -142,6 +142,7 @@ export const resetPassword = async (email: string, tokenOrPass: string, isPass: 
     else {
         const data = jwt.verify(tokenOrPass, await DefaultConfig.fromCacheOrSSM("authkey")) as jwt.JwtPayload;
         userId = data.resetUserId;
+        email = data.resetEmail;
     }
 
 
@@ -149,7 +150,8 @@ export const resetPassword = async (email: string, tokenOrPass: string, isPass: 
         salt = byteBuf.toString('base64'),
         hash = hashPass(newPassword, salt);
 
-    (await getHivePool).query("UPDATE tp.local_login set hash=$1 where user_id=$2", [hash, userId])
+        //TODO: clean this up
+    (await getHivePool).query("UPDATE tp.local_login set hash=$1 where user_id=$2 or email=$3", [hash, userId, email])
 
     return {};
 }

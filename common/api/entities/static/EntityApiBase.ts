@@ -6,7 +6,8 @@ export let versionCode =
     process.env.API_VERSION_CODE ||
     version ||
     "alpha"
-let callbackUrl = "https://m.tradinpostapp.com"
+
+let callbackUrl = "https://m.tradingpostapp.com"
 
 export const configApi = (settings: { versionCode?: string, apiBaseUrl?: string, callbackUrl?: string }) => {
     apiBaseUrl = settings.apiBaseUrl || apiBaseUrl;

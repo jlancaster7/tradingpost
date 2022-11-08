@@ -21,7 +21,7 @@ const loginStateChangedEventName = "LOGIN_STATE_CAHNGED";
 
 
 
-export const useAppUser = () => {
+export const useAppUser = (tracker?: string) => {
 
     const { value: _appUser, setValue: setAppUser } = useData("currentUser");
     const { value: _loginResult, setValue: setLoginResult } = useData("loginResult");
@@ -50,18 +50,21 @@ export const useAppUser = () => {
         }
     }
 
-    const [loginState, setLoginState] = useState(_appUser ? createLoginState(_appUser, _loginResult) : undefined)
+    const [loginState, setLoginState] = useState(_appUser || _loginResult ? createLoginState(_appUser, _loginResult) : undefined)
 
     useEffect(() => {
+        if (tracker)
+            console.log("CREATING WITH A TRACKER OF " + tracker);
         const sub = EventRegister.addEventListener(loginStateChangedEventName, (data) => {
-            console.log("Setting a new login state")
+            if (tracker)
+                console.log("TRIGGERED TRACKER OF " + tracker);
             console.log("New State is : " + JSON.stringify(data))
             setLoginState(data);
         });
         return () => {
             EventRegister.removeEventListener(sub as string)
         };
-    }, [])
+    }, [tracker])
 
     return {
         loginState,
