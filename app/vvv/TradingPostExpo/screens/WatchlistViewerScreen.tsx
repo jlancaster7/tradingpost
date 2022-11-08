@@ -123,10 +123,10 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                 field: (a) => {
                     const change = a.item.price?.price || a.item.price?.open ? (a.item.price?.price - a.item.price?.open) / a.item.price?.open : 0
                     return (
-                            <View style={{justifyContent: 'space-around', flexDirection: 'row', flex: 1}}>
-                                <Text style={[change ? change >= 0 ? { color: 'green'} : {color: 'red'} : {} ,{marginLeft: sizes.rem0_5/2}]}>{`(${toPercent2(change)})`}</Text>
-                                <Text>{toDollarsAndCents(a.item.price?.price)}</Text>                                
-                            </View>
+                        <View style={{ justifyContent: 'space-around', flexDirection: 'row', flex: 1 }}>
+                            <Text style={[change ? change >= 0 ? { color: 'green' } : { color: 'red' } : {}, { marginLeft: sizes.rem0_5 / 2 }]}>{`(${toPercent2(change)})`}</Text>
+                            <Text>{toDollarsAndCents(a.item.price?.price)}</Text>
+                        </View>
                     )
                 },
                 //align: 'left' as 'left',
@@ -170,27 +170,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
     const { shownMap, columns } = useWatchlistItemColumns(watchlist?.user[0].id !== appUser?.id);
     const translateHeaderY = useRef(new Animated.Value(0)).current;
     const scrollRef = useRef<FlatList>(null);
-    /*
-    const headerHeight = 154+311+74 + 5;
-    const minViewHeight = windowHeight - headerHeight;
-    const [collapsed, setCollapsed] = useState(false);
-    const [isMaxed, setIsMaxed] = useState(false);
-    const clampMax = headerHeight - ( sizes.rem1 + Number(elevated.paddingVertical) + Number(elevated.marginBottom) + sizes.rem1 + fonts.large ) ; 
-    const translation = translateHeaderY.interpolate({
-        inputRange: [0, clampMax],
-        outputRange: [0, -clampMax],
-        extrapolate: 'clamp',
-    });
-    useEffect(() => {
-        translation.addListener((v: { value: number }) => {
-            const c = Math.abs(v.value + clampMax) < 25;
-            const isMaxed = -v.value === clampMax;
-            setCollapsed(c);
-            setIsMaxed(isMaxed);
-        });
-        return () => translation.removeAllListeners();
-    }, [translation, clampMax]);
-    */
+
     const toast = useToast();
     useEffect(() => {
         (async () => {
@@ -214,10 +194,8 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
         <Animated.FlatList
             data={[
                 <View
-                    //finishedLoading={Boolean(watchlist?.items)}
                     style={{
                         paddingTop: sizes.rem0_5, backgroundColor: AppColors.background,
-                        //transform: [{ translateY: translation }], 
                         alignItems: "stretch", width: "100%"
                     }}
                 >
@@ -278,7 +256,6 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                     </View>
                 </View>,
                 <View style={[{ paddingHorizontal: 0 }]}
-                //finishedLoading={Boolean(watchlistTickers)}
                 >
                     {watchlistTickers && <MultiTermFeedPart key={watchlistTickers ? watchlistTickers.join() : "___"} searchText={watchlistTickers} />}
                 </View>
@@ -287,14 +264,6 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                 return info.item;
             }}
             ref={scrollRef} contentContainerStyle={[{ paddingTop: 0 }]} nestedScrollEnabled
-            /*
-            onMomentumScrollEnd={(ev) => {
-                if (collapsed && !isMaxed) {
-                    scrollRef.current?.scrollToOffset({ offset: clampMax, animated: true });
-                    setIsMaxed(true);
-                }
-            }}
-            */
             onScroll={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
                 { nativeEvent: { contentOffset: { y: translateHeaderY } } }
             ], { useNativeDriver: true })}>

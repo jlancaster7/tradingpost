@@ -122,7 +122,7 @@ export default ({ navigation }: RootStackScreenProps<"Root">) => {
             </Tab>
             <Tab>
                 <Section title="Login">
-                    <TextField placeholder='Username' returnKeyType="next"
+                    <TextField placeholder='Email Address' returnKeyType="next"
                         onChangeText={(name) => setUsername(name)}
                         textInputRef={userRef}
                         style={{ marginVertical: sizes.rem1 }}

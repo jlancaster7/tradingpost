@@ -43,8 +43,6 @@ Notifications.setNotificationHandler({
 
 export const Stack = createNativeStackNavigator<RootStackParamList>();
 
-
-
 export const useInitialRoute = () => {
     let { loginState } = useAppUser();
     let initialRoute: keyof RootStackParamList;
@@ -129,10 +127,10 @@ export function RootNavigator() {
             <Stack.Screen name="NotificationTrade" component={NotificationTradeScreen} />
         </Stack.Group>
         <Stack.Group screenOptions={{
-            presentation: "modal",
             headerStyle: {
                 backgroundColor: "transparent"
             },
+            headerBackVisible: true,
             headerTintColor: "white",
             headerBackground: () => <View></View>,
             headerTitle: "",
