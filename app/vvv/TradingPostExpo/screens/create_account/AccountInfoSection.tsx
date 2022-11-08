@@ -219,7 +219,7 @@ function UnverifiedEmail(props: CreateAccountProps) {
                 shadowRadius: 10,
                 elevation: 4
             }}>
-                <Image source={{ uri: props.user.data.profile_url, height: 120, width: 120 }} height={120} width={120}
+                <Image source={{ uri: props.user.data.profile_url, height: 120, width: 120 }} 
                     style={{ marginBottom: sizes.rem1 / 2, borderRadius: 60, alignSelf: "center" }} />
                 <Text style={{
                     marginBottom: sizes.rem1 / 2,

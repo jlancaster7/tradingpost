@@ -22,7 +22,7 @@ import Auth from '@tradingpost/common/api/entities/static/AuthApi'
 import UserApi from '@tradingpost/common/api/entities/apis/UserApi'
 import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
 import { useAppUser } from "../../Authentication";
-import { useLinkTo } from "@react-navigation/native";
+import { useLinkTo, useNavigation } from "@react-navigation/native";
 import { registerDeviceForNotifications } from "../../utils/notifications";
 
 
@@ -34,6 +34,7 @@ type FieldRefs = {
 
 export function BasicInfoSection(props: CreateAccountProps) {
     const
+        nav = useNavigation(),
         [lockButtons, setLockButtons] = useChangeLock(props),
         opacityAnim = useRef(new Animated.Value(0)).current,
         { signIn, loginState } = useAppUser(),
@@ -51,7 +52,7 @@ export function BasicInfoSection(props: CreateAccountProps) {
                 text: "Sign Out",
                 onPress: async () => {
                     Auth.signOut();
-                    props.navigation.goBack();
+                    nav.goBack();
                 }
             }
             // : (props.saveOnly ? undefined : {

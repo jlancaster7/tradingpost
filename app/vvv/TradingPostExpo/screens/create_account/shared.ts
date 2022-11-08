@@ -11,12 +11,12 @@ export type CreateAccountProps = {
     toastMessage: (msg: string, delay?: number | undefined) => void
 };
 
-// export function useChangeLock(caProps: CreateAccountProps, otherEntities?: IEntity<any>[]) {
-//     const output = useState( false)
-//     const setLockButtons = output[1];
-//     useEffect(() => {
-//     }, [caProps.saveOnly, caProps.user.hasChanged, otherEntities]);
+export function useChangeLock(caProps: CreateAccountProps, otherEntities?: IEntity<any>[]) {
+    const output = useState( false)
+    const setLockButtons = output[1];
+    useEffect(() => {
+    }, [ caProps.user.hasChanged, otherEntities]);
 
-//     return output
-// }
+    return output
+}
 

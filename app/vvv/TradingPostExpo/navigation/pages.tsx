@@ -30,6 +30,8 @@ export type RootStackParamList =
         "Login" |
         "Dash" |
         "WatchlistViewer" |
+        "BrokeragePicker" |
+        "IbkrInfo" |
         "Watchlist" |
         "ImagePicker" |
         "Subscription" |

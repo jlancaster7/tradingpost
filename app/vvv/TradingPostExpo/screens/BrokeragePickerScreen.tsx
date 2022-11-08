@@ -7,10 +7,11 @@ import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../s
 import { ElevatedSection, Section, Subsection } from "../components/Section"
 import { Bank, IBKR } from '../images'; 
 import { Header } from "../components/Headers";
+import { useNavigation } from "@react-navigation/native";
 
 
-export function BrokeragePickerScreen(props: any) {
-
+export function BrokeragePickerScreen() {
+    const nav = useNavigation();
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
     const intervalRef = useRef<any>();
@@ -66,7 +67,7 @@ export function BrokeragePickerScreen(props: any) {
         </View>
         <View style={{flex: 0.3, flexDirection: 'row'}}>
             <Pressable style={{flex: 1}} onPress={()=> {
-                props.navigation.navigate("IbkrInfo")
+               nav.navigate("IbkrInfo")
                 }}>
                 <ElevatedSection style={{justifyContent: 'center', flex: 1, marginRight: sizes.rem1 / 2}} title="">
                     <Text style={{ textAlign: 'center', marginBottom: 10}}>

@@ -9,7 +9,7 @@ import { PostList } from "../components/PostList";
 import { spaceOnSide, postInnerHeight, PostView } from "../components/PostView";
 import  {DashTabScreenProps}  from "../navigation/pages";
 
-export const MultiTermFeedPart = (props: { searchText?: string | string[]}) => {
+export const MultiTermFeedPart = (props: { searchText?: string[]}) => {
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const { searchText } = props
     return <PostList

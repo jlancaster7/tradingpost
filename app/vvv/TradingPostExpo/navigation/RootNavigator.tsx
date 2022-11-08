@@ -31,6 +31,8 @@ import { IconifyIcon } from "../components/IconfiyIcon";
 import KeyboardClose from '../assets/@iconify/keyboard-close'
 import { useAppUser } from "../Authentication";
 import { Log } from "../utils/logger";
+import { BrokeragePickerScreen } from "../screens/BrokeragePickerScreen";
+import { IbkrInfoScreen } from "../screens/IbkrInfoScreen";
 
 
 Notifications.setNotificationHandler({
@@ -127,6 +129,8 @@ export function RootNavigator() {
             <Stack.Screen name="Company" component={CompanyScreen} />
             <Stack.Screen name="TableModal" component={TableModalScreen} />
             <Stack.Screen name="NotificationTrade" component={NotificationTradeScreen} />
+            <Stack.Screen name="BrokeragePicker" component={BrokeragePickerScreen}  />
+            <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen}  />
         </Stack.Group>
         <Stack.Group screenOptions={{
             presentation: "modal",
