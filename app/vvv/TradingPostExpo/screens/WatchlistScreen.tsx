@@ -1,6 +1,6 @@
 import { Api } from "@tradingpost/common/api";
 import { AllWatchlists, IWatchlistGet, IWatchlistList } from "@tradingpost/common/api/entities/interfaces";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, TextStyle, View } from "react-native";
 import { AddButton, EditButton } from "../components/AddButton";
 import { Icon, Text } from '@ui-kitten/components'
@@ -15,15 +15,17 @@ import { AwaitedReturn, toPercent, toPercent2, toThousands } from "../utils/misc
 import { WatchlistSection } from "../components/WatchlistSection";
 import Theme from '../theme-light.json'
 import { FlatList } from "react-native-gesture-handler";
+import { useFocusEffect } from "@react-navigation/native";
 
 export const WatchlistScreen = (props: any) => {
 
     const [watchlists, setWatchlists] = useState<AllWatchlists>()
     const [quickWatchlist, setQuickWatchlist] = useState<IWatchlistGet>()
     const toast = useToast();//const [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>();
-
+    const [focus, setFocus] = useState(false);
     const scrollRef = useRef<FlatList>(null);
-    useEffect(() => {
+    useFocusEffect(useCallback(()=> {
+        
         (async () => {
             try {
                 const lists = await Api.Watchlist.extensions.getAllWatchlists();
@@ -42,13 +44,22 @@ export const WatchlistScreen = (props: any) => {
                         is_saved: false
                     })
                 }
+                setFocus((f) => !f)
                 setWatchlists(lists);
-                
+                console.log('useFocusEffect')
 
             }
             catch (ex: any) {
                 toast.show(ex.message);
             }
+        })()
+        
+    },[]))
+
+    useEffect(() => {
+        (async () => {
+
+            
         })()
     }, [])
 
@@ -73,6 +84,7 @@ export const WatchlistScreen = (props: any) => {
                 }}
             >
                 <Table
+                    datasetKey={`${focus}`}
                     listKey="quick_watch_list"
                     noDataMessage="No Companies"
                     columns={watchlistItemColumns}

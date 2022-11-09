@@ -76,6 +76,8 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
                                 else
                                     await Api.Watchlist.insert(watchlistData)
 
+                                //const lists = await Api.Watchlist.extensions.getAllWatchlists();
+                                //console.log(lists)
                                 props.navigation.goBack();
                             }
                         }
