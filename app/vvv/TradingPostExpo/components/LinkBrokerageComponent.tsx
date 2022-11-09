@@ -10,9 +10,9 @@ import { Table } from "./Table";
 import { AddButton, EditButton } from "./AddButton";
 import { openBrowserAsync } from 'expo-web-browser';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useLinkTo, useNavigation } from "@react-navigation/native";
 
-export const LinkBrokerageComponent = (props: any) => {
+export const LinkBrokerageComponent = () => {
     const nav = useNavigation();
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
@@ -68,7 +68,7 @@ export const LinkBrokerageComponent = (props: any) => {
     return (
     <Section style={flex} title="Link Brokerage Accounts" button={(buttonProps) => accounts?.length ? <EditButton
         onPress={() => {
-            props.props.navigation.navigate("BrokeragePicker")
+            nav.navigate("BrokeragePicker")
         }}
         height={buttonProps.height}
         width={buttonProps.width}

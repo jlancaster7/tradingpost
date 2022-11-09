@@ -251,6 +251,20 @@
     $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.view_watchlist_item_insert(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.view_watchlist_item_insert(
+        request jsonb)
+        RETURNS TABLE("symbol" text,"watchlist_id" bigint,"note" text,"id" BIGINT)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."symbol", d."watchlist_id", d."note", d."id" FROM public.data_watchlist_item as d;
+    END;
+    $BODY$;
+
+
     DROP FUNCTION IF EXISTS public.view_watchlist_item_get(jsonb);
   
     CREATE OR REPLACE FUNCTION public.view_watchlist_item_get(
@@ -386,7 +400,7 @@
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user", (SELECT json_agg(t) FROM public.view_watchlist_item_list(request) as t WHERE t.watchlist_id=d."id") as "items", d."note", d."name", d."id", d."type", (SELECT count(*) FROM public.view_watchlist_saved_list(request) as t WHERE t."watchlist_id"=d."id") as "saved_by_count", EXISTS(SELECT * FROM public.view_watchlist_saved_list(request) as t WHERE t.watchlist_id=d."id") as "is_saved" FROM public.data_watchlist as d;
+  RETURN QUERY SELECT (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user", (SELECT json_agg(t) FROM public.view_watchlist_item_insert(request) as t WHERE t.watchlist_id=d."id") as "items", d."note", d."name", d."id", d."type", (SELECT count(*) FROM public.view_watchlist_saved_list(request) as t WHERE t."watchlist_id"=d."id") as "saved_by_count", EXISTS(SELECT * FROM public.view_watchlist_saved_list(request) as t WHERE t.watchlist_id=d."id") as "is_saved" FROM public.data_watchlist as d;
     END;
     $BODY$;
 
@@ -400,7 +414,7 @@
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."name", d."note", (SELECT json_agg(t) FROM public.view_watchlist_item_list(request) as t WHERE t.watchlist_id=d."id") as "items", d."type", d."user_id" FROM public.data_watchlist as d;
+  RETURN QUERY SELECT d."name", d."note", (SELECT json_agg(t) FROM public.view_watchlist_item_insert(request) as t WHERE t.watchlist_id=d."id") as "items", d."type", d."user_id" FROM public.data_watchlist as d;
     END;
     $BODY$;
 
@@ -414,6 +428,6 @@
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."name", d."note", (SELECT json_agg(t) FROM public.view_watchlist_item_list(request) as t WHERE t.watchlist_id=d."id") as "items", d."type", d."user_id" FROM public.data_watchlist as d;
+  RETURN QUERY SELECT d."id", d."name", d."note", (SELECT json_agg(t) FROM public.view_watchlist_item_insert(request) as t WHERE t.watchlist_id=d."id") as "items", d."type", d."user_id" FROM public.data_watchlist as d;
     END;
     $BODY$;

@@ -433,8 +433,8 @@ VALUES ((request->'data'->>'name')::text,
 returning public.data_watchlist.id INTO _idField;
 DELETE FROM public.data_watchlist_item t WHERE t.watchlist_id = _idField;
 IF request->'data' ? 'items' THEN
-INSERT INTO public.data_watchlist_item(watchlist_id,symbol,note,date_added)
-SELECT _idField,(value->>'symbol')::text,(value->>'note')::text,(value->>'date_added')::timestamptz FROM json_array_elements((request->'data'->>'items')::json);
+INSERT INTO public.data_watchlist_item(watchlist_id,symbol,note)
+SELECT _idField,(value->>'symbol')::text,(value->>'note')::text FROM json_array_elements((request->'data'->>'items')::json);
 END IF;
 return query SELECT * FROM public.view_watchlist_get(request) as v WHERE v.id = _idField;
     END;
@@ -456,8 +456,8 @@ user_id =  tp.prop_or_default(request->'data' ,'user_id',v.user_id),
 type =  tp.prop_or_default(request->'data' ,'type',v.type) WHERE v."id" = (request->'data'->>'id')::BIGINT;
 DELETE FROM public.data_watchlist_item t WHERE t.watchlist_id = (request->'data'->>'id')::BIGINT;
 IF request->'data' ? 'items' THEN
-INSERT INTO public.data_watchlist_item(watchlist_id,symbol,note,date_added)
-SELECT (request->'data'->>'id')::BIGINT,(value->>'symbol')::text,(value->>'note')::text,(value->>'date_added')::timestamptz FROM json_array_elements((request->'data'->>'items')::json);
+INSERT INTO public.data_watchlist_item(watchlist_id,symbol,note)
+SELECT (request->'data'->>'id')::BIGINT,(value->>'symbol')::text,(value->>'note')::text FROM json_array_elements((request->'data'->>'items')::json);
 END IF;
 return query SELECT * FROM public.view_watchlist_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
     END;
@@ -492,6 +492,27 @@ return query SELECT * FROM public.view_watchlist_get(request) as v WHERE v."id" 
     $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.api_watchlist_item_insert(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_watchlist_item_insert(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"symbol" text,"watchlist_id" bigint,"note" text,"date_added" TIMESTAMP WITH TIME ZONE)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    DECLARE
+_idField BIGINT;
+    BEGIN
+  INSERT INTO public.data_watchlist_item(
+  symbol,
+watchlist_id,
+note)
+VALUES ((request->'data'->>'symbol')::text,
+(request->'data'->>'watchlist_id')::bigint,
+(request->'data'->>'note')::text)
+returning public.data_watchlist_item.id INTO _idField;
+return query SELECT * FROM public.view_watchlist_item_get(request) as v WHERE v.id = _idField;
+    END;
+    $BODY$;
 
 
 

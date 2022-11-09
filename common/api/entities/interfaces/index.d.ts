@@ -101,6 +101,7 @@ export interface ISubscriberGet {
     approved: boolean;
 }
 export interface ISubscriberInsert {
+    id: number;
     subscription_id: number;
     user_id: string;
     start_date: Date;
@@ -217,7 +218,7 @@ export interface IWatchlistList {
 }
 export interface IWatchlistGet {
     user: IUserList[];
-    items: IWatchlistItemList[];
+    items: IWatchlistItemInsert[];
     note?: string;
     name: string;
     id: number;
@@ -228,7 +229,7 @@ export interface IWatchlistGet {
 export interface IWatchlistInsert {
     name: string;
     note?: string;
-    items: Omit<IWatchlistItemList, 'watchlist_id' | 'id'>[];
+    items: Omit<IWatchlistItemInsert, 'watchlist_id' | 'id'>[];
     type: string;
     user_id?: string;
 }
@@ -236,7 +237,7 @@ export interface IWatchlistUpdate {
     id?: number;
     name?: string;
     note?: string;
-    items?: Omit<IWatchlistItemList, 'watchlist_id' | 'id'>[];
+    items?: Omit<IWatchlistItemInsert, 'watchlist_id' | 'id'>[];
     type?: string;
     user_id?: string;
 }
@@ -252,7 +253,13 @@ export interface IWatchlistItemGet {
     symbol: string;
     watchlist_id: number;
     note?: string;
-    date_added: Date;
+    date_added?: Date;
+}
+export interface IWatchlistItemInsert {
+    symbol: string;
+    watchlist_id: number;
+    note?: string;
+    id: number;
 }
 export interface IWatchlistSavedList {
     id: number;
