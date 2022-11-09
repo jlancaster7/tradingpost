@@ -58,7 +58,6 @@ export const useAppUser = (tracker?: string) => {
         const sub = EventRegister.addEventListener(loginStateChangedEventName, (data) => {
             if (tracker)
                 console.log("TRIGGERED TRACKER OF " + tracker);
-            console.log("New State is : " + JSON.stringify(data))
             setLoginState(data);
         });
         return () => {

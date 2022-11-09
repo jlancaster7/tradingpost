@@ -17,6 +17,7 @@ export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">)
     const verificationToken = props.route.params?.token;
     const toast = useToast();
     const linkTo = useLinkTo();
+    console.log("I'm on the verification screennnn....")
     const [imVerified, setImVerified] = useState(false);
     useEffect(() => {
         if (imVerified) {
@@ -43,7 +44,7 @@ export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">)
                     }
                 } else {
                     console.log("I CANT FIND THE TOKEN.....");
-                    props.navigation.navigate("Root");
+                    props.navigation.replace("Root");
                 }
             }
         })()
