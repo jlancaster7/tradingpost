@@ -3,7 +3,7 @@ import { IconifyIcon } from "../components/IconfiyIcon"
 import { Section, Subsection } from "../components/Section"
 import { SwitchField } from "../components/SwitchField"
 import { Api } from "@tradingpost/common/api";
-import { CreateAccountProps, sideMargin, useChangeLock } from "./create_account/shared"
+import { CreateAccountProps, sideMargin } from "./create_account/shared"
 //import { SetDashboardLayout } from "../../layouts/DashboardLayout"
 //import { deleteAccount, UpdateUserProfile } from "../../apis/Authenticfation"
 import { /*bindSwitch,*/ useReadonlyEntity } from "../utils/hooks"

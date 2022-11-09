@@ -1,6 +1,7 @@
 import { pbkdf2Sync, randomBytes } from 'crypto'
 import { execProc, execProcOne, getHivePool } from '../db'
 import { LoginResult } from './entities/static/AuthApi'
+import UserServerExtensions from './entities/extensions/User.server';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { DefaultConfig } from '../configuration';
 import { PublicError } from './entities/static/EntityApiBase';
@@ -105,6 +106,18 @@ export const createUser = async (data: {
     const [newUser] =
         await execProc<{ user_id: string }>("tp.api_local_login_create_user", { data });
 
+    try {
+        await UserServerExtensions.sendEmailValidation({
+            body: undefined,
+            extra: {
+                userId: newUser.user_id,
+            }
+        })
+    } catch (ex) {
+        console.error(ex);
+    }
+
+
     return {
         verified: false,
         token: await makeUserToken(newUser.user_id),
@@ -150,7 +163,7 @@ export const resetPassword = async (email: string, tokenOrPass: string, isPass: 
         salt = byteBuf.toString('base64'),
         hash = hashPass(newPassword, salt);
 
-        //TODO: clean this up
+    //TODO: clean this up
     (await getHivePool).query("UPDATE tp.local_login set hash=$1 where user_id=$2 or email=$3", [hash, userId, email])
 
     return {};

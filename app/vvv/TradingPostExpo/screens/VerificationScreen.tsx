@@ -43,7 +43,7 @@ export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">)
                     }
                 } else {
                     console.log("I CANT FIND THE TOKEN.....");
-                    props.navigation.navigate("Login");
+                    props.navigation.navigate("Root");
                 }
             }
         })()

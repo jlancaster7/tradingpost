@@ -10,6 +10,8 @@ export let versionCode =
 let callbackUrl = "https://m.tradingpostapp.com"
 
 export const configApi = (settings: { versionCode?: string, apiBaseUrl?: string, callbackUrl?: string }) => {
+    console.log("Setting api to :" + JSON.stringify(settings));
+
     apiBaseUrl = settings.apiBaseUrl || apiBaseUrl;
     versionCode = settings.versionCode || versionCode;
     callbackUrl = settings.callbackUrl || callbackUrl
