@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, RefObject, useMemo } from "react";
+import React, { useRef, useEffect, RefObject, useMemo, useState } from "react";
 import { Image, View, Animated } from "react-native";
 import { Text } from "@ui-kitten/components";
 import { ButtonField } from "../../components/ButtonField";
@@ -15,7 +15,7 @@ import Auth from '@tradingpost/common/api/entities/static/AuthApi'
 import { useAppUser } from "../../Authentication";
 import { useData } from "../../lds";
 import { useLinkTo, useNavigation } from "@react-navigation/native";
-import { CreateAccountProps, useChangeLock, sideMargin } from "./shared";
+import { CreateAccountProps, sideMargin } from "./shared";
 
 
 type FieldRefs = {
@@ -32,7 +32,7 @@ export function AccountInfoSection(props: CreateAccountProps) {
 
 
     const
-        [lockButtons, setLockButtons] = useChangeLock(props),
+        [lockButtons, setLockButtons] = useState(false),
         { setValue: setLoginResult } = useData("loginResult"),
         loginEntity = useReadonlyEntity<LoginInfo>({}),
         linkTo = useLinkTo<any>(),
@@ -219,7 +219,7 @@ function UnverifiedEmail(props: CreateAccountProps) {
                 shadowRadius: 10,
                 elevation: 4
             }}>
-                <Image source={{ uri: props.user.data.profile_url, height: 120, width: 120 }} 
+                <Image source={{ uri: props.user.data.profile_url, height: 120, width: 120 }}
                     style={{ marginBottom: sizes.rem1 / 2, borderRadius: 60, alignSelf: "center" }} />
                 <Text style={{
                     marginBottom: sizes.rem1 / 2,

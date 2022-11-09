@@ -11,7 +11,7 @@ import { TextField, ITextField } from "../../components/TextField";
 import { bannerText, flex, sizes, textInputWiz } from "../../style";
 import { bindTextInput, IEntity, useReadonlyEntity } from "../../utils/hooks";
 import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators";
-import { CreateAccountProps, sideMargin, useChangeLock } from "./shared";
+import { CreateAccountProps, sideMargin } from "./shared";
 
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
 import { useData } from "../../lds";
@@ -35,7 +35,7 @@ type FieldRefs = {
 export function BasicInfoSection(props: CreateAccountProps) {
     const
         nav = useNavigation(),
-        [lockButtons, setLockButtons] = useChangeLock(props),
+        [lockButtons, setLockButtons] = useState(false),
         opacityAnim = useRef(new Animated.Value(0)).current,
         { signIn, loginState } = useAppUser(),
         appUser = loginState?.appUser,

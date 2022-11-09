@@ -1,13 +1,12 @@
-import React, { useState, useRef, useEffect, RefObject, useMemo } from "react";
-import { Alert, TouchableOpacity, Image, ImageStyle, ViewStyle, View, Animated, Pressable } from "react-native";
+import React, { useRef, useEffect, RefObject, useState } from "react";
+import { View, Animated, Pressable } from "react-native";
 //import { Navigation } from "react-native-navigation";
 //import { Nav } from '@react-navigation/native'
 import { Avatar, Icon, Input, Text, } from "@ui-kitten/components";
 //import { signOut, getStoredCreds, CreateAuth0User, UpdateUserProfile, signInStoredCreds } from "../../apis/Authentication";
 import { TextField, ITextField } from "../../components/TextField";
 import { bannerText, flex, noMargin, paddView, sizes, textInputWiz, thinBannerText } from "../../style";
-import { isRequired, isValidEmail, isAlphaNumeric } from "../../utils/validators";
-import { CreateAccountProps, sideMargin, useChangeLock } from "./shared";
+import { CreateAccountProps, sideMargin } from "./shared";
 
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
 
@@ -16,7 +15,8 @@ import { SvgExpo } from "../../components/SvgExpo";
 import AnalyzeImage from '../../assets/analyze2.svg'
 import { useWatchlistPicker, WatchlistPicker } from "../../components/WatchlistPicker";
 import { ElevatedSection } from "../../components/Section";
-import { useLinkTo } from "@react-navigation/native";
+import { useLinkTo, useNavigation } from "@react-navigation/native";
+import { RootStackScreenProps } from "../../navigation/pages";
 
 type FieldRefs = {
     first: RefObject<ITextField>,
@@ -26,8 +26,9 @@ type FieldRefs = {
 
 
 export function PickWatchlistSection(props: CreateAccountProps) {
+    const nav = useNavigation<RootStackScreenProps<"Create">["navigation"]>();
     const
-        [lockButtons, setLockButtons] = useChangeLock(props),
+        [lockButtons, setLockButtons] = useState(false),
         opacityAnim = useRef(new Animated.Value(0)).current,
         { selectionConverter: converterRef, selectedItems, onSelectedItemschanged: setSelectedItems, symbolConverter } = useWatchlistPicker(),
         linkTo = useLinkTo<any>(),
@@ -37,7 +38,7 @@ export function PickWatchlistSection(props: CreateAccountProps) {
                 text: "Not Now",
                 onPress: () => {
                     linkTo('/create/analyststart');
-                    
+
                 }
             },
             right: {
@@ -90,13 +91,13 @@ export function PickWatchlistSection(props: CreateAccountProps) {
             <ElevatedSection title="" style={[flex, noMargin]}>
                 <Animated.View style={{ opacity: opacityAnim }}>
                     <Pressable onPress={() => {
-                        props.navigation.navigate("OverlayModal");
+                        nav.navigate("OverlayModal");
                     }}><Text
                         style={[thinBannerText, { marginVertical: sizes.rem0_5 }]}>
                             Help us get to know you.
                         </Text>
                     </Pressable>
-                    <SvgExpo style={{width:"100%", aspectRatio:1.5}}>
+                    <SvgExpo style={{ width: "100%", aspectRatio: 1.5 }}>
                         <AnalyzeImage />
                     </SvgExpo>
                     <Text

@@ -7,7 +7,7 @@ import { bannerText, flex, noMargin, paddView, sizes, thinBannerText } from "../
 import { Picker } from '../../components/Picker'
 import {
     CreateAccountProps,
-    sideMargin, useChangeLock
+    sideMargin
 } from "./shared"
 
 import {
@@ -106,7 +106,7 @@ export function InvestmentInterestSection(props: CreateAccountProps) {
     });
     //props.user.data.investment_interests || { interestLevel: 50 }
     const { securities: { list: securities } } = useSecuritiesList(),
-        [lockButtons, setLockButtons] = useChangeLock(props, [anaylistProfile]),
+        [lockButtons, setLockButtons] = useState(false),
         [bio, setBio] = useState(''),
         [sliderWidth, setSliderWidth] = useState(100),
         linkTo = useLinkTo<any>(),
