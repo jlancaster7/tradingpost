@@ -110,6 +110,13 @@ export const SubscriptionScreen = (props: RootStackScreenProps<"Subscription">) 
                                 alias: "Cost",
                                 align: "left",
                                 field: "subscription",
+                                headerStyle: {
+                                    textAlign: 'center'
+                                },
+                                style: {
+                                    textAlign: 'center',
+                                    //paddingLeft: 6
+                                },
                                 stringify: (k: ISubscriberList["subscription"]) => {
                                     return String(String(k[0].cost) === '$0.00' ? 'Free' : k[0].cost)
                                 }
@@ -223,7 +230,7 @@ export const SubscriptionScreen = (props: RootStackScreenProps<"Subscription">) 
                                             setButtonClick(!buttonClick);
                                         }}
                                         width={26}
-                                        height={'100%'}
+                                        //height={'auto'}
                                         color={'#EC5328'}
                                     />
                                 },
