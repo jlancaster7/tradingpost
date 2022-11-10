@@ -1,7 +1,7 @@
-import { useNavigation } from "@react-navigation/native"
+import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { Interface } from "@tradingpost/common/api"
 import { IWatchlistList } from "@tradingpost/common/api/entities/interfaces"
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { Pressable, Text } from "react-native"
 import { PlusIcon } from "../images"
 import { useNoteField } from "../screens/WatchlistViewerScreen"
@@ -13,7 +13,10 @@ import { ITableColumn, Table } from "./Table"
 
 export function WatchlistSection(props: { title: string, watchlists: Interface.IWatchlistList[] | undefined, showAddButton?: boolean, shared?: boolean, hideNoteOnEmpty?: boolean }) {
     const nav = useNavigation<any>();
-
+    const [focus, setFocus] = useState(false);
+    useFocusEffect(useCallback(()=> {
+        setFocus((f) => !f)
+    },[]))
     const fields: ITableColumn<IWatchlistList>[] = !props.shared ?
         [{ field: "name", alias: "Name", align: "left" },
         { field: "item_count", alias: "Items" },
@@ -35,6 +38,7 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
     }} /> : undefined}>
         <Table
             listKey={props.title}
+            datasetKey={`${focus}`}
             noDataMessage={props.shared ? "No Shared Watchlists" : "No Watchlists"}
             columns={[
                 ...fields,
