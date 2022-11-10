@@ -5,7 +5,7 @@ import { Api } from "@tradingpost/common/api";
 import { sideMargin } from "./create_account/shared"
 import { ScrollWithButtons } from "../components/ScrollWithButtons"
 import { View, Animated, Pressable } from "react-native"
-import { useLinkTo } from "@react-navigation/native"
+import { useLinkTo, useNavigation } from "@react-navigation/native"
 import { useSecuritiesList } from '../SecurityList'
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { openBrowserAsync } from 'expo-web-browser';
@@ -138,8 +138,7 @@ const AccountInfoContent = (props: { updates: IUserUpdate, setUpdates: (updates:
         setAcText("");
     }
     const benches = securities.filter(s => s.is_benchmark).sort((a, b) => a.symbol.localeCompare(b.symbol)).map((value) => ({
-        label: `${value.symbol}
-    ${value.security_name}`,
+        label: `${value.symbol} - ${value.security_name}`,
         value: value.symbol,
         iconUrl: value.logo_url
     }))
@@ -248,6 +247,7 @@ const AdvancedTabContent = () => {
     const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
     const intervalRef = useRef<any>();
     const [needsRefresh, setNeedsRefresh] = useState<{}>();
+    const nav = useNavigation();
     const openLink = async () => {
         await Api.User.extensions.generateBrokerageLink(undefined).then(({ link }) => {
             setLink(link)
@@ -322,12 +322,19 @@ const AdvancedTabContent = () => {
         <Section title="" style={{ padding: 10 }}>
             <SwitchField label='Analyst' checked={analystCheck} onChange={onAnalystCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: fonts.medium, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }} />
         </Section>
-        <Section title='Display' style={{ padding: 10 }}>
+        <Section title='Display To Subscribers' style={{ padding: 5 }}>
             <SwitchField label='Performance' checked={performanceCheck} onChange={onPerformanceCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
             <SwitchField label='Portfolio' checked={holdingsCheck} onChange={onHoldingsCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
             <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'center', marginVertical: 15 }}>
+                <PrimaryButton style={{ width: "60%", paddingHorizontal: 4,backgroundColor: AppColors.secondary, borderColor: AppColors.secondary }} onPress={() => {
+                    nav.navigate('Subscription')
+                 }}>
+                    Manage Subscriptions
+                </PrimaryButton>
+            </View>
         </Section>
-        <LinkBrokerageComponent />
+            <LinkBrokerageComponent />
         <Section title='Payment' style={{ padding: 10 }}>
             <Text>
                 Coming Soon!
