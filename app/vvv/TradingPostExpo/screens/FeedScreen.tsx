@@ -1,12 +1,12 @@
-import { NavigationProp } from "@react-navigation/native";
-import { Api, Interface } from "@tradingpost/common/api";
-import React, { useEffect, useState } from "react";
-import { useWindowDimensions } from "react-native";
-import { View, Text } from "react-native";
-import { PlusContentButton } from "../components/PlusContentButton";
-import { PostList } from "../components/PostList";
-import { spaceOnSide, postInnerHeight, PostView } from "../components/PostView";
-import  {DashTabScreenProps}  from "../navigation/pages";
+import {NavigationProp} from "@react-navigation/native";
+import {Api, Interface} from "@tradingpost/common/api";
+import React, {useEffect, useState} from "react";
+import {useWindowDimensions} from "react-native";
+import {View, Text} from "react-native";
+import {PlusContentButton} from "../components/PlusContentButton";
+import {PostList} from "../components/PostList";
+import {spaceOnSide, postInnerHeight, PostView} from "../components/PostView";
+import {DashTabScreenProps} from "../navigation/pages";
 
 export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const [searchText, setSearchText] = useState("")
@@ -25,11 +25,11 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     //},[])
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#F7f8f8" }}>
-            <FeedPart bookmarkedOnly={props.route.params.bookmarkedOnly === "true"} searchText={searchText} />
+        <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
+            <FeedPart bookmarkedOnly={props.route.params.bookmarkedOnly === "true"} searchText={searchText}/>
             <PlusContentButton onPress={() => {
                 props.navigation.navigate("PostEditor")
-            }} />
+            }}/>
         </View>
     );
 }
@@ -40,8 +40,8 @@ export const FeedPart = (props: {
     searchText?: string,
     userId?: string
 }) => {
-    const { width: windowWidth } = useWindowDimensions();
-    const { searchText, bookmarkedOnly, userId } = props
+    const {width: windowWidth} = useWindowDimensions();
+    const {searchText, bookmarkedOnly, userId} = props
     return <PostList
         key={bookmarkedOnly ? String(Date.now()) : "STATIC"}
         datasetKey={searchText ? searchText : "____________"}
@@ -53,11 +53,10 @@ export const FeedPart = (props: {
                 userId,
                 data: searchText ? {
                     terms: (() => {
-                        if (searchText[0] ==='$'){
+                        if (searchText[0] === '$') {
                             console.log('lowercasing')
                             return searchText.toLowerCase()
-                        }
-                        else{ 
+                        } else {
                             return searchText
                         }
                     })()

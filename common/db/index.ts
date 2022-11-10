@@ -52,7 +52,7 @@ export const init = (async () => {
     const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
     const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
     console.log("Start Init ")
-    await finicity.init();
+    // await finicity.init();
     brokerage = new Brokerage(pgClient, pgp, finicity);
 
     console.log("Start Connection ")
