@@ -269,3 +269,8 @@ DROP INDEX tradingpost_transaction_idx;
 
 CREATE UNIQUE INDEX tradingpost_current_holding_unique_idx ON public.tradingpost_current_holding USING btree (account_id, security_id, option_id, security_type);
 DROP INDEX tradingpost_current_holding_idx;
+
+-- TODO: Run In Production
+UPDATE NOTIFICATION n
+SET DATA = (SELECT DATA || '{"approved": true}')
+WHERE TYPE = 'NEW_SUBSCRIPTION';

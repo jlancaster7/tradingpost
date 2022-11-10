@@ -6,7 +6,6 @@ import {ListTradesResponse, ListAlertsResponse} from "../interfaces";
 
 export default ensureServerExtensions<Notification>({
     seenNotifications: async (req): Promise<{}> => {
-        
         if (!req.body.notificationIds || req.body.notificationIds.length <= 0) return {}
 
         const pool = await getHivePool;
@@ -128,7 +127,6 @@ export default ensureServerExtensions<Notification>({
             console.error(e)
             return {}
         }
-
     },
     updateUserDeviceTimezone: async (req) => {
         try {
@@ -140,5 +138,19 @@ export default ensureServerExtensions<Notification>({
             console.error(e)
             return {}
         }
+    },
+    updateNotification: async (req) => {
+        const query = `UPDATE
+                           NOTIFICATION
+                       SET TYPE       = $1,
+                           date_time  = $2,
+                           DATA       = $3,
+                           seen       = $4,
+                           updated_at = NOW()
+                       WHERE id = $5;`
+        const pool = await getHivePool;
+        const {type, dateTime, id, data, seen} = req.body;
+        await pool.query(query, [type, dateTime, data, seen, id]);
+        return
     }
 })

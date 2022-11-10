@@ -175,7 +175,6 @@ const UserInteractionNotification = (props: { response: ListAlertsResponse }): J
 }
 const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.Element => {
     const nav = useNavigation<NavigationProp<any>>();
-    const [approved, setApproved] = useState<boolean>()
     const openProfile = () => {
         if (props.response.data?.userId) {
             nav.navigate("Profile", {
@@ -183,14 +182,6 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
             });
         }
     }
-    useEffect(() => {
-        const d = async () => Api.Subscriber.get(props.response.data.subscriber_id);
-        d().then((r) => {
-            setApproved(r.approved)
-        }).catch((err) => {
-            setApproved(true)
-        })
-    }, [])
 
     const dt = new Date(props.response.dateTime);
     const dtFmt = `${dt.getMonth() + 1}/${dt.getDate()}/${dt.getFullYear() % 100}`
@@ -209,12 +200,11 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                     <SecondaryButton
                         children={'Approve'}
                         style={{
-                            display: approved ? 'none' : 'flex',
+                            display: props.response.data.approved ? 'none' : 'flex',
                             backgroundColor: "#35A265", borderColor: "#35A265",
                             minHeight: 26,
                             height: 26,
                             minWidth: 70,
-                            //width: 70,
                             alignSelf: "center",
                             paddingTop: 0,
                             paddingBottom: 0,
@@ -223,9 +213,18 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                         }}
                         onPress={async () => {
                             await Api.Subscriber.update(props.response.data.subscriber_id, {
-                                approved: true
-                            })
-                            setApproved(true);
+                                approved: true,
+                            });
+                            await Api.Notification.extensions.updateNotification({
+                                id: props.response.id,
+                                dateTime: props.response.dateTime,
+                                data: {
+                                    ...props.response.data,
+                                    approved: true
+                                },
+                                seen: true,
+                                type: props.response.type
+                            });
                         }}
                     />
                 </View>

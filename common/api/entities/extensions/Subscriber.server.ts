@@ -1,8 +1,8 @@
-import Extension, { ensureServerExtensions } from ".";
-import { execProc, getHivePool } from "../../../db";
+import Extension, {ensureServerExtensions} from ".";
+import {execProc, getHivePool} from "../../../db";
 
 import Subscription from "../extensions/Subscription.server";
-import { IUserGet } from "../interfaces";
+import {IUserGet} from "../interfaces";
 import Subscriber from './Subscriber';
 
 export default ensureServerExtensions<Subscriber>({
@@ -22,12 +22,14 @@ export default ensureServerExtensions<Subscriber>({
         if (result[0].subscription[0].settings.approve_new) {
             const pool = await getHivePool;
             await pool.query(`INSERT INTO notification(user_id, type, date_time, data)
-                              VALUES ($1, $2, $3, $4)`, 
-                              [req.body.user_id, 'NEW_SUBSCRIPTION', new Date(), {userId: req.extra.userId, 
-                                                                                   handle: user.handle, 
-                                                                                   message: 'has subscribed to you.',
-                                                                                   subscriber_id: result[0].id
-                                                                                }]);
+                              VALUES ($1, $2, $3, $4)`,
+                [req.body.user_id, 'NEW_SUBSCRIPTION', new Date(), {
+                    userId: req.extra.userId,
+                    handle: user.handle,
+                    message: 'has subscribed to you.',
+                    subscriber_id: result[0].id,
+                    approved: false,
+                }]);
         }
         return {}
     },
