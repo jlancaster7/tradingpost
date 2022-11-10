@@ -46,6 +46,7 @@ export const FeedPart = (props: {
         key={bookmarkedOnly ? String(Date.now()) : "STATIC"}
         datasetKey={searchText ? searchText : "____________"}
         posts={async (allItems, page, sizeCache) => {
+            console.log("PAGE: ", page)
             const posts = (await Api.Post.extensions.feed({
                 page,
                 bookmarkedOnly: bookmarkedOnly,

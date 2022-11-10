@@ -1,19 +1,19 @@
-import { ensureServerExtensions } from ".";
-import { DefaultConfig } from "../../../configuration";
-import { PublicError } from "../static/EntityApiBase";
+import {ensureServerExtensions} from ".";
+import {DefaultConfig} from "../../../configuration";
+import {PublicError} from "../static/EntityApiBase";
 import Post from './Post'
-import { Client as ElasticClient } from '@elastic/elasticsearch';
-import { IElasticPost, IElasticPostExt, ISubscriptionGet, IUserGet } from "../interfaces";
-import { getPostCache, getUserCache } from "../../cache";
-import { execProc, getHivePool } from '../../../db'
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import {Client as ElasticClient} from '@elastic/elasticsearch';
+import {IElasticPost, IElasticPostExt, ISubscriptionGet, IUserGet} from "../interfaces";
+import {getPostCache, getUserCache} from "../../cache";
+import {execProc, getHivePool} from '../../../db'
+import {S3Client, GetObjectCommand} from "@aws-sdk/client-s3";
 import PostApi from "../apis/PostApi";
 import ElasticService from "../../../elastic"
 import TradingPostsService from "../../../social-media/tradingposts/service"
 import PostPrepper from "../../../post-prepper";
-import { TradingPostsAndUsers, TradingPostsAndUsersTable } from "../../../social-media/tradingposts/interfaces"
-import { DateTime } from "luxon";
-import { Browser } from "puppeteer";
+import {TradingPostsAndUsers, TradingPostsAndUsersTable} from "../../../social-media/tradingposts/interfaces"
+import {DateTime} from "luxon";
+import {Browser} from "puppeteer";
 
 const client = new S3Client({
     region: "us-east-1"
@@ -58,7 +58,7 @@ const bookmarkQuery = (bookmarkItems: string[]) => {
             must: [
                 {
                     terms: {
-                        id: bookmarkItems
+                        _id: bookmarkItems
                     }
                 },
                 {
@@ -69,20 +69,7 @@ const bookmarkQuery = (bookmarkItems: string[]) => {
         }
     }
 }
-/*
-const userQuery = (userId: string) => {
-    return {
-        bool: {
-            must: [
-                {
-                    term: {
-                        "user.id": userId
-                    }
-                }]
-        }
-    }
-}
-*/
+
 const userQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions"]["feed"]>["0"]["data"], undefined>) => {
     const template = await userQueryTemplate;
     let queryString = template;
@@ -92,9 +79,9 @@ const userQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions"]
         const dt = typeof dataToReplace;
         if (dt !== "number" && dt !== "string" && !(dataToReplace instanceof Array))
             throw new Error("Invalid data passed to userQeury");
-        
+
         queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
-        
+
     });
     return JSON.parse(queryString);
 }
@@ -109,9 +96,9 @@ const searchQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions
         if (dt !== "number" && dt !== "string" && !(dataToReplace instanceof Array))
             throw new Error("Invalid data passed to searchQeury");
 
-        
+
         queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
-        
+
     });
 
     return JSON.parse(queryString);
@@ -124,19 +111,17 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             throw new PublicError("Invalid Request missing page", 400);
 
 
-
-
         const page = Number(req.body.page);
         const userCache = (await getUserCache());
         const curUserData = userCache[req.extra.userId];
         const postData = (await getPostCache())
         const pool = await getHivePool;
-        const results = await pool.query<{analyst_user_id: string}>(`SELECT dsp.user_id AS "analyst_user_id" 
-                                                                    FROM data_subscriber dsr
-                                                                    LEFT JOIN data_subscription dsp
-                                                                    ON dsp.id = dsr.subscription_id
-                                                                    WHERE dsr.user_id = $1`, [req.extra.userId]
-                                                                    )
+        const results = await pool.query<{ analyst_user_id: string }>(`SELECT dsp.user_id AS "analyst_user_id"
+                                                                       FROM data_subscriber dsr
+                                                                                LEFT JOIN data_subscription dsp
+                                                                                          ON dsp.id = dsr.subscription_id
+                                                                       WHERE dsr.user_id = $1`, [req.extra.userId]
+        )
         const subscriptions = results.rows.map(a => a.analyst_user_id);
         subscriptions.push(req.extra.userId)
         //TODO::::Need to think through how this is sorted in the future... and make this less stupid..
@@ -144,8 +129,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         if (req.body.bookmarkedOnly) {
             bookmarkItems.push(...Object.keys(curUserData.bookmarks))
             postsPerPage = bookmarkItems.length;
-        }
-        else {
+        } else {
             postsPerPage = 10;
         }
 
@@ -171,20 +155,20 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             query: await (async () => {
                 if (req.body.userId) {
                     //return searchQuery({user_id: req.body.userId})  
-                    return newUserTest({ user_id: req.body.userId, subscriptions: subscriptions })
-                }
-                else if (req.body.bookmarkedOnly)
-                    return bookmarkQuery(bookmarkItems)
-                else if (req.body.data)
+                    return newUserTest({user_id: req.body.userId, subscriptions: subscriptions})
+                } else if (req.body.bookmarkedOnly) {
+                    const query = bookmarkQuery(bookmarkItems);
+                    console.log(JSON.stringify(query));
+                    return query
+                } else if (req.body.data)
                     return newSearchTest({terms: String(req.body.data.terms), subscriptions: subscriptions});
                 else
                     return newFeedTest(subscriptions);
             })()
-
         });
-        //TODO::: Need to limit terms on this 
-        const { hits } = response.hits;
 
+        //TODO::: Need to limit terms on this 
+        const {hits} = response.hits;
 
         hits.forEach((h) => {
             (h as IElasticPostExt).ext = {
@@ -199,12 +183,16 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
     },
     setBookmarked: async (rep) => {
         //TODO:  need to to add incorp into api build in the future 
-        
+
         const pool = await getHivePool;
         if (rep.body.is_bookmarked)
-            await pool.query(`INSERT INTO  data_bookmark(post_id,user_id) VALUES($1,$2)`, [rep.body.id, rep.extra.userId])
+            await pool.query(`INSERT INTO data_bookmark(post_id, user_id)
+                              VALUES ($1, $2)`, [rep.body.id, rep.extra.userId])
         else
-            await pool.query(`DELETE FROM  data_bookmark WHERE post_id= $1 and user_id = $2`, [rep.body.id, rep.extra.userId])
+            await pool.query(`DELETE
+                              FROM data_bookmark
+                              WHERE post_id = $1
+                                and user_id = $2`, [rep.body.id, rep.extra.userId])
 
         return rep.body;
     },
@@ -218,9 +206,13 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         //TODO:  need to to add incorp into api build in the future 
         const pool = await getHivePool;
         if (rep.body.is_upvoted)
-            await pool.query(`INSERT INTO data_upvote(post_id,user_id) VALUES($1,$2)`, [rep.body.id, rep.extra.userId])
+            await pool.query(`INSERT INTO data_upvote(post_id, user_id)
+                              VALUES ($1, $2)`, [rep.body.id, rep.extra.userId])
         else
-            await pool.query(`DELETE FROM data_upvote WHERE post_id= $1 and user_id = $2`, [rep.body.id, rep.extra.userId])
+            await pool.query(`DELETE
+                              FROM data_upvote
+                              WHERE post_id = $1
+                                and user_id = $2`, [rep.body.id, rep.extra.userId])
         const result = await pool.query('SELECT count(post_id) from data_upvote where post_id = $1', [rep.body.id]);
 
         rep.body.count = result.rows[0].count;
@@ -228,7 +220,9 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
     },
     create: async (req) => {
         const pool = await getHivePool;
-        const result = await pool.query(`INSERT INTO data_post(user_id, title, body, subscription_level, max_width, aspect_ratio) VALUES($1,$2,$3,$4,$5,$6) RETURNING id, created_at, updated_at`, [req.extra.userId, req.body.title, req.body.content, req.body.subscription_level, req.body.width, req.body.height])        
+        const result = await pool.query(`INSERT INTO data_post(user_id, title, body, subscription_level, max_width, aspect_ratio)
+                                         VALUES ($1, $2, $3, $4, $5, $6)
+                                         RETURNING id, created_at, updated_at`, [req.extra.userId, req.body.title, req.body.content, req.body.subscription_level, req.body.width, req.body.height])
         const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
         const elasticClient = new ElasticClient({
             cloud: {
@@ -259,7 +253,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             updated_at: DateTime.fromJSDate(result.rows[0].updated_at)
         }
         await elasticService.ingest(TradingPostsService.map([usersAndTradingPosts]))
-        
+
 
         return {}
     },
@@ -272,19 +266,19 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         const curUserData = userCache[req.extra.userId];
 
         const pool = await getHivePool;
-        const results = await pool.query<{analyst_user_id: string}>(`SELECT dsp.user_id AS "analyst_user_id" 
-                                                                    FROM data_subscriber dsr
-                                                                    LEFT JOIN data_subscription dsp
-                                                                    ON dsp.id = dsr.subscription_id
-                                                                    WHERE dsr.user_id = $1`, [req.extra.userId]
-                                                                    )
+        const results = await pool.query<{ analyst_user_id: string }>(`SELECT dsp.user_id AS "analyst_user_id"
+                                                                       FROM data_subscriber dsr
+                                                                                LEFT JOIN data_subscription dsp
+                                                                                          ON dsp.id = dsr.subscription_id
+                                                                       WHERE dsr.user_id = $1`, [req.extra.userId]
+        )
         const subscriptions = results.rows.map(a => a.analyst_user_id);
         subscriptions.push(req.extra.userId)
 
         //TODO::::Need to think through how this is sorted in the future... and make this less stupid..
-        
+
         postsPerPage = 10;
-        
+
 
         if (page * postsPerPage + 20 > 10000)
             return [];
@@ -307,15 +301,14 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             query: await (async () => {
                 if (req.body.data) {
                     return CreateMultiTermQuery(req.body.data, subscriptions)
-                }
-                else {
+                } else {
                     return newFeedTest(subscriptions);
                 }
             })()
 
         });
         //TODO::: Need to limit terms on this 
-        const { hits } = response.hits;
+        const {hits} = response.hits;
 
 
         hits.forEach((h) => {
@@ -331,7 +324,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
 })
 
 export const CreateMultiTermQuery = (searchTerms: Record<string, string | number | (string | number)[]>, subscriptions: string[]) => {
-    let multiMatchQueryPart= [];
+    let multiMatchQueryPart = [];
     const key = Object.keys(searchTerms)[0]
     for (let d of Object.values(searchTerms[key])) {
         const queryPart = {
@@ -515,13 +508,13 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
         "boost": 1
     }
     }
-`    
-    
+`
+
     return JSON.parse(query);
-    
-} 
+
+}
 export const newFeedTest = (subscriptions: string[]): string => {
-    
+
     const query = `{
         "function_score": {
             "query": {
@@ -819,12 +812,12 @@ export const newFeedTest = (subscriptions: string[]): string => {
         "boost_mode": "avg"
         }
     }`
-    
+
     return JSON.parse(query);
-    
+
 }
 
-export const newSearchTest = (props: {terms: string, subscriptions: string[]}): string => {
+export const newSearchTest = (props: { terms: string, subscriptions: string[] }): string => {
     const query = `{
         "bool": {
             "should": [
@@ -1199,11 +1192,11 @@ export const newSearchTest = (props: {terms: string, subscriptions: string[]}): 
             "boost": 1
     }
     }`
-    
+
     return JSON.parse(query);
 }
-export const newUserTest = (props: {user_id: string, subscriptions: string[]}): any => {
-  const query = `{
+export const newUserTest = (props: { user_id: string, subscriptions: string[] }): any => {
+    const query = `{
     "bool": {
         "should": [
         {
@@ -1521,6 +1514,6 @@ export const newUserTest = (props: {user_id: string, subscriptions: string[]}): 
         "boost": 1
 }
 }`
-  
-  return JSON.parse(query);
+
+    return JSON.parse(query);
 }
