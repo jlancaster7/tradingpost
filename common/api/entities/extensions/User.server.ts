@@ -1,28 +1,29 @@
-import User, { UploadProfilePicBody } from "./User"
-import { ensureServerExtensions } from "."
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import UserApi, { IUserGet, IUserList, IUserUpdate } from '../apis/UserApi'
+import User, {UploadProfilePicBody} from "./User"
+import {ensureServerExtensions} from "."
+import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import UserApi, {IUserGet, IUserList, IUserUpdate} from '../apis/UserApi'
 import Brokerage from '../../../brokerage'
-import { DefaultConfig } from "../../../configuration";
+import {DefaultConfig} from "../../../configuration";
 import pgPromise from "pg-promise";
-import { Client as ElasticClient } from '@elastic/elasticsearch';
+import {Client as ElasticClient} from '@elastic/elasticsearch';
 import ElasticService from "../../../elastic";
 import Finicity from "../../../finicity";
 //import FinicityTransformer from '../../../brokerage/finicity/transformer'
-import { execProc, getHivePool, init } from '../../../db'
+import {execProc, getHivePool, init} from '../../../db'
 //import { } from '../../../social-media/twitter/index'
-import { DefaultTwitter } from "../../../social-media/twitter/service";
-import { DefaultSubstack } from "../../../social-media/substack/service";
-import { DefaultSpotify } from "../../../social-media/spotify/service";
-import { getUserCache } from "../../cache";
+import {DefaultTwitter} from "../../../social-media/twitter/service";
+import {DefaultSubstack} from "../../../social-media/substack/service";
+import {DefaultSpotify} from "../../../social-media/spotify/service";
+import {getUserCache} from "../../cache";
 import WatchlistApi from "../apis/WatchlistApi";
-import { DateTime } from 'luxon'
+import {DateTime} from 'luxon'
 import jwt from 'jsonwebtoken'
-import { sendByTemplate } from '../../../sendGrid'
-import { TradingPostAccountGroupStats } from "../../../brokerage/interfaces";
+import {sendByTemplate} from '../../../sendGrid'
+import {TradingPostAccountGroupStats} from "../../../brokerage/interfaces";
 import PostPrepper from "../../../post-prepper";
-import { parse } from "url";
-import { i } from "mathjs";
+import {parse} from "url";
+import {i} from "mathjs";
+
 export interface ITokenResponse {
     "token_type": "bearer",
     "expires_in": number,
@@ -42,16 +43,18 @@ const client = new S3Client({
 export default ensureServerExtensions<User>({
     validateUser: async (req) => {
         //to do need to id match
-        
+
         const data = jwt.verify(req.body.verificationToken, await DefaultConfig.fromCacheOrSSM("authkey")) as jwt.JwtPayload;
         const pool = await getHivePool;
-        await pool.query(`update tp.local_login set verified = true where user_id = $1`, [req.extra.userId])
+        await pool.query(`update tp.local_login
+                          set verified = true
+                          where user_id = $1`, [req.extra.userId])
         return {}
     },
     generateBrokerageLink: async (req) => {
-        const { brokerage } = await init;
+        const {brokerage} = await init;
         const test = await brokerage.generateBrokerageAuthenticationLink(req.extra.userId, "finicity");
-        
+
         return {
             link: test
         }
@@ -60,8 +63,9 @@ export default ensureServerExtensions<User>({
     uploadProfilePic: async (req) => {
         await client.send(new PutObjectCommand({
             Bucket: "tradingpost-images",
-            Key: `/profile-pics/${req.extra.userId}`,
-            Body: Buffer.from(req.body.image, 'base64url')
+            Key: `profile-pics/${req.extra.userId}`,
+            Body: Buffer.from(req.body.image, 'base64url'),
+            ACL: 'public-read'
         }));
         await UserApi.internal.update({
             user_id: req.extra.userId,
@@ -100,9 +104,9 @@ export default ensureServerExtensions<User>({
 
             })
             const authResp = (await info.json()) as ITokenResponse;
-            const { pgClient, pgp } = await init;
+            const {pgClient, pgp} = await init;
             const config = await DefaultConfig.fromCacheOrSSM("twitter");
-            
+
             const handle = await DefaultTwitter(config, pgClient, pgp).addTwitterUsersByToken({
                 accessToken: authResp.access_token,
                 expiration: authResp.expires_in,
@@ -110,9 +114,8 @@ export default ensureServerExtensions<User>({
                 userId: req.extra.userId
             });
             return handle.username;
-        }
-        else if (req.body.platform === 'substack') {
-            const { pgClient, pgp } = await init;
+        } else if (req.body.platform === 'substack') {
+            const {pgClient, pgp} = await init;
             const pp = new PostPrepper();
             const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
             const elasticClient = new ElasticClient({
@@ -128,15 +131,16 @@ export default ensureServerExtensions<User>({
             const indexName = "tradingpost-search";
             const elastic = new ElasticService(elasticClient, indexName);
             if (req.body.platform_idenifier) {
-                await DefaultSubstack(pgClient, pgp, pp, elastic).importUsers({ userId: req.extra.userId, username: req.body.platform_idenifier })
+                await DefaultSubstack(pgClient, pgp, pp, elastic).importUsers({
+                    userId: req.extra.userId,
+                    username: req.body.platform_idenifier
+                })
                 return req.body.platform_idenifier;
-            }
-            else {
+            } else {
                 return ''
             }
-        }
-        else if (req.body.platform === 'spotify') {
-            const { pgClient, pgp } = await init;
+        } else if (req.body.platform === 'spotify') {
+            const {pgClient, pgp} = await init;
             const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
             const elasticClient = new ElasticClient({
                 cloud: {
@@ -154,15 +158,16 @@ export default ensureServerExtensions<User>({
 
             if (req.body.platform_idenifier) {
                 let showId = parse(req.body.platform_idenifier).pathname?.slice(6) || ''
-                
-                await DefaultSpotify(elastic, pgClient, pgp, config).importSpotifyShows({ userId: req.extra.userId, showId: showId })
+
+                await DefaultSpotify(elastic, pgClient, pgp, config).importSpotifyShows({
+                    userId: req.extra.userId,
+                    showId: showId
+                })
                 return req.body.platform_idenifier;
-            }
-            else {
+            } else {
                 return ''
             }
-        }
-        else if (req.body.platform === 'youtube') {
+        } else if (req.body.platform === 'youtube') {
             const info = await fetch("https://accounts.google.com/o/oauth2/token", {
                 method: "POST",
                 headers: {
@@ -183,11 +188,9 @@ export default ensureServerExtensions<User>({
                     user_id: req.extra.userId
                 })
                 return username;
-            }
-            else
+            } else
                 throw new Error(await info.text());
-        }
-        else {
+        } else {
             return "";
         }
     },
@@ -202,8 +205,7 @@ export default ensureServerExtensions<User>({
                     id: r.body.userId
                 }
             }))[0];
-        }
-        else {
+        } else {
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId) {
@@ -211,14 +213,14 @@ export default ensureServerExtensions<User>({
                 limit: r.extra.limit || 5,
                 user_id: r.extra.userId,
                 page: r.extra.page,
-                data: { user_id: r.body.userId }
+                data: {user_id: r.body.userId}
             })
         } else if (requestedUser?.settings?.portfolio_display.trades && requestedUser.subscription?.is_subscribed) {
             let result = await execProc("public.api_trade_list", {
                 limit: r.extra.limit || 5,
                 user_id: r.extra.userId,
                 page: r.extra.page,
-                data: { user_id: r.body.userId }
+                data: {user_id: r.body.userId}
             })
             let t: any[] = []
             result.forEach((r, i) => {
@@ -236,8 +238,7 @@ export default ensureServerExtensions<User>({
                 t.push(o);
             })
             return t;
-        }
-        else {
+        } else {
             return [];
         }
     },
@@ -252,16 +253,14 @@ export default ensureServerExtensions<User>({
                     id: r.body.userId
                 }
             }))[0];
-        }
-        else {
+        } else {
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId) {
             return await execProc("public.api_holding_list", {
                 user_id: requestedId
             });
-        }
-        else if (requestedUser?.settings?.portfolio_display.holdings && requestedUser.subscription?.is_subscribed) {
+        } else if (requestedUser?.settings?.portfolio_display.holdings && requestedUser.subscription?.is_subscribed) {
             const result = await execProc("public.api_holding_list", {
                 user_id: requestedId
             })
@@ -285,13 +284,12 @@ export default ensureServerExtensions<User>({
                 t.push(o);
             })
             return t;
-        }
-        else {
+        } else {
             return [];
         }
     },
     getReturns: async r => {
-        const { brokerage } = await init;
+        const {brokerage} = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -302,8 +300,7 @@ export default ensureServerExtensions<User>({
                     id: r.body.userId
                 }
             }))[0];
-        }
-        else {
+        } else {
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.performance && requestedUser.subscription?.is_subscribed)) {
@@ -325,7 +322,7 @@ export default ensureServerExtensions<User>({
         //make sure there are public or that you are a subscriber 
     },
     getPortfolio: async (r) => {
-        const { brokerage } = await init;
+        const {brokerage} = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -336,14 +333,12 @@ export default ensureServerExtensions<User>({
                     id: r.body.userId
                 }
             }))[0];
-        }
-        else {
+        } else {
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.performance && requestedUser.subscription?.is_subscribed)) {
             return await brokerage.portfolioSummaryService.getSummary(requestedId);
-        }
-        else {
+        } else {
             return {} as TradingPostAccountGroupStats;
         }
     },
@@ -369,12 +364,12 @@ export default ensureServerExtensions<User>({
         const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
 
         const user = await UserApi.internal.get({
-            data: { id: r.extra.userId },
+            data: {id: r.extra.userId},
             user_id: r.extra.userId
         })
 
         //TODO: make this token expire faster and attach this to a code ( to prevent multiple tokens from working)
-        const token = jwt.sign({ verified: true }, authKey, { subject: r.extra.userId });
+        const token = jwt.sign({verified: true}, authKey, {subject: r.extra.userId});
 
         await sendByTemplate({
             to: user.email,
@@ -383,7 +378,7 @@ export default ensureServerExtensions<User>({
                 Weblink: (process.env.WEBLINK_BASE_URL || "https://m.tradingpostapp.com") + `/verifyaccount?token=${token}`
             }
         })
-        
+
         return {}
     }
 })
