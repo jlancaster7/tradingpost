@@ -46,7 +46,6 @@ export const WatchlistScreen = (props: any) => {
                 }
                 setFocus((f) => !f)
                 setWatchlists(lists);
-                console.log('useFocusEffect')
 
             }
             catch (ex: any) {
