@@ -44,7 +44,7 @@ export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">)
                     }
                 } else {
                     console.log("I CANT FIND THE TOKEN.....");
-                    props.navigation.replace("Root");
+                    props.navigation.replace("Root", {});
                 }
             }
         })()
@@ -77,7 +77,9 @@ export const VerificationScreen = (props: RootStackScreenProps<"VerifyAccount">)
             <Text style={{ textAlign: "center", paddingVertical: sizes.rem1 }}>{loginState?.appUser?.email}</Text>
             <ButtonPanel
                 left={{
-                    onPress: () => {
+                    onPress: async () => {
+                        if (loginState?.authToken)
+                            await signIn("", loginState?.authToken);
                         linkTo("/dash/feed")
                         //props.navigation.navigate("Dash");
                     },
