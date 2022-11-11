@@ -69,13 +69,13 @@ export function DrawerPart() {
                             {!isMarked ? <IconButton
                                 iconSource={isMarked ? BookmarkIcons.active : BookmarkIcons.inactive}
                                 style={{
-                                    height: 24,
-                                    width: 24,
+                                    height: 28,
+                                    width: 28,
                                     marginRight: sizes.rem1
                                 }} />
                                 : <BookmarkActiveBlue style={{
-                                    height: 16,
-                                    width: 16,
+                                    height: 28,
+                                    width: 28,
                                     marginLeft: "auto",
                                     marginRight: (sizes.rem1_5 + sizes.rem1) / 2
                                 }} />

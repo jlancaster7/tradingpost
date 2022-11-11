@@ -1,4 +1,4 @@
-import {NavigationProp} from "@react-navigation/native";
+import {NavigationProp, useNavigation} from "@react-navigation/native";
 import {Api, Interface} from "@tradingpost/common/api";
 import React, {useEffect, useState} from "react";
 import {useWindowDimensions} from "react-native";
@@ -10,6 +10,7 @@ import {DashTabScreenProps} from "../navigation/pages";
 
 export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const [searchText, setSearchText] = useState("")
+    const nav = useNavigation();
 
     //useEffect(()=>{
     //props.navigation.setOptions({
@@ -28,7 +29,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
         <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
             <FeedPart bookmarkedOnly={props.route.params.bookmarkedOnly === "true"} searchText={searchText}/>
             <PlusContentButton onPress={() => {
-                props.navigation.navigate("PostEditor")
+                nav.navigate("PostEditor")
             }}/>
         </View>
     );

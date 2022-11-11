@@ -37,6 +37,7 @@ export function AccountInfoScreen() {
             benchmark: "",
             interests: []
         },
+        profile_url: appUser?.profile_url,
         settings: {
             analyst: appUser?.settings?.analyst || false,
             portfolio_display: {
@@ -137,7 +138,7 @@ const AccountInfoContent = (props: { updates: IUserUpdate, setUpdates: (updates:
     return <ElevatedSection
         title="">
         <Text style={[questionStyle, { marginTop: sizes.rem0_5, textAlign: 'center' }]}>Tap to Modify Profile Picture</Text>
-        <ProfileButton userId={''} profileUrl={""} size={sizes.rem8} editable />
+        <ProfileButton userId={''} profileUrl={updates.profile_url || ''} size={sizes.rem8} editable />
         <Text style={[questionStyle, { marginTop: sizes.rem0_5 }]}>Bio</Text>
         <KeyboardAvoidingInput
             value={updates.bio}
