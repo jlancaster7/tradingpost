@@ -33,8 +33,7 @@ app.use("/" + versionCode, api);
 app.listen(port, () => {
     // tslint:disable-next-line:no-console
     console.log(`API Server has been started at http://localhost:${port}`);
-    if (process.env.CONFIGURATION_ENV === "development") {
-
+    if (process.env.CONFIGURATION_ENV === "development") {      
     }
     console.log(process.env.CONFIGURATION_ENV)
 });
