@@ -24,6 +24,8 @@ import PostPrepper from "../../../post-prepper";
 import { parse } from "url";
 import { i } from "mathjs";
 import { writeFileSync } from "fs";
+import { google, youtube_v3 } from 'googleapis'
+import { PublicError } from "../static/EntityApiBase";
 
 export interface ITokenResponse {
     "token_type": "bearer",
@@ -169,28 +171,32 @@ export default ensureServerExtensions<User>({
                 return ''
             }
         } else if (req.body.platform === 'youtube') {
-            const info = await fetch("https://accounts.google.com/o/oauth2/token", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    code: req.body.code,
-                    grant_type: "authorization_code",
-                    client_id: "",
-                    redirect_uri: `${req.body.callbackUrl}/auth/youtube`,
-                    code_verifier: req.body.challenge
-                }),
 
+            const oauth2Client = new google.auth.OAuth2({
+                clientId: "408632420955-7gsbtielmra10pj4sdccgml20tphfujk.apps.googleusercontent.com",
+                redirectUri: `${req.body.callbackUrl}/auth/youtube`
             })
-            if (info.ok) {
-                const username = ((await info.json()).claims.username);
+            if (!req.body.code)
+                throw new PublicError("Invalid request. Missing auth 'code'");
+
+            const { tokens } = await oauth2Client.getToken(req.body.code);
+            oauth2Client.setCredentials(tokens);
+            const youtube = google.youtube({
+                version: "v3",
+                auth: oauth2Client
+            })
+            //TODO: need to discuss if multiple channels what we wanna do
+            const channels = await youtube.channels.list();
+            console.log(JSON.stringify(channels));
+            const channel = channels.data.items?.pop();
+            if (channel?.id) {
                 execProc("tp.update_youtube_social", {
-                    user_id: req.extra.userId
+                    user_id: req.extra.userId,
+                    channel_id: channel?.id
                 })
-                return username;
-            } else
-                throw new Error(await info.text());
+            }
+            return channel?.id || ""
+
         } else {
             return "";
         }
