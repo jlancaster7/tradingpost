@@ -5,6 +5,7 @@ import { DataOrQuery, List } from "./List";
 import { fonts, sizes } from "../style";
 import { CommentView } from "./CommentView";
 import { Section } from "./Section";
+import React from "react";
 
 export function CommentsList(props: {comments: Interface.ICommentPlus[]}) {
     
