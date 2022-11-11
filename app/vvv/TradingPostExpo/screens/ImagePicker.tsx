@@ -1,5 +1,5 @@
 
-
+import { readAsStringAsync } from 'expo-file-system'
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import { Image, Text, Button, Animated, ImageBackground, useWindowDimensions, View, Alert, Platform } from "react-native";
 import { TabScreenProps } from "../navigation";
@@ -8,6 +8,8 @@ import { flex } from "../style";
 import * as ImagePicker from 'expo-image-picker'
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Api } from "@tradingpost/common/api";
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator'
+
 //import { ImageManipulator } from 'expo-image-crop'
 //const imageCrop = require('expo-image-crop')
 //const ImageManipulator = imageCrop.ImageManipulator;
@@ -40,7 +42,7 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
         // If they said yes then launch the image picker
         if (response.granted) {
             const pickerResult = await ImagePicker.launchImageLibraryAsync({
-                base64:true
+                base64: true
             });
             // Check they didn't cancel the picking
             console.log("PHOTO HAS BEEN SELECTED");
@@ -76,7 +78,7 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
                     await Api.User.extensions.uploadProfilePic({
                         image: imageData.uri
                     })
-                    props.navigation.goBack()
+                    props.navigation.goBack();
                 }
                 catch (ex) {
                     console.error(ex);
@@ -84,11 +86,9 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
 
             }} >Upload Photo</PrimaryButton>}
         <ImageEditor
-
             //asView={Platform.OS === "web"}
             visible={editorVisible}
             onCloseEditor={() => {
-                console.log("CLOSING....................................................");
                 setEditorVisible(false)
             }}
             imageUri={imageUri}
@@ -99,7 +99,24 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
                 height: 100,
             }}
             onEditingComplete={(result) => {
-                setImageData(result);
+                (async () => {
+
+                    const resizeResult = await manipulateAsync(result.uri, [{
+                        resize: {
+                            height: 512
+                        }
+                    }], {
+                        base64: true,
+                        format: SaveFormat.JPEG
+                    })
+
+                    console.log("IMAGE DATA:");
+                    console.log(resizeResult.base64?.substring(0, 100))
+                    console.log(resizeResult.uri)
+                    setImageData({
+                        uri: "data:image/jpeg;base64," + resizeResult.base64
+                    });
+                })()
             }}
             mode="crop-only"
         />

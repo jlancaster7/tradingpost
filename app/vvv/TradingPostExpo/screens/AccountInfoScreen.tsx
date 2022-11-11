@@ -1,17 +1,14 @@
-import React, { useEffect, useState, useMemo, useRef } from "react"
+import React, { useState, useMemo } from "react"
 import { ElevatedSection, Section, Subsection } from "../components/Section"
 import { SwitchField } from "../components/SwitchField"
 import { Api } from "@tradingpost/common/api";
 import { sideMargin } from "./create_account/shared"
 import { ScrollWithButtons } from "../components/ScrollWithButtons"
-import { View, Animated, Pressable } from "react-native"
+import { View, Pressable } from "react-native"
 import { useLinkTo, useNavigation } from "@react-navigation/native"
 import { useSecuritiesList } from '../SecurityList'
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { openBrowserAsync } from 'expo-web-browser';
 import { Autocomplete, AutocompleteItem, Icon, IndexPath, Text, TabView, Tab } from "@ui-kitten/components";
 import { AddButton, EditButton } from "../components/AddButton";
-import { Table } from "../components/Table";
 import { flex, sizes, fonts } from "../style";
 import { PrimaryButton } from "../components/PrimaryButton"
 import { useAppUser } from "../Authentication"
@@ -32,30 +29,29 @@ export function AccountInfoScreen() {
         linkTo = useLinkTo<any>()
 
     const appUser = loginState?.appUser;
-    const [accountUpdates, setAccountUpdates] = useState<IUserUpdate>(appUser ? {
-        bio: appUser.bio,
-        analyst_profile: appUser.analyst_profile || {
+    const [accountUpdates, setAccountUpdates] = useState<IUserUpdate>({
+        bio: appUser?.bio,
+        analyst_profile: appUser?.analyst_profile || {
             investment_strategy: "",
             portfolio_concentration: 50,
             benchmark: "",
             interests: []
         },
         settings: {
-            analyst: appUser.settings?.analyst || false,
+            analyst: appUser?.settings?.analyst || false,
             portfolio_display: {
-                holdings: appUser.settings?.portfolio_display.holdings || false,
-                performance: appUser.settings?.portfolio_display.performance || false,
-                trades: appUser.settings?.portfolio_display.trades || false
+                holdings: appUser?.settings?.portfolio_display.holdings || false,
+                performance: appUser?.settings?.portfolio_display.performance || false,
+                trades: appUser?.settings?.portfolio_display.trades || false
             },
             push_notifications: {
-                mentions: appUser.settings?.push_notifications.mentions || false,
-                upvotes: appUser.settings?.push_notifications.upvotes || false,
-                watchlist_changes: appUser.settings?.push_notifications.watchlist_changes || false
+                mentions: appUser?.settings?.push_notifications.mentions || true,
+                upvotes: appUser?.settings?.push_notifications.upvotes || true,
+                watchlist_changes: appUser?.settings?.push_notifications.watchlist_changes || true
             }
-
         }
 
-    } : {})
+    })
 
     return (
         <ScrollWithButtons
@@ -64,8 +60,6 @@ export function AccountInfoScreen() {
                     text: 'Cancel',
                     onPress: async () => {
                         try {
-                            //      await UpdateUserProfile({ status_setup: true });
-                            //    SetDashboardLayout();
                             linkTo('/dash/feed')
                         }
                         catch (ex) {
@@ -83,13 +77,10 @@ export function AccountInfoScreen() {
                         })
 
                         try {
-
                             linkTo('/dash/feed')
-
                         }
                         catch (ex) {
                             console.error(ex);
-
                         }
                     }
                 }
@@ -110,7 +101,7 @@ export function AccountInfoScreen() {
                         <YourContentComponent />
                     </Tab>
                     <Tab key={"C"} title={'Advanced'} style={{ backgroundColor: AppColors.background, borderColor: AppColors.background }}>
-                        <AdvancedTabContent />
+                        <AdvancedTabContent setUpdates={setAccountUpdates} updates={accountUpdates} />
 
                     </Tab>
                 </TabView>
@@ -243,98 +234,66 @@ const AccountInfoContent = (props: { updates: IUserUpdate, setUpdates: (updates:
 
 }
 
-const AdvancedTabContent = () => {
-    const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
-    const intervalRef = useRef<any>();
-    const [needsRefresh, setNeedsRefresh] = useState<{}>();
+const AdvancedTabContent = (props: { updates: IUserUpdate, setUpdates: (updates: IUserUpdate) => void }) => {
+
     const nav = useNavigation();
-    const openLink = async () => {
-        await Api.User.extensions.generateBrokerageLink(undefined).then(({ link }) => {
-            setLink(link)
-        })
-        const browserName = "finicity_auth";
-        await openBrowserAsync(brokerLink, { "windowName": browserName });
-        clearInterval(intervalRef.current);
-
-        intervalRef.current = setInterval(async () => {
-            console.log("WTF");
-            if (await AsyncStorage.getItem("auth-finicity-code")) {
-                console.log("CODE HAS BEEN FOUND");
-                setAccounts(await Api.User.extensions.getBrokerageAccounts())
-            }
-        }, 5000)
-    }
-    //cleanup
-    useEffect(() => {
-        AsyncStorage.removeItem("auth-finicity-code");
-        return () => {
-            clearInterval(intervalRef.current);
-            AsyncStorage.removeItem("auth-finicity-code");
-        }
-    }, [])
-
-
-    const [brokerLink, setLink] = useState("");
-    useEffect(() => {
-    }, [needsRefresh])
-
-    useEffect(() => {
-        Api.User.extensions.getBrokerageAccounts()
-            .then((r: any) => {
-                setAccounts(r);
-            })
-    }, [])
-    const { loginState } = useAppUser();
-    const appUser = loginState?.appUser;
-
-    const [mentionCheck, setMentionCheck] = useState<boolean>(appUser?.settings?.push_notifications.mentions === undefined ? true : appUser?.settings?.push_notifications.mentions),
-        [upvotesCheck, setUpvotesCheck] = useState<boolean>(appUser?.settings?.push_notifications.upvotes === undefined ? true : appUser?.settings?.push_notifications.upvotes),
-        [watchlistChangeCheck, setWatchlistChangeCheck] = useState<boolean>(appUser?.settings?.push_notifications.watchlist_changes === undefined ? true : appUser?.settings?.push_notifications.watchlist_changes),
-        [performanceCheck, setPerformanceCheck] = useState<boolean>(appUser?.settings?.portfolio_display.performance === undefined ? false : appUser?.settings?.portfolio_display.performance),
-        [holdingsCheck, setHoldingsCheck] = useState<boolean>(appUser?.settings?.portfolio_display.holdings === undefined ? false : appUser?.settings?.portfolio_display.holdings),
-        [tradesCheck, setTradesCheck] = useState<boolean>(appUser?.settings?.portfolio_display.trades === undefined ? false : appUser?.settings?.portfolio_display.trades),
-        [analystCheck, setAnalystCheck] = useState<boolean>(appUser?.settings?.analyst === undefined ? false : appUser?.settings?.analyst);
+    const updates = props.updates;
 
     const onMentionCheckChanged = (isMentionChecked: boolean) => {
-        setMentionCheck(isMentionChecked);
+        const _updates = { ...updates }
+        _updates.settings!.push_notifications.mentions = isMentionChecked;
+        props.setUpdates(_updates)
     }
     const onUpvoteCheckChanged = (isUpvoteChecked: boolean) => {
-        setUpvotesCheck(isUpvoteChecked);
+        const _updates = { ...updates }
+        _updates.settings!.push_notifications.upvotes = isUpvoteChecked
+        props.setUpdates(_updates)
     }
     const onWatchlistChangeCheckChanged = (isWatchlistChangeChecked: boolean) => {
-        setWatchlistChangeCheck(isWatchlistChangeChecked);
+        const _updates = { ...updates }
+        _updates.settings!.push_notifications.watchlist_changes = isWatchlistChangeChecked
+        props.setUpdates(_updates)
+
     }
     const onPerformanceCheckChanged = (isPerformanceChecked: boolean) => {
-        setPerformanceCheck(isPerformanceChecked);
+        const _updates = { ...updates }
+        _updates.settings!.portfolio_display.performance = isPerformanceChecked;
+        props.setUpdates(_updates)
     }
     const onHoldingsCheckChanged = (isHoldingsChecked: boolean) => {
-        setHoldingsCheck(isHoldingsChecked);
+        const _updates = { ...updates }
+        _updates.settings!.portfolio_display.holdings = isHoldingsChecked
+        props.setUpdates(_updates)
     }
     const onTradesCheckChanged = (isTradesChecked: boolean) => {
-        setTradesCheck(isTradesChecked);
+        const _updates = { ...updates }
+        _updates.settings!.portfolio_display.trades = isTradesChecked;
+        props.setUpdates(_updates)
     }
     const onAnalystCheckChanged = (isAnalystChecked: boolean) => {
-        setAnalystCheck(isAnalystChecked);
+        const _updates = { ...updates }
+        _updates.settings!.analyst = isAnalystChecked;
+        props.setUpdates(_updates)
     }
 
 
     return <ElevatedSection title="" style={{ padding: 5 }}>
         <Section title="" style={{ padding: 10 }}>
-            <SwitchField label='Analyst' checked={analystCheck} onChange={onAnalystCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: fonts.medium, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }} />
+            <SwitchField label='Analyst' checked={props.updates.settings?.analyst} onChange={onAnalystCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: fonts.medium, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }} />
         </Section>
         <Section title='Display To Subscribers' style={{ padding: 5 }}>
-            <SwitchField label='Performance' checked={performanceCheck} onChange={onPerformanceCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
-            <SwitchField label='Portfolio' checked={holdingsCheck} onChange={onHoldingsCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
-            <SwitchField label='Trades' checked={tradesCheck} onChange={onTradesCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+            <SwitchField label='Performance' checked={props.updates.settings?.portfolio_display.performance} onChange={onPerformanceCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+            <SwitchField label='Portfolio' checked={props.updates.settings?.portfolio_display.holdings} onChange={onHoldingsCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+            <SwitchField label='Trades' checked={props.updates.settings?.portfolio_display.trades} onChange={onTradesCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
             <View style={{ flexDirection: 'row', justifyContent: 'center', marginVertical: 15 }}>
-                <PrimaryButton style={{ width: "60%", paddingHorizontal: 4,backgroundColor: AppColors.secondary, borderColor: AppColors.secondary }} onPress={() => {
+                <PrimaryButton style={{ width: "60%", paddingHorizontal: 4, backgroundColor: AppColors.secondary, borderColor: AppColors.secondary }} onPress={() => {
                     nav.navigate('Subscription')
-                 }}>
+                }}>
                     Manage Subscriptions
                 </PrimaryButton>
             </View>
         </Section>
-            <LinkBrokerageComponent />
+        <LinkBrokerageComponent />
         <Section title='Payment' style={{ padding: 10 }}>
             <Text>
                 Coming Soon!
@@ -342,12 +301,12 @@ const AdvancedTabContent = () => {
         </Section>
         <Section title='Notifications' style={{ padding: 10 }}>
             <Subsection title='Posts' alt={true}>
-                <SwitchField label='Mentions' checked={mentionCheck} onChange={onMentionCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
-                <SwitchField label='Upvotes' checked={upvotesCheck} onChange={onUpvoteCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+                <SwitchField label='Mentions' checked={props.updates.settings?.push_notifications.mentions} onChange={onMentionCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+                <SwitchField label='Upvotes' checked={props.updates.settings?.push_notifications.upvotes} onChange={onUpvoteCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
             </Subsection>
             <Subsection title='Watchlists' alt={true}>
                 {/*<SwitchField label='Price Movement' checked={watchlistPxCheck} onChange={onWatchlistPxCheckChanged} viewStyle={{flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5}} toggleStyle={{}} textStyle={{fontSize: 14, alignSelf: 'center'}}/>*/}
-                <SwitchField label='Changes' checked={watchlistChangeCheck} onChange={onWatchlistChangeCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
+                <SwitchField label='Changes' checked={props.updates.settings?.push_notifications.watchlist_changes} onChange={onWatchlistChangeCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
             </Subsection>
         </Section>
         <Section title='Management' style={{ padding: 10 }}>

@@ -30,10 +30,10 @@ export function YourContentComponent() {
 
     let userClaims = appUser?.claims;
 
-    let [twitterHandle, setTwitterHandle] = useState(userClaims ? userClaims.find(c => c.platform === "twitter")?.claims.handle : '')
-    let [substackUsername, setsubstackUsername] = useState(userClaims ? userClaims.find(c => c.platform === "substack")?.claims.handle : '')
-    let [spotifyShow, setSpotifyShow] = useState(userClaims ? userClaims.find(c => c.platform === "spotify")?.claims.handle : '')
-    let [youtubeChannel, setYoutubeChannel] = useState(userClaims ? userClaims.find(c => c.platform === "youtube")?.claims.handle : '')
+    let [twitterHandle, setTwitterHandle] = useState(userClaims ? userClaims.find(c => c.platform === "twitter")?.claims?.handle : '')
+    let [substackUsername, setsubstackUsername] = useState(userClaims ? userClaims.find(c => c.platform === "substack")?.claims?.handle : '')
+    let [spotifyShow, setSpotifyShow] = useState(userClaims ? userClaims.find(c => c.platform === "spotify")?.claims?.handle : '')
+    let [youtubeChannel, setYoutubeChannel] = useState(userClaims ? userClaims.find(c => c.platform === "youtube")?.claims?.handle : '')
 
 
     return (

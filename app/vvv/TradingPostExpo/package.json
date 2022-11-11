@@ -44,6 +44,7 @@
     "expo-auth-session": "~3.7.1",
     "expo-constants": "~13.2.4",
     "expo-device": "~4.3.0",
+    "expo-file-system": "^15.1.1",
     "expo-font": "~10.2.1",
     "expo-image-editor": "^1.7.1",
     "expo-image-picker": "~13.3.1",

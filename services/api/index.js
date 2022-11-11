@@ -18,7 +18,8 @@ var app = (0, express_1.default)();
 var port = process.env.PORT || 8082; // default port to listen
 app.get("/", healthcheck_1.healthCheck);
 app.use((0, cors_1.default)());
-app.use(body_parser_1.default.json());
+//TODO: chage this to something reasonable 
+app.use(body_parser_1.default.json({ limit: "10mb" }));
 app.use(function (req, res, next) {
     next();
 });

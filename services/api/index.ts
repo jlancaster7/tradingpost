@@ -17,7 +17,8 @@ const port = process.env.PORT || 8082; // default port to listen
 app.get("/", healthCheck);
 
 app.use(cors())
-app.use(bodyParser.json())
+//TODO: chage this to something reasonable 
+app.use(bodyParser.json({ limit: "10mb" }))
 
 app.use((req, res, next) => {
     next();
@@ -34,6 +35,6 @@ app.listen(port, () => {
     console.log(`API Server has been started at http://localhost:${port}`);
     if (process.env.CONFIGURATION_ENV === "development") {
 
-    }   
+    }
     console.log(process.env.CONFIGURATION_ENV)
 });
