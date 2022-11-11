@@ -9,6 +9,8 @@ import * as ImagePicker from 'expo-image-picker'
 import { PrimaryButton } from "../components/PrimaryButton";
 import { Api } from "@tradingpost/common/api";
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator'
+import { useAppUser } from '../Authentication';
+import { useData } from '../lds';
 
 //import { ImageManipulator } from 'expo-image-crop'
 //const imageCrop = require('expo-image-crop')
@@ -16,6 +18,8 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator'
 
 
 export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any) => void }>) => {
+    const { loginState, forceTrigger } = useAppUser();
+    const appUser = loginState?.appUser;
 
     const [imageUri, setImageUri] = useState<string>(),
         [editorVisible, setEditorVisible] = useState(false),
@@ -78,6 +82,10 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
                     await Api.User.extensions.uploadProfilePic({
                         image: imageData.uri
                     })
+                    if (appUser)
+                        appUser.profile_url = imageData.uri;
+                    forceTrigger();
+                    console.log("TRIGGERING");
                     props.navigation.goBack();
                 }
                 catch (ex) {
@@ -110,9 +118,7 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
                         format: SaveFormat.JPEG
                     })
 
-                    console.log("IMAGE DATA:");
-                    console.log(resizeResult.base64?.substring(0, 100))
-                    console.log(resizeResult.uri)
+
                     setImageData({
                         uri: "data:image/jpeg;base64," + resizeResult.base64
                     });

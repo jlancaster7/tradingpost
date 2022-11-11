@@ -26,7 +26,7 @@ export const useAppUser = (tracker?: string) => {
     const { value: _appUser, setValue: setAppUser } = useData("currentUser");
     const { value: _loginResult, setValue: setLoginResult } = useData("loginResult");
     const { value: _authToken, setValue: setAuthToken } = useData("authToken");
-
+    const [toggleRefresh, setToggleRefresh] = useState(true);
     type LoginState = {
         appUser: typeof _appUser,
         loginResult: typeof _loginResult,
@@ -67,6 +67,12 @@ export const useAppUser = (tracker?: string) => {
 
     return {
         loginState,
+        forceTrigger: () => {
+            if (_loginResult){
+                console.log("FORCING RESULT")
+                setLoginResult({ ..._loginResult });
+            }
+        },
         signIn: useCallback(async (email: string, pass: string) => {
             setLoginState(undefined);
             const value = await Authentication.signIn(email, pass)

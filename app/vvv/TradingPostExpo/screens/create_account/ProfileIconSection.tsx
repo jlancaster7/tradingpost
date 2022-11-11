@@ -11,10 +11,11 @@ import { ElevatedSection } from "../../components/Section";
 import { useData } from "../../lds";
 import { useLinkTo, useNavigation } from "@react-navigation/native";
 import React from "react";
+import { useAppUser } from "../../Authentication";
 export const ProfileIconSection = (props: CreateAccountProps) => {
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const { value: hasAuthed, setValue } = useData("hasAuthed");
-
+    const { loginState } = useAppUser();
     const nav = useNavigation();
     useEffect(() => {
         Animated.timing(
@@ -44,7 +45,7 @@ export const ProfileIconSection = (props: CreateAccountProps) => {
         <Animated.View style={{ opacity: opacityAnim, padding: sideMargin }} >
             <ElevatedSection title="">
                 <Text style={[thinBannerText]}>Tap to Modify Profile Picture</Text>
-                <ProfileButton userId={props.user.data.id} profileUrl="" size={sizes.rem16} editable />
+                <ProfileButton userId={props.user.data.id} profileUrl={loginState?.appUser?.profile_url || ""} size={sizes.rem16} editable />
                 <Text style={[thinBannerText]}>Tip: Profile pictures will help others quickly identify you when on the platform.</Text>
             </ElevatedSection>
         </Animated.View>
