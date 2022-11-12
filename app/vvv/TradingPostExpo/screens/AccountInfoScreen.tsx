@@ -28,6 +28,9 @@ export function AccountInfoScreen() {
         [index, setIndex] = useState(0),
         linkTo = useLinkTo<any>()
 
+    const definedOrValue = (test: boolean | undefined, d: boolean) => {
+        return test === undefined ? d : test
+    }
     const appUser = loginState?.appUser;
     const [accountUpdates, setAccountUpdates] = useState<IUserUpdate>({
         bio: appUser?.bio,
@@ -41,14 +44,14 @@ export function AccountInfoScreen() {
         settings: {
             analyst: appUser?.settings?.analyst || false,
             portfolio_display: {
-                holdings: appUser?.settings?.portfolio_display.holdings || false,
-                performance: appUser?.settings?.portfolio_display.performance || false,
-                trades: appUser?.settings?.portfolio_display.trades || false
+                holdings: definedOrValue(appUser?.settings?.portfolio_display.holdings, false),
+                performance: definedOrValue(appUser?.settings?.portfolio_display.performance, false),
+                trades: definedOrValue(appUser?.settings?.portfolio_display.trades, false)
             },
             push_notifications: {
-                mentions: appUser?.settings?.push_notifications.mentions || true,
-                upvotes: appUser?.settings?.push_notifications.upvotes || true,
-                watchlist_changes: appUser?.settings?.push_notifications.watchlist_changes || true
+                mentions: definedOrValue(appUser?.settings?.push_notifications.mentions, true),
+                upvotes: definedOrValue(appUser?.settings?.push_notifications.upvotes, true),
+                watchlist_changes: definedOrValue(appUser?.settings?.push_notifications.watchlist_changes, true)
             }
         }
 
@@ -71,9 +74,9 @@ export function AccountInfoScreen() {
                     text: 'Save',
                     onPress: async () => {
                         await Log.tryCatch(async () => {
-                            if (appUser?.id) {
+                            if (appUser?.id && loginState?.authToken) {
                                 await Api.User.update(appUser?.id || '', accountUpdates);
-                                loginState?.authToken ? await signIn("", loginState?.authToken) : {};
+                                await signIn("", loginState?.authToken);
                             }
                         })
 

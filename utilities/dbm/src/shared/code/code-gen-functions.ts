@@ -63,7 +63,7 @@ const makeCalcParts = (settings: FunctionSettings, fields: string[], other: Othe
 
                     //Hack: Ignore matched id 
                     selectedFields = entity.definition?.fields.filter((_f) => {
-                        return selectedView?.fieldNames.find(fn => fn === _f.name) && !_f.PK && _f.name !== key
+                        return selectedView?.fieldNames.find(fn => fn === _f.name) && !_f.PK && _f.name !== key && !_f.calcType
                     })
                     break
                 }

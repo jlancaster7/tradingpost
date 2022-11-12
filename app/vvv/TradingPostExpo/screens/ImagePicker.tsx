@@ -1,5 +1,4 @@
 
-import { readAsStringAsync } from 'expo-file-system'
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import { Image, Text, Button, Animated, ImageBackground, useWindowDimensions, View, Alert, Platform } from "react-native";
 import { TabScreenProps } from "../navigation";
