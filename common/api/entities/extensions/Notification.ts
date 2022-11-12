@@ -8,5 +8,5 @@ export default class extends Extension {
     updateUserDeviceTimezone = this._makeFetch<{ deviceId: string, timezone: string }, {}>("updateUserDeviceTimezone", this._defaultPostRequest)
     seenNotifications = this._makeFetch<{ notificationIds: number[] }, {}>("seenNotifications", this._defaultPostRequest)
     hasNotifications = this._makeFetch<void, { unseenCount: number }>("hasNotifications", this._defaultPostRequest);
-    updateNotification = this._makeFetch<ListAlertsResponse, void>("updateNotification", this._defaultPostRequest);
+    updateNotification = this._makeFetch<ListAlertsResponse, {}>("updateNotification", this._defaultPostRequest);
 }

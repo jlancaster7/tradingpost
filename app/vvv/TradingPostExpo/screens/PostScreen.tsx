@@ -18,7 +18,11 @@ export function PostScreen(props: TabScreenProps<{ post: Interface.IElasticPostE
     useEffect(() => {
         Api.Comment.extensions.postList({type: "post", id: props.route.params.post._source.id})
         .then((r) => {
-            setPostComments(r);
+            const data = r.sort((a, b) => {
+                const diff = (new Date(String(a.created_at))).valueOf() - (new Date(String(b.created_at))).valueOf()
+                return diff
+            })
+            setPostComments(data);
         })
     },[])
     useEffect(() => {
