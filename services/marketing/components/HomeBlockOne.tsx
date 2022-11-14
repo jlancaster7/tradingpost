@@ -1,5 +1,6 @@
 import React from "react";
 import GainConfidenceSvg from '../public/Gainconfidence.svg';
+import FeedInFront from '../public/FeedInForeFront.svg'
 import DummyImage from '../public/DummyImage1.png';
 import Image from 'next/image'
 
@@ -13,8 +14,9 @@ const HomeBlockOne = () => {
                     Subscribe to experts on the platform to learn how they invest and trade. Gain access to articles,
                     charts, trades, and watchlists so you can grow your skills and your wealth.
                 </p>
+                
             </div>
-            <Image src={DummyImage} alt=""/>
+            <Image src={FeedInFront} alt=""/>
         </div>
     );
 }
