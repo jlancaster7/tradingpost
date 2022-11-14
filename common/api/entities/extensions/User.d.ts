@@ -43,15 +43,15 @@ export default class User extends Extension {
     getHoldings: (settings: {
         userId?: string | undefined;
     }) => Promise<{
-        id: number;
-        price_as_of: Date;
-        quantity: number;
-        price: number;
-        value: number;
-        cost_basis: number;
         security_id: number;
         option_id: number;
         option_info: any;
+        price: number;
+        quantity: number;
+        value: number;
+        cost_basis: number;
+        pnl: number;
+        date: Date;
     }[]>;
     getWatchlists: (settings: {
         userId: string;
