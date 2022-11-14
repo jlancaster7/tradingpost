@@ -250,6 +250,7 @@ export default ensureServerExtensions<User>({
         }
     },
     getHoldings: async (r) => {
+        const { brokerage } = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -264,29 +265,51 @@ export default ensureServerExtensions<User>({
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId) {
+            const result = await brokerage.getUserHoldings(requestedId);
+            let t: any[] = [];
+            result.forEach((r, i) => {
+                const o = {
+                    security_id: r.securityId,
+                    option_id: r.optionId,
+                    option_info: r.optionInfo,
+                    price: r.price,
+                    quantity: r.quantity,
+                    value: r.value,
+                    cost_basis: !r.costBasis ? 'n/a' : r.costBasis,
+                    pnl: r.pnl,
+                    date: r.date
+                }
+                t.push(o);
+            })
+            return t;
+            /*
             return await execProc("public.api_holding_list", {
                 user_id: requestedId
             });
+            */
         } else if (requestedUser?.settings?.portfolio_display.holdings && requestedUser.subscription?.is_subscribed) {
+            const result = await brokerage.getUserHoldings(requestedId);
+            /*
             const result = await execProc("public.api_holding_list", {
                 user_id: requestedId
-            })
+            });
+            */
             let portValue = 0;
             result.forEach((r, i) => {
-                portValue += parseFloat(r.value);
+                portValue += r.value;
             })
             let t: any[] = [];
             result.forEach((r, i) => {
                 const o = {
-                    id: r.id,
-                    price_as_of: r.price_as_of,
-                    quantity: 0,
+                    security_id: r.securityId,
+                    option_id: r.optionId,
+                    option_info: r.optionInfo,
                     price: r.price,
-                    value: parseFloat(r.value) / portValue,
-                    cost_basis: !r.cost_basis ? 'n/a' : r.cost_basis,
-                    security_id: r.security_id,
-                    option_id: r.option_id,
-                    option_info: r.option_info
+                    quantity: 0,
+                    value: r.value / portValue,
+                    cost_basis: !r.costBasis ? 'n/a' : r.costBasis,
+                    pnl: 0,
+                    date: r.date
                 }
                 t.push(o);
             })

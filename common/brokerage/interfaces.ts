@@ -514,6 +514,7 @@ export type HistoricalHoldings = {
     accountGroupId?: number
     securityId: number
     optionId: number | null
+    optionInfo: any | null
     price: number
     value: number
     costBasis: number
