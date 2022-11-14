@@ -66,14 +66,18 @@ export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number)
                             else
                                 return byId[value]?.id || -1
                         })()
-                    } ><Avatar style={{ marginRight: sizes.rem0_5 }}
+                    } ><Avatar key={value} style={{ marginRight: sizes.rem0_5 }}
                         source={
                             (() => {
-
+                                let output: { uri: string } | undefined;
                                 if (typeof value === "string")
-                                    return bySymbol[value] ? { uri: bySymbol[value].logo_url } : undefined
+                                    output = bySymbol[value] ? { uri: bySymbol[value].logo_url } : undefined
                                 else
-                                    return byId[value] ? { uri: byId[value].logo_url } : undefined
+                                    output = byId[value] ? { uri: byId[value].logo_url  } : undefined
+
+                                console.log(value);
+                                console.log(output?.uri);
+                                return output;
                             })()}
                         size="tiny" />
 
