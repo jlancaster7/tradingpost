@@ -293,7 +293,8 @@ const AdvancedTabContent = (props: { updates: IUserUpdate, setUpdates: (updates:
                 <PrimaryButton style={{ width: "60%", paddingHorizontal: 4, backgroundColor: AppColors.secondary, borderColor: AppColors.secondary }} onPress={() => {
                     nav.navigate('Subscription')
                 }}>
-                    Manage Subscriptions
+                    {evaProps => <Text {...evaProps} style={{textAlign: 'center', color: 'white', paddingHorizontal: 6}}>Manage Subscriptions</Text>}
+                    
                 </PrimaryButton>
             </View>
         </Section>

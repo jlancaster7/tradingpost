@@ -66,7 +66,8 @@ export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number)
                             else
                                 return byId[value]?.id || -1
                         })()
-                    } ><Avatar key={value} style={{ marginRight: sizes.rem0_5 }}
+                    } ><Avatar style={{ marginRight: sizes.rem0_5 }}
+                        resizeMode={'contain'}
                         source={
                             (() => {
                                 let output: { uri: string } | undefined;
@@ -127,8 +128,8 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                 field: (a) => {
                     const change = a.item.price?.price || a.item.price?.open ? (a.item.price?.price - a.item.price?.open) / a.item.price?.open : 0
                     return (
-                        <View style={{ justifyContent: 'space-around', flexDirection: 'row', flex: 1 }}>
-                            <Text style={[change ? change >= 0 ? { color: 'green' } : { color: 'red' } : {}, { marginLeft: sizes.rem0_5 / 2 }]}>{`(${toPercent2(change)})`}</Text>
+                        <View style={{ justifyContent: 'center', flexDirection: 'row', flex: 1 }}>
+                            <Text style={[change ? change >= 0 ? { color: 'green' } : { color: 'red' } : {}, { marginRight: sizes.rem0_5 }]}>{`(${toPercent2(change)})`}</Text>
                             <Text>{toDollarsAndCents(a.item.price?.price)}</Text>
                         </View>
                     )
@@ -144,7 +145,7 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                         return "-"
                 }
                 */
-            },
+            }/*,
             {
                 alias: "Date Added",
                 stringify: (a, b, c) => {
@@ -155,7 +156,7 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                         return "-";
                     }
                 }
-            },
+            }*/,
             column
             //        { field: "symbol", align: "left", style: { lineHeight: sizes.rem1_5 } },
         ] as ITableColumn<IWatchlistGetExt["items"][number]>[]

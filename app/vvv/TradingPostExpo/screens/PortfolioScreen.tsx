@@ -62,7 +62,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                     Api.Watchlist.extensions.getAllWatchlists(),
                     Api.User.extensions.getHoldings({})
                 ]);
-                console.log(holdings)
+                
                 //KEeping apart for now .. seems to have an error
                 try {
                     const portfolio = await Api.User.extensions.getPortfolio({});
@@ -106,6 +106,8 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                     endDate: new Date()
                 })
                 setReturns(returns);
+                if (!returns.length)
+                    return
                 let twr: { x: string, y: number }[] = [];
                 const day = new Date(String(returns.slice(returns.length - periods[portPeriod])[0].date))
                 twr.push({ x: (new Date(day.setDate(day.getDate() - 1))).toUTCString(), y: 1 })
@@ -127,7 +129,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
         })()
     }, [])
     useEffect(() => {
-        if (!returns) {
+        if (!returns || !returns.length) {
             return
         }
 

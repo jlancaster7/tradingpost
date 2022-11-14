@@ -1,6 +1,6 @@
 import {Api} from "@tradingpost/common/api";
 import React, {useRef, useState} from "react";
-import {ScrollView, View} from "react-native";
+import {KeyboardAvoidingView, Platform, ScrollView, View} from "react-native";
 import {RichEditor, RichToolbar} from "react-native-pell-rich-editor";
 import {useToast} from "react-native-toast-notifications";
 import {Header} from "../components/Headers";
@@ -76,45 +76,48 @@ export const PostEditorScreen = (props: any) => {
                                 {...bindTextInputBase(postEntity, "content", null, {"onChangeTextKey": "onChange"})} />
             </ScrollView>
         </View>
-        <RichToolbar editor={editorRef}/>
+        
         {/* //TODO: add are you sure if dirty  */}
-        <ButtonPanel
+        <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <RichToolbar editor={editorRef}/>
+            <ButtonPanel
 
-            locked={locked}
-            left={{
-                onPress: () => {
-                    props.navigation.goBack();
-                },
-                "text": "Cancel"
-            }}
-            right={{
-                onPress: async () => {
+                locked={locked}
+                left={{
+                    onPress: () => {
+                        props.navigation.goBack();
+                    },
+                    "text": "Cancel"
+                }}
+                right={{
+                    onPress: async () => {
 
 
-                    setLocked(true);
-                    if (!postEntity.data.content || !postEntity.data.title) {
-                        toast.show("Please provide a title and content for your post");
-                        setLocked(false);
-                    } else {
-                        try {
-                            //const { id: postId } = 
-                            await Api.Post.extensions.create(postEntity.data);
-                            // Navigation.pop(props.componentId);
-                            // const posts = await getPosts([postId]);
-                            // screens.push(props.componentId, "Post",
-                            //     { passProps: { post: posts[0] } });
-                            props.navigation.goBack();
-
-                        } catch (ex: any) {
-                            toast.show(ex.message);
+                        setLocked(true);
+                        if (!postEntity.data.content || !postEntity.data.title) {
+                            toast.show("Please provide a title and content for your post");
                             setLocked(false);
+                        } else {
+                            try {
+                                //const { id: postId } = 
+                                await Api.Post.extensions.create(postEntity.data);
+                                // Navigation.pop(props.componentId);
+                                // const posts = await getPosts([postId]);
+                                // screens.push(props.componentId, "Post",
+                                //     { passProps: { post: posts[0] } });
+                                props.navigation.goBack();
+
+                            } catch (ex: any) {
+                                toast.show(ex.message);
+                                setLocked(false);
+                            }
                         }
                     }
-                }
-                ,
-                "text": "Create"
-            }}
-        />
+                    ,
+                    "text": "Create"
+                }}
+            />
+        </KeyboardAvoidingView>
 
     </View>
 }

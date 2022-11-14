@@ -149,8 +149,10 @@ export default ensureServerExtensions<Notification>({
                            updated_at = NOW()
                        WHERE id = $5;`
         const pool = await getHivePool;
+        console.log(req.body)
         const {type, dateTime, id, data, seen} = req.body;
+
         await pool.query(query, [type, dateTime, data, seen, id]);
-        return
+        return {}
     }
 })

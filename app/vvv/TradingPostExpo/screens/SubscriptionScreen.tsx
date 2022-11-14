@@ -305,7 +305,7 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
                     cost: item.row ? Math.pow(5, item.row) : 0
                 })
             }}
-            items={[...Array.from({ length: 10 }).map((v, i) => {
+            items={[...Array.from({ length: 1 }).map((v, i) => {
                 const cost = i ? Math.pow(5, i) : 0;
                 return {
                     label: cost ? `${cost}/month` : "Free",
