@@ -12,7 +12,7 @@ const SplashBlock = () => {
     const handleSubmit = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         setIsEmailSubmitted(true);
-        const result = fetch(baseUrl + '/alpha/waitlist/add', {
+        const result = fetch(baseUrl + '/waitlist/add', {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json",
