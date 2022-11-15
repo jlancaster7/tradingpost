@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import Image from 'next/image'
 
-const baseUrl = process.env.API_URL || 'http://localhost:8082';
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8082';
 
 const SplashBlock = () => {
     const [email, setEmail] = useState("");

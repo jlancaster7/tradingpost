@@ -6,11 +6,7 @@
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.110.0",
     "@sendgrid/mail": "^7.7.0",
-<<<<<<< HEAD
-    "@tradingpost/common": "file:tradingpost-common-1.4.0.tgz",
-=======
     "@tradingpost/common": "^1.5.0",
->>>>>>> e07a59db1b6c5da3ce7305d646e1176498337ae1
     "@types/express": "^4.17.13",
     "@types/node-fetch": "^2.6.2",
     "body-parser": "^1.20.0",
@@ -32,7 +28,7 @@
     "build": "tsc",
     "start": "tsc & node ./",
     "dev": "tsc -b ../../common && tsc && node ./",
-    "deploy": "npm uninstall @tradingpost/common && npm run install-common && tsc && eb deploy",
+    "deploy": "tsc && eb deploy",
     "install-common": "node ../../common/_scripts/install",
     "link-common": "node ../../common/_scripts/link"
   }

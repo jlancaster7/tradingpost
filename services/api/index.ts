@@ -4,11 +4,12 @@ import express from 'express'
 import bodyParser from 'body-parser';
 import api from './routes-api-alpha'
 import cors from 'cors'
-import { healthCheck } from './healthcheck'
+import {healthCheck} from './healthcheck'
 import fetch from 'node-fetch'
-import { versionCode } from '@tradingpost/common/api/entities/static/EntityApiBase'
-import { addToWaitlist } from '@tradingpost/common/api/waitlist';
-import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
+import {versionCode} from '@tradingpost/common/api/entities/static/EntityApiBase'
+import {addToWaitlist} from '@tradingpost/common/api/waitlist';
+import {PublicError} from '@tradingpost/common/api/entities/static/EntityApiBase'
+
 (globalThis as any)["fetch" as any] = fetch;
 //fromWebToken()
 
@@ -20,7 +21,7 @@ app.get("/", healthCheck);
 
 app.use(cors())
 //TODO: chage this to something reasonable 
-app.use(bodyParser.json({ limit: "10mb" }))
+app.use(bodyParser.json({limit: "10mb"}))
 
 app.use((req, res, next) => {
     next();
@@ -29,9 +30,9 @@ app.use((req, res, next) => {
 // define a route handler for the default home page
 //app.use("/alpha", api);
 
-app.post('/watilist/add', async (req, res) => {
+app.post('/waitlist/add', async (req, res) => {
     if (!req.body.email) {
-        res.status(404).send({error: "Invalid Requestion"})
+        throw new PublicError("Invalid Request");
     }
     await addToWaitlist(req.body.email);
     res.send('Successfully added!');
@@ -43,7 +44,7 @@ app.use("/" + versionCode, api);
 app.listen(port, () => {
     // tslint:disable-next-line:no-console
     console.log(`API Server has been started at http://localhost:${port}`);
-    if (process.env.CONFIGURATION_ENV === "development") {      
+    if (process.env.CONFIGURATION_ENV === "development") {
     }
 
     console.log(process.env.CONFIGURATION_ENV)

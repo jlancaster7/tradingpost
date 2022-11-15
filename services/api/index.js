@@ -49,6 +49,7 @@ var healthcheck_1 = require("./healthcheck");
 var node_fetch_1 = __importDefault(require("node-fetch"));
 var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 var waitlist_1 = require("@tradingpost/common/api/waitlist");
+var EntityApiBase_2 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 globalThis["fetch"] = node_fetch_1.default;
 //fromWebToken()
 var app = (0, express_1.default)();
@@ -63,12 +64,12 @@ app.use(function (req, res, next) {
 //app.use("/api", api);
 // define a route handler for the default home page
 //app.use("/alpha", api);
-app.post('/watilist/add', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+app.post('/waitlist/add', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 if (!req.body.email) {
-                    res.status(404).send({ error: "Invalid Requestion" });
+                    throw new EntityApiBase_2.PublicError("Invalid Request");
                 }
                 return [4 /*yield*/, (0, waitlist_1.addToWaitlist)(req.body.email)];
             case 1:
