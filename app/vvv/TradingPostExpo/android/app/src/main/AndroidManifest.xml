@@ -33,9 +33,9 @@
         <data android:scheme="com.tradingpostapp"/>
         <data android:scheme="tp"/>
       </intent-filter>
-      <intent-filter data-generated="true" android:autoVerify="true">
+      <intent-filter data-generated="true">
         <action android:name="android.intent.action.VIEW"/>
-        <data android:scheme="https" android:host="m.tradingpostapp.com"/>
+        <data android:scheme="https" android:host="m.tradingpostapp.com" android:pathPattern="*"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>

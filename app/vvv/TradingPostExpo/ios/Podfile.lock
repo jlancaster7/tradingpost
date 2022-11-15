@@ -23,7 +23,7 @@ PODS:
     - React-Core
   - EXNotifications (0.16.1):
     - ExpoModulesCore
-  - Expo (46.0.16):
+  - Expo (46.0.17):
     - ExpoModulesCore
   - ExpoCrypto (11.0.0):
     - ExpoModulesCore
@@ -36,7 +36,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLocalization (13.1.0):
     - ExpoModulesCore
-  - ExpoModulesCore (0.11.8):
+  - ExpoModulesCore (0.11.9):
     - React-Core
     - ReactCommon/turbomodule/core
   - ExpoRandom (12.3.0):
@@ -586,13 +586,13 @@ SPEC CHECKSUMS:
   EXGL_CPP: 26d0d7639ec8fcf9133c2883926ca7a005625ee6
   EXImageLoader: b88e053d760f85a82405b1db2de4abf11978fc9f
   EXNotifications: 9a2aa201deb19dfe1dbe0e370eeb2922de0d2422
-  Expo: 7ac824960a6059d6c68e73f432c8e6bf6d92a0ef
+  Expo: 4de8a31146bb0480353b3ed1850e015c4862625f
   ExpoCrypto: e534314db0e1a17ae12b5140d529bd0c5efcbc6a
   ExpoImageManipulator: f4e286afa83c1c618de8701b0812ee0b647895fc
   ExpoImagePicker: ca4207f2952a78e6dac2d7852d7e170dd2eaf1d0
   ExpoKeepAwake: 0e8f18142e71bbf2c7f6aa66ebed249ba1420320
   ExpoLocalization: 63204f4b9d4f653469d266332ceaa6c6ac8a305d
-  ExpoModulesCore: 39ec590ce622289c060183aba57f77b1e73b4e11
+  ExpoModulesCore: f9d1730cc2dde38e46b0becb97628b3ebbd29f21
   ExpoRandom: f9f1faa299a40733867f344d6b7bfa2d1f4ab04d
   ExpoSystemUI: 9f550a8055e315f7b0c4da208de27e45fe7da0fb
   ExpoWebBrowser: 5804ac42a8269d0e534bc4461993005f72535649
