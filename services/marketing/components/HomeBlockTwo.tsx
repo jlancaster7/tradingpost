@@ -1,12 +1,13 @@
 import React from "react";
 import DummyImage from '../public/DummyImage1.png';
+import PortfolioInForefront from '../public/PortfolioInForefront.svg'
 import VerifiedPortfolios from '../public/Verifiedportfolios.svg';
 import Image from 'next/image'
 
 const HomeBlockTwo = () => {
     return (
         <div className="blocktwo">
-            <Image src={DummyImage} alt=""/>
+            <Image src={PortfolioInForefront} alt=""/>
             <div className="blocktext">
                 <Image src={VerifiedPortfolios} alt="verified portfolio image"/>
                 <h1>Verified portfolios, with total control over who sees your data</h1>

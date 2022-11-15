@@ -2016,6 +2016,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         let query = `SELECT account_id,
                             security_id,
                             option_id,
+                            (SELECT json_agg(t) FROM public.security_option as t WHERE t.id=tradingpost_historical_holding.option_id) AS option_info,
                             price,
                             value,
                             cost_basis,
@@ -2029,6 +2030,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                      FROM tradingpost_historical_holding
                      WHERE account_id = $1
                        AND date BETWEEN $2 AND $3
+                     ORDER BY value desc
         `;
 
         const response = await this.db.any(query, [accountId, startDate, endDate]);
@@ -2043,6 +2045,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 accountId: d.account_id,
                 securityId: parseInt(d.security_id),
                 optionId: parseInt(d.option_id),
+                optionInfo: d.option_info,
                 price: parseFloat(d.price),
                 value: parseFloat(d.value),
                 costBasis: parseFloat(d.cost_basis),
@@ -2059,6 +2062,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         let query = `SELECT atg.account_group_id AS account_group_id,
                             ht.security_id       AS security_id,
                             ht.option_id         AS option_id,
+                            (SELECT json_agg(t) FROM public.security_option as t WHERE t.id=ht.option_id) AS option_info,
                             AVG(ht.price)        AS price,
                             SUM(ht.value)        AS value,
                             CASE
@@ -2078,7 +2082,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                         ON ht.account_id = atg.account_id
                      WHERE atg.account_group_id = $1
                        AND ht.date BETWEEN $2 AND $3
-                     GROUP BY atg.account_group_id, ht.security_id, ht.date`;
+                     GROUP BY atg.account_group_id, ht.security_id, ht.date
+                     ORDER BY value desc`;
         const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
 
         if (!response || response.length <= 0) {
@@ -2092,6 +2097,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 accountGroupId: parseInt(d.account_group_id),
                 securityId: parseInt(d.security_id),
                 optionId: parseInt(d.option_id),
+                optionInfo: d.option_info,
                 price: parseFloat(d.price),
                 value: parseFloat(d.value),
                 costBasis: parseFloat(d.cost_basis),
@@ -2108,6 +2114,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         let query = `SELECT atg.account_group_id AS account_group_id,
                             ch.security_id       AS security_id,
                             ch.option_id         AS option_id,
+                            (SELECT json_agg(t) FROM public.security_option as t WHERE t.id=ch.option_id) AS option_info,
                             AVG(ch.price)        AS price,
                             SUM(ch.value)        AS value,
                             CASE
@@ -2126,7 +2133,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ch.account_id = atg.account_id
                      WHERE atg.account_group_id = $1
-                     GROUP BY atg.account_group_id, ch.security_id, ch.updated_at;`;
+                     GROUP BY atg.account_group_id, ch.security_id, ch.updated_at, ch.option_id
+                     ORDER BY value desc;`;
         const response = await this.db.any(query, [accountGroupId]);
 
         if (!response || response.length <= 0) {
@@ -2140,6 +2148,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 accountGroupId: parseInt(d.account_group_id),
                 securityId: parseInt(d.security_id),
                 optionId: parseInt(d.option_id),
+                optionInfo: d.option_info,
                 price: parseFloat(d.price),
                 value: parseFloat(d.value),
                 costBasis: parseFloat(d.cost_basis),

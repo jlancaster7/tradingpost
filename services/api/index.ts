@@ -7,6 +7,8 @@ import cors from 'cors'
 import { healthCheck } from './healthcheck'
 import fetch from 'node-fetch'
 import { versionCode } from '@tradingpost/common/api/entities/static/EntityApiBase'
+import { addToWaitlist } from '@tradingpost/common/api/waitlist';
+import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
 (globalThis as any)["fetch" as any] = fetch;
 //fromWebToken()
 
@@ -26,6 +28,14 @@ app.use((req, res, next) => {
 //app.use("/api", api);
 // define a route handler for the default home page
 //app.use("/alpha", api);
+
+app.post('/watilist/add', async (req, res) => {
+    if (!req.body.email) {
+        res.status(404).send({error: "Invalid Requestion"})
+    }
+    await addToWaitlist(req.body.email);
+    res.send('Successfully added!');
+})
 
 app.use("/" + versionCode, api);
 
