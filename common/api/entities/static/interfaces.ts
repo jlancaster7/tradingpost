@@ -1,6 +1,6 @@
-import { number } from "mathjs"
-import { PriceInfo } from "../../cache"
-import { ICommentList, IUserList, IWatchlistList } from "../interfaces"
+import {number} from "mathjs"
+import {PriceInfo} from "../../cache"
+import {ICommentList, IUserList, IWatchlistList} from "../interfaces"
 
 export interface ISecurityGet {
     id: number,
@@ -10,10 +10,10 @@ export interface ISecurityGet {
     industry: string
     description: string,
     logo_url: string
-    price: PriceInfo["price"]| null,
+    price: PriceInfo["price"] | null,
     week_52_high: number,
     week_52_low: number,
-    isOnQuickWatch?:boolean
+    isOnQuickWatch?: boolean
 }
 
 export interface ISecurityList {
@@ -31,6 +31,7 @@ export interface IAnalystProfile {
     benchmark: string
     interests: string[]
 }
+
 export interface IUserSettings {
     analyst: boolean,
     push_notifications: {
@@ -69,8 +70,7 @@ export interface IElasticPost {
             imageUrl: string,
             profileUrl: string,
             username: string
-        }
-        ,
+        },
         platformCreatedAt: string,
         platformUpdatedAt: null,
         postType: 'tweet' | 'spotify' | 'substack' | 'youtube' | 'tradingpost',
@@ -89,13 +89,14 @@ export interface IElasticPost {
         }
     }
 }
+
 export interface ICommentPlus extends ICommentList {
     created_at: Date,
     updated_at: Date
     handle: string,
     display_name: string,
     profile_url: string,
-    subscription: {[key: string]: string}
+    subscription: { [key: string]: string }
 }
 
 export type IElasticPostExt = IElasticPost & {
@@ -108,3 +109,37 @@ export type IElasticPostExt = IElasticPost & {
 }
 
 export type AllWatchlists = { quick: IWatchlistList, created: IWatchlistList[], saved: IWatchlistList[] }
+
+export interface ISecurityPrices {
+    historical: {
+        high: number
+        low: number
+        open: number
+        close: number
+        date: string
+    }[]
+    intraday: {
+        high: number
+        low: number
+        open: number
+        close: number
+        date: string
+    }[]
+}
+
+export type ListAlertsResponse = {
+    id: number
+    type: string
+    dateTime: string
+    seen: boolean
+    data: Record<string, any>
+}
+
+export type ListTradesResponse = {
+    id: number
+    dateTime: string
+    price: string
+    type: string
+    handle: string
+    symbol: string
+}

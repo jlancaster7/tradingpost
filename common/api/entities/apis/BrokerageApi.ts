@@ -1,13 +1,13 @@
 import { EntityApi } from '../static/EntityApi'
 import {  } from '../interfaces'
-import { Notification as Extensions } from './extensions'
-class NotificationApi extends EntityApi<never,never,never,never> {
+import { Brokerage as Extensions } from './extensions'
+class BrokerageApi extends EntityApi<never,never,never,never> {
     protected getFunction = '';
     protected listFunction = '';
     protected insertFunction = '';
     protected updateFunction = '';
-    protected apiCallName = 'NotificationApi';
+    protected apiCallName = 'BrokerageApi';
     extensions = new Extensions.default(this)
 }
-export default new NotificationApi();
+export default new BrokerageApi();
 export type {}

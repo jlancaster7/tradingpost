@@ -1,4 +1,4 @@
-import Extension from ".";
+import Extension from "./";
 import {ISecurityList, ISecurityPrices} from "../interfaces";
 
 export default class extends Extension {

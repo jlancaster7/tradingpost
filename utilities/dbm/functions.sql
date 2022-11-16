@@ -51,6 +51,14 @@
     $BODY$;
 
 
+
+
+
+
+
+
+
+
     DROP FUNCTION IF EXISTS public.api_comment_insert(jsonb);
   
     CREATE OR REPLACE FUNCTION public.api_comment_insert(
@@ -104,6 +112,14 @@ return query SELECT * FROM public.view_comment_get(request) as v WHERE v.id = _i
   return query SELECT * FROM public.view_comment_list(request) as v WHERE CASE WHEN  request->'data' ? 'ids' THEN  v.id in (SELECT value::BIGINT from jsonb_array_elements_text(request->'data'->'ids')) ELSE true end;
     END;
     $BODY$;
+
+
+
+
+
+
+
+
 
 
 

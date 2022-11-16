@@ -23,6 +23,14 @@ export interface IBookmarkGet {
     user_id: string
     };
 
+export interface IBrokerageList {
+    
+    };
+
+export interface IBrokerageGet {
+    
+    };
+
 export interface ICommentList {
         id: number,
     related_type: string,
@@ -51,6 +59,14 @@ export interface IIbkrList {
     };
 
 export interface IIbkrGet {
+    
+    };
+
+export interface INotificationList {
+    
+    };
+
+export interface INotificationGet {
     
     };
 
@@ -96,8 +112,8 @@ export interface IPostGet {
 export interface ISubscriberList {
         subscription_id: number,
     user_id: string,
-    start_date: Date,
-    due_date?: Date,
+    start_date: unknown,
+    due_date?: unknown,
     months_subscribed: string,
     payment_source: string,
     id: number,
@@ -109,9 +125,9 @@ export interface ISubscriberList {
 export interface ISubscriberGet {
         id: number,
     subscription_id: number,
-    start_date: Date,
+    start_date: unknown,
     user_id: string,
-    due_date?: Date,
+    due_date?: unknown,
     payment_source: string,
     months_subscribed: string,
     subscription: ISubscriptionGet[],
@@ -123,7 +139,7 @@ export interface ISubscriberInsert {
         id: number,
     subscription_id: number,
     user_id: string,
-    start_date: Date,
+    start_date: unknown,
     approved: boolean
     };
 
@@ -270,15 +286,15 @@ export interface IWatchlistItemList {
     symbol: string,
     watchlist_id: number,
     note?: string,
-    date_added: Date
-};
+    date_added?: unknown
+    };
 
 export interface IWatchlistItemGet {
         id: number,
     symbol: string,
     watchlist_id: number,
     note?: string,
-    date_added?: Date
+    date_added?: unknown
     };
 
 export interface IWatchlistItemInsert {
@@ -295,42 +311,7 @@ export interface IWatchlistSavedList {
     };
 
 export interface IWatchlistSavedGet {
-
-};
-
-
-export interface ISecurityPrices {
-    historical: {
-        high: number
-        low: number
-        open: number
-        close: number
-        date: string
-    }[]
-    intraday: {
-        high: number
-        low: number
-        open: number
-        close: number
-        date: string
-    }[]
-}
-
-export type ListAlertsResponse = {
-    id: number
-    type: string
-    dateTime: string
-    seen: boolean
-    data: Record<string, any>
-}
-
-export type ListTradesResponse = {
-    id: number
-    dateTime: string
-    price: string
-    type: string
-    handle: string
-    symbol: string
-}
+    
+    };
 
 export * from '../static/interfaces'
