@@ -1,4 +1,4 @@
-import Extension from "./";
+import Extension from ".";
 import {ListAlertsResponse, ListTradesResponse} from "../interfaces";
 
 export default class extends Extension {

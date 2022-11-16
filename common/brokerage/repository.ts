@@ -45,8 +45,9 @@ import {
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
-import {addSecurity, getUSExchangeHoliday, updateSecurity} from "../market-data/interfaces";
+import {addSecurity, getUSExchangeHoliday} from "../market-data/interfaces";
 import security from "../api/entities/extensions/Security";
+import {RobinhoodUser, RobinhoodUserTable} from "./robinhood/interfaces";
 
 export default class Repository implements IBrokerageRepository, ISummaryRepository {
     private db: IDatabase<any>;
@@ -55,6 +56,55 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     constructor(db: IDatabase<any>, pgp: IMain) {
         this.db = db;
         this.pgp = pgp;
+    }
+
+    getRobinhoodUser = async (username: string): Promise<RobinhoodUserTable | null> => {
+        const query = `SELECT id,
+                              user_id,
+                              username,
+                              device_token,
+                              status,
+                              uses_mfa,
+                              access_token,
+                              refresh_token,
+                              updated_at,
+                              created_at
+                       FROM robinhood_account
+                       WHERE username = $1;`
+        const results = await this.db.query<[{ id: number, user_id: string, username: string, device_token: string, status: string, uses_mfa: boolean, access_token: string, refresh_token: string, updated_at: Date, created_at: Date }]>(query, [username]);
+        if (results.length <= 0) return null;
+        return {
+            id: results[0].id,
+            userId: results[0].user_id,
+            username: results[0].username,
+            deviceToken: results[0].device_token,
+            status: results[0].status,
+            usesMfa: results[0].uses_mfa,
+            accessToken: results[0].access_token,
+            refreshToken: results[0].refresh_token,
+            updatedAt: DateTime.fromJSDate(results[0].updated_at),
+            createdAt: DateTime.fromJSDate(results[0].created_at)
+        };
+    }
+
+    updateRobinhoodUser = async (user: RobinhoodUser) => {
+        const query = `UPDATE robinhood_account
+                       SET user_id=$1,
+                           device_token=$2,
+                           status=$3,
+                           uses_mfa=$4,
+                           access_token=$5,
+                           refresh_token=$6,
+                           updated_at=NOW()
+                       WHERE username = $7`
+        await this.db.query(query, [user.userId, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken, user.username])
+    }
+
+    insertRobinhoodUser = async (user: RobinhoodUser) => {
+        const query = `INSERT INTO robinhood_account(user_id, username, device_token, status, uses_mfa, access_token,
+                                                     refresh_token)
+                       VALUES ($1, $2, $3, $4, $5, $6, $7);`
+        await this.db.query(query, [user.userId, user.username, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken]);
     }
 
     updateErrorStatusOfAccount = async (accountId: number, error: boolean, errorCode: number): Promise<void> => {
@@ -183,12 +233,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getSecurityPricesWithEndDateBySecurityIds = async (startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]> => {
         const query = `SELECT id,
                               security_id,
-                              price,
-                              time,
-                              high,
-                              low,
-                              open,
-                              created_at
+                              price, time, high, low, open, created_at
                        FROM security_price
                        WHERE is_eod = true
                          AND time >= $1
@@ -214,10 +259,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getMarketHolidays = async (endDate: DateTime): Promise<getUSExchangeHoliday[]> => {
-        const response = await this.db.query(`SELECT id,
-                                                     date,
-                                                     settlement_date,
-                                                     created_at
+        const response = await this.db.query(`SELECT id, date, settlement_date, created_at
                                               FROM us_exchange_holiday
                                               WHERE date > $1
                                               ORDER BY date DESC`, [endDate.toJSDate()])
@@ -409,17 +451,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             SELECT id,
                    account_id,
                    security_id,
-                   security_type,
-                   date,
-                   quantity,
-                   price,
-                   amount,
-                   fees,
-                   type,
-                   currency,
-                   updated_at,
-                   created_at,
-                   option_id
+                   security_type, date, quantity, price, amount, fees, type, currency, updated_at, created_at, option_id
             FROM tradingpost_transaction
             WHERE account_id = $1;`
         const response = await this.db.query(query, [accountId]);
@@ -771,8 +803,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                             zip, country, phone, logo_url)
                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                                $11, $12, $13, $14, $15, $16, $17, $18, $19,
-                               $20)
-                       RETURNING id;`
+                               $20) RETURNING id;`
         return (await this.db.one(query, [sec.symbol, sec.companyName, sec.exchange, sec.industry, sec.website,
             sec.description, sec.ceo, sec.securityName, sec.issueType, sec.securityName, sec.primarySicCode, sec.employees,
             sec.tags, sec.address, sec.address2, sec.state, sec.zip, sec.country, sec.phone, sec.logoUrl])).id;
@@ -1222,10 +1253,10 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     addFinicityUser = async (userId: string, customerId: string, type: string): Promise<FinicityUser> => {
         const query = `INSERT INTO finicity_user(tp_user_id, customer_id, type)
-                       VALUES ($1, $2, $3)
-                       ON CONFLICT(customer_id) DO UPDATE SET tp_user_id=EXCLUDED.tp_user_id,
-                                                              type=EXCLUDED.type
-                       RETURNING id, updated_at, created_at`;
+                       VALUES ($1, $2, $3) ON CONFLICT(customer_id) DO
+        UPDATE SET tp_user_id=EXCLUDED.tp_user_id,
+            type =EXCLUDED.type
+            RETURNING id, updated_at, created_at`;
         const response = await this.db.one(query, [userId, customerId, type]);
         return {
             id: response.id,
@@ -1799,9 +1830,10 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     addTradingPostAccountGroup = async (userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number> => {
         let query = `INSERT INTO tradingpost_account_group(user_id, name, default_benchmark_id)
-                     VALUES ($1, $2, $3)
-                     ON CONFLICT ON CONSTRAINT name_userid_unique DO UPDATE SET name = EXCLUDED.name
-                     RETURNING id;`;
+                     VALUES ($1, $2, $3) ON CONFLICT
+                     ON CONSTRAINT name_userid_unique DO
+        UPDATE SET name = EXCLUDED.name
+            RETURNING id;`;
 
         const accountGroupIdResults = await this.db.any(query, [userId, name, defaultBenchmarkId]);
         if (accountGroupIdResults.length <= 0) return 0
@@ -1939,21 +1971,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         const r = await this.db.oneOrNone(`SELECT id,
                                                   account_id,
                                                   security_id,
-                                                  security_type,
-                                                  date,
-                                                  quantity,
-                                                  price,
-                                                  amount,
-                                                  fees,
-                                                  type,
-                                                  currency,
-                                                  updated_at,
-                                                  created_at,
-                                                  option_id
+                                                  security_type, date, quantity, price, amount, fees, type, currency, updated_at, created_at, option_id
                                            FROM tradingpost_transaction
                                            WHERE account_id = $1
                                            ORDER BY date ASC
-                                           LIMIT 1;`, accountId)
+                                               LIMIT 1;`, accountId)
         if (!r) return null
         return {
             optionId: r.option_id,
@@ -2016,7 +2038,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         let query = `SELECT account_id,
                             security_id,
                             option_id,
-                            (SELECT json_agg(t) FROM public.security_option as t WHERE t.id=tradingpost_historical_holding.option_id) AS option_info,
+                            (SELECT json_agg(t)
+                             FROM public.security_option as t
+                             WHERE t.id = tradingpost_historical_holding.option_id) AS option_info,
                             price,
                             value,
                             cost_basis,
@@ -2024,12 +2048,12 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                 WHEN quantity = 0 THEN 0
                                 WHEN cost_basis is null THEN 0
                                 ELSE (value - (quantity * cost_basis))
-                                END as pnl,
-                            quantity,
-                            date
+                                END                                                 as pnl,
+                            quantity, date
                      FROM tradingpost_historical_holding
                      WHERE account_id = $1
-                       AND date BETWEEN $2 AND $3
+                       AND date BETWEEN $2
+                       AND $3
                      ORDER BY value desc
         `;
 
@@ -2059,31 +2083,56 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostHoldingsByAccountGroup = async (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id AS account_group_id,
-                            ht.security_id       AS security_id,
-                            ht.option_id         AS option_id,
-                            (SELECT json_agg(t) FROM public.security_option as t WHERE t.id=ht.option_id) AS option_info,
-                            AVG(ht.price)        AS price,
-                            SUM(ht.value)        AS value,
+        let query = `SELECT atg.account_group_id        AS account_group_id,
+                            ht.security_id              AS security_id,
+                            ht.option_id                AS option_id,
+                            (SELECT json_agg(t)
+                             FROM public.security_option as t
+                             WHERE t.id = ht.option_id) AS option_info,
+                            AVG(ht.price)               AS price,
+                            SUM(ht.value) AS value,
                             CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN sum(ht.cost_basis) is null THEN 0
                                 ELSE SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)
-                                END              AS cost_basis,
+        END
+        AS cost_basis,
                             CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN SUM(ht.cost_basis) IS null THEN 0
                                 ELSE (SUM(ht.value) - (SUM(ht.cost_basis * ht.quantity)))
-                                END              AS pnl,
+        END
+        AS pnl,
                             SUM(ht.quantity)     AS quantity,
                             ht.date              AS date
                      FROM tradingpost_historical_holding ht
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ht.account_id = atg.account_id
-                     WHERE atg.account_group_id = $1
-                       AND ht.date BETWEEN $2 AND $3
-                     GROUP BY atg.account_group_id, ht.security_id, ht.date
-                     ORDER BY value desc`;
+                     WHERE atg.account_group_id =
+        $1
+        AND
+        ht
+        .
+        date
+        BETWEEN
+        $2
+        AND
+        $3
+        GROUP
+        BY
+        atg
+        .
+        account_group_id,
+        ht
+        .
+        security_id,
+        ht
+        .
+        date
+        ORDER
+        BY
+        value
+        desc`;
         const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
 
         if (!response || response.length <= 0) {
@@ -2111,30 +2160,51 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostCurrentHoldingsByAccountGroup = async (accountGroupId: number): Promise<HistoricalHoldings[]> => {
-        let query = `SELECT atg.account_group_id AS account_group_id,
-                            ch.security_id       AS security_id,
-                            ch.option_id         AS option_id,
-                            (SELECT json_agg(t) FROM public.security_option as t WHERE t.id=ch.option_id) AS option_info,
-                            AVG(ch.price)        AS price,
-                            SUM(ch.value)        AS value,
+        let query = `SELECT atg.account_group_id        AS account_group_id,
+                            ch.security_id              AS security_id,
+                            ch.option_id                AS option_id,
+                            (SELECT json_agg(t)
+                             FROM public.security_option as t
+                             WHERE t.id = ch.option_id) AS option_info,
+                            AVG(ch.price)               AS price,
+                            SUM(ch.value) AS value,
                             CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN sum(ch.cost_basis) is null THEN 0
                                 ELSE SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)
-                                END              AS cost_basis,
+        END
+        AS cost_basis,
                             CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN SUM(ch.cost_basis) IS null THEN 0
                                 ELSE (SUM(ch.value) - (SUM(ch.cost_basis * ch.quantity)))
-                                END              AS pnl,
+        END
+        AS pnl,
                             SUM(ch.quantity)     AS quantity,
                             ch.updated_at        AS updated_at
                      FROM tradingpost_current_holding ch
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ch.account_id = atg.account_id
-                     WHERE atg.account_group_id = $1
-                     GROUP BY atg.account_group_id, ch.security_id, ch.updated_at, ch.option_id
-                     ORDER BY value desc;`;
+                     WHERE atg.account_group_id =
+        $1
+        GROUP
+        BY
+        atg
+        .
+        account_group_id,
+        ch
+        .
+        security_id,
+        ch
+        .
+        updated_at,
+        ch
+        .
+        option_id
+        ORDER
+        BY
+        value
+        desc;`;
         const response = await this.db.any(query, [accountGroupId]);
 
         if (!response || response.length <= 0) {
@@ -2163,14 +2233,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     getTradingPostAccountGroupReturns = async (accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]> => {
         let query = `SELECT id,
-                            account_group_id,
-                            date,
-                            return,
-                            created_at,
-                            updated_at
+                            account_group_id, date, return, created_at, updated_at
                      FROM account_group_hpr
                      WHERE account_group_id = $1
-                       AND date BETWEEN $2 AND $3
+                       AND date BETWEEN $2
+                       AND $3
                      ORDER BY date;`;
         const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
 
@@ -2196,12 +2263,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getDailySecurityPrices = async (securityId: number, startDate: DateTime, endDate: DateTime): Promise<SecurityPrices[]> => {
         let query = `SELECT id,
                             security_id,
-                            price,
-                            time,
-                            created_at
+                            price, time, created_at
                      FROM security_price
                      WHERE security_id = $1
-                       AND time BETWEEN $2 AND $3
+                       AND time BETWEEN $2
+                       AND $3
                        AND is_eod = true;
         `;
         const response = await this.db.any(query, [securityId, startDate, endDate]);
@@ -2434,15 +2500,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             beta,
                             sharpe,
                             industry_allocations,
-                            exposure,
-                            date,
-                            benchmark_id,
-                            updated_at,
-                            created_at
+                            exposure, date, benchmark_id, updated_at, created_at
                      FROM tradingpost_account_group_stat
                      WHERE account_group_id = $1
                      ORDER BY date DESC
-                     LIMIT 1
+                         LIMIT 1
         `;
         const result = await this.db.one(query, [accountGroupId]);
 

@@ -27,13 +27,6 @@ export const getHivePool = (async () => {
 
     const config = await DefaultConfig.fromCacheOrSSM("postgres");
     hive = new pg.Pool({...config, max: 10});
-    // {
-    //     host: process.env.API_DB_HOST || config.host,
-    //     user: process.env.API_DB_USER || config.user,
-    //     password: process.env.API_DB_PASS || config.password,
-    //     database: process.env.API_DB_NAME || config.database,
-    //     port: process.env.API_DB_PORT ? Number(process.env.API_DB_PORT) : config.port
-    // }
     return hive;
 })()
 
