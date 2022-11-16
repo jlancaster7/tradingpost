@@ -5,8 +5,6 @@ import fetch from 'node-fetch';
 import {TradingPostBrokerageAccountsTable} from "../../../brokerage/interfaces";
 import {init} from "../../../db/index";
 import Repository from "../../../brokerage/repository";
-import pg from "pg";
-import {DateTime} from "luxon";
 
 const loginUrl = 'https://api.robinhood.com/oauth2/token/';
 
@@ -57,10 +55,23 @@ export default ensureServerExtensions<Brokerage>({
             });
 
             const body = await response.json();
+            console.log("Robinhood Login Body: ", body);
             if ('mfa_required' in body) return {
                 status: RobinhoodLoginStatus.MFA,
                 body: "MFA required to proceed"
             }
+
+            if ('challenge' in body) {
+                if (body['status'] === 'issued') return {
+                    status: RobinhoodLoginStatus.MFA,
+                    body: "MFA required to proceed"
+                }
+            }
+
+            if ('detail' in body) return {
+                status: RobinhoodLoginStatus.ERROR,
+                body: body['detail']
+            };
 
             if (!robinhoodUser) {
                 await brokerageRepo.insertRobinhoodUser({
