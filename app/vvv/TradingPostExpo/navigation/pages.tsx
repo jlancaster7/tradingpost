@@ -32,6 +32,7 @@ export type RootStackParamList =
         "WatchlistViewer" |
         "BrokeragePicker" |
         "IbkrInfo" |
+        "RobinhoodLogin" |
         "Watchlist" |
         "ImagePicker" |
         "Subscription" |

@@ -62,7 +62,7 @@ export default ensureServerExtensions<Brokerage>({
             }
 
             if ('challenge' in body) {
-                if (body['status'] === 'issued') return {
+                if (body['challenge']['status'] === 'issued') return {
                     status: RobinhoodLoginStatus.MFA,
                     body: "MFA required to proceed"
                 }

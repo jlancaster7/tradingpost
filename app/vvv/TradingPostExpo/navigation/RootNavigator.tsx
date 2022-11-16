@@ -33,6 +33,7 @@ import { useAppUser } from "../Authentication";
 import { Log } from "../utils/logger";
 import { BrokeragePickerScreen } from "../screens/BrokeragePickerScreen";
 import { IbkrInfoScreen } from "../screens/IbkrInfoScreen";
+import { RobhinhoodLoginScreen } from "../screens/RobinhoodLoginScreen";
 
 
 Notifications.setNotificationHandler({
@@ -129,6 +130,7 @@ export function RootNavigator() {
             <Stack.Screen name="NotificationTrade" component={NotificationTradeScreen} />
             <Stack.Screen name="BrokeragePicker" component={BrokeragePickerScreen}  />
             <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen}  />
+            <Stack.Screen name="RobinhoodLogin" component={RobhinhoodLoginScreen}  />
         </Stack.Group>
         <Stack.Group screenOptions={{
             headerStyle: {

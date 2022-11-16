@@ -6,12 +6,16 @@ import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../s
 import { ElevatedSection, Section, Subsection } from "../components/Section"
 import { Autocomplete, AutocompleteItem, Button, Icon, IndexPath, Text, Layout } from "@ui-kitten/components"
 import { AddButton } from "../components/AddButton";
-import { useReadonlyEntity } from "../utils/hooks";
-import { ScrollWithButtons } from "../components/ScrollWithButtons";
+import { useIsKeyboardVisible, useReadonlyEntity } from "../utils/hooks";
+import { ButtonPanel, ScrollWithButtons } from "../components/ScrollWithButtons";
 import { getHivePool } from "@tradingpost/common/db";
+import { IBKR } from "../images"
+import { useNavigation } from "@react-navigation/native"
+import { ScrollView } from "react-native-gesture-handler"
 
 
 export function IbkrInfoScreen(props: any) {
+    const nav = useNavigation();
     const [acText, setAcText]  = useState('')
     let [submittedText, setSubmittedText] = useState('') 
     //const [accountIds, setAccountIds] = useState<string[]>([]);
@@ -32,39 +36,14 @@ export function IbkrInfoScreen(props: any) {
         })()
 
     },[submittedText])
+    const { isKeyboardVisible } = useIsKeyboardVisible();
     return (
-        <ScrollWithButtons
-        fillHeight={true}
-        buttons={{
-            left: {
-                text: 'Go back',
-                onPress: async () => {
-                    try {
-                        props.navigation.goBack();
-                    } catch (e) {
-                     console.error(e);
-                    } 
-                }
-            },
-            right: {
-                text: 'Continue',
-                onPress: async () => {
-                   try {
-                        if (!accountIds.data.ids.length) {
-                            return
-                        }
-                        await Api.Ibkr.extensions.insertNewAccounts({account_ids: accountIds.data.ids});
-                        const body = emailBody(accountIds.data.ids);
-                        Linking.openURL(`mailto:reportingintegration@interactivebrokers.com?subject=IBKR/TradingPost Reporting Integration&body=${body}`) 
-                    
-                   } catch (e) {
-                        console.error(e);
-                   }
-                }
-            }
-        }}>
+        
         <View style={[flex, { margin: sizes.rem1}]}>
-            <View style={{marginBottom: 20}}>
+            <View style={{borderRadius: 20, overflow: 'hidden', aspectRatio: 1, height: '15%', justifyContent: 'center', alignSelf: 'center'}}>
+                <IBKR height={"100%"} width={'100%'}/>
+            </View>
+            <View style={{marginVertical: 20}}>
                 <Text>
                     {instructions}
                 </Text>
@@ -100,12 +79,15 @@ export function IbkrInfoScreen(props: any) {
                     
                 </Autocomplete>
             </View>
-            <View key={`view_id_${accountIds.data.ids.length}`}>
+            <View style={{height: '20%', borderWidth: 1, borderColor: '#ccc', marginVertical: sizes.rem0_5, borderRadius: sizes.rem0_5}}>
+                <ScrollView  key={`view_id_${accountIds.data.ids.length}`} >
                     {
-                    accountIds.data.ids.map((v,i)=> <View key={`id_${i}`} style={{ padding: sizes.rem0_5, flexDirection: "row" }}><Text style={{ textAlign: "left", flex: 1 }}>{v}</Text></View>)
+                        accountIds.data.ids.map((v,i)=> <View key={`id_${i}`} style={{ padding: sizes.rem0_5, flexDirection: "row" }}><Text style={{ textAlign: "left", flex: 1 }}>{v}</Text></View>)
                     }
-            </View>
-            <View key='1' style={{position: 'absolute', bottom: 0}}>
+                </ScrollView>
+            </View>  
+            
+            <View key='1' style={[ isKeyboardVisible ? { height: 0 }: {} ,{position: 'absolute', bottom: 0}]}>
                 <Text style={{textAlign: 'left', fontSize: fonts.xSmall}}>
                     {note}
                 </Text>
@@ -114,9 +96,41 @@ export function IbkrInfoScreen(props: any) {
                         Linking.openURL('https://guides.interactivebrokers.com/ibrit/topics/reporting_integration_process.htm')}>
                         {'IBKR Reporting Integration Process'}
                 </Text>
+                <ButtonPanel 
+                    viewProps={{borderTopWidth: 0,
+                                flexDirection: "row", 
+                                paddingTop: sizes.rem1,
+                                paddingBottom: 0,
+                                justifyContent: "space-evenly", 
+                                zIndex: 1000
+                            }}
+                    left={{
+                        text: 'Go back',
+                        onPress: async () => {
+                            nav.goBack();
+                        }
+                    }}
+                    right={{
+                        text: 'Continue',
+                        onPress: async () => {
+                            try {
+                                if (!accountIds.data.ids.length) {
+                                    return
+                                }
+                                await Api.Ibkr.extensions.insertNewAccounts({account_ids: accountIds.data.ids});
+                                const body = emailBody(accountIds.data.ids);
+                                Linking.openURL(`mailto:reportingintegration@interactivebrokers.com?subject=IBKR/TradingPost Reporting Integration&body=${body}`) 
+                            
+                        } catch (e) {
+                                console.error(e);
+                        }
+                        }
+                    }}
+            />
             </View>
+            
         </View>
-    </ScrollWithButtons>
+
     )
 
 }

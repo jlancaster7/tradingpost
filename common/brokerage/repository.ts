@@ -2205,13 +2205,16 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         BY
         value
         desc;`;
+        let holdings: HistoricalHoldings[] = [];
+        if (!accountGroupId) {
+            return holdings;
+        }
         const response = await this.db.any(query, [accountGroupId]);
 
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get current holdings for accountGroupId: ${accountGroupId}`);
         }
 
-        let holdings: HistoricalHoldings[] = [];
 
         for (let d of response) {
             holdings.push({
