@@ -25,6 +25,7 @@ import _BookmarkActiveBlue from './assets/post-feed/bookmark-active-blue.svg'
 import _BookmarkInactive from './assets/post-feed/bookmark.svg'
 import _Retweet from './assets/post-feed/ei_retweet.svg'
 import _PremiumStar from './assets/post-feed/PremiumStar.svg'
+import _SendIcon from './assets/post-feed/SendIcon.svg'
 
 // /** Side Menu Icons */
 import Account from './assets/side-menu/Account.svg'
@@ -97,6 +98,7 @@ export const Retweet = makeExpoSvg(_Retweet);
 // PlusIcon,
 export const UpvoteIcon = makeExpoSvg(_UpvoteIcon);
 export const CommentIcon = makeExpoSvg(_CommentIcon);
+export const SendIcon = makeExpoSvg(_SendIcon);
 export const BookmarkActive = makeExpoSvg(_BookmarkActive);
 export const BookmarkActiveBlue = makeExpoSvg(_BookmarkActiveBlue);
 export const PremiumStar = makeExpoSvg(_PremiumStar);
