@@ -1,5 +1,5 @@
 import {ensureServerExtensions} from ".";
-import Brokerage, {RobinhoodLoginResponse, RobinhoodLoginStatus} from "./Brokerage";
+import Brokerage, {RobinhoodChallengeStatus, RobinhoodLoginResponse, RobinhoodLoginStatus} from "./Brokerage";
 import {v4 as uuidv4} from 'uuid';
 import fetch from 'node-fetch';
 import {TradingPostBrokerageAccountsTable} from "../../../brokerage/interfaces";
@@ -7,13 +7,47 @@ import {init} from "../../../db/index";
 import Repository from "../../../brokerage/repository";
 
 const loginUrl = 'https://api.robinhood.com/oauth2/token/';
+const pingUrl = (id: string) => `https://api.robinhood.com/push/${id}/get_prompts_status`;
+const pingMap: Record<string, RobinhoodChallengeStatus> = {
+    "redeemed": RobinhoodChallengeStatus.Redeemed,
+    "issued": RobinhoodChallengeStatus.Issued
+}
+
+const generatePayloadRequest = (username: string, password: string, fauxDeviceToken: string, headers: Record<string, string>, mfaCode: string | null, challengeResponseId: string | null): [Record<string, string>, Record<any, any>] => {
+    let challengeType = "sms";
+    let payload: Record<string, any> = {
+        "username": username,
+        "password": password,
+        "client_id": "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS",
+        "expires_in": 86400,
+        "grant_type": 'password',
+        "scope": "internal",
+        "challenge_type": challengeType,
+        "device_token": fauxDeviceToken
+    };
+
+    // MFA Login
+    if (mfaCode) {
+        payload["mfa_code"] = mfaCode
+        return [headers, payload];
+    }
+
+    if (challengeResponseId) {
+        payload["try_passkeys"] = false;
+        headers['x-robinhood-challenge-response-id'] = challengeResponseId
+        return [headers, payload];
+    }
+
+    return [headers, payload];
+}
+
+// We want to build different requests based on different requesting states
 
 export default ensureServerExtensions<Brokerage>({
     robinhoodLogin: async (req): Promise<RobinhoodLoginResponse> => {
-        const {username, password, mfaCode} = req.body;
+        const {username, password, mfaCode, challengeResponseId} = req.body;
         const {pgp, pgClient} = await init;
         const brokerageRepo = new Repository(pgClient, pgp);
-        let fauxDeviceToken = uuidv4();
 
         let tpBrokerageAccount: TradingPostBrokerageAccountsTable | null = null;
         const tpBrokerageAccounts = await brokerageRepo.getTradingPostBrokerageAccountsByBrokerageAndIds(req.extra.userId, "Robinhood", [username]);
@@ -24,85 +58,61 @@ export default ensureServerExtensions<Brokerage>({
             body: "Robinhood account already exists and is active"
         }
 
-        const robinhoodUser = await brokerageRepo.getRobinhoodUser(username);
-        if (robinhoodUser) {
-            fauxDeviceToken = robinhoodUser.deviceToken;
+        let headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'x-robinhood-api-version': '1.431.4'
         }
 
-        let challengeType = "sms";
+        let fauxDeviceToken = uuidv4();
+        const robinhoodUser = await brokerageRepo.getRobinhoodUser(username);
+        if (robinhoodUser) fauxDeviceToken = robinhoodUser.deviceToken
+        const [requestHeaders, requestPayload] = generatePayloadRequest(username, password, fauxDeviceToken, headers, mfaCode, challengeResponseId);
 
-        let payload: Record<string, any> = {
-            "username": username,
-            "password": password,
-            "client_id": "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS",
-            "expires_in": 86400,
-            "grant_type": 'password',
-            "scope": "internal",
-            "challenge_type": challengeType,
-            "device_token": fauxDeviceToken
-        };
-
-        if (mfaCode) payload["mfa_code"] = mfaCode;
 
         try {
             const response = await fetch(loginUrl, {
                 method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                headers: requestHeaders,
+                body: JSON.stringify(requestPayload)
             });
 
             const body = await response.json();
-            console.log("Robinhood Login Body: ", body);
+
+            // Credentials Provided Incorrectly
+            if (body['detail'] === 'Unable to log in with provided credentials.') return {
+                status: RobinhoodLoginStatus.ERROR,
+                body: "Credentials provided incorrectly"
+            }
+
+            if (!robinhoodUser)
+                await brokerageRepo.insertRobinhoodUser({
+                    username: username,
+                    deviceToken: fauxDeviceToken,
+                    usesMfa: mfaCode !== null && !body['mfa_required'] && !body['challenge'],
+                    status: RobinhoodLoginStatus.SUCCESS,
+                    accessToken: body.access_token ? body.access_token : null,
+                    refreshToken: body.refresh_token ? body.refresh_token : null,
+                    userId: req.extra.userId
+                })
+
+            // Basic MFA
+            // Have them type in a passcode
             if ('mfa_required' in body) return {
                 status: RobinhoodLoginStatus.MFA,
                 body: "MFA required to proceed"
             }
 
             if ('challenge' in body) {
-                if (body['status'] === 'issued') return {
-                    status: RobinhoodLoginStatus.MFA,
-                    body: "MFA required to proceed"
+                // this is the challenge where you constantly ping
+                if (body['challenge']['status'] === 'issued') return {
+                    status: RobinhoodLoginStatus.DEVICE_APPROVAL,
+                    body: "Please, approve the login on your device.",
+                    challengeResponseId: body['challenge']['id'],
                 }
             }
 
-            if ('detail' in body) return {
-                status: RobinhoodLoginStatus.ERROR,
-                body: body['detail']
-            };
-
-            if (!robinhoodUser) {
-                await brokerageRepo.insertRobinhoodUser({
-                    username: username,
-                    deviceToken: fauxDeviceToken,
-                    usesMfa: mfaCode !== null,
-                    status: RobinhoodLoginStatus.SUCCESS,
-                    accessToken: body.access_token,
-                    refreshToken: body.refresh_token,
-                    userId: req.extra.userId
-                })
-                await brokerageRepo.addTradingPostBrokerageAccounts([{
-                    status: "active",
-                    userId: req.extra.userId,
-                    accountNumber: username,
-                    type: "brokerage",
-                    brokerName: "Robinhood",
-                    institutionId: 9858,
-                    error: false,
-                    errorCode: 0,
-                    mask: "",
-                    name: "",
-                    subtype: "",
-                    officialName: "",
-                }]);
-
-                return {
-                    status: RobinhoodLoginStatus.SUCCESS,
-                    body: "Robinhood account successfully added to TradingPost."
-                }
-            }
+            // Made it through authentication and we have an access token
             await brokerageRepo.updateRobinhoodUser({
                 username: username,
                 refreshToken: body.refresh_token,
@@ -140,4 +150,31 @@ export default ensureServerExtensions<Brokerage>({
             }
         }
     },
+    hoodPing: async (req): Promise<{ challengeStatus: RobinhoodChallengeStatus }> => {
+        const {requestId} = req.body;
+        try {
+            const response = await fetch(pingUrl(requestId), {
+                method: "GET"
+            });
+            const body = await response.json();
+            if ('detail' in body) {
+                console.error("pinging the hood for challenge status: ", body.detail);
+                return {challengeStatus: RobinhoodChallengeStatus.Unknown}
+            }
+
+            if (body.challenge_status as string in pingMap) {
+                const challengeStatus = body.challenge_status as string
+                return {
+                    challengeStatus: pingMap[challengeStatus]
+                }
+            }
+
+            return {
+                challengeStatus: RobinhoodChallengeStatus.Unknown
+            }
+        } catch (e) {
+            console.error(e);
+            return {challengeStatus: RobinhoodChallengeStatus.Unknown}
+        }
+    }
 })
