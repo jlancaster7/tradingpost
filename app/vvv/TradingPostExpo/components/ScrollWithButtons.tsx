@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, ViewProps, ViewComponent, ViewStyle, StyleProp } from "react-native";
 import { AppColors } from "../constants/Colors";
 
 import { flex } from "../style";
@@ -31,13 +31,14 @@ export type ButtonPanelProps = {
         text: string,
         onPress: () => void
     }
+    viewProps?: StyleProp<ViewStyle> 
 }
 export function ButtonPanel(props: ButtonPanelProps) {
-    return <View style={[{ borderTopColor: "#ccc", borderTopWidth: 1, flexDirection: "row", 
+    return <View style={ props.viewProps && Object.keys(props.viewProps).length ? props.viewProps : { borderTopColor: "#ccc", borderTopWidth: 1, flexDirection: "row", 
     paddingTop: 8,
      paddingBottom: 8, 
      
-     justifyContent: "space-evenly", zIndex: 1000 }]}>
+     justifyContent: "space-evenly", zIndex: 1000 }}>
         {props.left && <SecondaryButton style={{ width: "48%" }} onPress={props.left.onPress} disabled={props.locked} >{props.left.text}</SecondaryButton>}
         <PrimaryButton style={{ width: props.left ? "48%" : "96%" }} onPress={props.right.onPress} disabled={props.locked} >{props.right.text}</PrimaryButton>
     </View>

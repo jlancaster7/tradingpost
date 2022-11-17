@@ -8,6 +8,8 @@ import _Studying from './assets/Studying.svg'
 import _Analyze from './assets/analyze.svg'
 import _Bank from './assets/bank.svg'
 import _IBKR from './assets/IBKR.svg'
+import _RobinhoodLogo from './assets/robinhood_logo.svg'
+import _RobinhoodLogoLong from './assets/robinhood_logo_long.svg'
 
 
 
@@ -78,6 +80,8 @@ export const Studying = makeExpoSvg(_Studying)
 export const Analyze = makeExpoSvg(_Analyze);
 export const Bank = makeExpoSvg(_Bank);
 export const IBKR = makeExpoSvg(_IBKR);
+export const RobinhoodLogo = makeExpoSvg(_RobinhoodLogo);
+export const RobinhoodLogoLong = makeExpoSvg(_RobinhoodLogoLong);
 //export const Bank_Link = makeExpoSvg(_Bank_Link);
 
 export const IconBg = makeExpoSvg(_IconBg)

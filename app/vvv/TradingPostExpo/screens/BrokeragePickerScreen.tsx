@@ -5,8 +5,8 @@ import { openBrowserAsync } from 'expo-web-browser';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../style"
 import { ElevatedSection, Section, Subsection } from "../components/Section"
-import { Bank, IBKR } from '../images'; 
-import { Header } from "../components/Headers";
+import { Bank, IBKR, RobinhoodLogo } from '../images'; 
+import { Header, Subheader } from "../components/Headers";
 import { useNavigation } from "@react-navigation/native";
 
 
@@ -70,21 +70,20 @@ export function BrokeragePickerScreen() {
                nav.navigate("IbkrInfo")
                 }}>
                 <ElevatedSection style={{justifyContent: 'center', flex: 1, marginRight: sizes.rem1 / 2}} title="">
-                    <Text style={{ textAlign: 'center', marginBottom: 10}}>
-                        {"Interactive Brokers"}
-                    </Text>
+                    <Subheader text='Interactive Brokers' style={{ textAlign: 'center', marginBottom: 10, color: 'black'}} />
                     <View style={{borderRadius: 20, overflow: 'hidden', aspectRatio: 1, height: '75%', justifyContent: 'center', alignSelf: 'center'}}>
                         <IBKR style={{}}  height={"100%"} width={'100%'}/>
                     </View>
                 </ElevatedSection>
             </Pressable>
             <Pressable style={{flex: 1 }} onPress={()=> {
-                //props.navigation.navigate("IbkrInfo")
+                nav.navigate("RobinhoodLogin")
             }}>
                 <ElevatedSection style={{justifyContent: 'center', flex: 1, marginLeft: sizes.rem1 / 2}} title="">
-                    <Text style={{ textAlign: 'center'}}>
-                        {"Robinhood \n(Coming Soon!)"}
-                    </Text>
+                    <Subheader text='Robinhood' style={{ textAlign: 'center', marginBottom: 10, color: 'black'}} />
+                    <View style={{borderRadius: 20, overflow: 'hidden', aspectRatio: 1, height: '75%', justifyContent: 'center', alignSelf: 'center'}}>
+                        <RobinhoodLogo style={{}}  height={"100%"} width={'100%'}/>
+                    </View>
                 </ElevatedSection>
             </Pressable>
         </View>
@@ -93,10 +92,11 @@ export function BrokeragePickerScreen() {
                 openLink();
             }}>
                 <ElevatedSection style={{justifyContent: 'center', flex: 0.5}} title="">
+                    <Subheader text='All other brokerages' style={{ textAlign: 'center',marginBottom: 0,  color: 'black'}} />
                     <Text style={{ textAlign: 'center', marginBottom: 10}}>
-                        {"All other brokerages\n(Finicity, a Mastercard Company)"}
+                        {"(Finicity, a Mastercard Company)"}
                     </Text>
-                    <Bank height={"75%"} />
+                    <Bank height={"70%"} />
                 </ElevatedSection>
             </Pressable>
         </View>

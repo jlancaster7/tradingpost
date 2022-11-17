@@ -276,7 +276,7 @@ export class PortfolioSummaryService implements ISummaryService {
             return await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId)
         } catch (err) {
             console.error(err);
-            return {} as HistoricalHoldings[];
+            return [] as HistoricalHoldings[];
         }
     }
 

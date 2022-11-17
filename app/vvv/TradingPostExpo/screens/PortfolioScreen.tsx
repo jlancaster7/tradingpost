@@ -192,7 +192,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                             </View>
                         </View>
                     </Subsection>
-                    <Subsection key="holdings" alt={true} title="Holdings" style={holdings ? { display: 'flex' } : { display: 'none' }}>{
+                    <Subsection key="holdings" alt={true} title="Holdings" style={holdings && holdings.length > 0 ? { display: 'flex' } : { display: 'none' }}>{
                         <Table
                             listKey="portfolio_holdings_table"
                             data={holdings}
