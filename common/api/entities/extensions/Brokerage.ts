@@ -23,6 +23,7 @@ export type RobinhoodLoginResponse = {
 export enum RobinhoodChallengeStatus {
     Issued = "issued",
     Redeemed = "redeemed",
+    Validated = "validated",
     Unknown = "unknown"
 }
 
