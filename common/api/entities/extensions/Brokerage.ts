@@ -29,4 +29,5 @@ export enum RobinhoodChallengeStatus {
 export default class extends Extension {
     robinhoodLogin = this._makeFetch<RobinhoodLoginRequest, RobinhoodLoginResponse>("robinhoodLogin", this._defaultPostRequest)
     hoodPing = this._makeFetch<{ requestId: string }, { challengeStatus: RobinhoodChallengeStatus }>("hoodPing", this._defaultPostRequest)
+    test = this._makeFetch("test", this._defaultPostRequest)
 }

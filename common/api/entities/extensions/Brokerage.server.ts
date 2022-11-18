@@ -176,5 +176,9 @@ export default ensureServerExtensions<Brokerage>({
             console.error(e);
             return {challengeStatus: RobinhoodChallengeStatus.Unknown}
         }
+    },
+    test: async(req) => {
+        console.log("YEAH!")
+        console.log("TESTING444")
     }
 })
