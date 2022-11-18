@@ -99,6 +99,7 @@ export const Retweet = makeExpoSvg(_Retweet);
 export const UpvoteIcon = makeExpoSvg(_UpvoteIcon);
 export const CommentIcon = makeExpoSvg(_CommentIcon);
 export const SendIcon = makeExpoSvg(_SendIcon);
+export const InfoIcon = makeExpoSvg(Information);
 export const BookmarkActive = makeExpoSvg(_BookmarkActive);
 export const BookmarkActiveBlue = makeExpoSvg(_BookmarkActiveBlue);
 export const PremiumStar = makeExpoSvg(_PremiumStar);

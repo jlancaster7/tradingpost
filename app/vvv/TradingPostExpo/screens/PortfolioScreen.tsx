@@ -21,6 +21,7 @@ import { AppColors } from "../constants/Colors";
 import { LineChart } from "../components/LineChart";
 import InteractiveChart from "../components/InteractiveGraph";
 import { DashTabScreenProps, RootStackScreenProps } from "../navigation/pages";
+import { TooltipComponent } from "../components/ToolTip";
 
 const styles = {
     stateLabel: {
@@ -165,6 +166,9 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                         </View>
                         <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
                         <View key={'portfolio_stats'} style={[portfolio ? { display: 'flex' } : { display: 'none' }, { borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2 }]}>
+                            <View style={{flex: 1}}>
+                                <TooltipComponent text="Return calculations are in beta. The more feedback you can provide us, the better we can do!" />
+                            </View>
                             <View key={"returns"} style={{ flexDirection: "row" }}>
                                 {[
                                     { title: "Total Return", value: toPercent2(cummReturn) },
@@ -190,6 +194,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                                         </View>
                                     })}
                             </View>
+                            
                         </View>
                     </Subsection>
                     <Subsection key="holdings" alt={true} title="Holdings" style={holdings && holdings.length > 0 ? { display: 'flex' } : { display: 'none' }}>{
