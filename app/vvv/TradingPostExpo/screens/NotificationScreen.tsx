@@ -108,8 +108,8 @@ export const NotificationScreen = () => {
 }
 
 const NotificationTab: React.FC<any> = (props: any) => {
-    return <ElevatedSection title={""} style={{marginHorizontal: sizes.rem2 / 2, marginVertical: sizes.rem1 / 2,}}>
-        <View style={{marginBottom: -sizes.rem0_5}}>
+    return <ElevatedSection title={""} style={{marginHorizontal: sizes.rem2 / 2, marginBottom: sizes.rem1}}>
+        <View style={{marginBottom: -sizes.rem0_5, paddingVertical: 6}}>
             <View style={{flexDirection: "row", width: "100%", marginBottom: sizes.rem0_5}}>
                 <View style={[flex, {marginLeft: sizes.rem0_5}]}>
                     {props.children}

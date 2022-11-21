@@ -3,15 +3,15 @@ import { AllWatchlists, IWatchlistGet, IWatchlistList } from "@tradingpost/commo
 import React, { useEffect, useState } from "react";
 import { Animated, ScrollView, TextStyle, View } from "react-native";
 import { AddButton, EditButton } from "../components/AddButton";
-import { Icon, Text } from '@ui-kitten/components'
+import { Avatar, Icon, Text } from '@ui-kitten/components'
 import { ElevatedSection, Section, Subsection } from "../components/Section";
 import { Table } from "../components/Table";
-import { DataOrQuery } from '../components/List'
+import { DataOrQuery, List } from '../components/List'
 
 import { flex, fonts, paddView, sizes } from "../style";
 import { useToast } from "react-native-toast-notifications";
-import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewerScreen";
-import { AwaitedReturn, toPercent, toPercent2, toThousands, toDollarsAndCents, toDollars, toNumber2, toNumber1 } from "../utils/misc";
+import { SecPressable, useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewerScreen";
+import { AwaitedReturn, toPercent, toPercent2, toThousands, toDollarsAndCents, toDollars, toNumber2, toNumber1, toFormatedDateTime } from "../utils/misc";
 import { WatchlistSection } from "../components/WatchlistSection";
 import Theme from '../theme-light.json'
 import { LimitedTable } from "./TableModalScreen";
@@ -22,6 +22,13 @@ import { LineChart } from "../components/LineChart";
 import InteractiveChart from "../components/InteractiveGraph";
 import { DashTabScreenProps, RootStackScreenProps } from "../navigation/pages";
 import { TooltipComponent } from "../components/ToolTip";
+import { useSecuritiesList } from "../SecurityList";
+import { Header } from "../components/Headers";
+import { WatchlistItemRenderItem } from "../components/WatchlistItemRenderItem";
+import { useNavigation } from "@react-navigation/native";
+import { HoldingRenderItem } from "../components/HoldingRenderItem";
+import { TradeRenderItem } from "../components/TradeRenderItem";
+import { LimitedBlockList } from "./BlockListModalScreen";
 
 const styles = {
     stateLabel: {
@@ -46,11 +53,13 @@ const periods: { [key: string]: number } = {
     "Max": 1000
 }
 export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
-    
+    const nav = useNavigation();
     const [watchlists, setWatchlists] = useState<AllWatchlists>()
     const [quickWatchlist, setQuickWatchlist] = useState<IWatchlistGet>()
+    const [shownMap, setShownMap] = useState<Record<string, boolean>>({})
     const toast = useToast();//const [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>();
     const [holdings, setHoldings] = useState<AwaitedReturn<typeof Api.User.extensions.getHoldings>>();
+    const [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>();
     const [portfolio, setPortfolio] = useState<AwaitedReturn<typeof Api.User.extensions.getPortfolio>>();
     const [returns, setReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>();
     const [twReturns, settwReturns] = useState<{ x: string, y: number }[]>();
@@ -151,6 +160,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
     }, [portPeriod])
 
     let cummReturn = 0;
+    const { securities: { bySymbol, byId } } = useSecuritiesList();
 
     if (twReturns) cummReturn = twReturns[twReturns.length - 1].y - 1;
     const { columns: watchlistItemColumns } = useWatchlistItemColumns(true)
@@ -158,14 +168,15 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
         <Animated.FlatList
             key={'top_level_portfolio_screen'}
             data={[
-                <ElevatedSection key={"portfolio_"} title="Portfolio">
-                    <Subsection key={'pertformance_chart_section'} alt={true} title="Performance" style={(twReturns === undefined) ? { display: 'none' } : { display: 'flex' }}>
+                <View key={"portfolio_"} >
+                    <Header text="Performance"/>
+                    <ElevatedSection key={'pertformance_chart_section'} alt={true} title="" style={(twReturns === undefined) ? { display: 'none' } : { display: 'flex' }}>
                         <View key={'performance_chart'} style={{ marginBottom: sizes.rem1 }} >
                             {/*<LineHolder data={twReturns} />*/}
                             <InteractiveChart data={twReturns} period={portPeriod} performance={true} />
                         </View>
                         <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod} />
-                        <View key={'portfolio_stats'} style={[portfolio ? { display: 'flex' } : { display: 'none' }, { borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2 }]}>
+                        <View key={'portfolio_stats'} style={[portfolio ? { display: 'flex' } : { display: 'none' }, { borderColor: "#ccc", borderWidth: 1, backgroundColor: "#f5f5f5", padding: sizes.rem0_5 / 2, borderRadius: 4, marginBottom: 12 }]}>
                             
                             <View key={"returns"} style={{ flexDirection: "row" }}>
                                 {[
@@ -193,91 +204,119 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                                     })}
                             </View>
                             <View style={{flex: 1, paddingHorizontal: sizes.rem1}}>
-                                <TooltipComponent text="Return calculations are in beta. The more feedback you can provide us, the better we can do!" />
+                                <Text style={{fontSize: fonts.xSmall}}>{"Return calculations are in beta. The more feedback you can provide us, the better we can do!"}</Text>
                             </View>
                         </View>
-                    </Subsection>
-                    <Subsection key="holdings" alt={true} title="Holdings" style={holdings && holdings.length > 0 ? { display: 'flex' } : { display: 'none' }}>{
-                        <Table
-                            listKey="portfolio_holdings_table"
+                    </ElevatedSection>
+                    <Section key="holdings" alt={true} title="Holdings" style={[holdings && holdings.length > 0 ? { display: 'flex' } : { display: 'none' }, {backgroundColor: AppColors.background}]}>{
+                        <List
+                            listKey="holdingsList"
+                            datasetKey={`holdings_id_${holdings?.length}`}
                             data={holdings}
-                            key={'holdings_table'}
-                            columns={[
-                                ...useMakeSecurityFields((item: Exclude<typeof holdings, undefined>[0]) => {
-                                    return Number(item.security_id)
-                                }),
-                                { alias: "# Shares", stringify: (a, b, c) => String(toThousands(c.quantity)), headerStyle: { overflow: 'visible' } },
-                                { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.price)), headerStyle: { overflow: 'visible' } },
-                                { alias: "$ Value", stringify: (a, b, c) => String(toDollars(c.value)), headerStyle: { overflow: 'visible' } },
-                                { alias: "PnL", stringify: (a, b, c) => c.cost_basis ? toDollars(Number(c.value) - Number(c.cost_basis)) : '-', headerStyle: { overflow: 'visible' } }
-                            ]}
-                            renderAuxItem={(info) => {
-                                return <Text numberOfLines={1} style={[info.item.option_info ? { display: 'flex' } : { display: 'none' }, { fontSize: fonts.xSmall }]}>
-                                    {info.item.option_info && `${String(info.item.option_info[0].type).toLowerCase() === 'call' ? 'C' : 'P'}${toNumber1(info.item.option_info[0].strike_price)} ${new Date(info.item.option_info[0].expiration).toLocaleDateString()}`}
-                                </Text>
+                            loadingMessage={" "}
+                            noDataMessage={" "}
+                            loadingItem={undefined}
+                            numColumns={2}
+                            renderItem={(item) => {
+                                return (
+                                    <HoldingRenderItem 
+                                        item={item}
+                                        byId={byId}
+                                        />
+                                )
                             }}
                         />
-                    }</Subsection>
-                    <Subsection key="trades" alt={true} title="Trades" style={!(holdings && twReturns && portfolio) ? { display: 'none' } : { display: 'flex' }}>
-                        <LimitedTable
+                    }</Section>
+                    <Section key="trades" alt={true} title="Trades" style={[!(holdings && twReturns && portfolio) ? { display: 'none' } : { display: 'flex' }, {backgroundColor: AppColors.background}]}>
+                        <LimitedBlockList 
                             listKey="portfolio_trades_table"
-                            title="All Trades"
                             key={'trades_table'}
                             maxPage={0}
-                            tableProps={{
-                                keyExtractor: (item, idx) => {
-                                    return item ? "trade_" + idx : "empty";
+                            title={'All Trades'}
+                            listProps={{
+                                keyExtractor: (item: any, idx) => {
+                                    return item ? "trade_" + item.id : "empty";
                                 },
-                                data: (async (a, $page) => {
+                                datasetKey: `trades_id_${holdings?.length}`,
+                                data: async (a, $page, $limit) => {
                                     const newArr = a || [];
                                     newArr.push(... (await Api.User.extensions.getTrades({ $page, settings: {} })))
                                     return newArr;
-                                }) as DataOrQuery<TradeReturnType[0]>,
-                                columns: [
-                                    ...useMakeSecurityFields((item: TradeReturnType[0]) => {
-                                        return Number(item.security_id)
-                                    }),
-                                    { alias: "Date", stringify: (a, b, c) => new Date(Date.parse(String(c.date))).toLocaleDateString() },
-                                    { alias: "Type", stringify: (a, b, c) => String(c.type).toLowerCase()[0].toUpperCase() },
-                                    { alias: "# Shares", stringify: (a, b, c) => String(toThousands(c.quantity)) },
-                                    { alias: "Price", stringify: (a, b, c) => String(toDollarsAndCents(c.price)) }
-                                ],
-                                renderAuxItem: (info) => {
-                                    return <Text numberOfLines={1} style={[info.item.option_info ? { display: 'flex' } : { display: 'none' }, { fontSize: fonts.xSmall }]}>
-                                        {info.item.option_info && `${String(info.item.option_info[0].type).toLowerCase() === 'call' ? 'C' : 'P'}${toNumber1(info.item.option_info[0].strike_price)} ${new Date(info.item.option_info[0].expiration).toLocaleDateString()}`}
-                                    </Text>
+                                } ,
+                                loadingMessage: " ",
+                                noDataMessage: " ",
+                                loadingItem: undefined,
+                                numColumns: 2,
+                                renderItem: (item: any) => {
+                                    return (
+                                        <TradeRenderItem
+                                            item={item}
+                                            byId={byId}
+                                            />
+                                    )
+                                }}
                                 }
-                            }
-                            }
+                            
+                            />
 
-                        />
-                    </Subsection>
+                    </Section>
                     <Text style={[(holdings && twReturns && portfolio) ? { display: 'none' } : { display: 'flex' },
                     { fontSize: fonts.medium, fontWeight: '500', color: '#ccc' }]}>
                         {"You haven't linked a brokerage to TradingPost. Go to your Account page in the Side Menu and Link one today!"}
                     </Text>
-                </ElevatedSection>,
-                <ElevatedSection key={"quick_watch"} title="Quick Watch"
-                    button={(_p) => {
-                        return watchlists?.quick.id ?
-                            <EditButton {..._p} onPress={() => {
-                                props.navigation.navigate("WatchlistEditor", {
-                                    watchlistId: watchlists?.quick.id
-                                })
-                            }} /> :
-                            <AddButton {..._p} onPress={() => {
-                                props.navigation.navigate("WatchlistEditor", {
-                                    watchlistId: -1
-                                })
-                            }} />
-                    }}
-                >
-                    <Table
-                        noDataMessage="No Companies"
-                        columns={watchlistItemColumns}
+                </View>,
+                <View>
+                    <View style={{flex: 1, flexDirection: 'row'}}>
+                        <Header key={"quick_watch"} text="Quick Watch" style={{flex: 1}}/>
+                        <View style={{marginBottom: sizes.rem0_5 / 2, marginHorizontal: 6}}> 
+                            {  
+                                watchlists?.quick.id ?
+                                    <EditButton
+                                        height={24}
+                                        width={24} 
+                                        onPress={() => {
+                                            nav.navigate("WatchlistEditor", {
+                                                watchlistId: watchlists?.quick.id
+                                            })
+                                    }} /> :
+                                    <AddButton
+                                        height={24}
+                                        width={24} 
+                                        onPress={() => {
+                                            nav.navigate("WatchlistEditor", {
+                                                watchlistId: -1
+                                            })
+                                    }} />
+                                }
+                        </View>
+                    </View>
+                    
+                    <List
+                        datasetKey={``}
+                        listKey="quick_watch_list"
+                        loadingMessage={" "}
+                        noDataMessage={" "}
+                        loadingItem={undefined}
+                        numColumns={2}
                         data={quickWatchlist?.items}
+                        renderItem={(item) => {                   
+                            const hideEmptyNote = false
+                            return (
+                                <WatchlistItemRenderItem
+                                    item={item}
+                                    bySymbol={bySymbol}
+                                    byId={byId}
+                                    hideEmptyNote={hideEmptyNote}
+                                    setShownMap={setShownMap}
+                                    shownMap={shownMap}
+                                    watchlist={quickWatchlist}
+                                        />
+                            )
+                        }}
                     />
-                </ElevatedSection>,
+
+                </View>
+                ,
                 <WatchlistSection
                     title="My Watchlists"
                     key={"my_watchlist"}

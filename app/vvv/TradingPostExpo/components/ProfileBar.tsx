@@ -20,8 +20,8 @@ export const ProfileBar = (props: {
     }
 
     return <View style={props.style}><View style={{flexDirection: "row", width: "100%", marginBottom: sizes.rem0_5}}>
-        <ProfileButton userId={props.user?.id || ""} profileUrl={props.user?.profile_url || ""} size={sizes.rem2}/>
-        <View style={[flex, {marginLeft: sizes.rem0_5, justifyContent: 'center', alignItems: 'center'}]}>
+        <ProfileButton userId={props.user?.id || ""} profileUrl={props.user?.profile_url || ""} size={sizes.rem6 / 2}/>
+        <View style={[flex, {marginLeft: sizes.rem0_5, justifyContent: 'center', alignItems: 'flex-start'}]}>
             <Pressable style={props.user?.display_name.length && props.user?.display_name.length > 1 ? {display: 'flex'} : {display: 'none'}} onPress={openProfile}><Text category={"s1"}>{props.user?.display_name}</Text></Pressable>
             <Pressable onPress={openProfile}><Text category={"s2"}>{"@" + props.user?.handle}</Text></Pressable>
         </View>

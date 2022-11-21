@@ -15,7 +15,7 @@ export function LimitedTable<T>(props: {
     title: string,
     tableProps: Omit<Parameters<typeof Table<T>>[0], "maxPage">
 }) {
-    const nav = useNavigation<NavigationProp<AllPages>>();
+    const nav = useNavigation();
     return <View style={[{}]}>
         <View>
             <Table {...props.tableProps} listKey={props.listKey} maxPage={props.maxPage} />
@@ -34,5 +34,13 @@ export function LimitedTable<T>(props: {
 }
 
 export function TableModalScreen<T>(props: TabScreenProps<{ title: string, tableProps: Parameters<typeof Table<T>>[0] }>) {
-    return props.route?.params?.tableProps ? <View style={paddView}><ElevatedSection title={props.route.params.title} ><Table {...props.route?.params?.tableProps} /></ElevatedSection></View> : <Text>Error</Text>
+    return (
+        props.route?.params?.tableProps ? 
+        <View style={paddView}>
+            <ElevatedSection title={props.route.params.title} >
+                <Table {...props.route?.params?.tableProps} />
+            </ElevatedSection>
+        </View> : 
+        <Text>Error</Text>
+        )
 }

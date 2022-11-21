@@ -136,7 +136,6 @@ export interface ISubscriberGet {
     };
 
 export interface ISubscriberInsert {
-        id: number,
     subscription_id: number,
     user_id: string,
     start_date: unknown,

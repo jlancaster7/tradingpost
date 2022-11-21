@@ -3,6 +3,7 @@ import { DrawerScreenProps } from '@react-navigation/drawer';
 import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Interface } from '@tradingpost/common/api';
+import { ListProps } from '../components/List';
 import { Table, TableProps } from '../components/Table';
 import { NavIconKeys } from '../images';
 import { PostScreen } from '../screens/PostScreen';
@@ -52,6 +53,7 @@ export type RootStackParamList =
         "ResetPassword": { token?: string },
         "PostEditor": undefined,
         "TableModal": { title: string, tableProps: TableProps<any> },
+        "BlockListModal": { title: string, listProps: ListProps<any> },
         "PostScreen": { post: Interface.IElasticPostExt },
         "Profile": { userId: string },
     }

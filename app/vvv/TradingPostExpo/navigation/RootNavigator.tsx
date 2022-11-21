@@ -20,6 +20,7 @@ import { PostEditorScreen } from "../screens/PostEditorScreen"
 import { PostScreen } from "../screens/PostScreen"
 import { SubscriptionScreen, SubscriptionSettingsScreen } from "../screens/SubscriptionScreen"
 import { TableModalScreen } from "../screens/TableModalScreen"
+import { BlockListModalScreen } from "../screens/BlockListModalScreen";
 import { VerificationScreen } from "../screens/VerificationScreen"
 import { WatchlistEditorScreen } from "../screens/WatchlistEditorScreen"
 import { WatchlistScreen } from "../screens/WatchlistScreen"
@@ -127,6 +128,7 @@ export function RootNavigator() {
             <Stack.Screen name="ImagePicker" component={ImagePickerScreen} />
             <Stack.Screen name="Company" component={CompanyScreen} />
             <Stack.Screen name="TableModal" component={TableModalScreen} />
+            <Stack.Screen name="BlockListModal" component={BlockListModalScreen} />
             <Stack.Screen name="NotificationTrade" component={NotificationTradeScreen} />
             <Stack.Screen name="BrokeragePicker" component={BrokeragePickerScreen}  />
             <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen}  />

@@ -222,7 +222,7 @@ function InteractiveChart(props: any) {
                 backgroundColor: '#fff',
                 alignItems: 'stretch',
                 borderWidth: 1, 
-                borderRadius: sizes.rem1, 
+                borderRadius: sizes.rem0_5 / 2,
                 borderColor: "#ccc",
                 padding: sizes.rem0_5,
                 //aspectRatio: 16 / 9,
