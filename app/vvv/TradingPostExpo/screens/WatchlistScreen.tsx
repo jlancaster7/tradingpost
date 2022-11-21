@@ -1,25 +1,31 @@
 import { Api } from "@tradingpost/common/api";
 import { AllWatchlists, IWatchlistGet, IWatchlistList } from "@tradingpost/common/api/entities/interfaces";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, TextStyle, View } from "react-native";
+import { Pressable, ScrollView, TextStyle, View } from "react-native";
 import { AddButton, EditButton } from "../components/AddButton";
-import { Icon, Text } from '@ui-kitten/components'
+import { Avatar, Icon, Text } from '@ui-kitten/components'
 import { ElevatedSection, Section, Subsection } from "../components/Section";
+import { WatchlistItemRenderItem } from '../components/WatchlistItemRenderItem'
 import { Table } from "../components/Table";
 import { DataOrQuery } from '../components/List'
 //import { DashScreenProps, TabScreenProps } from "../navigation";
-import { flex, paddView, sizes } from "../style";
+import { flex, fonts, paddView, sizes } from "../style";
 import { useToast } from "react-native-toast-notifications";
-import { useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewerScreen";
-import { AwaitedReturn, toPercent, toPercent2, toThousands } from "../utils/misc";
+import { NoteEditor, SecPressable, useMakeSecurityFields, useWatchlistItemColumns } from "./WatchlistViewerScreen";
+import { AwaitedReturn, toDollarsAndCents, toPercent, toPercent2, toThousands } from "../utils/misc";
 import { WatchlistSection } from "../components/WatchlistSection";
 import Theme from '../theme-light.json'
 import { FlatList } from "react-native-gesture-handler";
-import { useFocusEffect } from "@react-navigation/native";
+import { List } from "../components/List"
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useSecuritiesList } from "../SecurityList";
+import { Header } from "../components/Headers";
+import { AppColors } from "../constants/Colors";
 
 export const WatchlistScreen = (props: any) => {
-
+    const nav = useNavigation();
     const [watchlists, setWatchlists] = useState<AllWatchlists>()
+    const [shownMap, setShownMap] = useState<Record<string, boolean>>({})
     const [quickWatchlist, setQuickWatchlist] = useState<IWatchlistGet>()
     const toast = useToast();//const [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>();
     const [focus, setFocus] = useState(false);
@@ -63,33 +69,61 @@ export const WatchlistScreen = (props: any) => {
     }, [])
 
     const { columns: watchlistItemColumns } = useWatchlistItemColumns(true)
+    const { securities: { bySymbol, byId } } = useSecuritiesList();
+    const hideEmptyNote = false;
     return <View style={[paddView]}>
         <FlatList
             listKey="top_level_watchlist"
             data={[
-            <ElevatedSection key={"quick_watch"} title="Quick Watch"
-                button={(_p) => {
-                    return watchlists?.quick.id ?
-                        <EditButton {..._p} onPress={() => {
-                            props.navigation.navigate("WatchlistEditor", {
-                                watchlistId: watchlists?.quick.id
-                            })
-                        }} /> :
-                        <AddButton {..._p} onPress={() => {
-                            props.navigation.navigate("WatchlistEditor", {
-                                watchlistId: -1
-                            })
-                        }} />
-                }}
-            >
-                <Table
+                <View>
+                    <View style={{flex: 1, flexDirection: 'row'}}>
+                        <Header key={"quick_watch"} text="Quick Watch" style={{flex: 1}}/>
+                        <View style={{marginHorizontal: 6}}> 
+                            {  
+                                watchlists?.quick.id ?
+                                    <EditButton
+                                        height={24}
+                                        width={24} 
+                                        onPress={() => {
+                                            nav.navigate("WatchlistEditor", {
+                                                watchlistId: watchlists?.quick.id
+                                            })
+                                    }} /> :
+                                    <AddButton
+                                        height={24}
+                                        width={24} 
+                                        onPress={() => {
+                                            nav.navigate("WatchlistEditor", {
+                                                watchlistId: -1
+                                            })
+                                    }} />
+                                }
+                        </View>
+                    </View>
+                
+                <List
                     datasetKey={`${focus}`}
                     listKey="quick_watch_list"
-                    noDataMessage="No Companies"
-                    columns={watchlistItemColumns}
+                    loadingMessage={" "}
+                    noDataMessage={" "}
+                    loadingItem={undefined}
+                    numColumns={2}
                     data={quickWatchlist?.items}
+                    renderItem={(item) => {                        
+                        return (
+                            <WatchlistItemRenderItem
+                                item={item}
+                                bySymbol={bySymbol}
+                                byId={byId}
+                                hideEmptyNote={hideEmptyNote}
+                                setShownMap={setShownMap}
+                                shownMap={shownMap}
+                                watchlist={quickWatchlist}
+                                    />
+                        )
+                    }}
                 />
-            </ElevatedSection>,
+            </View>,
             <WatchlistSection
                 title="My Watchlists"
                 key={"my_watchlist"}
@@ -107,7 +141,7 @@ export const WatchlistScreen = (props: any) => {
             renderItem={(info) => {
                 return info.item;
             }}
-            ref={scrollRef} contentContainerStyle={[{ paddingTop: 20}]} nestedScrollEnabled         
+            ref={scrollRef} contentContainerStyle={[{ paddingTop: 0}]} nestedScrollEnabled         
 
             >
         </FlatList>

@@ -131,14 +131,14 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                                 else {
                                     return (
                                     <ElevatedSection title="" style={{flex: 1, marginBottom: 6, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}}>
-                                        <SecPressable securityId={item.item.id}>
-                                            <Avatar 
-                                                style={{ borderRadius: 5 }}
-                                                shape={'square'}
-                                                resizeMode={'contain'}
-                                                source={ {uri: item.item.logo_url} }
-                                                size="giant"
-                                            />
+                                        <SecPressable securityId={item.item.id}>                            
+                                                <Avatar
+                                                    style={{ borderRadius: 5 }}
+                                                    shape={'square'}
+                                                    resizeMode={'cover'}
+                                                    source={ {uri: item.item.logo_url} }
+                                                    size="giant"
+                                                />
                                         </SecPressable>
                                 </ElevatedSection>)
                                 }

@@ -38,6 +38,10 @@ import {useAppUser} from "../Authentication";
 import InteractiveChart from "../components/InteractiveGraph";
 import {ButtonGroup} from "../components/ButtonGroup";
 import {RootStackScreenProps} from "../navigation/pages";
+import { List } from "../components/List";
+import { HoldingRenderItem } from "../components/HoldingRenderItem";
+import { useSecuritiesList } from "../SecurityList";
+import { TradeRenderItem } from "../components/TradeRenderItem";
 //import { screens } from "../navigationComponents";
 //import { getUser } from "../apis/UserApi";
 
@@ -68,6 +72,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
     const [user, setUser] = useState<IUserGet>(),
         [watchlists, setWatchlists] = useState<AwaitedReturn<typeof Api.User.extensions.getWatchlists>>(),
         [summary, setSummary] = useState<AwaitedReturn<typeof Api.User.extensions.getPortfolio>>(),
+        [holdings, setHoldings] = useState<AwaitedReturn<typeof Api.User.extensions.getHoldings>>(),
         [returns, setReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>(),
         [twReturns, settwReturns] = useState<{ x: string, y: number }[]>(),
         [portPeriod, setPortPeriod] = useState("1Y"),
@@ -112,11 +117,13 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
         if (userId && !user) {
             (async () => {
                 try {
-                    const [user, watchlists] = await Promise.all([
+                    const [user, holdingsP, watchlists] = await Promise.all([
                         Api.User.get(userId),
+                        Api.User.extensions.getHoldings({userId: userId as string}),
                         Api.User.extensions.getWatchlists({userId: userId as string})
                     ]);
                     setWatchlists(watchlists);
+                    setHoldings(holdingsP);
                     setUser(user);
                     let today = new Date();
                     const summary = await Api.User.extensions.getPortfolio({userId: userId as string});
@@ -156,6 +163,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
             settwReturns(twr);
         }
     }, [portPeriod])
+    const { securities: { bySymbol, byId } } = useSecuritiesList();
     const displayHoldings = appUser?.id === user?.id || (user?.settings?.portfolio_display.holdings && user.subscription.is_subscribed)
     const displayTrades = appUser?.id === user?.id || (user?.settings?.portfolio_display.trades && user.subscription.is_subscribed)
     const displayPerformance = appUser?.id === user?.id || (user?.settings?.portfolio_display.performance && user.subscription.is_subscribed)
@@ -204,7 +212,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                             {"You haven't linked a brokerage to TradingPost. Go to your Account page in the Side Menu and Link one today!"}
                         </Text>
                     </ElevatedSection>
-                    <ElevatedSection title="Holdings">
+                    <Section title="Holdings" style={{backgroundColor: AppColors.background}}>
                         <View style={(appUser?.id === user?.id && !twReturns) ? {display: 'none'} : {display: 'flex'}}>
                             <View style={displayHoldings ? {display: 'none'} : {
                                 justifyContent: "center",
@@ -218,26 +226,22 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                                 display: 'flex',
                                 marginBottom: sizes.rem1
                             } : {display: 'none'}}>
-                                <Table
-                                    listKey={'holdings_table'}
-                                    keyExtractor={(item, idx) => {
-                                        return item ? "holding_" + idx : "empty";
+                                <List
+                                    listKey="holdingsList"
+                                    datasetKey={`holdings_id_${holdings?.length}`}
+                                    data={holdings}
+                                    loadingMessage={" "}
+                                    noDataMessage={" "}
+                                    loadingItem={undefined}
+                                    numColumns={2}
+                                    renderItem={(item) => {
+                                        return (
+                                            <HoldingRenderItem 
+                                                item={item}
+                                                byId={byId}
+                                                />
+                                        )
                                     }}
-                                    data={(async () => {
-                                        return await Api.User.extensions.getHoldings({userId: userId as string});
-                                    })}
-                                    columns={[
-                                        ...useMakeSecurityFields((item: any) => {
-                                            return Number(item.security_id)
-                                        }),
-                                        {alias: '% Owned', field: "value", stringify: toPercent2},
-                                        {alias: 'Price', field: "price", stringify: toDollarsAndCents},
-                                        {
-                                            alias: 'Cost Basis',
-                                            field: "cost_basis",
-                                            stringify: (a, b, c) => (String(c.cost_basis) === 'n/a') ? String(c.cost_basis) : toDollarsAndCents(c.cost_basis)
-                                        }
-                                    ]}
                                 />
                             </View>
                         </View>
@@ -249,7 +253,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                             }]}>
                             {"You haven't linked a brokerage to TradingPost. Go to your Account page in the Side Menu and Link one today!"}
                         </Text>
-                    </ElevatedSection>
+                    </Section>
                     <WatchlistSection title="Watchlists" watchlists={watchlists}/>
                 </ProfilePage>,
                 <ProfilePage key={'top_level_trades'} index={2} minViewHeight={minViewHeight} manager={manager}
@@ -264,9 +268,13 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                             {`@${user?.handle} does not display their trades.`}
                         </Text>
                     </View>
-                    <ElevatedSection title="" style={displayTrades ? {display: 'flex'} : {display: 'none'}}>
-                        <Table
+                    <Section title="" style={[displayTrades ? {display: 'flex'} : {display: 'none'}, {backgroundColor: AppColors.background}]}>
+                        <List
                             listKey={'trades_table'}
+                            loadingMessage={" "}
+                            noDataMessage={" "}
+                            loadingItem={undefined}
+                            numColumns={2}
                             keyExtractor={(item, idx) => {
                                 return item ? "trade_" + idx : "empty";
                             }}
@@ -280,24 +288,15 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                                 //console.log(JSON.stringify(newArr))
                                 return newArr;
                             })}
-                            columns={[
-                                ...useMakeSecurityFields((item: any) => {
-                                    return Number(item.security_id)
-                                }),
-                                {
-                                    alias: 'Trade Date',
-                                    field: "date",
-                                    stringify: (a, b, c) => new Date(a).toLocaleDateString()
-                                },
-                                {
-                                    alias: 'Buy/Sell',
-                                    field: "type",
-                                    stringify: (a, b, c) => c.type.charAt(0).toUpperCase() + c.type.slice(1)
-                                },
-                                {alias: 'Price', field: "price", stringify: toDollarsAndCents}
-                            ]}
+                            renderItem={(item)=> {
+
+                                return (<TradeRenderItem 
+                                    item={item}
+                                    byId={byId}
+                                />)
+                            }}
                         />
-                    </ElevatedSection>
+                    </Section>
                 </ProfilePage>,
                 <ProfilePage key={'top_level_about'} index={3} minViewHeight={minViewHeight} manager={manager}
                              currentIndex={tab}>
