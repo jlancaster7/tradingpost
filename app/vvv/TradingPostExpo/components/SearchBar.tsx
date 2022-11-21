@@ -4,7 +4,7 @@ import { ImageProps, ViewStyle, TextInputProps, Image, ViewProps, Pressable } fr
 import { ITextField, TextField } from "../components/TextField";
 import { navIcons } from "../images";
 
-export const SearchBar = (props: { onTextChange: (text: string) => void } & Pick<ViewProps, "onLayout">) => {
+export const SearchBar = (props: { onTextChange: (text: string) => void, placeholder?: string } & Pick<ViewProps, "onLayout">) => {
     const tfRef = useRef<ITextField>(null)
 
     return <TextField
@@ -51,7 +51,7 @@ export const SearchBar = (props: { onTextChange: (text: string) => void } & Pick
         // } as ViewStyle}
         {
         ...{
-            placeholder: "Search...",
+            placeholder: props.placeholder || "Search...",
             clearButtonMode: "while-editing",
             onChangeText: (text) => {
                 props.onTextChange(text);

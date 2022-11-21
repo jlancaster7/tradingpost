@@ -282,9 +282,17 @@ const AdvancedTabContent = (props: { updates: IUserUpdate, setUpdates: (updates:
 
 
     return <ElevatedSection title="" style={{ padding: 5 }}>
-        <Section title="" style={{ padding: 10 }}>
-            <SwitchField label='Analyst' checked={props.updates.settings?.analyst} onChange={onAnalystCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: fonts.medium, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }} />
-        </Section>
+        <View>
+            <SwitchField label='Analyst'
+                        toolTipText={`Becoming an analyst allows you to display your portfolio to subscribers, customize your profile and enable you to post premium content on TP.`}
+                        toolTipStyle={{alignItems: 'flex-start'}}
+                        checked={props.updates.settings?.analyst} 
+                        onChange={onAnalystCheckChanged} 
+                        viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5, padding: 5 }} 
+                        toggleStyle={{}} 
+                        textStyle={{ fontSize: fonts.large, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }} 
+                        />
+        </View>
         <Section title='Display To Subscribers' style={{ padding: 5 }}>
             <SwitchField label='Performance' checked={props.updates.settings?.portfolio_display.performance} onChange={onPerformanceCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
             <SwitchField label='Portfolio' checked={props.updates.settings?.portfolio_display.holdings} onChange={onHoldingsCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />

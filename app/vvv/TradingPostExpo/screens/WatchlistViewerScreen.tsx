@@ -43,7 +43,7 @@ export const useNoteField = (hideEmptyNote?: boolean) => {
 }
 
 
-const SecPressable = (props: PropsWithChildren<{ securityId: number }>) => {
+export const SecPressable = (props: PropsWithChildren<{ securityId: number }>) => {
     const nav = useNavigation<NavigationProp<AllPages>>();
     return <Pressable onPress={() => {
         nav.navigate("Company", {
@@ -75,9 +75,6 @@ export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number)
                                     output = bySymbol[value] ? { uri: bySymbol[value].logo_url } : undefined
                                 else
                                     output = byId[value] ? { uri: byId[value].logo_url  } : undefined
-
-                                console.log(value);
-                                console.log(output?.uri);
                                 return output;
                             })()}
                         size="tiny" />

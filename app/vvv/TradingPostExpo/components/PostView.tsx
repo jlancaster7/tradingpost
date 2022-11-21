@@ -181,7 +181,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                             style={{ color: "black", fontWeight: "bold" }} />
                     </Pressable>
                     <View style={{ marginRight: 10 }}>
-                        <ScrollView nestedScrollEnabled horizontal>
+                        <ScrollView nestedScrollEnabled horizontal showsHorizontalScrollIndicator={false}>
                             <View style={[row, props.post.ext.user?.tags ? { display: 'flex' } : { display: 'none' }]}>
                                 {props.post.ext.user?.tags && (props.post.ext.user?.tags).map((chip, i) =>
                                     <PrimaryChip isAlt key={i} label={chip} />)}
@@ -207,13 +207,21 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         style={{ height: 28, width: 28, marginLeft: "auto", marginRight: sizes.rem0_5 / 2 }} />}
                 </AsyncPressable>
             </Pressable>
-            <Pressable onPress={() => {
-                nav.navigate("PostScreen", {
-                    post
-                })
-            }} style={{ paddingHorizontal: postSidePad / 2 }}>
-                <PostContentView post={post} />
-            </Pressable>
+            {
+            ["substack", "tradingpost"].includes(post._source.postType) ? 
+                <Pressable onPress={() => {
+                        nav.navigate("PostScreen", {
+                            post
+                        })
+                    
+                }} style={{ paddingHorizontal: postSidePad / 2 }}>
+                    <PostContentView post={post} />
+                </Pressable> : 
+                <View style={{ paddingHorizontal: postSidePad / 2 }}>
+                    <PostContentView post={post} /> 
+                </View>
+            }
+            
             {(props.post._source.postType !== "tweet") &&
                 <View
                     style={[row, { alignItems: "center", marginTop: "auto", borderTopColor: "#ccc", borderTopWidth: 1 }]}>
@@ -230,7 +238,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         padding: 4
                     }}><Text style={{ width: "100%", textAlign: "center", color: "white" }}>Upvoted!</Text></View>}
                     <Button
-                        style={{ marginLeft: "auto", paddingHorizontal: 0 }}
+                        style={{ marginLeft: "auto", paddingLeft: 10, paddingRight: 0 }}
                         appearance={'ghost'}
                         accessoryLeft={(props: any) =>
                             <CommentIcon height={24} width={24} style={{ height: 24, width: 24, }} />
@@ -242,10 +250,16 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         }}
                     >
                         {evaProps => <Text {...evaProps}
-                            style={{ fontWeight: 'normal', paddingHorizontal: sizes.rem1 }}>-</Text>}
+                                            style={{ fontWeight: 'normal', 
+                                                    paddingLeft: sizes.rem1, 
+                                                    paddingRight: sizes.rem0_5, 
+                                                    color: '#9D9D9D'
+                                                    }}>
+                                        {'-'}
+                                     </Text>}
                     </Button>
                     {<Button
-                        style={{ paddingHorizontal: 0 }}
+                        style={{ paddingLeft: 10, paddingRight: 0 }}
                         onPress={() => {
                             if (!isUpvoted)
                                 setShowStatus(true);
@@ -269,7 +283,8 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         }} />} appearance={"ghost"}>
                         {evaProps => <Text {...evaProps} style={{
                             fontWeight: 'normal',
-                            paddingHorizontal: sizes.rem1
+                            paddingHorizontal: sizes.rem1, 
+                            color: '#9D9D9D'
                         }}>{upvoteCount}</Text>}
                     </Button>}
                 </View>}
@@ -394,10 +409,12 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
         </View>
         <View style={{
             height: postInnerHeight(props.post, availWidth),
-            justifyContent: ['spotify', 'youtube'].includes(props.post._source.postType) ? 'center' : undefined
+            paddingVertical: ['spotify', 'youtube'].includes(props.post._source.postType) ? sizes.rem0_5 : 0
+            //height: postInnerHeight(props.post, availWidth),
+            //justifyContent: ['spotify', 'youtube'].includes(props.post._source.postType) ? 'center' : undefined
         }}>
             <HtmlView style={{
-                height: ['spotify', 'youtube'].includes(props.post._source.postType) ? postInnerHeight(props.post, availWidth) * 0.95 : postInnerHeight(props.post, availWidth),
+                height: ['spotify', 'youtube'].includes(props.post._source.postType) ? postInnerHeight(props.post, availWidth)  : postInnerHeight(props.post, availWidth),
                 //height: postInnerHeight(props.post, availWidth)
                 //marginTop: ['spotify', 'youtube'].includes(props.post._source.postType) ? 8 : 0,
                 //marginBottom: ['youtube', 'spotify'].includes(props.post._source.postType) ? 8 : 0

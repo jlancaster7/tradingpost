@@ -8,9 +8,10 @@ import Repository from "../../../brokerage/repository";
 
 const loginUrl = 'https://api.robinhood.com/oauth2/token/';
 const pingUrl = (id: string) => `https://api.robinhood.com/push/${id}/get_prompts_status`;
-const pingMap: Record<string, RobinhoodChallengeStatus> = {
+const pingMap: Record<string, string> = {
     "redeemed": RobinhoodChallengeStatus.Redeemed,
-    "issued": RobinhoodChallengeStatus.Issued
+    "issued": RobinhoodChallengeStatus.Issued,
+    "validated": RobinhoodChallengeStatus.Validated
 }
 
 const generatePayloadRequest = (username: string, password: string, fauxDeviceToken: string, headers: Record<string, string>, mfaCode: string | null, challengeResponseId: string | null): [Record<string, string>, Record<any, any>] => {
@@ -78,7 +79,7 @@ export default ensureServerExtensions<Brokerage>({
             });
 
             const body = await response.json();
-
+            console.log(body);
             // Credentials Provided Incorrectly
             if (body['detail'] === 'Unable to log in with provided credentials.') return {
                 status: RobinhoodLoginStatus.ERROR,
@@ -106,10 +107,11 @@ export default ensureServerExtensions<Brokerage>({
             if ('challenge' in body) {
                 // this is the challenge where you constantly ping
                 if (body['challenge']['status'] === 'issued') return {
-                    status: RobinhoodLoginStatus.DEVICE_APPROVAL,
-                    body: "Please, approve the login on your device.",
-                    challengeResponseId: body['challenge']['id'],
-                }
+                        status: RobinhoodLoginStatus.DEVICE_APPROVAL,
+                        body: "Please, approve the login on your device.",
+                        challengeResponseId: body['challenge']['id'],
+                    };
+            
             }
 
             // Made it through authentication and we have an access token
@@ -157,6 +159,7 @@ export default ensureServerExtensions<Brokerage>({
                 method: "GET"
             });
             const body = await response.json();
+            console.log(body);
             if ('detail' in body) {
                 console.error("pinging the hood for challenge status: ", body.detail);
                 return {challengeStatus: RobinhoodChallengeStatus.Unknown}
@@ -165,7 +168,7 @@ export default ensureServerExtensions<Brokerage>({
             if (body.challenge_status as string in pingMap) {
                 const challengeStatus = body.challenge_status as string
                 return {
-                    challengeStatus: pingMap[challengeStatus]
+                    challengeStatus: pingMap[challengeStatus] as RobinhoodChallengeStatus
                 }
             }
 
