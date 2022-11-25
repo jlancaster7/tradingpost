@@ -34,7 +34,7 @@ export default class Repository {
                               LEFT JOIN (SELECT platform_user_id, access_token, refresh_token
                                          FROM data_platform_claim
                                          WHERE platform = 'twitter') as a
-                                        ON twitter_users.twitter_user_id = a.platform_user_id`;
+                                        ON twitter_users.twitter_user_id = a.platform_user_id;`;
 
         return await this.db.query(query);
     }

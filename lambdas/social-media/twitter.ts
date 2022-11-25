@@ -53,7 +53,6 @@ const runLambda = async () => {
             password: postgresConfiguration.password,
             database: postgresConfiguration.database
         })
-        await pgClient.connect()
     }
 
     const postPrepper = new PostPrepper()

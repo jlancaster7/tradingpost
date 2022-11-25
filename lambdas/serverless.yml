@@ -182,11 +182,11 @@ functions:
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1600
-    reservedConcurrency: 1
+    reservedConcurrency: 0
     events:
       - schedule:
           rate: cron(*/10 * ? * MON-SUN *) # Run every 10 minutes every day
-          enabled: true
+          enabled: false
 
   youtube:
     handler: social-media/youtube.run

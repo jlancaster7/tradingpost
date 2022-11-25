@@ -19,7 +19,6 @@ export default class PostPrepper {
         if (this.browser) return;
         if (puppeteerBrowser) {
             this.browser = puppeteerBrowser;
-            console.log("Setting Browser :D !")
             return
         }
 
