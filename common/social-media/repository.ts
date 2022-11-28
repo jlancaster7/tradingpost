@@ -230,6 +230,7 @@ export default class Repository {
             defaultDate.setDate(defaultDate.getDate() - 90);
             return defaultDate;
         } else {
+            // @ts-ignore
             return result.rows[0].max
         }
     }
@@ -244,6 +245,7 @@ export default class Repository {
         if (!result.rows.length) {
             return new Date('1/1/2018');
         } else {
+            // @ts-ignore
             return result.rows[0].max;
         }
     }
@@ -258,6 +260,7 @@ export default class Repository {
         if (!result.rows.length) {
             return new Date('1/1/2018');
         } else {
+            // @ts-ignore
             return result.rows[0].max;
         }
     }

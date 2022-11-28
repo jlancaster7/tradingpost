@@ -28,7 +28,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "npx nodemon ./index.ts",
+    "start": "npx ts-node ./index.ts",
     "dev": "tsc -b ../../common && tsc && node ./",
     "deploy": "tsc && eb deploy",
     "install-common": "node ../../common/_scripts/install",
