@@ -6,11 +6,11 @@ import { ElevatedSection, Section, Subsection } from "./Section"
 import { NoteEditor, SecPressable } from "../screens/WatchlistViewerScreen"
 import { fonts, sizes } from "../style"
 import { AppColors } from "../constants/Colors"
-import { toDollars, toDollarsAndCents, toFormatedDateTime } from "../utils/misc"
+import { toDollars, toDollarsAndCents, toFormatedDateTime, toNumber1 } from "../utils/misc"
 
 export const TradeRenderItem = (props: {item: any, byId: any}) => {
     const { item, byId } = props
-    const secId = item.item.security_id;
+    const secId = item.item.security_id || item.item.securityId;
     //const intradayChange = item.item.price ? item.item.price.price - item.item.price.open : 0
     //const hideEmptyNote = watchlist?.user[0].id !== appUser?.id
     return (
@@ -33,10 +33,13 @@ export const TradeRenderItem = (props: {item: any, byId: any}) => {
                 </SecPressable>
                 <View style={{flex: 1, alignItems: 'center'}}>
                     <Text style={{flex: 1, fontWeight: '900', color: '#454545'}}>
-                                {byId[secId] ? (byId[secId].symbol === 'USD:CUR' ? 'Cash' : byId[secId].symbol) : ''}
+                                {byId[secId] ? (byId[secId].symbol === 'USD:CUR' ? 'Cash' : `${item.item.type.slice(0,1).toUpperCase() + item.item.type.slice(1) } ${byId[secId].symbol}`) : ''}
+                    </Text>
+                    <Text style={[item.item.optionInfo ? {display: 'flex'} : {display: 'none'}, {fontSize: fonts.xSmall}]}>
+                        {item.item.optionInfo && `${String(item.item.optionInfo[0].type).toLowerCase() === 'call' ? 'C' : 'P'}${toNumber1(item.item.optionInfo[0].strike_price)} ${new Date(item.item.optionInfo[0].expiration).toLocaleDateString()}`}
                     </Text>
                     <Text style={{flex: 1, color: '#606060'}}>
-                        {toDollarsAndCents(item.item.price)}
+                        {`@ ${toDollarsAndCents(item.item.price)}`}
                     </Text>
                 </View>
             </View>
@@ -55,7 +58,7 @@ export const TradeRenderItem = (props: {item: any, byId: any}) => {
                             {'Market Value'}
                         </Text>
                         <Text style={{fontSize: fonts.small, color: '#606060'}}>
-                            {`${toDollars(item.item.price * item.item.quantity)}`}
+                            {`${toDollars(item.item.amount)}`}
                         </Text>                                                    
                     </View>
 

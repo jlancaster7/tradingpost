@@ -2047,7 +2047,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             CASE
                                 WHEN quantity = 0 THEN 0
                                 WHEN cost_basis is null THEN 0
-                                ELSE (value - (quantity * cost_basis))
+                                ELSE (value - (cost_basis))
                                 END                                                 as pnl,
                             quantity, date
                      FROM tradingpost_historical_holding
@@ -2094,13 +2094,13 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN sum(ht.cost_basis) is null THEN 0
-                                ELSE SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)
+                                ELSE SUM(ht.cost_basis) / SUM(ht.quantity)
         END
         AS cost_basis,
                             CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN SUM(ht.cost_basis) IS null THEN 0
-                                ELSE (SUM(ht.value) - (SUM(ht.cost_basis * ht.quantity)))
+                                ELSE (SUM(ht.value) - (SUM(ht.cost_basis)))
         END
         AS pnl,
                             SUM(ht.quantity)     AS quantity,
@@ -2171,13 +2171,13 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN sum(ch.cost_basis) is null THEN 0
-                                ELSE SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)
+                                ELSE SUM(ch.cost_basis ) / SUM(ch.quantity)
         END
         AS cost_basis,
                             CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN SUM(ch.cost_basis) IS null THEN 0
-                                ELSE (SUM(ch.value) - (SUM(ch.cost_basis * ch.quantity)))
+                                ELSE (SUM(ch.value) - (SUM(ch.cost_basis)))
         END
         AS pnl,
                             SUM(ch.quantity)     AS quantity,
@@ -2232,6 +2232,63 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
 
         return holdings;
+    }
+    getTradingPostTransactionsByAccountGroup = async (accountGroupId: number, paging?: {limit: number, offset: number}): Promise<TradingPostTransactions[]> => {
+        let query = `SELECT atg.account_group_id AS account_group_id,
+                            security_id,
+                            security_type, 
+                            date, 
+                            SUM(quantity) AS quantity, 
+                            AVG(price) AS price, 
+                            SUM(amount) AS amount, 
+                            SUM(fees) AS fees, 
+                            type, 
+                            currency,
+                            option_id,
+                            (SELECT json_agg(t) FROM public.security_option as t WHERE t.id=tt."option_id") AS "option_info"
+                    FROM tradingpost_transaction tt
+                    LEFT JOIN _tradingpost_account_to_group atg
+                        ON tt.account_id = atg.account_id
+                    WHERE atg.account_group_id = $1 AND type in ('buy', 'sell', 'short', 'cover')
+                    GROUP BY account_group_id, security_id, security_type, date, type, currency, option_id
+                    ORDER BY date DESC
+                    `;
+
+
+        let trades: TradingPostTransactions[] = []
+        if (!accountGroupId) {
+            return trades;
+        }
+        let response: any[];
+        if (paging) {
+            query += `LIMIT $2
+                      OFFSET $3`
+            response = await this.db.any(query, [accountGroupId, paging.limit, paging.offset * paging.limit]);
+        } 
+        else {
+            response = await this.db.any(query, [accountGroupId]);
+        }
+
+        if (!response || response.length <= 0) {
+            throw new Error(`Failed to get trades for accountGroupId: ${accountGroupId}`);
+        }
+        for (let d of response) {
+            trades.push({
+                accountGroupId: parseInt(d.account_group_id),
+                securityId: parseInt(d.security_id),
+                securityType: d.security_type,
+                optionId: parseInt(d.option_id),
+                optionInfo: d.option_info,
+                date: DateTime.fromJSDate(d.date),
+                quantity: parseFloat(d.quantity),
+                price: parseFloat(d.price),
+                amount: parseFloat(d.amount), // (quantity * price) + fees
+                fees: parseFloat(d.fees),
+                type: d.type,
+                currency: d.currency
+            })
+        }
+        return trades;
     }
 
     getTradingPostAccountGroupReturns = async (accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]> => {

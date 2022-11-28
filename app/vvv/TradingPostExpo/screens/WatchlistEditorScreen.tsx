@@ -97,7 +97,7 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
                                 items={[{ label: "Public", value: "public" }, { label: "Private", value: "private" }]}
                             />
                             <TextField value={name} onChangeText={(v) => setName(v || "")} placeholder="Watchlist Name" style={{ marginBottom: sizes.rem0_5 }} />
-                            <TextField value={note} onChangeText={(v) => setNote(v || "")} placeholder="Wathlist Note" style={{}} />
+                            <TextField value={note} onChangeText={(v) => setNote(v || "")} placeholder="Watchlist Note" style={{}} />
                         </View>
                     </ElevatedSection>
                 }
@@ -109,7 +109,6 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
                 </ElevatedSection>
             </View>
         </VirtualListWithButtons>
-
     </View >
 
 }
