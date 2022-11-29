@@ -49,7 +49,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
                 price: tx.price,
                 securityId: tx.securityId,
                 quantity: (-1 * tx.quantity),
-                accountId: tx.accountId,
+                accountId: tx.accountId || 0,
                 date: tx.date,
                 costBasis: 0,
                 priceSource: '',
