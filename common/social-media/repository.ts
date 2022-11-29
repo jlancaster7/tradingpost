@@ -619,7 +619,7 @@ export default class Repository {
             const result = await this.db.result(query);
             return result.rowCount;
         } catch (err) {
-            //console.log(err);
+            console.error(err);
             return 0;
         }
     }
