@@ -19,10 +19,16 @@ type ConfigKeys =
     | "substack"
     | "sendgrid"
     | "finicity"
+    | "robinhood"
 
 
 
 export interface ConfigPaths extends Record<ConfigKeys, unknown> {
+    robinhood: {
+        clientId: string
+        expiresIn: number
+        scope: string
+    }
     elastic: {
         cloudId: string
         apiKey: string

@@ -124,7 +124,7 @@ export interface ISummaryRepository {
 
     getTradingPostCurrentHoldingsByAccountGroup(accountGroupId: number): Promise<HistoricalHoldings[]>
 
-    getTradingPostTransactionsByAccountGroup(accountGroupId: number, paging?: {limit: number, offset: number}): Promise<TradingPostTransactions[]>
+    getTradingPostTransactionsByAccountGroup(accountGroupId: number, paging?: { limit: number, offset: number }): Promise<TradingPostTransactions[]>
 
     getTradingPostAccountGroupReturns(accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
 
@@ -441,6 +441,43 @@ export interface GetSecurityBySymbol {
     lastUpdated: Date
     createdAt: Date
 }
+
+export type Security = {
+    symbol: string
+    companyName: string
+    exchange: string
+    industry: string
+    website: string
+    description: string
+    ceo: string
+    securityName: string
+    issueType: string
+    sector: string
+    primarySicCode: string
+    employees: string
+    tags: string[]
+    address: string
+    address2: string
+    state: string
+    zip: string
+    country: string
+    phone: string
+    logoUrl: string
+}
+
+export type SecurityTable = {
+    id: number
+    lastUpdated: DateTime
+    createdAt: DateTime
+} & Security
+
+export type SecurityTableWithLatestPrice = {
+    latestPrice: number | null
+} & SecurityTable
+
+export type SecurityTableWithLatestPriceRobinhoodId = {
+    rhInternalId: number
+} & SecurityTableWithLatestPrice
 
 export type TableInfoV2 = {
     id: number

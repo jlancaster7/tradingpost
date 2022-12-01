@@ -3,8 +3,9 @@ import Brokerage, {RobinhoodChallengeStatus, RobinhoodLoginResponse, RobinhoodLo
 import {v4 as uuidv4} from 'uuid';
 import fetch from 'node-fetch';
 import {TradingPostBrokerageAccountsTable} from "../../../brokerage/interfaces";
-import {init} from "../../../db/index";
+import {init} from "../../../db";
 import Repository from "../../../brokerage/repository";
+import {DefaultConfig} from "../../../configuration";
 
 const loginUrl = 'https://api.robinhood.com/oauth2/token/';
 const pingUrl = (id: string) => `https://api.robinhood.com/push/${id}/get_prompts_status`;
@@ -14,15 +15,15 @@ const pingMap: Record<string, string> = {
     "validated": RobinhoodChallengeStatus.Validated
 }
 
-const generatePayloadRequest = (username: string, password: string, fauxDeviceToken: string, headers: Record<string, string>, mfaCode: string | null, challengeResponseId: string | null): [Record<string, string>, Record<any, any>] => {
+const generatePayloadRequest = (clientId: string, expiresIn: number, scope: string, username: string, password: string, fauxDeviceToken: string, headers: Record<string, string>, mfaCode: string | null, challengeResponseId: string | null): [Record<string, string>, Record<any, any>] => {
     let challengeType = "sms";
     let payload: Record<string, any> = {
         "username": username,
         "password": password,
-        "client_id": "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS",
-        "expires_in": 86400,
+        "client_id": clientId,
+        "expires_in": expiresIn,
         "grant_type": 'password',
-        "scope": "internal",
+        "scope": scope,
         "challenge_type": challengeType,
         "device_token": fauxDeviceToken
     };
@@ -46,6 +47,7 @@ const generatePayloadRequest = (username: string, password: string, fauxDeviceTo
 
 export default ensureServerExtensions<Brokerage>({
     robinhoodLogin: async (req): Promise<RobinhoodLoginResponse> => {
+        const robinhoodCredentials = await DefaultConfig.fromCacheOrSSM("robinhood");
         const {username, password, mfaCode, challengeResponseId} = req.body;
         const {pgp, pgClient} = await init;
         const brokerageRepo = new Repository(pgClient, pgp);
@@ -68,7 +70,9 @@ export default ensureServerExtensions<Brokerage>({
         let fauxDeviceToken = uuidv4();
         const robinhoodUser = await brokerageRepo.getRobinhoodUser(username);
         if (robinhoodUser) fauxDeviceToken = robinhoodUser.deviceToken
-        const [requestHeaders, requestPayload] = generatePayloadRequest(username, password, fauxDeviceToken, headers, mfaCode, challengeResponseId);
+        const [requestHeaders, requestPayload] = generatePayloadRequest(robinhoodCredentials.clientId,
+            robinhoodCredentials.expiresIn, robinhoodCredentials.scope, username, password, fauxDeviceToken,
+            headers, mfaCode, challengeResponseId);
 
 
         try {
@@ -107,11 +111,11 @@ export default ensureServerExtensions<Brokerage>({
             if ('challenge' in body) {
                 // this is the challenge where you constantly ping
                 if (body['challenge']['status'] === 'issued') return {
-                        status: RobinhoodLoginStatus.DEVICE_APPROVAL,
-                        body: "Please, approve the login on your device.",
-                        challengeResponseId: body['challenge']['id'],
-                    };
-            
+                    status: RobinhoodLoginStatus.DEVICE_APPROVAL,
+                    body: "Please, approve the login on your device.",
+                    challengeResponseId: body['challenge']['id'],
+                };
+
             }
 
             // Made it through authentication and we have an access token
@@ -179,9 +183,5 @@ export default ensureServerExtensions<Brokerage>({
             console.error(e);
             return {challengeStatus: RobinhoodChallengeStatus.Unknown}
         }
-    },
-    test: async(req) => {
-        console.log("YEAH!")
-        console.log("TESTING444")
     }
 })
