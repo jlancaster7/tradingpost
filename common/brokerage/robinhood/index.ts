@@ -2,7 +2,7 @@ import Transformer from "./transformer";
 import {PortfolioSummaryService} from "../portfolio-summary";
 import {
     Account,
-    Instrument, Option, OptionPosition,
+    Instrument, Option, OptionOrder, OptionPosition,
     Order,
     Position,
     RobinhoodAccount,
@@ -12,6 +12,7 @@ import {
 } from "./interfaces";
 import Api from "./api";
 import {DateTime} from "luxon";
+import {option} from "yargs";
 
 interface Repository {
     getRobinhoodUser(userId: string): Promise<RobinhoodUserTable | null>
@@ -152,8 +153,22 @@ export default class Service {
 
         let instrumentsMap: Record<string, RobinhoodInstrumentTable> = {};
         let accountMap: Record<string, RobinhoodAccountTable> = {};
+        let optionsMap: Record<string, RobinhoodOptionTable> = {};
 
-        let [transactions, nextUrl] = await this._api.orders({});
+        (await this._repo.getRobinhoodAccountsByRobinhoodUserId(robinhoodUser.id)).forEach(a => accountMap[a.accountNumber] = a);
+
+        let allTransactions: RobinhoodTransaction[] = [];
+
+        let equityTxs: Order[] = [];
+        let equityNextUrl: string | null = null;
+        while (true) {
+            [equityTxs, equityNextUrl] = await this._api.orders({}, equityNextUrl === null ? undefined : equityNextUrl);
+            (await this._repo.getRobinhoodInstrumentsByExternalId(equityTxs.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
+            let transformedPositions = await this._transformPositions(positions, accountMap, instrumentsMap);
+            allPositions = [...allPositions, ...transformedPositions];
+            if (positionsNextUrl === null) break;
+        }
+
 
         (await this._repo.getRobinhoodInstrumentsByExternalId(transactions.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
         (await this._repo.getRobinhoodAccountsByRobinhoodUserId(robinhoodUser.id)).forEach(a => accountMap[a.accountNumber] = a)
@@ -552,6 +567,47 @@ export default class Service {
         return transformedPositions
     }
 
+    _transformOptionOrders = async (optionOrders: OptionOrder[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodTransaction[]> => {
+        let transformedTxs: RobinhoodTransaction[] = [];
+        for (let i = 0; i < optionOrders.length; i++) {
+            let oo = optionOrders[i];
+            if (oo.account_number === null) {
+                console.warn("no account number for option")
+                continue
+            }
+
+            if (oo.legs === null || oo.legs.length === 0) {
+                console.warn("no legs for option")
+                continue
+            }
+
+            for (let j = 0; j < oo.legs.length; j++) {
+                const leg = oo.legs[j];
+                if (leg.option === null) {
+                    console.warn("could not find option")
+                    continue
+                }
+
+                if (leg.executions === null || leg.executions.length <= 0) {
+                    console.warn("leg exeuctions not set ")
+                    continue
+                }
+
+                const optionUrlSplit = leg.option.split("/")
+                const optionId = optionUrlSplit[optionUrlSplit.length - 2];
+
+                for (let k = 0; i < leg.executions.length; i++) {
+                    transformedTxs.push({
+                        url: '',
+                        executionsTimestamp: '',
+                        extendedHours: '',
+                        externalCreatedAt: ''
+                    })
+                }
+            }
+        }
+    }
+
     _transformTransactions = async (transactions: Order[], accountMap: Record<string, RobinhoodAccountTable>, instrumentMap: Record<string, RobinhoodInstrumentTable>): Promise<RobinhoodTransaction[]> => {
         let transformedTxs: RobinhoodTransaction[] = [];
         for (let i = 0; i < transactions.length; i++) {
@@ -581,6 +637,7 @@ export default class Service {
             for (let j = 0; j < tx.executions.length; j++) {
                 const ex = tx.executions[j];
                 if (ex.timestamp === null) throw new Error("no timestamp for execution");
+
                 const executionsTimestamp = DateTime.fromISO(ex.timestamp);
                 transformedTxs.push({
                     instrumentId: tx.instrument,

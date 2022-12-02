@@ -257,6 +257,31 @@ export type RobinhoodTransaction = {
     orderFormVersion: number | null
     presetPercentLimit: string | null
     orderFormType: string | null
+    accountNumber: string | null
+    cancelUrl: string | null
+    canceledQuantity: string | null
+    direction: string | null
+    optionUrl: string | null
+    optionLegId: string | null
+    positionEffect: string | null
+    ratioQuantity: string | null
+    expirationDate: DateTime | null
+    strikePrice: string | null
+    optionType: string | null
+    longStrategyCode: string | null
+    shortStrategyCode: string | null
+    pendingQuantity: string | null
+    premium: string | null
+    processedPremium: string | null
+    processedQuantity: string | null
+    chainId: string | null
+    chainSymbol: string | null
+    openingStrategy: string | null
+    closingStrategy: string | null
+    formSource: string | null
+    clientBidAtSubmission: string | null
+    clientAskAtSubmission: string | null
+    clientTimeAtSubmission: string | null
 }
 
 export type RobinhoodTransactionTable = {

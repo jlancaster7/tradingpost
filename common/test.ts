@@ -7,7 +7,6 @@ import Robinhood from "./brokerage/robinhood";
 import {PortfolioSummaryService} from "./brokerage/portfolio-summary";
 import Api from "./brokerage/robinhood/api";
 import Transformer from "./brokerage/robinhood/transformer";
-import {DateTime} from "luxon";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
