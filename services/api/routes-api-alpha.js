@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -41,9 +41,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = __importDefault(require("express"));
 var path_1 = require("path");
-var auth_1 = require("@tradingpost/common/api/auth");
 var jsonwebtoken_1 = require("jsonwebtoken");
 var configuration_1 = require("@tradingpost/common/configuration");
+var auth_1 = require("@tradingpost/common/api/auth");
 var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 var cache_1 = require("@tradingpost/common/api/cache");
 var waitlist_1 = require("@tradingpost/common/api/waitlist");
@@ -95,6 +95,14 @@ var makeRoute = function (path, action) {
                         res.status(ex_1.statusCode).json({
                             statusCode: ex_1.statusCode,
                             message: ex_1.message
+                        });
+                    }
+                    //TODO: change this to a DatabaseError check then check for the code
+                    else if (ex_1.code === '23505') {
+                        console.error(ex_1.constructor);
+                        res.status(400).json({
+                            type: "SQL_DUPLICATE",
+                            message: ex_1.detail
                         });
                     }
                     else {

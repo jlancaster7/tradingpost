@@ -4,11 +4,13 @@ import express from 'express'
 import bodyParser from 'body-parser';
 import api from './routes-api-alpha'
 import cors from 'cors'
-import {healthCheck} from './healthcheck'
+import { healthCheck } from './healthcheck'
 import fetch from 'node-fetch'
-import {versionCode} from '@tradingpost/common/api/entities/static/EntityApiBase'
-import {addToWaitlist} from '@tradingpost/common/api/waitlist';
-import {PublicError} from '@tradingpost/common/api/entities/static/EntityApiBase'
+import { versionCode } from '@tradingpost/common/api/entities/static/EntityApiBase'
+import { addToWaitlist } from '@tradingpost/common/api/waitlist';
+import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
+import Packages from "./package.json"
+import createRouterForApi from './routes-api-beta';
 
 (globalThis as any)["fetch" as any] = fetch;
 //fromWebToken()
@@ -21,7 +23,7 @@ app.get("/", healthCheck);
 
 app.use(cors())
 //TODO: chage this to something reasonable 
-app.use(bodyParser.json({limit: "10mb"}))
+app.use(bodyParser.json({ limit: "10mb" }))
 
 app.use((req, res, next) => {
     next();
@@ -32,14 +34,28 @@ app.use((req, res, next) => {
 
 app.post('/waitlist/add', async (req, res) => {
     if (!req.body.email) {
-        throw new PublicError("Invalid Request");
+        throw new PublicError("Missing Email");
     }
     await addToWaitlist(req.body.email);
     res.send('Successfully added!');
 })
 
+//Current API Routes
 app.use("/" + versionCode, api);
 
+//Legacy Api Routes... there is an issue with this.. I knwo the fix just need to implement it .
+const addAvailableApi = (version: string) => {
+    try {
+        if (version !== versionCode) {
+            app.use("/" + version, createRouterForApi(version))
+            console.log("Adding api version " + version);
+        }
+    }
+    catch (ex) {
+        console.error(ex);
+    }
+}
+addAvailableApi("")
 // start the express server
 app.listen(port, () => {
     // tslint:disable-next-line:no-console

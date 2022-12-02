@@ -17,6 +17,8 @@ import { LinkBrokerageSection } from './create_account/LinkBrokerageSection';
 import { AppColors } from '../constants/Colors';
 import { SubscriptionCostSection } from './create_account/SubscrpitionCostSection';
 import { Log } from '../utils/logger';
+import { PrivacyScreen } from './create_account/PrivacyScreen';
+import { TermsScreen } from './create_account/TermsScreen';
 
 export const screens = {
     'LoginInfo': AccountInfoSection,
@@ -27,7 +29,9 @@ export const screens = {
     'LinkBrokerage': LinkBrokerageSection,
     'AddClaims': YourContent,
     'SubscriptionCost': SubscriptionCostSection,
-    'ProfilePicture': ProfileIconSection
+    'ProfilePicture': ProfileIconSection,
+    'Terms': TermsScreen,
+    'Privacy':PrivacyScreen
 }
 
 

@@ -1,9 +1,10 @@
 import Express, { RequestHandler, response } from "express";
 import { join } from "path";
-import { EntityApi, RequestSettings } from '@tradingpost/common/api/entities/static/EntityApi'
-import { createLogin, createUser, forgotPassword, loginPass, loginToken, resetPassword, } from '@tradingpost/common/api/auth'
+
 import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 import { DefaultConfig } from "@tradingpost/common/configuration";
+import { EntityApi, RequestSettings } from '@tradingpost/common/api/entities/static/EntityApi'
+import { createLogin, createUser, forgotPassword, loginPass, loginToken, resetPassword, } from '@tradingpost/common/api/auth'
 import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
 import { cacheMonitor } from '@tradingpost/common/api/cache'
 import { addToWaitlist } from '@tradingpost/common/api/waitlist';
@@ -50,7 +51,16 @@ const makeRoute = (path: string, action: (req: Express.Request, res: Express.Res
                     message: ex.message
                 });
             }
+            //TODO: change this to a DatabaseError check then check for the code
+            else if ((ex as any).code === '23505') {
+                console.error((ex as Object).constructor);
+                res.status(400).json({
+                    type: "SQL_DUPLICATE",
+                    message: (ex as any).detail
+                });
+            }
             else {
+
                 console.error(ex);
                 res.status(400).json({
                     message: "An unknown error has occured. Please contact help@tradingpost.app"

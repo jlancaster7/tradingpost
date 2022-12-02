@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -50,6 +50,7 @@ var node_fetch_1 = __importDefault(require("node-fetch"));
 var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 var waitlist_1 = require("@tradingpost/common/api/waitlist");
 var EntityApiBase_2 = require("@tradingpost/common/api/entities/static/EntityApiBase");
+var routes_api_beta_1 = __importDefault(require("./routes-api-beta"));
 globalThis["fetch"] = node_fetch_1.default;
 //fromWebToken()
 var app = (0, express_1.default)();
@@ -69,7 +70,7 @@ app.post('/waitlist/add', function (req, res) { return __awaiter(void 0, void 0,
         switch (_a.label) {
             case 0:
                 if (!req.body.email) {
-                    throw new EntityApiBase_2.PublicError("Invalid Request");
+                    throw new EntityApiBase_2.PublicError("Missing Email");
                 }
                 return [4 /*yield*/, (0, waitlist_1.addToWaitlist)(req.body.email)];
             case 1:
@@ -79,7 +80,21 @@ app.post('/waitlist/add', function (req, res) { return __awaiter(void 0, void 0,
         }
     });
 }); });
+//Current API Routes
 app.use("/" + EntityApiBase_1.versionCode, routes_api_alpha_1.default);
+//Legacy Api Routes... there is an issue with this.. I knwo the fix just need to implement it .
+var addAvailableApi = function (version) {
+    try {
+        if (version !== EntityApiBase_1.versionCode) {
+            app.use("/" + version, (0, routes_api_beta_1.default)(version));
+            console.log("Adding api version " + version);
+        }
+    }
+    catch (ex) {
+        console.error(ex);
+    }
+};
+addAvailableApi("");
 // start the express server
 app.listen(port, function () {
     // tslint:disable-next-line:no-console

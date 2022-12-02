@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, RefObject, useMemo } from "react";
 import { Alert, TouchableOpacity, Image, ImageStyle, ViewStyle, View, Animated } from "react-native";
 //import { Navigation } from "react-native-navigation";
 //import { Nav } from '@react-navigation/native'
-import { Input, Text, } from "@ui-kitten/components";
+import { CheckBox, Input, Text, } from "@ui-kitten/components";
 //import { signOut, getStoredCreds, CreateAuth0User, UpdateUserProfile, signInStoredCreds } from "../../apis/Authentication";
 import { ButtonField } from "../../components/ButtonField";
 import { IconifyIcon } from "../../components/IconfiyIcon";
@@ -24,6 +24,7 @@ import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
 import { useAppUser } from "../../Authentication";
 import { useLinkTo, useNavigation } from "@react-navigation/native";
 import { registerDeviceForNotifications } from "../../utils/notifications";
+import { Link } from "../../components/Link";
 
 
 type FieldRefs = {
@@ -39,6 +40,8 @@ export function BasicInfoSection(props: CreateAccountProps) {
         opacityAnim = useRef(new Animated.Value(0)).current,
         { signIn, loginState } = useAppUser(),
         appUser = loginState?.appUser,
+        [agreeToTerms, setAgreeToTerms] = useState(false),
+        [agreeToPrivacy, setAgrreeToPrivacy] = useState(false),
         refs: FieldRefs = {
             first: useRef<ITextField>(null),
             last: useRef<ITextField>(null),

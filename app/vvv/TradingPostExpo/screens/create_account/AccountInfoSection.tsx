@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, RefObject, useMemo, useState } from "react";
 import { Image, View, Animated } from "react-native";
-import { Text } from "@ui-kitten/components";
+import { CheckBox, Text } from "@ui-kitten/components";
 import { ButtonField } from "../../components/ButtonField";
 import { TextField, ITextField } from "../../components/TextField";
 import { bannerText, flex, sizes, textInputWiz } from "../../style";
@@ -16,6 +16,7 @@ import { useAppUser } from "../../Authentication";
 import { useData } from "../../lds";
 import { useLinkTo, useNavigation } from "@react-navigation/native";
 import { CreateAccountProps, sideMargin } from "./shared";
+import { Link } from "../../components/Link";
 
 
 type FieldRefs = {
@@ -37,6 +38,8 @@ export function AccountInfoSection(props: CreateAccountProps) {
         loginEntity = useReadonlyEntity<LoginInfo>({}),
         linkTo = useLinkTo<any>(),
         nav = useNavigation(),
+        [agreeToTerms, setAgreeToTerms] = useState(false),
+        [agreeToPrivacy, setAgrreeToPrivacy] = useState(false),
         refs: FieldRefs = {
             first: useRef<ITextField>(null),
             last: useRef<ITextField>(null),
@@ -71,6 +74,10 @@ export function AccountInfoSection(props: CreateAccountProps) {
                                 errors.push(val.current.errorMessage || "");
                             }
                         }
+                        if (!agreeToPrivacy || !agreeToTerms) {
+                            errors.push("You must agree to terms and privacy policy");
+                        }
+
                         if (errors.length) {
                             errors.unshift("Please fix the following issues:");
                             props.toastMessage(errors.join("\r\n"));
@@ -107,15 +114,16 @@ export function AccountInfoSection(props: CreateAccountProps) {
     return <ScrollWithButtons
         buttons={buttonConfig}>
         {//isUnconfirmed ? <UnverifiedEmail  {...props} />: 
-            <AccountBasicInfo refs={refs} isAuthed={false} loginEntity={loginEntity} {...props} />
+            <AccountBasicInfo agreeToPrivacy={agreeToPrivacy} setAgreeToPrivacy={setAgrreeToPrivacy} agreeToTerms={agreeToTerms} setAgreeToTerms={setAgreeToTerms} refs={refs} isAuthed={false} loginEntity={loginEntity} {...props} />
         }
     </ScrollWithButtons>
 }
 
-function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthed: boolean, loginEntity: IEntity<LoginInfo> }) {
+function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthed: boolean, loginEntity: IEntity<LoginInfo>, agreeToTerms: boolean, setAgreeToTerms: (a: boolean) => void, agreeToPrivacy: boolean, setAgreeToPrivacy: (a: boolean) => void }) {
     const { refs, isAuthed } = props,
-        opacityAnim = useRef(new Animated.Value(0)).current;
-
+        opacityAnim = useRef(new Animated.Value(0)).current,
+        { agreeToTerms, setAgreeToTerms, agreeToPrivacy, setAgreeToPrivacy } = props,
+        linkTo = useLinkTo<any>();
     useEffect(() => {
         Animated.timing(
             opacityAnim,
@@ -157,15 +165,7 @@ function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthe
                 validateOnChange placeholder='Email Address'
                 returnKeyType="none" {...bindTextInput(props.loginEntity, "email", null)}
             />
-            {/* <TextField 
-                    //label='Username'
-                    style={textInputWiz}
-                    textInputRef={refs.username}
-                    validate={isAlphaNumeric}
-                    validateOnChange
-                    disabled={isAuthed}
-                    errorMessage={"`Username` must be alphanumeric"}
-                    placeholder='Account Username' returnKeyType="none" {...bindTextInput(props.user, "handle", null)} /> */}
+
             {
                 isAuthed ?
                     <ButtonField
@@ -195,51 +195,27 @@ function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthe
                             validate={(c) => Boolean(c) && c === props.loginEntity.data.password}
                             secureTextEntry
                         />
+                        <View
+                            style={[textInputWiz, { flexDirection: "row" }]}
+                        >
+                            <CheckBox checked={agreeToTerms} onChange={setAgreeToTerms} />
+                            <Text>Agree To </Text>
+                            <Link onPress={() => {
+                                linkTo('/create/terms')
+                            }} >Terms Of Use</Link>
+                        </View>
+                        <View
+                            style={[textInputWiz, { flexDirection: "row" }]}
+                        >
+                            <CheckBox checked={agreeToPrivacy} onChange={setAgreeToPrivacy} />
+                            <Text>Agree To </Text>
+                            <Link onPress={() => {
+                                linkTo('/create/privacy')
+                            }}>Privacy Policy</Link>
+                        </View>
                     </>
             }
             {/* </Section> */}
-        </View>
-    </View>
-}
-
-function UnverifiedEmail(props: CreateAccountProps) {
-    return <View style={[flex, { margin: sideMargin }]}>
-        <View>
-            {/* <Text style={{ fontSize:sizes.rem1_5 }}>Email verification is required for:</Text> */}
-            <Text style={{ fontSize: sizes.rem1 * 1.25, alignSelf: "center" }}>Please verify your account</Text>
-            <View style={{
-                marginBottom: sizes.rem1,
-                marginTop: sizes.rem1,
-                backgroundColor: "white",
-                borderColor: "#ccc",
-                padding: sizes.rem1,
-                borderWidth: 1,
-                alignSelf: "center",
-                shadowColor: "black",
-                shadowRadius: 10,
-                elevation: 4
-            }}>
-                <Image source={{ uri: props.user.data.profile_url, height: 120, width: 120 }}
-                    style={{ marginBottom: sizes.rem1 / 2, borderRadius: 60, alignSelf: "center" }} />
-                <Text style={{
-                    marginBottom: sizes.rem1 / 2,
-                    color: AppColors.primary,
-                    fontWeight: "bold",
-                    fontSize: sizes.rem1,
-                    alignSelf: "center"
-                }}>@{props.user.data.handle}</Text>
-                <Text style={{
-                    fontSize: sizes.rem1,
-                    alignSelf: "center",
-                    color: "black"
-                }}>{props.user.data.display_name}</Text>
-            </View>
-            <Text style={{ fontSize: sizes.rem1 * 1.25, alignSelf: "center" }}>An email has been sent to:</Text>
-            <Text style={{
-                fontWeight: "bold",
-                fontSize: sizes.rem1 * 1.25,
-                alignSelf: "center"
-            }}>{props.user.data.email}</Text>
         </View>
     </View>
 }
