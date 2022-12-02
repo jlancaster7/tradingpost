@@ -41,13 +41,27 @@ import {
     IbkrAccountTable,
     IbkrAccount,
     IbkrSecurity,
-    IbkrActivity, IbkrCashReport, IbkrNav, IbkrPl, IbkrPosition, TradingPostCurrentHoldingsTableWithMostRecentHolding
+    IbkrActivity,
+    IbkrCashReport,
+    IbkrNav,
+    IbkrPl,
+    IbkrPosition,
+    TradingPostCurrentHoldingsTableWithMostRecentHolding,
+    SecurityTableWithLatestPriceRobinhoodId
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
 import {addSecurity, getUSExchangeHoliday} from "../market-data/interfaces";
 import security from "../api/entities/extensions/Security";
-import {RobinhoodUser, RobinhoodUserTable} from "./robinhood/interfaces";
+import {
+    OptionContractTableWithRobinhoodId,
+    RobinhoodAccount,
+    RobinhoodAccountTable,
+    RobinhoodInstrument, RobinhoodInstrumentTable, RobinhoodOption, RobinhoodOptionTable,
+    RobinhoodPosition, RobinhoodTransaction,
+    RobinhoodUser, RobinhoodUserTable
+} from "./robinhood/interfaces";
+import internal from "stream";
 
 export default class Repository implements IBrokerageRepository, ISummaryRepository {
     private db: IDatabase<any>;
@@ -56,55 +70,6 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     constructor(db: IDatabase<any>, pgp: IMain) {
         this.db = db;
         this.pgp = pgp;
-    }
-
-    getRobinhoodUser = async (username: string): Promise<RobinhoodUserTable | null> => {
-        const query = `SELECT id,
-                              user_id,
-                              username,
-                              device_token,
-                              status,
-                              uses_mfa,
-                              access_token,
-                              refresh_token,
-                              updated_at,
-                              created_at
-                       FROM robinhood_account
-                       WHERE username = $1;`
-        const results = await this.db.query<[{ id: number, user_id: string, username: string, device_token: string, status: string, uses_mfa: boolean, access_token: string, refresh_token: string, updated_at: Date, created_at: Date }]>(query, [username]);
-        if (results.length <= 0) return null;
-        return {
-            id: results[0].id,
-            userId: results[0].user_id,
-            username: results[0].username,
-            deviceToken: results[0].device_token,
-            status: results[0].status,
-            usesMfa: results[0].uses_mfa,
-            accessToken: results[0].access_token,
-            refreshToken: results[0].refresh_token,
-            updatedAt: DateTime.fromJSDate(results[0].updated_at),
-            createdAt: DateTime.fromJSDate(results[0].created_at)
-        };
-    }
-
-    updateRobinhoodUser = async (user: RobinhoodUser) => {
-        const query = `UPDATE robinhood_account
-                       SET user_id=$1,
-                           device_token=$2,
-                           status=$3,
-                           uses_mfa=$4,
-                           access_token=$5,
-                           refresh_token=$6,
-                           updated_at=NOW()
-                       WHERE username = $7`
-        await this.db.query(query, [user.userId, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken, user.username])
-    }
-
-    insertRobinhoodUser = async (user: RobinhoodUser) => {
-        const query = `INSERT INTO robinhood_account(user_id, username, device_token, status, uses_mfa, access_token,
-                                                     refresh_token)
-                       VALUES ($1, $2, $3, $4, $5, $6, $7);`
-        await this.db.query(query, [user.userId, user.username, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken]);
     }
 
     updateErrorStatusOfAccount = async (accountId: number, error: boolean, errorCode: number): Promise<void> => {
@@ -233,7 +198,12 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getSecurityPricesWithEndDateBySecurityIds = async (startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]> => {
         const query = `SELECT id,
                               security_id,
-                              price, time, high, low, open, created_at
+                              price,
+                              time,
+                              high,
+                              low,
+                              open,
+                              created_at
                        FROM security_price
                        WHERE is_eod = true
                          AND time >= $1
@@ -451,7 +421,17 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             SELECT id,
                    account_id,
                    security_id,
-                   security_type, date, quantity, price, amount, fees, type, currency, updated_at, created_at, option_id
+                   security_type,
+                   date,
+                   quantity,
+                   price,
+                   amount,
+                   fees,
+                   type,
+                   currency,
+                   updated_at,
+                   created_at,
+                   option_id
             FROM tradingpost_transaction
             WHERE account_id = $1;`
         const response = await this.db.query(query, [accountId]);
@@ -621,6 +601,58 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         const query = upsertReplaceQuery(institution, cs, this.pgp, "external_id") + ' RETURNING id'
         const r = await this.db.oneOrNone(query)
         return r.id
+    }
+
+    getInstitutionByName = async (name: string): Promise<TradingPostInstitutionTable | null> => {
+        const query = `
+            SELECT id,
+                   external_id,
+                   name,
+                   account_type_description,
+                   phone,
+                   url_home_app,
+                   url_logon_app,
+                   oauth_enabled,
+                   url_forgot_password,
+                   url_online_registration,
+                   class,
+                   address_city,
+                   address_state,
+                   address_country,
+                   address_postal_code,
+                   address_address_line_1,
+                   address_address_line_2,
+                   email,
+                   status,
+                   updated_at,
+                   created_at
+            FROM tradingpost_institution
+            WHERE name = $1;`
+        const r = await this.db.oneOrNone(query, [name]);
+        if (r === null) return null;
+        return {
+            id: r.id,
+            externalId: r.external_id,
+            name: r.name,
+            accountTypeDescription: r.account_type_description,
+            phone: r.phone,
+            urlHomeApp: r.url_home_app,
+            urlLogonApp: r.url_logon_app,
+            oauthEnabled: r.oauth_enabled,
+            urlForgotPassword: r.url_forgot_password,
+            urlOnlineRegistration: r.url_online_registration,
+            class: r.class,
+            addressCity: r.address_city,
+            addressState: r.address_state,
+            addressCountry: r.address_country,
+            addressPostalCode: r.address_postal_code,
+            addressAddressLine1: r.address_address_line_1,
+            addressAddressLine2: r.address_address_line_2,
+            email: r.email,
+            status: r.status,
+            updatedAt: DateTime.fromJSDate(r.updated_at),
+            createdAt: DateTime.fromJSDate(r.created_at)
+        }
     }
 
     getInstitutions = async (): Promise<TradingPostInstitutionTable[]> => {
@@ -803,7 +835,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                             zip, country, phone, logo_url)
                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                                $11, $12, $13, $14, $15, $16, $17, $18, $19,
-                               $20) RETURNING id;`
+                               $20)
+                       RETURNING id;`
         return (await this.db.one(query, [sec.symbol, sec.companyName, sec.exchange, sec.industry, sec.website,
             sec.description, sec.ceo, sec.securityName, sec.issueType, sec.securityName, sec.primarySicCode, sec.employees,
             sec.tags, sec.address, sec.address2, sec.state, sec.zip, sec.country, sec.phone, sec.logoUrl])).id;
@@ -1253,10 +1286,10 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     addFinicityUser = async (userId: string, customerId: string, type: string): Promise<FinicityUser> => {
         const query = `INSERT INTO finicity_user(tp_user_id, customer_id, type)
-                       VALUES ($1, $2, $3) ON CONFLICT(customer_id) DO
-        UPDATE SET tp_user_id=EXCLUDED.tp_user_id,
-            type =EXCLUDED.type
-            RETURNING id, updated_at, created_at`;
+                       VALUES ($1, $2, $3)
+                       ON CONFLICT(customer_id) DO UPDATE SET tp_user_id=EXCLUDED.tp_user_id,
+                                                              type      =EXCLUDED.type
+                       RETURNING id, updated_at, created_at`;
         const response = await this.db.one(query, [userId, customerId, type]);
         return {
             id: response.id,
@@ -1830,10 +1863,10 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     addTradingPostAccountGroup = async (userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number> => {
         let query = `INSERT INTO tradingpost_account_group(user_id, name, default_benchmark_id)
-                     VALUES ($1, $2, $3) ON CONFLICT
-                     ON CONSTRAINT name_userid_unique DO
-        UPDATE SET name = EXCLUDED.name
-            RETURNING id;`;
+                     VALUES ($1, $2, $3)
+                     ON CONFLICT
+                         ON CONSTRAINT name_userid_unique DO UPDATE SET name = EXCLUDED.name
+                     RETURNING id;`;
 
         const accountGroupIdResults = await this.db.any(query, [userId, name, defaultBenchmarkId]);
         if (accountGroupIdResults.length <= 0) return 0
@@ -1971,11 +2004,21 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         const r = await this.db.oneOrNone(`SELECT id,
                                                   account_id,
                                                   security_id,
-                                                  security_type, date, quantity, price, amount, fees, type, currency, updated_at, created_at, option_id
+                                                  security_type,
+                                                  date,
+                                                  quantity,
+                                                  price,
+                                                  amount,
+                                                  fees,
+                                                  type,
+                                                  currency,
+                                                  updated_at,
+                                                  created_at,
+                                                  option_id
                                            FROM tradingpost_transaction
                                            WHERE account_id = $1
                                            ORDER BY date ASC
-                                               LIMIT 1;`, accountId)
+                                           LIMIT 1;`, accountId)
         if (!r) return null
         return {
             optionId: r.option_id,
@@ -2047,13 +2090,14 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             CASE
                                 WHEN quantity = 0 THEN 0
                                 WHEN cost_basis is null THEN 0
-                                ELSE (value - (quantity * cost_basis))
+                                ELSE (value - (cost_basis))
                                 END                                                 as pnl,
-                            quantity, date
+                            quantity,
+                            date
                      FROM tradingpost_historical_holding
                      WHERE account_id = $1
                        AND date BETWEEN $2
-                       AND $3
+                         AND $3
                      ORDER BY value desc
         `;
 
@@ -2090,49 +2134,44 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                              FROM public.security_option as t
                              WHERE t.id = ht.option_id) AS option_info,
                             AVG(ht.price)               AS price,
-                            SUM(ht.value) AS value,
+                            SUM(ht.value)               AS value,
                             CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN sum(ht.cost_basis) is null THEN 0
-                                ELSE SUM(ht.cost_basis * ht.quantity) / SUM(ht.quantity)
-        END
-        AS cost_basis,
+                                ELSE SUM(ht.cost_basis) / SUM(ht.quantity)
+                                END
+                                                        AS cost_basis,
                             CASE
                                 WHEN SUM(ht.quantity) = 0 THEN 0
                                 WHEN SUM(ht.cost_basis) IS null THEN 0
-                                ELSE (SUM(ht.value) - (SUM(ht.cost_basis * ht.quantity)))
-        END
-        AS pnl,
-                            SUM(ht.quantity)     AS quantity,
-                            ht.date              AS date
+                                ELSE (SUM(ht.value) - (SUM(ht.cost_basis)))
+                                END
+                                                        AS pnl,
+                            SUM(ht.quantity)            AS quantity,
+                            ht.date                     AS date
                      FROM tradingpost_historical_holding ht
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ht.account_id = atg.account_id
                      WHERE atg.account_group_id =
-        $1
-        AND
-        ht
-        .
-        date
-        BETWEEN
-        $2
-        AND
-        $3
-        GROUP
-        BY
-        atg
-        .
-        account_group_id,
-        ht
-        .
-        security_id,
-        ht
-        .
-        date
-        ORDER
-        BY
-        value
-        desc`;
+                           $1
+                       AND ht
+                         .
+                         date
+                         BETWEEN
+                         $2
+                         AND
+                         $3
+                     GROUP BY atg
+                                  .
+                                  account_group_id,
+                              ht
+                                  .
+                                  security_id,
+                              ht
+                                  .
+                                  date
+                     ORDER BY value
+                             desc`;
         const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
 
         if (!response || response.length <= 0) {
@@ -2167,44 +2206,40 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                              FROM public.security_option as t
                              WHERE t.id = ch.option_id) AS option_info,
                             AVG(ch.price)               AS price,
-                            SUM(ch.value) AS value,
+                            SUM(ch.value)               AS value,
                             CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN sum(ch.cost_basis) is null THEN 0
-                                ELSE SUM(ch.cost_basis * ch.quantity) / SUM(ch.quantity)
-        END
-        AS cost_basis,
+                                ELSE SUM(ch.cost_basis) / SUM(ch.quantity)
+                                END
+                                                        AS cost_basis,
                             CASE
                                 WHEN SUM(ch.quantity) = 0 THEN 0
                                 WHEN SUM(ch.cost_basis) IS null THEN 0
-                                ELSE (SUM(ch.value) - (SUM(ch.cost_basis * ch.quantity)))
-        END
-        AS pnl,
-                            SUM(ch.quantity)     AS quantity,
-                            ch.updated_at        AS updated_at
+                                ELSE (SUM(ch.value) - (SUM(ch.cost_basis)))
+                                END
+                                                        AS pnl,
+                            SUM(ch.quantity)            AS quantity,
+                            ch.updated_at               AS updated_at
                      FROM tradingpost_current_holding ch
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ch.account_id = atg.account_id
                      WHERE atg.account_group_id =
-        $1
-        GROUP
-        BY
-        atg
-        .
-        account_group_id,
-        ch
-        .
-        security_id,
-        ch
-        .
-        updated_at,
-        ch
-        .
-        option_id
-        ORDER
-        BY
-        value
-        desc;`;
+                           $1
+                     GROUP BY atg
+                                  .
+                                  account_group_id,
+                              ch
+                                  .
+                                  security_id,
+                              ch
+                                  .
+                                  updated_at,
+                              ch
+                                  .
+                                  option_id
+                     ORDER BY value
+                             desc;`;
         let holdings: HistoricalHoldings[] = [];
         if (!accountGroupId) {
             return holdings;
@@ -2233,21 +2268,84 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
         return holdings;
     }
+    getTradingPostTransactionsByAccountGroup = async (accountGroupId: number, paging?: { limit: number, offset: number }): Promise<TradingPostTransactions[]> => {
+        let query = `SELECT atg.account_group_id          AS account_group_id,
+                            security_id,
+                            security_type,
+                            date,
+                            SUM(quantity)                 AS quantity,
+                            AVG(price)                    AS price,
+                            SUM(amount)                   AS amount,
+                            SUM(fees)                     AS fees,
+                            type,
+                            currency,
+                            option_id,
+                            (SELECT json_agg(t)
+                             FROM public.security_option as t
+                             WHERE t.id = tt."option_id") AS "option_info"
+                     FROM tradingpost_transaction tt
+                              LEFT JOIN _tradingpost_account_to_group atg
+                                        ON tt.account_id = atg.account_id
+                     WHERE atg.account_group_id = $1
+                       AND type in ('buy', 'sell', 'short', 'cover')
+                     GROUP BY account_group_id, security_id, security_type, date, type, currency, option_id
+                     ORDER BY date DESC
+        `;
+
+
+        let trades: TradingPostTransactions[] = []
+        if (!accountGroupId) {
+            return trades;
+        }
+        let response: any[];
+        if (paging) {
+            query += `LIMIT $2
+                      OFFSET $3`
+            response = await this.db.any(query, [accountGroupId, paging.limit, paging.offset * paging.limit]);
+        } else {
+            response = await this.db.any(query, [accountGroupId]);
+        }
+
+        if (!response || response.length <= 0) {
+            throw new Error(`Failed to get trades for accountGroupId: ${accountGroupId}`);
+        }
+        for (let d of response) {
+            trades.push({
+                accountGroupId: parseInt(d.account_group_id),
+                securityId: parseInt(d.security_id),
+                securityType: d.security_type,
+                optionId: parseInt(d.option_id),
+                optionInfo: d.option_info,
+                date: DateTime.fromJSDate(d.date),
+                quantity: parseFloat(d.quantity),
+                price: parseFloat(d.price),
+                amount: parseFloat(d.amount), // (quantity * price) + fees
+                fees: parseFloat(d.fees),
+                type: d.type,
+                currency: d.currency
+            })
+        }
+        return trades;
+    }
 
     getTradingPostAccountGroupReturns = async (accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]> => {
         let query = `SELECT id,
-                            account_group_id, date, return, created_at, updated_at
+                            account_group_id,
+                            date,
+                            return,
+                            created_at,
+                            updated_at
                      FROM account_group_hpr
                      WHERE account_group_id = $1
                        AND date BETWEEN $2
-                       AND $3
+                         AND $3
                      ORDER BY date;`;
         const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
 
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get returns for accountGroupId: ${accountGroupId}`);
         }
-        ;
+
         let holdingPeriodReturns: AccountGroupHPRsTable[] = []
         for (let d of response) {
             holdingPeriodReturns.push({
@@ -2266,11 +2364,13 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getDailySecurityPrices = async (securityId: number, startDate: DateTime, endDate: DateTime): Promise<SecurityPrices[]> => {
         let query = `SELECT id,
                             security_id,
-                            price, time, created_at
+                            price,
+                            time,
+                            created_at
                      FROM security_price
                      WHERE security_id = $1
                        AND time BETWEEN $2
-                       AND $3
+                         AND $3
                        AND is_eod = true;
         `;
         const response = await this.db.any(query, [securityId, startDate, endDate]);
@@ -2503,11 +2603,15 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             beta,
                             sharpe,
                             industry_allocations,
-                            exposure, date, benchmark_id, updated_at, created_at
+                            exposure,
+                            date,
+                            benchmark_id,
+                            updated_at,
+                            created_at
                      FROM tradingpost_account_group_stat
                      WHERE account_group_id = $1
                      ORDER BY date DESC
-                         LIMIT 1
+                     LIMIT 1
         `;
         const result = await this.db.one(query, [accountGroupId]);
 
@@ -2605,6 +2709,22 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
         const query = upsertReplaceQuery(optionContracts, cs, this.pgp, "security_id,type,strike_price,expiration")
         await this.db.none(query, [optionContracts])
+    }
+
+    upsertOptionContract = async (oc: OptionContract): Promise<number | null> => {
+        const query = `INSERT INTO security_option(security_id, type, strike_price, expiration, external_id)
+                       VALUES ($1, $2, $3, $4, $5)
+                       ON CONFLICT(security_id, type, strike_price, expiration)
+                           DO UPDATE SET security_id=EXCLUDED.security_id,
+                                         type=EXCLUDED.type,
+                                         strike_price=EXCLUDED.strike_price,
+                                         expiration=EXCLUDED.expiration,
+                                         external_id=EXCLUDED.external_id
+                       RETURNING id;
+        `;
+        const result = await this.db.oneOrNone<{ id: number }>(query, [oc.securityId, oc.type, oc.strikePrice, oc.expiration, oc.externalId]);
+        if (result === null) return null;
+        return result.id
     }
 
     getOptionContract = async (securityId: number, expirationDate: DateTime, strikePrice: number, optionType: string): Promise<OptionContractTable | null> => {
@@ -3153,6 +3273,856 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         ], {table: 'ibkr_position'})
         const query = upsertReplaceQuery(positions, cs, this.pgp, "account_id, con_id, asset_type, report_date");
         await this.db.none(query);
+    }
+
+    upsertRobinhoodUsers = async (users: RobinhoodUser[]): Promise<void> => {
+        if (users.length <= 0) return;
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'user_id', prop: 'userId'},
+            {name: 'username', prop: 'username'},
+            {name: 'device_token', prop: 'deviceToken'},
+            {name: 'status', prop: 'status'},
+            {name: 'uses_mfa', prop: 'usesMfa'},
+            {name: 'access_token', prop: 'accessToken'},
+            {name: 'refresh_token', prop: 'refreshToken'},
+        ], {table: 'robinhood_account'});
+        const query = upsertReplaceQuery(users, cs, this.pgp, "username");
+        await this.db.none(query);
+    }
+
+    getRobinhoodUser = async (userId: string): Promise<RobinhoodUserTable | null> => {
+        const query = `SELECT id,
+                              user_id,
+                              username,
+                              device_token,
+                              status,
+                              uses_mfa,
+                              access_token,
+                              refresh_token,
+                              updated_at,
+                              created_at
+                       FROM robinhood_user
+                       WHERE user_id = $1;`
+        const results = await this.db.query<[{ id: number, user_id: string, username: string, device_token: string, status: string, uses_mfa: boolean, access_token: string, refresh_token: string, updated_at: Date, created_at: Date }]>(query, [userId]);
+        if (results.length <= 0) return null;
+        return {
+            id: results[0].id,
+            userId: results[0].user_id,
+            username: results[0].username,
+            deviceToken: results[0].device_token,
+            status: results[0].status,
+            usesMfa: results[0].uses_mfa,
+            accessToken: results[0].access_token,
+            refreshToken: results[0].refresh_token,
+            updatedAt: DateTime.fromJSDate(results[0].updated_at),
+            createdAt: DateTime.fromJSDate(results[0].created_at)
+        };
+    }
+
+    updateRobinhoodUser = async (user: RobinhoodUser) => {
+        const query = `UPDATE robinhood_user
+                       SET user_id=$1,
+                           device_token=$2,
+                           status=$3,
+                           uses_mfa=$4,
+                           access_token=$5,
+                           refresh_token=$6,
+                           updated_at=NOW()
+                       WHERE username = $7`
+        await this.db.query(query, [user.userId, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken, user.username])
+    }
+
+    insertRobinhoodUser = async (user: RobinhoodUser) => {
+        const query = `INSERT INTO robinhood_user(user_id, username, device_token, status, uses_mfa, access_token,
+                                                  refresh_token)
+                       VALUES ($1, $2, $3, $4, $5, $6, $7);`
+        await this.db.query(query, [user.userId, user.username, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken]);
+    }
+
+    deleteRobinhoodAccountsPositions = async (accountIds: number[]): Promise<void> => {
+        const query = `DELETE
+                       FROM robinhood_position
+                       WHERE internal_account_id IN ($1:list);`
+        await this.db.none(query, [accountIds]);
+    }
+
+    getRobinhoodAccountsByRobinhoodUserId = async (userId: number): Promise<RobinhoodAccountTable[]> => {
+        const query = `SELECT id,
+                              user_id,
+                              account_number,
+                              url,
+                              portfolio_cash,
+                              can_downgrade_to_cash_url,
+                              user_url,
+                              type,
+                              brokerage_account_type,
+                              external_created_at,
+                              external_updated_at,
+                              deactivated,
+                              deposit_halted,
+                              withdrawl_halted,
+                              only_position_closing_trades,
+                              buying_power,
+                              onbp,
+                              cash_available_for_withdrawl,
+                              cash,
+                              amount_eligible_for_deposit_cancellation,
+                              cash_held_for_orders,
+                              uncleared_deposits,
+                              sma,
+                              sma_held_for_orders,
+                              unsettled_funds,
+                              unsettled_debit,
+                              crypto_buying_power,
+                              max_ach_early_access_amount,
+                              cash_balances,
+                              updated_at,
+                              created_at
+                       FROM robinhood_account
+                       WHERE user_id = $1`;
+        const results = await this.db.query(query, [userId]);
+        return results.map((r: any) => {
+            let x: RobinhoodAccountTable = {
+                userId: r.user_id,
+                accountNumber: r.account_number,
+                type: r.type,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                createdAt: DateTime.fromJSDate(r.created_at),
+                id: r.id,
+                amountEligibleForDepositCancellation: r.amount_eligible_for_deposit_cancellation,
+                brokerageAccountType: r.brokerage_account_type,
+                buyingPower: r.buying_power,
+                canDowngradeToCashUrl: r.can_downgrade_to_cash_url,
+                cash: r.cash,
+                cashAvailableForWithdrawl: r.cash_available_for_withdrawal,
+                cashBalances: r.cash_balances,
+                cashHeldForOrders: r.cash_held_for_orders,
+                cryptoBuyingPower: r.crypto_buying_power,
+                deactivated: r.deactivated,
+                depositHalted: r.deposit_halted,
+                externalCreatedAt: r.external_created_at,
+                externalUpdatedAt: r.external_updated_at,
+                maxAchEarlyAccessAmount: r.max_ach_early_access_amount,
+                onbp: r.onbp,
+                sma: r.sma,
+                onlyPositionClosingTrades: r.only_position_closing_trade,
+                portfolioCash: r.portfolio_cash,
+                smaHeldForOrders: r.sma_held_for_orders,
+                unclearedDeposits: r.uncleared_deposits,
+                unsettledDebit: r.unsettled_debit,
+                userUrl: r.user_url,
+                unsettledFunds: r.unsettled_funds,
+                url: r.url,
+                withdrawlHalted: r.withdrawl_halted
+            }
+            return x;
+        })
+    }
+
+    upsertRobinhoodAccounts = async (accs: RobinhoodAccount[]): Promise<void> => {
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'user_id', prop: 'userId'},
+            {name: 'account_number', prop: 'accountNumber'},
+            {name: 'url', prop: 'url'},
+            {name: 'portfolio_cash', prop: 'portfolioCash'},
+            {name: 'can_downgrade_to_cash_url', prop: 'canDowngradeToCashUrl'},
+            {name: 'user_url', prop: 'userUrl'},
+            {name: 'type', prop: 'type'},
+            {name: 'brokerage_account_type', prop: 'brokerageAccountType'},
+            {name: 'external_created_at', prop: 'externalCreatedAt'},
+            {name: 'external_updated_at', prop: 'externalUpdatedAt'},
+            {name: 'deactivated', prop: 'deactivated'},
+            {name: 'deposit_halted', prop: 'depositHalted'},
+            {name: 'withdrawl_halted', prop: 'withdrawlHalted'},
+            {name: 'only_position_closing_trades', prop: 'onlyPositionClosingTrades'},
+            {name: 'buying_power', prop: 'buyingPower'},
+            {name: 'onbp', prop: 'onbp'},
+            {name: 'cash_available_for_withdrawl', prop: 'cashAvailableForWithdrawl'},
+            {name: 'cash', prop: 'cash'},
+            {name: 'amount_eligible_for_deposit_cancellation', prop: 'amountEligibleForDepositCancellation'},
+            {name: 'cash_held_for_orders', prop: 'cashHeldForOrders'},
+            {name: 'uncleared_deposits', prop: 'unclearedDeposits'},
+            {name: 'sma', prop: 'sma'},
+            {name: 'sma_held_for_orders', prop: 'smaHeldForOrders'},
+            {name: 'unsettled_funds', prop: 'unsettledFunds'},
+            {name: 'unsettled_debit', prop: 'unsettledDebit'},
+            {name: 'crypto_buying_power', prop: 'cryptoBuyingPower'},
+            {name: 'max_ach_early_access_amount', prop: 'maxAchEarlyAccessAmount'},
+            {name: 'cash_balances', prop: 'cashBalances'}
+        ], {table: "robinhood_account"});
+        const query = upsertReplaceQuery(accs, cs, this.pgp, "account_number");
+        await this.db.none(query);
+    }
+
+    upsertRobinhoodInstruments = async (instruments: RobinhoodInstrument[]): Promise<void> => {
+        if (instruments.length <= 0) return;
+
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'url', prop: 'url'},
+            {name: 'symbol', prop: 'symbol'},
+            {name: 'quote_url', prop: 'quoteUrl'},
+            {name: 'fundamentals_url', prop: 'fundamentalsUrl'},
+            {name: 'splits_url', prop: 'splitsUrl'},
+            {name: 'state', prop: 'state'},
+            {name: 'market_url', prop: 'marketUrl'},
+            {name: 'name', prop: 'name'},
+            {name: 'tradeable', prop: 'tradeable'},
+            {name: 'tradability', prop: 'tradability'},
+            {name: 'bloomberg_unique', prop: 'bloombergUnique'},
+            {name: 'margin_initial_ratio', prop: 'marginInitialRatio'},
+            {name: 'maintenance_ratio', prop: 'maintenanceRatio'},
+            {name: 'country', prop: 'country'},
+            {name: 'day_trade_ratio', prop: 'dayTradeRatio'},
+            {name: 'list_date', prop: 'listDate'},
+            {name: 'min_tick_size', prop: 'minTickSize'},
+            {name: 'type', prop: 'type'},
+            {name: 'tradeable_chain_id', prop: 'tradeable_chain_id'},
+            {name: 'rhs_tradability', prop: 'rhsTradability'},
+            {name: 'fractional_tradability', prop: 'fractionalTradability'},
+            {name: 'default_collar_fraction', prop: 'defaultCollarFraction'},
+            {name: 'ipo_access_status', prop: 'ipoAccessStatus'},
+            {name: 'ipo_access_cob_deadline', prop: 'ipoAccessCobDeadline'},
+            {name: 'ipo_s1_url', prop: 'ipoS1Url'},
+            {name: 'ipo_roadshow_url', prop: 'ipoRoadshowUrl'},
+            {name: 'is_spac', prop: 'ipoSpac'},
+            {name: 'is_test', prop: 'isTest'},
+            {name: 'ipo_access_supports_dsp', prop: 'ipoAccessSupportsDsp'},
+            {name: 'extended_hours_fractional_tradability', prop: 'extendedHoursFractionalTradability'},
+            {name: 'internal_halt_reason', prop: 'internalHaltReason'},
+            {name: 'internal_halt_details', prop: 'internalHaltDetails'},
+            {name: 'internal_halt_sessions', prop: 'internalHaltSessions'},
+            {name: 'internal_halt_start_time', prop: 'internalStartTime'},
+            {name: 'internal_halt_end_time', prop: 'internalEndTime'},
+            {name: 'internal_halt_source', prop: 'internalHaltSource'},
+            {name: 'all_day_tradability', prop: 'allDayTradability'},
+        ], {table: 'robinhood_instrument'});
+        const query = upsertReplaceQuery(instruments, cs, this.pgp, "symbol")
+        await this.db.none(query);
+    }
+
+    addRobinhoodInstrument = async (instrument: RobinhoodInstrument): Promise<number> => {
+        const query = `INSERT INTO robinhood_instrument(external_id, url, symbol, quote_url, fundamentals_url,
+                                                        splits_url, state,
+                                                        market_url,
+                                                        name, tradeable, tradability, bloomberg_unique,
+                                                        margin_initial_ratio, maintenance_ratio,
+                                                        country, day_trade_ratio, list_date, min_tick_size, type,
+                                                        tradeable_chain_id, rhs_tradability, fractional_tradability,
+                                                        default_collar_fraction,
+                                                        ipo_access_status, ipo_access_cob_deadline, ipo_s1_url,
+                                                        ipo_roadshow_url, is_spac, is_test,
+                                                        ipo_access_supports_dsp, extended_hours_fractional_tradability,
+                                                        internal_halt_reason, internal_halt_details,
+                                                        internal_halt_sessions, internal_halt_start_time,
+                                                        internal_halt_end_time, internal_halt_source,
+                                                        all_day_tradability)
+                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+                               $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36,
+                               $37, $38)
+                       ON CONFLICT (symbol) DO UPDATE SET symbol=EXCLUDED.symbol
+                       RETURNING id;`
+        const results = await this.db.oneOrNone<{ id: number }>(query, [instrument.externalId, instrument.url, instrument.symbol, instrument.quoteUrl,
+            instrument.fundamentalsUrl, instrument.splitsUrl, instrument.state, instrument.marketUrl, instrument.name,
+            instrument.tradeable, instrument.tradability, instrument.bloombergUnique, instrument.marginInitialRatio,
+            instrument.maintenanceRatio, instrument.country, instrument.dayTradeRatio, instrument.listDate,
+            instrument.minTickSize, instrument.type, instrument.tradeableChainId, instrument.rhsTradability,
+            instrument.fractionalTradability,
+            instrument.defaultCollarFraction, instrument.ipoAccessStatus, instrument.ipoAccessCobDeadline,
+            instrument.ipoS1Url, instrument.ipoRoadshowUrl, instrument.isSpac, instrument.isTest,
+            instrument.ipoAccessSupportsDsp, instrument.extendedHoursFractionalTradability,
+            instrument.internalHaltReason, instrument.internalHaltDetails, instrument.internalHaltSessions,
+            instrument.internalHaltStartTime, instrument.internalHaltEndTime, instrument.internalHaltSource,
+            instrument.allDayTradability])
+        if (results === null) throw new Error("could not return id");
+        return results.id;
+    }
+
+    upsertRobinhoodTransactions = async (txs: RobinhoodTransaction[]): Promise<void> => {
+        if (txs.length <= 0) return;
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'internal_account_id', prop: 'internalAccountId'},
+            {name: 'internal_instrument_id', prop: 'internalInstrumentId'},
+            {name: 'external_id', prop: 'externalId'},
+            {name: 'ref_id', prop: 'refId'},
+            {name: 'url', prop: 'url'},
+            {name: 'account_url', prop: 'accountUrl'},
+            {name: 'position_url', prop: 'positionUrl'},
+            {name: 'cancel', prop: 'cancel'},
+            {name: 'instrument', prop: 'instrument'},
+            {name: 'instrument_id', prop: 'instrumentId'},
+            {name: 'cumulative_quantity', prop: 'cumulativeQuantity'},
+            {name: 'average_price', prop: 'averagePrice'},
+            {name: 'fees', prop: 'fees'},
+            {name: 'state', prop: 'state'},
+            {name: 'pending_cancel_open_agent', prop: 'pendingCancelOpenAgent'},
+            {name: 'type', prop: 'type'},
+            {name: 'side', prop: 'side'},
+            {name: 'time_in_force', prop: 'timeInForce'},
+            {name: 'trigger', prop: 'trigger'},
+            {name: 'price', prop: 'price'},
+            {name: 'stop_price', prop: 'stopPrice'},
+            {name: 'quantity', prop: 'quantity'},
+            {name: 'reject_reason', prop: 'rejectReason'},
+            {name: 'external_created_at', prop: 'externalCreatedAt'},
+            {name: 'external_updated_at', prop: 'externalUpdatedAt'},
+            {name: 'executions_price', prop: 'executionsPrice'},
+            {name: 'executions_quantity', prop: 'executionsQuantity'},
+            {name: 'executions_rounded_notional', prop: 'executionsRoundedNotional'},
+            {name: 'executions_settlement_date', prop: 'executionsSettlementDate'},
+            {name: 'executions_timestamp', prop: 'executionsTimestamp'},
+            {name: 'executions_id', prop: 'executionsId'},
+            {name: 'executions_ipo_access_execution_rank', prop: 'executionsIpoAccessExecutionRank'},
+            {name: 'extended_hours', prop: 'extendedHours'},
+            {name: 'market_hours', prop: 'marketHours'},
+            {name: 'override_dtbp_checks', prop: 'overrideDtbpChecks'},
+            {name: 'override_day_trade_checks', prop: 'overrideDayTradeChecks'},
+            {name: 'response_category', prop: 'responseCategory'},
+            {name: 'stop_triggered_at', prop: 'stopTriggeredAt'},
+            {name: 'last_trail_price', prop: 'lastTrailPrice'},
+            {name: 'last_trail_price_updated_at', prop: 'lastTrailPriceUpdatedAt'},
+            {name: 'last_trail_price_source', prop: 'lastTrailPriceSource'},
+            {name: 'dollar_based_amount', prop: 'dollarBasedAmount'},
+            {name: 'total_notional_amount', prop: 'totalNotionalAmount'},
+            {name: 'total_notional_currency_code', prop: 'totalNotionalCurrencyCode'},
+            {name: 'total_notional_currency_id', prop: 'totalNotionalCurrencyId'},
+            {name: 'executed_notional_amount', prop: 'executedNotionalAmount'},
+            {name: 'executed_notional_currency_code', prop: 'executedNotionalCurrencyCode'},
+            {name: 'executed_notional_currency_id', prop: 'executedNotionalCurrencyId'},
+            {name: 'investment_schedule_id', prop: 'investmentScheduleId'},
+            {name: 'is_ipo_access_order', prop: 'isIpoAccessOrder'},
+            {name: 'ipo_access_cancellation_reason', prop: 'ipoAccessCancellationReason'},
+            {name: 'ipo_access_lower_collared_price', prop: 'ipoAccessLowerCollaredPrice'},
+            {name: 'ipo_access_upper_collared_price', prop: 'ipoAccessUpperCollaredPrice'},
+            {name: 'ipo_access_upper_price', prop: 'ipoAccessUpperPrice'},
+            {name: 'ipo_access_lower_price', prop: 'ipoAccessLowerPrice'},
+            {name: 'is_ipo_access_price_finalized', prop: 'isIpoAccessPriceFinalized'},
+            {name: 'is_visible_to_user', prop: 'isVisibleToUser'},
+            {name: 'has_ipo_access_custom_price_limit', prop: 'hasIpoAccessCustomPriceLimit'},
+            {name: 'is_primary_account', prop: 'isPrimaryAccount'},
+            {name: 'order_form_version', prop: 'orderFormVersion'},
+            {name: 'preset_percent_limit', prop: 'presetPercentLimit'},
+            {name: 'order_form_type', prop: 'orderFormType'},
+        ], {table: 'robinhood_transaction'});
+
+        const query = upsertReplaceQuery(txs, cs, this.pgp, `internal_account_id,internal_instrument_id,executions_timestamp,executions_quantity`)
+        await this.db.none(query);
+    }
+
+    upsertRobinhoodOptions = async (options: RobinhoodOption[]): Promise<void> => {
+        if (options.length <= 0) return;
+
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'internal_instrument_id', prop: 'internalInstrumentId'},
+            {name: 'external_id', prop: 'externalId'},
+            {name: 'chain_id', prop: 'chainId'},
+            {name: 'chain_symbol', prop: 'chainSymbol'},
+            {name: 'external_created_at', prop: 'externalCreatedAt'},
+            {name: 'expiration_date', prop: 'expiration_date'},
+            {name: 'issue_date', prop: 'issueDate'},
+            {name: 'min_ticks_above_tick', prop: 'minTicksAboveTick'},
+            {name: 'min_ticks_below_tick', prop: 'minTicksBelowTick'},
+            {name: 'min_ticks_cutoff_price', prop: 'minTicksCutoffPrice'},
+            {name: 'rhs_tradability', prop: 'rhsTradability'},
+            {name: 'state', prop: 'state'},
+            {name: 'strike_price', prop: 'strikePrice'},
+            {name: 'tradability', prop: 'tradability'},
+            {name: 'type', prop: 'type'},
+            {name: 'external_updated_at', prop: 'externalUpdatedAt'},
+            {name: 'url', prop: 'url'},
+            {name: 'sellout_date_time', prop: 'selloutDateTime'},
+            {name: 'long_strategy_code', prop: 'longStrategyCode'},
+            {name: 'short_strategy_code', prop: 'shortStrategyCode'}
+        ], {table: 'robinhood_option'});
+        const query = upsertReplaceQuery(options, cs, this.pgp, "external_id");
+        await this.db.none(query);
+    }
+
+    upsertRobinhoodOption = async (option: RobinhoodOption): Promise<number | null> => {
+        const query = `INSERT INTO robinhood_option(internal_instrument_id, external_id, chain_id, chain_symbol,
+                                                    external_created_at, expiration_date,
+                                                    issue_date, min_ticks_above_tick, min_ticks_below_tick,
+                                                    min_ticks_cutoff_price, rhs_tradability,
+                                                    state, strike_price, tradability, type, external_updated_at, url,
+                                                    sellout_date_time, long_strategy_code,
+                                                    short_strategy_code)
+                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+                               $20)
+                       ON CONFLICT(external_id) DO UPDATE SET internal_instrument_id=EXCLUDED.internal_instrument_id,
+                                                              external_id=EXCLUDED.external_id,
+                                                              chain_id=EXCLUDED.chain_id,
+                                                              chain_symbol=EXCLUDED.chain_symbol,
+                                                              external_created_at=EXCLUDED.external_created_at,
+                                                              expiration_date=EXCLUDED.expiration_date,
+                                                              issue_date=EXCLUDED.issue_date,
+                                                              min_ticks_above_tick=EXCLUDED.min_ticks_above_tick,
+                                                              min_ticks_below_tick=EXCLUDED.min_ticks_below_tick,
+                                                              min_ticks_cutoff_price=EXCLUDED.min_ticks_cutoff_price,
+                                                              rhs_tradability=EXCLUDED.rhs_tradability,
+                                                              state=EXCLUDED.state,
+                                                              strike_price=EXCLUDED.strike_price,
+                                                              tradability=EXCLUDED.tradability,
+                                                              type=EXCLUDED.type,
+                                                              external_updated_at=EXCLUDED.external_updated_at,
+                                                              url=EXCLUDED.url,
+                                                              sellout_date_time=EXCLUDED.sellout_date_time,
+                                                              long_strategy_code=EXCLUDED.long_strategy_code,
+                                                              short_strategy_code=EXCLUDED.short_strategy_code
+                       RETURNING id;`
+
+
+        const response = await this.db.oneOrNone<{ id: number }>(query, [option.internalInstrumentId, option.externalId, option.chainId, option.chainSymbol, option.externalCreatedAt, option.expirationDate, option.issueDate,
+            option.minTicksAboveTick, option.minTicksBelowTick, option.minTicksCutoffPrice, option.rhsTradability, option.state, option.strikePrice, option.tradability,
+            option.type, option.externalUpdatedAt, option.url, option.selloutDateTime, option.longStrategyCode, option.shortStrategyCode])
+        if (response === null) return null;
+        return response.id;
+    }
+
+    upsertRobinhoodPositions = async (positions: RobinhoodPosition[]): Promise<void> => {
+        if (positions.length <= 0) return;
+
+        const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'internal_account_id', prop: 'internalAccountId'},
+            {name: 'internal_instrument_id', prop: 'internalInstrumentId'},
+            {name: 'internal_option_id', prop: 'internalOptionId'},
+            {name: 'url', prop: 'url'},
+            {name: 'instrument_url', prop: 'instrumentUrl'},
+            {name: 'instrument_id', prop: 'instrumentId'},
+            {name: 'account_url', prop: 'accountUrl'},
+            {name: 'account_number', prop: 'accountNumber'},
+            {name: 'average_buy_price', prop: 'averageBuyPrice'},
+            {name: 'pending_average_buy_price', prop: 'pendingAverageBuyPrice'},
+            {name: 'quantity', prop: 'quantity'},
+            {name: 'intraday_average_buy_price', prop: 'intradayAverageBuyPrice'},
+            {name: 'intraday_quantity', prop: 'intradayQuantity'},
+            {name: 'shares_available_for_exercise', prop: 'sharesAvailableForExercise'},
+            {name: 'shares_held_for_buys', prop: 'sharesHeldForBuys'},
+            {name: 'shares_held_for_sells', prop: 'sharesHeldForSells'},
+            {name: 'shares_held_for_stock_grants', prop: 'sharesHeldForStockGrants'},
+            {name: 'ipo_allocated_quantity', prop: 'ipoAllocatedQuantity'},
+            {name: 'ipo_dsp_allocated_quantity', prop: 'ipoDspAllocatedQuantity'},
+            {name: 'avg_cost_affected', prop: 'avgCostAffected'},
+            {name: 'avg_cost_affected_reason', prop: 'avgCostAffectedReason'},
+            {name: 'is_primary_account', prop: 'isPrimaryAccount'},
+            {name: 'external_updated_at', prop: 'externalUpdatedAt'},
+            {name: 'external_created_at', prop: 'externalCreatedAt'},
+            {name: 'average_price', prop: 'averagePrice'},
+            {name: 'chain_id', prop: 'chainId'},
+            {name: 'chain_symbol', prop: 'chainSymbol'},
+            {name: 'external_id', prop: 'externalId'},
+            {name: 'type', prop: 'type'},
+            {name: 'pending_buy_quantity', prop: 'pendingBuyQuantity'},
+            {name: 'pending_expired_quantity', prop: 'pendingExpiredQuantity'},
+            {name: 'pending_assignment_quantity', prop: 'pendingAssignmentQuantity'},
+            {name: 'pending_sell_quantity', prop: 'pendingSellQuantity'},
+            {name: 'intraday_average_open_price', prop: 'intradayAverageOpenPrice'},
+            {name: 'trade_value_multiplier', prop: 'tradeValueMultiplier'},
+            {name: 'external_option_id', prop: 'externalOptionId'},
+        ], {table: 'robinhood_position'});
+        const query = upsertReplaceQuery(positions, cs, this.pgp, `internal_account_id,internal_instrument_id,internal_option_id`)
+        await this.db.none(query);
+    }
+
+    getRobinhoodInstrumentsByExternalId = async (instrumentIds: string[]): Promise<RobinhoodInstrumentTable[]> => {
+        const query = `SELECT id,
+                              external_id,
+                              url,
+                              symbol,
+                              quote_url,
+                              fundamentals_url,
+                              splits_url,
+                              state,
+                              market_url,
+                              name,
+                              tradeable,
+                              tradability,
+                              bloomberg_unique,
+                              margin_initial_ratio,
+                              maintenance_ratio,
+                              country,
+                              day_trade_ratio,
+                              list_date,
+                              min_tick_size,
+                              type,
+                              tradeable_chain_id,
+                              rhs_tradability,
+                              fractional_tradability,
+                              default_collar_fraction,
+                              ipo_access_status,
+                              ipo_access_cob_deadline,
+                              ipo_s1_url,
+                              ipo_roadshow_url,
+                              is_spac,
+                              is_test,
+                              ipo_access_supports_dsp,
+                              extended_hours_fractional_tradability,
+                              internal_halt_reason,
+                              internal_halt_details,
+                              internal_halt_sessions,
+                              internal_halt_start_time,
+                              internal_halt_end_time,
+                              internal_halt_source,
+                              all_day_tradability,
+                              updated_at,
+                              created_at
+                       FROM robinhood_instrument
+                       where external_id IN ($1:list);`
+        const results = await this.db.query(query, [instrumentIds]);
+        if (results.length <= 0) return [];
+
+        return results.map((r: any) => {
+            let x: RobinhoodInstrumentTable = {
+                id: r.id,
+                externalId: r.external_id,
+                name: r.name,
+                marketUrl: r.market_url,
+                url: r.url,
+                type: r.type,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                createdAt: DateTime.fromJSDate(r.created_at),
+                symbol: r.symbol,
+                state: r.state,
+                splitsUrl: r.splits_url,
+                quoteUrl: r.quote_url,
+                country: r.country,
+                maintenanceRatio: r.maintenance_ratio,
+                marginInitialRatio: r.margin_initial_ratio,
+                bloombergUnique: r.bloomberg_unique,
+                tradability: r.tradability,
+                tradeable: r.tradeable,
+                dayTradeRatio: r.day_trade_ratio,
+                fundamentalsUrl: r.fundamentals_url,
+                listDate: r.list_date,
+                minTickSize: r.min_tick_size,
+                tradeableChainId: r.tradeable_chain_id,
+                rhsTradability: r.rhs_tradability,
+                fractionalTradability: r.fractional_tradability,
+                defaultCollarFraction: r.default_collar_fraction,
+                ipoAccessStatus: r.ipo_access_status,
+                ipoAccessCobDeadline: r.ipo_access_cob_deadline,
+                ipoS1Url: r.ipo_s1_url,
+                ipoRoadshowUrl: r.ipo_roadshow_url,
+                ipoAccessSupportsDsp: r.ipo_access_supports_dsp,
+                isSpac: r.is_spac,
+                isTest: r.is_test,
+                extendedHoursFractionalTradability: r.extended_hours_fractional_tradability,
+                internalHaltReason: r.internal_halt_reason,
+                internalHaltDetails: r.internal_Halt_details,
+                internalHaltSessions: r.internal_halt_sessions,
+                internalHaltStartTime: r.internal_halt_start_time,
+                internalHaltEndTime: r.internal_halt_end_time,
+                internalHaltSource: r.internal_halt_source,
+                allDayTradability: r.all_day_tradability,
+            }
+            return x;
+        })
+    }
+
+    getRobinhoodInstrumentBySymbol = async (symbol: string): Promise<RobinhoodInstrumentTable | null> => {
+        const query = `SELECT id,
+                              external_id,
+                              url,
+                              symbol,
+                              quote_url,
+                              fundamentals_url,
+                              splits_url,
+                              state,
+                              market_url,
+                              name,
+                              tradeable,
+                              tradability,
+                              bloomberg_unique,
+                              margin_initial_ratio,
+                              maintenance_ratio,
+                              country,
+                              day_trade_ratio,
+                              list_date,
+                              min_tick_size,
+                              type,
+                              tradeable_chain_id,
+                              rhs_tradability,
+                              fractional_tradability,
+                              default_collar_fraction,
+                              ipo_access_status,
+                              ipo_access_cob_deadline,
+                              ipo_s1_url,
+                              ipo_roadshow_url,
+                              is_spac,
+                              is_test,
+                              ipo_access_supports_dsp,
+                              extended_hours_fractional_tradability,
+                              internal_halt_reason,
+                              internal_halt_details,
+                              internal_halt_sessions,
+                              internal_halt_start_time,
+                              internal_halt_end_time,
+                              internal_halt_source,
+                              all_day_tradability,
+                              updated_at,
+                              created_at
+                       FROM robinhood_instrument
+                       where symbol = $1;`
+        const r = await this.db.oneOrNone(query, [symbol]);
+        if (r === null) return null;
+        return {
+            id: r.id,
+            externalId: r.external_id,
+            name: r.name,
+            marketUrl: r.market_url,
+            url: r.url,
+            type: r.type,
+            updatedAt: DateTime.fromJSDate(r.updated_at),
+            createdAt: DateTime.fromJSDate(r.created_at),
+            symbol: r.symbol,
+            state: r.state,
+            splitsUrl: r.splits_url,
+            quoteUrl: r.quote_url,
+            country: r.country,
+            maintenanceRatio: r.maintenance_ratio,
+            marginInitialRatio: r.margin_initial_ratio,
+            bloombergUnique: r.bloomberg_unique,
+            tradability: r.tradability,
+            tradeable: r.tradeable,
+            dayTradeRatio: r.day_trade_ratio,
+            fundamentalsUrl: r.fundamentals_url,
+            listDate: r.list_date,
+            minTickSize: r.min_tick_size,
+            tradeableChainId: r.tradeable_chain_id,
+            rhsTradability: r.rhs_tradability,
+            fractionalTradability: r.fractional_tradability,
+            defaultCollarFraction: r.default_collar_fraction,
+            ipoAccessStatus: r.ipo_access_status,
+            ipoAccessCobDeadline: r.ipo_access_cob_deadline,
+            ipoS1Url: r.ipo_s1_url,
+            ipoRoadshowUrl: r.ipo_roadshow_url,
+            ipoAccessSupportsDsp: r.ipo_access_supports_dsp,
+            isSpac: r.is_spac,
+            isTest: r.is_test,
+            extendedHoursFractionalTradability: r.extended_hours_fractional_tradability,
+            internalHaltReason: r.internal_halt_reason,
+            internalHaltDetails: r.internal_Halt_details,
+            internalHaltSessions: r.internal_halt_sessions,
+            internalHaltStartTime: r.internal_halt_start_time,
+            internalHaltEndTime: r.internal_halt_end_time,
+            internalHaltSource: r.internal_halt_source,
+            allDayTradability: r.all_day_tradability,
+        }
+    }
+
+    getSecurityWithLatestPricingWithRobinhoodIds = async (rhIds: number[]): Promise<SecurityTableWithLatestPriceRobinhoodId[]> => {
+        const query = `select ri.id     as rh_internal_id,
+                              s.id,
+                              s.symbol,
+                              s.company_name,
+                              s.exchange,
+                              s.industry,
+                              s.website,
+                              s.description,
+                              s.ceo,
+                              s.security_name,
+                              s.issue_type,
+                              s.sector,
+                              s.primary_sic_code,
+                              s.employees,
+                              s.tags,
+                              s.address,
+                              s.address2,
+                              s.state,
+                              s.zip,
+                              s.country,
+                              s.phone,
+                              s.logo_url,
+                              (select price
+                               from security_price
+                               where security_id = s.id
+                               order by time desc
+                               limit 1) as latest_price
+                       from robinhood_instrument ri
+                                inner join security s on
+                           ri.symbol = s.symbol
+                       where ri.id in ($1:list);`
+        const results = await this.db.query(query, [rhIds]);
+        if (results.length <= 0) return [];
+        return results.map((r: any) => {
+            let x: SecurityTableWithLatestPriceRobinhoodId = {
+                id: r.id,
+                address: r.address,
+                address2: r.address2,
+                state: r.state,
+                zip: r.zip,
+                country: r.country,
+                phone: r.phone,
+                ceo: r.ceo,
+                securityName: r.security_name,
+                issueType: r.issue_type,
+                sector: r.sector,
+                primarySicCode: r.primary_sic_code,
+                employees: r.employees,
+                tags: r.tags,
+                companyName: r.company_name,
+                exchange: r.exchange,
+                industry: r.industry,
+                website: r.website,
+                description: r.description,
+                latestPrice: r.latest_price === undefined || r.latest_price === null ? null : r.latest_price,
+                createdAt: DateTime.fromJSDate(r.created_at),
+                lastUpdated: DateTime.fromJSDate(r.last_updated),
+                logoUrl: r.logo_url,
+                symbol: r.symbol,
+                rhInternalId: r.rh_internal_id,
+            }
+            return x;
+        })
+    }
+
+    getTradingPostOptionsWithRobinhoodOptionIds = async (rhOptionIds: number[]): Promise<OptionContractTableWithRobinhoodId[]> => {
+        const query = `select ro.id as internal_robinhood_option_id,
+                              so.id,
+                              so.security_id,
+                              so.type,
+                              so.strike_price,
+                              so.expiration,
+                              so.updated_at,
+                              so.created_at,
+                              so.external_id
+                       from robinhood_option ro
+                                inner join security_option so
+                                           on
+                                                       ro.strike_price = so.strike_price
+                                                   and ro.type = so.type
+                                                   and ro.expiration_date = so.expiration
+                       where ro.id in ($1:list);`
+        const results = await this.db.query(query, [rhOptionIds]);
+        if (results.length <= 0) return [];
+        return results.map((r: any) => {
+            let x: OptionContractTableWithRobinhoodId = {
+                id: r.id,
+                type: r.type,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                createdAt: DateTime.fromJSDate(r.created_at),
+                internalRobinhoodOptionId: r.internal_robinhood_option_id,
+                expiration: DateTime.fromJSDate(r.expiration),
+                externalId: r.external_id,
+                securityId: r.security_id,
+                strikePrice: r.strike_price,
+            }
+            return x;
+        })
+    }
+
+    getRobinhoodOptionsByExternalIds = async (externalIds: string[]): Promise<RobinhoodOptionTable[]> => {
+        if (externalIds.length <= 0) return [];
+        const query = `SELECT id,
+                              internal_instrument_id,
+                              external_id,
+                              strike_price,
+                              expiration_date,
+                              type,
+                              chain_id,
+                              chain_symbol,
+                              external_created_at,
+                              issue_date,
+                              min_ticks_above_tick,
+                              min_ticks_below_tick,
+                              min_ticks_cutoff_price,
+                              rhs_tradability,
+                              state,
+                              tradability,
+                              external_updated_at,
+                              url,
+                              sellout_date_time,
+                              long_strategy_code,
+                              short_strategy_code,
+                              updated_at,
+                              created_at
+                       FROM robinhood_option
+                       WHERE external_id IN ($1:list);`
+        const results = await this.db.query(query, [externalIds]);
+        if (results.length <= 0) return [];
+
+        return results.map((r: any) => {
+            let x: RobinhoodOptionTable = {
+                id: r.id,
+                url: r.url,
+                type: r.type,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                createdAt: DateTime.fromJSDate(r.created_at),
+                rhsTradability: r.rhs_tradability,
+                longStrategyCode: r.long_strategy_code,
+                selloutDateTime: r.sellout_date_time,
+                externalUpdatedAt: r.external_updated_at,
+                tradability: r.tradability,
+                strikePrice: r.strike_price,
+                minTicksCutoffPrice: r.min_ticks_cutoff_price,
+                minTicksBelowTick: r.min_ticks_below_tick,
+                minTicksAboveTick: r.min_ticks_above_tick,
+                issueDate: r.issue_date,
+                expirationDate: DateTime.fromJSDate(r.expiration_date),
+                chainId: r.chain_id,
+                externalCreatedAt: r.external_created_at,
+                externalId: r.external_id,
+                state: r.state,
+                chainSymbol: r.chain_symbol,
+                internalInstrumentId: r.internal_instrument_id,
+                shortStrategyCode: r.short_strategy_code,
+            }
+            return x;
+        })
+    }
+
+    getRobinhoodOption = async (internalOptionId: number): Promise<RobinhoodOptionTable | null> => {
+        const query = `SELECT id,
+                              internal_instrument_id,
+                              external_id,
+                              strike_price,
+                              expiration_date,
+                              type,
+                              chain_id,
+                              chain_symbol,
+                              external_created_at,
+                              issue_date,
+                              min_ticks_above_tick,
+                              min_ticks_below_tick,
+                              min_ticks_cutoff_price,
+                              rhs_tradability,
+                              state,
+                              tradability,
+                              external_updated_at,
+                              url,
+                              sellout_date_time,
+                              long_strategy_code,
+                              short_strategy_code,
+                              updated_at,
+                              created_at
+                       FROM robinhood_option
+                       WHERE id = $1
+        `;
+        const result = await this.db.oneOrNone(query, [internalOptionId]);
+        if (!result) return null;
+        return {
+            id: result.id,
+            url: result.url,
+            type: result.type,
+            updatedAt: DateTime.fromJSDate(result.updated_at),
+            createdAt: DateTime.fromJSDate(result.created_at),
+            rhsTradability: result.rhs_tradability,
+            longStrategyCode: result.long_strategy_code,
+            selloutDateTime: result.sellout_date_time,
+            externalUpdatedAt: result.external_updated_at,
+            tradability: result.tradability,
+            strikePrice: result.strike_price,
+            minTicksCutoffPrice: result.min_ticks_cutoff_price,
+            minTicksBelowTick: result.min_ticks_below_tick,
+            minTicksAboveTick: result.min_ticks_above_tick,
+            issueDate: result.issue_date,
+            expirationDate: DateTime.fromJSDate(result.expiration_date),
+            chainId: result.chain_id,
+            externalCreatedAt: result.external_created_at,
+            externalId: result.external_id,
+            state: result.state,
+            chainSymbol: result.chain_symbol,
+            internalInstrumentId: result.internal_instrument_id,
+            shortStrategyCode: result.short_strategy_code,
+        }
     }
 }
 

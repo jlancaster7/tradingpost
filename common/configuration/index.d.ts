@@ -1,6 +1,11 @@
 import { SSM } from '@aws-sdk/client-ssm';
-type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid" | "finicity";
+type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid" | "finicity" | "robinhood";
 export interface ConfigPaths extends Record<ConfigKeys, unknown> {
+    robinhood: {
+        clientId: string;
+        expiresIn: number;
+        scope: string;
+    };
     elastic: {
         cloudId: string;
         apiKey: string;

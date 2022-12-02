@@ -97,22 +97,24 @@ export default class Twitter {
         let result = 0;
 
         console.log("Tweets to Insert: ", formatedData.length);
+        let indexAdjust = 0
         for (let i = 0; i < formatedData.length; i++) {
             jobs.push(this.postPrepper.twitter(formatedData[i].embed));
             if (jobs.length >= 10 || formatedData.length - 1 === i) {
                 const r = await Promise.all(jobs);
                 r.forEach((item, idx) => {
                     const {maxWidth, aspectRatio} = item;
-                    formatedData[idx].max_width = maxWidth;
-                    formatedData[idx].aspect_ratio = aspectRatio;
+                    const dataIndex = indexAdjust * 10 + idx;
+                    formatedData[dataIndex].max_width = maxWidth;
+                    formatedData[dataIndex].aspect_ratio = aspectRatio;
                 });
 
                 const resultCnt = await this.repository.upsertTweets(formatedData);
-                result += resultCnt;
+                indexAdjust += 1;
                 jobs = [];
             }
         }
-
+        result += formatedData.length;
         return [formatedData, result];
     }
 
@@ -126,7 +128,7 @@ export default class Twitter {
             this.params.headers.authorization = 'BEARER ' + this.twitterCfg.bearer_token as string
         }
         let data = [];
-
+        let counter = 0;
         try {
             const tweetsEndpoints = `/users/${twitterUserId}/tweets?`;
             let nextToken = '';
@@ -161,11 +163,21 @@ export default class Twitter {
                 response = await (await fetch(fetchUrl, this.params)).json();
 
                 if (response.meta && !response.meta.result_count) {
-                    this.startDate = '';
-                    return [];
+                    if (Object.keys(response.meta).includes('next_token')) {
+                        nextToken = response.meta.next_token;
+                        continue;
+                    }
+                    else if (counter > 0) {
+                        this.startDate = '';
+                        return data;
+                    }
+                    else {
+                        this.startDate = '';
+                        return [];
+                    }
                 }
-
                 responseData = response.data;
+                counter += responseData ? responseData.length : 0;
 
                 if (token && !responseData) {
                     const newToken = await this.refreshTokensbyId('platform_user_id', twitterUserId);
@@ -173,10 +185,12 @@ export default class Twitter {
                         this.params.headers.authorization = 'BEARER ' + newToken!.accessToken;
                         response = await (await fetch(fetchUrl, this.params)).json();
                         responseData = response.data;
+                        counter += responseData ? responseData.length : 0;
                         if (!responseData) {
                             this.params.headers.authorization = 'BEARER ' + this.twitterCfg.bearer_token as string;
                             response = await (await fetch(fetchUrl, this.params)).json();
                             responseData = response.data;
+                            counter += responseData ? responseData.length : 0;
                             if (!responseData) {
                                 this.startDate = '';
                                 throw new Error(`Tried auth and api key, both failed for twitter user id: ${twitterUserId}`)
@@ -186,6 +200,7 @@ export default class Twitter {
                         this.params.headers.authorization = 'BEARER ' + this.twitterCfg.bearer_token as string;
                         response = await (await fetch(fetchUrl, this.params)).json();
                         responseData = response.data;
+                        counter += responseData ? responseData.length : 0;
                         if (!responseData) {
                             this.startDate = '';
                             throw new Error(`Tried auth and api key, both failed for twitter user id: ${twitterUserId}`)
@@ -223,6 +238,7 @@ export default class Twitter {
             if (err instanceof Error) {
                 console.warn(err.message);
             }
+            console.warn(`returning null because error occurred for ${twitterUserId}`)
             return [];
         }
         this.startDate = '';

@@ -4,7 +4,7 @@ import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import pg from 'pg';
 import Repository from '@tradingpost/common/brokerage/repository';
-import Ibkr from "@tradingpost/common/brokerage/ibkr/index";
+import Robinhood from "@tradingpost/common/brokerage/robinhood";
 import {S3Client} from "@aws-sdk/client-s3";
 import {PortfolioSummaryService} from "@tradingpost/common/brokerage/portfolio-summary";
 
@@ -42,7 +42,7 @@ const run = async () => {
     const repository = new Repository(pgClient, pgp);
     const s3Client = new S3Client({region: "us-east-1"});
     const portSummarySrv = new PortfolioSummaryService(repository);
-    const ibkrSrv = new Ibkr(repository, s3Client, portSummarySrv);
+    const robinhoodSrv = new Robinhood(repository, s3Client, portSummarySrv);
 
     // Check to see if any brokerages to process
     // Process

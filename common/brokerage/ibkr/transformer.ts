@@ -358,7 +358,7 @@ export default class IbkrTransformer {
 
         tpTransactions.sort(function (a, b) {
             try {
-                return a.accountId - b.accountId ||
+                return (a.accountId || 0) - (b.accountId  || 0) ||
                     a.securityId - b.securityId ||
                     a.securityType.localeCompare(b.securityType) ||
                     a.type.localeCompare(b.type) ||

@@ -13,7 +13,8 @@ import {
     TradingPostBrokerageAccountsTable,
     TradingPostHistoricalHoldings,
     IBrokerageService,
-    IBrokerageRepository
+    IBrokerageRepository,
+    TradingPostTransactions
 } from './interfaces';
 
 const Default = (pgClient: IDatabase<any>, pgp: IMain, finicity: Finicity): [Record<string, IBrokerageService>, IBrokerageRepository, PortfolioSummaryService] => {
@@ -33,6 +34,9 @@ export default class Brokerage extends BrokerageService {
 
     getUserHoldings = async (tpUserId: string): Promise<HistoricalHoldings[]> => {
         return await this.portfolioSummaryService.getCurrentHoldings(tpUserId);
+    }
+    getUserTrades = async (tpUserId: string, paging?: {limit: number, offset: number}): Promise<TradingPostTransactions[]> => {
+        return await this.portfolioSummaryService.getTrades(tpUserId, paging);
     }
 
     getUserAccountGroupSummary = async (tpUserId: string): Promise<TradingPostAccountGroupStats> => {

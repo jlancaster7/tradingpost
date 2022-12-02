@@ -161,7 +161,7 @@ export function toFormatedDateTime(dateTimeString: string) {
     let h = new Date(dateTimeString).getHours();
     let min: string | number = new Date(dateTimeString).getMinutes();
     let ampm = 'am'
-    if ( h > 12 ) {
+    if ( h >= 12 ) {
         ampm = 'pm';
         h = h === 12 ? h : h - 12;
     }

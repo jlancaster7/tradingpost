@@ -6,7 +6,7 @@ import { ElevatedSection, Section, Subsection } from "./Section"
 import { NoteEditor, SecPressable } from "../screens/WatchlistViewerScreen"
 import { fonts, sizes } from "../style"
 import { AppColors } from "../constants/Colors"
-import { toDollars, toDollarsAndCents } from "../utils/misc"
+import { toDollars, toDollarsAndCents, toNumber1 } from "../utils/misc"
 
 export const HoldingRenderItem = (props: {item: any, byId: any}) => {
     const { item, byId } = props
@@ -35,6 +35,9 @@ export const HoldingRenderItem = (props: {item: any, byId: any}) => {
                 <Text style={{flex: 1, fontWeight: '900', color: '#454545'}}>
                             {byId[secId] ? (byId[secId].symbol === 'USD:CUR' ? 'Cash' : byId[secId].symbol) : ''}
                 </Text>
+                <Text style={[item.item.optionInfo ? {display: 'flex'} : {display: 'none'}, {fontSize: fonts.xSmall}]}>
+                        {item.item.optionInfo && `${String(item.item.optionInfo[0].type).toLowerCase() === 'call' ? 'C' : 'P'}${toNumber1(item.item.optionInfo[0].strike_price)} ${new Date(item.item.optionInfo[0].expiration).toLocaleDateString()}`}
+                    </Text>
                 <Text style={{flex: 1, color: '#606060'}}>
                     {toDollarsAndCents(item.item.price)}
                 </Text>

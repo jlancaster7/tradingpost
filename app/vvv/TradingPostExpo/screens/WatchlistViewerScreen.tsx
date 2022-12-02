@@ -21,6 +21,7 @@ import { toDollarsAndCents, toNumber1, toPercent, toPercent1, toPercent2 } from 
 import { MultiTermFeedPart } from "../components/MultiTermFeed"
 import { List } from "../components/List"
 import { WatchlistItemRenderItem } from "../components/WatchlistItemRenderItem"
+import { PrimaryChip } from "../components/PrimaryChip"
 
 
 export const useNoteField = (hideEmptyNote?: boolean) => {
@@ -214,6 +215,9 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                         <ElevatedSection title={""}>
                             <View style={{flex: 1, flexDirection: 'row', alignContent: 'center'}}>
                                 <ProfileBar style={{flex: 1}} user={watchlist?.user[0]} />
+                                <View style={{flex: 1, alignContent: 'center', justifyContent: 'center'}}>
+                                    <PrimaryChip style={{width: '50%'}} isAlt key={watchlist?.id} label={watchlist?.type ? watchlist.type.slice(0,1).toUpperCase() + watchlist.type.slice(1) : ''} />
+                                </View>
                                 {watchlist?.user[0].id === appUser?.id ? 
                                     <EditButton
                                         height={24}

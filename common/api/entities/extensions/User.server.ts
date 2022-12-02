@@ -202,6 +202,7 @@ export default ensureServerExtensions<User>({
         }
     },
     getTrades: async (r) => {
+        const { brokerage } = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -216,19 +217,25 @@ export default ensureServerExtensions<User>({
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId) {
+            return await brokerage.getUserTrades(requestedId, {limit: r.extra.limit || 6, offset: r.extra.page || 0});
+            /*
             return await execProc("public.api_trade_list", {
                 limit: r.extra.limit || 5,
                 user_id: r.extra.userId,
                 page: r.extra.page,
                 data: { user_id: r.body.userId }
             })
+            */
         } else if (requestedUser?.settings?.portfolio_display.trades && requestedUser.subscription?.is_subscribed) {
+            let result = await brokerage.getUserTrades(requestedId, {limit: r.extra.limit || 6, offset: r.extra.page || 0});
+            /*
             let result = await execProc("public.api_trade_list", {
                 limit: r.extra.limit || 5,
                 user_id: r.extra.userId,
                 page: r.extra.page,
                 data: { user_id: r.body.userId }
             })
+            */
             let t: any[] = []
             result.forEach((r, i) => {
                 const o = {
@@ -238,9 +245,9 @@ export default ensureServerExtensions<User>({
                     price: r.price,
                     fees: r.fees,
                     currency: r.currency,
-                    security_id: r.security_id,
-                    option_id: r.option_id,
-                    option_info: r.option_info
+                    security_id: r.securityId,
+                    option_id: r.optionId,
+                    option_info: r.optionInfo
                 }
                 t.push(o);
             })

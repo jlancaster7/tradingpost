@@ -235,9 +235,9 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                             title={'All Trades'}
                             listProps={{
                                 keyExtractor: (item: any, idx) => {
-                                    return item ? "trade_" + item.id : "empty";
+                                    return item ? "trade_" + item.securityId + item.date : "empty";
                                 },
-                                datasetKey: `trades_id_${holdings?.length}`,
+                                datasetKey: `trades_id_`,
                                 data: async (a, $page, $limit) => {
                                     const newArr = a || [];
                                     newArr.push(... (await Api.User.extensions.getTrades({ $page, settings: {} })))

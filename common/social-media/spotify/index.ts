@@ -87,9 +87,8 @@ export default class Spotify {
         if (data.length <= 0) {
             return [[], 0]
         }
-    
-        const results = await this.repository.insertSpotifyEpisodes(data);
 
+        const results = await this.repository.insertSpotifyEpisodes(data);
         return [data, results]
     }
 
@@ -157,6 +156,7 @@ export default class Spotify {
                     if (startDate > new Date(body.items[i].release_date)) {
                         fetchUrl = null
                     }
+
                     const embeddedResponse = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${body.items[i].id}`);
                     const embeddedBody = await embeddedResponse.text();
                     try {
@@ -164,7 +164,7 @@ export default class Spotify {
                         body.items[i].embed = embedResponse;
                     } catch (err) {
                         console.error(err)
-                        console.log("body of json response from spotify: ", embeddedResponse)
+                        console.log("body of json response from spotify: ", embeddedBody)
                     }
                 }
 
