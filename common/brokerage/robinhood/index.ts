@@ -12,7 +12,6 @@ import {
 } from "./interfaces";
 import Api from "./api";
 import {DateTime} from "luxon";
-import {option} from "yargs";
 
 interface Repository {
     getRobinhoodUser(userId: string): Promise<RobinhoodUserTable | null>
@@ -148,46 +147,46 @@ export default class Service {
     }
 
     transactions = async (userId: string) => {
-        const robinhoodUser = await this._repo.getRobinhoodUser(userId);
-        if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
-
-        let instrumentsMap: Record<string, RobinhoodInstrumentTable> = {};
-        let accountMap: Record<string, RobinhoodAccountTable> = {};
-        let optionsMap: Record<string, RobinhoodOptionTable> = {};
-
-        (await this._repo.getRobinhoodAccountsByRobinhoodUserId(robinhoodUser.id)).forEach(a => accountMap[a.accountNumber] = a);
-
-        let allTransactions: RobinhoodTransaction[] = [];
-
-        let equityTxs: Order[] = [];
-        let equityNextUrl: string | null = null;
-        while (true) {
-            [equityTxs, equityNextUrl] = await this._api.orders({}, equityNextUrl === null ? undefined : equityNextUrl);
-            (await this._repo.getRobinhoodInstrumentsByExternalId(equityTxs.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
-            let transformedPositions = await this._transformPositions(positions, accountMap, instrumentsMap);
-            allPositions = [...allPositions, ...transformedPositions];
-            if (positionsNextUrl === null) break;
-        }
-
-
-        (await this._repo.getRobinhoodInstrumentsByExternalId(transactions.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
-        (await this._repo.getRobinhoodAccountsByRobinhoodUserId(robinhoodUser.id)).forEach(a => accountMap[a.accountNumber] = a)
-
-        let transformedTransactions = await this._transformTransactions(transactions, accountMap, instrumentsMap);
-        await this._repo.upsertRobinhoodTransactions(transformedTransactions)
-
-
-        let allTransformedTransactions: RobinhoodTransaction[] = [...transformedTransactions];
-        while (nextUrl !== null) {
-            [transactions, nextUrl] = await this._api.orders({}, nextUrl);
-            (await this._repo.getRobinhoodInstrumentsByExternalId(transactions.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
-
-            transformedTransactions = await this._transformTransactions(transactions, accountMap, instrumentsMap);
-            await this._repo.upsertRobinhoodTransactions(transformedTransactions);
-            allTransformedTransactions = [...allTransformedTransactions, ...transformedTransactions];
-        }
-
-        // Transformer for Transactions
+        // const robinhoodUser = await this._repo.getRobinhoodUser(userId);
+        // if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
+        //
+        // let instrumentsMap: Record<string, RobinhoodInstrumentTable> = {};
+        // let accountMap: Record<string, RobinhoodAccountTable> = {};
+        // let optionsMap: Record<string, RobinhoodOptionTable> = {};
+        //
+        // (await this._repo.getRobinhoodAccountsByRobinhoodUserId(robinhoodUser.id)).forEach(a => accountMap[a.accountNumber] = a);
+        //
+        // let allTransactions: RobinhoodTransaction[] = [];
+        //
+        // let equityTxs: Order[] = [];
+        // let equityNextUrl: string | null = null;
+        // while (true) {
+        //     [equityTxs, equityNextUrl] = await this._api.orders({}, equityNextUrl === null ? undefined : equityNextUrl);
+        //     (await this._repo.getRobinhoodInstrumentsByExternalId(equityTxs.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
+        //     let transformedPositions = await this._transformPositions(positions, accountMap, instrumentsMap);
+        //     allPositions = [...allPositions, ...transformedPositions];
+        //     if (positionsNextUrl === null) break;
+        // }
+        //
+        //
+        // (await this._repo.getRobinhoodInstrumentsByExternalId(transactions.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
+        // (await this._repo.getRobinhoodAccountsByRobinhoodUserId(robinhoodUser.id)).forEach(a => accountMap[a.accountNumber] = a)
+        //
+        // let transformedTransactions = await this._transformTransactions(transactions, accountMap, instrumentsMap);
+        // await this._repo.upsertRobinhoodTransactions(transformedTransactions)
+        //
+        //
+        // let allTransformedTransactions: RobinhoodTransaction[] = [...transformedTransactions];
+        // while (nextUrl !== null) {
+        //     [transactions, nextUrl] = await this._api.orders({}, nextUrl);
+        //     (await this._repo.getRobinhoodInstrumentsByExternalId(transactions.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
+        //
+        //     transformedTransactions = await this._transformTransactions(transactions, accountMap, instrumentsMap);
+        //     await this._repo.upsertRobinhoodTransactions(transformedTransactions);
+        //     allTransformedTransactions = [...allTransformedTransactions, ...transformedTransactions];
+        // }
+        //
+        // // Transformer for Transactions
     }
 
     _addOption = async (externalOptionId: string): Promise<RobinhoodOptionTable | null> => {
@@ -567,7 +566,7 @@ export default class Service {
         return transformedPositions
     }
 
-    _transformOptionOrders = async (optionOrders: OptionOrder[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodTransaction[]> => {
+    _transformOptionOrders = async (optionOrders: OptionOrder[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<any> => {
         let transformedTxs: RobinhoodTransaction[] = [];
         for (let i = 0; i < optionOrders.length; i++) {
             let oo = optionOrders[i];
@@ -596,14 +595,14 @@ export default class Service {
                 const optionUrlSplit = leg.option.split("/")
                 const optionId = optionUrlSplit[optionUrlSplit.length - 2];
 
-                for (let k = 0; i < leg.executions.length; i++) {
-                    transformedTxs.push({
-                        url: '',
-                        executionsTimestamp: '',
-                        extendedHours: '',
-                        externalCreatedAt: ''
-                    })
-                }
+                // for (let k = 0; i < leg.executions.length; i++) {
+                //     transformedTxs.push({
+                //         url: '',
+                //         executionsTimestamp: '',
+                //         extendedHours: '',
+                //         externalCreatedAt: ''
+                //     })
+                // }
             }
         }
     }
@@ -704,6 +703,32 @@ export default class Service {
                     trigger: tx.trigger,
                     totalNotionalCurrencyId: tx.total_notional ? tx.total_notional.currency_id : null,
                     internalOptionId: null,
+
+                    accountNumber: accountNumber,
+                    chainId: null,
+                    canceledQuantity: null,
+                    cancelUrl: null,
+                    chainSymbol: null,
+                    clientAskAtSubmission: null,
+                    clientBidAtSubmission: null,
+                    clientTimeAtSubmission: null,
+                    closingStrategy: null,
+                    direction: null,
+                    expirationDate: null,
+                    formSource: null,
+                    longStrategyCode: null,
+                    openingStrategy: null,
+                    optionLegId: null,
+                    optionType: null,
+                    optionUrl: null,
+                    pendingQuantity: null,
+                    positionEffect: null,
+                    premium: null,
+                    processedPremium: null,
+                    processedQuantity: null,
+                    ratioQuantity: null,
+                    shortStrategyCode: null,
+                    strikePrice: null
                 })
             }
         }

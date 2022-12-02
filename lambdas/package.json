@@ -3,7 +3,7 @@
     "@aws-sdk/client-s3": "^3.198.0",
     "@elastic/elasticsearch": "^8.2.1",
     "@sparticuz/chromium": "^107.0.0",
-    "@tradingpost/common": "file:tradingpost-common-1.5.0.tgz",
+    "@tradingpost/common": "file:../common",
     "aws-lambda": "^1.0.7",
     "aws-lambda-ric": "^2.0.0",
     "aws-sdk": "^2.1153.0",

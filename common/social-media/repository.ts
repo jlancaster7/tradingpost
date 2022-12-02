@@ -3,7 +3,7 @@ import {formatedTweet, formatedTwitterUser, TweetsAndUsers, TweetsAndUsersTable}
 import {PlatformToken} from './utils';
 import {SubstackAndNewsletter, SubstackAndNewsletterTable, SubstackArticles, SubstackUser} from './substack/interfaces';
 import {spotifyShow, spotifyEpisode, SpotifyEpisodeAndUser, SpotifyEpisodeAndUserTable} from './spotify/interfaces';
-import { TradingPostsAndUsers, TradingPostsAndUsersTable } from "./tradingposts/interfaces";
+import {TradingPostsAndUsers, TradingPostsAndUsersTable} from "./tradingposts/interfaces";
 import {
     formatedYoutubeVideo,
     formatedChannelInfo,
@@ -255,14 +255,10 @@ export default class Repository {
                      FROM spotify_episodes
                      WHERE spotify_show_id = $1
                      GROUP BY spotify_show_id`;
-        let result = await this.db.result(query, [spotify_show_id]);
+        let result = await this.db.oneOrNone<{ spotify_show_id: number, max: Date }>(query, [spotify_show_id]);
+        if (result === null) return new Date("1/1/2018");
 
-        if (!result.rows.length) {
-            return new Date('1/1/2018');
-        } else {
-            // @ts-ignore
-            return result.rows[0].max;
-        }
+        return result.max
     }
 
     getTokens = async (idType: string, ids: string[], platform: string): Promise<PlatformToken[]> => {
@@ -482,7 +478,7 @@ export default class Repository {
     }
 
     getTweetsAndUsersByTweetIds = async (tweetIds: string[]): Promise<TweetsAndUsers[]> => {
-        if(tweetIds.length <=0) return [];
+        if (tweetIds.length <= 0) return [];
         let query = `SELECT t.id                  AS id,
                             t.tweet_id            AS tweet_id,
                             t.twitter_user_id,
@@ -1185,21 +1181,21 @@ export default class Repository {
             let query = `SELECT dp.id,
                                 dp.user_id,
                                 dp.subscription_level,
-                                dp.title, 
+                                dp.title,
                                 dp.body,
                                 dp.created_at,
                                 dp.updated_at,
-                                (dp.max_width::numeric(24,4)) AS max_width,
-                                (dp.aspect_ratio::numeric(24,4)) AS aspect_ratio,
-                                du.handle AS tradingpost_user_handle,
-                                du.email AS tradingpost_user_email,
-                                du.profile_url AS tradingpost_user_profile_url
+                                (dp.max_width::numeric(24, 4))    AS max_width,
+                                (dp.aspect_ratio::numeric(24, 4)) AS aspect_ratio,
+                                du.handle                         AS tradingpost_user_handle,
+                                du.email                          AS tradingpost_user_email,
+                                du.profile_url                    AS tradingpost_user_profile_url
                          FROM data_post dp
-                         INNER JOIN data_user du
-                                ON dp.user_id = du.id
+                                  INNER JOIN data_user du
+                                             ON dp.user_id = du.id
                          WHERE dp.id > $1
                          ORDER BY dp.id;
-                         `;
+            `;
             const response = await this.db.query(query, [lastId]);
             if (response.length <= 0) return [];
             return response.map((row: any) => {
