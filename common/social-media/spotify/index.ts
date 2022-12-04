@@ -3,6 +3,12 @@ import {spotifyConfig} from '../utils';
 import {spotifyParams, spotifyShow, spotifyEpisode} from './interfaces';
 import Repository from '../repository';
 
+class ServerDownException extends Error {
+    constructor(msg: string) {
+        super(msg);
+    }
+}
+
 export default class Spotify {
     private spotifyConfig: spotifyConfig;
     private repository: Repository;
@@ -158,6 +164,7 @@ export default class Spotify {
                     }
 
                     const embeddedResponse = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${body.items[i].id}`);
+                    if (embeddedResponse.status === 502) throw new ServerDownException('');
                     const embeddedBody = await embeddedResponse.text();
                     try {
                         embedResponse = await JSON.parse(embeddedBody);
@@ -199,6 +206,7 @@ export default class Spotify {
             }
             return results;
         } catch (e) {
+            if (e instanceof ServerDownException) return [];
             console.log(e);
             throw e
         }

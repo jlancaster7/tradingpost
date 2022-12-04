@@ -1,5 +1,5 @@
 import { SSM } from '@aws-sdk/client-ssm';
-type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid" | "finicity" | "robinhood";
+declare type ConfigKeys = "elastic" | "iex" | "postgres" | "authkey" | "spotify" | "twitter" | "youtube" | "discord_bot" | "ios" | "fcm" | "substack" | "sendgrid" | "finicity" | "robinhood";
 export interface ConfigPaths extends Record<ConfigKeys, unknown> {
     robinhood: {
         clientId: string;
@@ -68,8 +68,8 @@ export interface ConfigPaths extends Record<ConfigKeys, unknown> {
         key: string;
     };
 }
-export type ConfigurationEnv = "production" | "development" | "automation";
-type ConfigOptions = {
+export declare type ConfigurationEnv = "production" | "development" | "automation";
+declare type ConfigOptions = {
     raw: boolean;
     maxCacheDuration?: number;
 };

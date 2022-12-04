@@ -207,11 +207,13 @@ export type RobinhoodTransaction = {
     cumulativeQuantity: string | null
     averagePrice: string | null
     fees: string | null
+    rate: string | null
+    position: string | null
+    withholding: string | null
+    cashDividendId: string | null
     state: string | null
-    pendingCancelOpenAgent: string | null
     type: string | null
     side: string | null
-    timeInForce: string | null
     trigger: string | null
     price: string | null
     stopPrice: string | null
@@ -220,68 +222,28 @@ export type RobinhoodTransaction = {
     externalCreatedAt: string | null
     externalUpdatedAt: string | null
     lastTransactionAt: string | null
-    executionsPrice: string | null
-    executionsQuantity: string | null
-    executionsRoundedNotional: string | null
-    executionsSettlementDate: string | null
+    executionsPrice: number
+    executionsQuantity: number
     executionsTimestamp: DateTime
+    executionsSettlementDate: string | null
     executionsId: string | null
-    executionsIpoAccessExecutionRank: string | null
     extendedHours: boolean | null
-    marketHours: string | null
-    overrideDtbpChecks: boolean | null
-    overrideDayTradeChecks: boolean | null
-    responseCategory: string | null
-    stopTriggeredAt: string | null
-    lastTrailPrice: string | null
-    lastTrailPriceUpdatedAt: string | null
-    lastTrailPriceSource: string | null
     dollarBasedAmount: string | null
-    totalNotionalAmount: string | null
-    totalNotionalCurrencyCode: string | null
-    totalNotionalCurrencyId: string | null
-    executedNotionalAmount: string | null
-    executedNotionalCurrencyCode: string | null
-    executedNotionalCurrencyId: string | null
     investmentScheduleId: string | null
-    isIpoAccessOrder: boolean | null
-    ipoAccessCancellationReason: string | null
-    ipoAccessLowerCollaredPrice: string | null
-    ipoAccessUpperCollaredPrice: string | null
-    ipoAccessUpperPrice: string | null
-    ipoAccessLowerPrice: string | null
-    isIpoAccessPriceFinalized: boolean | null
-    isVisibleToUser: boolean | null
-    hasIpoAccessCustomPriceLimit: boolean | null
-    isPrimaryAccount: boolean | null
-    orderFormVersion: number | null
-    presetPercentLimit: string | null
-    orderFormType: string | null
     accountNumber: string | null
     cancelUrl: string | null
     canceledQuantity: string | null
     direction: string | null
-    optionUrl: string | null
     optionLegId: string | null
     positionEffect: string | null
-    ratioQuantity: string | null
-    expirationDate: DateTime | null
-    strikePrice: string | null
-    optionType: string | null
-    longStrategyCode: string | null
-    shortStrategyCode: string | null
+    ratioQuantity: number | null
     pendingQuantity: string | null
-    premium: string | null
-    processedPremium: string | null
     processedQuantity: string | null
     chainId: string | null
     chainSymbol: string | null
-    openingStrategy: string | null
-    closingStrategy: string | null
-    formSource: string | null
-    clientBidAtSubmission: string | null
-    clientAskAtSubmission: string | null
-    clientTimeAtSubmission: string | null
+    achRelationship: string | null
+    expectedLandingDate: string | null
+    expectedLandingDateTime: string | null
 }
 
 export type RobinhoodTransactionTable = {
@@ -333,7 +295,24 @@ export type AchTransfer = {
     managed_by_ph: boolean | null
 }
 
-export type Dividend = {}
+export type Dividend = {
+    id: string | null
+    url: string | null
+    account: string | null
+    instrument: string | null
+    amount: string | null
+    rate: string | null
+    position: string | null
+    withholding: string | null
+    record_date: string | null
+    payable_date: string | null
+    paid_at: string | null
+    state: string | null
+    cash_dividend_id: string | null
+    drip_enabled: string | null
+    nra_withholding: string | null
+    is_primary_account: boolean | null
+}
 
 export type OptionPosition = {
     account: string | null
@@ -359,7 +338,6 @@ export type OptionPosition = {
     url: string | null
     option_id: string | null
 }
-
 
 export type OptionOrder = {
     account_number: string | null
