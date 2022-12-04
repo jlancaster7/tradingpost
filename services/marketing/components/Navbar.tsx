@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 const Navbar = () => {
     return (
-        <nav className="navbar">
+        <nav className="navbar" style={{height: '10vh'}}>
             <h1 className='title'>
                 <a href="/"><Image src={TPLogo} alt="tradingpost logo"/></a>
                 <a href="/"><span className='titleWhite'>Trading</span></a>

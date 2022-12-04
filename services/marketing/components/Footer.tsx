@@ -4,7 +4,7 @@ import Image from 'next/image'
 
 const Footer = () => {
     return (
-        <div className="footer">
+        <div className="footer" style={{height: '3vh'}}>
             <div className="copyright">
                 <p>© 2022 Tradingpost</p>
             </div>
@@ -14,9 +14,11 @@ const Footer = () => {
                    style={{
                        color: "white"
                    }}>Privacy Policy</a>
-                <a href="/" style={{
-                    color: "white",
-                }}>Terms of Service</a>
+                <a href="/terms-of-service" 
+                   target="_blank" rel="noreferrer"
+                   style={{
+                        color: "white",
+                    }}>Terms of Service</a>
                 <a href="/" style={{
                     color: "white",
                 }}>Contact Us</a>
