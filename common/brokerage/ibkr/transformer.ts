@@ -17,7 +17,7 @@ import {
 } from "../interfaces";
 import {DateTime} from "luxon";
 import {addSecurity} from "../../market-data/interfaces";
-import {transformTransactionTypeAmount} from "../utils/utils";
+import {rollUpHistoricalHoldings, rollUpTransactions, transformTransactionTypeAmount} from "../utils/utils";
 import fs from "fs";
 
 export interface TransformerRepository {
@@ -39,13 +39,13 @@ export interface TransformerRepository {
 
     upsertTradingPostHistoricalHoldings(historicalHoldings: TradingPostHistoricalHoldings[]): Promise<void>
 
-    addTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
-
     deleteTradingPostAccountCurrentHoldings(accountIds: number[]): Promise<void>
 
     getTradingPostBrokerageWithMostRecentHolding(tpUserId: string, brokerage: string): Promise<TradingPostCurrentHoldingsTableWithMostRecentHolding[]>
 
     getOptionContractsByExternalIds(externalIds: string[]): Promise<OptionContractTable[]>
+
+    upsertTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
 }
 
 const transformSecurityType = (type: string): SecurityType => {
@@ -136,7 +136,7 @@ const transformTransactionType = (transactionType: string): InvestmentTransactio
         case "DVPOUT": // Outgoing DVP
             throw new Error("no transaction type for outgoing dvp");
         case "EXE": // Exercise
-            // TODO: Check if its a call or a put before
+                    // TODO: Check if its a call or a put before
             return InvestmentTransactionType.buy
         case "EXP": // Expire
             return InvestmentTransactionType.cancel
@@ -356,46 +356,7 @@ export default class IbkrTransformer {
             }
         });
 
-        tpTransactions.sort(function (a, b) {
-            try {
-                return (a.accountId || 0) - (b.accountId  || 0) ||
-                    a.securityId - b.securityId ||
-                    a.securityType.localeCompare(b.securityType) ||
-                    a.type.localeCompare(b.type) ||
-                    a.date.toUnixInteger() - b.date.toUnixInteger()
-            } catch (e) {
-                console.error("HERE!!!")
-                console.error(e)
-                throw e
-            }
-        })
-
-        let rollupTxs: TradingPostTransactions[] = [];
-        let latestTx: TradingPostTransactions | null = null;
-        tpTransactions.forEach(tx => {
-            if (!latestTx) {
-                latestTx = tx;
-                return
-            }
-
-            if (latestTx.accountId === tx.accountId &&
-                latestTx.securityId === tx.securityId &&
-                latestTx.securityType === tx.securityType &&
-                latestTx.type === tx.type &&
-                latestTx.price === tx.price &&
-                latestTx.date.toUnixInteger() === tx.date.toUnixInteger()) {
-                latestTx.quantity += tx.quantity
-                latestTx.amount += tx.amount
-                if (!latestTx.fees) latestTx.fees = 0
-                latestTx.fees += !tx.fees ? 0 : tx.fees
-                return
-            }
-
-            rollupTxs.push(latestTx);
-            latestTx = tx;
-        });
-
-        latestTx !== null ? rollupTxs.push(latestTx) : null;
+        const rollupTxs = rollUpTransactions(tpTransactions);
 
         try {
             await this._repository.upsertTradingPostTransactions(rollupTxs);
@@ -468,7 +429,8 @@ export default class IbkrTransformer {
             }
         });
 
-        await this._repository.upsertTradingPostHistoricalHoldings(historicalHoldings)
+        const rollup = rollUpHistoricalHoldings(historicalHoldings);
+        await this._repository.upsertTradingPostHistoricalHoldings(rollup)
 
         const currentTpHoldings = await this._repository.getTradingPostBrokerageWithMostRecentHolding(tpUserId, "ibkr");
         if (currentTpHoldings.length > 0) {
@@ -555,7 +517,7 @@ export default class IbkrTransformer {
         const tpAccountIds = currentTpHoldings.map(tp => tp.id);
         try {
             await this._repository.deleteTradingPostAccountCurrentHoldings(tpAccountIds);
-            await this._repository.addTradingPostCurrentHoldings(rollupTxs);
+            await this._repository.upsertTradingPostCurrentHoldings(rollupTxs);
         } catch (e) {
             let data: any[] = [];
             rollupTxs.forEach(tx => {

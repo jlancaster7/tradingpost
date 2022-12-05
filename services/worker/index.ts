@@ -3,10 +3,16 @@ import cors from 'cors';
 import {DefaultConfig} from '@tradingpost/common/configuration';
 import pgPromise from 'pg-promise';
 import Finicity from "@tradingpost/common/finicity";
-import Brokerage from "@tradingpost/common/brokerage";
 import bodyParser from "body-parser";
 import pg from 'pg';
 import crypto from "crypto";
+import Repository from "@tradingpost/common/brokerage/repository";
+import {
+    BrokerageTaskStatusType,
+    BrokerageTaskType,
+    DirectBrokeragesType
+} from "@tradingpost/common/brokerage/interfaces";
+import {DateTime} from "luxon";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -35,12 +41,10 @@ const run = async () => {
         database: pgCfg.database
     });
 
-    await pgClient.connect()
-
+    const repository = new Repository(pgClient, pgp);
     const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
     const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
     await finicity.init()
-    const brokerageService = new Brokerage(pgClient, pgp, finicity);
 
     const app = express();
     const port = process.env.PORT || 8080;
@@ -64,23 +68,59 @@ const run = async () => {
         if (req.body.eventType === 'added') {
             console.log("Adding Account")
             const {customerId} = req.body;
-            await brokerageService.addNewAccounts(customerId, 'finicity');
-            console.log("Finished Adding An Account")
+            const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
+            if (!tpUser) throw new Error("finicity user does not exist")
+
+            await repository.upsertBrokerageTasks([{
+                type: BrokerageTaskType.NewAccount,
+                userId: tpUser.id,
+                status: BrokerageTaskStatusType.Pending,
+                data: null,
+                started: null,
+                finished: null,
+                brokerage: DirectBrokeragesType.Finicity,
+                date: DateTime.now().setZone("America/New_York"),
+                brokerageUserId: customerId,
+            }]);
         }
 
         if (req.body.eventType === 'accountsDeleted') {
             console.log("Account Deleted")
             const {customerId, eventId, payload} = req.body
             const {accounts} = payload;
-            await brokerageService.removeAccounts(customerId, accounts, 'finicity');
-            console.log("Finished Account Deletion")
+            const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
+            if (!tpUser) throw new Error("finicity user does not exist")
+
+            await repository.upsertBrokerageTasks([{
+                type: BrokerageTaskType.DeleteAccount,
+                finished: null,
+                brokerageUserId: customerId,
+                date: DateTime.now().setZone("America/New_York"),
+                started: null,
+                data: {accounts: accounts},
+                brokerage: DirectBrokeragesType.Finicity,
+                status: BrokerageTaskStatusType.Pending,
+                userId: tpUser.id
+            }]);
         }
 
         if (req.body.eventType === 'credentialsUpdated') {
             console.log("Credentials Updating")
-            // TODO: REDO Account
-            const {institutionLoginId} = req.body.payload;
-            console.log("Credentials finished Updating")
+            const {institutionLoginId, customerId} = req.body.payload;
+            const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
+            if (!tpUser) throw new Error("finicity user does not exist")
+
+            await repository.upsertBrokerageTasks([{
+                type: BrokerageTaskType.UpdateAccount,
+                finished: null,
+                brokerageUserId: customerId,
+                date: DateTime.now().setZone("America/New_York"),
+                started: null,
+                data: null,
+                brokerage: DirectBrokeragesType.Finicity,
+                status: BrokerageTaskStatusType.Pending,
+                userId: tpUser.id
+            }])
         }
 
         return res.send()

@@ -247,12 +247,12 @@ CREATE UNIQUE INDEX robinhood_transaction_unique_idx ON robinhood_transaction (i
                                                                                executions_quantity);
 
 INSERT INTO robinhood_instrument(url, external_id, symbol, name, country)
-VALUES ('', 'external-cash', 'CUR:USD', 'Cash', 'United States');
+VALUES ('', 'external-cash', 'USD:CUR', 'Cash', 'United States');
 
 -- TradingPost Transaction Update
 ALTER TABLE tradingpost_transaction DROP CONSTRAINT tradingpost_transaction_option_id_fkey;
 DROP INDEX tradingpost_transaction_unique_idx;
-CREATE UNIQUE INDEX tradingpost_transaction_unique_idx ON tradingpost_transaction USING btree (account_id, security_id, coalesce (option_id, -1), type, date);
+CREATE UNIQUE INDEX tradingpost_transaction_unique_idx ON tradingpost_transaction USING btree (account_id, security_id, coalesce (option_id, -1), type, date, price);
 
 -- TradingPost Current Holding Update
 ALTER TABLE tradingpost_current_holding DROP CONSTRAINT tradingpost_current_holding_option_id_fkey;
@@ -262,4 +262,41 @@ CREATE UNIQUE INDEX tradingpost_current_holding_unique_idx ON tradingpost_curren
 -- TradingPost Historical Holding Update
 ALTER TABLE tradingpost_historical_holding DROP CONSTRAINT tradingpost_historical_holding_option_id_fkey;
 DROP INDEX historical_holding_acc_sec_date_quantity;
-CREATE UNIQUE INDEX historical_holding_unqi ON tradingpost_historical_holding (account_id, security_id, coalesce(option_id,-1), date)
+CREATE UNIQUE INDEX historical_holding_unqi ON tradingpost_historical_holding (account_id, security_id, coalesce(option_id,-1), date, price);
+
+CREATE TYPE direct_brokerages_type AS ENUM('Robinhood', 'Ibkr', 'Finicity');
+
+CREATE TYPE brokerage_task_type AS enum('NEW_ACCOUNT', 'NEW_DATA', 'TODO');
+
+CREATE TYPE brokerage_task_status_type AS ENUM ('PENDING', 'FAILED', 'RUNNING', 'SUCCESSFUL');
+
+-- partial type is used when the task is not ready just quite yet and might have other dependents but is initialized
+ALTER TYPE brokerage_task_status_type ADD VALUE 'PARTIAL';
+
+ALTER TYPE brokerage_task_type ADD VALUE 'DELETE_ACCOUNT';
+
+ALTER TYPE brokerage_task_type ADD VALUE 'UPDATE_ACCOUNT';
+
+CREATE TABLE brokerage_task
+(
+    id                BIGSERIAL                      NOT NULL,
+    user_id           UUID REFERENCES data_user (id) NOT NULL,
+    brokerage         direct_brokerages_type         NOT NULL,
+    status            brokerage_task_status_type     NOT NULL DEFAULT 'PENDING',
+    type              brokerage_task_type            NOT NULL DEFAULT 'TODO',
+    date              TIMESTAMPTZ                    NOT NULL, -- Used for when to process in ASCENDING order
+    brokerage_user_id text                           NOT NULL,
+    started           TIMESTAMPTZ,
+    finished          TIMESTAMPTZ,
+    data              JSONB,
+    error             JSONB,
+    updated_at        TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at        TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+CREATE UNIQUE INDEX brokerage_task_uniq ON brokerage_task (brokerage, user_id, brokerage_user_id, date);
+
+DROP TABLE brokerage_to_process;
+DROP TYPE direct_brokerages;
+DROP TYPE brokerage_to_process_status;

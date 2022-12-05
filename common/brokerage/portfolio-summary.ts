@@ -10,7 +10,7 @@ import {
     TradingPostAccountGroups,
     AccountGroupHPRsTable,
     TradingPostTransactionsTable,
-    TradingPostTransactions
+    TradingPostTransactions, TradingPostTransactionsByAccountGroup
 } from './interfaces';
 
 export class PortfolioSummaryService implements ISummaryService {
@@ -281,7 +281,7 @@ export class PortfolioSummaryService implements ISummaryService {
             return [] as HistoricalHoldings[];
         }
     }
-    getTrades = async (userId: string, paging?: {limit: number, offset: number}): Promise<TradingPostTransactions[]> => {
+    getTrades = async (userId: string, paging?: {limit: number, offset: number}): Promise<TradingPostTransactionsByAccountGroup[]> => {
         try {
             const account_group = await this.getAccountGroupByName(userId, 'default');
             return await this.repository.getTradingPostTransactionsByAccountGroup(account_group.accountGroupId, paging)

@@ -1,4 +1,4 @@
-import Transformer from "./transformer";
+import * as RobinhoodTransformer from "./transformer";
 import {PortfolioSummaryService} from "../portfolio-summary";
 import {
     Account, AchTransfer, Dividend,
@@ -8,14 +8,20 @@ import {
     RobinhoodAccount,
     RobinhoodAccountTable, RobinhoodInstrument, RobinhoodInstrumentTable, RobinhoodOption, RobinhoodOptionTable,
     RobinhoodPosition,
-    RobinhoodTransaction, RobinhoodUserTable, Sweep
+    RobinhoodTransaction, RobinhoodUser, RobinhoodUserTable, Sweep
 } from "./interfaces";
-import Api from "./api";
+import * as RHApi from "./api";
 import {DateTime} from "luxon";
-import {exec} from "child_process";
+import {DirectBrokeragesType, TradingPostBrokerageAccountsTable, TradingPostInstitutionTable} from "../interfaces";
 
 interface Repository {
+    getTradingPostBrokerageAccountsByBrokerage(userId: string, brokerageName: string): Promise<TradingPostBrokerageAccountsTable[]>
+
+    getInstitutionByName(name: string): Promise<TradingPostInstitutionTable | null>
+
     getRobinhoodUser(userId: string): Promise<RobinhoodUserTable | null>
+
+    updateRobinhoodUser(user: RobinhoodUser): Promise<void>
 
     upsertRobinhoodAccounts(accs: RobinhoodAccount[]): Promise<void>
 
@@ -40,43 +46,75 @@ interface Repository {
     getRobinhoodOptionsByExternalIds(externalIds: string[]): Promise<RobinhoodOptionTable[]>
 }
 
-export default class Service {
-    private _transformer: Transformer;
+export class Service {
+    private _transformer: RobinhoodTransformer.default;
     private _repo: Repository;
-    private _api: Api;
+    private readonly _clientId: string;
+    private _scope: string;
+    private _expiresIn: number;
     private _portfolioSummaryService: PortfolioSummaryService;
 
-    constructor(api: Api, repo: Repository, transformer: Transformer, portfolioSummarySrv: PortfolioSummaryService) {
-        this._api = api;
+    constructor(clientId: string, scope: string, expiresIn: number, repo: Repository, transformer: RobinhoodTransformer.default, portfolioSummarySrv: PortfolioSummaryService) {
+        this._clientId = clientId;
+        this._scope = scope;
+        this._expiresIn = expiresIn;
         this._transformer = transformer;
         this._repo = repo;
         this._portfolioSummaryService = portfolioSummarySrv;
     }
 
-    firstIngestion = () => {
-        // Run all the below limiting to today and update accordingly
-        // If a request fails because of an error on HTTP, fetch token, update, and retry
-        // We should create a basic Brokerage class that lets us update the respective tables
-        //  though this should be within the Transformer(basic transformer) since all of our update logic
-        //  should exist within there...?
+    public add = async (userId: string, brokerageUserId: string, data?: any) => {
+        const institution = await this._repo.getInstitutionByName("Robinhood");
+        if (!institution) throw new Error("Robinhood institution is not defined");
+
+        await this.accounts(userId, institution.id);
+        await this.positions(userId);
+        await this.transactions(userId);
+
+        const tpAccounts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Robinhood);
+        for (let i = 0; i < tpAccounts.length; i++) {
+            const tpAccount = tpAccounts[i];
+            await this._transformer.computeHoldingsHistory(tpAccount.id);
+        }
     }
 
-    intradayIngestion = () => {
-        // Run all the below limiting to today and update accordingly
-        // If a request fails because of an error on HTTP, fetch token, update, and retry
+    public update = async (userId: string, brokerageUserId: string, data?: any) => {
+        const institution = await this._repo.getInstitutionByName(DirectBrokeragesType.Robinhood);
+        if (!institution) throw new Error("Robinhood institution is not defined");
+
+        await this.accounts(userId, institution.id);
+        await this.positions(userId);
+        await this.transactions(userId);
     }
 
-    accounts = async (userId: string, institutionId: number) => {
+    private _apiAndUpdate = async <T>(user: RobinhoodUser, fnCall: any, params: any, nextUrl?: string, authUpdate?: boolean): Promise<T> => {
+        try {
+            return await fnCall(user.accessToken, params, nextUrl);
+        } catch (e) {
+            if (e instanceof RHApi.AuthError) {
+                if (authUpdate) throw new Error("could not update authentication robinhood for account");
+                // Do update and recall API
+                const res = await RHApi.refreshToken(this._clientId, user.deviceToken, user.refreshToken as string);
+                user.accessToken = res.access_token;
+                user.refreshToken = res.refresh_token;
+                await this._repo.updateRobinhoodUser(user);
+                return this._apiAndUpdate(user, fnCall, params, nextUrl, true)
+            }
+            throw e
+        }
+    }
+
+    public accounts = async (userId: string, institutionId: number) => {
         const robinhoodUser = await this._repo.getRobinhoodUser(userId);
         if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
 
-        let [accounts, nextUrl] = await this._api.accounts({});
+        let [accounts, nextUrl] = await this._apiAndUpdate<[Account[], string | null]>(robinhoodUser, RHApi.accounts, {})
         let transformedAccounts = await this._transformAccounts(accounts, robinhoodUser.id);
         await this._repo.upsertRobinhoodAccounts(transformedAccounts);
 
         let allTransformedAccounts: RobinhoodAccount[] = [...transformedAccounts];
         while (nextUrl !== null) {
-            [accounts, nextUrl] = await this._api.accounts(nextUrl);
+            [accounts, nextUrl] = await this._apiAndUpdate(robinhoodUser, RHApi.accounts, {}, nextUrl);
             if (accounts.length <= 0) break;
 
             transformedAccounts = await this._transformAccounts(accounts, robinhoodUser.id);
@@ -87,7 +125,7 @@ export default class Service {
         await this._transformer.accounts(userId, institutionId, robinhoodUser, transformedAccounts);
     }
 
-    positions = async (userId: string) => {
+    public positions = async (userId: string) => {
         const robinhoodUser = await this._repo.getRobinhoodUser(userId);
         if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
 
@@ -105,9 +143,9 @@ export default class Service {
         let positions = [];
         let positionsNextUrl = null;
         while (true) {
-            [positions, positionsNextUrl] = await this._api.positions({}, positionsNextUrl !== null ? positionsNextUrl : undefined);
+            [positions, positionsNextUrl] = await this._apiAndUpdate<[Position[], string | null]>(robinhoodUser, RHApi.positions, {}, positionsNextUrl !== null ? positionsNextUrl : undefined);
             (await this._repo.getRobinhoodInstrumentsByExternalId(positions.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
-            let transformedPositions = await this._transformPositions(positions, accountMap, instrumentsMap);
+            let transformedPositions = await this._transformPositions(robinhoodUser, positions, accountMap, instrumentsMap);
             allPositions = [...allPositions, ...transformedPositions];
             if (positionsNextUrl === null) break;
         }
@@ -115,11 +153,11 @@ export default class Service {
         // Cash Positions
         let cashPositions = [];
         let cashNextUrl = null;
-        const cashInstrument = await this._repo.getRobinhoodInstrumentBySymbol('CUR:USD');
+        const cashInstrument = await this._repo.getRobinhoodInstrumentBySymbol('USD:CUR');
         if (cashInstrument === null) throw new Error("no cash instrument found in robinhood table");
 
         while (true) {
-            [cashPositions, cashNextUrl] = await this._api.accounts({}, cashNextUrl === null ? undefined : cashNextUrl);
+            [cashPositions, cashNextUrl] = await this._apiAndUpdate<[Account[], string | null]>(robinhoodUser, RHApi.accounts, {}, cashNextUrl === null ? undefined : cashNextUrl);
             let transformedCashPositions = await this._transformCashPosition(cashPositions, accountMap, cashInstrument);
             allPositions = [...allPositions, ...transformedCashPositions];
             if (cashNextUrl === null) break;
@@ -129,11 +167,11 @@ export default class Service {
         let optionPositions = [];
         let optionNextUrl = null;
         while (true) {
-            [optionPositions, optionNextUrl] = await this._api.optionPositions({}, optionNextUrl === null ? undefined : optionNextUrl);
+            [optionPositions, optionNextUrl] = await this._apiAndUpdate<[OptionPosition[], string | null]>(robinhoodUser, RHApi.optionPositions, {}, optionNextUrl === null ? undefined : optionNextUrl);
             (await this._repo.getRobinhoodOptionsByExternalIds(optionPositions.filter(p => p.option_id !== null).map(p => p.option_id as string))).forEach(res => {
                 optionsMap[res.externalId] = res;
             });
-            let transformedPositions = await this._transformOptionPositions(optionPositions, accountMap, optionsMap);
+            let transformedPositions = await this._transformOptionPositions(robinhoodUser, optionPositions, accountMap, optionsMap);
             allPositions = [...allPositions, ...transformedPositions];
             if (optionNextUrl === null) break;
         }
@@ -147,12 +185,12 @@ export default class Service {
         await this._transformer.positions(userId, allPositions);
     }
 
-    transactions = async (userId: string) => {
+    public transactions = async (userId: string) => {
         // TODO: Set a date and if used, then stop filtering transactions if exceeds this date
         const robinhoodUser = await this._repo.getRobinhoodUser(userId);
         if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
 
-        const cash = await this._repo.getRobinhoodInstrumentBySymbol("CUR:USD");
+        const cash = await this._repo.getRobinhoodInstrumentBySymbol("USD:CUR");
         if (!cash) throw new Error("could not find cash instrument for robinhood transactions");
 
         let instrumentsMap: Record<string, RobinhoodInstrumentTable> = {};
@@ -166,9 +204,9 @@ export default class Service {
         let equityTxs: Order[] = [];
         let equityNextUrl: string | null = null;
         while (true) {
-            [equityTxs, equityNextUrl] = await this._api.orders({}, equityNextUrl === null ? undefined : equityNextUrl);
+            [equityTxs, equityNextUrl] = await this._apiAndUpdate<[Order[], string | null]>(robinhoodUser, RHApi.orders, {}, equityNextUrl === null ? undefined : equityNextUrl);
             (await this._repo.getRobinhoodInstrumentsByExternalId(equityTxs.filter(p => p.instrument_id !== null).map(p => p.instrument_id as string))).forEach(res => instrumentsMap[res.externalId] = res);
-            let transformedPositions = await this._transformTransactions(equityTxs, accountMap, instrumentsMap);
+            let transformedPositions = await this._transformTransactions(robinhoodUser, equityTxs, accountMap, instrumentsMap);
             allTransactions = [...allTransactions, ...transformedPositions];
             if (equityNextUrl === null) break;
         }
@@ -176,7 +214,7 @@ export default class Service {
         let optionTxs: OptionOrder[] = [];
         let optionNextUrl: string | null = null;
         while (true) {
-            [optionTxs, optionNextUrl] = await this._api.optionOrders({}, optionNextUrl === null ? undefined : optionNextUrl);
+            [optionTxs, optionNextUrl] = await this._apiAndUpdate<[OptionOrder[], string | null]>(robinhoodUser, RHApi.optionOrders, {}, optionNextUrl === null ? undefined : optionNextUrl);
             let optionIds: Record<string, null> = {};
             optionTxs.forEach(ot => {
                 if (!ot.legs || ot.legs.length <= 0) return;
@@ -187,7 +225,7 @@ export default class Service {
                 })
             });
             (await this._repo.getRobinhoodOptionsByExternalIds(Object.keys(optionIds))).forEach(res => optionsMap[res.externalId] = res);
-            let transformedOptions = await this._transformOptionOrders(optionTxs, accountMap, optionsMap);
+            let transformedOptions = await this._transformOptionOrders(robinhoodUser, optionTxs, accountMap, optionsMap);
             allTransactions = [...allTransactions, ...transformedOptions];
             if (optionNextUrl === null) break;
         }
@@ -195,7 +233,7 @@ export default class Service {
         let dividendsTxs: Dividend[] = [];
         let dividendNextUrl: string | null = null;
         while (true) {
-            [dividendsTxs, dividendNextUrl] = await this._api.dividends({}, dividendNextUrl === null ? undefined : dividendNextUrl);
+            [dividendsTxs, dividendNextUrl] = await this._apiAndUpdate<[Dividend[], string | null]>(robinhoodUser, RHApi.dividends, {}, dividendNextUrl === null ? undefined : dividendNextUrl);
             let transformedDividends = await this._transformDividends(dividendsTxs, accountMap, cash);
             allTransactions = [...allTransactions, ...transformedDividends];
             if (dividendNextUrl === null) break;
@@ -205,7 +243,7 @@ export default class Service {
         let achTxs: AchTransfer[] = [];
         let achNextUrl: string | null = null;
         while (true) {
-            [achTxs, achNextUrl] = await this._api.achTransfers({}, achNextUrl === null ? undefined : achNextUrl);
+            [achTxs, achNextUrl] = await this._apiAndUpdate<[AchTransfer[], string | null]>(robinhoodUser, RHApi.achTransfers, {}, achNextUrl === null ? undefined : achNextUrl);
             let transformedAch = await this._transformAch(achTxs, accountMap, cash);
             allTransactions = [...allTransactions, ...transformedAch];
             if (achNextUrl === null) break;
@@ -215,19 +253,18 @@ export default class Service {
         let sweepTxs: Sweep[] = [];
         let sweepNextUrl: string | null = null;
         while (true) {
-            [sweepTxs, sweepNextUrl] = await this._api.sweeps({}, sweepNextUrl === null ? undefined : sweepNextUrl);
+            [sweepTxs, sweepNextUrl] = await this._apiAndUpdate<[Sweep[], string | null]>(robinhoodUser, RHApi.sweeps, {}, sweepNextUrl === null ? undefined : sweepNextUrl);
             let transformedSweeps = await this._transformSweeps(sweepTxs, accountMap, cash);
             allTransactions = [...allTransactions, ...transformedSweeps];
             if (sweepNextUrl === null) break;
         }
-
 
         await this._repo.upsertRobinhoodTransactions(allTransactions);
 
         await this._transformer.transactions(userId, allTransactions);
     }
 
-    _transformDividends = async (dividendTxs: Dividend[], accountMap: Record<string, RobinhoodAccountTable>, cash: RobinhoodInstrumentTable): Promise<RobinhoodTransaction[]> => {
+    private _transformDividends = async (dividendTxs: Dividend[], accountMap: Record<string, RobinhoodAccountTable>, cash: RobinhoodInstrumentTable): Promise<RobinhoodTransaction[]> => {
         let transformed: RobinhoodTransaction[] = [];
         for (let i = 0; i < dividendTxs.length; i++) {
             let d = dividendTxs[i];
@@ -237,12 +274,12 @@ export default class Service {
             const internalAccount = accountMap[accountNumber];
             transformed.push({
                 url: d.url,
-                type: null,
+                type: "dividend",
                 executionsTimestamp: DateTime.fromFormat(d.payable_date as string, 'y-m-d'),
                 extendedHours: null,
                 trigger: null,
                 externalCreatedAt: d.record_date,
-                internalOptionId: 0,
+                internalOptionId: null,
                 rejectReason: null,
                 stopPrice: null,
                 side: null,
@@ -292,7 +329,7 @@ export default class Service {
         return transformed;
     }
 
-    _transformSweeps = async (sweeps: Sweep[], accountMap: Record<string, RobinhoodAccountTable>, cash: RobinhoodInstrumentTable): Promise<RobinhoodTransaction[]> => {
+    private _transformSweeps = async (sweeps: Sweep[], accountMap: Record<string, RobinhoodAccountTable>, cash: RobinhoodInstrumentTable): Promise<RobinhoodTransaction[]> => {
         let transformedTxs: RobinhoodTransaction[] = [];
         for (let i = 0; i < sweeps.length; i++) {
             const s = sweeps[i];
@@ -302,7 +339,7 @@ export default class Service {
                 url: '',
                 state: null,
                 accountUrl: internalAccount.url,
-                type: s.payout_type,
+                type: "interest",
                 cancel: null,
                 chainId: null,
                 accountNumber: s.account_number,
@@ -356,7 +393,7 @@ export default class Service {
         return transformedTxs
     }
 
-    _transformAch = async (achTxs: AchTransfer[], accountMap: Record<string, RobinhoodAccountTable>, cash: RobinhoodInstrumentTable): Promise<RobinhoodTransaction[]> => {
+    private _transformAch = async (achTxs: AchTransfer[], accountMap: Record<string, RobinhoodAccountTable>, cash: RobinhoodInstrumentTable): Promise<RobinhoodTransaction[]> => {
         let transformed: RobinhoodTransaction[] = [];
         for (let i = 0; i < achTxs.length; i++) {
             const ach = achTxs[i];
@@ -384,7 +421,7 @@ export default class Service {
                 dollarBasedAmount: null,
                 executionsId: ach.id,
                 executionsPrice: 1,
-                executionsQuantity: parseFloat(ach.amount as string) + parseFloat(ach.fees as string),
+                executionsQuantity: parseFloat(ach.amount as string),
                 executionsTimestamp: DateTime.fromISO(ach.expected_landing_datetime as string),
                 executionsSettlementDate: ach.expected_landing_date,
                 fees: ach.fees,
@@ -405,7 +442,7 @@ export default class Service {
                 positionUrl: null,
                 price: "1",
                 processedQuantity: null,
-                quantity: (parseFloat(ach.amount as string) + parseFloat(ach.fees as string)).toString(),
+                quantity: ach.amount,
                 ratioQuantity: null,
                 refId: ach.ref_id,
                 side: null,
@@ -425,9 +462,9 @@ export default class Service {
         return transformed;
     }
 
-    _addOption = async (externalOptionId: string): Promise<RobinhoodOptionTable | null> => {
-        const option = await this._api.option(externalOptionId);
-        const transformedOption = await this._transformOption(option);
+    private _addOption = async (robinhoodUser: RobinhoodUser, externalOptionId: string): Promise<RobinhoodOptionTable | null> => {
+        const option = await this._apiAndUpdate<Option>(robinhoodUser, RHApi.option, {optionId: externalOptionId});
+        const transformedOption = await this._transformOption(robinhoodUser, option);
         if (transformedOption === null) {
             console.warn("could not transform option")
             return null;
@@ -447,7 +484,7 @@ export default class Service {
         }
     }
 
-    _transformOption = async (option: Option): Promise<RobinhoodOption | null> => {
+    private _transformOption = async (robinhoodUser: RobinhoodUser, option: Option): Promise<RobinhoodOption | null> => {
         if (option.chain_symbol === null) {
             console.warn("no chain symbol");
             return null;
@@ -455,7 +492,7 @@ export default class Service {
 
         let security = await this._repo.getRobinhoodInstrumentBySymbol(option.chain_symbol)
         if (security === null) {
-            const newSecurity = await this._api.instruments({symbol: option.chain_symbol});
+            const newSecurity = await this._apiAndUpdate<Instrument | null>(robinhoodUser, RHApi.instruments, {symbol: option.chain_symbol});
             if (newSecurity === null) {
                 console.warn("could not find new security for option chain symbol")
                 return null;
@@ -499,8 +536,8 @@ export default class Service {
         }
     }
 
-    _addInstrument = async (externalInstrumentId: string): Promise<RobinhoodInstrumentTable> => {
-        const instrument = await this._api.instrument(externalInstrumentId);
+    private _addInstrument = async (robinhoodUser: RobinhoodUser, externalInstrumentId: string): Promise<RobinhoodInstrumentTable> => {
+        const instrument = await this._apiAndUpdate<Instrument>(robinhoodUser, RHApi.instrument, {instrumentId: externalInstrumentId});
         const [transformedInstrument] = await this._transformInstrument([instrument]);
 
         const instrumentId = await this._repo.addRobinhoodInstrument(transformedInstrument);
@@ -512,7 +549,7 @@ export default class Service {
         }
     }
 
-    _transformAccounts = async (accs: Account[], userId: number): Promise<RobinhoodAccount[]> => {
+    private _transformAccounts = async (accs: Account[], userId: number): Promise<RobinhoodAccount[]> => {
         return accs.map(a => {
             let x: RobinhoodAccount = {
                 url: a.url,
@@ -548,7 +585,7 @@ export default class Service {
         })
     }
 
-    _transformInstrument = async (is: Instrument[]): Promise<RobinhoodInstrument[]> => {
+    private _transformInstrument = async (is: Instrument[]): Promise<RobinhoodInstrument[]> => {
         return is.map(i => {
             let x: RobinhoodInstrument = {
                 externalId: i.id as string,
@@ -594,7 +631,7 @@ export default class Service {
         });
     }
 
-    _transformCashPosition = async (cashPositions: Account[], accountMap: Record<string, RobinhoodAccountTable>, cashInstrument: RobinhoodInstrumentTable): Promise<RobinhoodPosition[]> => {
+    private _transformCashPosition = async (cashPositions: Account[], accountMap: Record<string, RobinhoodAccountTable>, cashInstrument: RobinhoodInstrumentTable): Promise<RobinhoodPosition[]> => {
         let transformedPositions: RobinhoodPosition[] = [];
         for (let i = 0; i < cashPositions.length; i++) {
             const cp = cashPositions[i];
@@ -654,7 +691,7 @@ export default class Service {
         return transformedPositions;
     }
 
-    _transformOptionPositions = async (optionPosition: OptionPosition[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodPosition[]> => {
+    private _transformOptionPositions = async (robinhoodUser: RobinhoodUser, optionPosition: OptionPosition[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodPosition[]> => {
         let transformedOptions: RobinhoodPosition[] = [];
         for (let i = 0; i < optionPosition.length; i++) {
             const op = optionPosition[i];
@@ -679,8 +716,10 @@ export default class Service {
                 continue;
             }
 
+            if (parseFloat(op.quantity) === 0) continue;
+
             if (!(op.option_id in optionMap)) {
-                const newOption = await this._addOption(op.option_id);
+                const newOption = await this._addOption(robinhoodUser, op.option_id);
                 if (newOption === null) {
                     console.warn("could not add option")
                     continue;
@@ -735,7 +774,7 @@ export default class Service {
         return transformedOptions;
     }
 
-    _transformOptionOrders = async (optionOrders: OptionOrder[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodTransaction[]> => {
+    private _transformOptionOrders = async (robinhoodUser: RobinhoodUser, optionOrders: OptionOrder[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodTransaction[]> => {
         let transformedTxs: RobinhoodTransaction[] = [];
         for (let i = 0; i < optionOrders.length; i++) {
             let oo = optionOrders[i];
@@ -743,10 +782,13 @@ export default class Service {
                 console.warn("no account number for option")
                 continue
             }
+
             if (oo.legs === null || oo.legs.length === 0) {
                 console.warn("no legs for option")
                 continue
             }
+
+            if (oo.quantity === null || parseFloat(oo.quantity) === 0) continue;
 
             const internalAccount = accountMap[oo.account_number];
             for (let j = 0; j < oo.legs.length; j++) {
@@ -756,16 +798,13 @@ export default class Service {
                     continue
                 }
 
-                if (leg.executions === null || leg.executions.length <= 0) {
-                    console.warn("leg exeuctions not set ")
-                    continue
-                }
+                if (leg.executions === null || leg.executions.length <= 0) continue
 
                 const optionSplit: string[] = leg.option.split("/");
                 const optionNumber = optionSplit[optionSplit.length - 2];
 
                 if (!(optionNumber in optionMap)) {
-                    const newOption = await this._addOption(optionNumber);
+                    const newOption = await this._addOption(robinhoodUser, optionNumber);
                     if (newOption === null) {
                         console.warn("could not add option")
                         continue;
@@ -835,10 +874,11 @@ export default class Service {
                 }
             }
         }
+
         return transformedTxs
     }
 
-    _transformPositions = async (positions: Position[], accountMap: Record<string, RobinhoodAccountTable>, instrumentMap: Record<string, RobinhoodInstrumentTable>): Promise<RobinhoodPosition[]> => {
+    private _transformPositions = async (robinhoodUser: RobinhoodUser, positions: Position[], accountMap: Record<string, RobinhoodAccountTable>, instrumentMap: Record<string, RobinhoodInstrumentTable>): Promise<RobinhoodPosition[]> => {
         let transformedPositions: RobinhoodPosition[] = [];
         for (let i = 0; i < positions.length; i++) {
             const p = positions[i];
@@ -852,10 +892,12 @@ export default class Service {
                 continue
             }
 
+            if (p.quantity === null || parseFloat(p.quantity) === 0) continue;
+
             let internalAccount = accountMap[p.account_number];
 
             if (!(p.instrument_id in instrumentMap)) {
-                const instrument = await this._addInstrument(p.instrument_id);
+                const instrument = await this._addInstrument(robinhoodUser, p.instrument_id);
                 instrumentMap[instrument.externalId] = instrument;
             }
 
@@ -905,7 +947,7 @@ export default class Service {
         return transformedPositions
     }
 
-    _transformTransactions = async (transactions: Order[], accountMap: Record<string, RobinhoodAccountTable>, instrumentMap: Record<string, RobinhoodInstrumentTable>): Promise<RobinhoodTransaction[]> => {
+    private _transformTransactions = async (robinhoodUser: RobinhoodUser, transactions: Order[], accountMap: Record<string, RobinhoodAccountTable>, instrumentMap: Record<string, RobinhoodInstrumentTable>): Promise<RobinhoodTransaction[]> => {
         let transformedTxs: RobinhoodTransaction[] = [];
         for (let i = 0; i < transactions.length; i++) {
             const tx = transactions[i];
@@ -919,12 +961,15 @@ export default class Service {
                 continue
             }
 
+            if (tx.quantity === null || parseFloat(tx.quantity) === 0) continue;
+
             const accountUrlSplit = tx.account.split("/");
             const accountNumber = accountUrlSplit[accountUrlSplit.length - 2];
             let internalAccount = accountMap[accountNumber];
+            if (!internalAccount) throw new Error("no internal account for account id: " + tx.account)
 
             if (!(tx.instrument_id in instrumentMap)) {
-                const instrument = await this._addInstrument(tx.instrument_id);
+                const instrument = await this._addInstrument(robinhoodUser, tx.instrument_id);
                 instrumentMap[instrument.externalId] = instrument;
             }
 
@@ -956,7 +1001,7 @@ export default class Service {
                     extendedHours: tx.extended_hours,
                     externalCreatedAt: tx.created_at,
                     externalUpdatedAt: tx.updated_at,
-                    fees: tx.fees,
+                    fees: tx.fees ? (parseFloat(tx.fees) / tx.executions.length).toString() : null,
                     instrumentUrl: tx.instrument,
                     internalAccountId: internalAccount.id,
                     rejectReason: tx.reject_reason,

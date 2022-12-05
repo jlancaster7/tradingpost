@@ -1,5 +1,6 @@
 import {DateTime} from "luxon";
 import {getUSExchangeHoliday} from "../market-data/interfaces";
+import {accountId} from "aws-sdk/clients/health";
 
 export interface IBrokerageService {
     getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
@@ -29,8 +30,6 @@ export interface IBrokerageRepository {
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>
 
     upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<number[]>
-
-    addTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
 
     upsertTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
 
@@ -124,7 +123,7 @@ export interface ISummaryRepository {
 
     getTradingPostCurrentHoldingsByAccountGroup(accountGroupId: number): Promise<HistoricalHoldings[]>
 
-    getTradingPostTransactionsByAccountGroup(accountGroupId: number, paging?: { limit: number, offset: number }): Promise<TradingPostTransactions[]>
+    getTradingPostTransactionsByAccountGroup(accountGroupId: number, paging?: { limit: number, offset: number }): Promise<TradingPostTransactionsByAccountGroup[]>
 
     getTradingPostAccountGroupReturns(accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
 
@@ -164,7 +163,7 @@ export interface ISummaryService {
 
     getCurrentHoldings(userId: string): Promise<HistoricalHoldings[]>
 
-    getTrades(userId: string): Promise<TradingPostTransactions[]>
+    getTrades(userId: string): Promise<TradingPostTransactionsByAccountGroup[]>
 
     getSummary(userId: string): Promise<TradingPostAccountGroupStats>
 
@@ -536,8 +535,8 @@ export type TradingPostCurrentHoldingsTableWithSecurity = {
 export type TradingPostHistoricalHoldings = {
     accountId: number
     securityId: number
-    securityType: SecurityType | null
     optionId: number | null
+    securityType: SecurityType | null
     price: number
     priceAsOf: DateTime
     priceSource: string
@@ -585,7 +584,7 @@ export type TradingPostCustomIndustry = {
 export type TradingPostCustomIndustryTable = TradingPostCustomIndustry & TableInfo;
 
 export type TradingPostTransactions = {
-    accountId?: number
+    accountId: number
     accountGroupId?: number
     securityId: number
     securityType: SecurityType
@@ -599,6 +598,8 @@ export type TradingPostTransactions = {
     type: InvestmentTransactionType
     currency: string | null
 }
+
+export type TradingPostTransactionsByAccountGroup = Omit<TradingPostTransactions, "accountId">
 
 export type TradingPostTransactionsTable = TradingPostTransactions & TableInfo;
 
@@ -757,31 +758,45 @@ export type OptionContractTable = {
     createdAt: DateTime
 } & OptionContract
 
-export enum BrokerageJobStatusType {
-    PENDING = "PENDING",
-    RUNNING = "RUNNING",
-    FAILED = "FAILED",
-    SUCCESSFUL = "SUCCESSFUL"
+export enum DirectBrokeragesType {
+    Robinhood = "Robinhood",
+    Ibkr = "Ibkr",
+    Finicity = "Finicity"
 }
 
-export type BrokerageJobStatus = {
-    brokerage: string
+export enum BrokerageTaskType {
+    NewAccount = "NEW_ACCOUNT",
+    NewData = "NEW_DATA",
+    DeleteAccount = "DELETE_ACCOUNT",
+    UpdateAccount = "UPDATE_ACCOUNT",
+    ToDo = "TODO"
+}
+
+export enum BrokerageTaskStatusType {
+    Partial = "PARTIAL",
+    Pending = "PENDING",
+    Running = "RUNNING",
+    Failed = "FAILED",
+    Successful = "SUCCESSFUL"
+}
+
+export type BrokerageTask = {
+    brokerage: DirectBrokeragesType
+    userId: string
+    status: BrokerageTaskStatusType,
+    type: BrokerageTaskType
+    date: DateTime
     brokerageUserId: string
-    dateToProcess: DateTime
-    status: BrokerageJobStatusType
-    data?: any
+    started: DateTime | null
+    finished: DateTime | null
+    data: any | null
 }
 
-export type BrokerageJobStatusTable = {
+export type BrokerageTaskTable = {
     id: number
-    brokerage: string
-    brokerageUserId: string
-    dateToProcess: DateTime
-    status: BrokerageJobStatusType
-    data?: any
     updatedAt: DateTime
     createdAt: DateTime
-}
+} & BrokerageTask
 
 export interface IbkrAccountCsv {
     Type: string
