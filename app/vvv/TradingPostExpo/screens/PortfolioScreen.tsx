@@ -222,6 +222,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                                     <HoldingRenderItem 
                                         item={item}
                                         byId={byId}
+                                        isOwner={true}
                                         />
                                 )
                             }}
@@ -252,6 +253,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                                         <TradeRenderItem
                                             item={item}
                                             byId={byId}
+                                            isOwner={true}
                                             />
                                     )
                                 }}
