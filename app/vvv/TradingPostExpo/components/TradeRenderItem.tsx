@@ -8,7 +8,7 @@ import { fonts, sizes } from "../style"
 import { AppColors } from "../constants/Colors"
 import { toDollars, toDollarsAndCents, toFormatedDateTime, toNumber1 } from "../utils/misc"
 
-export const TradeRenderItem = (props: {item: any, byId: any}) => {
+export const TradeRenderItem = (props: {item: any, byId: any, isOwner: boolean}) => {
     const { item, byId } = props
     const secId = item.item.security_id || item.item.securityId;
     //const intradayChange = item.item.price ? item.item.price.price - item.item.price.open : 0
@@ -25,7 +25,6 @@ export const TradeRenderItem = (props: {item: any, byId: any}) => {
                         source={
                             (() => {
                                 let output: { uri: string } | undefined;
-                                
                                 output = byId[secId] ? { uri: byId[secId].logo_url  } : undefined
                                 return output;
                             })()}
@@ -44,7 +43,7 @@ export const TradeRenderItem = (props: {item: any, byId: any}) => {
                 </View>
             </View>
             <View style={{flex: 1, alignContent: 'space-between', marginTop: sizes.rem0_5, flexDirection: 'row'}}>
-                <View style={{flex: 1, alignItems: 'center', flexDirection: 'row'}}>
+                <View style={[{flex: 1, alignItems: 'center', flexDirection: 'row'}, props.isOwner ? {display: 'flex'} : {display: 'none'}]}>
                     <View style={{flex: 1, alignItems: 'center'}}>
                         <Text style={{fontSize: fonts.medium / 2, color: '#9D9D9D'}}>
                             {'Quantity'}
@@ -61,7 +60,6 @@ export const TradeRenderItem = (props: {item: any, byId: any}) => {
                             {`${toDollars(item.item.amount)}`}
                         </Text>                                                    
                     </View>
-
                 </View>
             </View>
             <View style={{flex: 1, flexDirection: 'row'}}>
@@ -70,10 +68,9 @@ export const TradeRenderItem = (props: {item: any, byId: any}) => {
                     {'Trade Date'}
                 </Text>
                 <Text style={[{fontSize: fonts.xSmall}]}>
-                    {`${toFormatedDateTime(String(item.item.date))}`}
+                    {`${(new Date(item.item.date)).getUTCHours() !== 12 ? toFormatedDateTime(String(item.item.date)) : (new Date(item.item.date)).toLocaleDateString()}`}
                 </Text>
             </View>
-
         </View>
         </ElevatedSection>
     )

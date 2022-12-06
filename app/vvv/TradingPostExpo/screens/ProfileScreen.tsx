@@ -239,6 +239,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                                             <HoldingRenderItem 
                                                 item={item}
                                                 byId={byId}
+                                                isOwner={appUser?.id === user?.id}
                                                 />
                                         )
                                     }}
@@ -293,6 +294,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                                 return (<TradeRenderItem 
                                     item={item}
                                     byId={byId}
+                                    isOwner={appUser?.id === user?.id }
                                 />)
                             }}
                         />
@@ -319,25 +321,6 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                             </View>
                         </Subsection>
                     </ElevatedSection>
-                    {/* <ElevatedSection title="Competitions">
-                        <Table elevated data={[]} columns={
-                            [
-                                {
-                                    field: "name",
-                                    align: "left"
-                                },
-                                {
-                                    field: "position",
-                                    alias: "# Rank",
-                                    width: 128
-                                },
-                                {
-                                    field: "endDate",
-                                    stringify: stringyDate,
-                                    width: 72
-                                }
-                            ]} />
-                    </ElevatedSection> */}
                     <ElevatedSection title="Social Analytics">
                         <Text>
                             Coming soon!
@@ -367,7 +350,6 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
             alignItems: "stretch",
             width: "100%"
         }}>
-            {/* <ElevatedSection style={{ alignItems: "center", width:"100%" }} title=""> */}
             <ProfileBanner
                 subscriberCount={user?.subscription?.count}
                 navigator={props.navigation}
@@ -392,13 +374,6 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                     }}>{user?.display_name}</Text>
                 </View>
                 {appUser && user && <SecondaryButton
-                    /*style={{
-                        width: "50%", marginVertical: ButtonMargin,
-                        marginLeft: "auto", marginRight: collapsed ? sizes.rem1 : "auto",
-                        backgroundColor: user.subscription.is_subscribed ? '#EC5328' : '#35A265',
-                        borderColor: user.subscription.is_subscribed ? '#EC5328' : '#35A265',
-                    }}
-                    */
                     {...(() => {
                         let children: string;
                         let onPress: () => void;
@@ -419,9 +394,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                                 style = {backgroundColor: "#35A265", borderColor: "#35A265"}
                             } else {
                                 children = user.subscription.is_pending ? 'Pending' : 'Subscribed',
-
                                     onPress = async () => {
-                                        //Todo:: make this an are you sure
                                         await Api.Subscriber.extensions.removeSubscription({
                                             subscriptionId: user.subscription?.id
                                         });
