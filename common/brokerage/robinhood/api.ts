@@ -197,7 +197,7 @@ export const portfolios = async (_accessToken: string): Promise<Portfolio[]> => 
     return res['results'] as Portfolio[]
 }
 
-export const instrument = async (_accessToken: string, params: {instrumentId: string}): Promise<Instrument> => {
+export const instrument = async (_accessToken: string, params: { instrumentId: string }): Promise<Instrument> => {
     const url = new URL(`https://api.robinhood.com/instruments/${params.instrumentId}/`);
 
     return await _do<Instrument>(url.toString(), {

@@ -1,7 +1,7 @@
 import {IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
 import Repository from "./repository";
-import FinicityService from "./finicity"
+import {Service as FinicityService} from "./finicity"
 import Finicity from "../finicity";
 import FinicityTransformer from "./finicity/transformer";
 import {PortfolioSummaryService} from "./portfolio-summary";

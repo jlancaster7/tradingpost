@@ -13,6 +13,26 @@ import {
 } from "./interfaces";
 import {DateTime} from "luxon";
 import {getUSExchangeHoliday} from "../market-data/interfaces";
+import {abs} from "mathjs";
+
+export const transformTransactionTypeAmount = (txType: InvestmentTransactionType, transaction: TradingPostTransactions): TradingPostTransactions => {
+    switch (txType) {
+        case InvestmentTransactionType.buy:
+            transaction.amount = abs(transaction.amount);
+            return transaction
+        case InvestmentTransactionType.sell:
+            transaction.amount = -1 * abs(transaction.amount);
+            return transaction
+        case InvestmentTransactionType.short:
+            transaction.amount = -1 * abs(transaction.amount);
+            return transaction
+        case InvestmentTransactionType.cover:
+            transaction.amount = abs(transaction.amount);
+            return transaction
+        default:
+            return transaction
+    }
+}
 
 type historicalAccount = {
     date: DateTime
@@ -155,7 +175,7 @@ export interface BaseRepository {
     getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
 }
 
-export default class TransformerBase {
+export default class BaseTransformer {
     private _baseRepo: BaseRepository;
 
     constructor(repo: BaseRepository) {
@@ -175,6 +195,11 @@ export default class TransformerBase {
     upsertTransactions = async (transactions: TradingPostTransactions[]) => {
         const rollup = await rollupTransactions(transactions);
         await this._baseRepo.upsertTradingPostTransactions(rollup)
+    }
+
+    upsertHistoricalHoldings = async (historicalHoldings: TradingPostHistoricalHoldings[]) => {
+        const rollup = await rollupHistoricalHoldings(historicalHoldings);
+        await this._baseRepo.upsertTradingPostHistoricalHoldings(rollup);
     }
 
     computeHoldingsHistory = async (tpAccountId: number) => {
@@ -348,7 +373,7 @@ export default class TransformerBase {
             }
         }
 
-        await this._baseRepo.upsertTradingPostHistoricalHoldings(historicalHoldings);
+        await this.upsertHistoricalHoldings(historicalHoldings);
     }
 
     undoTransactions = (historicalAccount: historicalAccount, transactions: TradingPostTransactionsTable[]): historicalAccount => {
@@ -483,6 +508,41 @@ const rollupTransactions = async (transactions: TradingPostTransactions[]): Prom
     });
 
     latest !== null ? roll.push(latest) : null
+    return roll;
+}
+
+const rollupHistoricalHoldings = async (historicalHoldings: TradingPostHistoricalHoldings[]): Promise<TradingPostHistoricalHoldings[]> => {
+    historicalHoldings.sort((a, b) =>
+        a.accountId - b.accountId ||
+        a.securityId - b.securityId ||
+        (a.optionId || 0) - (b.optionId || 0) ||
+        a.date.toUnixInteger() - b.date.toUnixInteger() ||
+        a.price - b.price
+    )
+
+    let roll: TradingPostHistoricalHoldings[] = [];
+    let latest: TradingPostHistoricalHoldings | null = null;
+    historicalHoldings.forEach(hh => {
+        if (!latest) {
+            latest = hh;
+            return;
+        }
+
+        if (latest.accountId === hh.accountId && latest.securityId === hh.securityId && latest.optionId === hh.optionId
+            && latest.date.toUnixInteger() === hh.date.toUnixInteger() && latest.price === hh.price) {
+
+            latest.quantity = latest.quantity + hh.quantity
+            latest.value = latest.value + hh.value
+            let costBasis = null;
+            if (latest.costBasis) costBasis = (costBasis || 0) + latest.costBasis
+            if (hh.costBasis) costBasis = (costBasis || 0) + hh.costBasis
+            latest.costBasis = costBasis
+            return
+        }
+
+        roll.push(latest);
+        latest = hh;
+    })
     return roll;
 }
 

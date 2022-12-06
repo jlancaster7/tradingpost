@@ -1,5 +1,5 @@
-import { abs, mean, std, variance } from 'mathjs';
-import { DateTime } from "luxon";
+import {abs, mean, std, variance} from 'mathjs';
+import {DateTime} from "luxon";
 import {
     AccountGroupHPRs,
     HistoricalHoldings, ISummaryRepository, ISummaryService,
@@ -26,7 +26,7 @@ export class PortfolioSummaryService implements ISummaryService {
         dailyAmounts = holdings.reduce((res, value) => {
 
             if (!res.some(el => el.date.valueOf() === value.date.valueOf())) {
-                res.push({ accountGroupId: value.accountGroupId, date: value.date, amount: value.value });
+                res.push({accountGroupId: value.accountGroupId, date: value.date, amount: value.value});
 
             } else {
                 let i = res.findIndex(el => el.date.valueOf() === value.date.valueOf());
@@ -110,6 +110,7 @@ export class PortfolioSummaryService implements ISummaryService {
             }
             return 0;
         }
+
         if (securityReturns.length > benchmarkReturns.length) {
 
             securityReturns = securityReturns.slice(securityReturns.length - benchmarkReturns.length);
@@ -153,10 +154,14 @@ export class PortfolioSummaryService implements ISummaryService {
         let sum = 0;
         for (let d of holdings) {
             sum += d.value;
-            if (d.securityId === 26830) { continue; }
-            if (d.optionId) { continue; }
+            if (d.securityId === 26830) {
+                continue;
+            }
+            if (d.optionId) {
+                continue;
+            }
             beta.push([await this.computeSecurityBeta(d.securityId, benchmarkId, daysPrior), d.value]);
-            
+
         }
         let weighted_beta = 0;
         for (let d of beta) {
@@ -225,7 +230,7 @@ export class PortfolioSummaryService implements ISummaryService {
                 short += d.value;
             }
         }
-        return { long: long / total, short: short / total, gross: gross / total, net: net / total };
+        return {long: long / total, short: short / total, gross: gross / total, net: net / total};
     }
 
     computeAccountGroupSummary = async (userId: string, startDate: DateTime = DateTime.fromJSDate(new Date('1/1/2010')), endDate: DateTime = DateTime.now()): Promise<TradingPostAccountGroupStats> => {
@@ -247,7 +252,7 @@ export class PortfolioSummaryService implements ISummaryService {
             console.log(err);
             beta = 1;
         }
-        
+
         const sharpe = this.computeSharpe(returns);
 
         const allocations = await this.computeSectorAllocations(currentHoldings);
@@ -281,7 +286,7 @@ export class PortfolioSummaryService implements ISummaryService {
             return [] as HistoricalHoldings[];
         }
     }
-    getTrades = async (userId: string, paging?: {limit: number, offset: number}): Promise<TradingPostTransactionsByAccountGroup[]> => {
+    getTrades = async (userId: string, paging?: { limit: number, offset: number }): Promise<TradingPostTransactionsByAccountGroup[]> => {
         try {
             const account_group = await this.getAccountGroupByName(userId, 'default');
             return await this.repository.getTradingPostTransactionsByAccountGroup(account_group.accountGroupId, paging)
@@ -305,12 +310,11 @@ export class PortfolioSummaryService implements ISummaryService {
         try {
             const account_group = await this.getAccountGroupByName(userId, 'default');
             return await this.repository.getAccountGroupSummary(account_group.accountGroupId)
-        }
-        catch (err) {
+        } catch (err) {
             console.error(err);
             return {} as TradingPostAccountGroupStats;
         }
-        
+
     }
 
     getAccountGroupByName = async (userId: string, accountGroupName: string): Promise<TradingPostAccountGroups> => {

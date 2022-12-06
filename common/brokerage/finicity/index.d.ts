@@ -1,11 +1,14 @@
 import { FinicityUser, IBrokerageService, TradingPostBrokerageAccounts, TradingPostCurrentHoldings, TradingPostTransactions, IFinicityRepository, TradingPostUser } from "../interfaces";
 import Finicity from "../../finicity";
+import { DateTime } from "luxon";
 import FinicityTransformer from "./transformer";
-export default class FinicityService implements IBrokerageService {
+export declare class Service implements IBrokerageService {
     private finicity;
     private repository;
     private transformer;
     constructor(finicity: Finicity, repository: IFinicityRepository, transformer: FinicityTransformer);
+    update: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
+    add: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
     getTradingPostUserAssociatedWithBrokerageUser: (brokerageUserId: string) => Promise<TradingPostUser>;
     generateBrokerageAuthenticationLink: (userId: string, brokerageAccount?: string, brokerageAccountId?: string) => Promise<string>;
     _createFinicityUser: (userId: string) => Promise<FinicityUser>;

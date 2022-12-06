@@ -781,8 +781,8 @@ export enum BrokerageTaskStatusType {
 }
 
 export type BrokerageTask = {
-    brokerage: DirectBrokeragesType
     userId: string
+    brokerage: DirectBrokeragesType
     status: BrokerageTaskStatusType,
     type: BrokerageTaskType
     date: DateTime
@@ -790,6 +790,8 @@ export type BrokerageTask = {
     started: DateTime | null
     finished: DateTime | null
     data: any | null
+
+    error: any | null
 }
 
 export type BrokerageTaskTable = {

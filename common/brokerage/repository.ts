@@ -4170,15 +4170,16 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     upsertBrokerageTasks = async (tasks: BrokerageTask[]): Promise<void> => {
         const cs = new this.pgp.helpers.ColumnSet([
-            {name: 'brokerage', prop: 'brokerage'},
             {name: 'user_id', prop: 'userId'},
+            {name: 'brokerage', prop: 'brokerage'},
             {name: 'status', prop: 'status'},
             {name: 'type', prop: 'type'},
             {name: 'date', prop: 'date'},
             {name: 'brokerage_user_id', prop: 'brokerageUserId'},
             {name: 'started', prop: 'started'},
             {name: 'finished', prop: 'finished'},
-            {name: 'data', prop: 'data'}
+            {name: 'data', prop: 'data'},
+            {name: 'error', prop: 'error'}
         ], {table: 'brokerage_task'});
         const query = upsertReplaceQuery(tasks, cs, this.pgp, "brokerage, user_id, brokerage_user_id, date")
         await this.db.none(query);
@@ -4203,28 +4204,22 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getPendingBrokerageTask = async (): Promise<BrokerageTaskTable | null> => {
-        const query = `select id,
-                              user_id,
-                              brokerage,
-                              status,
-                              type,
-                              date,
-                              brokerage_user_id,
-                              started,
-                              finished,
-                              data,
-                              updated_at,
-                              created_at
-                       from brokerage_task
-                       where status = 'PENDING'
-                       order by date asc,
-                                case
-                                    "type"
-                                    when 'NEW_ACCOUNT' then 1
-                                    when 'NEW_DATA' then 2
-                                    when 'TODO' then 3
-                                    end
-                       LIMIT 1;`
+        const query = `UPDATE brokerage_task
+                       SET started = CURRENT_TIMESTAMP,
+                           status  = 'RUNNING'
+                       WHERE id = (select id
+                                   from brokerage_task
+                                   WHERE started IS NULL
+                                     AND status = 'PENDING'
+                                   order by date asc,
+                                            case
+                                                "type"
+                                                when 'NEW_ACCOUNT' then 1
+                                                when 'NEW_DATA' then 2
+                                                when 'TODO' then 3
+                                                end
+                                   LIMIT 1 FOR UPDATE SKIP LOCKED)
+                       RETURNING id, user_id, created_at, updated_at, date, started, brokerage, type, brokerage_user_id, status, finished, data;`
         const result = await this.db.oneOrNone(query);
         if (!result) return null;
 
@@ -4240,7 +4235,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             brokerageUserId: result.brokerage_user_id,
             status: result.status,
             finished: result.finished ? DateTime.fromJSDate(result.finished) : null,
-            data: result.data
+            data: result.data,
+            error: result.error
         }
     }
 
@@ -4251,17 +4247,18 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    brokerage,
                    status,
                    type,
-                   date,
+                   date, -- Used for when to process in ASCENDING order
                    brokerage_user_id,
                    started,
                    finished,
                    data,
+                   error,
                    updated_at,
                    created_at
             from brokerage_task
             WHERE brokerage = $1
               AND brokerage_user_id = $2
-              AND date_to_process = $3`;
+              AND date = $3`;
         const result = await this.db.oneOrNone(query, [brokerage, brokerageUserId, dateToProcess]);
         if (!result) return null;
         return {
@@ -4277,6 +4274,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             finished: result.finished ? DateTime.fromJSDate(result.finished) : null,
             updatedAt: DateTime.fromJSDate(result.updated_at),
             createdAt: DateTime.fromJSDate(result.created_at),
+            error: result.error
         }
     }
 }

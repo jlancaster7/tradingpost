@@ -1,4 +1,4 @@
-import * as RobinhoodTransformer from "./transformer";
+import {default as RobinhoodTransformer} from "./transformer";
 import {PortfolioSummaryService} from "../portfolio-summary";
 import {
     Account, AchTransfer, Dividend,
@@ -47,14 +47,14 @@ interface Repository {
 }
 
 export class Service {
-    private _transformer: RobinhoodTransformer.default;
+    private _transformer: RobinhoodTransformer;
     private _repo: Repository;
     private readonly _clientId: string;
     private _scope: string;
     private _expiresIn: number;
     private _portfolioSummaryService: PortfolioSummaryService;
 
-    constructor(clientId: string, scope: string, expiresIn: number, repo: Repository, transformer: RobinhoodTransformer.default, portfolioSummarySrv: PortfolioSummaryService) {
+    constructor(clientId: string, scope: string, expiresIn: number, repo: Repository, transformer: RobinhoodTransformer, portfolioSummarySrv: PortfolioSummaryService) {
         this._clientId = clientId;
         this._scope = scope;
         this._expiresIn = expiresIn;
@@ -63,7 +63,7 @@ export class Service {
         this._portfolioSummaryService = portfolioSummarySrv;
     }
 
-    public add = async (userId: string, brokerageUserId: string, data?: any) => {
+    public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         const institution = await this._repo.getInstitutionByName("Robinhood");
         if (!institution) throw new Error("Robinhood institution is not defined");
 
@@ -78,7 +78,7 @@ export class Service {
         }
     }
 
-    public update = async (userId: string, brokerageUserId: string, data?: any) => {
+    public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         const institution = await this._repo.getInstitutionByName(DirectBrokeragesType.Robinhood);
         if (!institution) throw new Error("Robinhood institution is not defined");
 

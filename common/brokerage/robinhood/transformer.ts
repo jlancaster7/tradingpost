@@ -18,8 +18,7 @@ import {
     TradingPostTransactions
 } from "../interfaces";
 import {DateTime} from "luxon";
-import TransformerBase, {BaseRepository} from "../transformer-base";
-import {rollUpHistoricalHoldings} from "../utils/utils";
+import TransformerBase, {BaseRepository} from "../base-transformer";
 
 interface Repository extends BaseRepository {
     getRobinhoodInstrumentBySymbol(symbol: string): Promise<RobinhoodInstrumentTable | null>
@@ -255,8 +254,8 @@ export default class Transformer extends TransformerBase {
             }
             return x;
         })
-        const rollup = rollUpHistoricalHoldings(hh);
-        await this._repo.upsertTradingPostHistoricalHoldings(hh);
+
+        await this.upsertHistoricalHoldings(hh);
     }
 }
 

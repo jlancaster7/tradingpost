@@ -90,12 +90,13 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
                 userId: ibkrAccount.userId,
                 finished: null,
                 type: BrokerageTaskType.NewData,
-                status: BrokerageTaskStatusType.PARTIAL,
+                status: BrokerageTaskStatusType.Partial,
                 data: {
                     filenames: [fileType],
                 },
                 brokerage: DirectBrokeragesType.Ibkr,
-                brokerageUserId: ibkrUserId
+                brokerageUserId: ibkrUserId,
+                error: null,
             }
 
             if (brokerageJobStatus === null) {
@@ -104,15 +105,16 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
                 continue
             }
 
-            if (brokerageJobStatus.status === BrokerageTaskStatusType.RUNNING
-                || brokerageJobStatus.status === BrokerageTaskStatusType.FAILED
-                || brokerageJobStatus.status === BrokerageTaskStatusType.SUCCESSFUL) continue;
+            if (brokerageJobStatus.status === BrokerageTaskStatusType.Running
+                || brokerageJobStatus.status === BrokerageTaskStatusType.Failed
+                || brokerageJobStatus.status === BrokerageTaskStatusType.Successful) continue;
 
             if (brokerageJobStatus.data?.filenames.includes(fileType)) continue;
 
             newBrokerageJobStatus.data.filenames = [...brokerageJobStatus.data?.filenames, fileType];
 
-            if (brokerageJobStatus.data?.filenames.length === 7) brokerageJobStatus.status = BrokerageTaskStatusType.PENDING
+            if (newBrokerageJobStatus.data.filenames.length === 7) newBrokerageJobStatus.status = BrokerageTaskStatusType.Pending
+
             await repo.upsertBrokerageTasks([newBrokerageJobStatus])
             await uploadFileToS3(path, filename, s3Client)
         }

@@ -5,8 +5,9 @@ import pgPromise, {IDatabase, IMain} from "pg-promise";
 import pg from 'pg';
 import Repository from '@tradingpost/common/brokerage/repository';
 import * as Finicity from "@tradingpost/common/finicity";
-import * as Ibkr from "@tradingpost/common/brokerage/ibkr";
-import * as Robinhood from "@tradingpost/common/brokerage/robinhood";
+import {Service as IbkrService} from "@tradingpost/common/brokerage/ibkr";
+import {Service as RobinhoodService} from "@tradingpost/common/brokerage/robinhood";
+import {default as RobinhoodTransformer} from "@tradingpost/common/brokerage/robinhood/transformer";
 import {S3Client} from "@aws-sdk/client-s3";
 import {PortfolioSummaryService} from "@tradingpost/common/brokerage/portfolio-summary";
 import {
@@ -36,9 +37,9 @@ let pgClient: IDatabase<any>;
 let pgp: IMain;
 
 interface Process {
-    add(userId: string, brokerageUserId: string, data?: any): Promise<void>
+    add(userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void>
 
-    update(userId: string, brokerageUserId: string, data?: any): Promise<void>
+    update(userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void>
 }
 
 let processMap: Record<DirectBrokeragesType, Process>;
@@ -64,10 +65,10 @@ const run = async (tokenFile?: string) => {
     const finicity = new Finicity.default(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey, tokenFile);
     await finicity.init();
 
-    const robinhoodTransformer = new Robinhood.Transformer(repository);
+    const robinhoodTransformer = new RobinhoodTransformer(repository);
 
-    processMap[DirectBrokeragesType.Robinhood] = new Robinhood.Service(robinhoodCfg.clientId, robinhoodCfg.scope,robinhoodCfg.expiresIn, repository, robinhoodTransformer, portfolioSummaryService);
-    processMap[DirectBrokeragesType.Ibkr] = new Ibkr.default(repository, s3Client, portfolioSummaryService);
+    processMap[DirectBrokeragesType.Robinhood] = new RobinhoodService(robinhoodCfg.clientId, robinhoodCfg.scope, robinhoodCfg.expiresIn, repository, robinhoodTransformer, portfolioSummaryService);
+    processMap[DirectBrokeragesType.Ibkr] = new IbkrService(repository, s3Client, portfolioSummaryService);
     processMap[DirectBrokeragesType.Finicity] = finicity;
 
     // Pull off a job and start processing based on brokerage type
