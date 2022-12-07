@@ -261,7 +261,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               updated_at,
                               created_at,
                               error,
-                              error_code
+                              error_code,
+                              hidden_for_deletion
                        FROM tradingpost_brokerage_account
                        WHERE user_id = $1
                          AND broker_name = $2;`
@@ -285,7 +286,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 id: r.id,
                 brokerName: r.broker_name,
                 institutionId: r.institution_id,
-
+                hiddenForDeletion: r.hidden_for_deletion
             }
             return x;
         })
@@ -306,7 +307,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               updated_at,
                               created_at,
                               error,
-                              error_code
+                              error_code,
+                              hidden_for_deletion
                        FROM tradingpost_brokerage_account
                        WHERE id = $1;`
         const result = await this.db.oneOrNone(query, [accountId])
@@ -325,7 +327,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             officialName: result.official_name,
             institutionId: result.institution_id,
             error: result.error,
-            errorCode: result.error_code
+            errorCode: result.error_code,
+            hiddenForDeletion: result.hidden_for_deletion
         }
     }
 
@@ -415,7 +418,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 errorCode: row.error_code,
                 subtype: row.subtype,
                 institutionId: row.institution_id,
-                officialName: row.official_name
+                officialName: row.official_name,
             }
             return o
         })
@@ -524,7 +527,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    fa.id                      internal_finicity_account_id,
                    fa.finicity_institution_id internal_finicity_institution_id,
                    fa.account_id              external_finicity_account_id,
-                   fa.number                  external_finicity_account_number
+                   fa.number                  external_finicity_account_number,
+                   tba.hidden_for_deletion
             FROM TRADINGPOST_BROKERAGE_ACCOUNT TBA
                      INNER JOIN
                  FINICITY_ACCOUNT FA
@@ -553,7 +557,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 errorCode: r.error_code,
                 error: r.error,
                 updatedAt: DateTime.fromJSDate(r.updated_at),
-                createdAt: DateTime.fromJSDate(r.created_at)
+                createdAt: DateTime.fromJSDate(r.created_at),
+                hiddenForDeletion: r.hidden_for_deletion
             }
             return o
         });
@@ -1794,12 +1799,15 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               type,
                               subtype,
                               updated_at,
-                              created_at
+                              created_at,
+                              error,
+                              error_code,
+                              hidden_for_deletion
                        FROM tradingpost_brokerage_account
                        WHERE user_id = $1`;
         const response = await this.db.query(query, [userId]);
         return response.map((r: any) => {
-            return {
+            let x: TradingPostBrokerageAccountsTable = {
                 id: r.id,
                 userId: r.user_id,
                 institutionId: r.institution_id,
@@ -1812,8 +1820,12 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 type: r.type,
                 subtype: r.subtype,
                 updatedAt: DateTime.fromJSDate(r.updated_at),
-                createdAt: DateTime.fromJSDate(r.created_at)
+                createdAt: DateTime.fromJSDate(r.created_at),
+                hiddenForDeletion: r.hidden_for_deletion,
+                errorCode: r.error_code,
+                error: r.error
             }
+            return x;
         });
     }
 
@@ -1829,6 +1841,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'official_name', prop: 'officialName'},
             {name: 'type', prop: 'type'},
             {name: 'subtype', prop: 'subtype'},
+            {name: 'hidden_for_deletion', prop: 'hiddenForDeletion'}
         ], {table: 'tradingpost_brokerage_account'})
         const query = this.pgp.helpers.insert(accounts, cs);
         await this.db.none(query);
@@ -1847,7 +1860,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'official_name', prop: 'officialName'},
             {name: 'type', prop: 'type'},
             {name: 'subtype', prop: 'subtype'},
-            {name: "updated_at", prop: "updatedAt"}
+            {name: "updated_at", prop: "updatedAt"},
+            {name: 'hidden_for_deletion', prop: 'hiddenForDeletion'}
         ], {table: 'tradingpost_brokerage_account'})
         const newAccounts = accounts.map(acc => ({...acc, updatedAt: DateTime.now()}));
         const query = upsertReplaceQuery(newAccounts, cs, this.pgp, "user_id,institution_id,account_number") + ` RETURNING id`;
@@ -2853,7 +2867,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               updated_at,
                               created_at,
                               error,
-                              error_code
+                              error_code,
+                              hidden_for_deletion
                        FROM TRADINGPOST_BROKERAGE_ACCOUNT
                        WHERE user_id = $1
                          AND broker_name = $2
@@ -2878,6 +2893,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 accountNumber: r.account_number,
                 updatedAt: DateTime.fromJSDate(r.updated_at),
                 createdAt: DateTime.fromJSDate(r.created_at),
+                hiddenForDeletion: r.hidden_for_deletion
             }
             return x;
         })
@@ -3103,7 +3119,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     upsertIbkrSecurities = async (securities: IbkrSecurity[]): Promise<void> => {
         if (securities.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
-            {name: 'file_date', prop:'fileDate'},
+            {name: 'file_date', prop: 'fileDate'},
             {name: 'type', prop: 'type'},
             {name: 'con_id', prop: 'conId'},
             {name: 'asset_type', prop: 'assetType'},
@@ -3187,7 +3203,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     upsertIbkrCashReport = async (cashReports: IbkrCashReport[]): Promise<void> => {
         if (cashReports.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
-            {name: 'file_date', prop:'fileDate'},
+            {name: 'file_date', prop: 'fileDate'},
             {name: 'type', prop: 'type'},
             {name: 'account_id', prop: 'accountId'},
             {name: 'report_date', prop: 'reportDate'},
@@ -3207,7 +3223,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     upsertIbkrNav = async (navs: IbkrNav[]): Promise<void> => {
         if (navs.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
-            {name: 'file_date', prop:'fileDate'},
+            {name: 'file_date', prop: 'fileDate'},
             {name: 'type', prop: 'type'},
             {name: 'account_id', prop: 'accountId'},
             {name: 'base_currency', prop: 'baseCurrency'},
@@ -4189,7 +4205,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'data', prop: 'data'},
             {name: 'error', prop: 'error'}
         ], {table: 'brokerage_task'});
-        const query = upsertReplaceQuery(tasks, cs, this.pgp, "brokerage, user_id, brokerage_user_id, date")
+
+        const query = this.pgp.helpers.insert(tasks, cs);
         await this.db.none(query);
     }
 
@@ -4337,6 +4354,14 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             createdAt: DateTime.fromJSDate(result.created_at),
             error: result.error
         }
+    }
+
+    scheduleTradingPostAccountForDeletion = async (accountIds: number[]): Promise<void> => {
+        if (accountIds.length <= 0) return;
+        const query = `UPDATE tradingpost_brokerage_account
+                       SET hidden_for_deletion = TRUE
+                       WHERE id IN ($1:list);`
+        await this.db.none(query, [accountIds]);
     }
 }
 

@@ -118,7 +118,8 @@ export class Transformer extends BaseTransformer {
                 type: account.type,
                 subtype: null,
                 error: account.aggregationStatusCode === 103 || account.aggregationStatusCode === 185,
-                errorCode: account.aggregationStatusCode
+                errorCode: account.aggregationStatusCode,
+                hiddenForDeletion: false
             });
         }
 

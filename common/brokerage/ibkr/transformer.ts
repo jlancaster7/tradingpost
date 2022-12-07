@@ -196,7 +196,8 @@ export default class IbkrTransformer extends BaseTransformer {
                 subtype: fa.type,
                 status: fa.state ? fa.state : "",
                 institutionId: 6723,
-                officialName: "Interactive Brokers"
+                officialName: "Interactive Brokers",
+                hiddenForDeletion: false,
             }
             return x;
         });

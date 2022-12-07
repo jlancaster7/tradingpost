@@ -659,6 +659,7 @@ export type TradingPostInstitutionWithFinicityInstitutionId = {
 } & TradingPostInstitutionTable
 
 export type TradingPostBrokerageAccounts = {
+    hiddenForDeletion: boolean
     userId: string
     institutionId: number
     brokerName: string
@@ -786,11 +787,10 @@ export type BrokerageTask = {
     status: BrokerageTaskStatusType,
     type: BrokerageTaskType
     date: DateTime
-    brokerageUserId: string
+    brokerageUserId: string | null
     started: DateTime | null
     finished: DateTime | null
     data: any | null
-
     error: any | null
 }
 

@@ -1,4 +1,5 @@
 import Extension from "./";
+import {DirectBrokeragesType} from "../../../brokerage/interfaces";
 
 export type RobinhoodLoginRequest = {
     username: string
@@ -30,4 +31,5 @@ export enum RobinhoodChallengeStatus {
 export default class extends Extension {
     robinhoodLogin = this._makeFetch<RobinhoodLoginRequest, RobinhoodLoginResponse>("robinhoodLogin", this._defaultPostRequest)
     hoodPing = this._makeFetch<{ requestId: string }, { challengeStatus: RobinhoodChallengeStatus }>("hoodPing", this._defaultPostRequest)
+    scheduleForDeletion = this._makeFetch<{ brokerage: DirectBrokeragesType, accountIds: number[] }, {}>("scheduleForDeletion", this._defaultPostRequest)
 }

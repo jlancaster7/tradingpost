@@ -285,7 +285,7 @@ CREATE TABLE brokerage_task
     status            brokerage_task_status_type     NOT NULL DEFAULT 'PENDING',
     type              brokerage_task_type            NOT NULL DEFAULT 'TODO',
     date              TIMESTAMPTZ                    NOT NULL, -- Used for when to process in ASCENDING order
-    brokerage_user_id text                           NOT NULL,
+    brokerage_user_id TEXT,
     started           TIMESTAMPTZ,
     finished          TIMESTAMPTZ,
     data              JSONB,
@@ -295,15 +295,21 @@ CREATE TABLE brokerage_task
     PRIMARY KEY (id)
 );
 
-CREATE UNIQUE INDEX brokerage_task_uniq ON brokerage_task (brokerage, user_id, brokerage_user_id, date);
-
 DROP TABLE brokerage_to_process;
 DROP TYPE direct_brokerages;
 DROP TYPE brokerage_to_process_status;
 
-ALTER TABLE ibkr_security ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
-ALTER TABLE ibkr_activity ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
-ALTER TABLE ibkr_cash_report ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
-ALTER TABLE ibkr_nav ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
-ALTER TABLE ibkr_pl ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
-ALTER TABLE ibkr_position ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_security
+    ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_activity
+    ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_cash_report
+    ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_nav
+    ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_pl
+    ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_position
+    ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE tradingpost_brokerage_account
+    ADD COLUMN hidden_for_deletion BOOLEAN NOT NULL DEFAULT FALSE;

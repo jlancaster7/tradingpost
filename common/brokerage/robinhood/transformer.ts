@@ -8,6 +8,7 @@ import {
     RobinhoodUserTable
 } from "./interfaces";
 import {
+    DirectBrokeragesType,
     GetSecurityBySymbol,
     InvestmentTransactionType,
     SecurityTableWithLatestPriceRobinhoodId,
@@ -108,7 +109,8 @@ export default class Transformer extends TransformerBase {
                 mask: "",
                 name: user.username,
                 status: "active",
-                brokerName: "Robinhood"
+                brokerName: DirectBrokeragesType.Robinhood,
+                hiddenForDeletion: false,
             }
 
             return x
