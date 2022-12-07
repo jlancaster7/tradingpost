@@ -14,7 +14,7 @@ import {
 import Finicity from "../../finicity";
 import {AddCustomerResponse, AddCustomerResponseError, GetInstitutionsInstitution} from "../../finicity/interfaces";
 import {DateTime} from "luxon";
-import FinicityTransformer from "./transformer";
+import {Transformer as FinicityTransformer} from "./transformer";
 
 export class Service implements IBrokerageService {
     private finicity: Finicity;

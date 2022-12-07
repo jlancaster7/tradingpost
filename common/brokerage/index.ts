@@ -3,7 +3,7 @@ import {DateTime} from "luxon";
 import Repository from "./repository";
 import {Service as FinicityService} from "./finicity"
 import Finicity from "../finicity";
-import FinicityTransformer from "./finicity/transformer";
+import {Transformer as FinicityTransformer} from "./finicity/transformer";
 import {PortfolioSummaryService} from "./portfolio-summary";
 import {
     HistoricalHoldings,

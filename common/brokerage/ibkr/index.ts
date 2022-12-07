@@ -1,5 +1,7 @@
 import IbkrTransformer, {TransformerRepository} from "./transformer";
 import {
+    BrokerageTaskStatusType,
+    BrokerageTaskTable,
     DirectBrokeragesType,
     IbkrAccount,
     IbkrAccountCsv,
@@ -15,7 +17,8 @@ import {
     IbkrPosition,
     IbkrPositionCsv,
     IbkrSecurity,
-    IbkrSecurityCsv, TradingPostBrokerageAccountsTable
+    IbkrSecurityCsv,
+    TradingPostBrokerageAccountsTable
 } from "../interfaces";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {DateTime} from "luxon";
@@ -23,9 +26,8 @@ import csv from 'csv-parser';
 import {PortfolioSummaryService} from "../portfolio-summary";
 
 type RepositoryInterface = {
+    getBrokerageTasks(params: { brokerage?: string, userId?: string, status?: BrokerageTaskStatusType }): Promise<BrokerageTaskTable[]>
     getTradingPostBrokerageAccountsByBrokerage(userId: string, brokerageName: string): Promise<TradingPostBrokerageAccountsTable[]>
-    getPendingJobs(brokerage: string): Promise<any[]>
-    updateJobStatus(jobId: number, status: any): Promise<void>
     getIbkrAccount(accountId: string): Promise<IbkrAccountTable | null>
     getIbkrMasterAndSubAccounts(accountId: string): Promise<IbkrAccountTable[]>
     upsertIbkrAccounts(accounts: IbkrAccount[]): Promise<void>
@@ -35,7 +37,6 @@ type RepositoryInterface = {
     upsertIbkrNav(navs: IbkrNav[]): Promise<void>
     upsertIbkrPls(pls: IbkrPl[]): Promise<void>
     upsertIbkrPositions(positions: IbkrPosition[]): Promise<void>
-    getBrokerageJobsPerUser(brokerage: string, brokerageUserId: string): Promise<any[]>
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 } & TransformerRepository
 
@@ -60,8 +61,9 @@ export class Service {
         // Accounts
         const ibkrAccounts = await this._importAccount(brokerageUserId, date);
         await this._transformer.accounts(date, userId, ibkrAccounts);
-        const accts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Ibkr)
-        const acctIds = accts.map(acc => acc.id);
+
+        const internalAccounts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Ibkr)
+        const acctIds = internalAccounts.map(acc => acc.id);
         await this._repo.addTradingPostAccountGroup(userId, 'default', acctIds, 10117)
 
         // Securities
@@ -80,9 +82,13 @@ export class Service {
         await this._importNav(brokerageUserId, date);
         await this._importPl(brokerageUserId, date);
 
-        const cnt = await this._repo.getBrokerageJobsPerUser(DirectBrokeragesType.Ibkr, brokerageUserId);
-        if ((!cnt || cnt.length <= 0) && userId !== null)
-            await this._portfolioSummaryService.computeAccountGroupSummary(userId)
+        const remainingTasks = await this._repo.getBrokerageTasks({
+            brokerage: DirectBrokeragesType.Ibkr,
+            userId: userId,
+            status: BrokerageTaskStatusType.Pending
+        });
+
+        if (remainingTasks.length <= 0) await this._portfolioSummaryService.computeAccountGroupSummary(userId)
     }
 
     _getFileFromS3 = async <T>(key: string, mapFn?: (data: T) => T): Promise<T[]> => {
@@ -113,7 +119,8 @@ export class Service {
         const masterAccount = currentAccounts.find(acc => acc.masterAccountId === null)
         if (currentAccounts.length <= 0 || !masterAccount) throw new Error(`no ibkr account found for id ${brokerageUserId}`);
 
-        const accounts = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Account", dateToProcess), (data: IbkrAccountCsv) => {
+        const fileName = this._formatFileName(brokerageUserId, "Account", dateToProcess);
+        const accounts = await this._getFileFromS3(fileName, (data: IbkrAccountCsv) => {
             let x: IbkrAccountCsv = {
                 AccountID: data.AccountID,
                 AccountRepresentative: data.AccountRepresentative,
@@ -135,11 +142,10 @@ export class Service {
                 Street2: data.Street2,
                 Van: data.Van,
                 Zip: data.Zip,
-                Type: data.Type
+                Type: data.Type,
             }
             return x;
         });
-
         await this._repo.upsertIbkrAccounts(accounts.map((acc: IbkrAccountCsv) => {
             let n: IbkrAccount = {
                 accountId: acc.AccountID,
@@ -206,6 +212,7 @@ export class Service {
 
         const securitiesMapped = ibkrSecurities.map((s: IbkrSecurityCsv) => {
             let x: IbkrSecurity = {
+                fileDate: dateToProcess,
                 assetType: s.AssetType,
                 bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,
                 bbTicker: s.BBTicker !== '' ? s.BBTicker : null,
@@ -300,6 +307,7 @@ export class Service {
             let tradeTime: string | null = tradeTimeDt.isValid ? tradeTimeDt.toSQLTime() : null;
 
             let x: IbkrActivity = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 assetType: s.AssetType !== '' ? s.AssetType : null,
                 awayBrokerCommission: s.AwayBrokerCommission !== '' ? parseFloat(s.AwayBrokerCommission) : null,
@@ -366,6 +374,7 @@ export class Service {
         });
         const cashReportsMapped = cashReports.map((s: IbkrCashReportCsv) => {
             let x: IbkrCashReport = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 currency: s.Currency !== '' ? s.Currency : null,
                 baseSummary: s.BaseSummary === 'Y',
@@ -414,6 +423,7 @@ export class Service {
         });
         const navsMapped = navs.map((s: IbkrNavCsv) => {
             let x: IbkrNav = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 baseCurrency: s.BaseCurrency,
                 bonds: s.Bonds !== '' ? parseFloat(s.Bonds) : null,
@@ -476,6 +486,7 @@ export class Service {
             if (s.ReportDate === '') throw new Error("no report date available for pls");
             const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
             let x: IbkrPl = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 assetType: s.AssetType !== '' ? s.AssetType : null,
                 bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,
@@ -544,6 +555,7 @@ export class Service {
             if (s.ReportDate === '') throw new Error("no report date available for position");
             const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
             let x: IbkrPosition = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 accruedInt: s.AccruedInt !== '' ? parseFloat(s.AccruedInt) : null,
                 assetType: s.AssetType !== '' ? s.AssetType : null,

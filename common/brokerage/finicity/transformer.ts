@@ -91,7 +91,7 @@ const transformTransactionType = (txType: string): InvestmentTransactionType => 
     }
 }
 
-export default class Transformer extends BaseTransformer {
+export class Transformer extends BaseTransformer {
     private repository: TransformerRepository;
 
     constructor(repository: TransformerRepository) {

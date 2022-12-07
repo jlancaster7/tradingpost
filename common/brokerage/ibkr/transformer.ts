@@ -188,7 +188,7 @@ export default class IbkrTransformer extends BaseTransformer {
                 accountNumber: fa.accountId,
                 error: false,
                 userId: tpUserId,
-                brokerName: "ibkr",
+                brokerName: DirectBrokeragesType.Ibkr,
                 errorCode: 0,
                 mask: "",
                 name: fa.accountTitle ? fa.accountTitle : "",
@@ -318,31 +318,23 @@ export default class IbkrTransformer extends BaseTransformer {
             ) {
                 symbol = 'USD:CUR'
             }
+            const internalAccount = tpAccountMap[tx.accountId];
+            if (!internalAccount) throw new Error("could not find account for account id: " + tx.accountId);
 
-            try {
-                const transactionType = transformTransactionType(tx.transactionType);
-                let x: TradingPostTransactions = {
-                    accountId: tpAccountMap[tx.accountId].id,
-                    currency: tx.currency,
-                    amount: tx.grossAmount,
-                    date: date,
-                    price: tx.unitPrice,
-                    type: transactionType,
-                    fees: tx.secFee,
-                    optionId: optionId,
-                    quantity: tx.quantity,
-                    securityId: securitiesMap[symbol].id,
-                    securityType: securityType,
-                }
-                return transformTransactionTypeAmount(transactionType, x);
-
-            } catch (e) {
-                console.error(e)
-                console.error("ACCOUNT ID: ", tx.accountId);
-                console.error("SYMBOL: ", symbol);
-                console.error(Object.keys(securitiesMap).join(", "))
-                throw e;
+            let x: TradingPostTransactions = {
+                accountId: internalAccount.id,
+                currency: tx.currency,
+                amount: tx.net ? tx.net : 0,
+                date: date,
+                price: tx.unitPrice,
+                type: transactionType,
+                fees: (tx.secFee ? tx.secFee : 0) + (tx.commission ? tx.commission : 0),
+                optionId: optionId,
+                quantity: tx.quantity,
+                securityId: securitiesMap[symbol].id,
+                securityType: securityType,
             }
+            return transformTransactionTypeAmount(transactionType, x);
         });
         await this.upsertTransactions(tpTransactions);
     }
@@ -371,17 +363,24 @@ export default class IbkrTransformer extends BaseTransformer {
                 symbol = symbol.split(" ")[0];
             }
 
+            let marketPrice = h.marketPrice
+            let value = h.marketValue;
+            if (securityType === SecurityType.cashEquivalent) {
+                marketPrice = 1
+                value = h.quantity
+            }
+
             let x: TradingPostHistoricalHoldings = {
                 accountId: tpAccountIdMap[h.accountId].id,
-                price: h.marketPrice,
+                price: marketPrice,
                 costBasis: h.costBasis,
                 date: h.reportDate,
                 currency: h.currency,
                 optionId: optionId,
                 securityId: securitiesMapBySymbol[symbol].id,
-                value: h.marketValue,
+                value: value,
                 priceAsOf: h.reportDate,
-                priceSource: "ibkr",
+                priceSource: DirectBrokeragesType.Ibkr,
                 quantity: h.quantity,
                 securityType: securityType,
             }
@@ -418,12 +417,19 @@ export default class IbkrTransformer extends BaseTransformer {
                 symbol = symbol.split(" ")[0];
             }
 
+            let marketPrice = h.marketPrice
+            let value = h.marketValue;
+            if (securityType === SecurityType.cashEquivalent) {
+                marketPrice = 1
+                value = h.quantity
+            }
+
             let x: TradingPostCurrentHoldings = {
                 accountId: tpAccountIdMap[h.accountId].id,
-                priceSource: "ibkr",
-                value: h.marketValue,
+                priceSource: DirectBrokeragesType.Ibkr,
+                value: value,
                 priceAsOf: h.reportDate,
-                price: securityType === SecurityType.cashEquivalent ? 1 : h.marketPrice,
+                price: marketPrice,
                 optionId: optionId,
                 currency: h.currency,
                 quantity: h.quantity,
@@ -443,7 +449,7 @@ export default class IbkrTransformer extends BaseTransformer {
         let ibkrAccountIdMap: Record<string, null> = {}
         ibkrWithAccount.forEach(acc => ibkrAccountIdMap[acc.accountId] = null);
         let accountIds = Object.keys(ibkrAccountIdMap);
-        const accounts = await this._repository.getTradingPostBrokerageAccountsByBrokerageAndIds(tpUserId, "ibkr", accountIds);
+        const accounts = await this._repository.getTradingPostBrokerageAccountsByBrokerageAndIds(tpUserId, DirectBrokeragesType.Ibkr, accountIds);
         let tpAccountIdMap: Record<string, TradingPostBrokerageAccountsTable> = {};
         accounts.forEach(acc => tpAccountIdMap[acc.accountNumber] = acc);
         return tpAccountIdMap

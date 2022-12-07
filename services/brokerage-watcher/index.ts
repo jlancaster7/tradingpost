@@ -72,7 +72,6 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
             const path = filesToProcess.pop();
             if (!path) continue
 
-            console.log("NEW FILE: ", path)
             const splitPath = path.split("/");
             const filename = splitPath[splitPath.length - 1];
             const filenameWithoutExt = filename.replace(".csv", "")

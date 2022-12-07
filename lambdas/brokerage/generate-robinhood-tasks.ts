@@ -53,14 +53,15 @@ const run = async () => {
     const robinhoodTasks = robinhoodUsers.map(ru => {
         let x: BrokerageTask = {
             date: DateTime.now().setZone("America/New_York").set({minute: 0, second: 0, millisecond: 0, hour: 7}),
-            status: BrokerageTaskStatusType.PENDING,
+            status: BrokerageTaskStatusType.Pending,
             data: null,
             userId: ru.userId,
             brokerage: DirectBrokeragesType.Robinhood,
             type: BrokerageTaskType.NewData,
             brokerageUserId: ru.userId,
             finished: null,
-            started: null
+            started: null,
+            error: null
         }
         return x;
     });

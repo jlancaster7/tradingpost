@@ -1,7 +1,7 @@
 import { FinicityUser, IBrokerageService, TradingPostBrokerageAccounts, TradingPostCurrentHoldings, TradingPostTransactions, IFinicityRepository, TradingPostUser } from "../interfaces";
 import Finicity from "../../finicity";
 import { DateTime } from "luxon";
-import FinicityTransformer from "./transformer";
+import { Transformer as FinicityTransformer } from "./transformer";
 export declare class Service implements IBrokerageService {
     private finicity;
     private repository;

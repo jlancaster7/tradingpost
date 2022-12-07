@@ -900,6 +900,7 @@ export type IbkrActivityCsv = {
 }
 
 export type IbkrActivity = {
+    fileDate: DateTime
     type: string | null
     accountId: string
     conId: string | null
@@ -963,6 +964,7 @@ export type IbkrCashReportCsv = {
 }
 
 export type IbkrCashReport = {
+    fileDate: DateTime
     type: string | null
     accountId: string
     reportDate: DateTime | null
@@ -1008,6 +1010,7 @@ export type IbkrNavCsv = {
 }
 
 export type IbkrNav = {
+    fileDate: DateTime
     type: string | null
     accountId: string
     baseCurrency: string | null
@@ -1065,6 +1068,7 @@ export type IbkrPlCsv = {
 }
 
 export type IbkrPl = {
+    fileDate: DateTime
     accountId: string
     internalAssetId: string
     securityId: string | null
@@ -1128,6 +1132,7 @@ export type IbkrPositionCsv = {
 }
 
 export type IbkrPosition = {
+    fileDate: DateTime
     accountId: string
     type: string | null
     conId: string | null
@@ -1195,6 +1200,7 @@ export type IbkrSecurityCsv = {
 }
 
 export type IbkrSecurity = {
+    fileDate: DateTime
     type: string
     conId: string
     assetType: string

@@ -264,7 +264,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               error_code
                        FROM tradingpost_brokerage_account
                        WHERE user_id = $1
-                         AND brokerage_name = $2;`
+                         AND broker_name = $2;`
         const results = await this.db.query(query, [userId, brokerageName]);
         if (results.length <= 0) return [];
 
@@ -285,7 +285,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 id: r.id,
                 brokerName: r.broker_name,
                 institutionId: r.institution_id,
+
             }
+            return x;
         })
     }
 
@@ -3101,6 +3103,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     upsertIbkrSecurities = async (securities: IbkrSecurity[]): Promise<void> => {
         if (securities.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'file_date', prop:'fileDate'},
             {name: 'type', prop: 'type'},
             {name: 'con_id', prop: 'conId'},
             {name: 'asset_type', prop: 'assetType'},
@@ -3136,6 +3139,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         if (activities.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'type', prop: 'type'},
+            {name: 'file_date', prop: 'fileDate'},
             {name: 'account_id', prop: 'accountId'},
             {name: 'con_id', prop: 'conId'},
             {name: 'security_id', prop: 'securityId'},
@@ -3183,6 +3187,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     upsertIbkrCashReport = async (cashReports: IbkrCashReport[]): Promise<void> => {
         if (cashReports.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'file_date', prop:'fileDate'},
             {name: 'type', prop: 'type'},
             {name: 'account_id', prop: 'accountId'},
             {name: 'report_date', prop: 'reportDate'},
@@ -3202,6 +3207,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     upsertIbkrNav = async (navs: IbkrNav[]): Promise<void> => {
         if (navs.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'file_date', prop:'fileDate'},
             {name: 'type', prop: 'type'},
             {name: 'account_id', prop: 'accountId'},
             {name: 'base_currency', prop: 'baseCurrency'},
@@ -3233,6 +3239,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     upsertIbkrPls = async (pls: IbkrPl[]): Promise<void> => {
         if (pls.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'file_date', prop: 'fileDate'},
             {name: 'account_id', prop: 'accountId'},
             {name: 'internal_asset_id', prop: 'internalAssetId'},
             {name: 'security_id', prop: 'securityId'},
@@ -3263,6 +3270,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     upsertIbkrPositions = async (positions: IbkrPosition[]): Promise<void> => {
         if (positions.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
+            {name: 'file_date', prop: 'fileDate'},
             {name: 'type', prop: 'type'},
             {name: 'account_id', prop: 'accountId'},
             {name: 'con_id', prop: 'conId'},
@@ -4185,22 +4193,75 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         await this.db.none(query);
     }
 
-    updateTask = async (taskId: number, params: { startDate?: DateTime, endDate?: DateTime, status?: BrokerageTaskStatusType, error?: any }): Promise<void> => {
+    updateTask = async (taskId: number, params: { started?: DateTime, finished?: DateTime, status?: BrokerageTaskStatusType, error?: any }): Promise<void> => {
         let query = `UPDATE brokerage_task
                      SET `
         let cnt = 1;
         let paramPass: any = [];
-        Object.keys(params).forEach((key: string) => {
+        Object.keys(params).forEach((key: string, idx: number) => {
             // @ts-ignore
             const val = params[key];
             paramPass.push(val);
-            query += ` ${key}=$${cnt}`
+            query += ` ${camelToSnakeCase(key)}=$${cnt}`
             cnt++
+            if (idx < Object.keys(params).length - 1) query += ','
         });
 
-        query += ` WHERE id = $` + paramPass.length + 1
+        query += ` WHERE id = $` + (paramPass.length + 1)
         paramPass.push(taskId);
         await this.db.none(query, paramPass);
+    }
+
+
+    getBrokerageTasks = async (params: { brokerage?: string, userId?: string, status?: BrokerageTaskStatusType }): Promise<BrokerageTaskTable[]> => {
+        let query = `SELECT id,
+                            user_id,
+                            created_at,
+                            updated_at,
+                            date,
+                            started,
+                            brokerage,
+                            type,
+                            brokerage_user_id,
+                            status,
+                            finished,
+                            data
+                     FROM brokerage_task `;
+
+        let dbParams = [];
+        const keys = Object.keys(params);
+        if (keys.length > 0) query += ` WHERE `;
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i] as string;
+
+            // @ts-ignore
+            const value = params[key];
+            query += `${camelToSnakeCase(key)}=$${i + 1}`
+            dbParams.push(value);
+            if (keys.length > 1 && i < keys.length - 1) query += ` AND `
+        }
+
+        const results = await this.db.query(query, dbParams);
+        if (results.length <= 0) return [];
+
+        return results.map((r: any) => {
+            let x: BrokerageTaskTable = {
+                id: r.id,
+                error: r.error,
+                brokerage: r.brokerage,
+                userId: r.user_id,
+                status: r.status,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                createdAt: DateTime.fromJSDate(r.created_at),
+                date: DateTime.fromJSDate(r.date),
+                type: r.type,
+                data: r.data,
+                brokerageUserId: r.brokerage_user_id,
+                started: r.started ? DateTime.fromJSDate(r.started) : null,
+                finished: r.finished ? DateTime.fromJSDate(r.finished) : null,
+            }
+            return x;
+        })
     }
 
     getPendingBrokerageTask = async (): Promise<BrokerageTaskTable | null> => {
@@ -4295,3 +4356,5 @@ function upsertReplaceQueryWithColumns(data: any, cs: ColumnSet, pgp: IMain, col
             return `${col}=EXCLUDED.${col}`
         }).join();
 }
+
+const camelToSnakeCase = (str: string) => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);

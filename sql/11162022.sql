@@ -300,3 +300,10 @@ CREATE UNIQUE INDEX brokerage_task_uniq ON brokerage_task (brokerage, user_id, b
 DROP TABLE brokerage_to_process;
 DROP TYPE direct_brokerages;
 DROP TYPE brokerage_to_process_status;
+
+ALTER TABLE ibkr_security ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_activity ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_cash_report ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_nav ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_pl ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
+ALTER TABLE ibkr_position ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
