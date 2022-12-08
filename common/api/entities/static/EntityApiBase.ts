@@ -1,4 +1,4 @@
-import { version } from '../../../package.json'
+import {version} from '../../../package.json'
 
 let apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8082";
 
@@ -23,6 +23,7 @@ type ValidationErrorData<T> = Record<Partial<keyof T>, string>;
 
 export class PublicError extends Error {
     statusCode: number
+
     constructor(msg: Error["message"], code = 400) {
         super(msg);
         this.statusCode = code;
@@ -66,11 +67,12 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
     async get(id: string | number) {
         const resp = await fetch(this.makeUrl("get"), {
             method: "POST",
-            body: JSON.stringify({ id }),
+            body: JSON.stringify({id}),
             headers: EntityApiBase.makeHeaders()
         });
         return EntityApiBase.handleFetchResponse<TGet>(resp);
     }
+
     // async list(ids?: (string | number)[]) {
     //     const resp = await fetch(this.makeUrl("list"), {
     //         method: "POST",
@@ -88,16 +90,19 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
         });
         return await EntityApiBase.handleFetchResponse<TGet>(resp)
     }
+
     async update(id: string | number, item: TUpdate) {
         const resp = await fetch(this.makeUrl("update"), {
             method: "POST",
-            body: JSON.stringify({ ...item, id }),
+            body: JSON.stringify({...item, id}),
             headers: EntityApiBase.makeHeaders()
         });
         return EntityApiBase.handleFetchResponse<TGet>(resp)
     }
 
-    validate(isInsert: boolean): (ValidationErrorData<TGet> | null) { return null };
+    validate(isInsert: boolean): (ValidationErrorData<TGet> | null) {
+        return null
+    };
 
 }
 

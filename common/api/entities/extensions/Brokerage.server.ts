@@ -1,11 +1,18 @@
 import {ensureServerExtensions} from ".";
-import Brokerage, {RobinhoodChallengeStatus, RobinhoodLoginResponse, RobinhoodLoginStatus} from "./Brokerage";
+import Brokerage from "./Brokerage";
+import brokerage, {RobinhoodChallengeStatus, RobinhoodLoginResponse, RobinhoodLoginStatus} from "./Brokerage";
 import {v4 as uuidv4} from 'uuid';
 import fetch from 'node-fetch';
-import {TradingPostBrokerageAccountsTable} from "../../../brokerage/interfaces";
+import {
+    BrokerageTaskStatusType,
+    BrokerageTaskType,
+    TradingPostBrokerageAccountsTable
+} from "../../../brokerage/interfaces";
 import {init} from "../../../db";
 import Repository from "../../../brokerage/repository";
 import {DefaultConfig} from "../../../configuration";
+import {accounts} from "../../../brokerage/robinhood/api";
+import {DateTime} from "luxon";
 
 const loginUrl = 'https://api.robinhood.com/oauth2/token/';
 const pingUrl = (id: string) => `https://api.robinhood.com/push/${id}/get_prompts_status`;
@@ -142,6 +149,7 @@ export default ensureServerExtensions<Brokerage>({
                 error: false,
                 officialName: "",
                 subtype: "",
+                hiddenForDeletion: false,
             }])
 
             return {
@@ -183,5 +191,30 @@ export default ensureServerExtensions<Brokerage>({
             console.error(e);
             return {challengeStatus: RobinhoodChallengeStatus.Unknown}
         }
+    },
+    scheduleForDeletion: async (req) => {
+        // Change TP account Id to hidden and publish event to remove account
+        const {pgp, pgClient} = await init;
+        const brokerageRepo = new Repository(pgClient, pgp);
+        await brokerageRepo.upsertBrokerageTasks([
+            {
+                status: BrokerageTaskStatusType.Pending,
+                date: DateTime.now(),
+                userId: req.extra.userId,
+                type: BrokerageTaskType.DeleteAccount,
+                started: null,
+                finished: null,
+                data: {
+                    brokerage: req.body.brokerage,
+                    accountIds: req.body.accountIds
+                },
+                error: null,
+                brokerageUserId: null,
+                brokerage: req.body.brokerage
+            }
+        ]);
+
+        await brokerageRepo.scheduleTradingPostAccountForDeletion(req.body.accountIds);
+        return {};
     }
 })

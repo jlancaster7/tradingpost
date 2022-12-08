@@ -17,10 +17,9 @@ import {
 import {CustomerAccountsDetail} from '../../finicity/interfaces'
 import {DateTime} from "luxon";
 import {addSecurity} from "../../market-data/interfaces";
-import {transformTransactionTypeAmount} from "../utils/utils";
+import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer";
 
-
-interface TransformerRepository {
+interface TransformerRepository extends BaseRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>
 
     getSecuritiesWithIssue(): Promise<SecurityIssue[]>
@@ -92,10 +91,11 @@ const transformTransactionType = (txType: string): InvestmentTransactionType => 
     }
 }
 
-export default class FinicityTransformer {
+export class Transformer extends BaseTransformer {
     private repository: TransformerRepository;
 
     constructor(repository: TransformerRepository) {
+        super(repository);
         this.repository = repository
     }
 
@@ -118,7 +118,8 @@ export default class FinicityTransformer {
                 type: account.type,
                 subtype: null,
                 error: account.aggregationStatusCode === 103 || account.aggregationStatusCode === 185,
-                errorCode: account.aggregationStatusCode
+                errorCode: account.aggregationStatusCode,
+                hiddenForDeletion: false
             });
         }
 

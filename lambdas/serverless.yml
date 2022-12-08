@@ -44,22 +44,20 @@ provider:
       - subnet-0365b7b01827b2dfe
 
 functions:
-  #  trades-notifications:
-  #    handler: notifications/trades.handler
-  #    description: Dispatches new trades notifications to users
-  #    logRetentionInDays: 14
-  #    timeout: 900
-  #    memorySize: 1024
-  collect-ibkr-trades:
-    handler: brokerage/collect-ibkr-trades.handler
-    description: Collects Ibkr Trades
+  generate-robinhood-tasks:
+    handler: brokerage/generate-robinhood-tasks.run
+    description: Generates tasks for brokerage to process
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1024
     events:
       - schedule:
-          rate: cron(*/10 * ? * MON-FRI *) # Every 10 minutes
+          rate: cron(0 11 ? * MON-FRI *) # 7:00 AM EDT
           enabled: true
+      - schedule:
+          rate: cron(0 10 ? * MON-FRI *) # 7:00 AM EST
+          enabled: true
+
   collect-trades:
     handler: brokerage/collect-trades.handler
     description: Collects Finicity Trades Daily
@@ -70,6 +68,7 @@ functions:
       - schedule:
           rate: cron(0 11 ? * MON-FRI *) # 5AM UTC
           enabled: true
+
   add-meta-data:
     handler: market-data/add-meta-data.run
     description: Ingests securities, exchanges, in the morning, in the evening it ingests stats, quotes, and closing pricing

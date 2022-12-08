@@ -3,10 +3,14 @@ import {Context} from 'aws-lambda';
 import {DefaultConfig} from "@tradingpost/common/configuration";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import pg from 'pg';
-import Repository from '@tradingpost/common/brokerage/repository';
-import Ibkr from "@tradingpost/common/brokerage/ibkr/index";
-import {S3Client} from "@aws-sdk/client-s3";
-import {PortfolioSummaryService} from "@tradingpost/common/brokerage/portfolio-summary";
+import Repository from "@tradingpost/common/brokerage/repository";
+import {
+    BrokerageTask,
+    BrokerageTaskStatusType,
+    BrokerageTaskType,
+    DirectBrokeragesType
+} from "@tradingpost/common/brokerage/interfaces";
+import {DateTime} from "luxon";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -27,6 +31,7 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 
+
 const run = async () => {
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
@@ -37,17 +42,31 @@ const run = async () => {
             password: postgresConfiguration.password,
             database: postgresConfiguration.database
         })
+
+        await pgClient.connect();
     }
 
+    if (DateTime.now().hour !== 7) return;
+
     const repository = new Repository(pgClient, pgp);
-    const s3Client = new S3Client({region: "us-east-1"});
-    const portSummarySrv = new PortfolioSummaryService(repository);
-    const ibkrSrv = new Ibkr(repository, s3Client, portSummarySrv);
+    const robinhoodUsers = await repository.getRobinhoodUsers();
+    const robinhoodTasks = robinhoodUsers.map(ru => {
+        let x: BrokerageTask = {
+            date: DateTime.now().setZone("America/New_York").set({minute: 0, second: 0, millisecond: 0, hour: 7}),
+            status: BrokerageTaskStatusType.Pending,
+            data: null,
+            userId: ru.userId,
+            brokerage: DirectBrokeragesType.Robinhood,
+            type: BrokerageTaskType.NewData,
+            brokerageUserId: ru.userId,
+            finished: null,
+            started: null,
+            error: null
+        }
+        return x;
+    });
 
-    // Check to see if any brokerages to process
-    // Process
-    // Update Portfolio / Holding History
-
+    await repository.upsertBrokerageTasks(robinhoodTasks);
 }
 
 export const handler = async (event: any, context: Context) => {

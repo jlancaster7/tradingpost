@@ -14,9 +14,9 @@ import {
 import Finicity from "../../finicity";
 import {AddCustomerResponse, AddCustomerResponseError, GetInstitutionsInstitution} from "../../finicity/interfaces";
 import {DateTime} from "luxon";
-import FinicityTransformer from "./transformer";
+import {Transformer as FinicityTransformer} from "./transformer";
 
-export default class FinicityService implements IBrokerageService {
+export class Service implements IBrokerageService {
     private finicity: Finicity;
     private repository: IFinicityRepository;
     private transformer: FinicityTransformer;
@@ -25,6 +25,14 @@ export default class FinicityService implements IBrokerageService {
         this.finicity = finicity;
         this.repository = repository;
         this.transformer = transformer;
+    }
+
+    public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
+
+    }
+
+    public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
+        return;
     }
 
     getTradingPostUserAssociatedWithBrokerageUser = async (brokerageUserId: string): Promise<TradingPostUser> => {

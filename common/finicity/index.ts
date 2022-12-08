@@ -19,7 +19,7 @@ import {
 } from "./interfaces";
 import fs from "fs";
 
-export default class Finicity {
+export default class Service {
     partnerId: string = "";
     partnerSecret: string = "";
     appKey: string = "";
@@ -70,6 +70,23 @@ export default class Finicity {
         }), {
             encoding: 'utf8'
         });
+    }
+
+    public add = async (userId: string, brokerageUserId: string, data?: any) => {
+        // Pull Accounts & Update
+        //  if new account add to account group summary
+        // Pull Positions & Update
+        // Upsert Positions into HoldingHistory
+        // Pull Transactions & Update & Limit to Today
+        // Done
+    }
+
+    public update = async (userId: string, brokerageUserId: string, data?: any) => {
+        // Pull Accounts & Insert
+        // Pull Positions & Insert
+        // Pull Transactions & Insert
+        // Compute Holding History
+        // Done
     }
 
     /**
@@ -296,7 +313,7 @@ export default class Finicity {
         if (!finicityCallbackUrl) throw new Error("finicity callback url not set within the system");
 
         if (!request.redirectUri) request.redirectUri = finicityCallbackUrl
-        if(!request.partnerId) request.partnerId = this.partnerId
+        if (!request.partnerId) request.partnerId = this.partnerId
         const url = `https://api.finicity.com/connect/v2/generate/fix`;
         const response = await fetch(url, {
             method: "POST",
@@ -305,7 +322,7 @@ export default class Finicity {
         });
         const body = await response.text();
         try {
-            const r =  JSON.parse(body) as ConnectFixResponse
+            const r = JSON.parse(body) as ConnectFixResponse
             console.log(r)
             return r;
         } catch (e) {

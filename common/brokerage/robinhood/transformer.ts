@@ -1,27 +1,27 @@
 import {
     OptionContractTableWithRobinhoodId,
     RobinhoodAccount,
-    RobinhoodInstrumentTable, RobinhoodOptionTable,
+    RobinhoodInstrumentTable,
+    RobinhoodOptionTable,
     RobinhoodPosition,
+    RobinhoodTransaction,
     RobinhoodUserTable
 } from "./interfaces";
 import {
+    DirectBrokeragesType,
     GetSecurityBySymbol,
-    OptionContract, SecurityTableWithLatestPriceRobinhoodId,
+    InvestmentTransactionType,
+    SecurityTableWithLatestPriceRobinhoodId,
     SecurityType,
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountsTable,
-    TradingPostCurrentHoldings
+    TradingPostCurrentHoldings, TradingPostHistoricalHoldings,
+    TradingPostTransactions
 } from "../interfaces";
 import {DateTime} from "luxon";
+import TransformerBase, {BaseRepository} from "../base-transformer";
 
-interface Repository {
-    upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<number[]>
-
-    upsertTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
-
-    deleteTradingPostAccountCurrentHoldings(accountIds: number[]): Promise<void>
-
+interface Repository extends BaseRepository {
     getRobinhoodInstrumentBySymbol(symbol: string): Promise<RobinhoodInstrumentTable | null>
 
     getCashSecurityId(): Promise<GetSecurityBySymbol>
@@ -30,8 +30,6 @@ interface Repository {
 
     getTradingPostOptionsWithRobinhoodOptionIds(rhOptionIds: number[]): Promise<OptionContractTableWithRobinhoodId[]>
 
-    upsertOptionContract(oc: OptionContract): Promise<number | null>
-
     getRobinhoodOption(internalOptionId: number): Promise<RobinhoodOptionTable | null>
 
     getSecuritiesBySymbol(symbols: string[]): Promise<GetSecurityBySymbol[]>
@@ -39,10 +37,11 @@ interface Repository {
     getTradingPostBrokerageAccountsByBrokerageAndIds(userId: string, brokerage: string, brokerageAccountIds: string[]): Promise<TradingPostBrokerageAccountsTable[]>
 }
 
-export default class Transformer {
+export default class Transformer extends TransformerBase {
     private _repo: Repository;
 
     constructor(repo: Repository) {
+        super(repo);
         this._repo = repo;
     }
 
@@ -54,9 +53,7 @@ export default class Transformer {
     }
 
     _getOptions = async (rhOptionIds: number[]): Promise<Record<number, number>> => {
-        console.log("o")
         const tpOptions = await this._repo.getTradingPostOptionsWithRobinhoodOptionIds(rhOptionIds);
-        console.log("f")
         let internalRhOptionToInternalTpOption: Record<number, number> = {};
         rhOptionIds.forEach(r => internalRhOptionToInternalTpOption[r] = 0);
 
@@ -99,7 +96,7 @@ export default class Transformer {
     }
 
     accounts = async (userId: string, institutionId: number, user: RobinhoodUserTable, accounts: RobinhoodAccount[]) => {
-        const tpAccounts = accounts.map(acc => {
+        await this.upsertAccounts(accounts.map(acc => {
             let x: TradingPostBrokerageAccounts = {
                 userId: userId,
                 accountNumber: acc.accountNumber,
@@ -112,25 +109,20 @@ export default class Transformer {
                 mask: "",
                 name: user.username,
                 status: "active",
-                brokerName: "Robinhood"
+                brokerName: DirectBrokeragesType.Robinhood,
+                hiddenForDeletion: false,
             }
 
             return x
-        })
-        console.log(tpAccounts)
-        await this._repo.upsertTradingPostBrokerageAccounts(tpAccounts);
+        }))
     }
 
     positions = async (userId: string, positions: RobinhoodPosition[]) => {
-        console.log("h")
         let accountMap: Record<string, TradingPostBrokerageAccountsTable> = await this._getAccounts(userId, positions.filter(p => p.accountNumber !== null).map(p => p.accountNumber as string));
-        console.log("sec")
         let securityMap: Record<number, SecurityTableWithLatestPriceRobinhoodId> = await this._getSecurities(positions.map(p => p.internalInstrumentId));
-        console.log("opts")
         let optionsMap: Record<number, number> = await this._getOptions(positions.filter(p => p.internalOptionId !== null).map(p => p.internalOptionId as number));
 
-        console.log("cash")
-        const internalRobinhoodCash = await this._repo.getRobinhoodInstrumentBySymbol("CUR:USD");
+        const internalRobinhoodCash = await this._repo.getRobinhoodInstrumentBySymbol("USD:CUR");
         if (!internalRobinhoodCash) throw new Error("no cash security created for robinhood");
 
         const tpPositions: TradingPostCurrentHoldings[] = [];
@@ -165,6 +157,7 @@ export default class Transformer {
                 hour: 0,
                 second: 0
             });
+
             const avgPriceFloat = parseFloat(rhPos.averagePrice)
             const quantityFloat = parseFloat(rhPos.quantity);
 
@@ -184,10 +177,111 @@ export default class Transformer {
             });
         }
 
-        console.log("accs")
-        const internalIds: number[] = Object.keys(accountMap).map(key => accountMap[key].id)
-        await this._repo.deleteTradingPostAccountCurrentHoldings(internalIds);
-        console.log("up")
-        await this._repo.upsertTradingPostCurrentHoldings(tpPositions);
+        await this.upsertPositions(tpPositions, Object.keys(accountMap).map(key => accountMap[key].id))
+        await this.holdingsHistory(userId, tpPositions);
     }
+
+    transactions = async (userId: string, transactions: RobinhoodTransaction[]) => {
+        let accountMap: Record<string, TradingPostBrokerageAccountsTable> = await this._getAccounts(userId, transactions.filter(p => p.accountNumber !== null).map(p => p.accountNumber as string));
+        let securityMap: Record<number, SecurityTableWithLatestPriceRobinhoodId> = await this._getSecurities((transactions.map(p => p.internalInstrumentId)));
+        let optionsMap: Record<number, number> = await this._getOptions(transactions.filter(p => p.internalOptionId !== null).map(p => p.internalOptionId as number));
+
+        const internalRobinhoodCash = await this._repo.getRobinhoodInstrumentBySymbol("USD:CUR");
+        if (!internalRobinhoodCash) throw new Error("no cash security created for robinhood");
+
+        const tpTransactions: TradingPostTransactions[] = [];
+        for (let i = 0; i < transactions.length; i++) {
+            const rhTx = transactions[i];
+
+            if (rhTx.accountNumber === null) throw new Error("no account number");
+
+            let internalAccount = accountMap[rhTx.accountNumber];
+
+            let securityType = SecurityType.equity;
+            if (rhTx.internalInstrumentId === internalRobinhoodCash.id) {
+                securityType = SecurityType.cashEquivalent;
+            }
+
+            let security = securityMap[rhTx.internalInstrumentId];
+            if (!security) {
+                console.log(rhTx);
+                throw new Error("security not found for robinhood transactions");
+            }
+
+            let optionId = null;
+            if (rhTx.internalOptionId !== null) {
+                let tmpOptionId = optionsMap[rhTx.internalOptionId];
+                if (!tmpOptionId) throw new Error("option id set, could not find tx");
+                securityType = SecurityType.option;
+                optionId = tmpOptionId;
+            }
+
+            const investmentType = rhTxTypeToTpTxType(rhTx.type, rhTx.side);
+
+            tpTransactions.push({
+                accountId: internalAccount.id,
+                type: investmentType,
+                amount: rhTx.executionsQuantity,
+                currency: "USD",
+                optionId: optionId,
+                price: rhTx.executionsPrice,
+                date: rhTx.executionsTimestamp,
+                securityType: securityType,
+                fees: rhTx.fees ? parseFloat(rhTx.fees) : 0,
+                securityId: security.id,
+                quantity: rhTx.executionsQuantity,
+                accountGroupId: undefined,
+                optionInfo: null,
+            });
+        }
+
+        await this.upsertTransactions(tpTransactions);
+    }
+
+    holdingsHistory = async (userId: string, positions: TradingPostCurrentHoldings[]) => {
+        const hh = positions.map(p => {
+            let x: TradingPostHistoricalHoldings = {
+                accountId: p.accountId,
+                price: p.price,
+                securityId: p.securityId,
+                securityType: p.securityType,
+                priceAsOf: p.priceAsOf,
+                priceSource: p.priceSource,
+                value: p.value,
+                costBasis: p.costBasis,
+                quantity: p.quantity,
+                currency: p.currency,
+                optionId: p.optionId,
+                date: p.holdingDate
+            }
+            return x;
+        })
+
+        await this.upsertHistoricalHoldings(hh);
+    }
+}
+
+const rhTxTypeToTpTxType = (rhType: string | null, side: string | null): InvestmentTransactionType => {
+    if (rhType === null) throw new Error("no type set")
+    switch (rhType) {
+        case 'cash':
+            return InvestmentTransactionType.cash;
+        case 'interest':
+            return InvestmentTransactionType.dividendOrInterest;
+        case 'dividend':
+            return InvestmentTransactionType.dividendOrInterest;
+        case 'market': {
+            if (side === null) throw new Error("no side to market");
+            if (side === 'sell') return InvestmentTransactionType.sell;
+            if (side === 'buy') return InvestmentTransactionType.buy;
+        }
+        case 'limit': {
+            if (side === null) throw new Error("no side to limit");
+            if (side === 'buy') return InvestmentTransactionType.buy;
+            if (side === 'sell') return InvestmentTransactionType.sell;
+        }
+        default:
+            throw new Error(`rh type ${rhType} not detected`)
+    }
+    return InvestmentTransactionType.buy
 }

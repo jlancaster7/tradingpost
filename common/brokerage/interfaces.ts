@@ -1,5 +1,6 @@
 import {DateTime} from "luxon";
 import {getUSExchangeHoliday} from "../market-data/interfaces";
+import {accountId} from "aws-sdk/clients/health";
 
 export interface IBrokerageService {
     getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
@@ -29,8 +30,6 @@ export interface IBrokerageRepository {
     addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>
 
     upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<number[]>
-
-    addTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
 
     upsertTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
 
@@ -124,7 +123,7 @@ export interface ISummaryRepository {
 
     getTradingPostCurrentHoldingsByAccountGroup(accountGroupId: number): Promise<HistoricalHoldings[]>
 
-    getTradingPostTransactionsByAccountGroup(accountGroupId: number, paging?: { limit: number, offset: number }): Promise<TradingPostTransactions[]>
+    getTradingPostTransactionsByAccountGroup(accountGroupId: number, paging?: { limit: number, offset: number }): Promise<TradingPostTransactionsByAccountGroup[]>
 
     getTradingPostAccountGroupReturns(accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
 
@@ -164,7 +163,7 @@ export interface ISummaryService {
 
     getCurrentHoldings(userId: string): Promise<HistoricalHoldings[]>
 
-    getTrades(userId: string): Promise<TradingPostTransactions[]>
+    getTrades(userId: string): Promise<TradingPostTransactionsByAccountGroup[]>
 
     getSummary(userId: string): Promise<TradingPostAccountGroupStats>
 
@@ -536,8 +535,8 @@ export type TradingPostCurrentHoldingsTableWithSecurity = {
 export type TradingPostHistoricalHoldings = {
     accountId: number
     securityId: number
-    securityType: SecurityType | null
     optionId: number | null
+    securityType: SecurityType | null
     price: number
     priceAsOf: DateTime
     priceSource: string
@@ -585,7 +584,7 @@ export type TradingPostCustomIndustry = {
 export type TradingPostCustomIndustryTable = TradingPostCustomIndustry & TableInfo;
 
 export type TradingPostTransactions = {
-    accountId?: number
+    accountId: number
     accountGroupId?: number
     securityId: number
     securityType: SecurityType
@@ -599,6 +598,8 @@ export type TradingPostTransactions = {
     type: InvestmentTransactionType
     currency: string | null
 }
+
+export type TradingPostTransactionsByAccountGroup = Omit<TradingPostTransactions, "accountId">
 
 export type TradingPostTransactionsTable = TradingPostTransactions & TableInfo;
 
@@ -658,6 +659,7 @@ export type TradingPostInstitutionWithFinicityInstitutionId = {
 } & TradingPostInstitutionTable
 
 export type TradingPostBrokerageAccounts = {
+    hiddenForDeletion: boolean
     userId: string
     institutionId: number
     brokerName: string
@@ -757,31 +759,46 @@ export type OptionContractTable = {
     createdAt: DateTime
 } & OptionContract
 
-export enum BrokerageJobStatusType {
-    PENDING = "PENDING",
-    RUNNING = "RUNNING",
-    FAILED = "FAILED",
-    SUCCESSFUL = "SUCCESSFUL"
+export enum DirectBrokeragesType {
+    Robinhood = "Robinhood",
+    Ibkr = "Ibkr",
+    Finicity = "Finicity"
 }
 
-export type BrokerageJobStatus = {
-    brokerage: string
-    brokerageUserId: string
-    dateToProcess: DateTime
-    status: BrokerageJobStatusType
-    data?: any
+export enum BrokerageTaskType {
+    NewAccount = "NEW_ACCOUNT",
+    NewData = "NEW_DATA",
+    DeleteAccount = "DELETE_ACCOUNT",
+    UpdateAccount = "UPDATE_ACCOUNT",
+    ToDo = "TODO"
 }
 
-export type BrokerageJobStatusTable = {
+export enum BrokerageTaskStatusType {
+    Partial = "PARTIAL",
+    Pending = "PENDING",
+    Running = "RUNNING",
+    Failed = "FAILED",
+    Successful = "SUCCESSFUL"
+}
+
+export type BrokerageTask = {
+    userId: string
+    brokerage: DirectBrokeragesType
+    status: BrokerageTaskStatusType,
+    type: BrokerageTaskType
+    date: DateTime
+    brokerageUserId: string | null
+    started: DateTime | null
+    finished: DateTime | null
+    data: any | null
+    error: any | null
+}
+
+export type BrokerageTaskTable = {
     id: number
-    brokerage: string
-    brokerageUserId: string
-    dateToProcess: DateTime
-    status: BrokerageJobStatusType
-    data?: any
     updatedAt: DateTime
     createdAt: DateTime
-}
+} & BrokerageTask
 
 export interface IbkrAccountCsv {
     Type: string
@@ -883,6 +900,7 @@ export type IbkrActivityCsv = {
 }
 
 export type IbkrActivity = {
+    fileDate: DateTime
     type: string | null
     accountId: string
     conId: string | null
@@ -946,6 +964,7 @@ export type IbkrCashReportCsv = {
 }
 
 export type IbkrCashReport = {
+    fileDate: DateTime
     type: string | null
     accountId: string
     reportDate: DateTime | null
@@ -991,6 +1010,7 @@ export type IbkrNavCsv = {
 }
 
 export type IbkrNav = {
+    fileDate: DateTime
     type: string | null
     accountId: string
     baseCurrency: string | null
@@ -1048,6 +1068,7 @@ export type IbkrPlCsv = {
 }
 
 export type IbkrPl = {
+    fileDate: DateTime
     accountId: string
     internalAssetId: string
     securityId: string | null
@@ -1111,6 +1132,7 @@ export type IbkrPositionCsv = {
 }
 
 export type IbkrPosition = {
+    fileDate: DateTime
     accountId: string
     type: string | null
     conId: string | null
@@ -1178,6 +1200,7 @@ export type IbkrSecurityCsv = {
 }
 
 export type IbkrSecurity = {
+    fileDate: DateTime
     type: string
     conId: string
     assetType: string

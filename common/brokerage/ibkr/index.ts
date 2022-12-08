@@ -1,7 +1,8 @@
 import IbkrTransformer, {TransformerRepository} from "./transformer";
 import {
-    BrokerageJobStatusTable,
-    BrokerageJobStatusType,
+    BrokerageTaskStatusType,
+    BrokerageTaskTable,
+    DirectBrokeragesType,
     IbkrAccount,
     IbkrAccountCsv,
     IbkrAccountTable,
@@ -16,36 +17,17 @@ import {
     IbkrPosition,
     IbkrPositionCsv,
     IbkrSecurity,
-    IbkrSecurityCsv, TradingPostCurrentHoldings
+    IbkrSecurityCsv,
+    TradingPostBrokerageAccountsTable
 } from "../interfaces";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {DateTime} from "luxon";
 import csv from 'csv-parser';
-import Repository from "../repository";
-import {DefaultConfig} from "../../configuration";
-import pgPromise from 'pg-promise';
-import pg from 'pg';
 import {PortfolioSummaryService} from "../portfolio-summary";
 
-pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
-    return parseInt(value);
-});
-
-pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
-    return parseFloat(value);
-});
-
-pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
-    return parseFloat(value);
-});
-
-pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
-    return parseFloat(value);
-});
-
 type RepositoryInterface = {
-    getPendingJobs(brokerage: string): Promise<BrokerageJobStatusTable[]>
-    updateJobStatus(jobId: number, status: BrokerageJobStatusType): Promise<void>
+    getBrokerageTasks(params: { brokerage?: string, userId?: string, status?: BrokerageTaskStatusType }): Promise<BrokerageTaskTable[]>
+    getTradingPostBrokerageAccountsByBrokerage(userId: string, brokerageName: string): Promise<TradingPostBrokerageAccountsTable[]>
     getIbkrAccount(accountId: string): Promise<IbkrAccountTable | null>
     getIbkrMasterAndSubAccounts(accountId: string): Promise<IbkrAccountTable[]>
     upsertIbkrAccounts(accounts: IbkrAccount[]): Promise<void>
@@ -55,11 +37,10 @@ type RepositoryInterface = {
     upsertIbkrNav(navs: IbkrNav[]): Promise<void>
     upsertIbkrPls(pls: IbkrPl[]): Promise<void>
     upsertIbkrPositions(positions: IbkrPosition[]): Promise<void>
-    getBrokerageJobsPerUser(brokerage: string, brokerageUserId: string): Promise<BrokerageJobStatusTable[]>
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 } & TransformerRepository
 
-export default class IbkrService {
+export class Service {
     private _transformer: IbkrTransformer;
     private _repo: RepositoryInterface;
     private _s3Client: S3Client;
@@ -70,6 +51,44 @@ export default class IbkrService {
         this._transformer = new IbkrTransformer(repo);
         this._s3Client = s3Client;
         this._portfolioSummaryService = portfolioSummaryService;
+    }
+
+    public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
+        return;
+    }
+
+    public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
+        // Accounts
+        const ibkrAccounts = await this._importAccount(brokerageUserId, date);
+        await this._transformer.accounts(date, userId, ibkrAccounts);
+
+        const internalAccounts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Ibkr)
+        const acctIds = internalAccounts.map(acc => acc.id);
+        await this._repo.addTradingPostAccountGroup(userId, 'default', acctIds, 10117)
+
+        // Securities
+        const securities = await this._importSecurity(brokerageUserId, date);
+        await this._transformer.securities(date, userId, securities);
+
+        // Activity
+        const activity = await this._importActivity(brokerageUserId, date);
+        await this._transformer.transactions(date, userId, activity);
+
+        // Pull Positions & Insert
+        const positions = await this._importPosition(brokerageUserId, date);
+        await this._transformer.holdings(date, userId, positions);
+
+        await this._importCashReport(brokerageUserId, date);
+        await this._importNav(brokerageUserId, date);
+        await this._importPl(brokerageUserId, date);
+
+        const remainingTasks = await this._repo.getBrokerageTasks({
+            brokerage: DirectBrokeragesType.Ibkr,
+            userId: userId,
+            status: BrokerageTaskStatusType.Pending
+        });
+
+        if (remainingTasks.length <= 0) await this._portfolioSummaryService.computeAccountGroupSummary(userId)
     }
 
     _getFileFromS3 = async <T>(key: string, mapFn?: (data: T) => T): Promise<T[]> => {
@@ -91,59 +110,17 @@ export default class IbkrService {
         return await streamToString(data.Body);
     }
 
-    run = async () => {
-        const pendingJobs = await this._repo.getPendingJobs("ibkr");
-        if (pendingJobs.length <= 0) return false;
-
-        const pendingJob = pendingJobs.find(j => j.data.filenames.length === 7);
-        if (!pendingJob) return false;
-
-        let tpUserId: string | null = null;
-        try {
-            await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.RUNNING);
-
-            const {dateToProcess} = pendingJob;
-            const [uId, newerDateAlreadyProcessed, newAccounts] = await this._importAccount(pendingJob);
-            tpUserId = uId
-            const newTpAccountIds = await this._transformer.importTradingPostBrokerageAccounts(dateToProcess, tpUserId, newAccounts);
-            await this._repo.addTradingPostAccountGroup(tpUserId, 'default', newTpAccountIds, 10117)
-
-            const securities = await this._importSecurity(pendingJob);
-            await this._transformer.importTradingPostSecurities(dateToProcess, tpUserId, securities);
-            const activity = await this._importActivity(pendingJob);
-            await this._transformer.importTradingPostTransactions(dateToProcess, tpUserId, activity);
-            const positions = await this._importPosition(pendingJob);
-            await this._transformer.importTradingPostHoldings(dateToProcess, tpUserId, positions);
-            await this._importCashReport(pendingJob);
-            await this._importNav(pendingJob);
-            await this._importPl(pendingJob);
-            await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.SUCCESSFUL)
-        } catch (e) {
-            await this._repo.updateJobStatus(pendingJob.id, BrokerageJobStatusType.FAILED)
-            console.error(e)
-            console.error("pending job date: ", pendingJob.dateToProcess.toString());
-        } finally {
-            const cnt = await this._repo.getBrokerageJobsPerUser("ibkr", pendingJob.brokerageUserId);
-            if ((!cnt || cnt.length <= 0) && tpUserId !== null)
-                await this._portfolioSummaryService.computeAccountGroupSummary(tpUserId)
-        }
-
-        return true
-    }
-
     _formatFileName = (brokerageUserId: string, fileType: string, date: DateTime): string => {
         return `${brokerageUserId}_${fileType}_${date.toFormat("yyyyMMdd")}.csv`
     }
 
-    _importAccount = async (pendingJob: BrokerageJobStatusTable): Promise<[string, boolean, IbkrAccount[]]> => {
-        const currentAccounts = await this._repo.getIbkrMasterAndSubAccounts(pendingJob.brokerageUserId);
+    _importAccount = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrAccount[]> => {
+        const currentAccounts = await this._repo.getIbkrMasterAndSubAccounts(brokerageUserId);
         const masterAccount = currentAccounts.find(acc => acc.masterAccountId === null)
-        if (currentAccounts.length <= 0 || !masterAccount) throw new Error(`no ibkr account found for id ${pendingJob.brokerageUserId}`);
+        if (currentAccounts.length <= 0 || !masterAccount) throw new Error(`no ibkr account found for id ${brokerageUserId}`);
 
-        let newerDateAlreadyProcessed = false;
-        if (masterAccount.accountProcessDate.toUnixInteger() > pendingJob.dateToProcess.toUnixInteger()) newerDateAlreadyProcessed = true;
-
-        const accounts = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Account", pendingJob.dateToProcess), (data: IbkrAccountCsv) => {
+        const fileName = this._formatFileName(brokerageUserId, "Account", dateToProcess);
+        const accounts = await this._getFileFromS3(fileName, (data: IbkrAccountCsv) => {
             let x: IbkrAccountCsv = {
                 AccountID: data.AccountID,
                 AccountRepresentative: data.AccountRepresentative,
@@ -165,17 +142,14 @@ export default class IbkrService {
                 Street2: data.Street2,
                 Van: data.Van,
                 Zip: data.Zip,
-                Type: data.Type
+                Type: data.Type,
             }
             return x;
         });
-
-        const filteredAccounts = newerDateAlreadyProcessed ? accounts.filter(acc =>
-            !currentAccounts.find(ca => ca.accountId === acc.AccountID)) : accounts;
-        await this._repo.upsertIbkrAccounts(filteredAccounts.map((acc: IbkrAccountCsv) => {
+        await this._repo.upsertIbkrAccounts(accounts.map((acc: IbkrAccountCsv) => {
             let n: IbkrAccount = {
                 accountId: acc.AccountID,
-                accountProcessDate: pendingJob.dateToProcess,
+                accountProcessDate: dateToProcess,
                 accountRepresentative: acc.AccountRepresentative !== '' ? acc.AccountRepresentative : null,
                 accountTitle: acc.AccountTitle !== '' ? acc.AccountTitle : null,
                 accountType: acc.AccountType !== '' ? acc.AccountType : null,
@@ -200,12 +174,11 @@ export default class IbkrService {
             }
             return n;
         }));
-
-        return [masterAccount.userId, newerDateAlreadyProcessed, currentAccounts];
+        return currentAccounts;
     }
 
-    _importSecurity = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrSecurity[]> => {
-        const ibkrSecurities = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Security", pendingJob.dateToProcess), (data: IbkrSecurityCsv) => {
+    _importSecurity = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrSecurity[]> => {
+        const ibkrSecurities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Security", dateToProcess), (data: IbkrSecurityCsv) => {
             let x: IbkrSecurityCsv = {
                 AssetType: data.AssetType,
                 BBGlobalID: data.BBGlobalID,
@@ -239,6 +212,7 @@ export default class IbkrService {
 
         const securitiesMapped = ibkrSecurities.map((s: IbkrSecurityCsv) => {
             let x: IbkrSecurity = {
+                fileDate: dateToProcess,
                 assetType: s.AssetType,
                 bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,
                 bbTicker: s.BBTicker !== '' ? s.BBTicker : null,
@@ -272,8 +246,8 @@ export default class IbkrService {
         return securitiesMapped;
     }
 
-    _importActivity = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrActivity[]> => {
-        const activities = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Activity", pendingJob.dateToProcess), (s: IbkrActivityCsv) => {
+    _importActivity = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrActivity[]> => {
+        const activities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Activity", dateToProcess), (s: IbkrActivityCsv) => {
             let x: IbkrActivityCsv = {
                 UnitPrice: s.UnitPrice,
                 TransactionType: s.TransactionType,
@@ -318,6 +292,7 @@ export default class IbkrService {
             }
             return x;
         });
+
         const activitiesMapped = activities.map((s: IbkrActivityCsv) => {
             let orderTime: DateTime | null = DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss");
             if (!orderTime.isValid) orderTime = null;
@@ -332,6 +307,7 @@ export default class IbkrService {
             let tradeTime: string | null = tradeTimeDt.isValid ? tradeTimeDt.toSQLTime() : null;
 
             let x: IbkrActivity = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 assetType: s.AssetType !== '' ? s.AssetType : null,
                 awayBrokerCommission: s.AwayBrokerCommission !== '' ? parseFloat(s.AwayBrokerCommission) : null,
@@ -379,8 +355,8 @@ export default class IbkrService {
         return activitiesMapped;
     }
 
-    _importCashReport = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrCashReport[]> => {
-        const cashReports = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "CashReport", pendingJob.dateToProcess), (s: IbkrCashReportCsv) => {
+    _importCashReport = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrCashReport[]> => {
+        const cashReports = await this._getFileFromS3(this._formatFileName(brokerageUserId, "CashReport", dateToProcess), (s: IbkrCashReportCsv) => {
             let x: IbkrCashReportCsv = {
                 AccountID: s.AccountID,
                 Currency: s.Currency,
@@ -398,6 +374,7 @@ export default class IbkrService {
         });
         const cashReportsMapped = cashReports.map((s: IbkrCashReportCsv) => {
             let x: IbkrCashReport = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 currency: s.Currency !== '' ? s.Currency : null,
                 baseSummary: s.BaseSummary === 'Y',
@@ -416,8 +393,8 @@ export default class IbkrService {
         return cashReportsMapped;
     }
 
-    _importNav = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrNav[]> => {
-        const navs = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "NAV", pendingJob.dateToProcess), (s: IbkrNavCsv) => {
+    _importNav = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrNav[]> => {
+        const navs = await this._getFileFromS3(this._formatFileName(brokerageUserId, "NAV", dateToProcess), (s: IbkrNavCsv) => {
             let x: IbkrNavCsv = {
                 AccountID: s.AccountID,
                 Options: s.Options,
@@ -446,6 +423,7 @@ export default class IbkrService {
         });
         const navsMapped = navs.map((s: IbkrNavCsv) => {
             let x: IbkrNav = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 baseCurrency: s.BaseCurrency,
                 bonds: s.Bonds !== '' ? parseFloat(s.Bonds) : null,
@@ -467,7 +445,7 @@ export default class IbkrService {
                 stocks: s.Stocks !== '' ? parseFloat(s.Stocks) : null,
                 twr: s.TWR !== '' ? parseFloat(s.TWR) : null,
                 totals: s.Totals !== '' ? parseFloat(s.Totals) : null,
-                processedDate: pendingJob.dateToProcess,
+                processedDate: dateToProcess,
                 accruals: s.Accruals !== '' ? parseFloat(s.Accruals) : null
             }
             return x;
@@ -476,8 +454,8 @@ export default class IbkrService {
         return navsMapped
     }
 
-    _importPl = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrPl[]> => {
-        const pls = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "PL", pendingJob.dateToProcess), (s: IbkrPlCsv) => {
+    _importPl = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrPl[]> => {
+        const pls = await this._getFileFromS3(this._formatFileName(brokerageUserId, "PL", dateToProcess), (s: IbkrPlCsv) => {
             let x: IbkrPlCsv = {
                 AccountID: s.AccountID,
                 AssetType: s.AssetType,
@@ -508,6 +486,7 @@ export default class IbkrService {
             if (s.ReportDate === '') throw new Error("no report date available for pls");
             const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
             let x: IbkrPl = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 assetType: s.AssetType !== '' ? s.AssetType : null,
                 bbGlobalId: s.BBGlobalID !== '' ? s.BBGlobalID : null,
@@ -537,8 +516,8 @@ export default class IbkrService {
         return plsMapped;
     }
 
-    _importPosition = async (pendingJob: BrokerageJobStatusTable): Promise<IbkrPosition[]> => {
-        const positions = await this._getFileFromS3(this._formatFileName(pendingJob.brokerageUserId, "Position", pendingJob.dateToProcess), (s: IbkrPositionCsv) => {
+    _importPosition = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrPosition[]> => {
+        const positions = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Position", dateToProcess), (s: IbkrPositionCsv) => {
             let x: IbkrPositionCsv = {
                 AccountID: s.AccountID,
                 AssetType: s.AssetType,
@@ -576,6 +555,7 @@ export default class IbkrService {
             if (s.ReportDate === '') throw new Error("no report date available for position");
             const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
             let x: IbkrPosition = {
+                fileDate: dateToProcess,
                 accountId: s.AccountID,
                 accruedInt: s.AccruedInt !== '' ? parseFloat(s.AccruedInt) : null,
                 assetType: s.AssetType !== '' ? s.AssetType : null,
@@ -612,28 +592,3 @@ export default class IbkrService {
         return positionsMapped;
     }
 }
-
-(async () => {
-    const pgCfg = await DefaultConfig.fromCacheOrSSM("postgres");
-    const pgp = pgPromise({});
-    const pgClient = pgp({
-        host: pgCfg.host,
-        user: pgCfg.user,
-        password: pgCfg.password,
-        database: pgCfg.database
-    });
-    const s3Client = new S3Client({region: "us-east-1"});
-
-    await pgClient.connect()
-    const repo = new Repository(pgClient, pgp);
-    const portfolioSummarySrv = new PortfolioSummaryService(repo);
-
-    const ibkrSrv = new IbkrService(repo, s3Client, portfolioSummarySrv);
-
-    console.log("Running...");
-    let keepProcessing = true;
-    while (keepProcessing) {
-        keepProcessing = await ibkrSrv.run();
-    }
-    console.log("Finished...");
-})()

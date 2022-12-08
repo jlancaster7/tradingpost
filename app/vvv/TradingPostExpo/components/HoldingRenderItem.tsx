@@ -6,9 +6,9 @@ import { ElevatedSection, Section, Subsection } from "./Section"
 import { NoteEditor, SecPressable } from "../screens/WatchlistViewerScreen"
 import { fonts, sizes } from "../style"
 import { AppColors } from "../constants/Colors"
-import { toDollars, toDollarsAndCents, toNumber1 } from "../utils/misc"
+import { toDollars, toDollarsAndCents, toNumber1, toPercent1 } from "../utils/misc"
 
-export const HoldingRenderItem = (props: {item: any, byId: any}) => {
+export const HoldingRenderItem = (props: {item: any, byId: any, isOwner: boolean}) => {
     const { item, byId } = props
     const secId = item.item.security_id;
     //const intradayChange = item.item.price ? item.item.price.price - item.item.price.open : 0
@@ -25,7 +25,6 @@ export const HoldingRenderItem = (props: {item: any, byId: any}) => {
                     source={
                         (() => {
                             let output: { uri: string } | undefined;
-                            
                             output = byId[secId] ? { uri: byId[secId].logo_url  } : undefined
                             return output;
                         })()}
@@ -48,10 +47,10 @@ export const HoldingRenderItem = (props: {item: any, byId: any}) => {
             <View style={{flex: 1, alignItems: 'center', flexDirection: 'row'}}>
                 <View style={{flex: 1, alignItems: 'center'}}>
                     <Text style={{fontSize: fonts.medium / 2, color: '#9D9D9D'}}>
-                        {'Market Value'}
+                        {props.isOwner ? 'Market Value' : '% Portfolio'}
                     </Text>
                     <Text style={{fontSize: fonts.small, color: '#606060'}}>
-                        {`${toDollars(item.item.value)}`}
+                        {props.isOwner ? `${toDollars(item.item.value)}` : `${toPercent1(item.item.value)}`}
                     </Text>
                 </View>
                 <View style={{flex: 1, alignItems: 'center'}}>
@@ -59,13 +58,13 @@ export const HoldingRenderItem = (props: {item: any, byId: any}) => {
                         {'Cost'}
                     </Text>
                     <Text style={{fontSize: fonts.small, color: '#606060'}}>
-                        {`${toDollars(item.item.cost_basis)}`}
+                        {`${toDollarsAndCents(item.item.cost_basis)}`}
                     </Text>                                                    
                 </View>
 
             </View>
         </View>
-        <View style={{flex: 1, flexDirection: 'row'}}>
+        <View style={[{flex: 1, flexDirection: 'row'}, props.isOwner ? {display: 'flex'} : {display: 'none'}]}>
             <View style={{flex: 1, alignItems: 'center'}}>
                 <Text style={{fontSize: fonts.medium / 2, color: '#9D9D9D'}}>
                     {'Profit/Loss'}

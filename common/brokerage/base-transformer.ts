@@ -1,15 +1,38 @@
 import {
-    GetSecurityPrice,
-    IBrokerageRepository,
-    IBrokerageService, InvestmentTransactionType,
+    GetSecurityBySymbol,
+    GetSecurityPrice, InvestmentTransactionType,
+    OptionContract,
     SecurityType,
+    TradingPostBrokerageAccounts,
+    TradingPostCurrentHoldings,
+    TradingPostCurrentHoldingsTableWithSecurity,
     TradingPostHistoricalHoldings,
     TradingPostHistoricalHoldingsTable,
+    TradingPostTransactions,
     TradingPostTransactionsTable
 } from "./interfaces";
-import {PortfolioSummaryService} from "./portfolio-summary";
-import {DateTime} from 'luxon';
+import {DateTime} from "luxon";
 import {getUSExchangeHoliday} from "../market-data/interfaces";
+import {abs} from "mathjs";
+
+export const transformTransactionTypeAmount = (txType: InvestmentTransactionType, transaction: TradingPostTransactions): TradingPostTransactions => {
+    switch (txType) {
+        case InvestmentTransactionType.buy:
+            transaction.amount = abs(transaction.amount);
+            return transaction
+        case InvestmentTransactionType.sell:
+            transaction.amount = -1 * abs(transaction.amount);
+            return transaction
+        case InvestmentTransactionType.short:
+            transaction.amount = -1 * abs(transaction.amount);
+            return transaction
+        case InvestmentTransactionType.cover:
+            transaction.amount = abs(transaction.amount);
+            return transaction
+        default:
+            return transaction
+    }
+}
 
 type historicalAccount = {
     date: DateTime
@@ -126,31 +149,78 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
     },
 };
 
-export default class BrokerageService {
-    brokerageMap: Record<string, IBrokerageService>;
-    portfolioSummaryService: PortfolioSummaryService;
-    repository: IBrokerageRepository;
+export interface BaseRepository {
+    upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<number[]>
 
-    constructor(brokerageMap: Record<string, IBrokerageService>, repository: IBrokerageRepository, portfolioSummaryService: PortfolioSummaryService) {
-        this.brokerageMap = brokerageMap
-        this.repository = repository;
-        this.portfolioSummaryService = portfolioSummaryService;
+    upsertTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
+
+    deleteTradingPostAccountCurrentHoldings(accountIds: number[]): Promise<void>
+
+    upsertOptionContract(oc: OptionContract): Promise<number | null>
+
+    upsertTradingPostTransactions(transactions: TradingPostTransactions[]): Promise<void>
+
+    upsertTradingPostHistoricalHoldings(historicalHoldings: TradingPostHistoricalHoldings[]): Promise<void>
+
+    getOldestTransaction(accountId: number): Promise<TradingPostTransactions | null>
+
+    getCashSecurityId(): Promise<GetSecurityBySymbol>
+
+    getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(accountId: number): Promise<TradingPostCurrentHoldingsTableWithSecurity[]>
+
+    getTradingPostBrokerageAccountTransactions(accountId: number): Promise<TradingPostTransactionsTable[]>
+
+    getMarketHolidays(start: DateTime, end: DateTime): Promise<getUSExchangeHoliday[]>
+
+    getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
+}
+
+export default class BaseTransformer {
+    private _baseRepo: BaseRepository;
+
+    constructor(repo: BaseRepository) {
+        this._baseRepo = repo;
     }
 
-    computeHoldingsHistory = async (tpAccountId: number, endDate: DateTime): Promise<TradingPostHistoricalHoldings[]> => {
-        const cashSecurity = await this.repository.getCashSecurityId();
+    upsertAccounts = async (accounts: TradingPostBrokerageAccounts[]) => {
+        await this._baseRepo.upsertTradingPostBrokerageAccounts(accounts);
+    }
+
+    upsertPositions = async (positions: TradingPostCurrentHoldings[], accountIds: number[]) => {
+        await this._baseRepo.deleteTradingPostAccountCurrentHoldings(accountIds);
+        const rollup = await rollupPositions(positions);
+        await this._baseRepo.upsertTradingPostCurrentHoldings(rollup);
+    }
+
+    upsertTransactions = async (transactions: TradingPostTransactions[]) => {
+        const rollup = await rollupTransactions(transactions);
+        await this._baseRepo.upsertTradingPostTransactions(rollup)
+    }
+
+    upsertHistoricalHoldings = async (historicalHoldings: TradingPostHistoricalHoldings[]) => {
+        const rollup = await rollupHistoricalHoldings(historicalHoldings);
+        await this._baseRepo.upsertTradingPostHistoricalHoldings(rollup);
+    }
+
+    computeHoldingsHistory = async (tpAccountId: number) => {
+        const oldestTx = await this._baseRepo.getOldestTransaction(tpAccountId);
+        if (!oldestTx) throw new Error("no transactions for");
+
+        const endDate = oldestTx.date;
+
+        const cashSecurity = await this._baseRepo.getCashSecurityId();
 
         let allSecurityIds: Record<number, unknown> = {}
 
         // Get Current Holdings
-        const currentHoldings = await this.repository.getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(tpAccountId);
+        const currentHoldings = await this._baseRepo.getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(tpAccountId);
 
         // TODO: We could recomptue old holdings history...
         if (currentHoldings.length <= 0) throw new Error("no holdings available for account " + tpAccountId);
         currentHoldings.forEach(h => allSecurityIds[h.securityId] = {});
 
         // Get Current Transactions Sorted in DESC order
-        const transactions = await this.repository.getTradingPostBrokerageAccountTransactions(tpAccountId);
+        const transactions = await this._baseRepo.getTradingPostBrokerageAccountTransactions(tpAccountId);
         if (transactions.length <= 0) throw new Error("no transactions available for account " + tpAccountId);
 
         const transactionsPerDate: Record<number, TradingPostTransactionsTable[]> = {}
@@ -303,7 +373,7 @@ export default class BrokerageService {
             }
         }
 
-        return historicalHoldings;
+        await this.upsertHistoricalHoldings(historicalHoldings);
     }
 
     undoTransactions = (historicalAccount: historicalAccount, transactions: TradingPostTransactionsTable[]): historicalAccount => {
@@ -313,7 +383,7 @@ export default class BrokerageService {
     }
 
     getSecurityPrices = async (securityIds: number[], startDate: DateTime, endDate: DateTime): Promise<Record<number, GetSecurityPrice[]>> => {
-        const securityPrices = await this.repository.getSecurityPricesWithEndDateBySecurityIds(
+        const securityPrices = await this._baseRepo.getSecurityPricesWithEndDateBySecurityIds(
             endDate.set({
                 minute: 0,
                 second: 0,
@@ -337,7 +407,7 @@ export default class BrokerageService {
     }
 
     getTradingDays = async (start: DateTime, end: DateTime): Promise<DateTime[]> => {
-        const marketHolidays = await this.repository.getMarketHolidays(start, end);
+        const marketHolidays = await this._baseRepo.getMarketHolidays(start, end);
 
         let holidayMap: Record<string, unknown> = {};
         marketHolidays.forEach((row: getUSExchangeHoliday) => {
@@ -374,3 +444,105 @@ export default class BrokerageService {
         return null;
     }
 }
+
+const rollupPositions = async (positions: TradingPostCurrentHoldings[]): Promise<TradingPostCurrentHoldings[]> => {
+    positions.sort((a, b) =>
+        a.accountId - b.accountId ||
+        a.securityId - b.securityId ||
+        (a.optionId || 0) - (b.optionId || 0)
+    );
+
+    let roll: TradingPostCurrentHoldings[] = [];
+    let latest: TradingPostCurrentHoldings | null = null;
+    positions.forEach(p => {
+        if (!latest) {
+            latest = p;
+            return;
+        }
+
+        if (latest.accountId === p.accountId && latest.securityId === p.securityId && latest.optionId === p.optionId) {
+            latest.quantity = latest.quantity + p.quantity;
+            return;
+        }
+
+        roll.push(latest);
+        latest = p;
+    });
+
+    latest !== null ? roll.push(latest) : null;
+    return roll;
+}
+
+const rollupTransactions = async (transactions: TradingPostTransactions[]): Promise<TradingPostTransactions[]> => {
+    transactions.sort((a, b) =>
+        a.accountId - b.accountId ||
+        a.securityId - b.securityId ||
+        (a.optionId || 0) - (b.optionId || 0) ||
+        a.type.localeCompare(b.type) ||
+        a.date.toUnixInteger() - b.date.toUnixInteger() ||
+        a.price - b.price
+    )
+
+    let roll: TradingPostTransactions[] = [];
+    let latest: TradingPostTransactions | null = null;
+    transactions.forEach(tx => {
+        if (!latest) {
+            latest = tx;
+            return;
+        }
+
+        if (latest.accountId === tx.accountId && latest.securityId === tx.securityId && latest.optionId === tx.optionId
+            && latest.type === tx.type && latest.date.toUnixInteger() === tx.date.toUnixInteger() && latest.price === tx.price) {
+            let fees: number | null = null
+            if (latest.fees !== null) fees = latest.fees;
+            if (tx.fees !== null) fees = tx.fees + (latest.fees || 0)
+
+            latest.quantity = latest.quantity + tx.quantity;
+            latest.amount = latest.amount + latest.amount;
+            latest.fees = fees;
+            return
+        }
+
+        roll.push(latest);
+        latest = tx;
+    });
+
+    latest !== null ? roll.push(latest) : null
+    return roll;
+}
+
+const rollupHistoricalHoldings = async (historicalHoldings: TradingPostHistoricalHoldings[]): Promise<TradingPostHistoricalHoldings[]> => {
+    historicalHoldings.sort((a, b) =>
+        a.accountId - b.accountId ||
+        a.securityId - b.securityId ||
+        (a.optionId || 0) - (b.optionId || 0) ||
+        a.date.toUnixInteger() - b.date.toUnixInteger() ||
+        a.price - b.price
+    )
+
+    let roll: TradingPostHistoricalHoldings[] = [];
+    let latest: TradingPostHistoricalHoldings | null = null;
+    historicalHoldings.forEach(hh => {
+        if (!latest) {
+            latest = hh;
+            return;
+        }
+
+        if (latest.accountId === hh.accountId && latest.securityId === hh.securityId && latest.optionId === hh.optionId
+            && latest.date.toUnixInteger() === hh.date.toUnixInteger() && latest.price === hh.price) {
+
+            latest.quantity = latest.quantity + hh.quantity
+            latest.value = latest.value + hh.value
+            let costBasis = null;
+            if (latest.costBasis) costBasis = (costBasis || 0) + latest.costBasis
+            if (hh.costBasis) costBasis = (costBasis || 0) + hh.costBasis
+            latest.costBasis = costBasis
+            return
+        }
+
+        roll.push(latest);
+        latest = hh;
+    })
+    return roll;
+}
+
