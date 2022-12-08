@@ -35,6 +35,9 @@ import { Log } from "../utils/logger";
 import { BrokeragePickerScreen } from "../screens/BrokeragePickerScreen";
 import { IbkrInfoScreen } from "../screens/IbkrInfoScreen";
 import { RobhinhoodLoginScreen } from "../screens/RobinhoodLoginScreen";
+import { ShareButton } from "../components/ShareButton";
+import linking from "./LinkingConfiguration";
+import { useLinkBuilder, useRoute } from "@react-navigation/native";
 
 
 Notifications.setNotificationHandler({
@@ -99,6 +102,9 @@ export function RootNavigator() {
                             }} />
                     </Pressable>
                 }
+                // else if () {
+
+                // }
                 else return undefined;
             }
         }}>
@@ -130,9 +136,9 @@ export function RootNavigator() {
             <Stack.Screen name="TableModal" component={TableModalScreen} />
             <Stack.Screen name="BlockListModal" component={BlockListModalScreen} />
             <Stack.Screen name="NotificationTrade" component={NotificationTradeScreen} />
-            <Stack.Screen name="BrokeragePicker" component={BrokeragePickerScreen}  />
-            <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen}  />
-            <Stack.Screen name="RobinhoodLogin" component={RobhinhoodLoginScreen}  />
+            <Stack.Screen name="BrokeragePicker" component={BrokeragePickerScreen} />
+            <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen} />
+            <Stack.Screen name="RobinhoodLogin" component={RobhinhoodLoginScreen} />
         </Stack.Group>
         <Stack.Group screenOptions={{
             headerStyle: {
@@ -146,7 +152,14 @@ export function RootNavigator() {
                 marginTop: -64
             }
         }}>
-            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen options={{
+                headerRight: () => {
+                    const route = useRoute();
+                    const buildLink = useLinkBuilder()
+                    const url = buildLink(route.name, route.params);
+                    return <ShareButton style={{ marginRight: 8, height: 32, width: 32 }} url={"https://m.tradingpostapp.com" + url || ""} title={"https://m.tradingpostapp.com" + url || ""} color="white" />
+                }
+            }} name="Profile" component={ProfileScreen} />
         </Stack.Group>
     </Stack.Navigator>
 }

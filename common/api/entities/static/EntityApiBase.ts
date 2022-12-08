@@ -78,7 +78,7 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
     //         body: ids ? JSON.stringify({ ids }) : undefined
     //     });
     //     return EntityApiBase.handleFetchResponse<TList[]>(resp);
-    // }
+    // }   
 
     async insert(item: TInsert) {
         const resp = await fetch(this.makeUrl("insert"), {

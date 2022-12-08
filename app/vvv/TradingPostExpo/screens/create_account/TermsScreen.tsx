@@ -64,6 +64,6 @@ export function TermsScreen(props: CreateAccountProps) {
         <HtmlView
             style={{ flex: 1 }}
             isUrl
-        >{"http://tradingpostapp.com/terms-of-service"}</HtmlView>
+        >{"https://tradingpostapp.com/terms-of-service"}</HtmlView>
     </ScrollWithButtons>
 }

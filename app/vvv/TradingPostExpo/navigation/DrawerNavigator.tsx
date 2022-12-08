@@ -54,7 +54,8 @@ export function DrawerPart() {
                                 height: 24,
                                 width: 24,
                                 marginRight: sizes.rem1
-                            }} />
+                            }}
+                        />
                     </Pressable>
                 }
 

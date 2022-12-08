@@ -44,6 +44,7 @@ import { RootStackParamList } from '../navigation/pages'
 //import { setBookmarked } from '../apis/PostApi'
 //import { openProfileScreen } from '../screens/ProfileScreen'
 import { WebView } from "react-native-webview";
+import { ShareButton } from './ShareButton'
 
 
 const postTotalVerticalMargin = sizes.rem1;
@@ -208,20 +209,21 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                 </AsyncPressable>
             </Pressable>
             {
-            ["substack", "tradingpost"].includes(post._source.postType) ? 
-                <Pressable onPress={() => {
+                ["substack", "tradingpost"].includes(post._source.postType) ?
+                    <Pressable onPress={() => {
                         nav.navigate("PostScreen", {
-                            post
+                            post,
+                            id: post._id
                         })
-                    
-                }} style={{ paddingHorizontal: postSidePad / 2 }}>
-                    <PostContentView post={post} />
-                </Pressable> : 
-                <View style={{ paddingHorizontal: postSidePad / 2 }}>
-                    <PostContentView post={post} /> 
-                </View>
+
+                    }} style={{ paddingHorizontal: postSidePad / 2 }}>
+                        <PostContentView post={post} />
+                    </Pressable> :
+                    <View style={{ paddingHorizontal: postSidePad / 2 }}>
+                        <PostContentView post={post} />
+                    </View>
             }
-            
+
             {(props.post._source.postType !== "tweet") &&
                 <View
                     style={[row, { alignItems: "center", marginTop: "auto", borderTopColor: "#ccc", borderTopWidth: 1 }]}>
@@ -245,18 +247,19 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         }
                         onPress={() => {
                             nav.navigate("PostScreen", {
-                                post
+                                post, id: post._id
                             })
                         }}
                     >
                         {evaProps => <Text {...evaProps}
-                                            style={{ fontWeight: 'normal', 
-                                                    paddingLeft: sizes.rem1, 
-                                                    paddingRight: sizes.rem0_5, 
-                                                    color: '#9D9D9D'
-                                                    }}>
-                                        {'-'}
-                                     </Text>}
+                            style={{
+                                fontWeight: 'normal',
+                                paddingLeft: sizes.rem1,
+                                paddingRight: sizes.rem0_5,
+                                color: '#9D9D9D'
+                            }}>
+                            {'-'}
+                        </Text>}
                     </Button>
                     {<Button
                         style={{ paddingLeft: 10, paddingRight: 0 }}
@@ -283,10 +286,14 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         }} />} appearance={"ghost"}>
                         {evaProps => <Text {...evaProps} style={{
                             fontWeight: 'normal',
-                            paddingHorizontal: sizes.rem1, 
+                            paddingHorizontal: sizes.rem1,
                             color: '#9D9D9D'
                         }}>{upvoteCount}</Text>}
                     </Button>}
+                    <ShareButton url={"https://m.tradingpostapp.com/post?id=" + props.post._id} title={"https://m.tradingpostapp.com/post?id=" + props.post._id} style={{
+                        height: 24,
+                        width: 24, marginRight: 10
+                    }} />
                 </View>}
         </View>
     </View>
@@ -414,7 +421,7 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
             //justifyContent: ['spotify', 'youtube'].includes(props.post._source.postType) ? 'center' : undefined
         }}>
             <HtmlView style={{
-                height: ['spotify', 'youtube'].includes(props.post._source.postType) ? postInnerHeight(props.post, availWidth)  : postInnerHeight(props.post, availWidth),
+                height: ['spotify', 'youtube'].includes(props.post._source.postType) ? postInnerHeight(props.post, availWidth) : postInnerHeight(props.post, availWidth),
                 //height: postInnerHeight(props.post, availWidth)
                 //marginTop: ['spotify', 'youtube'].includes(props.post._source.postType) ? 8 : 0,
                 //marginBottom: ['youtube', 'spotify'].includes(props.post._source.postType) ? 8 : 0

@@ -164,7 +164,7 @@ export const resetPassword = async (email: string, tokenOrPass: string, isPass: 
         hash = hashPass(newPassword, salt);
 
     //TODO: clean this up
-    (await getHivePool).query("UPDATE tp.local_login set hash=$1 where user_id=$2 or email=$3", [hash, userId, email])
+    (await getHivePool).query("UPDATE tp.local_login set hash=$1, updated_at = now()  where user_id=$2 or email=$3", [hash, userId, email])
 
     return {};
 }

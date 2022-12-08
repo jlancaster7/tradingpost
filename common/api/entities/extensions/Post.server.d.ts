@@ -3,6 +3,7 @@ declare const _default: {
     feed: (req: {
         body: {
             page: number;
+            postId?: string | undefined;
             userId?: string | undefined;
             bookmarkedOnly?: boolean | undefined;
             data?: Record<string, string | number | (string | number)[]> | undefined;

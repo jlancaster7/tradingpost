@@ -65,6 +65,6 @@ export function PrivacyScreen(props: CreateAccountProps) {
         <HtmlView
             style={{ flex: 1 }}
             isUrl
-        >{"http://tradingpostapp.com/privacy-policy"}</HtmlView>
+        >{"https://tradingpostapp.com/privacy-policy"}</HtmlView>
     </ScrollWithButtons>
 }

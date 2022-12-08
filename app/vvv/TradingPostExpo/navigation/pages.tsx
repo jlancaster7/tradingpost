@@ -54,7 +54,7 @@ export type RootStackParamList =
         "PostEditor": undefined,
         "TableModal": { title: string, tableProps: TableProps<any> },
         "BlockListModal": { title: string, listProps: ListProps<any> },
-        "PostScreen": { post: Interface.IElasticPostExt },
+        "PostScreen": { post?: Interface.IElasticPostExt, id: string },
         "Profile": { userId: string },
     }
 

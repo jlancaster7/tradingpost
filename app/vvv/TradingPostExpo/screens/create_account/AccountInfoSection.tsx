@@ -113,7 +113,7 @@ export function AccountInfoSection(props: CreateAccountProps) {
 
     return <ScrollWithButtons
         buttons={buttonConfig}>
-        {//isUnconfirmed ? <UnverifiedEmail  {...props} />: 
+        {
             <AccountBasicInfo agreeToPrivacy={agreeToPrivacy} setAgreeToPrivacy={setAgrreeToPrivacy} agreeToTerms={agreeToTerms} setAgreeToTerms={setAgreeToTerms} refs={refs} isAuthed={false} loginEntity={loginEntity} {...props} />
         }
     </ScrollWithButtons>
@@ -153,7 +153,7 @@ function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthe
                     textInputRef={refs.last}
                     validate={isRequired}
                     validateOnChange placeholder='Last Name' returnKeyType="none"  {...bindTextInput(props.user, "last_name", null)} />
-            </Section> */}
+            </Section> */}  
             {/* <Section title={'Login Information'} > */}
             <TextField
                 //label='Email'

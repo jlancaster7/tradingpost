@@ -190,9 +190,9 @@ export default ensureServerExtensions<User>({
             console.log(JSON.stringify(channels));
             const channel = channels.data.items?.pop();
             if (channel?.id) {
-                execProc("tp.update_youtube_social", {
+                await execProc("tp.update_youtube_social", {
                     user_id: req.extra.userId,
-                    channel_id: channel?.id
+                    channel_id: channel?.id ||""
                 })
             }
             return channel?.id || ""
@@ -217,7 +217,7 @@ export default ensureServerExtensions<User>({
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId) {
-            return await brokerage.getUserTrades(requestedId, {limit: r.extra.limit || 6, offset: r.extra.page || 0});
+            return await brokerage.getUserTrades(requestedId, { limit: r.extra.limit || 6, offset: r.extra.page || 0 });
             /*
             return await execProc("public.api_trade_list", {
                 limit: r.extra.limit || 5,
@@ -227,7 +227,7 @@ export default ensureServerExtensions<User>({
             })
             */
         } else if (requestedUser?.settings?.portfolio_display.trades && requestedUser.subscription?.is_subscribed) {
-            let result = await brokerage.getUserTrades(requestedId, {limit: r.extra.limit || 6, offset: r.extra.page || 0});
+            let result = await brokerage.getUserTrades(requestedId, { limit: r.extra.limit || 6, offset: r.extra.page || 0 });
             /*
             let result = await execProc("public.api_trade_list", {
                 limit: r.extra.limit || 5,

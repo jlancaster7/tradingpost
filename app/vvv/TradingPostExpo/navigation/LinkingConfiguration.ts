@@ -46,6 +46,8 @@ const linking: LinkingOptions<any> = {
                     }
                 }
             },
+            Profile: "profile",
+            PostScreen: "post",
             AccountInformation: "account",
             VerifyAccount: "verifyaccount",
             ResetPassword: "resetpassword",
