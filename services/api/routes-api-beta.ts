@@ -44,8 +44,8 @@ export const createRouterForApi = (versionCode: string) => {
         }
     }
 
-    const makeRoute = (path: string, action: (req: Express.Request, res: Express.Response) => Promise<any>) =>
-        router.post(path, async (req: Express.Request, res: Express.Response) => {
+    const makeRoute = (path: string, action: (req: Express.Request, res: Express.Response) => Promise<any>, asGet?: boolean) =>
+        router[asGet ? "get" : "post"](path, async (req: Express.Request, res: Express.Response) => {
             try {
                 res.json(await action(req, res))
             }
@@ -127,7 +127,11 @@ export const createRouterForApi = (versionCode: string) => {
             await resetPassword(req.body.email, req.body.tokenOrPass, req.body.isPass, req.body.newPassword);
         return {};
     })
-
+    makeRoute("/test", async (req) => {
+        return {
+            isMostRecent: false,
+        }
+    }, true);
     //AUTH
     makeRoute("/authapi/login", async (req) => {
         if (!req.body.pass)

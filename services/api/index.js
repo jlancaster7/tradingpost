@@ -49,7 +49,6 @@ var healthcheck_1 = require("./healthcheck");
 var node_fetch_1 = __importDefault(require("node-fetch"));
 var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 var waitlist_1 = require("@tradingpost/common/api/waitlist");
-var EntityApiBase_2 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 var routes_api_beta_1 = __importDefault(require("./routes-api-beta"));
 globalThis["fetch"] = node_fetch_1.default;
 //fromWebToken()
@@ -70,7 +69,7 @@ app.post('/waitlist/add', function (req, res) { return __awaiter(void 0, void 0,
         switch (_a.label) {
             case 0:
                 if (!req.body.email) {
-                    throw new EntityApiBase_2.PublicError("Missing Email");
+                    throw new EntityApiBase_1.PublicError("Missing Email");
                 }
                 return [4 /*yield*/, (0, waitlist_1.addToWaitlist)(req.body.email)];
             case 1:
@@ -94,7 +93,7 @@ var addAvailableApi = function (version) {
         console.error(ex);
     }
 };
-addAvailableApi("");
+addAvailableApi("1.4.0");
 // start the express server
 app.listen(port, function () {
     // tslint:disable-next-line:no-console

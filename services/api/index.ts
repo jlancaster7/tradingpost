@@ -6,16 +6,15 @@ import api from './routes-api-alpha'
 import cors from 'cors'
 import { healthCheck } from './healthcheck'
 import fetch from 'node-fetch'
-import { versionCode } from '@tradingpost/common/api/entities/static/EntityApiBase'
+import { versionCode, PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
 import { addToWaitlist } from '@tradingpost/common/api/waitlist';
-import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
-import Packages from "./package.json"
+
 import createRouterForApi from './routes-api-beta';
 
 (globalThis as any)["fetch" as any] = fetch;
 //fromWebToken()
 
-
+ 
 const app = express();
 const port = process.env.PORT || 8082; // default port to listen
 
@@ -55,13 +54,14 @@ const addAvailableApi = (version: string) => {
         console.error(ex);
     }
 }
-addAvailableApi("")
+addAvailableApi("1.5.0")
+addAvailableApi("1.4.0")
 // start the express server
 app.listen(port, () => {
     // tslint:disable-next-line:no-console
     console.log(`API Server has been started at http://localhost:${port}`);
     if (process.env.CONFIGURATION_ENV === "development") {
-    }
 
+    }
     console.log(process.env.CONFIGURATION_ENV)
 });

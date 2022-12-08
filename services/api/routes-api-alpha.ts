@@ -33,14 +33,13 @@ const decodeToken = async (req: Express.Request, disableModelCheck?: boolean) =>
             throw new Error(`Invalid authorization token`);
         else
             return result as JwtPayload;
-
     } else {
         throw new Error("Unauthoized....");
     }
 }
 
-const makeRoute = (path: string, action: (req: Express.Request, res: Express.Response) => Promise<any>) =>
-    router.post(path, async (req: Express.Request, res: Express.Response) => {
+const makeRoute = (path: string, action: (req: Express.Request, res: Express.Response) => Promise<any>, asGet?: boolean) =>
+    router[asGet ? "get" : "post"](path, async (req: Express.Request, res: Express.Response) => {
         try {
             res.json(await action(req, res))
         }
@@ -105,7 +104,11 @@ const sharedHandler = async (req: Express.Request, routeDetails: (entity: Entity
             .default;
     return await routeDetails(entity);
 }
-
+makeRoute("/test", async (req) => {
+    return {
+        isMostRecent: true,
+    }
+}, true);
 makeRoute("/authapi/forgotpassword", async (req) => {
     if (!req.body.email)
         throw new PublicError("Email is required", 400)

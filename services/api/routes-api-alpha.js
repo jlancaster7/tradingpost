@@ -77,8 +77,8 @@ var decodeToken = function (req, disableModelCheck) { return __awaiter(void 0, v
         }
     });
 }); };
-var makeRoute = function (path, action) {
-    return router.post(path, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+var makeRoute = function (path, action, asGet) {
+    return router[asGet ? "get" : "post"](path, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
         var _a, _b, ex_1;
         return __generator(this, function (_c) {
             switch (_c.label) {
@@ -158,6 +158,13 @@ var sharedHandler = function (req, routeDetails) { return __awaiter(void 0, void
         }
     });
 }); };
+makeRoute("/test", function (req) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, {
+                isMostRecent: true,
+            }];
+    });
+}); }, true);
 makeRoute("/authapi/forgotpassword", function (req) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
