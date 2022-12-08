@@ -121,6 +121,7 @@ export const resolvePostContent = (itm: Interface.IElasticPost | undefined, wind
                 `
         case 'substack':
         //return SubstackView({post: itm});
+        
         /*
         return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"></meta></head>
         <body style="margin:0; padding:0;width:${itm?._source.size.maxWidth}px;transform: scale(${windowWidth / itm._source.size.maxWidth});transform-origin: top left;">
@@ -128,6 +129,8 @@ export const resolvePostContent = (itm: Interface.IElasticPost | undefined, wind
         <p>${itm?._source.content.body}</p>
         </body></html>`
         */
+
+        
         default:
             return itm?._source.content.htmlBody || "";
     }
@@ -145,7 +148,6 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
     //         .then((r) => {
     //             setUpvoteCount(r.count);
     //         })
-
     // }, [])
     const [showStatus, setShowStatus] = useState(false);
     return <View style={{ marginHorizontal: postTotalHorizontalMargin / 2, marginVertical: postTotalVerticalMargin / 2 }}>

@@ -6,9 +6,9 @@
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.110.0",
     "@sendgrid/mail": "^7.7.0",
-    "@tradingpost/common": "file:../../common",
     "@types/express": "^4.17.13",
     "@types/node-fetch": "^2.6.2",
+    "@tradingpost/common": "^1.6.0",
     "body-parser": "^1.20.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
@@ -16,6 +16,8 @@
     "get-stream": "^6.0.1",
     "jsonwebtoken": "^8.5.1",
     "node-fetch": "^2.6.7",
+    "tp_common_1.4.0": "file:tradingpost-common-1.4.0.tgz",
+    "tp_common_1.5.0": "file:tradingpost-common-1.5.0.tgz",
     "typescript": "^4.8.4"
   },
   "devDependencies": {
@@ -31,6 +33,7 @@
     "start": "npx ts-node ./index.ts",
     "dev": "tsc -b ../../common && tsc && node ./",
     "deploy": "tsc && eb deploy",
+    "pre-publish": "npm uninstall @tradingpost/common && npm install @tradingpost/common",
     "install-common": "node ../../common/_scripts/install",
     "link-common": "node ../../common/_scripts/link"
   }
