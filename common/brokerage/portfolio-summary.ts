@@ -153,13 +153,15 @@ export class PortfolioSummaryService implements ISummaryService {
         let beta = [];
         let sum = 0;
         for (let d of holdings) {
-            sum += d.value;
+            if (d.securityType && ['equity', 'cashEquivalent'].includes(d.securityType)) {
+                sum += d.value;
+            }
+            
+            
             if (d.securityType && d.securityType !== 'equity') {
                 continue;
             }
-            if (d.optionId) {
-                continue;
-            }
+
             beta.push([await this.computeSecurityBeta(d.securityId, benchmarkId, daysPrior), d.value]);
 
         }
