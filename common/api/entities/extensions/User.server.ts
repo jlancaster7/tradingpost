@@ -80,11 +80,13 @@ export default ensureServerExtensions<User>({
         });
         return {};
     },
-    getBrokerageAccounts: (r) => {
-        return execProc("public.api_brokerage_account", {
+    getBrokerageAccounts: async (r) => {
+        const accs = await execProc("public.api_brokerage_account", {
             user_id: r.extra.userId,
             data: {}
         });
+        if (accs.length <= 0) return [];
+        return accs.filter(acc => acc.hidden_for_deletion !== true);
     },
     initBrokerageAccounts: async () => {
         return [];

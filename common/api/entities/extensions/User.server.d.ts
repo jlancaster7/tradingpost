@@ -39,6 +39,7 @@ declare const _default: {
         broker_name: string;
         account_number: string;
         user_id: string;
+        hidden_for_deletion: boolean;
     }[]>;
     initBrokerageAccounts: (req: {
         body: undefined;

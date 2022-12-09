@@ -1,7 +1,7 @@
 import { IUserList, IWatchlistList } from "../interfaces";
 import { Extension } from "./index";
 import { AccountGroupHPRsTable, TradingPostAccountGroupStats } from '../../../brokerage/interfaces';
-export declare type UploadProfilePicBody = {
+export type UploadProfilePicBody = {
     image: string;
 };
 export default class User extends Extension {
@@ -14,6 +14,7 @@ export default class User extends Extension {
         broker_name: string;
         account_number: string;
         user_id: string;
+        hidden_for_deletion: boolean;
     }[]>;
     initBrokerageAccounts: (settings?: undefined) => Promise<{}[]>;
     linkSocialAccount: (settings: {

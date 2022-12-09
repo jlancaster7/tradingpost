@@ -315,3 +315,14 @@ ALTER TABLE ibkr_position
     ADD COLUMN file_date TIMESTAMPTZ NOT NULL;
 ALTER TABLE tradingpost_brokerage_account
     ADD COLUMN hidden_for_deletion BOOLEAN NOT NULL DEFAULT FALSE;
+
+DROP FUNCTION api_brokerage_account;
+CREATE
+OR REPLACE FUNCTION public.api_brokerage_account(request jsonb)
+ RETURNS TABLE(id bigint, broker_name text, account_number text, type text, user_id uuid, hidden_for_deletion boolean)
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+return query SELECT v."id", v."broker_name",v."account_number",v."type", v."user_id", v.hidden_for_deletion FROM public.tradingpost_brokerage_account as v WHERE v.user_id = (request->>'user_id')::UUID;
+END;
+$function$;

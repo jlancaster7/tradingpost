@@ -10,18 +10,13 @@ if (!__DEV__) {
 } else if (__DEV__ && (AppOwnership.Expo === Constants.appOwnership || AppOwnership.Standalone === Constants.appOwnership || !Constants.appOwnership)) {
 
     if (Constants.manifest?.hostUri) {
-        console.log("Here...?")
         configApi({
             apiBaseUrl: `http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
         })
     } else {
-        console.log("Here..")
-        //const u = `http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`;
-        const u = `http://192.168.4.186:8082`
-        console.log(u);
         //manual ip for api server... have been trying to find a way to avoid this...
         configApi({
-            apiBaseUrl: u, //`http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
+            apiBaseUrl: `http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
         })
     }
 }
