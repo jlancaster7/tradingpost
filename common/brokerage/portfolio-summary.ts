@@ -154,7 +154,7 @@ export class PortfolioSummaryService implements ISummaryService {
         let sum = 0;
         for (let d of holdings) {
             sum += d.value;
-            if (d.securityId === 26830) {
+            if (d.securityType && d.securityType !== 'equity') {
                 continue;
             }
             if (d.optionId) {
@@ -250,7 +250,7 @@ export class PortfolioSummaryService implements ISummaryService {
             beta = await this.computeAccountGroupBeta(currentHoldings, account_group.defaultBenchmarkId);
         } catch (err) {
             console.log(err);
-            beta = 1;
+            beta = -99;
         }
 
         const sharpe = this.computeSharpe(returns);

@@ -2119,6 +2119,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getTradingPostHoldingsByAccount = async (userId: string, accountId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]> => {
         let query = `SELECT account_id,
                             security_id,
+                            security_type,
                             option_id,
                             (SELECT json_agg(t)
                              FROM public.security_option as t
@@ -2151,6 +2152,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             holdings.push({
                 accountId: d.account_id,
                 securityId: parseInt(d.security_id),
+                securityType: d.security_type,
                 optionId: parseInt(d.option_id),
                 optionInfo: d.option_info,
                 price: parseFloat(d.price),
@@ -2168,6 +2170,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getTradingPostHoldingsByAccountGroup = async (userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime = DateTime.now()): Promise<HistoricalHoldings[]> => {
         let query = `SELECT atg.account_group_id        AS account_group_id,
                             ht.security_id              AS security_id,
+                            ht.security_type            AS security_type,
                             ht.option_id                AS option_id,
                             (SELECT json_agg(t)
                              FROM public.security_option as t
@@ -2208,7 +2211,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                   security_id,
                               ht
                                   .
-                                  date
+                                  date,
+                              ht.security_type,
+                              ht.option_id
                      ORDER BY value
                              desc`;
         const response = await this.db.any(query, [accountGroupId, startDate, endDate]);
@@ -2223,6 +2228,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             holdings.push({
                 accountGroupId: parseInt(d.account_group_id),
                 securityId: parseInt(d.security_id),
+                securityType: d.security_type,
                 optionId: parseInt(d.option_id),
                 optionInfo: d.option_info,
                 price: parseFloat(d.price),
@@ -2240,6 +2246,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getTradingPostCurrentHoldingsByAccountGroup = async (accountGroupId: number): Promise<HistoricalHoldings[]> => {
         let query = `SELECT atg.account_group_id        AS account_group_id,
                             ch.security_id              AS security_id,
+                            ch.security_type            AS security_type,
                             ch.option_id                AS option_id,
                             (SELECT json_agg(t)
                              FROM public.security_option as t
@@ -2276,7 +2283,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                   updated_at,
                               ch
                                   .
-                                  option_id
+                                  option_id, 
+                              ch.security_type
                      ORDER BY value
                              desc;`;
         let holdings: HistoricalHoldings[] = [];
@@ -2294,6 +2302,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             holdings.push({
                 accountGroupId: parseInt(d.account_group_id),
                 securityId: parseInt(d.security_id),
+                securityType: d.security_type,
                 optionId: parseInt(d.option_id),
                 optionInfo: d.option_info,
                 price: parseFloat(d.price),

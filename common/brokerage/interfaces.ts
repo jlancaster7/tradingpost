@@ -113,6 +113,9 @@ export interface IFinicityRepository {
 }
 
 export interface ISummaryRepository {
+
+    getCashSecurityId(): Promise<GetSecurityBySymbol>
+
     getTradingPostBrokerageAccounts(userId: string): Promise<TradingPostBrokerageAccountsTable[]>
 
     getTradingPostAccountGroups(userId: string): Promise<TradingPostAccountGroups[]>
@@ -155,7 +158,7 @@ export interface ISummaryService {
 
     computeSecurityBeta(securityId: number, benchmarkId: number, daysPrior: number): Promise<number>
 
-    computeAccountGroupBeta(holdings: HistoricalHoldings[], daysPrior: number): Promise<number>
+    computeAccountGroupBeta(holdings: HistoricalHoldings[], benchmarkId: number, cashId: number, daysPrior: number): Promise<number>
 
     computeSharpe(holdingsReturns: AccountGroupHPRs[]): number
 
@@ -553,6 +556,7 @@ export type HistoricalHoldings = {
     accountId?: number
     accountGroupId?: number
     securityId: number
+    securityType: SecurityType | null
     optionId: number | null
     optionInfo: any | null
     price: number

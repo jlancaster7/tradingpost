@@ -50,9 +50,11 @@ export const useNoteField = (hideEmptyNote?: boolean) => {
 export const SecPressable = (props: PropsWithChildren<{ securityId: number }>) => {
     const nav = useNavigation<NavigationProp<AllPages>>();
     return <Pressable onPress={() => {
+        if (props.securityId !== -1) {
         nav.navigate("Company", {
             securityId: props.securityId
         })
+        }
     }}>{props.children}</Pressable>
 }
 
