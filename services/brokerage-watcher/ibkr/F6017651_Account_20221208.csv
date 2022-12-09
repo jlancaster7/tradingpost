@@ -1,7 +1,0 @@
-Type,AccountID,AccountTitle,Street,Street2,City,State,Zip,Country,AccountType,CustomerType,BaseCurrency,MasterAccountID,Van,Capabilities,Alias,PrimaryEmail,DateOpened,DateClosed,DateFunded,AccountRepresentative,
-D,F6017651,Joshua Lancaster,909 E St Se Apt 1,,Washington,DC,20003-2837,United States,Advisor Master,Individual,USD,,,Cash,,lancaster.joshua.c@gmail.com,20210416,,20210428,,
-D,U4445393,Joshua Lancaster,909 E St Se Apt 1,,Washington,DC,20003-2837,United States,Advisor Client,Individual,USD,F6017651,U4445393,Margin,,lancaster.joshua.c@gmail.com,20200827,,20200831,,
-D,U5422138,"Joshua Lancaster Roth IRA, Interactive Brokers LLC Custodian",909 E St Se Apt 1,,Washington,DC,20003-2837,United States,Advisor Client,IRA-Roth New,USD,F6017651,U5422138,Margin,,lancaster.joshua.c@gmail.com,20210209,,20210210,,
-D,U5457404,"Joshua Lancaster Rollover IRA, Interactive Brokers LLC Custodian",909 E St Se Apt 1,,Washington,DC,20003-2837,United States,Advisor Client,IRA-Traditional Rollover,USD,F6017651,U5457404,Margin,,lancaster.joshua.c@gmail.com,20210205,,20210210,,
-D,U5457571,"Alina Lancaster Rollover IRA, Interactive Brokers LLC Custodian",909 E St Se Apt 1,,Washington,DC,20003-2837,United States,Advisor Client,IRA-Traditional Rollover,USD,F6017651,U5457571,Margin,,alinafleury@gmail.com,20210312,,20210316,,
-D,U5824529,"Alina Lancaster Roth IRA, Interactive Brokers LLC Custodian",909 E St Se Apt 1,,Washington,DC,20003-2837,United States,Advisor Client,IRA-Roth New,USD,F6017651,U5824529,Margin,,alinafleury@gmail.com,20210312,,20210316,,

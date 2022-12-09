@@ -1,3 +1,0 @@
-Type,AccountID,ConID,SecurityID,Symbol,BBTicker,BBGlobalID,SecurityDescription,AssetType,Currency,BaseCurrency,TradeDate,TradeTime,SettleDate,OrderTime,TransactionType,Quantity,UnitPrice,GrossAmount,SECFee,Commission,Tax,Net,NetInBase,TradeID,TaxBasisElection,Description,FxRateToBase,ContraPartyName,ClrFirmID,Exchange,MasterAccountID,Van,AwayBrokerCommission,OrderID,ClientReference,TransactionID,ExecutionID,CostBasis,Flag,
-D,U4445393,,,,,,,,USD,USD,20221206,,20221206,,INTACC,0,0,2.6,0,0,0,2.6,2.6,,,INTEREST ACCRUAL POSTING,1,,,,F6017651,U4445393,0,,,,,0,,
-D,U5457404,,,,,,,,USD,USD,20221206,,20221206,,INTACC,0,0,2.33,0,0,0,2.33,2.33,,,INTEREST ACCRUAL POSTING,1,,,,F6017651,U5457404,0,,,,,0,,
