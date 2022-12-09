@@ -16,7 +16,7 @@ export const HoldingRenderItem = (props: {item: any, byId: any, isOwner: boolean
     return (
         <ElevatedSection title="" style={{flex: 1, marginBottom: sizes.rem1_5 / 2, marginHorizontal: sizes.rem1_5 / 4, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}}>
         <View style={{flexDirection: 'row', justifyContent: 'center'}}>
-            <SecPressable securityId={secId}>                                        
+            <SecPressable securityId={byId[secId] ? (byId[secId].symbol === 'USD:CUR' ? -1 : secId) : -1}>                                        
                 <Avatar
                     style={{borderWidth: 1, borderColor: '#ccc'}}
                     resizeMode={'contain'}
@@ -37,7 +37,7 @@ export const HoldingRenderItem = (props: {item: any, byId: any, isOwner: boolean
                 <Text style={[item.item.optionInfo ? {display: 'flex'} : {display: 'none'}, {fontSize: fonts.xSmall}]}>
                         {item.item.optionInfo && `${String(item.item.optionInfo[0].type).toLowerCase() === 'call' ? 'C' : 'P'}${toNumber1(item.item.optionInfo[0].strike_price)} ${new Date(item.item.optionInfo[0].expiration).toLocaleDateString()}`}
                     </Text>
-                <Text style={{flex: 1, color: '#606060'}}>
+                <Text style={[{flex: 1, color: '#606060'}, byId[secId] ? (byId[secId].symbol === 'USD:CUR' ? {display: 'none'} : {display: 'flex'}) : {display: 'none'}]}>
                     {toDollarsAndCents(item.item.price)}
                 </Text>
             </View>
@@ -53,7 +53,7 @@ export const HoldingRenderItem = (props: {item: any, byId: any, isOwner: boolean
                         {props.isOwner ? `${toDollars(item.item.value)}` : `${toPercent1(item.item.value)}`}
                     </Text>
                 </View>
-                <View style={{flex: 1, alignItems: 'center'}}>
+                <View style={[{flex: 1, alignItems: 'center'}, byId[secId] ? (byId[secId].symbol === 'USD:CUR' ? {display: 'none'} : {display: 'flex'}) : {display: 'none'}]}>
                     <Text style={{fontSize: fonts.medium / 2, color: '#9D9D9D'}}>
                         {'Cost'}
                     </Text>
@@ -61,11 +61,10 @@ export const HoldingRenderItem = (props: {item: any, byId: any, isOwner: boolean
                         {`${toDollarsAndCents(item.item.cost_basis)}`}
                     </Text>                                                    
                 </View>
-
             </View>
         </View>
         <View style={[{flex: 1, flexDirection: 'row'}, props.isOwner ? {display: 'flex'} : {display: 'none'}]}>
-            <View style={{flex: 1, alignItems: 'center'}}>
+            <View style={[{flex: 1, alignItems: 'center'}, byId[secId] ? (byId[secId].symbol === 'USD:CUR' ? {display: 'none'} : {display: 'flex'}) : {display: 'none'}]}>
                 <Text style={{fontSize: fonts.medium / 2, color: '#9D9D9D'}}>
                     {'Profit/Loss'}
                 </Text>
