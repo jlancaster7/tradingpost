@@ -193,9 +193,10 @@ export default ensureServerExtensions<Brokerage>({
         }
     },
     scheduleForDeletion: async (req) => {
-        // Change TP account Id to hidden and publish event to remove account
+        // Change TP account ID to hidden and publish event to remove account
         const {pgp, pgClient} = await init;
         const brokerageRepo = new Repository(pgClient, pgp);
+        const tpAccount = await brokerageRepo.getTradingPostBrokerageAccount(req.body.accountId);
         await brokerageRepo.upsertBrokerageTasks([
             {
                 status: BrokerageTaskStatusType.Pending,
@@ -204,17 +205,14 @@ export default ensureServerExtensions<Brokerage>({
                 type: BrokerageTaskType.DeleteAccount,
                 started: null,
                 finished: null,
-                data: {
-                    brokerage: req.body.brokerage,
-                    accountIds: req.body.accountIds
-                },
+                data: {brokerage: req.body.brokerage, accountId: req.body.accountId},
                 error: null,
-                brokerageUserId: null,
+                brokerageUserId: tpAccount.accountNumber,
                 brokerage: req.body.brokerage
             }
         ]);
 
-        await brokerageRepo.scheduleTradingPostAccountForDeletion(req.body.accountIds);
+        await brokerageRepo.scheduleTradingPostAccountForDeletion(req.body.accountId);
         return {};
     }
 })

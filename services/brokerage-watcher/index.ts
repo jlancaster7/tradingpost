@@ -82,8 +82,8 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
 
             const ibkrAccount = await repo.getIbkrAccount(ibkrUserId);
             if (!ibkrAccount) throw new Error("could not find ibkr account for account id");
-            const brokerageJobStatus = await repo.getExistingTask(DirectBrokeragesType.Ibkr, ibkrUserId, dateDateTime)
-            let newBrokerageJobStatus: BrokerageTask = {
+            const existingTask = await repo.getExistingTaskByDate(DirectBrokeragesType.Ibkr, BrokerageTaskType.NewData, dateDateTime, ibkrAccount.userId, ibkrUserId);
+            let updatedTask: BrokerageTask = {
                 date: dateDateTime,
                 started: null,
                 userId: ibkrAccount.userId,
@@ -98,23 +98,29 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
                 error: null,
             }
 
-            if (brokerageJobStatus === null) {
-                await repo.upsertBrokerageTasks([newBrokerageJobStatus])
+            if (existingTask === null) {
+                await repo.upsertBrokerageTasks([updatedTask])
                 await uploadFileToS3(path, filename, s3Client)
                 continue
             }
 
-            if (brokerageJobStatus.status === BrokerageTaskStatusType.Running
-                || brokerageJobStatus.status === BrokerageTaskStatusType.Failed
-                || brokerageJobStatus.status === BrokerageTaskStatusType.Successful) continue;
+            if (existingTask.status === BrokerageTaskStatusType.Running
+                || existingTask.status === BrokerageTaskStatusType.Pending
+                || existingTask.status === BrokerageTaskStatusType.Failed
+                || existingTask.status === BrokerageTaskStatusType.Successful) continue;
+            if (existingTask.data.filenames.length === 7) continue;
 
-            if (brokerageJobStatus.data?.filenames.includes(fileType)) continue;
+            if (existingTask.data?.filenames.includes(fileType)) continue;
 
-            newBrokerageJobStatus.data.filenames = [...brokerageJobStatus.data?.filenames, fileType];
+            existingTask.data.filenames = [...existingTask.data?.filenames, fileType];
 
-            if (newBrokerageJobStatus.data.filenames.length === 7) newBrokerageJobStatus.status = BrokerageTaskStatusType.Pending
+            if (existingTask.data.filenames.length === 7) existingTask.status = BrokerageTaskStatusType.Pending
 
-            await repo.upsertBrokerageTasks([newBrokerageJobStatus])
+            console.log("UPdating Task: ", existingTask.id, existingTask.data)
+            await repo.updateTask(existingTask.id, {
+                status: existingTask.status,
+                data: existingTask.data
+            })
             await uploadFileToS3(path, filename, s3Client)
         }
     }

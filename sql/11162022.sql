@@ -285,7 +285,7 @@ CREATE TABLE brokerage_task
     status            brokerage_task_status_type     NOT NULL DEFAULT 'PENDING',
     type              brokerage_task_type            NOT NULL DEFAULT 'TODO',
     date              TIMESTAMPTZ                    NOT NULL, -- Used for when to process in ASCENDING order
-    brokerage_user_id TEXT,
+    brokerage_user_id TEXT                           NOT NULL,
     started           TIMESTAMPTZ,
     finished          TIMESTAMPTZ,
     data              JSONB,
@@ -294,6 +294,8 @@ CREATE TABLE brokerage_task
     created_at        TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
+
+CREATE UNIQUE INDEX brokerage_task_uniq ON brokerage_task (brokerage, status, type, date, user_id);
 
 DROP TABLE brokerage_to_process;
 DROP TYPE direct_brokerages;

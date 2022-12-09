@@ -194,7 +194,8 @@ export default class BaseTransformer {
 
     upsertTransactions = async (transactions: TradingPostTransactions[]) => {
         const rollup = await rollupTransactions(transactions);
-        await this._baseRepo.upsertTradingPostTransactions(rollup)
+        const filtered = rollup.filter(f => f.securityType !== SecurityType.mutualFund);
+        await this._baseRepo.upsertTradingPostTransactions(filtered)
     }
 
     upsertHistoricalHoldings = async (historicalHoldings: TradingPostHistoricalHoldings[]) => {

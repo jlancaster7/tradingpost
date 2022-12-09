@@ -49,7 +49,7 @@ import {
     TradingPostTransactionsByAccountGroup,
     BrokerageTask,
     BrokerageTaskTable,
-    BrokerageTaskStatusType, DirectBrokeragesType
+    BrokerageTaskStatusType, DirectBrokeragesType, BrokerageTaskType
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -2283,7 +2283,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                   updated_at,
                               ch
                                   .
-                                  option_id, 
+                                  option_id,
                               ch.security_type
                      ORDER BY value
                              desc;`;
@@ -4215,11 +4215,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'error', prop: 'error'}
         ], {table: 'brokerage_task'});
 
-        const query = this.pgp.helpers.insert(tasks, cs);
+        const query = upsertReplaceQuery(tasks, cs, this.pgp, `brokerage, status, type, date, user_id`)
         await this.db.none(query);
     }
 
-    updateTask = async (taskId: number, params: { started?: DateTime, finished?: DateTime, status?: BrokerageTaskStatusType, error?: any }): Promise<void> => {
+    updateTask = async (taskId: number, params: { userId?: string, brokerage?: string, type?: BrokerageTaskType, date?: DateTime, brokerageUserId?: string, started?: DateTime, finished?: DateTime, status?: BrokerageTaskStatusType, error?: any, data?: any }): Promise<void> => {
         let query = `UPDATE brokerage_task
                      SET `
         let cnt = 1;
@@ -4306,7 +4306,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                                                 when 'TODO' then 3
                                                 end
                                    LIMIT 1 FOR UPDATE SKIP LOCKED)
-                       RETURNING id, user_id, created_at, updated_at, date, started, brokerage, type, brokerage_user_id, status, finished, data;`
+                       RETURNING id, user_id, brokerage, status, type, date, brokerage_user_id, started, finished, data, error, updated_at, created_at;`
         const result = await this.db.oneOrNone(query);
         if (!result) return null;
 
@@ -4327,7 +4327,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
-    getExistingTask = async (brokerage: DirectBrokeragesType, brokerageUserId: string, dateToProcess: DateTime): Promise<BrokerageTaskTable | null> => {
+    getExistingTaskByDate = async (brokerage: DirectBrokeragesType, type: BrokerageTaskType, date: DateTime, userId: string, brokerageUserId: string): Promise<BrokerageTaskTable | null> => {
         const query = `
             select id,
                    user_id,
@@ -4344,9 +4344,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                    created_at
             from brokerage_task
             WHERE brokerage = $1
-              AND brokerage_user_id = $2
-              AND date = $3`;
-        const result = await this.db.oneOrNone(query, [brokerage, brokerageUserId, dateToProcess]);
+              AND type = $2
+              AND date = $3
+              AND user_id = $4
+              AND brokerage_user_id = $5`;
+        const result = await this.db.oneOrNone(query, [brokerage, type, date, userId, brokerageUserId]);
         if (!result) return null;
         return {
             id: result.id,
@@ -4365,12 +4367,53 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
-    scheduleTradingPostAccountForDeletion = async (accountIds: number[]): Promise<void> => {
-        if (accountIds.length <= 0) return;
+
+    getExistingTask = async (brokerage: DirectBrokeragesType, status: BrokerageTaskStatusType, type: BrokerageTaskType, date: DateTime, userId: string, brokerageUserId: string): Promise<BrokerageTaskTable | null> => {
+        const query = `
+            select id,
+                   user_id,
+                   brokerage,
+                   status,
+                   type,
+                   date, -- Used for when to process in ASCENDING order
+                   brokerage_user_id,
+                   started,
+                   finished,
+                   data,
+                   error,
+                   updated_at,
+                   created_at
+            from brokerage_task
+            WHERE brokerage = $1
+              AND status = $2
+              AND type = $3
+              AND date = $4
+              AND user_id = $5
+              AND brokerage_user_id = $6`;
+        const result = await this.db.oneOrNone(query, [brokerage, status, type, date, userId, brokerageUserId]);
+        if (!result) return null;
+        return {
+            id: result.id,
+            userId: result.user_id,
+            data: result.data,
+            type: result.type,
+            status: result.status,
+            brokerageUserId: result.brokerage_user_id,
+            brokerage: result.brokerage,
+            date: DateTime.fromJSDate(result.date),
+            started: result.started ? DateTime.fromJSDate(result.started) : null,
+            finished: result.finished ? DateTime.fromJSDate(result.finished) : null,
+            updatedAt: DateTime.fromJSDate(result.updated_at),
+            createdAt: DateTime.fromJSDate(result.created_at),
+            error: result.error
+        }
+    }
+
+    scheduleTradingPostAccountForDeletion = async (accountId: number): Promise<void> => {
         const query = `UPDATE tradingpost_brokerage_account
                        SET hidden_for_deletion = TRUE
-                       WHERE id IN ($1:list);`
-        await this.db.none(query, [accountIds]);
+                       WHERE id IN ($1);`
+        await this.db.none(query, [accountId]);
     }
 }
 
