@@ -93,6 +93,7 @@ var addAvailableApi = function (version) {
         console.error(ex);
     }
 };
+addAvailableApi("1.5.0");
 addAvailableApi("1.4.0");
 // start the express server
 app.listen(port, function () {
