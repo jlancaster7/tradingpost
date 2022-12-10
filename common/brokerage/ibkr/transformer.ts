@@ -19,6 +19,7 @@ import {
 import {DateTime} from "luxon";
 import {addSecurity} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer"
+import ibkr from "../../api/entities/extensions/Ibkr";
 
 export interface TransformerRepository extends BaseRepository {
     getTradingPostBrokerageAccountsByBrokerageAndIds(userId: string, brokerage: string, brokerageAccountIds: string[]): Promise<TradingPostBrokerageAccountsTable[]>
@@ -124,7 +125,7 @@ const transformTransactionType = (transactionType: string): InvestmentTransactio
         case "DVPOUT": // Outgoing DVP
             throw new Error("no transaction type for outgoing dvp");
         case "EXE": // Exercise
-            // TODO: Check if its a call or a put before
+                    // TODO: Check if its a call or a put before
             return InvestmentTransactionType.buy
         case "EXP": // Expire
             return InvestmentTransactionType.cancel
@@ -179,10 +180,12 @@ export default class IbkrTransformer extends BaseTransformer {
         const tpAccounts = await this._repository.getTradingPostBrokerageAccounts(tpUserId);
 
         let filteredAccounts = accounts.filter(acc => {
+            if (acc.masterAccountId === null) return false;
             const tpAccount = tpAccounts.find(a => a.accountNumber === acc.accountId)
             if (!tpAccount) return true
             return tpAccount.updatedAt.toUnixInteger() < processDate.toUnixInteger();
         });
+
         const transformedAccounts = filteredAccounts.map(fa => {
             let x: TradingPostBrokerageAccounts = {
                 accountNumber: fa.accountId,
@@ -201,6 +204,7 @@ export default class IbkrTransformer extends BaseTransformer {
             }
             return x;
         });
+
         await this.upsertAccounts(transformedAccounts);
     }
 
@@ -283,46 +287,38 @@ export default class IbkrTransformer extends BaseTransformer {
         const optionsMap = await this._getOptions(optionTransactions);
         const tpAccountMap = await this._getAccounts(tpUserId, transactions);
 
-        const tpTransactions = transactions.map(tx => {
+        let tpTransactions: TradingPostTransactions[] = [];
+        for (let i = 0; i < transactions.length; i++) {
+            const tx = transactions[i];
             if (tx.transactionType === null) throw new Error("transaction type is null");
-            const transactionType = transformTransactionType(tx.transactionType);
-
-            let securityType = SecurityType.cashEquivalent;
-            if (tx.assetType !== null) securityType = transformSecurityType(tx.assetType);
-
             if (tx.quantity === null) throw new Error("quantity is null");
             if (tx.unitPrice === null) throw new Error("unit price is null");
             if (tx.grossAmount === null) throw new Error("gross amount is null");
-            let date = tx.orderTime
-            if (date === null) {
-                date = processDate;
-            }
+
+            const internalAccount = tpAccountMap[tx.accountId];
+            if (!internalAccount) continue;
+
+            const transactionType = transformTransactionType(tx.transactionType);
+            let securityType = SecurityType.cashEquivalent;
+            if (tx.assetType !== null) securityType = transformSecurityType(tx.assetType);
 
             let optionId = null;
             let symbol = tx.symbol as string;
             if (securityType === SecurityType.option) {
-                try {
-                    optionId = optionsMap[symbol].id;
-                    symbol = symbol.split(" ")[0].trim();
-                } catch (e) {
-                    console.error(e)
-                    console.log(optionsMap);
-                    console.log(symbol)
-                    throw e
-                }
+                optionId = optionsMap[symbol].id
+                symbol = symbol.split(" ")[0].trim();
             }
+
+            let date = tx.orderTime
+            if (date === null) date = processDate;
 
             if (!symbol && (
                 transactionType === InvestmentTransactionType.fee ||
                 transactionType === InvestmentTransactionType.dividendOrInterest ||
                 transactionType === InvestmentTransactionType.cash)
-            ) {
-                symbol = 'USD:CUR'
-            }
-            const internalAccount = tpAccountMap[tx.accountId];
-            if (!internalAccount) throw new Error("could not find account for account id: " + tx.accountId);
+            ) symbol = 'USD:CUR'
 
-            let x: TradingPostTransactions = {
+            const x: TradingPostTransactions = transformTransactionTypeAmount(transactionType, {
                 accountId: internalAccount.id,
                 currency: tx.currency,
                 amount: tx.net ? tx.net : 0,
@@ -334,9 +330,10 @@ export default class IbkrTransformer extends BaseTransformer {
                 quantity: tx.quantity,
                 securityId: securitiesMap[symbol].id,
                 securityType: securityType,
-            }
-            return transformTransactionTypeAmount(transactionType, x);
-        });
+            });
+            tpTransactions.push(x);
+        }
+
         await this.upsertTransactions(tpTransactions);
     }
 
@@ -345,18 +342,21 @@ export default class IbkrTransformer extends BaseTransformer {
         const securitiesMapBySymbol = await this._getSecurities(ibkrHoldings);
         const optionsMapping = await this._getOptions(ibkrHoldings);
 
-        const historicalHoldings = ibkrHoldings.map(h => {
+        let historicalHoldings: TradingPostHistoricalHoldings[] = [];
+        for (let i = 0; i < ibkrHoldings.length; i++) {
+            const h = ibkrHoldings[i];
             if (h.assetType === null) throw new Error("no type for ibkr holding");
-            const securityType = transformSecurityType(h.assetType);
-
-            let symbol = h.symbol
-            if (securityType === SecurityType.cashEquivalent) symbol = "USD:CUR";
-
-            if (symbol === null) throw new Error("no symbol for ibkr holding");
-
+            if (h.symbol === null) throw new Error("no symbol for ibkr holding");
             if (h.marketPrice === null) throw new Error("no market price for ibkr holding");
             if (h.marketValue === null) throw new Error("no market value for ibkr holding");
             if (h.quantity === null) throw new Error("no quantity for ibkr holding");
+
+            const internalAccount = tpAccountIdMap[h.accountId];
+            if (!internalAccount) continue;
+
+            const securityType = transformSecurityType(h.assetType);
+            let symbol = h.symbol
+            if (securityType === SecurityType.cashEquivalent) symbol = "USD:CUR";
 
             let optionId: number | null = null;
             if (securityType === SecurityType.option) {
@@ -371,8 +371,8 @@ export default class IbkrTransformer extends BaseTransformer {
                 value = h.quantity
             }
 
-            let x: TradingPostHistoricalHoldings = {
-                accountId: tpAccountIdMap[h.accountId].id,
+            historicalHoldings.push({
+                accountId: internalAccount.id,
                 price: marketPrice,
                 costBasis: h.costBasis,
                 date: h.reportDate,
@@ -384,9 +384,8 @@ export default class IbkrTransformer extends BaseTransformer {
                 priceSource: DirectBrokeragesType.Ibkr,
                 quantity: h.quantity,
                 securityType: securityType,
-            }
-            return x;
-        });
+            })
+        }
 
         await this.upsertHistoricalHoldings(historicalHoldings);
 
@@ -399,18 +398,20 @@ export default class IbkrTransformer extends BaseTransformer {
         }
 
         let currentHoldings: TradingPostCurrentHoldings[] = [];
-        ibkrHoldings.forEach(h => {
+        for (let i = 0; i < ibkrHoldings.length; i++) {
+            const h = ibkrHoldings[i];
             if (h.assetType === null) throw new Error("no type for ibkr holding");
-            const securityType = transformSecurityType(h.assetType);
-
-            let symbol = h.symbol;
-            if (securityType === SecurityType.cashEquivalent) symbol = "USD:CUR";
-            if (symbol === null) throw new Error("no symbol for ibkr holding");
-
+            if (h.symbol === null) throw new Error("no symbol for ibkr holding");
             if (h.marketPrice === null) throw new Error("no market price for ibkr holding");
             if (h.marketValue === null) throw new Error("no market value for ibkr holding");
             if (h.quantity === null) throw new Error("no quantity for ibkr holding");
 
+            const internalAccount = tpAccountIdMap[h.accountId];
+            if (!internalAccount) continue;
+
+            let symbol = h.symbol;
+            const securityType = transformSecurityType(h.assetType);
+            if (securityType === SecurityType.cashEquivalent) symbol = "USD:CUR";
 
             let optionId: number | null = null;
             if (securityType === SecurityType.option) {
@@ -425,8 +426,8 @@ export default class IbkrTransformer extends BaseTransformer {
                 value = h.quantity
             }
 
-            let x: TradingPostCurrentHoldings = {
-                accountId: tpAccountIdMap[h.accountId].id,
+            currentHoldings.push({
+                accountId: internalAccount.id,
                 priceSource: DirectBrokeragesType.Ibkr,
                 value: value,
                 priceAsOf: h.reportDate,
@@ -438,9 +439,8 @@ export default class IbkrTransformer extends BaseTransformer {
                 securityType: securityType,
                 securityId: securitiesMapBySymbol[symbol].id,
                 holdingDate: h.reportDate
-            }
-            currentHoldings.push(x)
-        });
+            });
+        }
 
         const tpAccountIds = currentTpHoldings.map(tp => tp.id);
         await this.upsertPositions(currentHoldings, tpAccountIds)
