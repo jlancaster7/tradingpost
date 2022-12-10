@@ -48,7 +48,8 @@ export function SideMenu(props: DrawerContentComponentProps) {
     const linkTo = useLinkTo<any>();
     //Not sure if the issue here but this seems to work for now.
     //const { EnsureUser, appUser, signOut } = useEnsureUser(props.navigation as any as NavigationProp<any>);
-    const currentUser = loginState!.appUser!;
+    const currentUser = loginState?.appUser;
+    if (!currentUser) return;
 
     return <DrawerContentScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ flexGrow: 1, backgroundColor: "white" }}>
         <View style={{ alignSelf: "center", alignItems: "center", backgroundColor: "transparent" }}>
@@ -118,7 +119,7 @@ export function SideMenu(props: DrawerContentComponentProps) {
             onPress: () => {
                 signOut();
                 //TODO: Investigate why this is needed and linkto doesn't seem to work.
-                props.navigation.getParent()?.replace("Root");
+                //props.navigation.getParent()?.replace("Root");
 
             },
             icon: sideMenu.LogOut

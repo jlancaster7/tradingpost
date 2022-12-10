@@ -380,7 +380,7 @@ return query SELECT * FROM public.view_subscription_get(request) as v WHERE v."i
   
     CREATE OR REPLACE FUNCTION public.api_user_update(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json,"is_deleted" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -393,7 +393,8 @@ bio =  tp.prop_or_default(request->'data' ,'bio',v.bio),
 banner_url =  tp.prop_or_default(request->'data' ,'banner_url',v.banner_url), 
 analyst_profile =  tp.prop_or_default(request->'data' ,'analyst_profile',v.analyst_profile), 
 has_profile_pic =  tp.prop_or_default(request->'data' ,'has_profile_pic',v.has_profile_pic), 
-social_analytics =  tp.prop_or_default(request->'data' ,'social_analytics',v.social_analytics) WHERE v."id" = (request->'data'->>'id')::UUID;
+social_analytics =  tp.prop_or_default(request->'data' ,'social_analytics',v.social_analytics), 
+is_deleted =  tp.prop_or_default(request->'data' ,'is_deleted',v.is_deleted) WHERE v."id" = (request->'data'->>'id')::UUID;
 return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (request->'data'->>'id')::UUID;
     END;
     $BODY$;
@@ -403,7 +404,7 @@ return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (re
   
     CREATE OR REPLACE FUNCTION public.api_user_get(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json,"is_deleted" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -417,7 +418,7 @@ return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (re
   
     CREATE OR REPLACE FUNCTION public.api_user_list(
         request jsonb)
-        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json)
+        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json,"is_deleted" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     

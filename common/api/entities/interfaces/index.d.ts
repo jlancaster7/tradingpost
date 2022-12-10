@@ -176,6 +176,7 @@ export interface IUserList {
         is_pending: boolean;
     };
     social_analytics?: any;
+    is_deleted?: boolean;
 }
 export interface IUserGet {
     handle: string;
@@ -200,6 +201,7 @@ export interface IUserGet {
     };
     settings?: Statics.IUserSettings;
     social_analytics?: any;
+    is_deleted?: boolean;
 }
 export interface IUserUpdate {
     id?: string;
@@ -212,6 +214,7 @@ export interface IUserUpdate {
     banner_url?: string;
     bio?: string;
     social_analytics?: any;
+    is_deleted?: boolean;
 }
 export interface IWatchlistList {
     id: number;

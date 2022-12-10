@@ -207,7 +207,8 @@ export interface IUserList {
     display_name: string,
     profile_url?: string,
     subscription: { cost:string, id:number , is_subscribed:boolean, count:number, settings:any, is_pending:boolean    },
-    social_analytics?: any
+    social_analytics?: any,
+    is_deleted?: boolean
     };
 
 export interface IUserGet {
@@ -225,7 +226,8 @@ export interface IUserGet {
     analyst_profile?: Statics.IAnalystProfile,
     subscription: { cost:string, id:number , is_subscribed:boolean, count:number, settings:any, is_pending:boolean    },
     settings?: Statics.IUserSettings,
-    social_analytics?: any
+    social_analytics?: any,
+    is_deleted?: boolean
     };
 
 export interface IUserUpdate {
@@ -238,7 +240,8 @@ export interface IUserUpdate {
     settings?: Statics.IUserSettings,
     banner_url?: string,
     bio?: string,
-    social_analytics?: any
+    social_analytics?: any,
+    is_deleted?: boolean
     };
 
 export interface IWatchlistList {

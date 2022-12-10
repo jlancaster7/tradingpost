@@ -4,7 +4,7 @@ import { SwitchField } from "../components/SwitchField"
 import { Api } from "@tradingpost/common/api";
 import { sideMargin } from "./create_account/shared"
 import { ScrollWithButtons } from "../components/ScrollWithButtons"
-import { View, Pressable } from "react-native"
+import { View, Pressable, Alert, Platform } from "react-native"
 import { useLinkTo, useNavigation } from "@react-navigation/native"
 import { useSecuritiesList } from '../SecurityList'
 import { Autocomplete, AutocompleteItem, Icon, IndexPath, Text, TabView, Tab } from "@ui-kitten/components";
@@ -19,12 +19,12 @@ import { ProfileButton } from "../components/ProfileButton";
 import { Slider } from "../components/Slider";
 import { AppColors } from "../constants/Colors";
 import { YourContentComponent } from "../components/YourContentComponent";
-import { IUserUpdate } from "@tradingpost/common/api/entities/interfaces";
+import { IUserGet, IUserUpdate } from "@tradingpost/common/api/entities/interfaces";
 import { Log } from "../utils/logger";
 import { LinkBrokerageComponent } from "../components/LinkBrokerageComponent";
 
 export function AccountInfoScreen() {
-    const { loginState, signIn } = useAppUser(),
+    const { loginState, signIn, signOut } = useAppUser(),
         [index, setIndex] = useState(0),
         linkTo = useLinkTo<any>()
 
@@ -53,8 +53,8 @@ export function AccountInfoScreen() {
                 upvotes: definedOrValue(appUser?.settings?.push_notifications.upvotes, true),
                 watchlist_changes: definedOrValue(appUser?.settings?.push_notifications.watchlist_changes, true)
             }
-        }
-
+        },
+        is_deleted: appUser?.is_deleted
     })
 
     return (
@@ -105,7 +105,7 @@ export function AccountInfoScreen() {
                         <YourContentComponent />
                     </Tab>
                     <Tab key={"C"} title={'Advanced'} style={{ backgroundColor: AppColors.background, borderColor: AppColors.background }}>
-                        <AdvancedTabContent setUpdates={setAccountUpdates} updates={accountUpdates} />
+                        <AdvancedTabContent signOut={signOut} appUser={appUser} setUpdates={setAccountUpdates} updates={accountUpdates} />
 
                     </Tab>
                 </TabView>
@@ -238,7 +238,7 @@ const AccountInfoContent = (props: { updates: IUserUpdate, setUpdates: (updates:
 
 }
 
-const AdvancedTabContent = (props: { updates: IUserUpdate, setUpdates: (updates: IUserUpdate) => void }) => {
+const AdvancedTabContent = (props: { appUser: IUserGet | undefined, signOut: any, updates: IUserUpdate, setUpdates: (updates: IUserUpdate) => void }) => {
 
     const nav = useNavigation();
     const updates = props.updates;
@@ -279,6 +279,22 @@ const AdvancedTabContent = (props: { updates: IUserUpdate, setUpdates: (updates:
         _updates.settings!.analyst = isAnalystChecked;
         props.setUpdates(_updates)
     }
+    //@ts-ignore
+    const alertPolyfill = (title, description, options, extra) => {
+        const result = window.confirm([title, description].filter(Boolean).join('\n'))
+    
+        if (result) {
+            //@ts-ignore
+            const confirmOption = options.find(({style}) => style !== 'cancel')
+            confirmOption && confirmOption.onPress()
+        } else {
+            //@ts-ignore
+            const cancelOption = options.find(({style}) => style === 'cancel')
+            cancelOption && cancelOption.onPress()
+        }
+    }
+    
+    const alert = Platform.OS === 'web' ? alertPolyfill : Alert.alert;
 
 
     return <ElevatedSection title="" style={{ padding: 5 }}>
@@ -327,7 +343,27 @@ const AdvancedTabContent = (props: { updates: IUserUpdate, setUpdates: (updates:
                 <Text style={{ fontSize: 14, alignSelf: 'center' }}>
                     Delete Account
                 </Text>
-                <PrimaryButton style={{ width: "40%", backgroundColor: "#D81222", borderColor: "#D81222" }} onPress={() => { }}>
+                <PrimaryButton style={{ width: "40%", backgroundColor: "#D81222", borderColor: "#D81222" }} onPress={ async () => {
+                    return alert(
+                        `Are you sure you want to delete your account?`,
+                        '',
+                        [
+                            {
+                                text: "Yes",
+                                onPress: async () => {
+                                    const _updates = { ...updates }
+                                    _updates.is_deleted = true;
+                                    props.setUpdates(_updates)
+                                    await Api.User.update(props.appUser?.id || '', _updates);
+                                    props.signOut();
+                                }
+                            },
+                            {
+                                text: "No"
+                            }
+                        ]
+                    )
+                 }}>
                     FOREVER
                 </PrimaryButton>
             </View>

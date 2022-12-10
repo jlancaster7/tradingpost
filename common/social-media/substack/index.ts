@@ -11,6 +11,25 @@ export default class Substack {
         this.repository = repository
         this.postPrepper = postPrepper;
     }
+    adminImportUsers = async (username: string): Promise<number> => {
+        let results = [];
+        let data: SubstackFeed | undefined;
+        let count = 0;
+
+        let formatedUser: SubstackUser;
+
+        data = await this.getUserFeed(username);
+        if (!data) {
+            throw new Error(`Substack user: ${username} was not found`);
+
+        }
+
+        formatedUser = this.formatUser(data);
+        count = await this.repository.insertSubstackUser(formatedUser);
+
+        return count;
+
+    }
 
     importUsers = async (substackUser: { userId: string, username: string }): Promise<[SubstackUser, number]> => {
         let results = [];

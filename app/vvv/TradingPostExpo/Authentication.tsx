@@ -5,6 +5,7 @@ import { useData } from "./lds";
 import { useState } from 'react';
 import { EventRegister } from 'react-native-event-listeners';
 import { Log } from './utils/logger';
+import { useNavigation } from '@react-navigation/native';
 
 
 // if (email !== '') {
@@ -27,6 +28,7 @@ export const useAppUser = (tracker?: string) => {
     const { value: _loginResult, setValue: setLoginResult } = useData("loginResult");
     const { value: _authToken, setValue: setAuthToken } = useData("authToken");
     const [toggleRefresh, setToggleRefresh] = useState(true);
+    const nav = useNavigation();
     type LoginState = {
         appUser: typeof _appUser,
         loginResult: typeof _loginResult,
@@ -91,6 +93,7 @@ export const useAppUser = (tracker?: string) => {
             setAppUser(undefined);
             setLoginState(undefined);
             EventRegister.emit(loginStateChangedEventName, undefined);
+            nav.navigate('Root');
         }, [])
     }
 }

@@ -87,7 +87,7 @@ export default class TwitterService {
         });
     }
 
-    ddTwitterUsersByHandle = async (handles: string | string[]): Promise<formatedTwitterUser[]> => {
+    addTwitterUsersByHandle = async (handles: string | string[]): Promise<formatedTwitterUser[]> => {
         const result = await this.twitter.importUserByHandle(handles);
         let length: number;
         if (typeof handles === 'string') {

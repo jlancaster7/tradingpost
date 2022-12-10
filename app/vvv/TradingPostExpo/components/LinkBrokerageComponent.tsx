@@ -53,7 +53,7 @@ export const LinkBrokerageComponent = () => {
     }
 
     const removeAccount = async (accountId: number, brokerage: DirectBrokeragesType) => {
-        await Api.Brokerage.extensions.scheduleForDeletion({accountId, brokerage});
+        await Api.Brokerage.extensions.scheduleForDeletion({brokerage, accountId});
         if (!accounts) return
         setAccounts(accounts.filter(a => a.id !== accountId));
     }
@@ -103,9 +103,9 @@ export const LinkBrokerageComponent = () => {
         />}>
             <Table datasetKey={accounts?.map(a => a.id).join(",") || "none"}
                    columns={[
-                       {alias: "Brokerage", field: "broker_name", align: "left"},
-                       {alias: "Account #", field: "account_number", align: "left"},
-                       {alias: "Remove", field: "remove", align: "left"}
+                       {alias: "Brokerage", field: "broker_name"},
+                       {alias: "Account #", field: "account_number"},
+                       {alias: " ", field: "remove", width: '10%', align: 'left'}
                    ]}
                    data={accounts?.map(acc => {
                        return {

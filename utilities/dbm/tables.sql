@@ -35,7 +35,8 @@ CREATE  TABLE tradingpost_transactio(
 
 /* No changes to data_upvote [upvote]*/
 
-/* No changes to data_user [user]*/
+ALTER TABLE data_user
+ADD COLUMN is_deleted BOOLEAN;
 
 /* No changes to data_watchlist [watchlist]*/
 

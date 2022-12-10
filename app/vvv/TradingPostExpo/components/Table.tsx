@@ -15,7 +15,7 @@ type EntireRowFunction<T, R> = (item: T, index: number) => R
 
 interface TableColumnProps {
     alias?: string,
-    width?: number,
+    width?: number | string,
     align?: "left" | "right" | undefined
 }
 //This about if yo ucan infer this in the future

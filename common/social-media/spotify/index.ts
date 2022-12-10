@@ -53,6 +53,12 @@ export default class Spotify {
             return 0;
         }
     }
+    adminImportShows = async (showId: string): Promise<number> => {
+        let shows = await this.getShowInfo(showId);
+        
+        const result = await this.repository.upsertSpotifyShow([shows]);
+        return 0;
+    }
 
     importShows = async (spotifyUsers: { userId: string, showId: string }): Promise<[spotifyShow, number]> => {
         let shows = await this.getShowInfo(spotifyUsers.showId);
