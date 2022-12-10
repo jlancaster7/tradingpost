@@ -81,6 +81,7 @@ const run = async () => {
                 brokerage: DirectBrokeragesType.Finicity,
                 date: DateTime.now().setZone("America/New_York"),
                 brokerageUserId: customerId,
+                error: null
             }]);
         }
 
@@ -100,7 +101,8 @@ const run = async () => {
                 data: {accounts: accounts},
                 brokerage: DirectBrokeragesType.Finicity,
                 status: BrokerageTaskStatusType.Pending,
-                userId: tpUser.id
+                userId: tpUser.id,
+                error: null
             }]);
         }
 
@@ -119,7 +121,8 @@ const run = async () => {
                 data: null,
                 brokerage: DirectBrokeragesType.Finicity,
                 status: BrokerageTaskStatusType.Pending,
-                userId: tpUser.id
+                userId: tpUser.id,
+                error: null
             }])
         }
 
