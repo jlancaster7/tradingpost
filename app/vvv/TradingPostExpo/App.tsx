@@ -14,12 +14,14 @@ if (!__DEV__) {
             apiBaseUrl: `http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
         })
     } else {
+
         //manual ip for api server... have been trying to find a way to avoid this...
         configApi({
-            apiBaseUrl: `http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
+            apiBaseUrl: 'http://localhost:8082'//`http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
         })
     }
 }
+
 if (__DEV__ && Platform.OS === "web")
     configApi({
         callbackUrl: "http://localhost:19006"

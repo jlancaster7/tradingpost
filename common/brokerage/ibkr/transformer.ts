@@ -17,9 +17,8 @@ import {
     TradingPostTransactions
 } from "../interfaces";
 import {DateTime} from "luxon";
-import {addSecurity} from "../../market-data/interfaces";
+import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer"
-import ibkr from "../../api/entities/extensions/Ibkr";
 
 export interface TransformerRepository extends BaseRepository {
     getTradingPostBrokerageAccountsByBrokerageAndIds(userId: string, brokerage: string, brokerageAccountIds: string[]): Promise<TradingPostBrokerageAccountsTable[]>
@@ -125,7 +124,7 @@ const transformTransactionType = (transactionType: string): InvestmentTransactio
         case "DVPOUT": // Outgoing DVP
             throw new Error("no transaction type for outgoing dvp");
         case "EXE": // Exercise
-                    // TODO: Check if its a call or a put before
+            // TODO: Check if its a call or a put before
             return InvestmentTransactionType.buy
         case "EXP": // Expire
             return InvestmentTransactionType.cancel
@@ -236,7 +235,9 @@ export default class IbkrTransformer extends BaseTransformer {
                 primarySicCode: null,
                 securityName: sec.description,
                 employees: null,
-                issueType: sec.issuer
+                issueType: sec.issuer,
+                priceSource: PriceSourceType.IBKR,
+                enableUtp: false
             }
             return x
         }));
@@ -346,7 +347,6 @@ export default class IbkrTransformer extends BaseTransformer {
         for (let i = 0; i < ibkrHoldings.length; i++) {
             const h = ibkrHoldings[i];
             if (h.assetType === null) throw new Error("no type for ibkr holding");
-            if (h.symbol === null) throw new Error("no symbol for ibkr holding");
             if (h.marketPrice === null) throw new Error("no market price for ibkr holding");
             if (h.marketValue === null) throw new Error("no market value for ibkr holding");
             if (h.quantity === null) throw new Error("no quantity for ibkr holding");
@@ -357,6 +357,7 @@ export default class IbkrTransformer extends BaseTransformer {
             const securityType = transformSecurityType(h.assetType);
             let symbol = h.symbol
             if (securityType === SecurityType.cashEquivalent) symbol = "USD:CUR";
+            if (symbol === null) throw new Error("no symbol for ibkr holding");
 
             let optionId: number | null = null;
             if (securityType === SecurityType.option) {
@@ -401,7 +402,6 @@ export default class IbkrTransformer extends BaseTransformer {
         for (let i = 0; i < ibkrHoldings.length; i++) {
             const h = ibkrHoldings[i];
             if (h.assetType === null) throw new Error("no type for ibkr holding");
-            if (h.symbol === null) throw new Error("no symbol for ibkr holding");
             if (h.marketPrice === null) throw new Error("no market price for ibkr holding");
             if (h.marketValue === null) throw new Error("no market value for ibkr holding");
             if (h.quantity === null) throw new Error("no quantity for ibkr holding");
@@ -412,6 +412,7 @@ export default class IbkrTransformer extends BaseTransformer {
             let symbol = h.symbol;
             const securityType = transformSecurityType(h.assetType);
             if (securityType === SecurityType.cashEquivalent) symbol = "USD:CUR";
+            if (symbol === null) throw new Error("no symbol for ibkr holding");
 
             let optionId: number | null = null;
             if (securityType === SecurityType.option) {

@@ -81,9 +81,11 @@ const run = async (tokenFile?: string): Promise<boolean> => {
 
     try {
         const broker = processMap[pendingTask.brokerage];
-        if (pendingTask.type === BrokerageTaskType.NewData) await broker.update(pendingTask.userId, pendingTask.brokerageUserId, pendingTask.date, pendingTask.data);
-        else if (pendingTask.type === BrokerageTaskType.NewAccount) await broker.add(pendingTask.userId, pendingTask.brokerageUserId, pendingTask.date, pendingTask.data);
-        else throw new Error("undefined type")
+        if (pendingTask.type === BrokerageTaskType.NewData) {
+            await broker.update(pendingTask.userId, pendingTask.brokerageUserId as string, pendingTask.date, pendingTask.data);
+        } else if (pendingTask.type === BrokerageTaskType.NewAccount) {
+            await broker.add(pendingTask.userId, pendingTask.brokerageUserId as string, pendingTask.date, pendingTask.data);
+        } else throw new Error("undefined type")
 
         await repository.updateTask(pendingTask.id, {
             status: BrokerageTaskStatusType.Successful,
@@ -104,11 +106,11 @@ const run = async (tokenFile?: string): Promise<boolean> => {
         })
     }
 
-    console.log("Fin")
     return true
 }
 
 (async () => {
+    console.log("Starting")
     let flag = true;
     while (flag) {
         flag = await run();

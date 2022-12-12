@@ -72,23 +72,6 @@ export default class Service {
         });
     }
 
-    public add = async (userId: string, brokerageUserId: string, data?: any) => {
-        // Pull Accounts & Update
-        //  if new account add to account group summary
-        // Pull Positions & Update
-        // Upsert Positions into HoldingHistory
-        // Pull Transactions & Update & Limit to Today
-        // Done
-    }
-
-    public update = async (userId: string, brokerageUserId: string, data?: any) => {
-        // Pull Accounts & Insert
-        // Pull Positions & Insert
-        // Pull Transactions & Insert
-        // Compute Holding History
-        // Done
-    }
-
     /**
      * Validate partner id and secret + receive a secure access token
      * works for 2hrs, if exceeds 90 mins then re-authenticate

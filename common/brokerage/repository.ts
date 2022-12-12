@@ -2462,6 +2462,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'country', prop: 'country'},
             {name: 'phone', prop: 'phone'},
             {name: 'logo_url', prop: 'logoUrl'},
+            {name: 'enable_utp', prop: 'enableUtp'},
+            {name: 'price_source', prop: 'priceSource'}
         ], {table: 'security'});
         const query = this.pgp.helpers.insert(securities, cs);
         await this.db.none(query);

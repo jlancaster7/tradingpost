@@ -54,7 +54,7 @@ export default class Repository {
             {name: 'is_eod', prop: 'isEod'},
             {name: 'is_intraday', prop: 'isIntraday'}
         ], {table: 'security_price'})
-        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, "(security_id,time,is_intraday)")
+        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, "security_id,time,is_intraday")
         await this.db.none(query);
     }
 
@@ -70,7 +70,7 @@ export default class Repository {
             {name: 'is_eod', prop: 'isEod'},
             {name: 'is_intraday', prop: 'isIntraday'}
         ], {table: 'security_price'})
-        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, "(security_id, (((\"time\" AT TIME ZONE 'America/New_York'::text))::date)) where is_eod = true")
+        const query = upsertReplaceQuery(securityPrices, cs, this.pgp, `security_id, ((("time" AT TIME ZONE 'America/New_York'::text))::date)`, `where (is_eod = true)`)
         await this.db.none(query);
     }
 
@@ -112,14 +112,15 @@ export default class Repository {
                                                                     max_prices.security_id = sp.security_id
                                                                 AND max_prices.time = sp.time
                                     WHERE is_eod = TRUE)
-            SELECT s.id     AS security_id,
+            SELECT s.id           AS security_id,
                    s.symbol,
-                   lp.time  AS time,
-                   lp.price AS price,
-                   lp.high  AS high,
-                   lp.low   AS low,
-                   lp.open  AS open,
-                   lp.id    AS eod_id
+                   lp.time        AS time,
+                   lp.price       AS price,
+                   lp.high        AS high,
+                   lp.low         AS low,
+                   lp.open        AS open,
+                   lp.id          AS eod_id,
+                   s.price_source AS price_source
             FROM SECURITY s
                      LEFT JOIN
                  latest_pricing lp ON
@@ -136,7 +137,8 @@ export default class Repository {
                 high: row.high,
                 low: row.low,
                 open: row.open,
-                eodId: row.eod_id
+                eodId: row.eod_id,
+                priceSource: row.price_source
             }
             return obj
         })
@@ -166,7 +168,9 @@ export default class Repository {
                    phone,
                    logo_url,
                    last_updated,
-                   created_at
+                   created_at,
+                   enable_utp,
+                   price_source
             FROM security
             WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
                                'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
@@ -193,9 +197,11 @@ export default class Repository {
                 zip: row.zip,
                 country: row.country,
                 phone: row.phone,
-                logoUrl: row.logoUrl,
-                lastUpdated: row.lastUpdated,
-                createdAt: row.createdAt,
+                logoUrl: row.logo_url,
+                lastUpdated: row.last_updated,
+                createdAt: row.created_at,
+                priceSource: row.price_source,
+                enableUtp: row.enble_utp
             }
             return obj;
         })
@@ -225,7 +231,9 @@ export default class Repository {
                    phone,
                    logo_url,
                    last_updated,
-                   created_at
+                   created_at,
+                   enable_utp,
+                   price_source
             FROM security;`)
         return data.map((row: any) => {
             let obj: getSecurityBySymbol = {
@@ -251,13 +259,16 @@ export default class Repository {
                 phone: row.phone,
                 logoUrl: row.logoUrl,
                 lastUpdated: row.lastUpdated,
-                createdAt: row.createdAt
+                createdAt: row.createdAt,
+                enableUtp: row.enable_utp,
+                priceSource: row.price_source
             }
             return obj;
         })
     }
 
     addSecurities = async (securities: addSecurity[]) => {
+        if (securities.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'symbol', prop: 'symbol'},
             {name: 'company_name', prop: 'companyName'},
@@ -278,7 +289,9 @@ export default class Repository {
             {name: 'zip', prop: 'zip'},
             {name: 'country', prop: 'country'},
             {name: 'phone', prop: 'phone'},
-            {name: 'logoUrl', prop: 'logoUrl'},
+            {name: 'logo_url', prop: 'logoUrl'},
+            {name: 'enable_utp', prop: 'enableUtp'},
+            {name: 'price_source', prop: 'priceSource'}
         ], {table: 'security'});
         const query = this.pgp.helpers.insert(securities, cs) + ` ON CONFLICT DO NOTHING;`;
         await this.db.none(query);
@@ -312,13 +325,16 @@ export default class Repository {
             {name: 'zip', prop: 'zip'},
             {name: 'country', prop: 'country'},
             {name: 'phone', prop: 'phone'},
-            {name: 'logoUrl', prop: 'logoUrl'},
+            {name: 'logo_url', prop: 'logoUrl'},
+            {name: 'enable_utp', prop: 'enableUtp'},
+            {name: 'price_source', prop: 'price_source'}
         ], {table: 'security'});
         const query = this.pgp.helpers.update(securities, cs);
         await this.db.none(query);
     }
 
     addIexSecurities = async (securities: addIexSecurity[]) => {
+        if (securities.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'symbol', prop: 'symbol'},
             {name: 'company_name', prop: 'companyName'},
@@ -339,7 +355,7 @@ export default class Repository {
             {name: 'zip', prop: 'zip'},
             {name: 'country', prop: 'country'},
             {name: 'phone', prop: 'phone'},
-            {name: 'logoUrl', prop: 'logoUrl'},
+            {name: 'logo_url', prop: 'logoUrl'},
             {name: 'validated', prop: 'validated'},
         ], {table: 'iex_security'});
         const query = this.pgp.helpers.insert(securities, cs) + ` ON CONFLICT DO NOTHING;`;
@@ -347,6 +363,7 @@ export default class Repository {
     }
 
     updateIexSecurities = async (securities: updateIexSecurity[]) => {
+        if (securities.length <= 0) return;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'symbol', prop: 'symbol'},
             {name: 'company_name', prop: 'companyName'},
@@ -367,10 +384,10 @@ export default class Repository {
             {name: 'zip', prop: 'zip'},
             {name: 'country', prop: 'country'},
             {name: 'phone', prop: 'phone'},
-            {name: 'logoUrl', prop: 'logoUrl'},
+            {name: 'logo_url', prop: 'logoUrl'},
             {name: 'validated', prop: 'validated'},
         ], {table: 'iex_security'});
-        const query = this.pgp.helpers.update(securities, cs);
+        const query = upsertReplaceQuery(securities, cs, this.pgp, "symbol")
         await this.db.none(query)
     }
 
@@ -426,7 +443,7 @@ export default class Repository {
                 logoUrl: row.logoUrl,
                 lastUpdated: row.lastUpdated,
                 createdAt: row.createdAt,
-                validated: row.validated
+                validated: row.validated,
             }
             return obj;
         })
@@ -456,7 +473,9 @@ export default class Repository {
                    phone,
                    logo_url,
                    last_updated,
-                   created_at
+                   created_at,
+                   enable_utp,
+                   price_source
             FROM security
             where symbol = $1;`, [symbol])
         return data.map((row: any) => {
@@ -481,9 +500,11 @@ export default class Repository {
                 zip: row.zip,
                 country: row.country,
                 phone: row.phone,
-                logoUrl: row.logoUrl,
-                lastUpdated: row.lastUpdated,
-                createdAt: row.createdAt
+                logoUrl: row.logo_url,
+                lastUpdated: row.last_updated,
+                createdAt: row.created_at,
+                priceSource: row.price_source,
+                enableUtp: row.enable_utp
             }
             return obj;
         });
@@ -513,7 +534,9 @@ export default class Repository {
                    phone,
                    logo_url,
                    last_updated,
-                   created_at
+                   created_at,
+                   enable_utp,
+                   price_source
             FROM security
             WHERE symbol IN ($1:list);`, [symbols])
         return data.map((row: any) => {
@@ -538,9 +561,11 @@ export default class Repository {
                 zip: row.zip,
                 country: row.country,
                 phone: row.phone,
-                logoUrl: row.logoUrl,
-                lastUpdated: row.lastUpdated,
-                createdAt: row.createdAt
+                logoUrl: row.logo_url,
+                lastUpdated: row.last_updated,
+                createdAt: row.created_at,
+                enableUtp: row.enable_utp,
+                priceSource: row.price_source
             }
             return obj;
         });
@@ -734,11 +759,12 @@ export default class Repository {
     }
 }
 
-function upsertReplaceQuery(data: any, cs: ColumnSet, pgp: IMain, conflict: string = "id") {
+function upsertReplaceQuery(data: any, cs: ColumnSet, pgp: IMain, conflict: string = "id", partialWhere?: string) {
+    let pw = partialWhere ? partialWhere : ''
     return pgp.helpers.insert(data, cs) +
-        ` ON CONFLICT ${conflict} DO UPDATE SET ` +
+        ` ON CONFLICT(${conflict}) ${pw} DO UPDATE SET ` +
         cs.columns.map(x => {
             let col = pgp.as.name(x.name);
-            return `${col}=EXCLUDED.${col}`
-        }).join();
+            return `${col}=EXCLUDED.${col}`;
+        }).join()
 }

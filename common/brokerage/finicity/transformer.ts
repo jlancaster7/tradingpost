@@ -16,7 +16,7 @@ import {
 } from "../interfaces";
 import {CustomerAccountsDetail} from '../../finicity/interfaces'
 import {DateTime} from "luxon";
-import {addSecurity} from "../../market-data/interfaces";
+import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer";
 
 interface TransformerRepository extends BaseRepository {
@@ -162,7 +162,9 @@ export class Transformer extends BaseTransformer {
                 zip: null,
                 address: null,
                 website: null,
-                sector: null
+                sector: null,
+                enableUtp: false,
+                priceSource: PriceSourceType.FINICITY
             };
 
             const securityId = await this.repository.addSecurity(sec)
