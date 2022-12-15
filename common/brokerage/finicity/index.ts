@@ -28,11 +28,27 @@ export class Service implements IBrokerageService {
     }
 
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
-
+        // Pull Accounts
+        //      Insert & Transform
+        // Pull Holdings
+        //      Insert & Transform
+        // Append Holdings Above to Historical Holdings
+        //      Insert & Transform
+        // Pull Transactions
+        //      Insert & Transform
+        // Compute Account Group Summary Statistics
     }
 
     public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
-        return;
+        // Pull Accounts
+        //      Insert/Update
+        // Pull Holdings
+        //      Insert/Update
+        // Pull Transactions
+        //      Insert/Update
+        // Compute Holdings History
+        //      Insert/Update
+        // Compute Account Group Summary Statistics
     }
 
     getTradingPostUserAssociatedWithBrokerageUser = async (brokerageUserId: string): Promise<TradingPostUser> => {
@@ -100,7 +116,6 @@ export class Service implements IBrokerageService {
             moreAvailable = institutions.moreAvailable;
             if (institutions.institutions.length <= 0) continue
             let finStitutions: FinicityInstitution[] = []
-            let tpInstitutions: TradingPostInstitution[] = []
             institutions.institutions.forEach((ins: GetInstitutionsInstitution) => {
                 if (ins.id in institutionIds) {
                     institutionIds[ins.id] += 1
@@ -164,31 +179,10 @@ export class Service implements IBrokerageService {
                     createdAt: DateTime.now(),
                     updatedAt: DateTime.now(),
                 });
-
-                tpInstitutions.push({
-                    externalId: `fin_${ins.id}`,
-                    name: ins.name,
-                    accountTypeDescription: ins.accountTypeDescription,
-                    phone: ins.phone,
-                    urlHomeApp: ins.urlHomeApp,
-                    urlLogonApp: ins.urlLogonApp,
-                    oauthEnabled: ins.oauthEnabled,
-                    urlForgotPassword: ins.urlForgotPassword,
-                    urlOnlineRegistration: ins.urlOnlineRegistration,
-                    class: ins.class,
-                    status: ins.status,
-                    addressAddressLine1: ins.address?.addressLine1,
-                    addressAddressLine2: ins.address?.addressLine2,
-                    addressCity: ins.address?.city,
-                    addressState: ins.address?.state,
-                    addressCountry: ins.address?.country,
-                    addressPostalCode: ins.address?.postalCode,
-                    email: ins.email
-                })
             })
 
             await this.repository.upsertFinicityInstitutions(finStitutions)
-            await this.repository.upsertInstitutions(tpInstitutions)
+            await this.transformer.institutions(finStitutions)
         }
     }
 
@@ -255,28 +249,8 @@ export class Service implements IBrokerageService {
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
         });
-        const tpInId = await this.repository.upsertInstitution({
-            externalId: `fin_${ins.id}`,
-            name: ins.name,
-            accountTypeDescription: ins.accountTypeDescription,
-            phone: ins.phone,
-            urlHomeApp: ins.urlHomeApp,
-            urlLogonApp: ins.urlLogonApp,
-            oauthEnabled: ins.oauthEnabled,
-            urlForgotPassword: ins.urlForgotPassword,
-            urlOnlineRegistration: ins.urlOnlineRegistration,
-            class: ins.class,
-            status: ins.status,
-            addressAddressLine1: ins.address?.addressLine1,
-            addressAddressLine2: ins.address?.addressLine2,
-            addressCity: ins.address?.city,
-            addressState: ins.address?.state,
-            addressCountry: ins.address?.country,
-            addressPostalCode: ins.address?.postalCode,
-            email: ins.email
-        });
-
-        return {tradingPostInstitutionId: tpInId, finicityInstitutionId: finInternalInstitutionId}
+        const tpInstitutionId = await this.transformer.institution(ni)
+        return {tradingPostInstitutionId: tpInstitutionId, finicityInstitutionId: finInternalInstitutionId}
     }
 
     importAccounts = async (userId: string): Promise<TradingPostBrokerageAccounts[]> => {

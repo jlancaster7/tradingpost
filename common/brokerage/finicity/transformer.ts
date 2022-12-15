@@ -1,6 +1,6 @@
 import {
     FinicityAccount,
-    FinicityHolding,
+    FinicityHolding, FinicityInstitution,
     FinicityTransaction,
     InvestmentTransactionType,
     OptionContract,
@@ -10,11 +10,11 @@ import {
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountWithFinicity,
     TradingPostCashSecurity,
-    TradingPostCurrentHoldings,
+    TradingPostCurrentHoldings, TradingPostInstitution,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
 } from "../interfaces";
-import {CustomerAccountsDetail} from '../../finicity/interfaces'
+import {CustomerAccountsDetail, GetInstitution} from '../../finicity/interfaces'
 import {DateTime} from "luxon";
 import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer";
@@ -35,6 +35,10 @@ interface TransformerRepository extends BaseRepository {
     getOptionContract(securityId: number, expirationDate: DateTime, strikePrice: number, optionType: string): Promise<OptionContractTable | null>
 
     getAccountOptionsContractsByTransactions(accountId: number, securityId: number, strikePrice: number): Promise<OptionContractTable[]>
+
+    upsertInstitutions(institutions: TradingPostInstitution[]): Promise<void>
+
+    upsertInstitution(institution: TradingPostInstitution): Promise<number>
 }
 
 // Finicity Types Found Here: https://api-reference.finicity.com/#/rest/models/enumerations/investment-transaction-types
@@ -419,5 +423,57 @@ export class Transformer extends BaseTransformer {
             tpTransactions.push(newTpTx)
         }
         return tpTransactions
+    }
+
+    institutions = async (institutions: FinicityInstitution[]): Promise<void> => {
+        const tformInstitutions = institutions.map(ins => {
+            let x: TradingPostInstitution = {
+                externalId: `fin_${ins.id}`,
+                name: ins.name,
+                accountTypeDescription: ins.accountTypeDescription,
+                phone: ins.phone,
+                urlHomeApp: ins.urlHomeApp,
+                urlLogonApp: ins.urlLogonApp,
+                oauthEnabled: ins.oauthEnabled,
+                urlForgotPassword: ins.urlForgotPassword,
+                urlOnlineRegistration: ins.urlOnlineRegistration,
+                class: ins.class,
+                status: ins.status,
+                addressAddressLine1: ins.addressLine1,
+                addressAddressLine2: ins.addressLine2,
+                addressCity: ins.addressCity,
+                addressState: ins.addressState,
+                addressCountry: ins.addressCountry,
+                addressPostalCode: ins.addressPostalCode,
+                email: ins.email
+            }
+            return x;
+        })
+        await this.repository.upsertInstitutions(tformInstitutions)
+    }
+
+    institution = async (institution: GetInstitution): Promise<number> => {
+        const {institution: ins} = institution;
+        const tpInId = await this.repository.upsertInstitution({
+            externalId: `fin_${ins.id}`,
+            name: ins.name,
+            accountTypeDescription: ins.accountTypeDescription,
+            phone: ins.phone,
+            urlHomeApp: ins.urlHomeApp,
+            urlLogonApp: ins.urlLogonApp,
+            oauthEnabled: ins.oauthEnabled,
+            urlForgotPassword: ins.urlForgotPassword,
+            urlOnlineRegistration: ins.urlOnlineRegistration,
+            class: ins.class,
+            status: ins.status,
+            addressAddressLine1: ins.address?.addressLine1,
+            addressAddressLine2: ins.address?.addressLine2,
+            addressCity: ins.address?.city,
+            addressState: ins.address?.state,
+            addressCountry: ins.address?.country,
+            addressPostalCode: ins.address?.postalCode,
+            email: ins.email
+        });
+        return tpInId
     }
 }

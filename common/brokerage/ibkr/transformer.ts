@@ -19,6 +19,7 @@ import {
 import {DateTime} from "luxon";
 import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer"
+import {endAt} from "@firebase/database";
 
 export interface TransformerRepository extends BaseRepository {
     getTradingPostBrokerageAccountsByBrokerageAndIds(userId: string, brokerage: string, brokerageAccountIds: string[]): Promise<TradingPostBrokerageAccountsTable[]>

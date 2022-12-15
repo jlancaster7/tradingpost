@@ -69,10 +69,9 @@ const run = async (tokenFile?: string): Promise<boolean> => {
         const robinhoodTransformer = new RobinhoodTransformer(repository);
         const finicityTransformer = new FinicityTransformer(repository);
 
-        // const rh = new RobinhoodService(robinhoodCfg.clientId, robinhoodCfg.scope, robinhoodCfg.expiresIn, repository, robinhoodTransformer, portfolioSummaryService)
-        // processMap[DirectBrokeragesType.Robinhood] = rh;
-        processMap["Ibkr"] = new IbkrService(repository, s3Client, portfolioSummaryService);
-        // processMap[DirectBrokeragesType.Finicity] = new FinicityService(finicity, repository, finicityTransformer);
+        processMap[DirectBrokeragesType.Robinhood] = new RobinhoodService(robinhoodCfg.clientId, robinhoodCfg.scope, robinhoodCfg.expiresIn, repository, robinhoodTransformer, portfolioSummaryService);
+        processMap[DirectBrokeragesType.Ibkr] = new IbkrService(repository, s3Client, portfolioSummaryService);
+        processMap[DirectBrokeragesType.Finicity] = new FinicityService(finicity, repository, finicityTransformer);
     }
 
     // Pull off a job and start processing based on brokerage type

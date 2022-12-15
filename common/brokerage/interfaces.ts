@@ -83,10 +83,6 @@ export interface IFinicityRepository {
 
     upsertFinicityInstitution(institution: FinicityInstitution): Promise<number>
 
-    upsertInstitutions(institutions: TradingPostInstitution[]): Promise<void>
-
-    upsertInstitution(institution: TradingPostInstitution): Promise<number>
-
     getTradingPostInstitutionsWithFinicityInstitutionId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>
 
     getTradingPostInstitutionByFinicityId(finicityInstitutionId: number): Promise<TradingPostInstitutionWithFinicityInstitutionId | null>

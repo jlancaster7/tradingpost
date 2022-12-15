@@ -11,7 +11,6 @@ import {
 import {init} from "../../../db";
 import Repository from "../../../brokerage/repository";
 import {DefaultConfig} from "../../../configuration";
-import {accounts} from "../../../brokerage/robinhood/api";
 import {DateTime} from "luxon";
 
 const loginUrl = 'https://api.robinhood.com/oauth2/token/';

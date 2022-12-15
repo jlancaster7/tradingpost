@@ -2316,6 +2316,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
         return holdings;
     }
+
     getTradingPostTransactionsByAccountGroup = async (accountGroupId: number, paging?: { limit: number, offset: number }): Promise<TradingPostTransactionsByAccountGroup[]> => {
         let query = `SELECT atg.account_group_id          AS account_group_id,
                             security_id,

@@ -354,6 +354,7 @@ export class Service {
             }
             return x;
         });
+
         await this._repo.upsertIbkrActivity(activitiesMapped);
         return activitiesMapped;
     }
@@ -375,6 +376,7 @@ export class Service {
             }
             return x;
         });
+
         const cashReportsMapped = cashReports.map((s: IbkrCashReportCsv) => {
             let x: IbkrCashReport = {
                 fileDate: dateToProcess,
