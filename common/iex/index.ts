@@ -414,9 +414,9 @@ export interface GetUSHolidayAndTradingDays {
 }
 
 export default class IEX {
-    private readonly baseURL: string;
-    private readonly token: string;
-    private readonly retryMax: number;
+    readonly baseURL: string;
+    readonly token: string;
+    readonly retryMax: number;
 
     constructor(token: string, baseURL: string = ProductionBaseURL, retryMax: number = 3) {
         this.token = token;

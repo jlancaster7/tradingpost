@@ -126,7 +126,7 @@ export interface ISummaryRepository {
 
     getTradingPostCurrentHoldingsByAccountGroup(accountGroupId: number): Promise<HistoricalHoldings[]>
 
-    getTradingPostTransactionsByAccountGroup(accountGroupId: number, paging?: { limit: number, offset: number }): Promise<TradingPostTransactionsByAccountGroup[]>
+    getTradingPostTransactionsByAccountGroup(accountGroupId: number, paging: { limit: number, offset: number } | undefined, cash?: boolean): Promise<TradingPostTransactionsByAccountGroup[]>
 
     getTradingPostAccountGroupReturns(accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<AccountGroupHPRsTable[]>
 
@@ -148,7 +148,7 @@ export interface ISummaryRepository {
 }
 
 export interface ISummaryService {
-    computeAccountGroupHPRs(holdings: HistoricalHoldings[]): Promise<AccountGroupHPRs[]>
+    computeAccountGroupHPRs(holdings: HistoricalHoldings[], trades: TradingPostTransactionsByAccountGroup[]): Promise<AccountGroupHPRs[]>
 
     addAccountGroupHPRs(accountGroupHPRs: AccountGroupHPRs[]): Promise<number>
 
@@ -166,7 +166,7 @@ export interface ISummaryService {
 
     getCurrentHoldings(userId: string): Promise<HistoricalHoldings[]>
 
-    getTrades(userId: string): Promise<TradingPostTransactionsByAccountGroup[]>
+    getTrades(userId: string, paging: { limit: number, offset: number } | undefined, cash?: boolean): Promise<TradingPostTransactionsByAccountGroup[]>
 
     getSummary(userId: string): Promise<TradingPostAccountGroupStats>
 
