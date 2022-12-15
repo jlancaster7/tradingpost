@@ -142,6 +142,15 @@ export interface getSecurityWithLatestPrice {
     low: number | null
     open: number | null
     eodId: number | null
+    priceSource: PriceSourceType
+}
+
+export enum PriceSourceType {
+    UNKNOWN = "UNKNOWN",
+    IEX = "IEX",
+    ROBINHOOD = "ROBINHOOD",
+    IBKR = "IBKR",
+    FINICITY = "FINICITY"
 }
 
 export interface getSecurityBySymbol {
@@ -168,10 +177,35 @@ export interface getSecurityBySymbol {
     logoUrl: string
     lastUpdated: Date
     createdAt: Date
+    enableUtp: boolean
+    priceSource: PriceSourceType
 }
 
 
-export interface getIexSecurityBySymbol extends getSecurityBySymbol {
+export interface getIexSecurityBySymbol {
+    id: number
+    symbol: string
+    companyName: string
+    exchange: string
+    industry: string
+    website: string
+    description: string
+    ceo: string
+    securityName: string
+    issueType: string
+    sector: string
+    primarySicCode: string
+    employees: string
+    tags: string[]
+    address: string
+    address2: string
+    state: string
+    zip: string
+    country: string
+    phone: string
+    logoUrl: string
+    lastUpdated: Date
+    createdAt: Date
     validated: boolean
 }
 
@@ -196,9 +230,31 @@ export interface addSecurity {
     country: string | null
     phone: string | null
     logoUrl: string | null
+    enableUtp: boolean
+    priceSource: PriceSourceType
 }
 
-export interface addIexSecurity extends addSecurity {
+export interface addIexSecurity {
+    symbol: string
+    companyName: string
+    exchange: string | null
+    industry: string | null
+    website: string | null
+    description: string | null
+    ceo: string | null
+    securityName: string | null
+    issueType: string | null
+    sector: string | null
+    primarySicCode: string | null
+    employees: string | null
+    tags: string[] | null
+    address: string | null
+    address2: string | null
+    state: string | null
+    zip: string | null
+    country: string | null
+    phone: string | null
+    logoUrl: string | null
     validated: boolean
 }
 

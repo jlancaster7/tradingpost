@@ -1,17 +1,18 @@
 import 'dotenv/config';
 import IEX, {
     GetCompany,
+    GetIexSymbols,
     GetLogo,
+    GetOtcSymbols,
     GetPreviousDayPrice,
     GetQuote,
-    GetStatsBasic,
-    GetIexSymbols,
-    GetOtcSymbols
+    GetStatsBasic
 } from "@tradingpost/common/iex";
 import Repository from "@tradingpost/common/market-data/repository";
 import {
     addIexSecurity,
     addSecurity,
+    PriceSourceType,
     updateIexSecurity,
     upsertSecuritiesInformation
 } from '@tradingpost/common/market-data/interfaces';
@@ -77,21 +78,22 @@ const start = async (repository: Repository, iex: IEX) => {
             await updateSecurities(repository, iex);
             return
         }
-
         await ingestMorningSecuritiesInformation(repository, iex);
     }
 }
 
 const updateSecurities = async (repository: Repository, iex: IEX) => {
-    const securities = await repository.getIexSecurities();
+    const securities = await repository.getSecurities();
     const securitiesMap = buildSecuritiesMap(securities);
-    const securityGroups = buildGroups(securities, 100);
+
+    let iexSecurities = securities.filter(sec => sec.priceSource === 'IEX');
+    const securityGroups = buildGroups(iexSecurities, 100);
 
     const updateSymbols: string[] = [];
 
     for (let i = 0; i < securityGroups.length; i++) {
-        const securities = securityGroups[i];
-        const symbols = securities.map(sec => sec.symbol);
+        const iexSecs = securityGroups[i];
+        const symbols = iexSecs.map(sec => sec.symbol);
         const iexResponse = await iex.bulk(symbols, ["company", "logo"]);
 
         const newSecurities: addSecurity[] = [];
@@ -122,10 +124,12 @@ const updateSecurities = async (repository: Repository, iex: IEX) => {
                 sector: company.sector || null,
                 securityName: company.securityName || null,
                 state: company.state || null,
-                symbol: company.symbol,
+                symbol: symbol,
                 tags: company.tags || null,
                 website: company.website || null,
-                zip: company.zip || null
+                zip: company.zip || null,
+                enableUtp: false,
+                priceSource: PriceSourceType.IEX
             }
 
             const newIexSecurity: addIexSecurity = {
@@ -142,12 +146,8 @@ const updateSecurities = async (repository: Repository, iex: IEX) => {
                 return
             }
 
-            newIexSecurity.validated = true
-            curSec.validated = true;
-
             // Compare Objects...
             if (Object.keys(diff(curSec, newIexSecurity)).length === 0) return;
-
             newIexSecurity.validated = false
             updateIexSecurities.push(newIexSecurity)
             updateSymbols.push(newIexSecurity.symbol)
@@ -310,7 +310,9 @@ const ingestMorningSecuritiesInformation = async (repository: Repository, iex: I
                 symbol: company.symbol,
                 tags: company.tags || null,
                 website: company.website || null,
-                zip: company.zip || null
+                zip: company.zip || null,
+                enableUtp: false,
+                priceSource: PriceSourceType.IEX
             }
             const newIexSec: addIexSecurity = {...newSec, validated: false}
 

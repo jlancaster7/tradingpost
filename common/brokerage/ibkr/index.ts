@@ -210,7 +210,9 @@ export class Service {
             return x;
         });
 
-        const securitiesMapped = ibkrSecurities.map((s: IbkrSecurityCsv) => {
+        let transformedSecurities: IbkrSecurity[] = [];
+        for (let i = 0; i < ibkrSecurities.length; i++) {
+            const s = ibkrSecurities[i];
             let x: IbkrSecurity = {
                 fileDate: dateToProcess,
                 assetType: s.AssetType,
@@ -240,10 +242,11 @@ export class Service {
                 underlyingPrimaryExchange: s.UnderlyingPrimaryExchange !== '' ? s.UnderlyingPrimaryExchange : null,
                 underlyingSymbol: s.UnderlyingSymbol !== '' ? s.UnderlyingSymbol : null,
             }
-            return x;
-        });
-        await this._repo.upsertIbkrSecurities(securitiesMapped);
-        return securitiesMapped;
+            transformedSecurities.push(x);
+        }
+
+        await this._repo.upsertIbkrSecurities(transformedSecurities);
+        return transformedSecurities;
     }
 
     _importActivity = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrActivity[]> => {
@@ -351,6 +354,7 @@ export class Service {
             }
             return x;
         });
+
         await this._repo.upsertIbkrActivity(activitiesMapped);
         return activitiesMapped;
     }
@@ -372,6 +376,7 @@ export class Service {
             }
             return x;
         });
+
         const cashReportsMapped = cashReports.map((s: IbkrCashReportCsv) => {
             let x: IbkrCashReport = {
                 fileDate: dateToProcess,

@@ -15,7 +15,8 @@ export default class MarketData {
     }
 
     ingestEodOfDayPricing = async () => {
-        const securitiesWithEodAndLatestPrice = await this.repository.getUsExchangeListedSecuritiesWithPricing();
+        let securitiesWithEodAndLatestPrice = await this.repository.getUsExchangeListedSecuritiesWithPricing();
+        securitiesWithEodAndLatestPrice = securitiesWithEodAndLatestPrice.filter(sec => sec.priceSource === 'IEX');
         const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securitiesWithEodAndLatestPrice, 100);
 
         let newEodPrices: addSecurityPrice[] = [];
@@ -126,7 +127,8 @@ export default class MarketData {
     }
 
     ingestPricing = async () => {
-        const securities = await this.repository.getUsExchangeListedSecuritiesWithPricing();
+        let securities = await this.repository.getUsExchangeListedSecuritiesWithPricing();
+        securities = securities.filter(sec => sec.priceSource === 'IEX')
         const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
         let newSecurityPrices: addSecurityPrice[] = [];
         let newEodPrices: addSecurityPrice[] = [];

@@ -326,3 +326,25 @@ BEGIN
 return query SELECT v."id", v."broker_name",v."account_number",v."type", v."user_id", v.hidden_for_deletion FROM public.tradingpost_brokerage_account as v WHERE v.user_id = (request->>'user_id')::UUID;
 END;
 $function$;
+
+
+ALTER TABLE public.ibkr_activity DROP CONSTRAINT ibkr_activity_security_id_fkey;
+ALTER TABLE public.ibkr_activity
+    ADD CONSTRAINT ibkr_activity_con_id_fkey FOREIGN KEY (con_id) REFERENCES ibkr_security (con_id);
+DROP INDEX ibkr_activity_unique_idx;
+CREATE UNIQUE INDEX ibkr_activity_unique_idx ON public.ibkr_activity USING btree (account_id, con_id, trade_date, transaction_type, quantity);
+
+ALTER TABLE public.ibkr_pl DROP CONSTRAINT ibkr_pl_security_id_fkey;
+ALTER TABLE public.ibkr_position DROP CONSTRAINT ibkr_position_security_id_fkey;
+ALTER TABLE public.ibkr_position
+    ADD CONSTRAINT ibkr_position_con_id_fkey FOREIGN KEY (con_id) REFERENCES ibkr_security (con_id);
+
+DROP INDEX ibkr_position_unique_idx;
+CREATE UNIQUE INDEX ibkr_position_unique_idx ON public.ibkr_position USING btree (account_id, con_id, asset_type, report_date)
+
+ALTER TABLE public.ibkr_security DROP CONSTRAINT ibkr_security_security_id_key;
+ALTER TABLE public.ibkr_security
+    ADD CONSTRAINT ibkr_security_con_id_key UNIQUE (con_id);
+DROP INDEX ibkr_security_security_id_key;
+CREATE UNIQUE INDEX ibkr_security_con_id_key ON public.ibkr_security USING btree (con_id)
+

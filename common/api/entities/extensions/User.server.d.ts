@@ -1,4 +1,3 @@
-import { UploadProfilePicBody } from "./User";
 import { IUserList } from '../apis/UserApi';
 import { TradingPostAccountGroupStats } from "../../../brokerage/interfaces";
 export interface ITokenResponse {
@@ -10,7 +9,7 @@ export interface ITokenResponse {
 }
 declare const _default: {
     uploadProfilePic: (req: {
-        body: UploadProfilePicBody;
+        body: import("./User").UploadProfilePicBody;
         extra: {
             userId: string;
             page?: number | undefined;

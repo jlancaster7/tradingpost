@@ -1,5 +1,5 @@
 import pg from "pg";
-import {addSecurityPrice, getSecurityBySymbol} from "../market-data/interfaces";
+import {addSecurityPrice, getSecurityBySymbol, getSecurityWithLatestPrice} from "../market-data/interfaces";
 import IEX, {GetHistoricalPrice, GetIntraDayPrices} from "../iex/index";
 import {DateTime} from "luxon";
 import Repository from "../market-data/repository";
@@ -40,7 +40,7 @@ class PricingFix {
     iexIntraday = async () => {
         const securities = await this.repository.getUSExchangeListedSecurities();
         const securitiesMap: Record<string, getSecurityBySymbol> = {};
-        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+        securities.filter(sec => sec.priceSource === 'IEX').forEach(sec => securitiesMap[sec.symbol] = sec);
         const groupSecurities = buildGroups(securities, 100);
         for (let i = 0; i < groupSecurities.length; i++) {
             const group = groupSecurities[i];
@@ -103,7 +103,7 @@ class PricingFix {
     ingestFromS3 = async () => {
         const securities = await this.repository.getUSExchangeListedSecurities();
         const securitiesMap: Record<string, getSecurityBySymbol> = {};
-        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+        securities.filter(sec => sec.priceSource === 'IEX').forEach(sec => securitiesMap[sec.symbol] = sec);
 
         const streamToString = (stream: any): Promise<string> =>
             new Promise((resolve, reject) => {
@@ -198,18 +198,20 @@ class PricingFix {
     iexHistorical = async () => {
         const securities = await this.repository.getUSExchangeListedSecurities();
         const securitiesMap: Record<string, getSecurityBySymbol> = {};
-        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+        securities.filter(sec => sec.priceSource === 'IEX').forEach(sec => securitiesMap[sec.symbol] = sec);
         const groupSecurities = buildGroups(securities, 100);
 
+        let finCnt = 0;
         for (let i = 0; i < groupSecurities.length; i++) {
             const group = groupSecurities[i];
             const symbols = group.map(sec => sec.symbol);
             const response = await this.iex.bulk(symbols, ["chart"], {
-                range: '20221010'
+                range: '20221210'
             });
 
             let securityPrices: addSecurityPrice[] = []
             for (let idx = 0; idx < group.length; idx++) {
+                finCnt = finCnt + 1
                 const {symbol, id} = group[idx];
                 if (response[symbol] === undefined || response[symbol] === null) {
                     console.error(`could not find symbol ${symbol}`)
@@ -243,6 +245,7 @@ class PricingFix {
                     const datefmt = `${earliestDate.year}-${earliestDate.month}-${earliestDate.day}-to-${latestDate.year}-${latestDate.month}-${latestDate.day}`
                     const fmt = `${symbol}-${datefmt}.json`
                     console.log("UPLOADING FILE:::: ", fmt)
+                    console.log(`\t PROCESSED:::: ${finCnt}/${securities.length}`);
                     await this.s3Client.send(new PutObjectCommand({
                         Bucket: "iex-pricing",
                         Key: fmt,
@@ -316,6 +319,6 @@ class PricingFix {
     const iexCfg = await DefaultConfig.fromCacheOrSSM("iex");
 
     const pricingFix = new PricingFix(pgClient, pgp, iexCfg.key);
-    await pricingFix.ingestFromS3();
+    await pricingFix.iexHistorical();
     console.log("Finished")
 })()
