@@ -2,13 +2,17 @@
 
 /* No changes to data_bookmark [bookmark]*/
 
-/* No changes to data_brokerage [brokerage]*/
+CREATE  TABLE data_brokerage(
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 
 /* No changes to data_comment [comment]*/
 
 /* No changes to ibkr_account [ibkr]*/
 
-/* No changes to data_notification [notification]*/
+CREATE  TABLE data_notification(
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 
 /* No changes to data_platform_claim [platform_claim]*/
 

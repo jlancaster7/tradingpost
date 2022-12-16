@@ -499,7 +499,7 @@ const rollupTransactions = async (transactions: TradingPostTransactions[]): Prom
             if (tx.fees !== null) fees = tx.fees + (latest.fees || 0)
 
             latest.quantity = latest.quantity + tx.quantity;
-            latest.amount = latest.amount + latest.amount;
+            latest.amount = latest.amount + tx.amount;
             latest.fees = fees;
             return
         }

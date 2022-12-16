@@ -357,9 +357,9 @@ export interface GetUSHolidayAndTradingDays {
     settlementDate?: string;
 }
 export default class IEX {
-    private readonly baseURL;
-    private readonly token;
-    private readonly retryMax;
+    readonly baseURL: string;
+    readonly token: string;
+    readonly retryMax: number;
     constructor(token: string, baseURL?: string, retryMax?: number);
     fetch: (endpoint: string, httpConfiguration: HTTPConfiguration, queryParameters?: Record<string, any>) => Promise<any>;
     retry: (fn: () => Promise<Response>, retryNum: number) => Promise<Response>;

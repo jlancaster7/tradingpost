@@ -20,7 +20,7 @@ export class PortfolioSummaryService implements ISummaryService {
         this.repository = repository;
     }
 
-    computeAccountGroupHPRs = async (holdings: HistoricalHoldings[]): Promise<AccountGroupHPRs[]> => {
+    computeAccountGroupHPRs = async (holdings: HistoricalHoldings[], trades: TradingPostTransactionsByAccountGroup[]): Promise<AccountGroupHPRs[]> => {
         let dailyAmounts: { accountGroupId?: number, date: DateTime, amount: number }[] = [];
 
         dailyAmounts = holdings.reduce((res, value) => {
@@ -35,15 +35,16 @@ export class PortfolioSummaryService implements ISummaryService {
             return res;
         }, dailyAmounts);
 
-        // will need some logic here to account for cash transfers from transactions
-
         dailyAmounts.sort((a, b) => {
             return a.date.valueOf() - b.date.valueOf();
         });
 
         let returns: AccountGroupHPRs[] = [];
 
+        const cashTransactions = trades.filter(a => a.type === 'cash'); 
         for (let i = 1; i < dailyAmounts.length; i++) {
+            const date = dailyAmounts[i].date;
+            const cashTransaction = cashTransactions.find((a) => a.date.valueOf() === date.valueOf())?.amount || 0;
             if (!dailyAmounts[i].accountGroupId) {
                 dailyAmounts[i].accountGroupId = 0
             }
@@ -51,7 +52,7 @@ export class PortfolioSummaryService implements ISummaryService {
                 // @ts-ignore
                 accountGroupId: dailyAmounts[i].accountGroupId,
                 date: dailyAmounts[i].date,
-                return: (dailyAmounts[i].amount - dailyAmounts[i - 1].amount) / dailyAmounts[i - 1].amount
+                return: ((dailyAmounts[i].amount + cashTransaction) - dailyAmounts[i - 1].amount) / dailyAmounts[i - 1].amount
             })
         }
         return returns;
@@ -238,15 +239,15 @@ export class PortfolioSummaryService implements ISummaryService {
     computeAccountGroupSummary = async (userId: string, startDate: DateTime = DateTime.fromJSDate(new Date('1/1/2010')), endDate: DateTime = DateTime.now()): Promise<TradingPostAccountGroupStats> => {
 
         const account_group = await this.getAccountGroupByName(userId, 'default');
-
+        
         const currentHoldings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId);
 
         const historicalHoldings = await this.repository.getTradingPostHoldingsByAccountGroup(userId, account_group.accountGroupId, startDate, endDate);
 
-        const returns = await this.computeAccountGroupHPRs(historicalHoldings);
+        const trades = await this.getTrades(userId, undefined, true);
 
+        const returns = await this.computeAccountGroupHPRs(historicalHoldings, trades);
         await this.addAccountGroupHPRs(returns);
-
         let beta: number;
         try {
             beta = await this.computeAccountGroupBeta(currentHoldings, account_group.defaultBenchmarkId);
@@ -288,10 +289,10 @@ export class PortfolioSummaryService implements ISummaryService {
             return [] as HistoricalHoldings[];
         }
     }
-    getTrades = async (userId: string, paging?: { limit: number, offset: number }): Promise<TradingPostTransactionsByAccountGroup[]> => {
+    getTrades = async (userId: string, paging: { limit: number, offset: number } | undefined, cash?: boolean): Promise<TradingPostTransactionsByAccountGroup[]> => {
         try {
             const account_group = await this.getAccountGroupByName(userId, 'default');
-            return await this.repository.getTradingPostTransactionsByAccountGroup(account_group.accountGroupId, paging)
+            return await this.repository.getTradingPostTransactionsByAccountGroup(account_group.accountGroupId, paging, cash)
         } catch (err) {
             console.error(err);
             return [] as TradingPostTransactions[];

@@ -2316,7 +2316,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
         return holdings;
     }
-    getTradingPostTransactionsByAccountGroup = async (accountGroupId: number, paging?: { limit: number, offset: number }): Promise<TradingPostTransactionsByAccountGroup[]> => {
+    getTradingPostTransactionsByAccountGroup = async (accountGroupId: number, paging: { limit: number, offset: number } | undefined, cash?: boolean): Promise<TradingPostTransactionsByAccountGroup[]> => {
         let query = `SELECT atg.account_group_id          AS account_group_id,
                             security_id,
                             security_type,
@@ -2335,25 +2335,26 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON tt.account_id = atg.account_id
                      WHERE atg.account_group_id = $1
-                       AND type in ('buy', 'sell', 'short', 'cover')
+                       AND type in ($2:list)
                      GROUP BY account_group_id, security_id, security_type, date, type, currency, option_id
                      ORDER BY date DESC
         `;
-
-
         let trades: TradingPostTransactionsByAccountGroup[] = []
         if (!accountGroupId) {
             return trades;
         }
         let response: any[];
-        if (paging) {
-            query += `LIMIT $2
-                      OFFSET $3`
-            response = await this.db.any(query, [accountGroupId, paging.limit, paging.offset * paging.limit]);
-        } else {
-            response = await this.db.any(query, [accountGroupId]);
+        let includedTypes = ['buy', 'sell', 'short', 'cover'];
+        if (cash) {
+            includedTypes.push('cash')
         }
-
+        let params = [accountGroupId, includedTypes]
+        if (paging) {
+            query += `LIMIT $3
+                      OFFSET $4`
+            params.push(...[paging.limit, paging.offset * paging.limit])
+        } 
+        response = await this.db.any(query, params);
         if (!response || response.length <= 0) {
             throw new Error(`Failed to get trades for accountGroupId: ${accountGroupId}`);
         }
@@ -2462,6 +2463,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'country', prop: 'country'},
             {name: 'phone', prop: 'phone'},
             {name: 'logo_url', prop: 'logoUrl'},
+            {name: 'enable_utp', prop: 'enableUtp'},
+            {name: 'price_source', prop: 'priceSource'}
         ], {table: 'security'});
         const query = this.pgp.helpers.insert(securities, cs);
         await this.db.none(query);

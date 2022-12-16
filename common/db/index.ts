@@ -2,7 +2,10 @@ import {DefaultConfig} from '../configuration'
 import pg from 'pg'
 import pgPromise from "pg-promise";
 import Finicity from "../finicity";
-import Brokerage from '../brokerage'
+import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
+import Repository from "../brokerage/repository";
+import {Service} from "../brokerage/finicity";
+import {Transformer} from "../brokerage/finicity/transformer";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -40,20 +43,20 @@ export const init = (async () => {
         database: pgCfg.database,
         max: 10
     });
-    let brokerage: Brokerage;
+
+    const repository = new Repository(pgClient, pgp);
 
     const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
     const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
-    console.log("Start Init ")
     await finicity.init();
-    brokerage = new Brokerage(pgClient, pgp, finicity);
+    const finicityTransformer = new Transformer(repository);
+    const finicitySrv = new Service(finicity, repository, finicityTransformer);
 
-    console.log("Start Connection ")
+    const portfolioSummarySrv = new PortfolioSummaryService(repository)
 
-    await pgClient.connect();
-    console.log("Returning ");
     return {
-        brokerage,
+        finicitySrv,
+        portfolioSummarySrv,
         pgp,
         pgClient
     }

@@ -1,16 +1,11 @@
-import User, {UploadProfilePicBody} from "./User"
+import User from "./User"
 import {ensureServerExtensions} from "."
 import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
-import UserApi, {IUserGet, IUserList, IUserUpdate} from '../apis/UserApi'
-import Brokerage from '../../../brokerage'
+import UserApi, {IUserGet, IUserList} from '../apis/UserApi'
 import {DefaultConfig} from "../../../configuration";
-import pgPromise from "pg-promise";
 import {Client as ElasticClient} from '@elastic/elasticsearch';
 import ElasticService from "../../../elastic";
-import Finicity from "../../../finicity";
-//import FinicityTransformer from '../../../brokerage/finicity/transformer'
 import {execProc, getHivePool, init} from '../../../db'
-//import { } from '../../../social-media/twitter/index'
 import {DefaultTwitter} from "../../../social-media/twitter/service";
 import {DefaultSubstack} from "../../../social-media/substack/service";
 import {DefaultSpotify} from "../../../social-media/spotify/service";
@@ -22,9 +17,7 @@ import {sendByTemplate} from '../../../sendGrid'
 import {TradingPostAccountGroupStats} from "../../../brokerage/interfaces";
 import PostPrepper from "../../../post-prepper";
 import {parse} from "url";
-import {i} from "mathjs";
-import {writeFileSync} from "fs";
-import {google, youtube_v3} from 'googleapis'
+import {google} from 'googleapis'
 import {PublicError} from "../static/EntityApiBase";
 
 export interface ITokenResponse {
@@ -55,9 +48,8 @@ export default ensureServerExtensions<User>({
         return {}
     },
     generateBrokerageLink: async (req) => {
-        const {brokerage} = await init;
-        const test = await brokerage.generateBrokerageAuthenticationLink(req.extra.userId, "finicity");
-        console.log("BROKERAGE LINK!!! ", test);
+        const {finicitySrv} = await init;
+        const test = await finicitySrv.generateBrokerageAuthenticationLink(req.extra.userId);
         return {
             link: test
         }
@@ -204,7 +196,7 @@ export default ensureServerExtensions<User>({
         }
     },
     getTrades: async (r) => {
-        const {brokerage} = await init;
+        const {portfolioSummarySrv} = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -219,7 +211,10 @@ export default ensureServerExtensions<User>({
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId) {
-            return await brokerage.getUserTrades(requestedId, {limit: r.extra.limit || 6, offset: r.extra.page || 0});
+            return await portfolioSummarySrv.getTrades(requestedId, {
+                limit: r.extra.limit || 6,
+                offset: r.extra.page || 0
+            });
             /*
             return await execProc("public.api_trade_list", {
                 limit: r.extra.limit || 5,
@@ -229,7 +224,7 @@ export default ensureServerExtensions<User>({
             })
             */
         } else if (requestedUser?.settings?.portfolio_display.trades && requestedUser.subscription?.is_subscribed) {
-            let result = await brokerage.getUserTrades(requestedId, {
+            let result = await portfolioSummarySrv.getTrades(requestedId, {
                 limit: r.extra.limit || 6,
                 offset: r.extra.page || 0
             });
@@ -262,7 +257,7 @@ export default ensureServerExtensions<User>({
         }
     },
     getHoldings: async (r) => {
-        const {brokerage} = await init;
+        const {portfolioSummarySrv} = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -277,7 +272,7 @@ export default ensureServerExtensions<User>({
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId) {
-            const result = await brokerage.getUserHoldings(requestedId);
+            const result = await portfolioSummarySrv.getCurrentHoldings(requestedId);
             let t: any[] = [];
             result.forEach((r, i) => {
                 const o = {
@@ -300,7 +295,7 @@ export default ensureServerExtensions<User>({
             });
             */
         } else if (requestedUser?.settings?.portfolio_display.holdings && requestedUser.subscription?.is_subscribed) {
-            const result = await brokerage.getUserHoldings(requestedId);
+            const result = await portfolioSummarySrv.getCurrentHoldings(requestedId);
             /*
             const result = await execProc("public.api_holding_list", {
                 user_id: requestedId
@@ -331,7 +326,7 @@ export default ensureServerExtensions<User>({
         }
     },
     getReturns: async r => {
-        const {brokerage} = await init;
+        const {portfolioSummarySrv} = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -346,7 +341,7 @@ export default ensureServerExtensions<User>({
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.performance && requestedUser.subscription?.is_subscribed)) {
-            return await brokerage.getUserReturns(r.body.userId || r.extra.userId, DateTime.fromISO(r.body.startDate as any as string), DateTime.fromISO(r.body.endDate as any as string));
+            return await portfolioSummarySrv.getReturns(r.body.userId || r.extra.userId, DateTime.fromISO(r.body.startDate as any as string), DateTime.fromISO(r.body.endDate as any as string));
         } else {
             return []
         }
@@ -364,7 +359,7 @@ export default ensureServerExtensions<User>({
         //make sure there are public or that you are a subscriber 
     },
     getPortfolio: async (r) => {
-        const {brokerage} = await init;
+        const {portfolioSummarySrv} = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -379,7 +374,7 @@ export default ensureServerExtensions<User>({
             requestedId = r.extra.userId
         }
         if (r.extra.userId === requestedId || (requestedUser?.settings?.portfolio_display.performance && requestedUser.subscription?.is_subscribed)) {
-            return await brokerage.portfolioSummaryService.getSummary(requestedId);
+            return await portfolioSummarySrv.getSummary(requestedId);
         } else {
             return {} as TradingPostAccountGroupStats;
         }

@@ -7,17 +7,10 @@ PODS:
     - ExpoModulesCore
   - EXDevice (4.3.0):
     - ExpoModulesCore
-  - EXErrorRecovery (3.2.0):
-    - ExpoModulesCore
   - EXFileSystem (14.1.0):
     - ExpoModulesCore
   - EXFont (10.2.1):
     - ExpoModulesCore
-  - EXGL (11.4.0):
-    - EXGL_CPP
-    - ExpoModulesCore
-  - EXGL_CPP (11.4.0):
-    - React-jsi
   - EXImageLoader (3.2.0):
     - ExpoModulesCore
     - React-Core
@@ -26,9 +19,6 @@ PODS:
   - Expo (46.0.17):
     - ExpoModulesCore
   - ExpoCrypto (11.0.0):
-    - ExpoModulesCore
-  - ExpoImageManipulator (10.4.0):
-    - EXImageLoader
     - ExpoModulesCore
   - ExpoImagePicker (13.3.1):
     - ExpoModulesCore
@@ -389,16 +379,12 @@ DEPENDENCIES:
   - EXApplication (from `../node_modules/expo-application/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXDevice (from `../node_modules/expo-device/ios`)
-  - EXErrorRecovery (from `../node_modules/expo-error-recovery/ios`)
   - EXFileSystem (from `../node_modules/expo-file-system/ios`)
   - EXFont (from `../node_modules/expo-font/ios`)
-  - EXGL (from `../node_modules/expo-gl/ios`)
-  - EXGL_CPP (from `../node_modules/expo-gl-cpp/cpp`)
   - EXImageLoader (from `../node_modules/expo-image-loader/ios`)
   - EXNotifications (from `../node_modules/expo-notifications/ios`)
   - Expo (from `../node_modules/expo`)
   - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
-  - ExpoImageManipulator (from `../node_modules/expo-image-manipulator/ios`)
   - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - ExpoLocalization (from `../node_modules/expo-localization/ios`)
@@ -463,16 +449,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-constants/ios"
   EXDevice:
     :path: "../node_modules/expo-device/ios"
-  EXErrorRecovery:
-    :path: "../node_modules/expo-error-recovery/ios"
   EXFileSystem:
     :path: "../node_modules/expo-file-system/ios"
   EXFont:
     :path: "../node_modules/expo-font/ios"
-  EXGL:
-    :path: "../node_modules/expo-gl/ios"
-  EXGL_CPP:
-    :path: "../node_modules/expo-gl-cpp/cpp"
   EXImageLoader:
     :path: "../node_modules/expo-image-loader/ios"
   EXNotifications:
@@ -481,8 +461,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo"
   ExpoCrypto:
     :path: "../node_modules/expo-crypto/ios"
-  ExpoImageManipulator:
-    :path: "../node_modules/expo-image-manipulator/ios"
   ExpoImagePicker:
     :path: "../node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
@@ -584,16 +562,12 @@ SPEC CHECKSUMS:
   EXApplication: e418d737a036e788510f2c4ad6c10a7d54d18586
   EXConstants: 7c44785d41d8e959d527d23d29444277a4d1ee73
   EXDevice: 7647ca9b1fd8b269dfd896a7643d659343358054
-  EXErrorRecovery: 74d71ee59f6814315457b09d68e86aa95cc7d05d
   EXFileSystem: 927e0a8885aa9c49e50fc38eaba2c2389f2f1019
   EXFont: 06df627203afcb8a3b3152ec06eb2f11f46f0cff
-  EXGL: af303c96595c2879a83d0cdc429ee12639f6d78c
-  EXGL_CPP: 26d0d7639ec8fcf9133c2883926ca7a005625ee6
   EXImageLoader: b88e053d760f85a82405b1db2de4abf11978fc9f
   EXNotifications: 9a2aa201deb19dfe1dbe0e370eeb2922de0d2422
   Expo: 4de8a31146bb0480353b3ed1850e015c4862625f
   ExpoCrypto: e534314db0e1a17ae12b5140d529bd0c5efcbc6a
-  ExpoImageManipulator: f4e286afa83c1c618de8701b0812ee0b647895fc
   ExpoImagePicker: ca4207f2952a78e6dac2d7852d7e170dd2eaf1d0
   ExpoKeepAwake: 0e8f18142e71bbf2c7f6aa66ebed249ba1420320
   ExpoLocalization: 63204f4b9d4f653469d266332ceaa6c6ac8a305d
