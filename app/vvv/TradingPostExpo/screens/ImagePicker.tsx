@@ -15,11 +15,11 @@ import { useData } from '../lds';
 //const imageCrop = require('expo-image-crop')
 //const ImageManipulator = imageCrop.ImageManipulator;
 
-
+console.log("Loading IMAGE PICKER")
 export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any) => void }>) => {
     const { loginState, forceTrigger } = useAppUser();
     const appUser = loginState?.appUser;
-
+    console.log("Loading inside picker")
     const [imageUri, setImageUri] = useState<string>(),
         [editorVisible, setEditorVisible] = useState(false),
         [imageData, setImageData] = useState<{ uri: string }>();
@@ -61,6 +61,7 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
     };
 
     const launchEditor = (uri: string) => {
+        console.log("WTF")
         // Then set the image uri
         setImageUri(uri);
         // And set the image editor to be visible
@@ -92,39 +93,41 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
                 }
 
             }} >Upload Photo</PrimaryButton>}
-        <ImageEditor
-            //asView={Platform.OS === "web"}
-            visible={editorVisible}
-            onCloseEditor={() => {
-                setEditorVisible(false)
-            }}
-            imageUri={imageUri}
-            fixedCropAspectRatio={1}
-            lockAspectRatio={true}
-            minimumCropDimensions={{
-                width: 100,
-                height: 100,
-            }}
-            onEditingComplete={(result) => {
-                (async () => {
+        <View style={{ height: 100, width: 200, backgroundColor:"blue" }}>
+            {true && <ImageEditor
+                //asView={Platform.OS === "web"}
+                visible={editorVisible}
+                onCloseEditor={() => {
+                    setEditorVisible(false)
+                }}
+                imageUri={imageUri}
+                fixedCropAspectRatio={1}
+                lockAspectRatio={true}
+                minimumCropDimensions={{
+                    width: 100,
+                    height: 100,
+                }}
+                onEditingComplete={(result) => {
+                    (async () => {
+console.log("DONE EDITTINGS")
+                        const resizeResult = await manipulateAsync(result.uri, [{
+                            resize: {
+                                height: 512
+                            }
+                        }], {
+                            base64: true,
+                            format: SaveFormat.JPEG
+                        })
 
-                    const resizeResult = await manipulateAsync(result.uri, [{
-                        resize: {
-                            height: 512
-                        }
-                    }], {
-                        base64: true,
-                        format: SaveFormat.JPEG
-                    })
 
-
-                    setImageData({
-                        uri: "data:image/jpeg;base64," + resizeResult.base64
-                    });
-                })()
-            }}
-            mode="crop-only"
-        />
+                        setImageData({
+                            uri: "data:image/jpeg;base64," + resizeResult.base64
+                        });
+                    })()
+                }}
+                mode="crop-only"
+            />}
+        </View>
     </View>
 
     // const [imageUri, setImageUri] = useState("'https://i.pinimg.com/originals/39/42/a1/3942a180299d5b9587c2aa8e09d91ecf.jpg'")
