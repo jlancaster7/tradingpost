@@ -6,7 +6,8 @@ import fetch from 'node-fetch';
 import {
     BrokerageTaskStatusType,
     BrokerageTaskType,
-    TradingPostBrokerageAccountsTable
+    TradingPostBrokerageAccountsTable,
+    TradingPostBrokerageAccountStatus
 } from "../../../brokerage/interfaces";
 import {init} from "../../../db";
 import Repository from "../../../brokerage/repository";
@@ -60,7 +61,8 @@ export default ensureServerExtensions<Brokerage>({
 
         let tpBrokerageAccount: TradingPostBrokerageAccountsTable | null = null;
         const tpBrokerageAccounts = await brokerageRepo.getTradingPostBrokerageAccountsByBrokerageAndIds(req.extra.userId, "Robinhood", [username]);
-        if (tpBrokerageAccounts.length >= 0) tpBrokerageAccount = tpBrokerageAccounts[0];
+        if (tpBrokerageAccounts.length > 1) throw new Error("cant have more than one brokerage account for robinhood user");
+        if (tpBrokerageAccounts.length > 0) tpBrokerageAccount = tpBrokerageAccounts[0];
 
         if (tpBrokerageAccount && tpBrokerageAccount.status === 'active') return {
             status: RobinhoodLoginStatus.SUCCESS,
@@ -73,13 +75,13 @@ export default ensureServerExtensions<Brokerage>({
             'x-robinhood-api-version': '1.431.4'
         }
 
+        const robinhoodUser = await brokerageRepo.getRobinhoodUser(req.extra.userId);
         let fauxDeviceToken = uuidv4();
-        const robinhoodUser = await brokerageRepo.getRobinhoodUser(username);
         if (robinhoodUser) fauxDeviceToken = robinhoodUser.deviceToken
+
         const [requestHeaders, requestPayload] = generatePayloadRequest(robinhoodCredentials.clientId,
             robinhoodCredentials.expiresIn, robinhoodCredentials.scope, username, password, fauxDeviceToken,
             headers, mfaCode, challengeResponseId);
-
 
         try {
             const response = await fetch(loginUrl, {
@@ -89,7 +91,7 @@ export default ensureServerExtensions<Brokerage>({
             });
 
             const body = await response.json();
-            console.log(body);
+
             // Credentials Provided Incorrectly
             if (body['detail'] === 'Unable to log in with provided credentials.') return {
                 status: RobinhoodLoginStatus.ERROR,
@@ -149,6 +151,7 @@ export default ensureServerExtensions<Brokerage>({
                 officialName: "",
                 subtype: "",
                 hiddenForDeletion: false,
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING
             }])
 
             return {

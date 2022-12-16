@@ -76,6 +76,8 @@ export class Service {
             const tpAccount = tpAccounts[i];
             await this._transformer.computeHoldingsHistory(tpAccount.id);
         }
+
+        await this._portfolioSummaryService.computeAccountGroupSummary(userId);
     }
 
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
@@ -85,6 +87,7 @@ export class Service {
         await this.accounts(userId, institution.id);
         await this.positions(userId);
         await this.transactions(userId);
+        await this._portfolioSummaryService.computeAccountGroupSummary(userId);
     }
 
     private _apiAndUpdate = async <T>(user: RobinhoodUser, fnCall: any, params: any, nextUrl?: string, authUpdate?: boolean): Promise<T> => {

@@ -11,6 +11,7 @@ import {
     SecurityType,
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountsTable,
+    TradingPostBrokerageAccountStatus,
     TradingPostCurrentHoldings,
     TradingPostCurrentHoldingsTableWithMostRecentHolding,
     TradingPostHistoricalHoldings,
@@ -19,7 +20,6 @@ import {
 import {DateTime} from "luxon";
 import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer"
-import {endAt} from "@firebase/database";
 
 export interface TransformerRepository extends BaseRepository {
     getTradingPostBrokerageAccountsByBrokerageAndIds(userId: string, brokerage: string, brokerageAccountIds: string[]): Promise<TradingPostBrokerageAccountsTable[]>
@@ -125,7 +125,7 @@ const transformTransactionType = (transactionType: string): InvestmentTransactio
         case "DVPOUT": // Outgoing DVP
             throw new Error("no transaction type for outgoing dvp");
         case "EXE": // Exercise
-            // TODO: Check if its a call or a put before
+                    // TODO: Check if its a call or a put before
             return InvestmentTransactionType.buy
         case "EXP": // Expire
             return InvestmentTransactionType.cancel
@@ -201,6 +201,7 @@ export default class IbkrTransformer extends BaseTransformer {
                 institutionId: 6723,
                 officialName: "Interactive Brokers",
                 hiddenForDeletion: false,
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING
             }
             return x;
         });

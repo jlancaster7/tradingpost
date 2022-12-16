@@ -15,7 +15,9 @@ import {
     SecurityType,
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountsTable,
-    TradingPostCurrentHoldings, TradingPostHistoricalHoldings,
+    TradingPostBrokerageAccountStatus,
+    TradingPostCurrentHoldings,
+    TradingPostHistoricalHoldings,
     TradingPostTransactions
 } from "../interfaces";
 import {DateTime} from "luxon";
@@ -111,6 +113,7 @@ export default class Transformer extends TransformerBase {
                 status: "active",
                 brokerName: DirectBrokeragesType.Robinhood,
                 hiddenForDeletion: false,
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING
             }
 
             return x

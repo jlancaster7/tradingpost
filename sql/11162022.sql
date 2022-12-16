@@ -346,5 +346,10 @@ ALTER TABLE public.ibkr_security DROP CONSTRAINT ibkr_security_security_id_key;
 ALTER TABLE public.ibkr_security
     ADD CONSTRAINT ibkr_security_con_id_key UNIQUE (con_id);
 DROP INDEX ibkr_security_security_id_key;
-CREATE UNIQUE INDEX ibkr_security_con_id_key ON public.ibkr_security USING btree (con_id)
+CREATE UNIQUE INDEX ibkr_security_con_id_key ON public.ibkr_security USING btree (con_id);
+
+CREATE TYPE tradingpost_brokerage_account_status AS ENUM('ACTIVE', 'INACTIVE', 'REMOVED', 'ERROR', 'PROCESSING');
+
+ALTER TABLE tradingpost_brokerage_account
+    ADD COLUMN account_status tradingpost_brokerage_account_status DEFAULT 'PROCESSING';
 

@@ -1,26 +1,5 @@
 import {DateTime} from "luxon";
 import {getUSExchangeHoliday} from "../market-data/interfaces";
-import {accountId} from "aws-sdk/clients/health";
-
-export interface IBrokerageService {
-    getTradingPostUserAssociatedWithBrokerageUser(brokerageUserId: string): Promise<TradingPostUser>
-
-    generateBrokerageAuthenticationLink(userId: string, brokerageAccount?: string, brokerageAccountId?: string): Promise<string>
-
-    importAccounts(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostBrokerageAccounts[]>
-
-    importTransactions(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostTransactions[]>
-
-    importHoldings(userId: string, brokerageIds?: string[] | number[]): Promise<TradingPostCurrentHoldings[]>
-
-    exportAccounts(userId: string): Promise<TradingPostBrokerageAccounts[]>
-
-    exportTransactions(userId: string): Promise<TradingPostTransactions[]>
-
-    exportHoldings(userId: string): Promise<TradingPostCurrentHoldings[]>
-
-    removeAccounts(brokerageCustomerId: string, accountIds: string[]): Promise<number[]>
-}
 
 export interface IBrokerageRepository {
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
@@ -63,6 +42,10 @@ export interface IBrokerageRepository {
 }
 
 export interface IFinicityRepository {
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
+
+    getTradingPostBrokerageAccountsByBrokerage(userId: string, brokerageName: string): Promise<TradingPostBrokerageAccountsTable[]>
+
     updateErrorStatusOfAccount(accountId: number, error: boolean, errorCode: number): Promise<void>
 
     getTradingPostUserByFinicityCustomerId(finicityCustomerId: string): Promise<TradingPostUser | null>
@@ -523,6 +506,7 @@ export type TradingPostCurrentHoldingsTableWithMostRecentHolding = {
     error: boolean
     errorCode: number
     mostRecentHolding: DateTime | null
+    accountStatus: TradingPostBrokerageAccountStatus
 }
 
 
@@ -658,6 +642,14 @@ export type TradingPostInstitutionWithFinicityInstitutionId = {
     externalFinicityId: string
 } & TradingPostInstitutionTable
 
+export enum TradingPostBrokerageAccountStatus {
+    ACTIVE = "ACTIVE",
+    INACTIVE = "INACTIVE",
+    REMOVED = "REMOVED",
+    ERROR = "ERROR",
+    PROCESSING = "PROCESSING",
+}
+
 export type TradingPostBrokerageAccounts = {
     hiddenForDeletion: boolean
     userId: string
@@ -672,6 +664,7 @@ export type TradingPostBrokerageAccounts = {
     subtype: string | null
     error: boolean
     errorCode: number
+    accountStatus: TradingPostBrokerageAccountStatus
 }
 
 export type TradingPostBrokerageAccountsTable = TradingPostBrokerageAccounts & TableInfoV2;

@@ -50,6 +50,7 @@ export default ensureServerExtensions<User>({
     generateBrokerageLink: async (req) => {
         const {finicitySrv} = await init;
         const test = await finicitySrv.generateBrokerageAuthenticationLink(req.extra.userId);
+        console.log(test);
         return {
             link: test
         }

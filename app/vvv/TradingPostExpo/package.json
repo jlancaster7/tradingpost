@@ -77,7 +77,8 @@
     "react-native-webview": "11.23.0",
     "recoil": "^0.7.5",
     "sharp": "^0.31.1",
-    "url": "^0.11.0"
+    "url": "^0.11.0",
+    "expo-image-manipulator": "~10.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

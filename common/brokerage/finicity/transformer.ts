@@ -1,6 +1,7 @@
 import {
     FinicityAccount,
-    FinicityHolding, FinicityInstitution,
+    FinicityHolding,
+    FinicityInstitution,
     FinicityTransaction,
     InvestmentTransactionType,
     OptionContract,
@@ -8,9 +9,12 @@ import {
     SecurityIssue,
     SecurityType,
     TradingPostBrokerageAccounts,
+    TradingPostBrokerageAccountStatus,
     TradingPostBrokerageAccountWithFinicity,
     TradingPostCashSecurity,
-    TradingPostCurrentHoldings, TradingPostInstitution,
+    TradingPostCurrentHoldings,
+    TradingPostHistoricalHoldings,
+    TradingPostInstitution,
     TradingPostInstitutionWithFinicityInstitutionId,
     TradingPostTransactions,
 } from "../interfaces";
@@ -103,7 +107,7 @@ export class Transformer extends BaseTransformer {
         this.repository = repository
     }
 
-    accounts = async (userId: string, finAccounts: FinicityAccount[]): Promise<TradingPostBrokerageAccounts[]> => {
+    accounts = async (userId: string, finAccounts: FinicityAccount[]): Promise<void> => {
         let tpAccounts: TradingPostBrokerageAccounts[] = [];
         for (let i = 0; i < finAccounts.length; i++) {
             const account = finAccounts[i];
@@ -123,11 +127,216 @@ export class Transformer extends BaseTransformer {
                 subtype: null,
                 error: account.aggregationStatusCode === 103 || account.aggregationStatusCode === 185,
                 errorCode: account.aggregationStatusCode,
-                hiddenForDeletion: false
+                hiddenForDeletion: false,
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING
             });
         }
+        await this.upsertAccounts(tpAccounts);
+    }
 
-        return tpAccounts;
+    holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], holdingDate: DateTime | null, currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<void> => {
+        let internalAccount = await this.getFinicityToTradingPostAccount(userId, accountId);
+        if (internalAccount === undefined || internalAccount === null) throw new Error(`account id(${accountId}) does not exist for holding`)
+
+        const securities = await this.repository.getSecuritiesWithIssue();
+        const cashSecurities = await this.repository.getTradingpostCashSecurity();
+
+        const securitiesMap: Record<string, SecurityIssue> = {};
+        const cashSecuritiesMap: Record<string, number> = {};
+        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+        cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
+
+        let tpHoldings: TradingPostCurrentHoldings[] = [];
+        let isCashSecurity = false;
+
+        // TODO: revisit this ... do we want to completely botch the holdings / etc when a holding fails?
+        //  at the end of the day, how do we want to present the state of holdings itself to users? In an incomplete,
+        //  but correct form, -- meaning not all their holdings are added, but the ones that are, are valid. Or,
+        //  not at all until all holdings can be verified, or all holdings even if they are incorrect(assuming its
+        //  not the latter).
+        for (let i = 0; i < finHoldings.length; i++) {
+            try {
+                let holding = finHoldings[i];
+
+                const security = await this._resolveSecurity(holding, securitiesMap, cashSecuritiesMap);
+                if (security.issueType.toLowerCase() === 'cash') isCashSecurity = true;
+
+                let priceAsOf = holdingDate;
+                if (holding.currentPriceDate) priceAsOf = DateTime.fromSeconds(holding.currentPriceDate)
+                if (priceAsOf === undefined || priceAsOf === null) {
+                    console.error(`no price date set for holding=${holding.id}`)
+                    continue
+                }
+
+                let cur = currency
+                if (holding.securityCurrency) cur = holding.securityCurrency
+
+                if (holding.securityType.toLowerCase() === 'option') {
+                    // We are making the assumption that the option already exists within our system since we run
+                    // transactions first and an option will be created there...(since they have more meta-data
+                    // then we do)
+                    const optionExpireDateTime = DateTime.fromSeconds(holding.optionExpiredate);
+                    const optionId = await this.resolveHoldingOptionId(internalAccount.id, security.id,
+                        holding.optionStrikePrice, optionExpireDateTime, holding.optionType);
+                    if (!optionId) {
+                        console.error(`could not resolve option id for security=${security.symbol} strikePrice=${holding.optionStrikePrice} expirationDate=${holding.optionExpiredate}`)
+                        continue
+                    }
+
+                    tpHoldings.push({
+                        accountId: internalAccount.id, // TradingPost Brokerage Account ID
+                        securityId: security.id,
+                        securityType: SecurityType.option,
+                        price: holding.currentPrice,
+                        priceAsOf: priceAsOf,
+                        priceSource: '',
+                        value: parseFloat(holding.marketValue),
+                        costBasis: holding.costBasis,
+                        quantity: holding.units,
+                        currency: cur,
+                        optionId: optionId,
+                        holdingDate: DateTime.now()
+                    })
+                    continue
+                }
+
+                tpHoldings.push({
+                    accountId: internalAccount.id, // TradingPost Brokerage Account ID
+                    securityId: security.id,
+                    securityType: security.issueType === 'Cash' ? SecurityType.cashEquivalent : SecurityType.equity,
+                    price: holding.currentPrice,
+                    priceAsOf: priceAsOf,
+                    priceSource: '',
+                    value: parseFloat(holding.marketValue),
+                    costBasis: holding.costBasis,
+                    quantity: holding.units,
+                    currency: cur,
+                    optionId: null,
+                    holdingDate: DateTime.now()
+                })
+            } catch (err) {
+                console.error(err)
+            }
+        }
+
+        // Add a cash security is the broker doesn't display it this way
+        if (accountDetails && accountDetails.availableCashBalance && !isCashSecurity) {
+            let cashSecurityId = cashSecurities.find(a => a.currency === 'USD')?.toSecurityId;
+            tpHoldings.push({
+                accountId: internalAccount.id, // TradingPost Brokerage Account ID
+                // @ts-ignore
+                securityId: cashSecurityId,
+                securityType: SecurityType.cashEquivalent,
+                price: 1,
+                priceAsOf: DateTime.fromSeconds(accountDetails.dateAsOf),
+                priceSource: '',
+                value: accountDetails.availableCashBalance,
+                costBasis: null,
+                quantity: accountDetails.availableCashBalance,
+                currency: 'USD',
+                optionId: null,
+            })
+        }
+
+        await this.upsertPositions(tpHoldings, [internalAccount.id])
+        await this.historicalHoldings(tpHoldings)
+    }
+
+    transactions = async (userId: string, finTransactions: FinicityTransaction[]): Promise<void> => {
+        const securities = await this.repository.getSecuritiesWithIssue();
+        const cashSecurities = await this.repository.getTradingpostCashSecurity();
+
+        const cashSecuritiesMap: Record<string, number> = {};
+        const securitiesMap: Record<string, SecurityIssue> = {};
+        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
+        cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
+
+        const tpAccountsWithFinicityId = await this.repository.getTradingPostAccountsWithFinicityNumber(userId);
+        const finicityIdToTpAccountMap: Record<string, number> = {};
+        tpAccountsWithFinicityId.forEach(tpa => finicityIdToTpAccountMap[tpa.externalFinicityAccountId] = tpa.id);
+
+        let tpTransactions: TradingPostTransactions[] = [];
+        for (let i = 0; i < finTransactions.length; i++) {
+            const transaction = finTransactions[i];
+
+            const internalTpAccountId = finicityIdToTpAccountMap[transaction.accountId];
+            if (!internalTpAccountId) throw new Error(`could not get internal account id for transaction with id ${transaction.id} for user ${userId}`);
+
+            if (!transaction.ticker || Object.keys(cashSecuritiesMap).includes(transaction.ticker)) {
+                switch (transaction.investmentTransactionType) {
+                    case "fee":
+                    case "interest":
+                    case "deposit":
+                    case "transfer":
+                    case "other":
+                    case "contribution":
+                        transaction.ticker = "USD:CUR"
+                        break
+                    default:
+                        throw new Error(`no symbol available for transaction type ${transaction.investmentTransactionType}`)
+                }
+            }
+
+            let security = securitiesMap[transaction.ticker]
+            if (!security) throw new Error(`could not find symbol(${transaction.ticker} for holding`)
+
+            const optionId = await this.isTransactionAnOption(transaction, security.id);
+
+            // TODO: We should check if its just a general "cash" security...
+            if (!transaction.unitQuantity && transaction.ticker !== "USD:CUR") {
+                console.error("not unit quantity for non-cash security")
+                continue
+            }
+
+            if (!transaction.unitQuantity) transaction.unitQuantity = transaction.amount;
+
+            let price = transaction.unitPrice ? transaction.unitPrice : (transaction.amount / transaction.unitQuantity)
+
+            let securityType: SecurityType = SecurityType.equity;
+            if (transaction.ticker === 'USD:CUR') securityType = SecurityType.cashEquivalent
+            if (optionId) securityType = SecurityType.option
+
+            let transactionType = transformTransactionType(transaction.investmentTransactionType);
+            let newTpTx: TradingPostTransactions = {
+                optionId: optionId,
+                accountId: internalTpAccountId,
+                securityId: security.id,
+                securityType: securityType,
+                date: DateTime.fromSeconds(transaction.postedDate),
+                quantity: transaction.unitQuantity,
+                price: price,
+                amount: transaction.amount,
+                fees: transaction.feeAmount,
+                type: transactionType,
+                currency: null,
+            };
+
+            newTpTx = transformTransactionTypeAmount(transactionType, newTpTx);
+            tpTransactions.push(newTpTx)
+        }
+
+        await this.upsertTransactions(tpTransactions)
+    }
+
+    historicalHoldings = async (tpHoldings: TradingPostCurrentHoldings[]): Promise<void> => {
+        const hh = tpHoldings.map(h => {
+            let x: TradingPostHistoricalHoldings = {
+                costBasis: h.costBasis,
+                quantity: h.quantity,
+                date: h.holdingDate.setZone("America/New_York").set({hour: 0, minute: 0, second: 0, millisecond: 0}),
+                value: h.value,
+                optionId: h.optionId,
+                currency: h.currency,
+                priceSource: h.priceSource,
+                priceAsOf: h.priceAsOf,
+                securityType: h.securityType,
+                securityId: h.securityId,
+                price: h.price,
+                accountId: h.accountId
+            }
+            return x
+        });
+        await this.upsertHistoricalHoldings(hh);
     }
 
     getFinicityToTradingPostAccount = async (userId: string, accountId: string) => {
@@ -241,188 +450,6 @@ export class Transformer extends BaseTransformer {
         }
 
         return option.id
-    }
-
-    holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], holdingDate: DateTime | null, currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<TradingPostCurrentHoldings[]> => {
-        let internalAccount = await this.getFinicityToTradingPostAccount(userId, accountId);
-        if (internalAccount === undefined || internalAccount === null) throw new Error(`account id(${accountId}) does not exist for holding`)
-
-        const securities = await this.repository.getSecuritiesWithIssue();
-        const cashSecurities = await this.repository.getTradingpostCashSecurity();
-
-        const securitiesMap: Record<string, SecurityIssue> = {};
-        const cashSecuritiesMap: Record<string, number> = {};
-        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
-        cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
-
-        let tpHoldings: TradingPostCurrentHoldings[] = [];
-        let isCashSecurity = false;
-
-        // TODO: revisit this ... do we want to completely botch the holdings / etc when a holding fails?
-        //  at the end of the day, how do we want to present the state of holdings itself to users? In an incomplete,
-        //  but correct form, -- meaning not all their holdings are added, but the ones that are, are valid. Or,
-        //  not at all until all holdings can be verified, or all holdings even if they are incorrect(assuming its
-        //  not the latter).
-        for (let i = 0; i < finHoldings.length; i++) {
-            try {
-                let holding = finHoldings[i];
-
-                const security = await this._resolveSecurity(holding, securitiesMap, cashSecuritiesMap);
-                if (security.issueType.toLowerCase() === 'cash') isCashSecurity = true;
-
-                let priceAsOf = holdingDate;
-                if (holding.currentPriceDate) priceAsOf = DateTime.fromSeconds(holding.currentPriceDate)
-                if (priceAsOf === undefined || priceAsOf === null) {
-                    console.error(`no price date set for holding=${holding.id}`)
-                    continue
-                }
-
-                let cur = currency
-                if (holding.securityCurrency) cur = holding.securityCurrency
-
-                if (holding.securityType.toLowerCase() === 'option') {
-                    // We are making the assumption that the option already exists within our system since we run
-                    // transactions first and an option will be created there...(since they have more meta-data
-                    // then we do)
-                    const optionExpireDateTime = DateTime.fromSeconds(holding.optionExpiredate);
-                    const optionId = await this.resolveHoldingOptionId(internalAccount.id, security.id,
-                        holding.optionStrikePrice, optionExpireDateTime, holding.optionType);
-                    if (!optionId) {
-                        console.error(`could not resolve option id for security=${security.symbol} strikePrice=${holding.optionStrikePrice} expirationDate=${holding.optionExpiredate}`)
-                        continue
-                    }
-
-                    tpHoldings.push({
-                        accountId: internalAccount.id, // TradingPost Brokerage Account ID
-                        securityId: security.id,
-                        securityType: SecurityType.option,
-                        price: holding.currentPrice,
-                        priceAsOf: priceAsOf,
-                        priceSource: '',
-                        value: parseFloat(holding.marketValue),
-                        costBasis: holding.costBasis,
-                        quantity: holding.units,
-                        currency: cur,
-                        optionId: optionId,
-                        holdingDate: DateTime.now()
-                    })
-                    continue
-                }
-
-                tpHoldings.push({
-                    accountId: internalAccount.id, // TradingPost Brokerage Account ID
-                    securityId: security.id,
-                    securityType: security.issueType === 'Cash' ? SecurityType.cashEquivalent : SecurityType.equity,
-                    price: holding.currentPrice,
-                    priceAsOf: priceAsOf,
-                    priceSource: '',
-                    value: parseFloat(holding.marketValue),
-                    costBasis: holding.costBasis,
-                    quantity: holding.units,
-                    currency: cur,
-                    optionId: null,
-                    holdingDate: DateTime.now()
-                })
-            } catch (err) {
-                console.error(err)
-            }
-        }
-
-        // Add a cash security is the broker doesn't display it this way
-        if (accountDetails && accountDetails.availableCashBalance && !isCashSecurity) {
-            let cashSecurityId = cashSecurities.find(a => a.currency === 'USD')?.toSecurityId;
-            tpHoldings.push({
-                accountId: internalAccount.id, // TradingPost Brokerage Account ID
-                // @ts-ignore
-                securityId: cashSecurityId,
-                securityType: SecurityType.cashEquivalent,
-                price: 1,
-                priceAsOf: DateTime.fromSeconds(accountDetails.dateAsOf),
-                priceSource: '',
-                value: accountDetails.availableCashBalance,
-                costBasis: null,
-                quantity: accountDetails.availableCashBalance,
-                currency: 'USD',
-                optionId: null,
-            })
-        }
-
-        return tpHoldings;
-    }
-
-    transactions = async (userId: string, finTransactions: FinicityTransaction[]): Promise<TradingPostTransactions[]> => {
-        const securities = await this.repository.getSecuritiesWithIssue();
-        const cashSecurities = await this.repository.getTradingpostCashSecurity();
-
-        const cashSecuritiesMap: Record<string, number> = {};
-        const securitiesMap: Record<string, SecurityIssue> = {};
-        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
-        cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
-
-        const tpAccountsWithFinicityId = await this.repository.getTradingPostAccountsWithFinicityNumber(userId);
-        const finicityIdToTpAccountMap: Record<string, number> = {};
-        tpAccountsWithFinicityId.forEach(tpa => finicityIdToTpAccountMap[tpa.externalFinicityAccountId] = tpa.id);
-
-        let tpTransactions: TradingPostTransactions[] = [];
-        for (let i = 0; i < finTransactions.length; i++) {
-            const transaction = finTransactions[i];
-
-            const internalTpAccountId = finicityIdToTpAccountMap[transaction.accountId];
-            if (!internalTpAccountId) throw new Error(`could not get internal account id for transaction with id ${transaction.id} for user ${userId}`);
-
-            if (!transaction.ticker || Object.keys(cashSecuritiesMap).includes(transaction.ticker)) {
-                switch (transaction.investmentTransactionType) {
-                    case "fee":
-                    case "interest":
-                    case "deposit":
-                    case "transfer":
-                    case "other":
-                    case "contribution":
-                        transaction.ticker = "USD:CUR"
-                        break
-                    default:
-                        throw new Error(`no symbol available for transaction type ${transaction.investmentTransactionType}`)
-                }
-            }
-
-            let security = securitiesMap[transaction.ticker]
-            if (!security) throw new Error(`could not find symbol(${transaction.ticker} for holding`)
-
-            const optionId = await this.isTransactionAnOption(transaction, security.id);
-
-            // TODO: We should check if its just a general "cash" security...
-            if (!transaction.unitQuantity && transaction.ticker !== "USD:CUR") {
-                console.error("not unit quantity for non-cash security")
-                continue
-            }
-
-            if (!transaction.unitQuantity) transaction.unitQuantity = transaction.amount;
-
-            let price = transaction.unitPrice ? transaction.unitPrice : (transaction.amount / transaction.unitQuantity)
-
-            let securityType: SecurityType = SecurityType.equity;
-            if (transaction.ticker === 'USD:CUR') securityType = SecurityType.cashEquivalent
-            if (optionId) securityType = SecurityType.option
-
-            let transactionType = transformTransactionType(transaction.investmentTransactionType);
-            let newTpTx: TradingPostTransactions = {
-                optionId: optionId,
-                accountId: internalTpAccountId,
-                securityId: security.id,
-                securityType: securityType,
-                date: DateTime.fromSeconds(transaction.postedDate),
-                quantity: transaction.unitQuantity,
-                price: price,
-                amount: transaction.amount,
-                fees: transaction.feeAmount,
-                type: transactionType,
-                currency: null,
-            };
-
-            newTpTx = transformTransactionTypeAmount(transactionType, newTpTx);
-            tpTransactions.push(newTpTx)
-        }
-        return tpTransactions
     }
 
     institutions = async (institutions: FinicityInstitution[]): Promise<void> => {
