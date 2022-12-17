@@ -93,41 +93,40 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
                 }
 
             }} >Upload Photo</PrimaryButton>}
-        <View style={{ height: 100, width: 200, backgroundColor:"blue" }}>
-            {true && <ImageEditor
-                //asView={Platform.OS === "web"}
-                visible={editorVisible}
-                onCloseEditor={() => {
-                    setEditorVisible(false)
-                }}
-                imageUri={imageUri}
-                fixedCropAspectRatio={1}
-                lockAspectRatio={true}
-                minimumCropDimensions={{
-                    width: 100,
-                    height: 100,
-                }}
-                onEditingComplete={(result) => {
-                    (async () => {
-console.log("DONE EDITTINGS")
-                        const resizeResult = await manipulateAsync(result.uri, [{
-                            resize: {
-                                height: 512
-                            }
-                        }], {
-                            base64: true,
-                            format: SaveFormat.JPEG
-                        })
+
+        <ImageEditor
+            //asView={Platform.OS === "web"}
+            visible={editorVisible}
+            onCloseEditor={() => {
+                setEditorVisible(false)
+            }}
+            imageUri={imageUri}
+            fixedCropAspectRatio={1}
+            lockAspectRatio={true}
+            minimumCropDimensions={{
+                width: 100,
+                height: 100,
+            }}
+            onEditingComplete={(result) => {
+                (async () => {
+                    console.log("DONE EDITTINGS")
+                    const resizeResult = await manipulateAsync(result.uri, [{
+                        resize: {
+                            height: 512
+                        }
+                    }], {
+                        base64: true,
+                        format: SaveFormat.JPEG
+                    })
 
 
-                        setImageData({
-                            uri: "data:image/jpeg;base64," + resizeResult.base64
-                        });
-                    })()
-                }}
-                mode="crop-only"
-            />}
-        </View>
+                    setImageData({
+                        uri: "data:image/jpeg;base64," + resizeResult.base64
+                    });
+                })()
+            }}
+            mode="crop-only"
+        />
     </View>
 
     // const [imageUri, setImageUri] = useState("'https://i.pinimg.com/originals/39/42/a1/3942a180299d5b9587c2aa8e09d91ecf.jpg'")
