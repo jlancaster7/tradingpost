@@ -41,6 +41,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 //import { SSM } from '@aws-sdk/client-ssm'
 require("dotenv/config");
+console.log("WTF");
 var express_1 = __importDefault(require("express"));
 var body_parser_1 = __importDefault(require("body-parser"));
 var routes_api_alpha_1 = __importDefault(require("./routes-api-alpha"));

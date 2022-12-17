@@ -155,7 +155,7 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                                 style={{width: "100%", marginHorizontal: 0 }}
                                 selectedIndex={tab}
                                 onSelect={t => {
-                                    setTab(t);
+                                    //setTab(t);
                                 }}>
                                 {["Posts", "Analysts"].map(t => <Tab key={"tab_id" + t} style={{ marginTop: -4 }} title={t} />)}
                             </TabBar>

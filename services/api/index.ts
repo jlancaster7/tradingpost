@@ -1,5 +1,6 @@
 //import { SSM } from '@aws-sdk/client-ssm'
 import 'dotenv/config'
+console.log("WTF");
 import express from 'express'
 import bodyParser from 'body-parser';
 import api from './routes-api-alpha'

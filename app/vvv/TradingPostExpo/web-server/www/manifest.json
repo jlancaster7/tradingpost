@@ -1,11 +1,23 @@
 {
-  "background_color": "#ffffff",
+  "background_color": "#282869",
   "display": "standalone",
   "lang": "en",
   "name": "TradingPostExpo",
   "short_name": "TradingPostExpo",
   "start_url": "/?utm_source=web_app_manifest",
   "orientation": "portrait",
+  "related_applications": [
+    {
+      "platform": "itunes",
+      "id": "com.tradingpostapp"
+    },
+    {
+      "platform": "play",
+      "url": "http://play.google.com/store/apps/details?id=com.tradingpostapp",
+      "id": "com.tradingpostapp"
+    }
+  ],
+  "prefer_related_applications": true,
   "icons": [
     {
       "src": "\\pwa\\chrome-icon\\chrome-icon-144.png",

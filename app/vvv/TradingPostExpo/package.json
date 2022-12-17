@@ -1,5 +1,5 @@
 {
-  "name": "tradingpostexpo",
+  "name": "tradingpost",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start --dev-client",
@@ -13,6 +13,7 @@
     "launch": "node ./_scripts/launch",
     "build-scripts": "tsc -b tsconfig.scripts.json",
     "pre-publish": "npm uninstall @tradingpost/common && npm install @tradingpost/common",
+    "build-web": "npx expo export:web",
     "deploy": "npm uninstall @tradinpost/common && npm install @tradinpost/common && expo build:web && cd web-server && eb deploy"
   },
   "jest": {
@@ -48,6 +49,7 @@
     "expo-file-system": "~14.1.0",
     "expo-font": "~10.2.1",
     "expo-image-editor": "^1.7.1",
+    "expo-image-manipulator": "~10.4.0",
     "expo-image-picker": "~13.3.1",
     "expo-linking": "~3.2.2",
     "expo-localization": "~13.1.0",
@@ -77,8 +79,7 @@
     "react-native-webview": "11.23.0",
     "recoil": "^0.7.5",
     "sharp": "^0.31.1",
-    "url": "^0.11.0",
-    "expo-image-manipulator": "~10.4.0"
+    "url": "^0.11.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

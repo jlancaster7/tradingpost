@@ -32,4 +32,5 @@ export default class extends Extension {
     robinhoodLogin = this._makeFetch<RobinhoodLoginRequest, RobinhoodLoginResponse>("robinhoodLogin", this._defaultPostRequest)
     hoodPing = this._makeFetch<{ requestId: string }, { challengeStatus: RobinhoodChallengeStatus }>("hoodPing", this._defaultPostRequest)
     scheduleForDeletion = this._makeFetch<{ brokerage: DirectBrokeragesType, accountId: number }, {}>("scheduleForDeletion", this._defaultPostRequest)
+    createIbkrAccounts = this._makeFetch<{ account_ids: string[] }, {}>("createIbkrAccounts", this._defaultPostRequest)
 }

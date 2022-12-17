@@ -1,46 +1,53 @@
-import React, { useEffect, useState, useMemo, useRef } from "react"
-import { View, Animated, Pressable, Linking } from "react-native"
-import { Api, Interface } from "@tradingpost/common/api"
+import React, {useEffect, useState, useMemo, useRef} from "react"
+import {View, Animated, Pressable, Linking} from "react-native"
+import {Api, Interface} from "@tradingpost/common/api"
 //import { LinkBrokerageComponent } from "../components/LinkBrokerageComponent";
-import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../style"
-import { ElevatedSection, Section, Subsection } from "../components/Section"
-import { Autocomplete, AutocompleteItem, Button, Icon, IndexPath, Text, Layout } from "@ui-kitten/components"
-import { AddButton } from "../components/AddButton";
-import { useIsKeyboardVisible, useReadonlyEntity } from "../utils/hooks";
-import { ButtonPanel, ScrollWithButtons } from "../components/ScrollWithButtons";
-import { getHivePool } from "@tradingpost/common/db";
-import { IBKR } from "../images"
-import { useNavigation } from "@react-navigation/native"
-import { ScrollView } from "react-native-gesture-handler"
+import {elevated, flex, fonts, paddView, paddViewWhite, row, sizes} from "../style"
+import {ElevatedSection, Section, Subsection} from "../components/Section"
+import {Autocomplete, AutocompleteItem, Button, Icon, IndexPath, Text, Layout} from "@ui-kitten/components"
+import {AddButton} from "../components/AddButton";
+import {useIsKeyboardVisible, useReadonlyEntity} from "../utils/hooks";
+import {ButtonPanel, ScrollWithButtons} from "../components/ScrollWithButtons";
+import {getHivePool} from "@tradingpost/common/db";
+import {IBKR} from "../images"
+import {useNavigation} from "@react-navigation/native"
+import {ScrollView} from "react-native-gesture-handler"
 
 
 export function IbkrInfoScreen(props: any) {
     const nav = useNavigation();
-    const [acText, setAcText]  = useState('')
-    let [submittedText, setSubmittedText] = useState('') 
+    const [acText, setAcText] = useState('')
+    let [submittedText, setSubmittedText] = useState('')
     //const [accountIds, setAccountIds] = useState<string[]>([]);
-    
-    const accountIds = useReadonlyEntity<{ids: string[]}>({
+
+    const accountIds = useReadonlyEntity<{ ids: string[] }>({
         ids: []
     })
-    useEffect(()=> {
+    useEffect(() => {
         (async () => {
             if (submittedText === '') {
                 return
             }
-            
+
             accountIds.update({ids: [...accountIds.data.ids, submittedText]});
             console.log('use effect')
             console.log(accountIds)
             setSubmittedText('')
         })()
 
-    },[submittedText])
-    const { isKeyboardVisible } = useIsKeyboardVisible();
+    }, [submittedText])
+    const {isKeyboardVisible} = useIsKeyboardVisible();
     return (
-        
-        <View style={[flex, { margin: sizes.rem1}]}>
-            <View style={{borderRadius: 20, overflow: 'hidden', aspectRatio: 1, height: '15%', justifyContent: 'center', alignSelf: 'center'}}>
+
+        <View style={[flex, {margin: sizes.rem1}]}>
+            <View style={{
+                borderRadius: 20,
+                overflow: 'hidden',
+                aspectRatio: 1,
+                height: '15%',
+                justifyContent: 'center',
+                alignSelf: 'center'
+            }}>
                 <IBKR height={"100%"} width={'100%'}/>
             </View>
             <View style={{marginVertical: 20}}>
@@ -60,7 +67,7 @@ export function IbkrInfoScreen(props: any) {
                         setAcText('')
 
                     }}
-                    
+
                     accessoryRight={
                         (props) => <AddButton
                             onPress={() => {
@@ -69,41 +76,51 @@ export function IbkrInfoScreen(props: any) {
                                 setAcText('')
 
                             }}
-                            
+
                             height={(props?.style as any)?.height * 1.5}
                             width={(props?.style as any)?.width * 1.5}
 
                         />
                     }
-                    >
-                    
+                >
+
                 </Autocomplete>
             </View>
-            <View style={{height: '20%', borderWidth: 1, borderColor: '#ccc', marginVertical: sizes.rem0_5, borderRadius: sizes.rem0_5}}>
-                <ScrollView  key={`view_id_${accountIds.data.ids.length}`} >
+            <View style={{
+                height: '20%',
+                borderWidth: 1,
+                borderColor: '#ccc',
+                marginVertical: sizes.rem0_5,
+                borderRadius: sizes.rem0_5
+            }}>
+                <ScrollView key={`view_id_${accountIds.data.ids.length}`}>
                     {
-                        accountIds.data.ids.map((v,i)=> <View key={`id_${i}`} style={{ padding: sizes.rem0_5, flexDirection: "row" }}><Text style={{ textAlign: "left", flex: 1 }}>{v}</Text></View>)
+                        accountIds.data.ids.map((v, i) => <View key={`id_${i}`} style={{
+                            padding: sizes.rem0_5,
+                            flexDirection: "row"
+                        }}><Text style={{textAlign: "left", flex: 1}}>{v}</Text></View>)
                     }
                 </ScrollView>
-            </View>  
-            
-            <View key='1' style={[ isKeyboardVisible ? { height: 0 }: {} ,{position: 'absolute', bottom: 0}]}>
+            </View>
+
+            <View key='1' style={[isKeyboardVisible ? {height: 0} : {}, {position: 'absolute', bottom: 0}]}>
                 <Text style={{textAlign: 'left', fontSize: fonts.xSmall}}>
                     {note}
                 </Text>
                 <Text style={{color: '#0000EE', marginVertical: 10, fontSize: fonts.xSmall}}
-                    onPress={()=> 
-                        Linking.openURL('https://guides.interactivebrokers.com/ibrit/topics/reporting_integration_process.htm')}>
-                        {'IBKR Reporting Integration Process'}
+                      onPress={() =>
+                          Linking.openURL('https://guides.interactivebrokers.com/ibrit/topics/reporting_integration_process.htm')}>
+                    {'IBKR Reporting Integration Process'}
                 </Text>
-                <ButtonPanel 
-                    viewProps={{borderTopWidth: 0,
-                                flexDirection: "row", 
-                                paddingTop: sizes.rem1,
-                                paddingBottom: 0,
-                                justifyContent: "space-evenly", 
-                                zIndex: 1000
-                            }}
+                <ButtonPanel
+                    viewProps={{
+                        borderTopWidth: 0,
+                        flexDirection: "row",
+                        paddingTop: sizes.rem1,
+                        paddingBottom: 0,
+                        justifyContent: "space-evenly",
+                        zIndex: 1000
+                    }}
                     left={{
                         text: 'Go back',
                         onPress: async () => {
@@ -117,25 +134,22 @@ export function IbkrInfoScreen(props: any) {
                                 if (!accountIds.data.ids.length) {
                                     return
                                 }
-                                await Api.Ibkr.extensions.insertNewAccounts({account_ids: accountIds.data.ids});
+                                await Api.Brokerage.extensions.createIbkrAccounts({account_ids: accountIds.data.ids});
                                 const body = emailBody(accountIds.data.ids);
-                                Linking.openURL(`mailto:reportingintegration@interactivebrokers.com?subject=IBKR/TradingPost Reporting Integration&body=${body}`) 
-                            
-                        } catch (e) {
+                                Linking.openURL(`mailto:reportingintegration@interactivebrokers.com?subject=IBKR/TradingPost Reporting Integration&body=${body}`)
+                            } catch (e) {
                                 console.error(e);
-                        }
+                            }
                         }
                     }}
-            />
+                />
             </View>
-            
         </View>
-
     )
 
 }
 
-const emailBody = (accountIds: string[]) => { 
+const emailBody = (accountIds: string[]) => {
     return `To Whom It May Concern,
 
 I would like to integrate my Interactive Brokers reporting data with the TradingPost feed.

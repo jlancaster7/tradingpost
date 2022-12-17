@@ -5,23 +5,19 @@ import {parse} from 'url'
 
 if (!__DEV__) {
     configApi({
-        apiBaseUrl: "http://192.168.4.186:8082"
+        apiBaseUrl: "https://api.tradingpostapp.com"
     })
 } else if (__DEV__ && (AppOwnership.Expo === Constants.appOwnership || AppOwnership.Standalone === Constants.appOwnership || !Constants.appOwnership)) {
 
     if (Constants.manifest?.hostUri) {
-        console.log("HI!!")
         configApi({
-            apiBaseUrl: 'http://192.168.4.186:8082'
+            apiBaseUrl: `http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
         })
-        // configApi({
-        //     apiBaseUrl: `http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
-        // })
     } else {
-        console.log("HERE...?")
+
         //manual ip for api server... have been trying to find a way to avoid this...
         configApi({
-            apiBaseUrl: 'http://192.168.4.186:8082'//`http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
+            apiBaseUrl: 'http://localhost:8082'//`http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
         })
     }
 }

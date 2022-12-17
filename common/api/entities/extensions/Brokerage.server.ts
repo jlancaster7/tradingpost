@@ -5,7 +5,9 @@ import {v4 as uuidv4} from 'uuid';
 import fetch from 'node-fetch';
 import {
     BrokerageTaskStatusType,
-    BrokerageTaskType,
+    BrokerageTaskType, DirectBrokeragesType,
+    IbkrAccount,
+    TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountsTable,
     TradingPostBrokerageAccountStatus
 } from "../../../brokerage/interfaces";
@@ -216,5 +218,64 @@ export default ensureServerExtensions<Brokerage>({
 
         await brokerageRepo.scheduleTradingPostAccountForDeletion(req.body.accountId);
         return {};
+    },
+    createIbkrAccounts: async (req) => {
+        const {pgp, pgClient} = await init;
+        const repository = new Repository(pgClient, pgp);
+        const ibkrAccounts = req.body.account_ids.map(ai => {
+            let x: IbkrAccount = {
+                accountId: ai,
+                masterAccountId: ai,
+                userId: req.extra.userId,
+                van: null,
+                accountTitle: null,
+                accountType: null,
+                zip: null,
+                type: null,
+                alias: null,
+                country: null,
+                city: null,
+                accountRepresentative: null,
+                baseCurrency: null,
+                capabilities: null,
+                customerType: null,
+                dateClosed: null,
+                dateFunded: null,
+                dateOpened: DateTime.now(),
+                state: null,
+                street: null,
+                street2: null,
+                primaryEmail: null,
+                accountProcessDate: DateTime.now()
+            }
+            return x;
+        });
+        await repository.upsertIbkrAccounts(ibkrAccounts);
+
+        const ibkrInstitution = await repository.getInstitutionByName("Interactive Brokers - Account Management");
+        if (!ibkrInstitution) throw new Error("no institution found by name");
+
+        const tpAccounts = req.body.account_ids.map(ai => {
+            let x: TradingPostBrokerageAccounts = {
+                userId: req.extra.userId,
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
+                error: false,
+                type: '',
+                status: '',
+                hiddenForDeletion: false,
+                errorCode: 0,
+                mask: null,
+                institutionId: ibkrInstitution?.id,
+                brokerName: DirectBrokeragesType.Ibkr,
+                accountNumber: ai,
+                name: '',
+                subtype: null,
+                officialName: null
+            }
+            return x;
+        })
+        await repository.upsertTradingPostBrokerageAccounts(tpAccounts);
+
+        return {}
     }
 })
