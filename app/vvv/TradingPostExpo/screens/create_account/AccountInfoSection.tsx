@@ -198,7 +198,7 @@ function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthe
                         <View
                             style={[textInputWiz, { flexDirection: "row" }]}
                         >
-                            <CheckBox checked={agreeToTerms} onChange={setAgreeToTerms} />
+                            <CheckBox checked={agreeToTerms} onChange={setAgreeToTerms} style={{marginRight: 10}}/>
                             <Text>Agree To </Text>
                             <Link onPress={() => {
                                 linkTo('/create/terms')
@@ -207,7 +207,7 @@ function AccountBasicInfo(props: CreateAccountProps & { refs: FieldRefs, isAuthe
                         <View
                             style={[textInputWiz, { flexDirection: "row" }]}
                         >
-                            <CheckBox checked={agreeToPrivacy} onChange={setAgreeToPrivacy} />
+                            <CheckBox checked={agreeToPrivacy} onChange={setAgreeToPrivacy} style={{marginRight: 10}} />
                             <Text>Agree To </Text>
                             <Link onPress={() => {
                                 linkTo('/create/privacy')
