@@ -17,7 +17,7 @@ import { useData } from '../lds';
 
 console.log("Loading IMAGE PICKER")
 export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any) => void }>) => {
-    const { loginState, forceTrigger } = useAppUser();
+    const { loginState, updateState  } = useAppUser();
     const appUser = loginState?.appUser;
     console.log("Loading inside picker")
     const [imageUri, setImageUri] = useState<string>(),
@@ -84,7 +84,7 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
                     })
                     if (appUser)
                         appUser.profile_url = imageData.uri;
-                    forceTrigger();
+                    updateState();
                     console.log("TRIGGERING");
                     props.navigation.goBack();
                 }

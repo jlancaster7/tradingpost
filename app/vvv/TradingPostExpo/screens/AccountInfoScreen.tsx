@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { ElevatedSection, Section, Subsection } from "../components/Section"
 import { SwitchField } from "../components/SwitchField"
 import { Api } from "@tradingpost/common/api";
@@ -56,6 +56,14 @@ export function AccountInfoScreen() {
         },
         is_deleted: appUser?.is_deleted
     })
+    //HACK: think through a better way of doing this.
+    useEffect(() => {
+        setAccountUpdates((a) => {
+            const clone = { ...a };
+            clone.profile_url = appUser?.profile_url;
+            return clone;
+        });
+    }, [loginState?.updated.toString(), appUser?.profile_url])
 
     return (
         <ScrollWithButtons
@@ -137,11 +145,12 @@ const AccountInfoContent = (props: { updates: IUserUpdate, setUpdates: (updates:
         value: value.symbol,
         iconUrl: value.logo_url
     }))
+    const { loginState } = useAppUser();
 
     return <ElevatedSection
         title="">
         <Text style={[questionStyle, { marginTop: sizes.rem0_5, textAlign: 'center' }]}>Tap to Modify Profile Picture</Text>
-        <ProfileButton userId={''} profileUrl={updates.profile_url || ''} size={sizes.rem8} editable />
+        <ProfileButton key={loginState?.updated.toString()} userId={''} profileUrl={updates.profile_url || ''} size={sizes.rem8} editable />
         <Text style={[questionStyle, { marginTop: sizes.rem0_5 }]}>Bio</Text>
         <KeyboardAvoidingInput
             value={updates.bio}
@@ -282,32 +291,32 @@ const AdvancedTabContent = (props: { appUser: IUserGet | undefined, signOut: any
     //@ts-ignore
     const alertPolyfill = (title, description, options, extra) => {
         const result = window.confirm([title, description].filter(Boolean).join('\n'))
-    
+
         if (result) {
             //@ts-ignore
-            const confirmOption = options.find(({style}) => style !== 'cancel')
+            const confirmOption = options.find(({ style }) => style !== 'cancel')
             confirmOption && confirmOption.onPress()
         } else {
             //@ts-ignore
-            const cancelOption = options.find(({style}) => style === 'cancel')
+            const cancelOption = options.find(({ style }) => style === 'cancel')
             cancelOption && cancelOption.onPress()
         }
     }
-    
+
     const alert = Platform.OS === 'web' ? alertPolyfill : Alert.alert;
 
 
     return <ElevatedSection title="" style={{ padding: 5 }}>
         <View>
             <SwitchField label='Analyst'
-                        toolTipText={`Becoming an analyst allows you to display your portfolio to subscribers, customize your profile and enable you to post premium content on TP.`}
-                        toolTipStyle={{alignItems: 'flex-start'}}
-                        checked={props.updates.settings?.analyst} 
-                        onChange={onAnalystCheckChanged} 
-                        viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5, padding: 5 }} 
-                        toggleStyle={{}} 
-                        textStyle={{ fontSize: fonts.large, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }} 
-                        />
+                toolTipText={`Becoming an analyst allows you to display your portfolio to subscribers, customize your profile and enable you to post premium content on TP.`}
+                toolTipStyle={{ alignItems: 'flex-start' }}
+                checked={props.updates.settings?.analyst}
+                onChange={onAnalystCheckChanged}
+                viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5, padding: 5 }}
+                toggleStyle={{}}
+                textStyle={{ fontSize: fonts.large, fontWeight: '500', alignSelf: 'center', color: AppColors.primary }}
+            />
         </View>
         <Section title='Display To Subscribers' style={{ padding: 5 }}>
             <SwitchField label='Performance' checked={props.updates.settings?.portfolio_display.performance} onChange={onPerformanceCheckChanged} viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginVertical: 5 }} toggleStyle={{}} textStyle={{ fontSize: 14, alignSelf: 'center' }} />
@@ -317,8 +326,8 @@ const AdvancedTabContent = (props: { appUser: IUserGet | undefined, signOut: any
                 <PrimaryButton style={{ width: "60%", paddingHorizontal: 4, backgroundColor: AppColors.secondary, borderColor: AppColors.secondary }} onPress={() => {
                     nav.navigate('Subscription')
                 }}>
-                    {evaProps => <Text {...evaProps} style={{textAlign: 'center', color: 'white', paddingHorizontal: 6}}>Manage Subscriptions</Text>}
-                    
+                    {evaProps => <Text {...evaProps} style={{ textAlign: 'center', color: 'white', paddingHorizontal: 6 }}>Manage Subscriptions</Text>}
+
                 </PrimaryButton>
             </View>
         </Section>
@@ -343,7 +352,7 @@ const AdvancedTabContent = (props: { appUser: IUserGet | undefined, signOut: any
                 <Text style={{ fontSize: 14, alignSelf: 'center' }}>
                     Delete Account
                 </Text>
-                <PrimaryButton style={{ width: "40%", backgroundColor: "#D81222", borderColor: "#D81222" }} onPress={ async () => {
+                <PrimaryButton style={{ width: "40%", backgroundColor: "#D81222", borderColor: "#D81222" }} onPress={async () => {
                     return alert(
                         `Are you sure you want to delete your account?`,
                         '',
@@ -363,7 +372,7 @@ const AdvancedTabContent = (props: { appUser: IUserGet | undefined, signOut: any
                             }
                         ]
                     )
-                 }}>
+                }}>
                     FOREVER
                 </PrimaryButton>
             </View>

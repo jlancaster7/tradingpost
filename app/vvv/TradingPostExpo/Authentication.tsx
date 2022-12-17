@@ -37,11 +37,13 @@ export const useAppUser = (tracker?: string) => {
         setupStatus?: {
             needsSettings: boolean,
             needsAnalystSettings: boolean
-        }
+        },
+        updated: Date
     };
 
     const createLoginState = (currentUser: typeof _appUser, loginResult: typeof _loginResult): LoginState => {
         return {
+            updated: new Date(),
             appUser: currentUser,
             authToken: loginResult?.user_id ? loginResult.token : undefined,
             loginResult: loginResult,
@@ -70,9 +72,16 @@ export const useAppUser = (tracker?: string) => {
     return {
         loginState,
         forceTrigger: () => {
-            if (_loginResult){
-                console.log("FORCING RESULT")
+            if (_loginResult) {
                 setLoginResult({ ..._loginResult });
+            }
+        },
+        updateState: () => {
+            if (_loginResult) {
+                setLoginResult({ ..._loginResult });
+            }
+            if (loginState) {
+                setLoginState({ ...loginState, updated: new Date() })
             }
         },
         signIn: useCallback(async (email: string, pass: string) => {
