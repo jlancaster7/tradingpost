@@ -1,16 +1,16 @@
-import {bannerText, flex, paddView, paddViewWhite, sizes, thinBannerText} from "../style";
+import {flex, sizes} from "../style";
 
 import React, {useEffect, useRef, useState} from "react";
 import {Animated, Pressable, Text, Alert, Platform} from "react-native";
 import {Icon} from "@ui-kitten/components";
 
 import {Api} from "@tradingpost/common/api";
-import {ElevatedSection, Section} from "./Section";
+import {Section} from "./Section";
 import {Table} from "./Table";
 import {AddButton, EditButton} from "./AddButton";
 import {openBrowserAsync} from 'expo-web-browser';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useLinkTo, useNavigation} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {DirectBrokeragesType} from "@tradingpost/common/brokerage/interfaces";
 
 //@ts-ignore
@@ -32,9 +32,11 @@ const alert = Platform.OS === 'web' ? alertPolyfill : Alert.alert;
 export const LinkBrokerageComponent = () => {
     const nav = useNavigation();
     const opacityAnim = useRef(new Animated.Value(0)).current;
-    const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
+    const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts> | null>>()
     const intervalRef = useRef<any>();
     const [needsRefresh, setNeedsRefresh] = useState<{}>();
+    const [brokerLink, setLink] = useState("");
+
     const openLink = async () => {
         await Api.User.extensions.generateBrokerageLink(undefined).then(({link}) => {
             setLink(link)
@@ -78,16 +80,18 @@ export const LinkBrokerageComponent = () => {
                 useNativeDriver: true
             }).start();
     }, [])
-    const [brokerLink, setLink] = useState("");
+
     useEffect(() => {
     }, [needsRefresh])
 
-    useEffect(() => {
-        Api.User.extensions.getBrokerageAccounts().then((r) => {
-            setAccounts(r);
-        })
-    }, [])
-
+    useFocusEffect(
+        React.useCallback(() => {
+            setAccounts(null);
+            Api.User.extensions.getBrokerageAccounts().then((r) => {
+                setAccounts(r);
+            });
+        }, [])
+    );
 
     return (
         <Section style={flex} title="Link Brokerage Account" button={(buttonProps) => accounts?.length ? <EditButton
