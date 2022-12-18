@@ -61,13 +61,6 @@ export const WatchlistScreen = (props: any) => {
         
     },[]))
 
-    useEffect(() => {
-        (async () => {
-
-            
-        })()
-    }, [])
-
     const { columns: watchlistItemColumns } = useWatchlistItemColumns(true)
     const { securities: { bySymbol, byId } } = useSecuritiesList();
     const hideEmptyNote = false;
@@ -103,7 +96,7 @@ export const WatchlistScreen = (props: any) => {
                 
                 <List
                     datasetKey={`${focus}`}
-                    listKey="quick_watch_list"
+                    listKey={`quick_watch_list${focus}`}
                     loadingMessage={" "}
                     noDataMessage={" "}
                     loadingItem={undefined}
@@ -125,15 +118,17 @@ export const WatchlistScreen = (props: any) => {
                 />
             </View>,
             <WatchlistSection
+                datasetKey={`my_watchlist_${focus}`}
                 title="My Watchlists"
-                key={"my_watchlist"}
+                key={`my_watchlist${focus}`}
                 watchlists={watchlists?.created}
                 showAddButton
                 hideNoteOnEmpty
             />,
             <WatchlistSection
+                datasetKey={`shared_watchlist_${focus}`}
                 title="Shared Watchlists"
-                key={"shared_watchlist"}
+                key={`shared_watchlist${focus}`}
                 watchlists={watchlists?.saved}
                 shared
             />

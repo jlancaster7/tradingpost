@@ -13,7 +13,7 @@ import { ElevatedSection, Section } from "./Section"
 import { ITableColumn, Table } from "./Table"
 
 
-export function WatchlistSection(props: { title: string, watchlists: Interface.IWatchlistList[] | undefined, showAddButton?: boolean, shared?: boolean, hideNoteOnEmpty?: boolean }) {
+export function WatchlistSection(props: { title: string, watchlists: Interface.IWatchlistList[] | undefined, showAddButton?: boolean, shared?: boolean, hideNoteOnEmpty?: boolean, datasetKey?: string }) {
     const nav = useNavigation<any>();
     const [focus, setFocus] = useState(false);
     useFocusEffect(useCallback(()=> {
@@ -32,7 +32,7 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
         nav.navigate("WatchlistEditor")
     }} /> : undefined}>
         <List 
-            datasetKey={`${props.watchlists?.length}`}
+            datasetKey={`${props.datasetKey ? props.datasetKey : props.watchlists?.length}`}
             listKey={props.title}
             loadingMessage={" "}
             noDataMessage={" "}

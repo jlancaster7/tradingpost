@@ -64,6 +64,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
     const [returns, setReturns] = useState<AwaitedReturn<typeof Api.User.extensions.getReturns>>();
     const [twReturns, settwReturns] = useState<{ x: string, y: number }[]>();
     const [portPeriod, setPortPeriod] = useState("1Y")
+    const [focus, setFocus] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -96,9 +97,8 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                     })
                 }
                 setWatchlists(lists);
-                //          setTrades(trades);
                 setHoldings(holdings);
-
+                setFocus((f) => !f)
             }
             catch (ex: any) {
                 toast.show(ex.message);
@@ -294,7 +294,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                     </View>
                     
                     <List
-                        datasetKey={``}
+                        datasetKey={`quick_watch_${focus}`}
                         listKey="quick_watch_list"
                         loadingMessage={" "}
                         noDataMessage={" "}
@@ -320,6 +320,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                 </View>
                 ,
                 <WatchlistSection
+                    datasetKey={`my_watchlist_${focus}`}
                     title="My Watchlists"
                     key={"my_watchlist"}
                     watchlists={watchlists?.created}
@@ -327,6 +328,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                     hideNoteOnEmpty
                 />,
                 <WatchlistSection
+                    datasetKey={`shared_watch_${focus}`}
                     title="Shared Watchlists"
                     key={"shared_watchlist"}
                     watchlists={watchlists?.saved}

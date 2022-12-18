@@ -1,4 +1,6 @@
+import { useNavigation } from "@react-navigation/native";
 import { Api } from "@tradingpost/common/api";
+import { sleep } from "@tradingpost/common/utils/sleep";
 import { Button, } from "@ui-kitten/components";
 import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
@@ -23,30 +25,35 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
 
     const watchlistId = props.route?.params?.watchlistId;
     //TODO: HACK need to clean this u
+    const nav = useNavigation()
     const [magic, setMagic] = useState(true);
     const toast = useToast();
     useEffect(() => {
-        const converter = pickerProps.symbolConverter.current;
-        if (watchlistId && converter)
-            if (watchlistId > 0) {
-                Api.Watchlist.get(watchlistId).then((watchlist) => {
-                    //TODO: need to deal with settings for primary watchlist
-                    setName(watchlist.name);
-                    setWatchlistType(watchlist.type as WLTypes);
-                    setNote(watchlist.note);
-                    const selectedItems = converter(watchlist.items.map((s) => s.symbol));
-                    pickerProps.onSelectedItemschanged(selectedItems);
-
-                    //TODO:: need to cache items notes since this is an delete and insert style update
-
-                }).catch((ex) => {
-                    toast.show(ex.message);
-                })
+        (async ()=> {
+            const converter = pickerProps.symbolConverter.current;
+            if (watchlistId && converter){
+                if (watchlistId > 0) {
+                    Api.Watchlist.get(watchlistId).then((watchlist) => {
+                        //TODO: need to deal with settings for primary watchlist
+                        setName(watchlist.name);
+                        setWatchlistType(watchlist.type as WLTypes);
+                        setNote(watchlist.note);
+                        const selectedItems = converter(watchlist.items.map((s) => s.symbol));
+                        pickerProps.onSelectedItemschanged(selectedItems);
+    
+                        //TODO:: need to cache items notes since this is an delete and insert style update
+    
+                    }).catch((ex) => {
+                        toast.show(ex.message);
+                    })
+                }
+                else {
+                    setName("Primary Watchlists")
+                    setWatchlistType("primary");
+                }
             }
-            else {
-                setName("Primary Watchlists")
-                setWatchlistType("primary");
-            }
+        })()
+        
     }, [watchlistId, Boolean(pickerProps.symbolConverter.current)])
 
 
@@ -71,14 +78,10 @@ export const WatchlistEditorScreen = (props: TabScreenProps<{ watchlistId?: numb
                                     type: type
                                 }
 
-                                if (props.route?.params?.watchlistId && props.route.params.watchlistId > 0)
-                                    await Api.Watchlist.update(props.route.params.watchlistId, watchlistData)
-                                else
-                                    await Api.Watchlist.insert(watchlistData)
+                                if (props.route?.params?.watchlistId && props.route.params.watchlistId > 0) await Api.Watchlist.update(props.route.params.watchlistId, watchlistData)
+                                else await Api.Watchlist.insert(watchlistData)
 
-                                //const lists = await Api.Watchlist.extensions.getAllWatchlists();
-                                //console.log(lists)
-                                props.navigation.goBack();
+                                nav.goBack()
                             }
                         }
                         else {

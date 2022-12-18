@@ -1,10 +1,10 @@
-import { NavigationProp, useNavigation } from "@react-navigation/native"
+import { NavigationProp, useFocusEffect, useNavigation } from "@react-navigation/native"
 import { Api, Interface } from "@tradingpost/common/api"
 import WatchlistApi from "@tradingpost/common/api/entities/apis/WatchlistApi"
 import { IWatchlistGetExt } from "@tradingpost/common/api/entities/extensions/Watchlist"
 import { ISecurityList } from "@tradingpost/common/api/entities/interfaces"
 import { Avatar, Icon } from "@ui-kitten/components"
-import React, { PropsWithChildren, useEffect, useRef, useState, Component } from "react"
+import React, { PropsWithChildren, useEffect, useRef, useState, Component, useCallback } from "react"
 import { Header, Subheader } from "../components/Headers";
 import { View, Text, Pressable, ScrollView, useWindowDimensions, Animated, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
 import { useToast } from "react-native-toast-notifications"
@@ -22,6 +22,7 @@ import { MultiTermFeedPart } from "../components/MultiTermFeed"
 import { List } from "../components/List"
 import { WatchlistItemRenderItem } from "../components/WatchlistItemRenderItem"
 import { PrimaryChip } from "../components/PrimaryChip"
+import { sleep } from "@tradingpost/common/utils/sleep"
 
 
 export const useNoteField = (hideEmptyNote?: boolean) => {
@@ -181,7 +182,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
     const scrollRef = useRef<FlatList>(null);
 
     const toast = useToast();
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         (async () => {
             try {
                 if (watchlistId) {
@@ -189,16 +190,43 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                     setIsFav(w.is_saved)
                     setWatchlist(w as IWatchlistGetExt);
                 }
+                if (watchlist) {
+                    setWatchlistTickers(watchlist.items.map(a => `$${a.symbol}`))
+                }
             } catch (err) {
                 console.error(err);
             }
         })()
-    }, [watchlistId])
-    useEffect(() => {
-        if (watchlist) {
-            setWatchlistTickers(watchlist.items.map(a => `$${a.symbol}`))
-        }
-    }, [watchlist])
+    }, []))
+    useFocusEffect(useCallback(() => {
+        (async () => {
+            try {
+                if (watchlist) {
+                    setWatchlistTickers(watchlist.items.map(a => `$${a.symbol}`))
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        })()
+    }, [watchlist]))
+
+    useFocusEffect(useCallback(() => {
+        (async () => {
+            try {
+                if (watchlistId) {
+                    const w = await WatchlistApi.get(watchlistId)
+                    setIsFav(w.is_saved)
+                    setWatchlist(w as IWatchlistGetExt);
+                }
+                if (watchlist) {
+                    setWatchlistTickers(watchlist.items.map(a => `$${a.symbol}`))
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        })()
+    }, [watchlistId]))
+
     const { securities: { bySymbol, byId } } = useSecuritiesList();
     const [shownMap, setShownMap] = useState<Record<string, boolean>>({})
     return <View style={[flex]}>
@@ -264,7 +292,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                                  
                             <List   
                                 listKey={`watchlist_id}`}
-                                datasetKey={`watchlist_id_${watchlist?.id}`}
+                                datasetKey={`watchlist_id_${watchlist?.items.length}`}
                                 data={watchlist?.items}
                                 loadingMessage={" "}
                                 noDataMessage={" "}

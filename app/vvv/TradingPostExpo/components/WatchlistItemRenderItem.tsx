@@ -37,7 +37,7 @@ export const WatchlistItemRenderItem = (props: {item: any, bySymbol: any, byId: 
                         <Text style={{ fontWeight: '900', color: '#454545'}}>
                                     {props.byId[secId] ? (props.byId[secId].symbol === 'USD:CUR' ? 'Cash' : props.byId[secId].symbol) : ''}
                         </Text>
-                        <Pressable onPress={() => {
+                        {/*<Pressable onPress={() => {
                             if (props.item.item.note || !props.hideEmptyNote) {
                                 props.setShownMap({
                                     ...props.shownMap,
@@ -52,6 +52,7 @@ export const WatchlistItemRenderItem = (props: {item: any, bySymbol: any, byId: 
                                 fill={AppColors.primary}
                                 />
                         </Pressable>
+                        */}
                     </View>
                     <View style={{flex: 1, flexDirection: 'row', alignItems: 'center'}}>
                         <Text style={[{ color: '#606060', fontSize: fonts.xSmall, marginRight: 4}, intradayChange >= 0 ? (!intradayChange ? {color: 'black'} : {color: 'green'}) : {color: 'red'}]}>
