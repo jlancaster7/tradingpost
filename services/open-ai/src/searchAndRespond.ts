@@ -5,11 +5,13 @@ import { dot, multiply, norm } from 'mathjs';
 import FinnhubService from './service';
 import { OpenAIClass } from './openAI';
 import { TranscriptEmbedding, TranscriptEmbeddingTable } from './interfaces';
+import { GPU } from 'gpu.js';
 
 
 export class SearchAndRespond {
     openaiServices: OpenAIClass;
     finnhubService: FinnhubService;
+    gpu: GPU;
     openAiResponseModel: string;
     openAiEmbedModel: string;
     maxResponseTokens: number;
@@ -17,6 +19,7 @@ export class SearchAndRespond {
     n: number;
 
     constructor(init: initOutput, 
+        gpu: GPU,
         openAiResponseModel: string = 'text-davinci-003', 
         maxResponseTokens: number = 500, 
         openAiEmbedModel: string = 'text-embedding-ada-002',
@@ -25,6 +28,7 @@ export class SearchAndRespond {
         ) {
         this.openaiServices = init.openaiServices;
         this.finnhubService = init.finnhubService;
+        this.gpu = gpu;
         this.openAiResponseModel = openAiResponseModel;
         this.openAiEmbedModel = openAiEmbedModel;
         this.maxResponseTokens = maxResponseTokens;
@@ -39,22 +43,30 @@ export class SearchAndRespond {
 
     cosineSimilarity = (arr1: number[], arr2: number[]): number => {
         if (arr1.length !== arr2.length) throw new Error('arrays in dot product calc were not of the same length');
-        const norm1 = Number(norm(arr1));
-        const norm2 = Number(norm(arr2));
-        return dot(arr1, arr2) / (norm1 * norm2);
+        return dot(arr1, arr2) / (Number(norm(arr1)) * Number(norm(arr2)));
     }
-
-    matrixMultiplication = (matrix1: number[][], matrix2: number[][]): number[][] => {
+    checkForMatrixMult = (matrix1: number[][], matrix2: number[][]) => {
         for (let i = 0; i < matrix2.length - 1; i++) {
             if (matrix2[i] !== matrix2[i + 1]) throw new Error("Matrix 2 doesn't have rows of equal length.");
         }
         if (matrix1[0].length !== matrix2.length) throw new Error("Inner dimenssion of the two matricies do not equal.");
-    
+    }
+    matrixMultiplication = (matrix1: number[][], matrix2: number[][]): number[][] => {
+        this.checkForMatrixMult(matrix1, matrix2);
         return multiply(matrix1, matrix2);
     }
 
     gpuMatrixMultiplication = (matrix1: number[][], matrix2: number[][]): number[][] => {
-        return [[]];
+        this.checkForMatrixMult(matrix1, matrix2);
+        const multiplyMatrix = this.gpu.createKernel(function(a: number[][], b: number[][]) {
+            let sum = 0;
+            for (let i = 0; i < matrix2.length; i++) {
+            sum += a[this.thread.y][i] * b[i][this.thread.x];
+            }
+            return sum;
+        }).setOutput([1, matrix2[0].length])
+        const result = multiplyMatrix(matrix1, matrix2)
+        return result as number[][];
     }
 
     findMostSimilarSpeech = async (symbol: string, prompt: string): Promise<string>  => {
@@ -63,7 +75,7 @@ export class SearchAndRespond {
         let embeddingsWithDist: (TranscriptEmbeddingTable & {dist?: number})[] = embeddings;
         for (let i = 0; i < embeddingsWithDist.length; i++) {
             const embed = JSON.parse(embeddingsWithDist[i].embedding)
-            embeddingsWithDist[i].dist = this.euclideanDistance(embed, promptEmbedding);
+            embeddingsWithDist[i].dist = this.cosineSimilarity(embed, promptEmbedding);
         }
         embeddingsWithDist.sort((a ,b) => (b.dist || -100) - (a.dist || 100))
         
