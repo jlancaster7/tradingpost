@@ -197,7 +197,7 @@ export default ({ navigation }: RootStackScreenProps<"Root">) => {
         />
 
     </View>
-        {!selectedIndex && <Pressable
+        {!selectedIndex && Platform.OS !== "web" && <Pressable
             onPress={() => {
                 navigation.navigate('AppInformation')
             }}>

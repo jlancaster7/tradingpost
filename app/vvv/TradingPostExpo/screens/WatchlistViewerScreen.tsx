@@ -177,7 +177,6 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
     const [watchlistTickers, setWatchlistTickers] = useState<string[]>();
     const { loginState } = useAppUser();
     const appUser = loginState?.appUser;
-    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const translateHeaderY = useRef(new Animated.Value(0)).current;
     const scrollRef = useRef<FlatList>(null);
 

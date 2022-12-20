@@ -3,35 +3,35 @@ import { Api, Interface } from "@tradingpost/common/api";
 import React, { useEffect, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import { View, Text } from "react-native";
-import { SizeParts }  from './List'
+import { SizeParts } from './List'
 import { PlusContentButton } from "../components/PlusContentButton";
 import { PostList } from "../components/PostList";
 import { spaceOnSide, postInnerHeight, PostView } from "../components/PostView";
-import  {DashTabScreenProps}  from "../navigation/pages";
+import { DashTabScreenProps } from "../navigation/pages";
 
-export const MultiTermFeedPart = (props: { searchText?: string[]}) => {
+export const MultiTermFeedPart = (props: { searchText?: string[] }) => {
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const { searchText } = props
     return <PostList
         key={"STATIC"}
-        datasetKey={ "____________"}
-        
+        datasetKey={"____________"}
+
         posts={async (allItems, page, sizeCache) => {
             console.log(page)
             const posts = (await Api.Post.extensions.multitermfeed({
                 page,
                 data: searchText ? {
                     terms: searchText
-                        } : undefined
+                } : undefined
             }));
-            
+
             const newItems = [...(allItems || []), ...posts]
             newItems.forEach((itm, index) => {
                 if (!sizeCache[index]) {
                     sizeCache[index] = {
                         index,
                         offset: index ? sizeCache[index - 1].offset + sizeCache[index - 1].length : 0,
-                        length: postInnerHeight(itm, windowWidth - spaceOnSide)
+                        length: postInnerHeight(itm, Math.min(windowWidth, 680) - spaceOnSide)
                     }
                 }
             })

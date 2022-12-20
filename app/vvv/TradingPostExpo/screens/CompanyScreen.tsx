@@ -36,7 +36,6 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
     const [description, setDescription] = useState<string>();
     const [portPeriod, setPortPeriod] = useState("1Y")
     const [tab, setTab] = useState(0);
-    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const scrollRef = useRef<FlatList>(null);
     const translateHeaderY = useRef(new Animated.Value(0)).current;
     /*

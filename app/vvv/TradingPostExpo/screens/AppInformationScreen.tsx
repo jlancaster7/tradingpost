@@ -11,7 +11,8 @@ import { SecondaryButton } from "../components/SecondaryButton";
 
 export function AppInformationScreen(props: any) {
     const [sliderState, setSliderState] = useState({ currentPage: 0 });
-    let { width, height } = useWindowDimensions();
+    let { width: widthOg, height } = useWindowDimensions();
+    let width = Math.min(widthOg, 680);
     const { value: result, setValue: setResult } = useData('loginResult')
     const linkTo = useLinkTo<any>();
     const setSliderPage = (event: any) => {

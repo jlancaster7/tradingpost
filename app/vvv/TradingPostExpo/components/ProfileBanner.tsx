@@ -40,7 +40,7 @@ const profileImageSmallStyle = {
 
 export function useProfileBannerSize() {
     const dim = useWindowDimensions();
-    return dim.width / bannerAspectRatio + actionPanelSize;
+    return Math.min(dim.width, 680) / bannerAspectRatio + actionPanelSize;
 }
 
 const bannerAspectRatio = 21 / 9;//16 / 9;

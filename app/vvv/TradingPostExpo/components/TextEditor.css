@@ -1,0 +1,10 @@
+.pell-content {
+    flex: 1;
+    margin:8px;
+    border:1px solid #ccc;
+    padding:8px;
+}
+
+.pell-holder{
+    margin: 0 16px;
+}

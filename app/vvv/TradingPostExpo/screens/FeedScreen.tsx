@@ -70,7 +70,7 @@ export const FeedPart = (props: {
                     sizeCache[index] = {
                         index,
                         offset: index ? sizeCache[index - 1].offset + sizeCache[index - 1].length : 0,
-                        length: postInnerHeight(itm, windowWidth - spaceOnSide)
+                        length: postInnerHeight(itm,  Math.min(windowWidth, 680) - spaceOnSide)
                     }
                 }
             })

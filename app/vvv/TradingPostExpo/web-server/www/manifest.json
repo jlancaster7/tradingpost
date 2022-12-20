@@ -2,8 +2,8 @@
   "background_color": "#282869",
   "display": "standalone",
   "lang": "en",
-  "name": "TradingPostExpo",
-  "short_name": "TradingPostExpo",
+  "name": "TradingPost",
+  "short_name": "TradingPost",
   "start_url": "/?utm_source=web_app_manifest",
   "orientation": "portrait",
   "related_applications": [
