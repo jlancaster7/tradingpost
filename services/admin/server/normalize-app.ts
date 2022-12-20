@@ -346,7 +346,7 @@ class Repository implements IRepository {
                    last_updated,
                    created_at
             FROM security
-            WHERE lower(symbol) like lower($1)
+            WHERE lower(symbol) like lower($1) COLLATE "tr-TR-x-icu"
             LIMIT 10`
         const insert = `%${query}%`;
 

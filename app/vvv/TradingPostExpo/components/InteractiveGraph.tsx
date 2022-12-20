@@ -30,6 +30,7 @@ export default InteractiveChart;
 function InteractiveChart(props: any) {
     const apx = (size = 0) => {
         let width = Dimensions.get('window').width; //useDimensions
+        if (width > 680) width = 680
         return (width / 750) * size;
     };
     
