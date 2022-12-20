@@ -46,8 +46,8 @@ import {Platform} from 'react-native'
 
 export default function App() {
     const {isLoadingComplete} = useCachedResources();
-    const colorScheme = useColorScheme();
-
+    //const colorScheme = useColorScheme();
+    const colorScheme = 'light';
     useEffect(() => {
         if (isLoadingComplete) {
             getSecurityList();
