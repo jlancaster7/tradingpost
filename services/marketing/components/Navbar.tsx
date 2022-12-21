@@ -14,6 +14,9 @@ const Navbar = () => {
                 <a href="/about" style={{
                     color: "white",
                 }}>About</a>
+                <a href="/chatGPT" style={{
+                    color: "white",
+                }}>chatGPT</a>
             </div>
             <div className="loginButton">
                 <button type="button" onClick={() => {

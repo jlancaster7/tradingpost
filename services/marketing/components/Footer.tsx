@@ -4,7 +4,7 @@ import Image from 'next/image'
 
 const Footer = () => {
     return (
-        <div className="footer" style={{height: '3vh'}}>
+        <div className="footer" >
             <div className="copyright">
                 <p>© 2022 Tradingpost</p>
             </div>

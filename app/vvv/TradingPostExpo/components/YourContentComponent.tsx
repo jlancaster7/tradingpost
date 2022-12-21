@@ -8,7 +8,7 @@ import { Autocomplete, AutocompleteItem, Icon, IndexPath, Text, TabView, Tab } f
 import { bannerText, elevated, flex, paddView, paddViewWhite, sizes, thinBannerText, social as socialStyling, fonts } from "../style";
 import { useAppUser } from "../Authentication"
 import { KeyboardAvoidingInput } from "./KeyboardAvoidingInput";
-import { useTwitterAuth } from "../utils/third-party/twitter";
+import { useTwitterAuth, useTwitterAuthWebView } from "../utils/third-party/twitter";
 import { social } from "../images";
 import { AppColors } from "../constants/Colors";
 import { useToast } from "react-native-toast-notifications";
@@ -25,7 +25,7 @@ export function YourContentComponent() {
 
     const appUser = loginState?.appUser;
     const authToken = loginState?.authToken
-    const getTwitterToken = useTwitterAuth();
+    const getTwitterToken = useTwitterAuthWebView();
     const getGoogleToken = useGoogleAuth();
 
     let userClaims = appUser?.claims;
@@ -43,10 +43,10 @@ export function YourContentComponent() {
                 <HandleButton
                     title={twitterHandle}
                     icon={social.TwitterLogo}
-                    onPress={() => {
-                        getTwitterToken().then((handle) => {
-                            setTwitterHandle(handle)
-                        })
+                    onPress={async () => {
+                        const handle = await getTwitterToken()
+                        console.log(handle)
+                        
                     }}
                     iconPadd={sizes.rem1}
                 />

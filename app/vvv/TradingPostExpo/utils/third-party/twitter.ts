@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 import { Api } from "@tradingpost/common/api";
 import { getCallBackUrl } from "@tradingpost/common/api/entities/static/EntityApiBase";
 import { openBrowserAsync, WebBrowserResultType } from "expo-web-browser";
@@ -27,6 +28,41 @@ export interface TwitterMe {
     name: string
     username: string
 }
+
+export function useTwitterAuthWebView() {
+    const state = useRef<string>(uuid.v4() as string);
+    let intervalHandler = useRef<any>()
+    const nav = useNavigation()
+    const openAuth = useCallback(async () => {
+        await AsyncStorage.removeItem("auth-twitter-code");
+        const _challenge = Math.random().toString().substring(2, 10);
+        const authUrl = new URL(authUrlText);
+        authUrl.searchParams.append("response_type", "code");
+        authUrl.searchParams.append("client_id", clientId);
+        authUrl.searchParams.append("redirect_uri", redirectUriText);
+        authUrl.searchParams.append("state", state.current);
+        authUrl.searchParams.append("scope", "users.read tweet.read offline.access");
+        authUrl.searchParams.append("code_challenge", _challenge);
+        authUrl.searchParams.append("code_challenge_method", "plain");
+        console.log("OPENING BRWOSER")
+        //const openResult = await openBrowserAsync(authUrl.toString());
+        
+        nav.navigate("TwitterAuthWebView", {
+            url: authUrl.toString(),
+            challenge: _challenge
+        })
+        
+    
+    }, []);
+
+    //Clean up interval if its dangling 
+    useEffect(()=>{
+        return ()=> clearInterval(intervalHandler.current)
+    },[])
+
+    return openAuth
+}
+
 
 export function useTwitterAuth() {
     const state = useRef<string>(uuid.v4() as string);
@@ -70,7 +106,7 @@ export function useTwitterAuth() {
         //     console.log(respTest);
         // }
         //const auth    //: ITokenResponse =  JSON.parse(respTest);  //await resp.json();
-        return  await Api.User.extensions.linkSocialAccount({ callbackUrl: getCallBackUrl(), platform,code, challenge:_challenge}) ;        
+        return await Api.User.extensions.linkSocialAccount({ callbackUrl: getCallBackUrl(), platform,code, challenge:_challenge}) ;        
     }, []);
 
     //Clean up interval if its dangling 

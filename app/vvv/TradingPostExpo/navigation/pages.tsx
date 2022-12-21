@@ -38,7 +38,7 @@ export type RootStackParamList =
         "ImagePicker" |
         "Subscription" |
         "SubscriptionSettings" |
-        "NotificationTrade"
+        "NotificationTrade" 
     > &
     {
         "WatchlistEditor": {
@@ -51,6 +51,7 @@ export type RootStackParamList =
         "Company": { securityId: number },
         "VerifyAccount": { token?: string },
         "ResetPassword": { token?: string },
+        "TwitterAuthWebView": {url: string, challenge: string},
         "PostEditor": undefined,
         "TableModal": { title: string, tableProps: TableProps<any> },
         "BlockListModal": { title: string, listProps: ListProps<any> },
