@@ -7,7 +7,7 @@ import { ToastContainer, toast } from 'react-toastify';
 
 import 'react-toastify/dist/ReactToastify.css';
 
-
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 const ChatGPTBlockOne = () => {
     const [question, setQuestion] = useState(""),
@@ -29,7 +29,19 @@ const ChatGPTBlockOne = () => {
         } else {
             setQuestionSubmitted(true);
             setSubmittedQuestion(question)
-            setAnswer('test answer to any')
+            fetch(baseUrl + '/chatGPT/prompt', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    symbol: list[0].symbol,
+                    prompt: submittedQuestion
+                })
+            })
+            .then(result => result.json())
+            .then(text => setAnswer(text.answer))
+            .catch((err) => console.error(err))
         }   
     }
     const resetQuestion = (e?: { preventDefault: () => void; }) => {

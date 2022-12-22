@@ -8,8 +8,8 @@ const create = async (Init: initOutput) => {
     
     const importAndCreate = new ImportAndCreate(Init);
 
-    await importAndCreate.createMDTrainingSet();
-    await importAndCreate.createQATrainingSet();
+    //await importAndCreate.createMDTrainingSet();
+    //await importAndCreate.createQATrainingSet();
     await importAndCreate.createEmbeddings();
 }
 
@@ -17,7 +17,7 @@ const respond = async (Init: initOutput) => {
     const gpu = new GPU({ mode: 'gpu' });
     const respond = new SearchAndRespond(Init, gpu);
     
-    const response = await respond.answerQuestionUsingContext('CRWD', 'What was subscriber growth in 2022?')
+    const response = await respond.answerQuestionUsingContext('ADBE', 'what are operating margins?')
     console.log(response.choices[0].text)
 }
 
@@ -25,7 +25,7 @@ const respond = async (Init: initOutput) => {
     try {
         const Init = await init();
         
-        await create(Init);
+        //await create(Init);
         await respond(Init);
     } catch (err) {
         console.error(err);

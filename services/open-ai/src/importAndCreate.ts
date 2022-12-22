@@ -34,7 +34,7 @@ export class ImportAndCreate {
         const transcripts = await this.finnhubService.getTrainingSet();
     
         const total = transcripts.length, 
-            batchSize = 100, 
+            batchSize = 50, 
             embedModelName = 'text-embedding-ada-002';
         let batchList = [], 
             textList = [], 
@@ -48,7 +48,14 @@ export class ImportAndCreate {
             batchList.push(d)
             if (batchList.length === batchSize){
                 textList = batchList.map(a => a.prompt)
-                embedList = await this.openaiServices.getModelEmbeddings(embedModelName, textList)
+                try {
+                    embedList = await this.openaiServices.getModelEmbeddings(embedModelName, textList) 
+                    
+                } catch (err) {
+                    console.error(err)
+                    continue;
+                }
+                
                 if (batchList.length !== embedList.length) throw new Error("batchList and embedList were of different sizes.");
                 for (let i = 0; i < batchList.length; i++) {
                     if (batchList[i].type === 'MD') {
@@ -80,7 +87,8 @@ export class ImportAndCreate {
             }
         }
         const upsertResult = await this.finnhubService.repo.upsertTranscriptEmbedding(embeddings);
-        console.log(`Successfully upserted ${upsertResult} embeddings to the table`);
+        upsertCounter += upsertResult;
+        console.log(`Successfully upserted ${upsertCounter} embeddings to the table`);
     }
 }
 

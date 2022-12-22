@@ -81,7 +81,7 @@ export class SearchAndRespond {
         
         let result = ''
         for (let d of embeddingsWithDist) {
-            if (result.split(' ').length > 1800 || (d.dist || 0) < 0.85) return result;
+            if (result.split(' ').length > 1800 ) return result;
             else result += `* ${d.speech}\n`;
         }
         return result;
