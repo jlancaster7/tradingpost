@@ -1,0 +1,30 @@
+{
+    "navigation": {
+        "addListener": [Function addListener], 
+        "canGoBack": [Function canGoBack], 
+        "dispatch": [Function dispatch], 
+        "getId": [Function getId], 
+        "getParent": [Function getParent], 
+        "getState": [Function anonymous], 
+        "goBack": [Function anonymous], 
+        "isFocused": [Function isFocused], 
+        "navigate": [Function anonymous], 
+        "pop": [Function anonymous], 
+        "popToTop": [Function anonymous], 
+        "push": [Function anonymous], 
+        "removeListener": [Function removeListener], 
+        "replace": [Function anonymous], 
+        "reset": [Function anonymous], 
+        "setOptions": [Function setOptions], 
+        "setParams": [Function anonymous]
+    }, 
+    "route": {
+        "key": "TwitterAuthWebView-Ahl552mDxUFmnSBzDgNNO", 
+        "name": "TwitterAuthWebView", 
+        "params": {
+            "challenge": "27594814", 
+            "url": "https://twitter.com/i/oauth2/authorize/?response_type=code&client_id=cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ&redirect_uri=https%3A%2F%2Fm.tradingpostapp.com%2Fauth%2Ftwitter&state=f602dcb8-e451-4c8b-bb73-4377757728ed&scope=users.read%20tweet.read%20offline.access&code_challenge=27594814&code_challenge_method=plain"
+            }, 
+        "path": undefined
+            }
+        }

@@ -23,7 +23,7 @@ export type RootStackParamList =
     PagesWithoutParams<
         "NotFound" |
         "AccountSettings" |
-        "AccountInformation" |
+        
         "Help" |
         "AppInformation" |
         "Launch" |
@@ -38,19 +38,21 @@ export type RootStackParamList =
         "ImagePicker" |
         "Subscription" |
         "SubscriptionSettings" |
-        "NotificationTrade"
+        "NotificationTrade" 
     > &
     {
         "WatchlistEditor": {
             watchlistId?: number
-        }
+        },
         "Root": {
             baseUrl?: string
-        }
-        "Auth": { platform: "twitter" | "youtube" | "spotify" | "finicity", code: string }
+        },
+        "Auth": { platform: "twitter" | "youtube" | "spotify" | "finicity", code: string },
+        "AccountInformation": {newTwitterHandle: string} | undefined,
         "Company": { securityId: number },
         "VerifyAccount": { token?: string },
         "ResetPassword": { token?: string },
+        "TwitterAuthWebView": {isNewAccount: boolean} | undefined,
         "PostEditor": undefined,
         "TableModal": { title: string, tableProps: TableProps<any> },
         "BlockListModal": { title: string, listProps: ListProps<any> },

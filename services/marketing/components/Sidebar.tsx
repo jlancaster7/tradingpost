@@ -17,6 +17,10 @@ const SideMenu: React.FunctionComponent<SideMenuProps> = ({pageWrapId, outerCont
                 <Image src={HomeIconSvg} alt="home icon"/>
                 <p>Home</p>
             </a>
+            <a className="menu-item" href="/chatGPT">
+                <Image src={HomeIconSvg} alt="home icon"/>
+                <p>chatGPT</p>
+            </a>
             <a className="menu-item" href="/about">
                 <Image src={AboutSvg} alt="about icon"/>
                 About

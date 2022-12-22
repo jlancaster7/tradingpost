@@ -105,9 +105,9 @@ export default class Repository {
                 {name: 'transcript_training_id', prop: 'transcriptTrainingId'},
             ], {table: 'transcript_embedding'})
     
-            const query = this.pgp.helpers.insert(data, cs) //+ ` ON CONFLICT ON CONSTRAINT unique_embedding DO UPDATE SET
-                                                            //        embedding = EXCLUDED.embedding,
-                                                            //        updated_at = now()`
+            const query = this.pgp.helpers.insert(data, cs) + ` ON CONFLICT ON CONSTRAINT training_id_embedding DO UPDATE SET
+                                                                    embedding = EXCLUDED.embedding,
+                                                                    updated_at = now()`
             const result = await this.db.result(query);
 
             return result.rowCount;

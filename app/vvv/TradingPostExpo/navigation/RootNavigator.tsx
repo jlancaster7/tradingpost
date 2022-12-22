@@ -38,6 +38,7 @@ import { RobhinhoodLoginScreen } from "../screens/RobinhoodLoginScreen";
 import { ShareButton } from "../components/ShareButton";
 import linking from "./LinkingConfiguration";
 import { useLinkBuilder, useRoute } from "@react-navigation/native";
+import { TwitterAuthWebViewScreen } from "../screens/TwitterAuthSceen";
 
 
 Notifications.setNotificationHandler({
@@ -139,6 +140,7 @@ export function RootNavigator() {
             <Stack.Screen name="BrokeragePicker" component={BrokeragePickerScreen} />
             <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen} />
             <Stack.Screen name="RobinhoodLogin" component={RobhinhoodLoginScreen} />
+            <Stack.Screen name="TwitterAuthWebView" component={TwitterAuthWebViewScreen} options={{ headerShown: false }}/>
         </Stack.Group>
         <Stack.Group screenOptions={{
             headerStyle: {

@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useMemo, useRef } from "react"
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react"
 import { IconifyIcon, IIconifyIcon } from "./IconfiyIcon"
 import { ElevatedSection, Section, Subsection } from "./Section"
 import { Api } from "@tradingpost/common/api";
-import { View, Animated, Pressable, PressableProps } from "react-native"
-import { useLinkTo } from "@react-navigation/native"
+import { View, Animated, Pressable, PressableProps, Platform } from "react-native"
+import { useFocusEffect, useLinkTo, useNavigation } from "@react-navigation/native"
 import { Autocomplete, AutocompleteItem, Icon, IndexPath, Text, TabView, Tab } from "@ui-kitten/components";
 import { bannerText, elevated, flex, paddView, paddViewWhite, sizes, thinBannerText, social as socialStyling, fonts } from "../style";
 import { useAppUser } from "../Authentication"
 import { KeyboardAvoidingInput } from "./KeyboardAvoidingInput";
-import { useTwitterAuth } from "../utils/third-party/twitter";
+import { useTwitterAuth, useTwitterAuthWebView } from "../utils/third-party/twitter";
 import { social } from "../images";
 import { AppColors } from "../constants/Colors";
 import { useToast } from "react-native-toast-notifications";
@@ -16,16 +16,18 @@ import { useGoogleAuth } from "../utils/third-party/youtube";
 import { getCallBackUrl } from "@tradingpost/common/api/entities/static/EntityApiBase";
 
 
-export function YourContentComponent() {
-    const { loginState, signIn } = useAppUser(),
+export function YourContentComponent(props?: any) {
+    let { loginState, signIn, updateState } = useAppUser(),
         toast = useToast(),
         [inputMessage, setInputMessage] = useState(''),
         [inputPlatform, setInputPlatform] = useState(''),
         [inputValue, setInputValue] = useState('');
+    const nav = useNavigation();
 
-    const appUser = loginState?.appUser;
+    let appUser = loginState?.appUser;
     const authToken = loginState?.authToken
-    const getTwitterToken = useTwitterAuth();
+    
+    const getTwitterTokenOther = useTwitterAuth();
     const getGoogleToken = useGoogleAuth();
 
     let userClaims = appUser?.claims;
@@ -34,19 +36,30 @@ export function YourContentComponent() {
     let [substackUsername, setsubstackUsername] = useState(userClaims ? userClaims.find(c => c.platform === "substack")?.claims?.handle : '')
     let [spotifyShow, setSpotifyShow] = useState(userClaims ? userClaims.find(c => c.platform === "spotify")?.claims?.handle : '')
     let [youtubeChannel, setYoutubeChannel] = useState(userClaims ? userClaims.find(c => c.platform === "youtube")?.claims?.handle : '')
-
-
+    useFocusEffect(useCallback(() => {
+        if (props?.newTwitterhandle) setTwitterHandle(props.newTwitterhandle);
+    },[props]))
     return (
         <ElevatedSection title="" style={{ padding: 5 }}>
             <Text style={[thinBannerText, { fontSize: fonts.medium, lineHeight: fonts.medium * 1.5 }]}>TradingPost aggregates content across several social platforms.</Text>
             <View style={{ flexDirection: "row", marginHorizontal: sizes.rem2, marginBottom: sizes.rem1 }}>
                 <HandleButton
+                    key={`${twitterHandle}`}
                     title={twitterHandle}
                     icon={social.TwitterLogo}
                     onPress={() => {
-                        getTwitterToken().then((handle) => {
-                            setTwitterHandle(handle)
-                        })
+                        if (Platform.OS === 'android') {
+                            nav.navigate('TwitterAuthWebView', props?.isNewAccount)
+                        }
+                        else {
+                            getTwitterTokenOther()
+                                .then((handle) => setTwitterHandle(handle))
+                                .catch((err) => {
+                                    console.error(err)
+                                    toast.show('This Twitter account has already been claimed! If you think this is a mistake, please reach out to help@tradingpostapp.com.')
+                                })
+                        }
+                        setInputPlatform('twitter')
                     }}
                     iconPadd={sizes.rem1}
                 />
@@ -55,6 +68,9 @@ export function YourContentComponent() {
                     onPress={() => {
                         getGoogleToken().then((handle) => {
                             setYoutubeChannel(handle)
+                        }).catch((err) => {
+                            console.error(err)
+                            toast.show('This YouTube account has already been claimed! If you think this is a mistake, please reach out to help@tradingpostapp.com.')
                         })
                         setInputPlatform('youtube')
                         //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
@@ -81,7 +97,7 @@ export function YourContentComponent() {
                 />
             </View>
             <Text style={[thinBannerText, { fontSize: fonts.medium, lineHeight: fonts.medium * 1.5 }]}>Sign in to your account(s) above to claim or add your content.</Text>
-            <View style={inputPlatform === '' ? { display: 'none' } : { display: 'flex' }}>
+            <View style={(inputPlatform === '' || inputPlatform === 'twitter') ? { display: 'none' } : { display: 'flex' }}>
                 <Text>
                     {inputMessage}
                 </Text>
@@ -95,13 +111,23 @@ export function YourContentComponent() {
                         fill={AppColors.secondary}
                         name="plus-square" height={35} width={35} style={{ height: 35, width: 35, padding: 0, alignContent: 'center' }} />}
 
-                    onClick={async (r: any, s: any, t: any) => {
-                        const result = await Api.User.extensions.linkSocialAccount({ callbackUrl: getCallBackUrl(), platform: inputPlatform, platform_idenifier: r });
-                        if (result === '') {
-                            toast.show(`${inputPlatform} Account Link Failed. Please try again or email contact@tradingpostapp.com for assistance.`)
-                        }
-                        s('')
-                        authToken ? await signIn("", authToken) : {};
+                    onClick={(r: any, s: any, t: any) => {
+                        Api.User.extensions.linkSocialAccount({ callbackUrl: getCallBackUrl(), platform: inputPlatform, platform_idenifier: r })
+                            .then((result) => {
+                                if (inputPlatform === 'substack') setsubstackUsername(result)
+                                else if (inputPlatform === 'spotify') setSpotifyShow(result)
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                                toast.show(`${inputPlatform} Account Link Failed. Please try again or email contact@tradingpostapp.com for assistance.`)
+                            })
+                            .finally(() =>{
+                                s('')
+                                authToken ? signIn("", authToken) : {};
+                            }
+                            )
+                        
+                        
                     }}
                 />
             </View>

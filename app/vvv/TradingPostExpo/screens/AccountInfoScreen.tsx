@@ -23,7 +23,7 @@ import { IUserGet, IUserUpdate } from "@tradingpost/common/api/entities/interfac
 import { Log } from "../utils/logger";
 import { LinkBrokerageComponent } from "../components/LinkBrokerageComponent";
 
-export function AccountInfoScreen() {
+export function AccountInfoScreen(props?: any) {
     const { loginState, signIn, signOut } = useAppUser(),
         [index, setIndex] = useState(0),
         linkTo = useLinkTo<any>()
@@ -110,7 +110,7 @@ export function AccountInfoScreen() {
                         <AccountInfoContent setUpdates={setAccountUpdates} updates={accountUpdates} />
                     </Tab>
                     <Tab key={"B"} title={'Your Content'} style={{ backgroundColor: AppColors.background, borderColor: AppColors.background }}>
-                        <YourContentComponent />
+                        <YourContentComponent key={props?.route?.params?.newTwitterHandle} newTwitterhandle={props?.route?.params?.newTwitterHandle} />
                     </Tab>
                     <Tab key={"C"} title={'Advanced'} style={{ backgroundColor: AppColors.background, borderColor: AppColors.background }}>
                         <AdvancedTabContent signOut={signOut} appUser={appUser} setUpdates={setAccountUpdates} updates={accountUpdates} />
