@@ -1,24 +1,25 @@
 import User from "./User"
-import {ensureServerExtensions} from "."
-import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
-import UserApi, {IUserGet, IUserList} from '../apis/UserApi'
-import {DefaultConfig} from "../../../configuration";
-import {Client as ElasticClient} from '@elastic/elasticsearch';
+import { ensureServerExtensions } from "."
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import UserApi, { IUserGet, IUserList } from '../apis/UserApi'
+import { DefaultConfig } from "../../../configuration";
+import { Client as ElasticClient } from '@elastic/elasticsearch';
 import ElasticService from "../../../elastic";
-import {execProc, getHivePool, init} from '../../../db'
-import {DefaultTwitter} from "../../../social-media/twitter/service";
-import {DefaultSubstack} from "../../../social-media/substack/service";
-import {DefaultSpotify} from "../../../social-media/spotify/service";
-import {getUserCache} from "../../cache";
+import { execProc, getHivePool, init } from '../../../db'
+import { DefaultTwitter } from "../../../social-media/twitter/service";
+import { DefaultSubstack } from "../../../social-media/substack/service";
+import { DefaultSpotify } from "../../../social-media/spotify/service";
+import { getUserCache } from "../../cache";
 import WatchlistApi from "../apis/WatchlistApi";
-import {DateTime} from 'luxon'
+import { DateTime } from 'luxon'
 import jwt from 'jsonwebtoken'
-import {sendByTemplate} from '../../../sendGrid'
-import {TradingPostAccountGroupStats} from "../../../brokerage/interfaces";
+import { sendByTemplate } from '../../../sendGrid'
+import { TradingPostAccountGroupStats } from "../../../brokerage/interfaces";
 import PostPrepper from "../../../post-prepper";
-import {parse} from "url";
-import {google} from 'googleapis'
-import {PublicError} from "../static/EntityApiBase";
+import { parse } from "url";
+import { google } from 'googleapis'
+import { PublicError } from "../static/EntityApiBase";
+import Repository from "../../../social-media/repository";
 
 export interface ITokenResponse {
     "token_type": "bearer",
@@ -48,7 +49,7 @@ export default ensureServerExtensions<User>({
         return {}
     },
     generateBrokerageLink: async (req) => {
-        const {finicitySrv} = await init;
+        const { finicitySrv } = await init;
         const test = await finicitySrv.generateBrokerageAuthenticationLink(req.extra.userId);
         console.log(test);
         return {
@@ -102,7 +103,7 @@ export default ensureServerExtensions<User>({
 
             })
             const authResp = (await info.json()) as ITokenResponse;
-            const {pgClient, pgp} = await init;
+            const { pgClient, pgp } = await init;
             const config = await DefaultConfig.fromCacheOrSSM("twitter");
 
             const handle = await DefaultTwitter(config, pgClient, pgp).addTwitterUsersByToken({
@@ -113,7 +114,7 @@ export default ensureServerExtensions<User>({
             });
             return handle.username;
         } else if (req.body.platform === 'substack') {
-            const {pgClient, pgp} = await init;
+            const { pgClient, pgp } = await init;
             const pp = new PostPrepper();
             const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
             const elasticClient = new ElasticClient({
@@ -138,7 +139,7 @@ export default ensureServerExtensions<User>({
                 return ''
             }
         } else if (req.body.platform === 'spotify') {
-            const {pgClient, pgp} = await init;
+            const { pgClient, pgp } = await init;
             const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
             const elasticClient = new ElasticClient({
                 cloud: {
@@ -174,7 +175,7 @@ export default ensureServerExtensions<User>({
             if (!req.body.code)
                 throw new PublicError("Invalid request. Missing auth 'code'");
 
-            const {tokens} = await oauth2Client.getToken(req.body.code);
+            const { tokens } = await oauth2Client.getToken(req.body.code);
             oauth2Client.setCredentials(tokens);
             const youtube = google.youtube({
                 version: "v3",
@@ -184,20 +185,39 @@ export default ensureServerExtensions<User>({
             const channels = await youtube.channels.list();
             console.log(JSON.stringify(channels));
             const channel = channels.data.items?.pop();
-            if (channel?.id) {
-                await execProc("tp.update_youtube_social", {
-                    user_id: req.extra.userId,
-                    channel_id: channel?.id || ""
-                })
+            const { pgClient, pgp } = await init;
+            const repo = new Repository(pgClient, pgp);
+            repo.isUserIdDummy
+            const channelId = channel?.id;
+            if (channelId) {
+                const pool = await getHivePool;
+                const existingUsers = await pool.query("SELECT user_id, u.dummy FROM data_platform_claim c inner join data_user u on u.id  = c.user_id where platform = 'youtube' and platform_user_id=$1", [channelId]);
+
+                if (!existingUsers.rows.length)
+                    await execProc("tp.update_youtube_social", {
+                        user_id: req.extra.userId,
+                        channel_id: channel?.id || ""
+                    })
+                else if (existingUsers.rows[0].dummy) {
+                    await repo.mergeDummyAccounts({
+                        dummyUserId: existingUsers.rows[0].user_id,
+                        newUserId: req.extra.userId
+                    })
+                }
+                else {
+                    throw new PublicError("This account is claimed by another non-dummy user.");
+                }
+                //check if somebody has the channel... if they are dummy then you can merge... if not then you will not merge 
             }
-            return channel?.id || ""
+
+            return channelId || ""
 
         } else {
             return "";
         }
     },
     getTrades: async (r) => {
-        const {portfolioSummarySrv} = await init;
+        const { portfolioSummarySrv } = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -258,7 +278,7 @@ export default ensureServerExtensions<User>({
         }
     },
     getHoldings: async (r) => {
-        const {portfolioSummarySrv} = await init;
+        const { portfolioSummarySrv } = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -327,7 +347,7 @@ export default ensureServerExtensions<User>({
         }
     },
     getReturns: async r => {
-        const {portfolioSummarySrv} = await init;
+        const { portfolioSummarySrv } = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -360,7 +380,7 @@ export default ensureServerExtensions<User>({
         //make sure there are public or that you are a subscriber 
     },
     getPortfolio: async (r) => {
-        const {portfolioSummarySrv} = await init;
+        const { portfolioSummarySrv } = await init;
         let requestedUser = {} as IUserGet;
         let requestedId;
         if (r.body.userId) {
@@ -402,12 +422,12 @@ export default ensureServerExtensions<User>({
         const authKey = await DefaultConfig.fromCacheOrSSM("authkey");
 
         const user = await UserApi.internal.get({
-            data: {id: r.extra.userId},
+            data: { id: r.extra.userId },
             user_id: r.extra.userId
         })
 
         //TODO: make this token expire faster and attach this to a code ( to prevent multiple tokens from working)
-        const token = jwt.sign({verified: true}, authKey, {subject: r.extra.userId});
+        const token = jwt.sign({ verified: true }, authKey, { subject: r.extra.userId });
 
         await sendByTemplate({
             to: user.email,

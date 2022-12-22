@@ -34,14 +34,42 @@
 
         body {
             display: flex;
-            overflow-y: hidden;
+            overflow: hidden;
             margin: auto;
             max-width: 680px;
             overscroll-behavior-y: none;
             text-rendering: optimizeLegibility;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            -ms-overflow-style: scrollbar
+            -ms-overflow-style: scrollbar;
+            background-color: black;
+        }
+
+        #root {
+            overflow-x: hidden;
+        }
+
+        /* width */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 5px grey;
+            border-radius: 2px;
+            background: #f1f1f1;
+        }
+
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            border-radius: 2px;
+            background: #888;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
     </style>
     <link rel="manifest" href="\manifest.json">
@@ -98,8 +126,8 @@
     </noscript>
     <div id="root"></div>
     <script src="/static/js/runtime~app.27401809.js"></script>
-    <script src="/static/js/2.13880526.chunk.js"></script>
-    <script src="/static/js/app.0a9a7a64.chunk.js"></script>
+    <script src="/static/js/2.83f790d4.chunk.js"></script>
+    <script src="/static/js/app.c6d58749.chunk.js"></script>
 </body>
 
 </html>

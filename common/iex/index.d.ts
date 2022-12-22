@@ -213,8 +213,8 @@ export interface GetQuote {
     currency: string;
     isUSMarketOpen: boolean;
 }
-export declare type HistoricalPriceRange = 'max' | '5y' | '2y' | '1y' | 'ytd' | '6m' | '3m' | '1m' | '1mm' | '5d' | '5dm' | 'dynamic';
-export declare type BulkTypes = 'balance-sheet' | 'book' | 'cash-flow' | 'ceo-compensation' | 'chart' | 'intraday-prices' | 'logo' | 'ohlc' | 'previous' | 'quote' | 'splits' | "company" | "stats";
+export type HistoricalPriceRange = 'max' | '5y' | '2y' | '1y' | 'ytd' | '6m' | '3m' | '1m' | '1mm' | '5d' | '5dm' | 'dynamic';
+export type BulkTypes = 'balance-sheet' | 'book' | 'cash-flow' | 'ceo-compensation' | 'chart' | 'intraday-prices' | 'logo' | 'ohlc' | 'previous' | 'quote' | 'splits' | "company" | "stats";
 export interface GetIntraDayPrices {
     date: string;
     minute: string;
@@ -263,7 +263,7 @@ export interface GetSplitsBasic {
     date: number;
     updated: number;
 }
-export declare type GetSplitsBasicRange = "5y" | "2y" | "1y" | "ytd" | "6m" | "3m" | "1m" | "next";
+export type GetSplitsBasicRange = "5y" | "2y" | "1y" | "ytd" | "6m" | "3m" | "1m" | "next";
 export interface GetStatsBasic {
     companyName: string;
     marketcap: number;
