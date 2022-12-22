@@ -1,9 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { Text } from '@ui-kitten/components'
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { RootStackScreenProps } from '../navigation/pages';
 
 export const AuthScreen = (props: RootStackScreenProps<"Auth">) => {
+    const nav = useNavigation()
     const platform = props.route?.params?.platform;
     const code = props.route?.params?.code;
     console.log("############################## LOADED THE AUTH SCREEN ########################################");
@@ -19,9 +22,13 @@ export const AuthScreen = (props: RootStackScreenProps<"Auth">) => {
         else if (platform === "finicity") {
             AsyncStorage.setItem(`auth-${platform}-code`, "DONE!");
         }
-        if (props.navigation.canGoBack())
-            props.navigation.goBack();
+        if (nav.canGoBack())
+            nav.goBack()
 
     }, [platform, code]);
-    return <Text>You have been authozied to {platform || "Missing platform"}</Text>
+    return (
+        <View>
+            <Text>You have been authorized to {platform || "Missing platform"}</Text>
+        </View>
+        )
 }
