@@ -4,14 +4,17 @@ import { View } from "react-native";
 import { ScrollWithButtons } from "../../components/ScrollWithButtons";
 import { YourContentComponent } from "../../components/YourContentComponent";
 import { AppColors } from "../../constants/Colors";
+import { flex } from "../../style";
+import { sideMargin } from "./shared";
 
 //import { claimPlatform, createPlatform, Platform } from "../../apis/UserApi"
 //import { AmiraError } from "../../AmiraError"
 
-export function YourContent() {
+export function YourContent(props?: any) {
     const linkTo = useLinkTo<any>()
     return (
         <ScrollWithButtons
+            
             fillHeight
             buttons={{
                 right: {
@@ -20,9 +23,10 @@ export function YourContent() {
                         linkTo('/create/subscriptioncost')
                     }
                 }
-            }}
-        >
-        <YourContentComponent />
+            }}>
+            <View style={[flex, { margin: sideMargin, marginTop: 12 }]} >
+                <YourContentComponent isNewAccount={true} />
+            </View>
     </ScrollWithButtons>
     )
 }

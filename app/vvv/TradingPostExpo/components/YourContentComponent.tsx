@@ -3,7 +3,7 @@ import { IconifyIcon, IIconifyIcon } from "./IconfiyIcon"
 import { ElevatedSection, Section, Subsection } from "./Section"
 import { Api } from "@tradingpost/common/api";
 import { View, Animated, Pressable, PressableProps, Platform } from "react-native"
-import { useFocusEffect, useLinkTo } from "@react-navigation/native"
+import { useFocusEffect, useLinkTo, useNavigation } from "@react-navigation/native"
 import { Autocomplete, AutocompleteItem, Icon, IndexPath, Text, TabView, Tab } from "@ui-kitten/components";
 import { bannerText, elevated, flex, paddView, paddViewWhite, sizes, thinBannerText, social as socialStyling, fonts } from "../style";
 import { useAppUser } from "../Authentication"
@@ -22,10 +22,11 @@ export function YourContentComponent(props?: any) {
         [inputMessage, setInputMessage] = useState(''),
         [inputPlatform, setInputPlatform] = useState(''),
         [inputValue, setInputValue] = useState('');
+    const nav = useNavigation();
 
     let appUser = loginState?.appUser;
     const authToken = loginState?.authToken
-    const getTwitterTokenAndroid = useTwitterAuthWebView();
+    
     const getTwitterTokenOther = useTwitterAuth();
     const getGoogleToken = useGoogleAuth();
 
@@ -48,15 +49,15 @@ export function YourContentComponent(props?: any) {
                     icon={social.TwitterLogo}
                     onPress={() => {
                         if (Platform.OS === 'android') {
-                            getTwitterTokenAndroid()
-                                .then((handle) => {
-                                    console.log(handle)
-                                    setTwitterHandle(handle)
-                                })
+                            nav.navigate('TwitterAuthWebView', props?.isNewAccount)
                         }
                         else {
                             getTwitterTokenOther()
                                 .then((handle) => setTwitterHandle(handle))
+                                .catch((err) => {
+                                    console.error(err)
+                                    toast.show('This Twitter account has already been claimed! If you think this is a mistake, please reach out to help@tradingpostapp.com.')
+                                })
                         }
                         setInputPlatform('twitter')
                     }}
@@ -67,6 +68,9 @@ export function YourContentComponent(props?: any) {
                     onPress={() => {
                         getGoogleToken().then((handle) => {
                             setYoutubeChannel(handle)
+                        }).catch((err) => {
+                            console.error(err)
+                            toast.show('This YouTube account has already been claimed! If you think this is a mistake, please reach out to help@tradingpostapp.com.')
                         })
                         setInputPlatform('youtube')
                         //await Api.User.extensions.linkSocialAccount({platform: 'substack', platform_idenifier: ''}) ;  
@@ -107,13 +111,23 @@ export function YourContentComponent(props?: any) {
                         fill={AppColors.secondary}
                         name="plus-square" height={35} width={35} style={{ height: 35, width: 35, padding: 0, alignContent: 'center' }} />}
 
-                    onClick={async (r: any, s: any, t: any) => {
-                        const result = await Api.User.extensions.linkSocialAccount({ callbackUrl: getCallBackUrl(), platform: inputPlatform, platform_idenifier: r });
-                        if (result === '') {
-                            toast.show(`${inputPlatform} Account Link Failed. Please try again or email contact@tradingpostapp.com for assistance.`)
-                        }
-                        s('')
-                        authToken ? await signIn("", authToken) : {};
+                    onClick={(r: any, s: any, t: any) => {
+                        Api.User.extensions.linkSocialAccount({ callbackUrl: getCallBackUrl(), platform: inputPlatform, platform_idenifier: r })
+                            .then((result) => {
+                                if (inputPlatform === 'substack') setsubstackUsername(result)
+                                else if (inputPlatform === 'spotify') setSpotifyShow(result)
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                                toast.show(`${inputPlatform} Account Link Failed. Please try again or email contact@tradingpostapp.com for assistance.`)
+                            })
+                            .finally(() =>{
+                                s('')
+                                authToken ? signIn("", authToken) : {};
+                            }
+                            )
+                        
+                        
                     }}
                 />
             </View>
