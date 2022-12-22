@@ -170,7 +170,8 @@ export default ensureServerExtensions<User>({
 
             const oauth2Client = new google.auth.OAuth2({
                 clientId: "408632420955-7gsbtielmra10pj4sdccgml20tphfujk.apps.googleusercontent.com",
-                redirectUri: `${req.body.callbackUrl}/auth/youtube`
+                redirectUri: `${req.body.callbackUrl}/auth/youtube`,
+                clientSecret: "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"
             })
             if (!req.body.code)
                 throw new PublicError("Invalid request. Missing auth 'code'");
@@ -182,35 +183,44 @@ export default ensureServerExtensions<User>({
                 auth: oauth2Client
             })
             //TODO: need to discuss if multiple channels what we wanna do
-            const channels = await youtube.channels.list();
-            console.log(JSON.stringify(channels));
+            const channels = await youtube.channels.list({ part: ["snippet"], mine: true });
+            //console.log(JSON.stringify(channels));
             const channel = channels.data.items?.pop();
-            const { pgClient, pgp } = await init;
-            const repo = new Repository(pgClient, pgp);
-            repo.isUserIdDummy
+
             const channelId = channel?.id;
+            const channelTitle = channel?.snippet?.title;
             if (channelId) {
                 const pool = await getHivePool;
                 const existingUsers = await pool.query("SELECT user_id, u.dummy FROM data_platform_claim c inner join data_user u on u.id  = c.user_id where platform = 'youtube' and platform_user_id=$1", [channelId]);
 
-                if (!existingUsers.rows.length)
-                    await execProc("tp.update_youtube_social", {
-                        user_id: req.extra.userId,
-                        channel_id: channel?.id || ""
-                    })
+                if (!existingUsers.rows.length) {
+                    await pool.query("delete from public.data_platform_claim where user_id = $1 and platform  ='youtube'", [req.extra.userId]);
+                    await pool.query("INSERT INTO public.data_platform_claim(platform, platform_user_id , claims , user_id , created_at , updated_at )"
+                        + "VALUES ('youtube', $1,$2,$3, NOW(),NOW())"
+                        , [channelId, JSON.stringify({ handle: channelTitle }), req.extra.userId]);
+
+                    //TODO: will fix later
+                    // await execProc("tp.update_youtube_social", {
+                    //     user_id: req.extra.userId,
+                    //     channel_id: channel?.id || ""
+                    // })
+                }
+
                 else if (existingUsers.rows[0].dummy) {
+                    const { pgClient, pgp } = await init;
+                    const repo = new Repository(pgClient, pgp);
                     await repo.mergeDummyAccounts({
                         dummyUserId: existingUsers.rows[0].user_id,
                         newUserId: req.extra.userId
                     })
                 }
                 else {
-                    throw new PublicError("This account is claimed by another non-dummy user.");
+                    throw new PublicError("This account is claimed by another user.");
                 }
                 //check if somebody has the channel... if they are dummy then you can merge... if not then you will not merge 
             }
 
-            return channelId || ""
+            return channelTitle || ""
 
         } else {
             return "";
