@@ -10,10 +10,11 @@ import { Api } from '@tradingpost/common/api'
 import { ButtonPanel } from "../components/ScrollWithButtons"
 import { paddView, sizes } from "../style"
 import { useToast } from "react-native-toast-notifications"
-import { useLinkTo } from "@react-navigation/native"
+import { useLinkTo, useNavigation } from "@react-navigation/native"
 import { useTwitterAuth } from "../utils/third-party/twitter";
 import { getCallBackUrl } from "@tradingpost/common/api/entities/static/EntityApiBase";
 import { HtmlView } from "../components/HtmlView"
+import * as tURL from "url";
 
 const clientId = "cm9mUHBhbVUxZzcyVGJNX0xrc2E6MTpjaQ";
 const platform = "twitter",
@@ -23,8 +24,9 @@ const platform = "twitter",
 
 export const TwitterAuthWebViewScreen = (props: any) => {
     let intervalHandler = useRef<any>()
-    
-    console.log(props.route.params.url);
+    const { loginState, signIn, signOut } = useAppUser()
+    const nav = useNavigation()
+    const linkTo = useLinkTo<any>();
 
     useEffect(() => {
         (async () => {
@@ -43,14 +45,25 @@ export const TwitterAuthWebViewScreen = (props: any) => {
                         }
                     },1000);
                 })
-                return await Api.User.extensions.linkSocialAccount({ callbackUrl: getCallBackUrl(), platform,code, challenge: props.route.params.challenge}) ;        
+            const handle = await Api.User.extensions.linkSocialAccount({ callbackUrl: getCallBackUrl(), platform,code, challenge: props.route.params.challenge}) ;        
+            nav.navigate('AccountInformation', {newTwitterHandle: handle});
         })()
     },[])
     useEffect(()=>{
         return ()=> clearInterval(intervalHandler.current)
     },[])
     return <View style={paddView}>
-        <HtmlView isUrl={true}>
+        <HtmlView isUrl={true} allowFileAccess={true} 
+            onNavigationStateChange={(e) => {
+                if (e.url !== undefined) {
+                    const url = tURL.parse(e.url, true);
+                    const baseURL = 'https://' + (url.hostname || '') + (url.pathname || '') 
+                    if (baseURL === redirectUriText && url.path) {
+                        AsyncStorage.setItem(`auth-${platform}-code`, String(url.query.code));
+                    }
+                }
+            }} 
+        >
             {props.route.params.url}
         </HtmlView>
     </View>

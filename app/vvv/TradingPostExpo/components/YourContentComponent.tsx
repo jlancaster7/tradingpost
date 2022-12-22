@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useMemo, useRef } from "react"
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react"
 import { IconifyIcon, IIconifyIcon } from "./IconfiyIcon"
 import { ElevatedSection, Section, Subsection } from "./Section"
 import { Api } from "@tradingpost/common/api";
-import { View, Animated, Pressable, PressableProps } from "react-native"
-import { useLinkTo } from "@react-navigation/native"
+import { View, Animated, Pressable, PressableProps, Platform } from "react-native"
+import { useFocusEffect, useLinkTo } from "@react-navigation/native"
 import { Autocomplete, AutocompleteItem, Icon, IndexPath, Text, TabView, Tab } from "@ui-kitten/components";
 import { bannerText, elevated, flex, paddView, paddViewWhite, sizes, thinBannerText, social as socialStyling, fonts } from "../style";
 import { useAppUser } from "../Authentication"
@@ -16,16 +16,17 @@ import { useGoogleAuth } from "../utils/third-party/youtube";
 import { getCallBackUrl } from "@tradingpost/common/api/entities/static/EntityApiBase";
 
 
-export function YourContentComponent() {
-    const { loginState, signIn } = useAppUser(),
+export function YourContentComponent(props?: any) {
+    let { loginState, signIn, updateState } = useAppUser(),
         toast = useToast(),
         [inputMessage, setInputMessage] = useState(''),
         [inputPlatform, setInputPlatform] = useState(''),
         [inputValue, setInputValue] = useState('');
 
-    const appUser = loginState?.appUser;
+    let appUser = loginState?.appUser;
     const authToken = loginState?.authToken
-    const getTwitterToken = useTwitterAuthWebView();
+    const getTwitterTokenAndroid = useTwitterAuthWebView();
+    const getTwitterTokenOther = useTwitterAuth();
     const getGoogleToken = useGoogleAuth();
 
     let userClaims = appUser?.claims;
@@ -34,19 +35,30 @@ export function YourContentComponent() {
     let [substackUsername, setsubstackUsername] = useState(userClaims ? userClaims.find(c => c.platform === "substack")?.claims?.handle : '')
     let [spotifyShow, setSpotifyShow] = useState(userClaims ? userClaims.find(c => c.platform === "spotify")?.claims?.handle : '')
     let [youtubeChannel, setYoutubeChannel] = useState(userClaims ? userClaims.find(c => c.platform === "youtube")?.claims?.handle : '')
-
-
+    useFocusEffect(useCallback(() => {
+        if (props?.newTwitterhandle) setTwitterHandle(props.newTwitterhandle);
+    },[props]))
     return (
         <ElevatedSection title="" style={{ padding: 5 }}>
             <Text style={[thinBannerText, { fontSize: fonts.medium, lineHeight: fonts.medium * 1.5 }]}>TradingPost aggregates content across several social platforms.</Text>
             <View style={{ flexDirection: "row", marginHorizontal: sizes.rem2, marginBottom: sizes.rem1 }}>
                 <HandleButton
+                    key={`${twitterHandle}`}
                     title={twitterHandle}
                     icon={social.TwitterLogo}
-                    onPress={async () => {
-                        const handle = await getTwitterToken()
-                        console.log(handle)
-                        
+                    onPress={() => {
+                        if (Platform.OS === 'android') {
+                            getTwitterTokenAndroid()
+                                .then((handle) => {
+                                    console.log(handle)
+                                    setTwitterHandle(handle)
+                                })
+                        }
+                        else {
+                            getTwitterTokenOther()
+                                .then((handle) => setTwitterHandle(handle))
+                        }
+                        setInputPlatform('twitter')
                     }}
                     iconPadd={sizes.rem1}
                 />
@@ -81,7 +93,7 @@ export function YourContentComponent() {
                 />
             </View>
             <Text style={[thinBannerText, { fontSize: fonts.medium, lineHeight: fonts.medium * 1.5 }]}>Sign in to your account(s) above to claim or add your content.</Text>
-            <View style={inputPlatform === '' ? { display: 'none' } : { display: 'flex' }}>
+            <View style={(inputPlatform === '' || inputPlatform === 'twitter') ? { display: 'none' } : { display: 'flex' }}>
                 <Text>
                     {inputMessage}
                 </Text>
