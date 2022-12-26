@@ -60,11 +60,12 @@ export const PostEditorScreen = (props: any) => {
                 style={[flex, {}]}
                 contentContainerStyle={{ minHeight: "100%", maxHeight: "100%", height: "100%" }}>
                 <Text style={{ fontSize: fonts.medium, marginHorizontal: sizes.rem1, marginVertical: sizes.rem1 }}>Post</Text>
-                {Platform.OS === 'web'} <TextEditor html={postEntity.data.content} onChangeHtml={function (text: string): void {
+                {Platform.OS === 'web' && <TextEditor html={postEntity.data.content} onChangeHtml={function (text: string): void {
                     postEntity.update({
                         "content": text
                     })
                 }} />
+                }
                 {Platform.OS !== 'web' && <RichEditor
                     onLayout={(event) => {
                         postEntity.update({ height: event.nativeEvent.layout.width / event.nativeEvent.layout.height, width: event.nativeEvent.layout.width })

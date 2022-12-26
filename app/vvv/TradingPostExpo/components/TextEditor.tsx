@@ -8,5 +8,5 @@ export const TextEditor = (
         onChangeHtml: (text: string) => void
     }>
 ) => {
-    return <Text>{"test"}</Text>
+    return <Text>test</Text>
 }
