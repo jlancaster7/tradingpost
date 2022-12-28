@@ -1,17 +1,11 @@
 import 'dotenv/config'
 import express from 'express';
 import cors from 'cors'
-import {Client, Client as PGClient} from 'pg';
-import {DefaultConfig} from "@tradingpost/common/configuration";
-import {DateTime} from "luxon";
-import {S3Client} from '@aws-sdk/client-s3'
 import bodyParser from 'body-parser';
-import multer from 'multer';
-import { init, initOutput } from "./init"
-import { SearchAndRespond } from './searchAndRespond';
+import { init, initOutput } from "./src/init"
+import { SearchAndRespond } from './src/searchAndRespond';
 import { GPU } from "gpu.js";
-import multerS3 from 'multer-s3';
-import path from 'path';
+
 
 const run = async () => {
     
@@ -43,16 +37,26 @@ const setupRoutes = async (app: express.Application, respond: SearchAndRespond) 
         return res.json();
     });
     app.post('/chatGPT/prompt', async (req: express.Request, res: express.Response) => {
-        console.log('Processing request')
-        
-        const response = await respond.answerQuestionUsingContext(req.body.symbol, req.body.prompt);
-        if (response.choices[0].text) {
-            const parsedResponse = response.choices[0].text.replace('"', '').replace('"', '').replace('\n', '');
-            return res.json({answer: parsedResponse});
-        }
-        else {
+        const startTime = new Date()
+        console.log(`Processing request ${startTime.toTimeString()}`)
+        try {
+            const response = await respond.answerQuestionUsingContext(req.body.symbol, req.body.prompt);
+            if (response.choices[0].text) {
+                const parsedResponse = response.choices[0].text.replace('"', '').replace('"', '').replace('\n', '');
+                const endTime = new Date()
+                console.log(endTime.valueOf() - startTime.valueOf())
+                console.log(`Returning Response ${endTime.toTimeString()}`)
+                return res.json({answer: parsedResponse});
+            }
+            else {
+                return res.json({});
+            }
+        } 
+        catch (err) {
+            console.error(err)
             return res.json({});
         }
+       
 
     });
 

@@ -1,8 +1,9 @@
 import React, { useState, useRef, createRef, useEffect } from "react";
-import { ImageList, ImageListItem, ImageListItemBar } from '@mui/material'
+import { ImageList, ImageListItem, ImageListItemBar, IconButton  } from '@mui/material'
 import {
     CSSTransition
   } from 'react-transition-group';
+  import SendIcon from '@mui/icons-material/Send';
 import { ToastContainer, toast } from 'react-toastify';
 
 import 'react-toastify/dist/ReactToastify.css';
@@ -11,12 +12,11 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 const ChatGPTBlockOne = () => {
     const [question, setQuestion] = useState(""),
-          [answer, setAnswer] = useState(""),
+          [answer, setAnswer] = useState<any[]>([]),
           [isMobile, setIsMobile] = useState(false),
-          [submittedQuestion, setSubmittedQuestion] = useState(''),
+          //[submittedQuestion, setSubmittedQuestion] = useState(''),
           [questionSubmitted, setQuestionSubmitted] = useState(false),
           [inProp, setInProp] = useState(false),
-          scrollRef = createRef<any>(),
           [windowSize, setWindowSize] = useState({
         innerWidth: 0,
         innerHeight: 0,
@@ -27,8 +27,17 @@ const ChatGPTBlockOne = () => {
         if (question === '') {
             notify()
         } else {
+            //setAnswer([])
             setQuestionSubmitted(true);
-            setSubmittedQuestion(question)
+            const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+            
+            setAnswer((p: any[]) => {
+                p.push({author: 'User', response: question, time});
+                return p;
+            })
+            
+            
+            
             fetch(baseUrl + '/chatGPT/prompt', {
                 method: 'POST',
                 headers: {
@@ -36,18 +45,28 @@ const ChatGPTBlockOne = () => {
                 },
                 body: JSON.stringify({
                     symbol: list[0].symbol,
-                    prompt: submittedQuestion
+                    prompt: question
                 })
             })
             .then(result => result.json())
-            .then(text => setAnswer(text.answer))
+            .then(text => {
+                setAnswer((p: any[]) => {
+                    const newAnswer = p.slice(0);
+                    const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                    newAnswer.push({author: 'Michael', response: text.answer, time})
+                    setQuestion('')
+                    return newAnswer;
+                })
+
+            })
             .catch((err) => console.error(err))
+            .finally(() => setQuestionSubmitted(false))
         }   
     }
     const resetQuestion = (e?: { preventDefault: () => void; }) => {
         if (e) e.preventDefault();
         setQuestion('');
-        setAnswer('');
+        setAnswer([]);
         setQuestionSubmitted(false);   
     }
     const notify = () => {
@@ -71,10 +90,6 @@ const ChatGPTBlockOne = () => {
         setIsMobile(() => windowSize.innerWidth < 770 ? true : false)
     },[windowSize, isMobile])
 
-    useEffect(() => {
-        if (questionSubmitted) scrollRef.current?.scrollIntoView({behavior: 'smooth'});
-
-    }, [questionSubmitted])
 
     let data: any[] = [
         {symbol: 'AAPL', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/AAPL.png'}, 
@@ -86,7 +101,7 @@ const ChatGPTBlockOne = () => {
         {symbol: 'CRWD', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/CRWD-1671487114964.png'}, 
         {symbol: 'DDOG', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/DDOG-1671487143454.jpg'}, 
         {symbol: 'DIS', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/DIS.png'}, 
-        {symbol: 'GOOG', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/GOOG-1666113693819.jpg'}, 
+        {symbol: 'GOOGL', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/GOOG-1666113693819.jpg'}, 
         {symbol: 'META', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/META-1671487025787.jpg'}, 
         {symbol: 'MSFT', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/MSFT.png'}, 
         {symbol: 'NVDA', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/NVDA.png'}, 
@@ -166,36 +181,47 @@ const ChatGPTBlockOne = () => {
                 </p>
             </div>
             <div className="questionInput" 
-                style={list.length === 1 ? {display: 'block'} : {display: 'none'}}>
-                <form className="questionForm" >
+                style={list.length === 1 ? {display: 'block'} : {display: 'none'}}
+                >
+                <div 
+                    className="chatgptAnswer"
+                    style={answer.length > 0 ? {display: 'flex'} : {display: 'none'}}
+                    >
+                    <div className="chatBox"
+                         >
+                        {answer.map(a => {
+                            return (
+                                <div style={a.author === 'User' ? {alignSelf: 'flex-start',width: '70%'} : {alignSelf: 'flex-end', width: '70%'}}>
+                                    <p style={a.author === 'User' ? {textAlign: 'left'} : {textAlign: 'right'}}>
+                                        {`${a.response}`}
+                                    </p>
+                                    <p style={a.author === 'User' ? {textAlign: 'left', fontSize: '14px', opacity: 0.9, marginLeft: '10px'} : {textAlign: 'right', fontSize: '14px', opacity: 0.9, marginRight: '10px'}}>
+                                        {`${a.author} - ${a.time}`}
+                                    </p>
+                                </div>
+                            )
+                        }
+                        )}
+                    </div>
+                </div>
+                <form className="questionForm">
                     <input className="questionInput" placeholder="Enter your question here"
                         onChange={(e) => setQuestion(e.target.value)} 
                         value={question}
-                        //disabled={questionSubmitted}
+                        disabled={questionSubmitted}
                         />
                     <div className="buttonGroup">
-                        <button className="questionSubmitButton" 
-                            onClick={handleSubmit}>
-                            {'Ask Michael'}
-                        </button>
-                        <button className="resetButton" 
-                            onClick={resetQuestion}
-                            style={questionSubmitted ? {}: {display: 'none'}}>
-                            {'Reset'}
-                        </button>
+                        <IconButton  
+                            className="questionSubmitButton" 
+                            onClick={handleSubmit}
+                            disabled={questionSubmitted}
+                            >
+                            <SendIcon />
+                        </IconButton >
+                        
                     </div>
                     <ToastContainer />
                 </form>
-            </div>
-        </div>
-        <div 
-            className="chatgptBottom" 
-            ref={scrollRef}
-            style={questionSubmitted ? {display: 'flex'} : {display: 'none'}}
-            >
-            <div className="middle" >
-                <h1>{submittedQuestion}</h1>
-                <p>{answer}</p>
             </div>
         </div>
         </>

@@ -12,6 +12,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
     "express": "^4.18.2",
+    "fs": "^0.0.1-security",
     "fuse.js": "^6.6.2",
     "gpu.js": "^2.16.0",
     "luxon": "^3.0.1",
@@ -34,5 +35,13 @@
     "@types/pg": "^8.6.5",
     "ts-node": "^10.9.1"
   },
-  "scripts": {}
+  "scripts": {
+    "build": "tsc",
+    "start": "npx ts-node ./index.ts",
+    "dev": "tsc -b ../../common && tsc && node ./",
+    "deploy": "npm run pre-publish && tsc && eb deploy",
+    "pre-publish": "npm uninstall @tradingpost/common && npm install @tradingpost/common",
+    "install-common": "node ../../common/_scripts/install",
+    "link-common": "node ../../common/_scripts/link"
+  }
 }

@@ -10,14 +10,17 @@ import {
     TranscriptEmbedding,
     TranscriptEmbeddingTable
 } from './interfaces';
+import { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsCommand, _Object } from "@aws-sdk/client-s3";
 
 export default class Repository {
     private db: IDatabase<any>;
     private readonly pgp: IMain;
+    private readonly s3: S3Client;
 
-    constructor(db: IDatabase<any>, pgp: IMain) {
+    constructor(db: IDatabase<any>, pgp: IMain, s3: S3Client) {
         this.db = db;
         this.pgp = pgp;
+        this.s3 = s3;
     }
     upsertTranscriptList = async (data: TranscriptList[]): Promise<number> => {
         try {
@@ -125,7 +128,7 @@ export default class Repository {
                             te.created_at,
                             te.updated_at
                      FROM transcript_embedding te
-                     LEFT JOIN transcript_list tl
+                     INNER JOIN transcript_list tl
                         ON te.transcript_id = tl.transcript_id
                      WHERE tl.symbol = $1 AND tl.year > 2017
                      `
@@ -147,26 +150,36 @@ export default class Repository {
         })
         return result;
     }
-    getTrainingSet = async (): Promise<TranscriptTrainingSetTable[]> => {
-        let query = `SELECT id,
-                            transcript_id,
-                            training_set_id,
-                            prompt,
-                            prompt_position,
-                            response,
-                            response_position,
-                            type,
-                            created_at,
-                            updated_at
+    getS3TranscriptEmbeddings = async(symbol: string ): Promise<TranscriptEmbedding[]>  => {
+        return await this._getFileFromS3<TranscriptEmbedding>(symbol);
+    }
+    getTrainingSet = async (tickers: string[]): Promise<(TranscriptTrainingSetTable & {symbol: string})[]> => {
+        let query = `SELECT tts.id,
+                            tl.symbol,
+                            tts.transcript_id,
+                            tts.training_set_id,
+                            tts.prompt,
+                            tts.prompt_position,
+                            tts.response,
+                            tts.response_position,
+                            tts.type,
+                            tts.created_at,
+                            tts.updated_at
                      FROM transcript_training_set tts
+                     INNER JOIN transcript_list tl
+                        on tl.transcript_id = tts.transcript_id
+                     WHERE tl.symbol in ($1:list)
+                     ORDER BY tl.symbol asc;
                      `;
-        const response = await this.db.query(query);
+        
+        const response = await this.db.query(query, [tickers]);
 
-        let result: TranscriptTrainingSetTable[] = [];
+        let result: (TranscriptTrainingSetTable & {symbol: string})[] = [];
 
         response.forEach((item: any, index: number) => {
-            let o: TranscriptTrainingSetTable = {
+            let o: (TranscriptTrainingSetTable & {symbol: string}) = {
                 id: item.id,
+                symbol: item.symbol,
                 transcriptId: item.transcript_id,
                 trainingSetId: item.training_set_id,
                 prompt: item.prompt,
@@ -337,6 +350,38 @@ export default class Repository {
             result.push(o);
         })
         return result;
+    }
+    _getFileFromS3 = async <T>(key: string, mapFn?: (data: T) => T): Promise<T[]> => {
+        
+        const streamToString = (stream: any) =>
+            new Promise<string>((resolve, reject) => {
+                const chunks: any[] = [];
+                stream.on("data", (chunk: any) => chunks.push(chunk));
+                stream.on("error", reject);
+                stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+            });
+        const bucketList = await this.s3.send(new ListObjectsCommand({
+            Bucket: `tradingpost-embedding`,
+            Prefix: key
+        }))
+        
+        let mostRecentEmbeddings: _Object;
+        if (bucketList.Contents) {
+            mostRecentEmbeddings = (bucketList.Contents?.sort((a, b) => (b.LastModified?.valueOf() || 0) - (a.LastModified?.valueOf() || 0)))[0]
+        }
+        else {
+            throw new Error(`No object found in folder with key ${key}`);
+        }
+        
+        const data = (async () => JSON.parse(
+            await streamToString((
+              await this.s3.send(new GetObjectCommand({
+                Bucket: 'tradingpost-embedding',
+                Key: mostRecentEmbeddings.Key,
+              }))).Body)))()
+
+        
+        return data;
     }
 
 }

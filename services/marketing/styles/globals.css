@@ -644,7 +644,7 @@ body {
         position: relative;
         display: flex;
         align-items: center;
-        flex-direction: column;
+        flex-direction: row;
         z-index: 1;
         padding: 1.25vw;
     }
@@ -1392,10 +1392,10 @@ body {
         background-image: url('/MobileClouds.svg');
         background-size: 60%;
         background-repeat: no-repeat;
-        background-position-y: 1%;
+        background-position-y: 30%;
         background-position-x: 40%;
         padding: 1vw;
-        height: 79.8vh;
+        min-height: 79.8vh;
     }
 
     
@@ -1404,7 +1404,7 @@ body {
         text-align: center;
         font-size: 42px;
         font-weight: 800;
-        margin-top: 5%;
+        margin-top: 0%;
         padding: 2vh;
     }
     .chatgptTop .title .titleWhite {
@@ -1467,14 +1467,15 @@ body {
     
     .chatgptTop .questionInput {
         text-align: center;
-        margin-bottom: 20px;
+        
     }
     .chatgptTop .questionInput .questionForm{
-        text-align: center;
+        
         position: relative;
         display: flex;
         align-items: center;
-        flex-direction: column;
+        justify-content: center;
+        flex-direction: row;
         z-index: 1;
         padding: 1.25vw;
     }
@@ -1487,26 +1488,39 @@ body {
         height: 4vh;
         margin-right: 1%;
         background-color: rgba(255,255,255,0.9);
-        overflow-wrap: normal
+        
 
     }
     .chatgptTop .questionInput .questionForm .questionSubmitButton {
-        margin-top: 2vh;
+        padding: 3.5vh 1.5vw 3.5vh;
+        
         background-color: #EC5328;
-        padding: 1vw;
-        width: 14vw;
-        color: white;
-        font-size: 18px;
-        font-weight: 600;
+        height: 4vh;        
         border-radius: 10px;
     }
-    .chatgptBottom {
+    .chatgptTop .questionInput .chatgptAnswer {
         background-color:rgba(5, 11, 44, 0.9);
+        padding: 1vh 0 1vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+    .chatgptTop .questionInput .chatgptAnswer .chatBox {
+        display: flex;
+        flex-direction: column;
+        background-color:rgba(255,255,255,.9);
+        width: 51vw; 
+        border-radius: 5px;
+        padding: 1vw;
+    }
+    .chatgptTop .questionInput .chatgptAnswer .chatBox p {
+        font-size: 18px;
+        color: black;
+        margin: 0;
+        padding: 0;
         
-        
-        height: 90vh;
-        
-        justify-content: center
     }
     .chatgptBottom .middle {
         background-color:rgba(255,255,255,.9);
