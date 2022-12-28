@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, useWindowDimensions, View, Text } from "react-native";
 import { Api, Interface } from "@tradingpost/common/api";
-import { elevated, flex, fonts, sizes } from "../style";
+import { elevated, flex, fonts, paddView, sizes } from "../style";
 import { ClimbingMountain, Studying, Debate, Analyze } from "../images";
 import { AppColors } from "../constants/Colors";
 import { ExitButton } from "../components/AddButton";
@@ -29,7 +29,7 @@ export function AppInformationScreen(props: any) {
     const paragraphSize = height >= 760 ? fonts.medium : fonts.small
     const { currentPage: pageIndex } = sliderState;
 
-    return <View style={flex}>
+    return <View style={paddView}>
         <View style={{ zIndex: 1, position: 'absolute', top: 30, left: 10, flexDirection: 'row', alignItems: 'center' }}>
             <ExitButton height={36} width={36} color={'#708090'} style={{ height: 36, width: 36, }}
                 onPress={() => {
