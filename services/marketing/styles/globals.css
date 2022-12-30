@@ -863,15 +863,16 @@ body {
     }
 
     .navbar .loginButton {
-        display: block;
+        display: flex;
         position: absolute;
         right: 7%;
     }
 
     .navbar .loginButton button {
-        background: none;
+        background-color: #050B2C;
         border-style: solid;
         border-width: 3px;
+        margin: 0 5px 0;
         border-color: white;
 
         width: 8vw;
@@ -882,6 +883,9 @@ body {
         border-radius: 10px;
         text-align: center;
         z-index: 1;
+    }
+    .navbar .loginButton button:hover {
+        background-color: #424c85;
     }
 
     .footer {
@@ -1424,7 +1428,7 @@ body {
         margin-top: 2vh;
     }
     .chatgptTop .iconList {
-        margin: 2vh 23vw 2vh;
+        margin: 2vh 28vw 2vh;
         justify-content: center;
     }
     .chatgptTop .iconList p {
@@ -1433,11 +1437,11 @@ body {
         margin: 0 0 -2vh
     }
     .chatgptTop .iconList .MuiImageList-root {
-        line-height: 6vw;
+        line-height: 5vw;
     }
     .chatgptTop .iconList .MuiImageListItem-root {
-        width: 6vw;
-        height: 6vw;
+        width: 5vw;
+        height: 5vw;
         resize: 'block'; 
         border-radius: 15px;
         align-content: center;
@@ -1479,10 +1483,10 @@ body {
         z-index: 1;
         padding: 1.25vw;
     }
-    .chatgptTop .questionInput .questionForm .questionInput{
+    .chatgptTop .questionInput .questionForm .questionInputBox{
         padding: 1vw;
         border-radius: 10px;
-        width: 45vw;
+        width: 35vw;
         font-size: 18px;
         text-align: left;
         height: 4vh;
@@ -1511,7 +1515,7 @@ body {
         display: flex;
         flex-direction: column;
         background-color:rgba(255,255,255,.9);
-        width: 51vw; 
+        width: 41vw; 
         border-radius: 5px;
         padding: 1vw;
     }
@@ -1536,6 +1540,114 @@ body {
     .chatgptBottom .middle p {
         text-align: center;
         padding: 4vh 5vw 0;
+    }
+
+    .loginBase {
+        background-color: #050B2C;
+        background-image: url('/MobileClouds.svg');
+        background-size: 60%;
+        background-repeat: no-repeat;
+        background-position-y: 20%;
+        background-position-x: 40%;
+        padding: 1vw;
+        min-height: 79.8vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .loginBase p {
+        font-size: medium;
+    }
+    .loginBase .loginForm {
+        background-color: rgb(229, 229, 229);
+        border-radius: 10px;
+        padding: 5vh 5vh 5vh;
+        
+        display: flex;
+        align-items: center;
+        border-color: rgba(0, 0, 0, 0.7);
+        flex-direction: column;
+        box-shadow: 4px 4px .25px rgba(224, 224, 224, 0.125);
+    }
+    .loginBase .loginForm .title {
+        
+        margin-bottom: 7vh;
+        
+    }
+    .loginBase .loginForm .title h1 {
+        overflow: visible;
+        font-size: 4vh;
+        text-align: center;
+    }
+    .loginBase .loginForm .accountInfo {
+        width: 20vw;
+        height: 5vh;
+        border-radius: 10px;
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .loginEmailBox {
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .loginEmailBox .loginEmail {
+        width: 20vw;
+        height: 5vh;
+        border-radius: 10px;
+        
+    }
+    .loginBase .loginForm .loginPassword {
+        width: 20vw;
+        height: 5vh;
+        border-radius: 10px;
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .confirmLoginPasswordBox {
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .confirmLoginPasswordBox .confirmLoginPassword {
+        width: 20vw;
+        height: 5vh;
+        border-radius: 10px;
+        
+    }
+    .loginBase .loginForm .buttonGroup {
+        display: flex;
+        align-items: center;
+    }
+    .loginBase .loginForm .buttonGroup .createAccount {
+        background-color: #EC5328;
+        color: white;
+        font-size: medium;
+        width: 12.25vw;
+        height: 6vh;        
+        border-radius: 10px;
+        border-color: rgba(0, 0, 0, 0.3);
+        margin-right: 0.5vw;
+        box-shadow: 2px 2px 0.25px rgba(0, 0, 0, 0.125);
+    }
+    .loginBase .loginForm .buttonGroup .login {
+        background-color: #35A265;
+        color: white;
+        font-size: medium;
+        width: 12.25vw;
+        height: 6vh;        
+        border-radius: 10px;
+        border-color: rgba(0, 0, 0, 0.3);
+        margin-left: 0.5vw;
+        box-shadow: 2px 2px 0.25px rgba(0, 0, 0, 0.125);
+    }
+    .loginBase .loginForm .createAccountLine {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 10vh 0 3vh;
+    }
+    .loginBase .loginForm .createAccountLine .createLinkButton {
+        color: #0F33AF;
+        font-weight: 600;
+        font-size: medium;
+        background-color: transparent;
+        border-color: transparent;
+        
     }
     .bm-burger-button {
         display: none;

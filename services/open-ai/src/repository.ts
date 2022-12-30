@@ -8,7 +8,8 @@ import {
     TranscriptListTable,
     TranscriptWithDetailTable, 
     TranscriptEmbedding,
-    TranscriptEmbeddingTable
+    TranscriptEmbeddingTable,
+    PromptResponse
 } from './interfaces';
 import { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsCommand, _Object } from "@aws-sdk/client-s3";
 
@@ -111,6 +112,25 @@ export default class Repository {
             const query = this.pgp.helpers.insert(data, cs) + ` ON CONFLICT ON CONSTRAINT training_id_embedding DO UPDATE SET
                                                                     embedding = EXCLUDED.embedding,
                                                                     updated_at = now()`
+            const result = await this.db.result(query);
+
+            return result.rowCount;
+        } catch (err) {
+            console.error(err)
+            return 0;
+        }
+    }
+    insertPromptResponse = async(data: PromptResponse) => {
+        try {
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'user_id', prop: 'userId'}, 
+                {name: 'symbol', prop: 'symbol'}, 
+                {name: 'prompt', prop: 'prompt'},
+                {name: 'response', prop: 'response'},
+                {name: 'context_length', prop: 'contextLength'},
+            ], {table: 'data_prompt_response'})
+    
+            const query = this.pgp.helpers.insert(data, cs) //+ ` ON CONFLICT DO NOTHING`
             const result = await this.db.result(query);
 
             return result.rowCount;

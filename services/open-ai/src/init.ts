@@ -17,9 +17,6 @@ export type initOutput = {
     finnhubService: FinnhubService
 }
 export const init = async (): Promise<initOutput> => {
-    if (!process.env.OPENAI_API_KEY) throw new Error('missing openai api key');
-    if (!process.env.FINNHUB_API_KEY) throw new Error('missing finnhub api key');
-
     if (!pgClient || !pgp) {
         const postgresConfiguration = await DefaultConfig.fromCacheOrSSM('postgres');
         pgp = pgPromise({});
@@ -38,16 +35,12 @@ export const init = async (): Promise<initOutput> => {
     // @ts-ignore
     const finnhubConfiguration = await DefaultConfig.fromCacheOrSSM('finnhub');
 
-
-
     const repo = new Repository(pgClient, pgp, s3client);
 
-    //const finnhub = new Finnhub(process.env.FINNHUB_API_KEY);
     // @ts-ignore
     const finnhub = new Finnhub(finnhubConfiguration.FINNHUB_API_KEY);
     const finnhubService = new FinnhubService(repo, finnhub);
 
-    //const openaiServices = new OpenAIClass(process.env.OPENAI_API_KEY, repo);
     // @ts-ignore
     const openaiServices = new OpenAIClass(openaiConfiguration.OPENAI_API_KEY, repo);
 

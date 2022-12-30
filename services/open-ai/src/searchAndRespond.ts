@@ -130,7 +130,7 @@ export class SearchAndRespond {
         return result;
     }
 
-    answerQuestionUsingContext = async (symbol: string, prompt: string) => {
+    answerQuestionUsingContext = async (symbol: string, prompt: string, userId: string = 'n/a') => {
         const preContext = `Answer the question as truthfully as possible using the provided context, and if the answer is not contained within the text below, say "I don't know. Please try asking the question in a different way to help me better understand what you are looking for."\n\nContext:\n`;
         
         const context = await this.findMostSimilarSpeech(symbol, prompt)
@@ -145,7 +145,13 @@ export class SearchAndRespond {
             max_tokens: this.maxResponseTokens,
             temperature: this.temperature
         })
-        
+        await this.finnhubService.repo.insertPromptResponse({
+            userId, 
+            symbol, 
+            prompt, 
+            response: response.choices[0].text || '', 
+            contextLength: context.split(' ').length
+        })
         return response;
     }
 }

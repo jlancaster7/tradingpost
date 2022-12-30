@@ -139,3 +139,11 @@ export type TranscriptEmbedding = {
     transcriptTrainingId: number
 }
 export type TranscriptEmbeddingTable = TranscriptEmbedding & TableInfo;
+
+export type PromptResponse = {
+    userId: string,
+    symbol: string,
+    prompt: string,
+    response: string,
+    contextLength: number
+}

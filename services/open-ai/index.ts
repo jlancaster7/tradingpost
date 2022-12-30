@@ -1,5 +1,9 @@
 import 'dotenv/config'
-import express from 'express';
+import {loginPass, loginToken, resetPassword, createLogin, createUser } from '@tradingpost/common/api/auth' 
+import { DefaultConfig } from '@tradingpost/common/configuration';
+import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
+import jwt, { JwtPayload, verify } from 'jsonwebtoken';
+import Express, { RequestHandler, response } from "express";
 import cors from 'cors'
 import bodyParser from 'body-parser';
 import { init, initOutput } from "./src/init"
@@ -9,9 +13,9 @@ import { GPU } from "gpu.js";
 
 const run = async () => {
     
-    const app: express.Application = express();
+    const app: Express.Application = Express();
     const port = 8080;
-    app.use(express.json())
+    app.use(Express.json())
     app.use(cors());
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({extended: false}));
@@ -27,20 +31,42 @@ const run = async () => {
     })
 }
 
-const setupRoutes = async (app: express.Application, respond: SearchAndRespond) => {
-    app.post('/login', async (req: express.Request, res: express.Response) => {
-        
-        return res.json();
+const setupRoutes = async (app: Express.Application, respond: SearchAndRespond) => {
+    app.post('/chatGPT/login', async (req: Express.Request, res: Express.Response) => {
+        try {
+            if (!req.body.pass) throw new PublicError("Unauthorized...", 401)
+            else {
+                if (req.body.email) return res.json(await loginPass(req.body.email, req.body.pass, ""));
+                else return res.json(await loginToken(req.body.pass));
+            }
+        } catch (err: any) {
+            return res.json({token: '', statusCode: err.statusCode, msg: err.message})
+        }
+        });
+    app.post('/chatGPT/createAccount', async (req: Express.Request, res: Express.Response) => {
+        try {
+            if (!req.body.email || !req.body.pass) throw new PublicError("Invalid Request");
+            const loginResult = await createLogin(req.body.email, req.body.pass);
+            const userResult = await createUser({
+                email: req.body.email,
+                first_name: req.body.first_name,
+                last_name: req.body.last_name,
+                handle: req.body.username,
+                dummy: false
+            })
+            return res.json(userResult);
+            
+        } catch (err: any) {
+            return res.json({token: '', statusCode: err.statusCode, msg: err.message});
+        }
     });
-    app.post('/createAccount', async (req: express.Request, res: express.Response) => {
+    app.post('/chatGPT/prompt', async (req: Express.Request, res: Express.Response) => {
         
-        return res.json();
-    });
-    app.post('/chatGPT/prompt', async (req: express.Request, res: express.Response) => {
         const startTime = new Date()
         console.log(`Processing request ${startTime.toTimeString()}`)
         try {
-            const response = await respond.answerQuestionUsingContext(req.body.symbol, req.body.prompt);
+            const token = await decodeToken(req);
+            const response = await respond.answerQuestionUsingContext(req.body.symbol, req.body.prompt, token.sub);
             if (response.choices[0].text) {
                 const parsedResponse = response.choices[0].text.replace('"', '').replace('"', '').replace('\n', '');
                 const endTime = new Date()
@@ -52,14 +78,34 @@ const setupRoutes = async (app: express.Application, respond: SearchAndRespond) 
                 return res.json({});
             }
         } 
-        catch (err) {
+        catch (err: any) {
             console.error(err)
-            return res.json({});
+            return res.json({statusCode: err.statusCode, msg: err.message});
         }
-       
-
     });
+}
+const decodeToken = async (req: Express.Request, disableModelCheck?: boolean) => {
 
+    const bearerHeader = req.headers['authorization'];
+    
+    //check if bearer is undefined
+    if (typeof bearerHeader !== 'undefined') {
+        //split the space at the bearer
+        const bearer = bearerHeader.split(' ');
+        if (bearer[0].toLowerCase() !== "bearer")
+            throw new Error(`Invalid authorization type: "${bearer[0]}".`)
+
+        const result = verify(bearer[1],
+            await DefaultConfig.fromCacheOrSSM("authkey"));
+            
+        if (!disableModelCheck && !result.sub)
+            throw new Error(`Invalid authorization token`);
+        else
+            return result as JwtPayload;
+
+    } else {
+        throw new Error("Unauthoized....");
+    }
 }
 
 (async () => {

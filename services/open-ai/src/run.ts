@@ -65,9 +65,9 @@ const respondTest = async (Init: initOutput) => {
 (async () => {
     try {
         const Init = await init();
-        //await importTranscripts(Init);
-        //await create(Init);
-        await respondTest(Init);
+        await importTranscripts(Init);
+        await create(Init);
+        //await respondTest(Init);
     } catch (err) {
         console.error(err);
     }

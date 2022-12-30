@@ -5,16 +5,23 @@ import {
   } from 'react-transition-group';
   import SendIcon from '@mui/icons-material/Send';
 import { ToastContainer, toast } from 'react-toastify';
-
 import 'react-toastify/dist/ReactToastify.css';
+import { getToken } from "./hooks/useToken";
+import { notify } from "./utils";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 const ChatGPTBlockOne = () => {
+    const [token, setToken] = useState('');
+
+    useEffect(() => {
+        const newToken = getToken();
+        setToken(newToken);
+    }, [])
+    
     const [question, setQuestion] = useState(""),
           [answer, setAnswer] = useState<any[]>([]),
           [isMobile, setIsMobile] = useState(false),
-          //[submittedQuestion, setSubmittedQuestion] = useState(''),
           [questionSubmitted, setQuestionSubmitted] = useState(false),
           [inProp, setInProp] = useState(false),
           [windowSize, setWindowSize] = useState({
@@ -25,30 +32,29 @@ const ChatGPTBlockOne = () => {
     const handleSubmit = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         if (question === '') {
-            notify()
+            notify(`Please enter a question and try asking Michael again.`)
         } else {
-            //setAnswer([])
             setQuestionSubmitted(true);
-            const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-            
+            const time = (new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             setAnswer((p: any[]) => {
                 p.push({author: 'User', response: question, time});
                 return p;
             })
-            
-            
-            
             fetch(baseUrl + '/chatGPT/prompt', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
+                    "authorization": 'Bearer ' + token
                 },
                 body: JSON.stringify({
                     symbol: list[0].symbol,
                     prompt: question
                 })
             })
-            .then(result => result.json())
+            .then(result => {
+                setQuestion('')
+                return result.json()
+            })
             .then(text => {
                 setAnswer((p: any[]) => {
                     const newAnswer = p.slice(0);
@@ -57,10 +63,11 @@ const ChatGPTBlockOne = () => {
                     setQuestion('')
                     return newAnswer;
                 })
-
             })
             .catch((err) => console.error(err))
-            .finally(() => setQuestionSubmitted(false))
+            .finally(() => {
+                setQuestionSubmitted(false)
+            })
         }   
     }
     const resetQuestion = (e?: { preventDefault: () => void; }) => {
@@ -68,10 +75,6 @@ const ChatGPTBlockOne = () => {
         setQuestion('');
         setAnswer([]);
         setQuestionSubmitted(false);   
-    }
-    const notify = () => {
-        toast(`Please enter a question and try asking Michael again.`,
-                {position: toast.POSITION.TOP_CENTER})
     }
 
     useEffect(() => {
@@ -90,32 +93,6 @@ const ChatGPTBlockOne = () => {
         setIsMobile(() => windowSize.innerWidth < 770 ? true : false)
     },[windowSize, isMobile])
 
-
-    let data: any[] = [
-        {symbol: 'AAPL', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/AAPL.png'}, 
-        {symbol: 'ABNB', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/ABNB.png'}, 
-        {symbol: 'ADBE', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/ADBE-1671486682003.png'}, 
-        {symbol: 'AMZN', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/AMZN.png'}, 
-        {symbol: 'COST', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/COST.png'}, 
-        {symbol: 'CRM', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/CRM.png'}, 
-        {symbol: 'CRWD', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/CRWD-1671487114964.png'}, 
-        {symbol: 'DDOG', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/DDOG-1671487143454.jpg'}, 
-        {symbol: 'DIS', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/DIS.png'}, 
-        {symbol: 'GOOGL', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/GOOG-1666113693819.jpg'}, 
-        {symbol: 'META', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/META-1671487025787.jpg'}, 
-        {symbol: 'MSFT', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/MSFT.png'}, 
-        {symbol: 'NVDA', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/NVDA.png'}, 
-        {symbol: 'SNAP', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/SNAP-1671486920339.png'}, 
-        {symbol: 'SNOW', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/SNOW-1671486875966.jpg'}, 
-        {symbol: 'TGT', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/TGT.png'}, 
-        {symbol: 'TSLA', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/TSLA-1671486638257.jpg'}, 
-        {symbol: 'V', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/V.png'}, 
-    ]
-    for (let i = 0; i < data.length; i++) {
-        const ref = createRef<any>()
-        data[i].nodeRef = ref
-    }
-    const [list, setList] = useState(data);
     useEffect(() => {
         if (list.length > 1) return;
        (async () => {
@@ -124,7 +101,30 @@ const ChatGPTBlockOne = () => {
         })()
     }, [inProp])
 
-    return (<>
+    let data: any[] = [
+        {symbol: 'AAPL', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/AAPL.png', nodeRef: createRef<any>()}, 
+        {symbol: 'ABNB', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/ABNB.png', nodeRef: createRef<any>()}, 
+        {symbol: 'ADBE', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/ADBE-1671486682003.png', nodeRef: createRef<any>()}, 
+        {symbol: 'AMZN', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/AMZN.png', nodeRef: createRef<any>()}, 
+        {symbol: 'COST', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/COST.png', nodeRef: createRef<any>()}, 
+        {symbol: 'CRM', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/CRM.png', nodeRef: createRef<any>()}, 
+        {symbol: 'CRWD', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/CRWD-1671487114964.png', nodeRef: createRef<any>()}, 
+        {symbol: 'DDOG', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/DDOG-1671487143454.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'DIS', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/DIS.png', nodeRef: createRef<any>()}, 
+        {symbol: 'GOOGL', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/GOOG-1666113693819.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'META', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/META-1671487025787.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'MSFT', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/MSFT.png', nodeRef: createRef<any>()}, 
+        {symbol: 'NVDA', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/NVDA.png', nodeRef: createRef<any>()}, 
+        {symbol: 'SNAP', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/SNAP-1671486920339.png', nodeRef: createRef<any>()}, 
+        {symbol: 'SNOW', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/SNOW-1671486875966.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'TGT', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/TGT.png', nodeRef: createRef<any>()}, 
+        {symbol: 'TSLA', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/TSLA-1671486638257.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'V', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/V.png', nodeRef: createRef<any>()}, 
+    ]
+
+    const [list, setList] = useState(data);
+    
+    return (!token ? null : <>
         <div className="chatgptTop">    
             <h1 className="title">
                 <span className="titleWhite">ChatWithManagement</span>
@@ -147,29 +147,25 @@ const ChatGPTBlockOne = () => {
                     >
                     {list.map((item) => {
                         return (<>
-                            <CSSTransition
-                                key={`${item.logoUrl}_css_transition`}
-                                nodeRef={item.nodeRef}
-                                in={inProp}
-                                timeout={1500}
-                                classNames="item"
-                                >
-                                <ImageListItem 
-                                    key={`${item.logoUrl}_image_list_item`}
-                                    ref={item.nodeRef}
-
-                                    onClick={async () => {
-                                        setInProp(!inProp)
-                                        if (list.length === 1) return
-                                        await sleep(1000);
-                                        setList((g) => g.filter((d) => d.logoUrl === item.logoUrl))
-                                    }}>
-                                    <img 
-                                        key={`${item.logoUrl}_img`}
-                                        src={`${item.logoUrl}`}
-                                        alt={item.symbol}
-                                        loading='lazy'
-                                    />
+                            <CSSTransition key={`${item.logoUrl}_css_transition`}
+                                           nodeRef={item.nodeRef}
+                                           in={inProp}
+                                           timeout={1500}
+                                           classNames="item"
+                                           >
+                                <ImageListItem key={`${item.logoUrl}_image_list_item`}
+                                               ref={item.nodeRef}
+                                               onClick={async (e) => {
+                                                   setInProp(!inProp)
+                                                   if (list.length === 1) return
+                                                   await sleep(1000);
+                                                   setList((g) => g.filter((d) => d.logoUrl === item.logoUrl))
+                                                   }}>
+                                    <img key={`${item.logoUrl}_img`}
+                                         src={`${item.logoUrl}`}
+                                         alt={item.symbol}
+                                         loading='lazy'
+                                         />
                                 </ImageListItem>
                             </CSSTransition>
                             </>
@@ -181,11 +177,10 @@ const ChatGPTBlockOne = () => {
                 </p>
             </div>
             <div className="questionInput" 
-                style={list.length === 1 ? {display: 'block'} : {display: 'none'}}
+                 style={list.length === 1 ? {display: 'block'} : {display: 'none'}}
                 >
-                <div 
-                    className="chatgptAnswer"
-                    style={answer.length > 0 ? {display: 'flex'} : {display: 'none'}}
+                <div className="chatgptAnswer"
+                     style={answer.length > 0 ? {display: 'flex'} : {display: 'none'}}
                     >
                     <div className="chatBox"
                          >
@@ -205,17 +200,18 @@ const ChatGPTBlockOne = () => {
                     </div>
                 </div>
                 <form className="questionForm">
-                    <input className="questionInput" placeholder="Enter your question here"
-                        onChange={(e) => setQuestion(e.target.value)} 
-                        value={question}
-                        disabled={questionSubmitted}
-                        />
+                    <input className="questionInputBox" 
+                           placeholder="Enter your question here"
+                           onChange={(e) => setQuestion(e.target.value)} 
+                           onKeyPress={(e) => {if ( e.key === 'Enter') handleSubmit(e)}}
+                           value={question}
+                           disabled={questionSubmitted}
+                           />
                     <div className="buttonGroup">
-                        <IconButton  
-                            className="questionSubmitButton" 
-                            onClick={handleSubmit}
-                            disabled={questionSubmitted}
-                            >
+                        <IconButton className="questionSubmitButton" 
+                                    onClick={handleSubmit}
+                                    disabled={questionSubmitted}
+                                    >
                             <SendIcon />
                         </IconButton >
                         
