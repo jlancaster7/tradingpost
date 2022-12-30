@@ -96,3 +96,4 @@ Thumbs.db
 # Serverless Zip File
 lambdas/.serverless/*.zip
 
+*.tsbuildinfo
