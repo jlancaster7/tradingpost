@@ -36,7 +36,7 @@ const ChatGPTCreateAccount = () => {
             notify(`Please make sure you've entered a valid email address, your passwords match and you've .`)
         }
         else {
-            fetch(baseUrl + '/chatGPT/createAccount', {
+            fetch(baseUrl + '/createAccount', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
@@ -82,8 +82,9 @@ const ChatGPTCreateAccount = () => {
         <div className="loginBase">
             <form className="loginForm">
                 <div className="title">
-                    <h1>Create an Account</h1>
-                    <h1>with TradingPost</h1>
+                    <h1>Create a</h1>
+                    <h1>TradingPost</h1>
+                    <h1>Account</h1>
                 </div>
                 <input type='text' 
                        className="accountInfo" 
@@ -140,6 +141,17 @@ const ChatGPTCreateAccount = () => {
                             onClick={handleCreate}
                             >
                             Create Account
+                    </button>
+                </div>
+                <div className="signInLine">
+                    <p>Already have an account?</p>
+                    <button className="createLinkButton"
+                            type="button"
+                            onClick={() => {
+                                window.location.href = '/chatGPT/login';
+                            }}
+                            >
+                        Login!
                     </button>
                 </div>
             </form>

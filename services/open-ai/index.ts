@@ -9,6 +9,7 @@ import bodyParser from 'body-parser';
 import { init, initOutput } from "./src/init"
 import { SearchAndRespond } from './src/searchAndRespond';
 import { GPU } from "gpu.js";
+import { GPTAccount } from './src/gptAccount';
 
 
 const run = async () => {
@@ -23,7 +24,7 @@ const run = async () => {
     const Init = await init();
     const gpu = new GPU({ mode: 'cpu' });
     const Respond = new SearchAndRespond(Init, gpu)    
-    await setupRoutes(app, Respond);
+    await setupRoutes(app, Respond, Init.gptAccount);
 
     const runningMessage = `Server running at http://localhost:${port}`;
     app.listen(port, () => {
@@ -31,8 +32,8 @@ const run = async () => {
     })
 }
 
-const setupRoutes = async (app: Express.Application, respond: SearchAndRespond) => {
-    app.post('/chatGPT/login', async (req: Express.Request, res: Express.Response) => {
+const setupRoutes = async (app: Express.Application, respond: SearchAndRespond, account: GPTAccount) => {
+    app.post('/login', async (req: Express.Request, res: Express.Response) => {
         try {
             if (!req.body.pass) throw new PublicError("Unauthorized...", 401)
             else {
@@ -43,9 +44,9 @@ const setupRoutes = async (app: Express.Application, respond: SearchAndRespond) 
             return res.json({token: '', statusCode: err.statusCode, msg: err.message})
         }
         });
-    app.post('/chatGPT/createAccount', async (req: Express.Request, res: Express.Response) => {
+    app.post('/createAccount', async (req: Express.Request, res: Express.Response) => {
         try {
-            if (!req.body.email || !req.body.pass) throw new PublicError("Invalid Request");
+            if (!req.body.email || !req.body.pass) throw new PublicError("Invalid Request", 401);
             const loginResult = await createLogin(req.body.email, req.body.pass);
             const userResult = await createUser({
                 email: req.body.email,
@@ -60,12 +61,30 @@ const setupRoutes = async (app: Express.Application, respond: SearchAndRespond) 
             return res.json({token: '', statusCode: err.statusCode, msg: err.message});
         }
     });
+    app.get('/getAccount', async (req: Express.Request, res: Express.Response) => {
+        try {
+            const token = await decodeToken(req);
+            if (!token.sub) throw new PublicError("Invalid authorization token", 403);
+            const result = await account.getAccountInfo(token.sub);
+            return res.json({...result, verified: token.verified})
+        } catch (err: any) {
+            return res.json({userId: '', statusCode: err.statusCode, msg: err.message});
+        }
+    })
     app.post('/chatGPT/prompt', async (req: Express.Request, res: Express.Response) => {
         
         const startTime = new Date()
         console.log(`Processing request ${startTime.toTimeString()}`)
         try {
             const token = await decodeToken(req);
+            if (!token.sub) throw new PublicError("Invalid authorization token", 403);
+            const result = await account.getAccountInfo(token.sub);
+            if (result.verified) {
+                if (result.totalTokens - result.tokensUsed <= 0) throw new PublicError("You're all out of tokens!", 401);
+            }
+            else {
+                if (result.totalTokens - result.tokensUsed <= 15) throw new PublicError("To use your remaining 15 tokens please verify your email address!", 401);
+            }
             const response = await respond.answerQuestionUsingContext(req.body.symbol, req.body.prompt, token.sub);
             if (response.choices[0].text) {
                 const parsedResponse = response.choices[0].text.replace('"', '').replace('"', '').replace('\n', '');
@@ -75,12 +94,11 @@ const setupRoutes = async (app: Express.Application, respond: SearchAndRespond) 
                 return res.json({answer: parsedResponse});
             }
             else {
-                return res.json({});
+                return res.json({answer: '', statusCode: 403});
             }
         } 
         catch (err: any) {
-            console.error(err)
-            return res.json({statusCode: err.statusCode, msg: err.message});
+            return res.json({answer: '', statusCode: err.statusCode, msg: err.message});
         }
     });
 }

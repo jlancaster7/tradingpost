@@ -12,11 +12,39 @@ import { notify } from "./utils";
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 const ChatGPTBlockOne = () => {
-    const [token, setToken] = useState('');
+    const [token, setToken] = useState(''),
+          [user, setUser] = useState<any>(null),
+          [isAuthed, setIsAuthed] = useState(false);
 
     useEffect(() => {
         const newToken = getToken();
         setToken(newToken);
+        if (newToken) {
+            fetch(baseUrl + '/getAccount', {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json",
+                    "authorization": 'Bearer ' + newToken
+                }
+            })
+            .then(result => result.json())
+            .then(user => {
+                if (user.userId) {
+                    setUser(user)
+                    setIsAuthed(true)
+                }
+                else if (user.statusCode === 401) {
+                    notify(user.msg)
+                }
+                else {
+                    notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
+                }
+            })
+            .catch(err => {
+                console.error(err)
+                notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
+            })
+        }
     }, [])
     
     const [question, setQuestion] = useState(""),
@@ -34,6 +62,18 @@ const ChatGPTBlockOne = () => {
         if (question === '') {
             notify(`Please enter a question and try asking Michael again.`)
         } else {
+            if (user.verified) {
+                if (user.totalTokens - user.tokensUsed <= 0) {
+                    notify("You're all out of tokens!")
+                    return
+                }
+            }
+            else {
+                if (user.totalTokens - user.tokensUsed <= 15) {
+                    notify('To use your remaining 15 tokens please verify your email address!');
+                    return
+                }
+            }
             setQuestionSubmitted(true);
             const time = (new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             setAnswer((p: any[]) => {
@@ -56,15 +96,30 @@ const ChatGPTBlockOne = () => {
                 return result.json()
             })
             .then(text => {
-                setAnswer((p: any[]) => {
-                    const newAnswer = p.slice(0);
-                    const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-                    newAnswer.push({author: 'Michael', response: text.answer, time})
-                    setQuestion('')
-                    return newAnswer;
-                })
+                console.log(text)
+                if (text.answer !== '') {
+                    setAnswer((p: any[]) => {
+                        const newAnswer = p.slice(0);
+                        const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                        newAnswer.push({author: 'Michael', response: text.answer, time})
+                        setQuestion('')
+                        return newAnswer;
+                    })
+                    user.tokensUsed +=1
+                    setUser(user);
+                }
+                else if (text.statusCode === 401) {
+                    notify(text.msg)
+                }
+                else {
+                    notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
+                }
+                
             })
-            .catch((err) => console.error(err))
+            .catch((err) => {
+                notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
+                //console.error(err)
+            })
             .finally(() => {
                 setQuestionSubmitted(false)
             })
@@ -216,9 +271,15 @@ const ChatGPTBlockOne = () => {
                         </IconButton >
                         
                     </div>
-                    <ToastContainer />
+
                 </form>
+                <div className="tokenCounter">
+                    <p>
+                        {user ? `Tokens Remaining: ${user.totalTokens - user.tokensUsed}` : ''}
+                    </p>
+                </div>
             </div>
+            <ToastContainer />
         </div>
         </>
     );

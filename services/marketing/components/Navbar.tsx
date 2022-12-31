@@ -3,7 +3,7 @@ import TPLogo from '../public/TPLogo.svg';
 import Image from 'next/image';
 import { saveToken } from "./hooks/useToken";
 
-const Navbar = (props: {token: string}) => {
+const Navbar = (props: {isAuthed: boolean, user: any}) => {
     return (
         <nav className="navbar" style={{height: '10vh'}}>
             <h1 className='title'>
@@ -20,21 +20,29 @@ const Navbar = (props: {token: string}) => {
                 }}>chatGPT</a>
             </div>
             <div className="loginButton">
+                <div className="loggedInUserDisplay">
+                    <p>
+                        {props.user ? 'Logged in as' : ''}
+                    </p>
+                    <p>
+                        {props.user ? `${props.user.userName}` : ''}
+                    </p>
+                </div>
+                
                 <button type="button" 
                         onClick={() => {
-                            if (!props.token) {
+                            if (!props.isAuthed) {
                                 window.location.href = '/chatGPT/login';
                             }
                             else {
-                                saveToken({token: ''})
-                                window.location.href = '/'
+                                saveToken({token: ''});
+                                window.location.href = '/';
                             }
-                            
                         }}
                         >
-                    {props.token === '' ? `Login` : 'Logout'}
+                    {!props.isAuthed ? `Login` : 'Logout'}
                 </button>
-                <button type="button" 
+                <button type="button"
                         onClick={() => {
                             window.location.href = 'https://m.tradingpostapp.com';
                         }}

@@ -4,9 +4,11 @@ import GPU from 'gpu.js';
 import pgPromise, {IDatabase, IMain} from 'pg-promise';
 import FinnhubService from './service';
 import Finnhub from './finnhub';
+import { GPTAccount } from './gptAccount';
 import Repository from './repository'
 import { OpenAIClass } from './openAI';
 import { S3Client } from "@aws-sdk/client-s3";
+
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
@@ -15,6 +17,7 @@ export const availableTickers = ['META', 'AMZN', 'TSLA', 'AAPL', 'NFLX', 'MSFT',
 export type initOutput = {
     openaiServices: OpenAIClass
     finnhubService: FinnhubService
+    gptAccount: GPTAccount
 }
 export const init = async (): Promise<initOutput> => {
     if (!pgClient || !pgp) {
@@ -37,6 +40,8 @@ export const init = async (): Promise<initOutput> => {
 
     const repo = new Repository(pgClient, pgp, s3client);
 
+    const gptAccount = new GPTAccount(repo);
+
     // @ts-ignore
     const finnhub = new Finnhub(finnhubConfiguration.FINNHUB_API_KEY);
     const finnhubService = new FinnhubService(repo, finnhub);
@@ -44,5 +49,5 @@ export const init = async (): Promise<initOutput> => {
     // @ts-ignore
     const openaiServices = new OpenAIClass(openaiConfiguration.OPENAI_API_KEY, repo);
 
-    return {openaiServices, finnhubService}
+    return {openaiServices, finnhubService, gptAccount}
 }

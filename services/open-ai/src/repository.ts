@@ -1,4 +1,5 @@
 import { IDatabase, IMain } from "pg-promise";
+import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
 import { 
     Transcript, 
     TranscriptTable, 
@@ -370,6 +371,25 @@ export default class Repository {
             result.push(o);
         })
         return result;
+    }
+    getTokensused = async (userId: string): Promise<number> => {
+        const month = (new Date()).getMonth() + 1;
+        const year = (new Date()).getFullYear();
+        const query = `SELECT count(*) as tokens_used
+                       FROM data_prompt_response
+                       WHERE user_id = $1 
+                       AND created_at >= '${month}/1/${year}'`;
+        const response = await this.db.query(query, [userId]);
+
+        return parseInt(response[0].tokens_used);
+    }
+    getTradingPostUser = async (userId: string): Promise<IUserGet> => {
+        
+        const result = await this.db.query(`SELECT * FROM public.api_user_get ($1)`, [JSON.stringify({data: {id: userId}})])
+    
+        if (!result.length) throw new Error("User not found!");
+        
+        return result[0] as IUserGet;
     }
     _getFileFromS3 = async <T>(key: string, mapFn?: (data: T) => T): Promise<T[]> => {
         

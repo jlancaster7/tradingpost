@@ -11,7 +11,7 @@ import { getToken, saveToken } from "./hooks/useToken";
 import { notify } from "./utils";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-const baseAuthUrl = 'https://api.tradingpostapp.com/'
+
 
 const ChatGPTLogin = () => {
     const [hydrate, setHydrate] = useState(false);
@@ -27,7 +27,7 @@ const ChatGPTLogin = () => {
         if ( password === '' || email === '') {
             notify(`Please make sure to enter your username and password to login.`)
         } else {
-            fetch(baseUrl + '/chatGPT/login', {
+            fetch(baseUrl + '/login', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
