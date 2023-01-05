@@ -17,7 +17,7 @@ const Navbar = (props: {isAuthed: boolean, user: any}) => {
                 }}>About</a>
                 <a href="/chatGPT" style={{
                     color: "white",
-                }}>chatGPT</a>
+                }}>chatGPT <span style={{color: 'white', fontStyle: 'italic'}}>beta</span></a>
             </div>
             <div className="loginButton">
                 <div className="loggedInUserDisplay">

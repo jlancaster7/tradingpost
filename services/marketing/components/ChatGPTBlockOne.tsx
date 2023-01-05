@@ -13,12 +13,13 @@ import Typewriter from "./Typewriter";
 
 
 //const baseUrl = 'https://openai.tradingpostapp.com' || 'http://localhost:8082'
-const baseUrl = process.env.NEXT_PUBLIC_API_URL 
+const baseUrl = process.env.NEXT_PUBLIC_OPENAI_API_URL 
 
 const ChatGPTBlockOne = () => {
     const [token, setToken] = useState(''),
           [user, setUser] = useState<any>(null),
-          [isAuthed, setIsAuthed] = useState(false);
+          [isAuthed, setIsAuthed] = useState(false),
+          [hideTips, setHideTips] = useState(true);
 
     useEffect(() => {
         const newToken = getToken();
@@ -139,6 +140,7 @@ const ChatGPTBlockOne = () => {
         setQuestion('');
         setAnswer([]);
         setQuestionSubmitted(false);   
+        setHideTips(true);
     }
 
     useEffect(() => {
@@ -292,6 +294,28 @@ const ChatGPTBlockOne = () => {
                     <p>
                         {user ? `Tokens Remaining: ${user.totalTokens - user.tokensUsed}` : ''}
                     </p>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', flexDirection: 'column'}}>
+                    <button className="tipsButton"
+                            onClick={() => setHideTips(!hideTips)}>
+                        Tips and tricks
+                    </button>
+                    <div className="tips" style={hideTips ? {display: 'none'} : {display: 'inherit'}}>
+                        <ol type="1">
+                            <li>
+                                <span style={{fontWeight: '700'}}>Be specific about the time period (ie quarter, year) that you are referring to.</span>
+                                <br />
+                                &emsp;Example: 
+                                <br />
+                                &emsp;&emsp;Good - How much did revenue grow in Q1 2022?
+                                <br />
+                                &emsp;&emsp;Bad - How much did revenue grow last quarter?
+                            </li>
+                        </ol>
+                        
+                    </div>
+
+                    
                 </div>
             </div>
             <ToastContainer />

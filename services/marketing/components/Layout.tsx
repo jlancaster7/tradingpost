@@ -6,7 +6,7 @@ import SideMenu from './Sidebar';
 import { getToken, saveToken } from "./hooks/useToken";
 import { notify } from "./utils";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL
+const baseUrl = process.env.NEXT_PUBLIC_OPENAI_API_URL
 
 // @ts-ignore
 export default function Layout({children}) {

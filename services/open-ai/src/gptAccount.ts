@@ -59,7 +59,7 @@ export class GPTAccount {
             to: email,
             templateId: "d-23c8fc09ded942d386d7c888a95a0653",
             dynamicTemplateData: {
-                Weblink: 'http://localhost:3000' + `/chatGPT/verifyAccount?token=${token}`
+                Weblink: 'https://tradingpostapp.com' + `/chatGPT/verifyAccount?token=${token}`
             }
         })
     }

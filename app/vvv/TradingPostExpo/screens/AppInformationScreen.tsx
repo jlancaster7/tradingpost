@@ -112,7 +112,7 @@ export function AppInformationScreen(props: any) {
                         </Text>
                     </View>
                     <Text style={{ padding: sizes.rem1, fontSize: paragraphSize, fontFamily: 'K2D', textAlign: 'center', }}>
-                        {"Connect your portfolio to TradingPost and control who can view your articles, charts, trades, and watchlists.\n\nMake it public, share with friends and family, or build a paying subscriber base."}
+                        {"Connect your portfolio to TradingPost and control who can view your articles, charts, trades, and watchlists.\n\nMake it public or share with friends and family."}
                     </Text>
                 </View>
             </View>

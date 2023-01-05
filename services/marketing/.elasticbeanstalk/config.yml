@@ -5,9 +5,12 @@ environment-defaults:
   Tradingpost-Marketing-env:
     branch: null
     repository: null
+  Tradingpostmarketing-env:
+    branch: null
+    repository: null
 global:
   application_name: Tradingpost-Marketing
-  default_ec2_keyname: null
+  default_ec2_keyname: aws-eb
   default_platform: Node.js 16 running on 64bit Amazon Linux 2
   default_region: us-east-1
   include_git_submodules: true

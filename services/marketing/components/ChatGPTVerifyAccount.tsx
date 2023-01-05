@@ -6,7 +6,7 @@ import { getToken, saveToken } from "./hooks/useToken";
 import 'react-toastify/dist/ReactToastify.css';
 
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL
+const baseUrl = process.env.NEXT_PUBLIC_OPENAI_API_URL
 
 const ChatGPTVerifyAccount = () => {
     const [verificationResult, setVerificationResult ] = useState(false);

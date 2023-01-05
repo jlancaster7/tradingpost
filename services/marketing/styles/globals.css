@@ -663,7 +663,36 @@ body {
         transition: opacity 1s;
         transition-timing-function: cubic-bezier(0.42,0,0.58,1)
     }
-    
+    .chatgptTop .questionInput .tipsButton {
+        background-color: #050B2C;
+        border-style: solid;
+        border-width: 1px;
+        margin: 10px 5px 0;
+        border-color: white;
+
+        
+        height: 3vh;
+        color: white;
+        font-size: small;
+        font-weight: 600;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1;
+    }
+    .chatgptTop .questionInput .tips {
+        margin: 10px 0 10px;
+        padding: 1vw;
+        background-color:rgba(255,255,255,.9);
+        border-radius: 10px;
+        width: 90vw;
+
+    }
+    .chatgptTop .questionInput .tips li {
+        padding: 0;
+        
+        text-align: left;
+        font-size: small;
+    }
     
     .chatgptTop .questionInput {
         text-align: center;
@@ -1061,9 +1090,9 @@ body {
         border-color: white;
 
         width: 8vw;
-        height: 3vw;
+        height: 3.5vw;
         color: white;
-        font-size: 1vw;
+        font-size: .95vw;
         font-weight: 600;
         border-radius: 10px;
         text-align: center;
@@ -1656,12 +1685,57 @@ body {
     
     .chatgptTop .questionInput {
         text-align: center;
+        
     }
     .chatgptTop .questionInput .tokenCounter {
         display: flex;
         justify-content: center;
     }
     .chatgptTop .questionInput .tokenCounter p {
+        font-size: small;
+    }
+    .chatgptTop .questionInput .tipsButton {
+        background-color: #050B2C;
+        border-style: solid;
+        border-width: 1px;
+        margin: 0 5px 0;
+        border-color: white;
+
+        
+        height: 3vw;
+        color: white;
+        font-size: 1vw;
+        font-weight: 600;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1;
+    }
+    .chatgptTop .questionInput .tips {
+        margin-top: 10px;
+        padding: 1vw;
+        background-color:rgba(255,255,255,.9);
+        border-radius: 10px;
+        width: 41vw;
+
+    }
+    .chatgptTop .questionInput .tips li {
+        padding: 0;
+        
+        text-align: left;
+        font-size: small;
+    }
+    .chatgptTop .questionInput .tips {
+        margin-top: 10px;
+        padding: 1vw;
+        background-color:rgba(255,255,255,.9);
+        border-radius: 10px;
+        width: 41vw;
+
+    }
+    .chatgptTop .questionInput .tips li {
+        padding: 0;
+        
+        text-align: left;
         font-size: small;
     }
     .chatgptTop .questionInput .questionForm{

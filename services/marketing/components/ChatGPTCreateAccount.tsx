@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { saveToken } from "./hooks/useToken";
 
 //const baseUrl = 'https://openai.tradingpostapp.com' || 'http://localhost:8082'
-const baseUrl = process.env.NEXT_PUBLIC_API_URL
+const baseUrl = process.env.NEXT_PUBLIC_OPENAI_API_URL
 
 const ChatGPTCreateAccount = () => {
 
