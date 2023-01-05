@@ -29,7 +29,7 @@ export function AppInformationScreen(props: any) {
     const paragraphSize = height >= 760 ? fonts.medium : fonts.small
     const { currentPage: pageIndex } = sliderState;
 
-    return <View style={paddView}>
+    return <View style={{marginTop: 10}}>
         <View style={{ zIndex: 1, position: 'absolute', top: 30, left: 10, flexDirection: 'row', alignItems: 'center' }}>
             <ExitButton height={36} width={36} color={'#708090'} style={{ height: 36, width: 36, }}
                 onPress={() => {
