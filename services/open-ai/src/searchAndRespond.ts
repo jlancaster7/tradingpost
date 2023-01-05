@@ -5,13 +5,13 @@ import { dot, matrix, multiply, norm } from 'mathjs';
 import FinnhubService from './service';
 import { OpenAIClass } from './openAI';
 import { TranscriptEmbedding, TranscriptEmbeddingTable } from './interfaces';
-import { GPU } from 'gpu.js';
+//import { GPU } from 'gpu.js';
 
 
 export class SearchAndRespond {
     openaiServices: OpenAIClass;
     finnhubService: FinnhubService;
-    gpu: GPU;
+    //gpu: GPU;
     openAiResponseModel: string;
     openAiEmbedModel: string;
     maxResponseTokens: number;
@@ -19,7 +19,7 @@ export class SearchAndRespond {
     n: number;
 
     constructor(init: initOutput, 
-        gpu: GPU,
+        //gpu: GPU,
         openAiResponseModel: string = 'text-davinci-003', 
         maxResponseTokens: number = 500, 
         openAiEmbedModel: string = 'text-embedding-ada-002',
@@ -28,7 +28,7 @@ export class SearchAndRespond {
         ) {
         this.openaiServices = init.openaiServices;
         this.finnhubService = init.finnhubService;
-        this.gpu = gpu;
+        //this.gpu = gpu;
         this.openAiResponseModel = openAiResponseModel;
         this.openAiEmbedModel = openAiEmbedModel;
         this.maxResponseTokens = maxResponseTokens;
@@ -55,7 +55,7 @@ export class SearchAndRespond {
         this.checkForMatrixMult(matrix1, matrix2);
         return multiply(matrix1, matrix2);
     }
-
+    /*
     gpuMatrixMultiplication = (matrix1: number[][], matrix2: number[][]): number[] => {
         
         this.checkForMatrixMult(matrix1, matrix2);
@@ -73,8 +73,9 @@ export class SearchAndRespond {
         const result = multiplyMatrix(matrix1, matrix2)
         return result as number[];
     }
+    */
     gpuCosineSimilarity = (matrix1: number[][], matrix2: number[][]): number[] => {
-        const distances = this.gpuMatrixMultiplication(matrix1, this.transposeMatrix(matrix2))
+        const distances = this.matrixMultiplication(matrix1, this.transposeMatrix(matrix2))[0]
         const matrix1Norm = Number(norm(matrix1[0]))
         const matrix2Norm = matrix2.map(a => Number(norm(a)))
         for (let i = 0; i < distances.length; i++) {
@@ -136,8 +137,8 @@ export class SearchAndRespond {
         const context = await this.findMostSimilarSpeech(symbol, prompt)
         //console.log(`Context is ${context.split(' ').length} words long.\n`)
         
-        let promptWithContext = preContext + `${context}\n` + `Q: ${prompt}\nA: `;
-        //console.log(promptWithContext);
+        let promptWithContext = preContext + `${context}\n` + `${prompt}\nA: `;
+        console.log(promptWithContext);
         
         const response = await this.openaiServices.getModelResponse(this.openAiResponseModel,{
             prompt: promptWithContext,

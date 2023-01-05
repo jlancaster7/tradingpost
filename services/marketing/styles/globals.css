@@ -23,7 +23,31 @@ body {
     height: 100%;
 }
 
+.cursor {
+    animation: blinkingText 1s infinite;
+}
 
+@keyframes blinkingText {
+    0% {
+        opacity: 1;
+    }
+
+    49% {
+        opacity: 1;
+    }
+
+    60% {
+        opacity: 0;
+    }
+
+    99% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
 
 .privacyPolicy {
     display: flex;
@@ -829,6 +853,32 @@ body {
         border-color: transparent;
         
     }
+    .verifyBase {
+        background-color: #050B2C;
+        background-image: url('/MobileClouds.svg');
+        background-size: 60%;
+        background-repeat: no-repeat;
+        background-position-y: 20%;
+        background-position-x: 40%;
+        padding: 1vw;
+        min-height: 79.8vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .verifyBase .verifyMessage {
+        background-color: rgb(229, 229, 229);
+        border-radius: 10px;
+        padding: 5vh 5vh 5vh;
+        
+        display: flex;
+        align-items: center;
+        border-color: rgba(0, 0, 0, 0.7);
+        flex-direction: column;
+        box-shadow: 4px 4px .25px rgba(224, 224, 224, 0.125);
+        max-width: 50vw;
+    }
+
    
 
     /* Position and sizing of burger button */
@@ -1805,6 +1855,31 @@ body {
     }
     .bm-burger-button {
         display: none;
+    }
+    .verifyBase {
+        background-color: #050B2C;
+        background-image: url('/MobileClouds.svg');
+        background-size: 60%;
+        background-repeat: no-repeat;
+        background-position-y: 20%;
+        background-position-x: 40%;
+        padding: 1vw;
+        min-height: 79.8vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .verifyBase .verifyMessage {
+        background-color: rgb(229, 229, 229);
+        border-radius: 10px;
+        padding: 5vh 5vh 5vh;
+        
+        display: flex;
+        align-items: center;
+        border-color: rgba(0, 0, 0, 0.7);
+        flex-direction: column;
+        box-shadow: 4px 4px .25px rgba(224, 224, 224, 0.125);
+        max-width: 80%;
     }
 
 }

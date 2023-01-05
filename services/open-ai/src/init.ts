@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { DefaultConfig } from '@tradingpost/common/configuration';
-import GPU from 'gpu.js';
+//import GPU from 'gpu.js';
 import pgPromise, {IDatabase, IMain} from 'pg-promise';
 import FinnhubService from './service';
 import Finnhub from './finnhub';

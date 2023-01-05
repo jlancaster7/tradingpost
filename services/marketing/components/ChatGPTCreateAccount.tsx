@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, createRef, useEffect } from "react";
 import { ToastContainer } from 'react-toastify';
 import { isEmail, notify } from "./utils";
@@ -6,7 +7,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { saveToken } from "./hooks/useToken";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+//const baseUrl = 'https://openai.tradingpostapp.com' || 'http://localhost:8082'
+const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
 const ChatGPTCreateAccount = () => {
 
@@ -32,8 +34,8 @@ const ChatGPTCreateAccount = () => {
     }
     const handleCreate = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
-        if (!email || !password || !isEmail(email) || (password !== confirmPassword)) {
-            notify(`Please make sure you've entered a valid email address, your passwords match and you've .`)
+        if (!email || !password || !isEmail(email) || (password !== confirmPassword) || !firstName || !lastName || !userName) {
+            notify(`Please make sure you've entered a valid email address, your passwords match and you've entered your first, last and user name.`)
         }
         else {
             fetch(baseUrl + '/createAccount', {

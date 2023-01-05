@@ -10,7 +10,8 @@ import {
     TranscriptWithDetailTable, 
     TranscriptEmbedding,
     TranscriptEmbeddingTable,
-    PromptResponse
+    PromptResponse,
+    CreateUserInfo
 } from './interfaces';
 import { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsCommand, _Object } from "@aws-sdk/client-s3";
 
@@ -386,10 +387,20 @@ export default class Repository {
     getTradingPostUser = async (userId: string): Promise<IUserGet> => {
         
         const result = await this.db.query(`SELECT * FROM public.api_user_get ($1)`, [JSON.stringify({data: {id: userId}})])
-    
         if (!result.length) throw new Error("User not found!");
         
         return result[0] as IUserGet;
+    }
+    verifyToken = async (userId: string) => {
+        return await this.db.query(`UPDATE tp.local_login 
+                                           SET verified = true 
+                                           WHERE user_id = $1`, [userId]);
+    }
+    createUser = async (data: CreateUserInfo) => {
+        return await this.db.query(`SELECT * from tp.api_local_login_create_user ($1)`, [JSON.stringify({data})])
+    }
+    deleteLogin = async (email: string) => {
+        return await this.db.query('DELETE FROM tp.local_login WHERE email = $1', [email]);
     }
     _getFileFromS3 = async <T>(key: string, mapFn?: (data: T) => T): Promise<T[]> => {
         

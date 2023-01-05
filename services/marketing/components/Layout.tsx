@@ -1,11 +1,12 @@
+
 import React, { useState, useRef, createRef, useEffect } from "react";
 import Navbar from './Navbar';
 import Footer from './Footer';
 import SideMenu from './Sidebar';
-import { getToken } from "./hooks/useToken";
+import { getToken, saveToken } from "./hooks/useToken";
 import { notify } from "./utils";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
 // @ts-ignore
 export default function Layout({children}) {
@@ -18,6 +19,7 @@ export default function Layout({children}) {
         setToken(newToken);
         
         if (newToken) {
+            console.log(baseUrl)
             fetch(baseUrl + '/getAccount', {
                 method: 'GET',
                 headers: {
@@ -40,6 +42,7 @@ export default function Layout({children}) {
             })
             .catch(err => {
                 console.error(err)
+                saveToken({token: ''})
                 notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
             })
         }

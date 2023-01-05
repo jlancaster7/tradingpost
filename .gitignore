@@ -97,3 +97,8 @@ Thumbs.db
 lambdas/.serverless/*.zip
 
 *.tsbuildinfo
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

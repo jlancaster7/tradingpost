@@ -1,13 +1,15 @@
 branch-defaults:
   default:
-    environment: Tradingpost-Open-Ai-Api-Env
+    environment: Tradingpost-OpenAi-Api-Env
+    group_suffix: null
 environment-defaults:
-  Tradingpost-Api-Env:
+  Tradingpost-OpenAi-Api-Env:
     branch: null
     repository: null
 global:
   application_name: Tradingpost-Open-Ai-Api
-  default_ec2_keyname: null
+  branch: null
+  default_ec2_keyname: aws-eb
   default_platform: Node.js 16 running on 64bit Amazon Linux 2
   default_region: us-east-1
   include_git_submodules: true
@@ -15,5 +17,6 @@ global:
   platform_name: null
   platform_version: null
   profile: null
+  repository: null
   sc: null
   workspace_type: Application

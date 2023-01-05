@@ -1,7 +1,7 @@
 import { ImportAndCreate } from "./importAndCreate";
 import { SearchAndRespond } from './searchAndRespond';
 import { init, initOutput, availableTickers } from "./init"
-import { GPU } from "gpu.js";
+//import { GPU } from "gpu.js";
 import fs from "fs";
 
 const importTranscripts = async (Init: initOutput) => {
@@ -21,8 +21,10 @@ const create = async (Init: initOutput) => {
 }
 
 const respond = async (Init: initOutput) => {
-    const gpu = new GPU({ mode: 'cpu' });
-    const respond = new SearchAndRespond(Init, gpu);
+    //const gpu = new GPU({ mode: 'cpu' });
+    const respond = new SearchAndRespond(Init
+        //,gpu
+        );
 
     const response = await respond.answerQuestionUsingContext('ADBE', 'How much did revenue grow in Q1 2022?')
     
@@ -32,8 +34,10 @@ const respond = async (Init: initOutput) => {
 
 
 const respondTest = async (Init: initOutput) => {
-    const gpu = new GPU({ mode: 'cpu' });
-    const respond = new SearchAndRespond(Init, gpu);
+    //const gpu = new GPU({ mode: 'cpu' });
+    const respond = new SearchAndRespond(Init
+        //,gpu
+        );
     //let responseResults = []
     let writeStream = fs.createWriteStream('./testResults.txt')
     for (let t of availableTickers) {
@@ -65,7 +69,7 @@ const respondTest = async (Init: initOutput) => {
 (async () => {
     try {
         const Init = await init();
-        await importTranscripts(Init);
+        //await importTranscripts(Init);
         await create(Init);
         //await respondTest(Init);
     } catch (err) {

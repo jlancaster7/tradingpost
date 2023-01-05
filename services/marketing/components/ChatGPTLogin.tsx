@@ -1,17 +1,13 @@
+
 import React, { useState, useRef, createRef, useEffect } from "react";
 
-import { ImageList, ImageListItem, ImageListItemBar, IconButton  } from '@mui/material'
-import {
-    CSSTransition
-  } from 'react-transition-group';
-  import SendIcon from '@mui/icons-material/Send';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getToken, saveToken } from "./hooks/useToken";
 import { notify } from "./utils";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
+//const baseUrl = 'https://openai.tradingpostapp.com' || 'http://localhost:8082'
+const baseUrl = process.env.NEXT_PUBLIC_API_URL
 
 const ChatGPTLogin = () => {
     const [hydrate, setHydrate] = useState(false);
@@ -27,6 +23,7 @@ const ChatGPTLogin = () => {
         if ( password === '' || email === '') {
             notify(`Please make sure to enter your username and password to login.`)
         } else {
+            
             fetch(baseUrl + '/login', {
                 method: 'POST',
                 headers: {

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, createRef, useEffect } from "react";
 import { ImageList, ImageListItem, ImageListItemBar, IconButton  } from '@mui/material'
 import {
@@ -6,10 +7,13 @@ import {
   import SendIcon from '@mui/icons-material/Send';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getToken } from "./hooks/useToken";
+import { getToken, saveToken } from "./hooks/useToken";
 import { notify } from "./utils";
+import Typewriter from "./Typewriter";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+//const baseUrl = 'https://openai.tradingpostapp.com' || 'http://localhost:8082'
+const baseUrl = process.env.NEXT_PUBLIC_API_URL 
 
 const ChatGPTBlockOne = () => {
     const [token, setToken] = useState(''),
@@ -52,6 +56,7 @@ const ChatGPTBlockOne = () => {
           [isMobile, setIsMobile] = useState(false),
           [questionSubmitted, setQuestionSubmitted] = useState(false),
           [inProp, setInProp] = useState(false),
+          [cursor, setCursor] = useState(false),
           [windowSize, setWindowSize] = useState({
         innerWidth: 0,
         innerHeight: 0,
@@ -62,6 +67,7 @@ const ChatGPTBlockOne = () => {
         if (question === '') {
             notify(`Please enter a question and try asking Michael again.`)
         } else {
+            
             if (user.verified) {
                 if (user.totalTokens - user.tokensUsed <= 0) {
                     notify("You're all out of tokens!")
@@ -70,7 +76,7 @@ const ChatGPTBlockOne = () => {
             }
             else {
                 if (user.totalTokens - user.tokensUsed <= 15) {
-                    notify('To use your remaining 15 tokens please verify your email address!');
+                    notify('To use your remaining 15 tokens please verify your email address! A verification email was sent from no-reply@tradingpostapp.com.');
                     return
                 }
             }
@@ -80,6 +86,7 @@ const ChatGPTBlockOne = () => {
                 p.push({author: 'User', response: question, time});
                 return p;
             })
+            setCursor(true)
             fetch(baseUrl + '/chatGPT/prompt', {
                 method: 'POST',
                 headers: {
@@ -93,10 +100,11 @@ const ChatGPTBlockOne = () => {
             })
             .then(result => {
                 setQuestion('')
+                
                 return result.json()
             })
             .then(text => {
-                console.log(text)
+                setCursor(false)
                 if (text.answer !== '') {
                     setAnswer((p: any[]) => {
                         const newAnswer = p.slice(0);
@@ -118,6 +126,7 @@ const ChatGPTBlockOne = () => {
             })
             .catch((err) => {
                 notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
+                saveToken({token: ''})
                 //console.error(err)
             })
             .finally(() => {
@@ -187,7 +196,7 @@ const ChatGPTBlockOne = () => {
                 <span className="titleGreen">GPT</span>
             </h1>
             <p>
-                Ask any quesiton you may have and our A.I.-powered analyst, Michael, will try and find an answer for you!
+                Ask any quesiton you may have and our A.I.-powered analyst, Michael, will find an answer for you.
             </p>
             <p className="selectCompany">
                 Select a Company:
@@ -241,8 +250,8 @@ const ChatGPTBlockOne = () => {
                          >
                         {answer.map(a => {
                             return (
-                                <div style={a.author === 'User' ? {alignSelf: 'flex-start',width: '70%'} : {alignSelf: 'flex-end', width: '70%'}}>
-                                    <p style={a.author === 'User' ? {textAlign: 'left'} : {textAlign: 'right'}}>
+                                <div style={a.author === 'User' ? {alignSelf: 'flex-start', maxWidth: '60%'} : {alignSelf: 'flex-end', maxWidth: '60%'}}>
+                                    <p style={a.author === 'User' ? {textAlign: 'left', wordBreak: 'normal', whiteSpace: 'normal'} : {textAlign: 'left', wordBreak: 'normal', whiteSpace: 'normal'}}>
                                         {`${a.response}`}
                                     </p>
                                     <p style={a.author === 'User' ? {textAlign: 'left', fontSize: '14px', opacity: 0.9, marginLeft: '10px'} : {textAlign: 'right', fontSize: '14px', opacity: 0.9, marginRight: '10px'}}>
@@ -252,6 +261,12 @@ const ChatGPTBlockOne = () => {
                             )
                         }
                         )}
+                        {cursor ? 
+                            <div style={{alignSelf: 'flex-end'}}>
+                                <Typewriter mount={cursor} text='Michael is typing...' cursor={true} />
+                            </div> 
+                            : null
+                        }
                     </div>
                 </div>
                 <form className="questionForm">

@@ -157,3 +157,10 @@ export type AccountInfo = {
     tokensUsed: number
     totalTokens: number
 }
+export type CreateUserInfo = {
+    email: string,
+    first_name: string,
+    last_name: string,
+    handle: string,
+    dummy: boolean
+}
