@@ -157,7 +157,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         <ScrollView nestedScrollEnabled horizontal showsHorizontalScrollIndicator={false}>
                             <View style={[row, props.post.ext.user?.tags ? { display: 'flex' } : { display: 'none' }]}>
                                 {props.post.ext.user?.tags && (props.post.ext.user?.tags).map((chip, i) =>
-                                    <PrimaryChip isAlt key={i} label={chip} />)}
+                                    <PrimaryChip isAlt key={i} label={chip}  style={{backgroundColor: 'rgba(53, 162, 101, 0.6)', borderColor: 'transparent'}}/>)}
                             </View>
                         </ScrollView>
                     </View>
@@ -181,7 +181,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                 </AsyncPressable>
                 <View style={{paddingLeft: 15}}>
                     <AsyncPressable>
-                        <EllipsesIcon height={24} width={24} style={{height: 24, width: 24, opacity: 0.75}}/>
+                        <EllipsesIcon height={28} width={28} style={{height: 28, width: 28, opacity: 0.75}}/>
                     </AsyncPressable>
                 </View>
             </Pressable>
@@ -217,7 +217,7 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         padding: 4
                     }}><Text style={{width: "100%", textAlign: "center", color: "white"}}>Upvoted!</Text></View>}
                     <Button
-                        style={{paddingLeft: 10, paddingRight: 0}}
+                        style={{marginLeft: "auto", paddingLeft: 10, paddingRight: 0}}
                         appearance={'ghost'}
                         accessoryLeft={(props: any) =>
                             <CommentIcon height={24} width={24} style={{height: 24, width: 24,}}/>
@@ -271,7 +271,8 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                                  title={"https://m.tradingpostapp.com/post?id=" + props.post._id} style={{
                         height: 24,
                         width: 24, marginRight: 10
-                    }}/>
+                    }}
+                    color={'rgba(0,0,0,0.5)'}/>
                 </View>}
         </View>
     </View>
