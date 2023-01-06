@@ -302,83 +302,79 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                         </View>
                 }
 
-                {(props.post._source.postType !== "tweet") &&
-                    <View
-                        style={[row, {
-                            alignItems: "center",
-                            marginTop: "auto",
-                            borderTopColor: "#ccc",
-                            borderTopWidth: 1
-                        }]}>
-                        {showStatus && <View style={{
-                            position: "absolute",
-                            backgroundColor: "black",
-                            //   opacity: 0.6,
-                            width: 100,
-                            margin: "auto",
-                            top: 12,
-                            left: 0,
-                            borderRadius: 8,
-                            right: 0,
-                            padding: 4
-                        }}><Text style={{width: "100%", textAlign: "center", color: "white"}}>Upvoted!</Text></View>}
-                        <Button
-                            style={{marginLeft: 'auto', paddingLeft: 10, paddingRight: 0}}
-                            appearance={'ghost'}
-                            accessoryLeft={(props: any) =>
-                                <CommentIcon height={24} width={24} style={{height: 24, width: 24,}}/>
-                            }
-                            onPress={() => {
-                                nav.navigate("PostScreen", {
-                                    post, id: post._id
-                                })
-                            }}
-                        >
-                            {evaProps => <Text {...evaProps}
-                                               style={{
-                                                   fontWeight: 'normal',
-                                                   paddingLeft: sizes.rem1,
-                                                   paddingRight: sizes.rem0_5,
-                                                   color: '#9D9D9D'
-                                               }}>
-                                {'-'}
-                            </Text>}
-                        </Button>
-                        {<Button
-                            style={{paddingLeft: 10, paddingRight: 0}}
-                            onPress={() => {
-                                if (!isUpvoted)
-                                    setShowStatus(true);
-                                Api.Post.extensions.setUpvoted({
-                                    id: post._id,
-                                    is_upvoted: !isUpvoted,
-                                    count: upvoteCount // return number of upvotes.
-                                }).then((r) => {
-                                    if (r.is_upvoted)
-                                        setTimeout(() => {
-                                            setShowStatus(false)
-                                        }, 1333);
-                                    setUpvoteCount(r.count);
-                                    setIsUpvoted(r.is_upvoted);
-                                });
-                            }}
-                            accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{
-                                height: 24,
-                                width: 24,
-                                // opacity: isUpvoted ? 1 : 0.25
-                            }}/>} appearance={"ghost"}>
-                            {evaProps => <Text {...evaProps} style={{
-                                fontWeight: 'normal',
-                                paddingHorizontal: sizes.rem1,
-                                color: '#9D9D9D'
-                            }}>{upvoteCount}</Text>}
-                        </Button>}
-                        <ShareButton url={"https://m.tradingpostapp.com/post?id=" + props.post._id}
-                                     title={"https://m.tradingpostapp.com/post?id=" + props.post._id} style={{
+            {(props.post._source.postType !== "tweet") &&
+                <View
+                    style={[row, {alignItems: "center", marginTop: "auto", borderTopColor: "#ccc", borderTopWidth: 1}]}>
+                    {showStatus && <View style={{
+                        position: "absolute",
+                        backgroundColor: "black",
+                        //   opacity: 0.6,
+                        width: 100,
+                        margin: "auto",
+                        top: 12,
+                        left: 0,
+                        borderRadius: 8,
+                        right: 0,
+                        padding: 4
+                    }}><Text style={{width: "100%", textAlign: "center", color: "white"}}>Upvoted!</Text></View>}
+                    <Button
+                        style={{marginLeft: "auto", paddingLeft: 10, paddingRight: 0}}
+                        appearance={'ghost'}
+                        accessoryLeft={(props: any) =>
+                            <CommentIcon height={24} width={24} style={{height: 24, width: 24,}}/>
+                        }
+                        onPress={() => {
+                            nav.navigate("PostScreen", {
+                                post, id: post._id
+                            })
+                        }}
+                    >
+                        {evaProps => <Text {...evaProps}
+                                           style={{
+                                               fontWeight: 'normal',
+                                               paddingLeft: sizes.rem1,
+                                               paddingRight: sizes.rem0_5,
+                                               color: '#9D9D9D'
+                                           }}>
+                            {'-'}
+                        </Text>}
+                    </Button>
+                    {<Button
+                        style={{paddingLeft: 10, paddingRight: 0}}
+                        onPress={() => {
+                            if (!isUpvoted)
+                                setShowStatus(true);
+                            Api.Post.extensions.setUpvoted({
+                                id: post._id,
+                                is_upvoted: !isUpvoted,
+                                count: upvoteCount // return number of upvotes.
+                            }).then((r) => {
+                                if (r.is_upvoted)
+                                    setTimeout(() => {
+                                        setShowStatus(false)
+                                    }, 1333);
+                                setUpvoteCount(r.count);
+                                setIsUpvoted(r.is_upvoted);
+                            });
+                        }}
+                        accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{
                             height: 24,
-                            width: 24, marginRight: 10
-                        }}/>
-                    </View>}
+                            width: 24,
+                            // opacity: isUpvoted ? 1 : 0.25
+                        }}/>} appearance={"ghost"}>
+                        {evaProps => <Text {...evaProps} style={{
+                            fontWeight: 'normal',
+                            paddingHorizontal: sizes.rem1,
+                            color: '#9D9D9D'
+                        }}>{upvoteCount}</Text>}
+                    </Button>}
+                    <ShareButton url={"https://m.tradingpostapp.com/post?id=" + props.post._id}
+                                 title={"https://m.tradingpostapp.com/post?id=" + props.post._id} style={{
+                        height: 24,
+                        width: 24, marginRight: 10
+                    }}
+                    color={'rgba(0,0,0,0.5)'}/>
+                </View>}
             </View>
         </View>
     </View>
