@@ -12,11 +12,9 @@ import _RobinhoodLogo from './assets/robinhood_logo.svg'
 import _RobinhoodLogoLong from './assets/robinhood_logo_long.svg'
 
 
-
 import Logo from './assets/logo.svg'
 import LogoNoBg from './assets/logo-no-bg.svg'
 
-// import MenuIcon from './assets/side-menu/menu-icon.svg';
 import _PlusIcon from './assets/misc/plus.svg';
 import _UpvoteIcon from './assets/post-feed/upvote.svg'
 import _CommentIcon from './assets/post-feed/comment.svg'
@@ -26,6 +24,8 @@ import _BookmarkInactive from './assets/post-feed/bookmark.svg'
 import _Retweet from './assets/post-feed/ei_retweet.svg'
 import _PremiumStar from './assets/post-feed/PremiumStar.svg'
 import _SendIcon from './assets/post-feed/SendIcon.svg'
+import _ErrorIcon from './assets/post-feed/material-symbols_error-circle-rounded-outline.svg'
+import _EllipsesIcon from './assets/post-feed/ph_dots-three-bold.svg'
 
 // /** Side Menu Icons */
 import Account from './assets/side-menu/Account.svg'
@@ -48,9 +48,9 @@ import LinkedInLogo from './assets/@iconify/linkedin-icon'
 
 import SubstackLogo from './assets/@iconify/substack'
 
-import React, { Component } from 'react'
-import { SvgExpo } from './components/SvgExpo'
-import { SvgProps } from 'react-native-svg'
+import React, {Component} from 'react'
+import {SvgExpo} from './components/SvgExpo'
+import {SvgProps} from 'react-native-svg'
 
 export const sideMenu = {
     Account,
@@ -69,7 +69,7 @@ export const sideMenu = {
 }
 
 function makeExpoSvg(Svg: React.FC<SvgProps>) {
-    return (props: SvgProps & { onReady?: (parent: any) => void }) => <SvgExpo {...props}><Svg /></SvgExpo>
+    return (props: SvgProps & { onReady?: (parent: any) => void }) => <SvgExpo {...props}><Svg/></SvgExpo>
 }
 
 export const AppTitle = makeExpoSvg(_AppTitle)
@@ -88,7 +88,6 @@ export const RobinhoodLogoLong = makeExpoSvg(_RobinhoodLogoLong);
 export const IconBg = makeExpoSvg(_IconBg)
 export const IconNoBg = makeExpoSvg(_IconNoBg)
 export const PlusIcon = makeExpoSvg(_PlusIcon)
-
 export const Retweet = makeExpoSvg(_Retweet);
 
 
@@ -103,9 +102,11 @@ export const InfoIcon = makeExpoSvg(Information);
 export const BookmarkActive = makeExpoSvg(_BookmarkActive);
 export const BookmarkActiveBlue = makeExpoSvg(_BookmarkActiveBlue);
 export const PremiumStar = makeExpoSvg(_PremiumStar);
+export const ErrorIcon = makeExpoSvg(_ErrorIcon);
 
+export const EllipsesIcon = makeExpoSvg(_EllipsesIcon);
 
-export { Logo, LogoNoBg };
+export {Logo, LogoNoBg};
 
 
 export const rnui = {

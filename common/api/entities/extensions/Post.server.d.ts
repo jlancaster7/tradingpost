@@ -83,6 +83,17 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<{}>;
+    report: (req: {
+        body: {
+            postId: string;
+            reason: string;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<void>;
 } & {
     get?: ((i: any, extra: {
         userId: string;
