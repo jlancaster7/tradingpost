@@ -1,15 +1,14 @@
-
-import React, { useEffect, useLayoutEffect, useState } from "react";
-import { Image, Text, Button, Animated, ImageBackground, useWindowDimensions, View, Alert, Platform } from "react-native";
-import { TabScreenProps } from "../navigation";
-import { ImageEditor } from 'expo-image-editor'
-import { flex } from "../style";
+import React, {useEffect, useLayoutEffect, useState} from "react";
+import {Image, Text, Button, Animated, ImageBackground, useWindowDimensions, View, Alert, Platform} from "react-native";
+import {TabScreenProps} from "../navigation";
+import {ImageEditor} from 'expo-image-editor'
+import {flex} from "../style";
 import * as ImagePicker from 'expo-image-picker'
-import { PrimaryButton } from "../components/PrimaryButton";
-import { Api } from "@tradingpost/common/api";
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator'
-import { useAppUser } from '../Authentication';
-import { useData } from '../lds';
+import {PrimaryButton} from "../components/PrimaryButton";
+import {Api} from "@tradingpost/common/api";
+import {manipulateAsync, SaveFormat} from 'expo-image-manipulator'
+import {useAppUser} from '../Authentication';
+import {useData} from '../lds';
 
 //import { ImageManipulator } from 'expo-image-crop'
 //const imageCrop = require('expo-image-crop')
@@ -17,7 +16,7 @@ import { useData } from '../lds';
 
 console.log("Loading IMAGE PICKER")
 export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any) => void }>) => {
-    const { loginState, updateState  } = useAppUser();
+    const {loginState, updateState} = useAppUser();
     const appUser = loginState?.appUser;
     console.log("Loading inside picker")
     const [imageUri, setImageUri] = useState<string>(),
@@ -71,10 +70,10 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
 
     return <View style={flex}>
         <Image
-            style={{ height: 300, width: 300 }}
-            source={{ uri: imageData?.uri }}
+            style={{height: 300, width: 300}}
+            source={{uri: imageData?.uri}}
         />
-        <Button title="Select Photo" onPress={() => selectPhoto()} />
+        <Button title="Select Photo" onPress={() => selectPhoto()}/>
 
         {imageData?.uri &&
             <PrimaryButton onPress={async () => {
@@ -87,12 +86,11 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
                     updateState();
                     console.log("TRIGGERING");
                     props.navigation.goBack();
-                }
-                catch (ex) {
+                } catch (ex) {
                     console.error(ex);
                 }
 
-            }} >Upload Photo</PrimaryButton>}
+            }}>Upload Photo</PrimaryButton>}
 
         <ImageEditor
             //asView={Platform.OS === "web"}
@@ -118,8 +116,6 @@ export const ImagePickerScreen = (props: TabScreenProps<{ onComplete: (data: any
                         base64: true,
                         format: SaveFormat.JPEG
                     })
-
-
                     setImageData({
                         uri: "data:image/jpeg;base64," + resizeResult.base64
                     });

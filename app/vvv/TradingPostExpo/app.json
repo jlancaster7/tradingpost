@@ -2,7 +2,7 @@
   "expo": {
     "name": "TradingPost",
     "slug": "TradingPost",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "tp",
@@ -67,6 +67,12 @@
         {
           "icon": "./assets/logo/android/logo_96.jpg",
           "color": "#282869"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app access your photos to let you include images within your profile."
         }
       ]
     ]
