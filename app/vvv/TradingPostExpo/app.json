@@ -72,7 +72,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow access to photos to upload a profile image from your photos library."
+          "photosPermission": "Allow TradingPost access to photos to upload a profile image from your photos library.",
+          "cameraPermission": "Allow TradingPost to access your camera to take your profile picture."
         }
       ]
     ]

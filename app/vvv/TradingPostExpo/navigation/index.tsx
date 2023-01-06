@@ -3,7 +3,7 @@
  * https://reactnavigation.org/docs/getting-started
  *
  */
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
 import {
   getFocusedRouteNameFromRoute,
   NavigationContainer,

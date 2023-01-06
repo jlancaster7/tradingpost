@@ -93,7 +93,7 @@ declare const _default: {
             page?: number | undefined;
             limit?: number | undefined;
         };
-    }) => Promise<void>;
+    }) => Promise<{}>;
 } & {
     get?: ((i: any, extra: {
         userId: string;

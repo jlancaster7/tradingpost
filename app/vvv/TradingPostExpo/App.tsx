@@ -11,13 +11,13 @@ if (!__DEV__) {
 
     if (Constants.manifest?.hostUri) {
         configApi({
-            apiBaseUrl: `http://192.168.4.186:8082`//`http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
+            apiBaseUrl: `http://192.168.4.186:8082` //`http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
         })
     } else {
 
         //manual ip for api server... have been trying to find a way to avoid this...
         configApi({
-            apiBaseUrl: `http://192.168.4.186:8082`//`http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
+            apiBaseUrl: `http://192.168.4.186:8082`// `http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
         })
     }
 }

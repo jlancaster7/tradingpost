@@ -45,5 +45,5 @@ export default class extends Extension {
     report: (settings: {
         postId: string;
         reason: string;
-    }) => Promise<void>;
+    }) => Promise<{}>;
 }

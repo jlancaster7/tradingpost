@@ -4,9 +4,10 @@ import {
     Pressable,
     ScrollView,
     Text,
-    View
+    View,
+    StyleSheet
 } from 'react-native'
-import {Button} from '@ui-kitten/components'
+import {Button, Card, Modal} from '@ui-kitten/components'
 
 import {flex, fonts, row, shadow, sizes} from '../style'
 
@@ -34,6 +35,7 @@ import {ProfileButton} from './ProfileButton'
 import {NavigationProp, useNavigation} from "@react-navigation/native"
 import {RootStackParamList} from '../navigation/pages'
 import {ShareButton} from './ShareButton'
+import {ElevatedSection} from "./Section";
 
 
 const postTotalVerticalMargin = sizes.rem1;
@@ -115,6 +117,69 @@ export const resolvePostContent = (itm: Interface.IElasticPost | undefined, wind
     }
 }
 
+const HardcodedReportingReasons = [
+    {
+        text: "I just dont like it",
+        value: "I just dont like it"
+    },
+    {
+        text: "It's spam",
+        value: "It's spam"
+    },
+    {
+        text: "Nudity or sexual activity",
+        value: "Nudity or sexual activity"
+    },
+    {
+        text: "Hate speech or symbols",
+        value: "Hate speech or symbols"
+    },
+    {
+        text: "Bullying or harassment",
+        value: "Bullying or harassment"
+    },
+    {
+        text: "False information",
+        value: "False information"
+    },
+    {
+        text: "Violence or dangerous organizations",
+        value: "Violence or dangerous organizations"
+    },
+    {
+        text: "Scam or fraud",
+        value: "Scam or fraud"
+    },
+    {
+        text: "Intellectual property violation",
+        value: "Intellectual property violation"
+    },
+    {
+        text: "Sale of illegal or regulated goods",
+        value: "Sale of illegal or regulated goods"
+    },
+    {
+        text: "Suicide or self-injury",
+        value: "Suicide or self-injury"
+    },
+    {
+        text: "Eating disorders",
+        value: "Eating disorders"
+    },
+];
+
+const ReportingTabReason: React.FC<any> = (props: any) => {
+    return <ElevatedSection title={""} style={{marginHorizontal: sizes.rem2 / 2, marginBottom: sizes.rem1}}>
+        <View style={{marginBottom: -sizes.rem0_5, paddingVertical: 2}}>
+            <View style={{flexDirection: "row", width: "100%", marginBottom: sizes.rem0_5}}>
+                <View style={[flex, {marginLeft: sizes.rem0_5}]}>
+                    {props.children}
+                </View>
+            </View>
+        </View>
+    </ElevatedSection>
+}
+
 export function PostView(props: { post: Interface.IElasticPostExt }) {
     const {post} = props
     const nav = useNavigation<NavigationProp<RootStackParamList>>();
@@ -122,159 +187,202 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
     const [isBookmarked, setIsBookmarked] = useState(Boolean(post.ext.is_bookmarked));
     const [isUpvoted, setIsUpvoted] = useState(Boolean(post.ext.is_upvoted));
     const [upvoteCount, setUpvoteCount] = useState(post.ext.upvoteCount || 0);
-
     const [showStatus, setShowStatus] = useState(false);
-    return <View style={{marginHorizontal: postTotalHorizontalMargin / 2, marginVertical: postTotalVerticalMargin / 2}}>
-        <View
-            style={[shadow, {
-                backgroundColor: "white",
-                borderRadius: sizes.borderRadius * 4,
-                borderColor: "#ccc",
-                borderWidth: postTotalBorder / 2
-            }]}>
-            <Pressable
-                style={[row, {
-                    alignItems: "center",
-                    overflow: "hidden",
-                    borderBottomColor: "#ccc",
-                    borderBottomWidth: 1,
-                    padding: sizes.rem1 / 2
-                }]}>
-                <ProfileButton userId={props.post._source.user.id}
-                               profileUrl={props.post.ext.user?.profile_url || ""} size={48}/>
-                <View style={[flex, {marginLeft: sizes.rem1}]}>
-                    <Pressable onPress={() => {
-                        if (props.post._source.user.id)
-                            nav.navigate("Profile", {
-                                userId: props.post._source.user.id
-                            } as any);
-                    }}
-                    >
-                        <Subheader text={"@" + (props.post.ext.user?.handle || "NoUserAttached")}
-                                   style={{color: "black", fontWeight: "bold"}}/>
-                    </Pressable>
-                    <View style={{ marginRight: 10 }}>
-                        <ScrollView nestedScrollEnabled horizontal showsHorizontalScrollIndicator={false}>
-                            <View style={[row, props.post.ext.user?.tags ? { display: 'flex' } : { display: 'none' }]}>
-                                {props.post.ext.user?.tags && (props.post.ext.user?.tags).map((chip, i) =>
-                                    <PrimaryChip isAlt key={i} label={chip} />)}
-                            </View>
-                        </ScrollView>
-                    </View>
-                </View>
-                <AsyncPressable
-                    onPress={async () => {
-                        try {
-                            const resp = await Api.Post.extensions.setBookmarked({
-                                id: props.post._id,
-                                is_bookmarked: !isBookmarked
-                            });
-                            setIsBookmarked(Boolean(resp.is_bookmarked));
-                        } catch (ex) {
-                            console.error(ex);
-                        }
-                    }}>
-                    {!isBookmarked && <IconButton iconSource={BookmarkIcons.inactive}
-                                                  style={{height: 28, width: 28, marginLeft: "auto"}}/>}
-                    {isBookmarked && <BookmarkActive
-                        style={{height: 28, width: 28, marginLeft: "auto", marginRight: sizes.rem0_5 / 2}}/>}
-                </AsyncPressable>
-                <View style={{paddingLeft: 15}}>
-                    <AsyncPressable>
-                        <EllipsesIcon height={24} width={24} style={{height: 24, width: 24, opacity: 0.75}}/>
-                    </AsyncPressable>
-                </View>
-            </Pressable>
-            {
-                ["substack", "tradingpost"].includes(post._source.postType) ?
-                    <Pressable onPress={() => {
-                        nav.navigate("PostScreen", {
-                            post,
-                            id: post._id
+    const [modalVisible, setModalVisible] = useState(false);
+
+    return <View>
+        <Modal
+            visible={modalVisible}
+            backdropStyle={styles.backdrop}
+            onBackdropPress={() => setModalVisible(false)}
+            style={{width: '100%', alignItems: 'center'}}
+        >
+            <Card style={{width: '90%'}}>
+                <ScrollView style={{height: 400}}>
+                    {
+                        HardcodedReportingReasons.map(h => {
+                            return <ReportingTabReason key={h.value}>
+                                <Pressable onPress={async () => {
+                                    setModalVisible(false)
+                                    await Api.Post.extensions.report({
+                                        postId: post._id,
+                                        reason: h.value
+                                    })
+                                }}>
+                                    <View>
+                                        <Text>
+                                            {h.text}
+                                        </Text>
+                                    </View>
+                                </Pressable>
+                            </ReportingTabReason>
                         })
+                    }
+                </ScrollView>
+                <Button onPress={() => setModalVisible(false)}>Cancel</Button>
+            </Card>
+        </Modal>
 
-                    }} style={{paddingHorizontal: postSidePad / 2}}>
-                        <PostContentView post={post}/>
-                    </Pressable> :
-                    <View style={{paddingHorizontal: postSidePad / 2}}>
-                        <PostContentView post={post}/>
+        <View style={{marginHorizontal: postTotalHorizontalMargin / 2, marginVertical: postTotalVerticalMargin / 2}}>
+            <View
+                style={[shadow, {
+                    backgroundColor: "white",
+                    borderRadius: sizes.borderRadius * 4,
+                    borderColor: "#ccc",
+                    borderWidth: postTotalBorder / 2
+                }]}>
+                <Pressable
+                    style={[row, {
+                        alignItems: "center",
+                        overflow: "hidden",
+                        borderBottomColor: "#ccc",
+                        borderBottomWidth: 1,
+                        padding: sizes.rem1 / 2
+                    }]}>
+                    <ProfileButton userId={props.post._source.user.id}
+                                   profileUrl={props.post.ext.user?.profile_url || ""} size={48}/>
+                    <View style={[flex, {marginLeft: sizes.rem1}]}>
+                        <Pressable onPress={() => {
+                            if (props.post._source.user.id)
+                                nav.navigate("Profile", {
+                                    userId: props.post._source.user.id
+                                } as any);
+                        }}
+                        >
+                            <Subheader text={"@" + (props.post.ext.user?.handle || "NoUserAttached")}
+                                       style={{color: "black", fontWeight: "bold"}}/>
+                        </Pressable>
+                        <View style={{marginRight: 10}}>
+                            <ScrollView nestedScrollEnabled horizontal showsHorizontalScrollIndicator={false}>
+                                <View style={[row, props.post.ext.user?.tags ? {display: 'flex'} : {display: 'none'}]}>
+                                    {props.post.ext.user?.tags && (props.post.ext.user?.tags).map((chip, i) =>
+                                        <PrimaryChip isAlt key={i} label={chip}/>)}
+                                </View>
+                            </ScrollView>
+                        </View>
                     </View>
-            }
-
-            {(props.post._source.postType !== "tweet") &&
-                <View
-                    style={[row, {alignItems: "center", marginTop: "auto", borderTopColor: "#ccc", borderTopWidth: 1}]}>
-                    {showStatus && <View style={{
-                        position: "absolute",
-                        backgroundColor: "black",
-                        //   opacity: 0.6,
-                        width: 100,
-                        margin: "auto",
-                        top: 12,
-                        left: 0,
-                        borderRadius: 8,
-                        right: 0,
-                        padding: 4
-                    }}><Text style={{width: "100%", textAlign: "center", color: "white"}}>Upvoted!</Text></View>}
-                    <Button
-                        style={{paddingLeft: 10, paddingRight: 0}}
-                        appearance={'ghost'}
-                        accessoryLeft={(props: any) =>
-                            <CommentIcon height={24} width={24} style={{height: 24, width: 24,}}/>
-                        }
-                        onPress={() => {
+                    <AsyncPressable
+                        onPress={async () => {
+                            try {
+                                const resp = await Api.Post.extensions.setBookmarked({
+                                    id: props.post._id,
+                                    is_bookmarked: !isBookmarked
+                                });
+                                setIsBookmarked(Boolean(resp.is_bookmarked));
+                            } catch (ex) {
+                                console.error(ex);
+                            }
+                        }}>
+                        {!isBookmarked && <IconButton iconSource={BookmarkIcons.inactive}
+                                                      style={{height: 28, width: 28, marginLeft: "auto"}}/>}
+                        {isBookmarked && <BookmarkActive
+                            style={{height: 28, width: 28, marginLeft: "auto", marginRight: sizes.rem0_5 / 2}}/>}
+                    </AsyncPressable>
+                    <View style={{paddingLeft: 15}}>
+                        <Pressable
+                            onPress={() => setModalVisible(true)}
+                        >
+                            <EllipsesIcon height={24} width={24} style={{height: 24, width: 24, opacity: 0.75}}/>
+                        </Pressable>
+                    </View>
+                </Pressable>
+                {
+                    ["substack", "tradingpost"].includes(post._source.postType) ?
+                        <Pressable onPress={() => {
                             nav.navigate("PostScreen", {
-                                post, id: post._id
+                                post,
+                                id: post._id
                             })
-                        }}
-                    >
-                        {evaProps => <Text {...evaProps}
-                                           style={{
-                                               fontWeight: 'normal',
-                                               paddingLeft: sizes.rem1,
-                                               paddingRight: sizes.rem0_5,
-                                               color: '#9D9D9D'
-                                           }}>
-                            {'-'}
-                        </Text>}
-                    </Button>
-                    {<Button
-                        style={{paddingLeft: 10, paddingRight: 0}}
-                        onPress={() => {
-                            if (!isUpvoted)
-                                setShowStatus(true);
-                            Api.Post.extensions.setUpvoted({
-                                id: post._id,
-                                is_upvoted: !isUpvoted,
-                                count: upvoteCount // return number of upvotes. 
-                            }).then((r) => {
-                                if (r.is_upvoted)
-                                    setTimeout(() => {
-                                        setShowStatus(false)
-                                    }, 1333);
-                                setUpvoteCount(r.count);
-                                setIsUpvoted(r.is_upvoted);
-                            });
-                        }}
-                        accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{
+
+                        }} style={{paddingHorizontal: postSidePad / 2}}>
+                            <PostContentView post={post}/>
+                        </Pressable> :
+                        <View style={{paddingHorizontal: postSidePad / 2}}>
+                            <PostContentView post={post}/>
+                        </View>
+                }
+
+                {(props.post._source.postType !== "tweet") &&
+                    <View
+                        style={[row, {
+                            alignItems: "center",
+                            marginTop: "auto",
+                            borderTopColor: "#ccc",
+                            borderTopWidth: 1
+                        }]}>
+                        {showStatus && <View style={{
+                            position: "absolute",
+                            backgroundColor: "black",
+                            //   opacity: 0.6,
+                            width: 100,
+                            margin: "auto",
+                            top: 12,
+                            left: 0,
+                            borderRadius: 8,
+                            right: 0,
+                            padding: 4
+                        }}><Text style={{width: "100%", textAlign: "center", color: "white"}}>Upvoted!</Text></View>}
+                        <Button
+                            style={{marginLeft: 'auto', paddingLeft: 10, paddingRight: 0}}
+                            appearance={'ghost'}
+                            accessoryLeft={(props: any) =>
+                                <CommentIcon height={24} width={24} style={{height: 24, width: 24,}}/>
+                            }
+                            onPress={() => {
+                                nav.navigate("PostScreen", {
+                                    post, id: post._id
+                                })
+                            }}
+                        >
+                            {evaProps => <Text {...evaProps}
+                                               style={{
+                                                   fontWeight: 'normal',
+                                                   paddingLeft: sizes.rem1,
+                                                   paddingRight: sizes.rem0_5,
+                                                   color: '#9D9D9D'
+                                               }}>
+                                {'-'}
+                            </Text>}
+                        </Button>
+                        {<Button
+                            style={{paddingLeft: 10, paddingRight: 0}}
+                            onPress={() => {
+                                if (!isUpvoted)
+                                    setShowStatus(true);
+                                Api.Post.extensions.setUpvoted({
+                                    id: post._id,
+                                    is_upvoted: !isUpvoted,
+                                    count: upvoteCount // return number of upvotes.
+                                }).then((r) => {
+                                    if (r.is_upvoted)
+                                        setTimeout(() => {
+                                            setShowStatus(false)
+                                        }, 1333);
+                                    setUpvoteCount(r.count);
+                                    setIsUpvoted(r.is_upvoted);
+                                });
+                            }}
+                            accessoryLeft={(props: any) => <UpvoteIcon height={24} width={24} style={{
+                                height: 24,
+                                width: 24,
+                                // opacity: isUpvoted ? 1 : 0.25
+                            }}/>} appearance={"ghost"}>
+                            {evaProps => <Text {...evaProps} style={{
+                                fontWeight: 'normal',
+                                paddingHorizontal: sizes.rem1,
+                                color: '#9D9D9D'
+                            }}>{upvoteCount}</Text>}
+                        </Button>}
+                        <ShareButton url={"https://m.tradingpostapp.com/post?id=" + props.post._id}
+                                     title={"https://m.tradingpostapp.com/post?id=" + props.post._id} style={{
                             height: 24,
-                            width: 24,
-                            // opacity: isUpvoted ? 1 : 0.25
-                        }}/>} appearance={"ghost"}>
-                        {evaProps => <Text {...evaProps} style={{
-                            fontWeight: 'normal',
-                            paddingHorizontal: sizes.rem1,
-                            color: '#9D9D9D'
-                        }}>{upvoteCount}</Text>}
-                    </Button>}
-                    <ShareButton url={"https://m.tradingpostapp.com/post?id=" + props.post._id}
-                                 title={"https://m.tradingpostapp.com/post?id=" + props.post._id} style={{
-                        height: 24,
-                        width: 24, marginRight: 10
-                    }}/>
-                </View>}
+                            width: 24, marginRight: 10
+                        }}/>
+                    </View>}
+            </View>
         </View>
     </View>
+
 }
 
 const SubstackView = (props: { post: Interface.IElasticPost }) => {
@@ -420,3 +528,12 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
     </View>
 
 }
+
+const styles = StyleSheet.create({
+    container: {
+        minHeight: 192,
+    },
+    backdrop: {
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+});

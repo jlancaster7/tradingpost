@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Text, FlatList, FlatListProps, ListRenderItem, ScrollView, View, ViewToken } from "react-native";
-import { flex } from "../style";
-import { TBI } from "../utils/misc";
-import { Link } from "./Link";
-import { NoDataPanel } from "./NoDataPanel";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {Text, FlatList, FlatListProps, ListRenderItem, ScrollView, View, ViewToken} from "react-native";
+import {flex} from "../style";
+import {TBI} from "../utils/misc";
+import {Link} from "./Link";
+import {NoDataPanel} from "./NoDataPanel";
 
 
 export type DataOrQuery<T> = T[] | ((data: T[] | undefined, page: number, sizeCache: SizeParts[]) => Promise<T[]>);
@@ -18,6 +18,7 @@ export type ListProps<T> = {
 }
 type HasU<T, U> = U extends undefined | null ? T : (T | U);
 export type SizeParts = { index: number, length: number, offset: number };
+
 export function List<T, U>(props: {
     //    data: ReadonlyArray<T> | null | undefined
     maxPage?: number,
@@ -34,7 +35,7 @@ export function List<T, U>(props: {
 } & ListProps<T> & Pick<FlatListProps<HasU<T, U>>, "style" | "contentContainerStyle" | "numColumns" | "ListHeaderComponent" | "StickyHeaderComponent" | "keyExtractor" | "horizontal">) {
 
     const [internalData, setInternalData] = useState<T[]>(),
-        { data, preloadOffset, datasetKey } = props,
+        {data, preloadOffset, datasetKey} = props,
         [currentPage, setCurrentPage] = useState(0),
         [pagesDone, setPagesDone] = useState(false),
         isLoadingRef = useRef(true),
@@ -62,8 +63,7 @@ export function List<T, U>(props: {
                 }
 
 
-            }
-            else {
+            } else {
                 isLoadingRef.current = false;
                 setInternalData(data);
                 setPagesDone(true);
@@ -86,20 +86,17 @@ export function List<T, U>(props: {
                             if (newData.length === originalLength || props.maxPage === nextPage) {
                                 isLoadingRef.current = false;
                                 setPagesDone(true);
-                            }
-                            else {
+                            } else {
                                 setInternalData(newData);
                                 setCurrentPage(nextPage);
                                 isLoadingRef.current = false;
                             }
                         });
                     }
-                }
-                else {
+                } else {
                     //console.log("NOPE");
                 }
-            }
-            else {
+            } else {
                 //console.log("WHAT UP");
             }
         }
@@ -123,19 +120,17 @@ export function List<T, U>(props: {
     ], []);
     const needsSplice = internalData && props.maxDisaplyCount && internalData.length > props.maxDisaplyCount;
 
-    return !internalData?.length ? <NoDataPanel message={internalData ? props.noDataMessage : (props.loadingMessage || "Loading...")} /> :
+    return !internalData?.length ?
+        <NoDataPanel message={internalData ? props.noDataMessage : (props.loadingMessage || "Loading...")}/> :
         <FlatList
             listKey={props.listKey}
             horizontal={props.horizontal}
-            style={[{
-                //    height: "100%" 
-            }, props.style]}
-            // contentContainerStyle={[{ height: "100%" }, props.contentContainerStyle]}
+            style={[{}, props.style]}
             getItemLayout={props.getItemLayout ? (a, b) => (props.getItemLayout as any)(a, b, sizeCache) : undefined}
             numColumns={props.numColumns}
             ListHeaderComponent={props.ListHeaderComponent}
             ListFooterComponent={needsSplice ? () => {
-                return <Link onPress={TBI} style={{ marginLeft: "auto" }}>{props.maxDisaplyText || "View All"}</Link>
+                return <Link onPress={TBI} style={{marginLeft: "auto"}}>{props.maxDisaplyText || "View All"}</Link>
             } : undefined}
             stickyHeaderIndices={props.ListHeaderComponent ? [0] : undefined}
             data={(isLoadingRef.current ? [...internalData, props.loadingItem] : (needsSplice ? internalData.slice(0, props.maxDisaplyCount) : internalData)) as HasU<T, U>[]}
@@ -144,10 +139,4 @@ export function List<T, U>(props: {
             nestedScrollEnabled={props.nestedScrollEnabled}
             viewabilityConfigCallbackPairs={vp}
         />
-
-    // return <ScrollView nestedScrollEnabled>
-    //     <View
-    //         style={{ backgroundColor: "purple", height: 1000, borderColor: "yellow", borderWidth: 2 }}
-    //     ></View>
-    // </ScrollView>
 }

@@ -17,5 +17,5 @@ export default class extends Extension {
     setBookmarked = this._makeFetch<{ id: string, is_bookmarked: boolean }>("setBookmarked", this._defaultPostRequest)
     setUpvoted = this._makeFetch<{ id: string, is_upvoted: boolean, count: number }>("setUpvoted", this._defaultPostRequest)
     create = this._makeFetch<{ title: string, content: string, subscription_level: string, width: number, height: number }, {}>("create", this._defaultPostRequest)
-    report = this._makeFetch<{ postId: string, reason: string }, void>("report", this._defaultPostRequest)
+    report = this._makeFetch<{ postId: string, reason: string }, {}>("report", this._defaultPostRequest)
 }

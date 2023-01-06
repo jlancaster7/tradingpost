@@ -321,6 +321,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             INSERT INTO flagged_content_log (post_id, user_reporter_id, reason, status)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT DO NOTHING`, [req.body.postId, req.extra.userId, req.body.reason, "REPORTED"]);
+        return {};
     }
 })
 
