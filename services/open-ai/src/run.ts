@@ -15,9 +15,9 @@ const create = async (Init: initOutput) => {
     
     const importAndCreate = new ImportAndCreate(Init);
 
-    await importAndCreate.createMDTrainingSet();
+    //await importAndCreate.createMDTrainingSet();
     await importAndCreate.createQATrainingSet();
-    await importAndCreate.createEmbeddings2(availableTickers);
+    //await importAndCreate.createEmbeddings2(['TSLA']);
 }
 
 const respond = async (Init: initOutput) => {
@@ -28,7 +28,7 @@ const respond = async (Init: initOutput) => {
 
     const response = await respond.answerQuestionUsingContext('ADBE', 'How much did revenue grow in Q1 2022?')
     
-    console.log(response.choices[0].text)
+    console.log(response)
 
 }
 
@@ -52,7 +52,7 @@ const respondTest = async (Init: initOutput) => {
                 const prompt = `How much did revenue grow in Q${q} ${y}?`
                 try {
                     const response = await respond.answerQuestionUsingContext(t, prompt)
-                    writeStream.write(t + '|' + prompt + '|' + response.choices[0].text + '\n')
+                    writeStream.write(t + '|' + prompt + '|' + response + '\n')
                     //responseResults.push({prompt, response});
                 }
                 catch (err) {

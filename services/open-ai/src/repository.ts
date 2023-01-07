@@ -141,37 +141,15 @@ export default class Repository {
             return 0;
         }
     }
-    getTranscriptEmedding = async(symbol: string): Promise<TranscriptEmbeddingTable[]> => {
-        let query = `SELECT te.id,
-                            te.transcript_id,
-                            te.speech,
-                            te.embedding,
-                            transcript_training_id,
-                            te.created_at,
-                            te.updated_at
-                     FROM transcript_embedding te
-                     INNER JOIN transcript_list tl
-                        ON te.transcript_id = tl.transcript_id
-                     WHERE tl.symbol = $1 AND tl.year > 2017
-                     `
-        const response = await this.db.query(query, [symbol]);
+    getSymbolMostRecent = async (symbol: string): Promise<string> => {
+        let query = `SELECT quarter, year FROM transcript_list where symbol = $1 ORDER BY year DESC, quarter DESC LIMIT 1`;
+        const response = await this.db.query(query, [symbol])
 
-        let result: TranscriptEmbeddingTable[] = [];
+        if (!response.length) return '';
 
-        response.forEach((item: any, index: number) => {
-            let o: TranscriptEmbeddingTable ={
-                id: item.id,
-                transcriptId: item.transcript_id,
-                speech: item.speech,
-                embedding: item.embedding,
-                transcriptTrainingId: item.transcript_training_id,
-                created_at: item.created_at,
-                updated_at: item.updated_at
-            }
-            result.push(o);
-        })
-        return result;
+        return `Q${response[0].quarter} ${response[0].year}`
     }
+    
     getS3TranscriptEmbeddings = async(symbol: string ): Promise<TranscriptEmbedding[]>  => {
         return await this._getFileFromS3<TranscriptEmbedding>(symbol);
     }
@@ -245,8 +223,9 @@ export default class Repository {
             params.push(session);
         }
         query += ' order by tl.year, tl.quarter, t.call_ordering'
+        
         const response = await this.db.query(query, params);
-
+        console.log(response);
         let result: TranscriptWithDetailTable[] = [];
 
         response.forEach((item: any, index: number) => {

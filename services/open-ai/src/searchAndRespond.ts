@@ -21,9 +21,9 @@ export class SearchAndRespond {
     constructor(init: initOutput, 
         //gpu: GPU,
         openAiResponseModel: string = 'text-davinci-003', 
-        maxResponseTokens: number = 500, 
+        maxResponseTokens: number = 1000, 
         openAiEmbedModel: string = 'text-embedding-ada-002',
-        temperature: number = 0.5,
+        temperature: number = 1,
         n: number = 1
         ) {
         this.openaiServices = init.openaiServices;
@@ -125,27 +125,51 @@ export class SearchAndRespond {
         //console.log(embeddingsWithDist[embeddingsWithDist.length - 1])
         let result = ''
         for (let d of embeddingsWithDist) {
-            if (result.split(' ').length > 500 || (d.dist || 0) < 0.7 ) return result;
+            if (result.split(' ').length > 1000 || (d.dist || 0) < 0.80 ) return result;
             else result += `* ${d.speech}\n`;
         }
         return result;
     }
-
-    answerQuestionUsingContext = async (symbol: string, prompt: string, userId: string = 'n/a') => {
-        const preContext = `Answer the question as truthfully as possible using the provided context, and if the answer is not contained within the text below, say "I don't know. Please try asking the question in a different way to help me better understand what you are looking for."\n\nContext:\n`;
+    promptProcessing = async (symbol: string, prompt: string): Promise<string> => {
         
-        const context = await this.findMostSimilarSpeech(symbol, prompt)
+        const mostRecentQuarter = await this.finnhubService.repo.getSymbolMostRecent(symbol);
+        
+        const timePeriodPrompt = `In the text labeled question, is a time period being referenced? If so, explicitly state which time periods that are being referenced. Only return the list. Otherwise, return 'None'. For context, the most recent time period is ${mostRecentQuarter}. If the question contains 'latest', 'most recent', or 'last', start with ${mostRecentQuarter}. Question: "${prompt}" Answer: `;
+        console.log(timePeriodPrompt)
+        const timePeriodInfo = await this.openaiServices.getModelResponse(this.openAiResponseModel, {
+            prompt: timePeriodPrompt,
+            n: 1,
+            max_tokens: 100,
+            temperature: 1
+        })
+        
+        const noneRegex = RegExp('none', 'i')
+        const dupeRegex = RegExp(timePeriodInfo.choices[0].text || '', 'i')
+        let postProcessedPrompt = `${(!timePeriodInfo.choices[0].text || noneRegex.test(timePeriodInfo.choices[0].text) ? mostRecentQuarter : (dupeRegex.test(prompt) ? '' : timePeriodInfo.choices[0].text))} - ` + prompt;
+        
+        const epsRegex = RegExp('eps', 'i')
+        if (epsRegex.test(postProcessedPrompt)) postProcessedPrompt += ' earnings per share';
+
+        return postProcessedPrompt;
+    }
+    answerQuestionUsingContext = async (symbol: string, prompt: string, userId: string = 'n/a') => {
+        const preContext = `Answer the question as truthfully as possible using the provided context, and if the answer is not in the available context, provide a related question that you could be answered and then answer that question. Context:\n`;
+        const postProcessedPrompt = await this.promptProcessing(symbol, prompt);
+        console.log(postProcessedPrompt)
+        const context = await this.findMostSimilarSpeech(symbol, postProcessedPrompt)
         //console.log(`Context is ${context.split(' ').length} words long.\n`)
         
-        let promptWithContext = preContext + `${context}\n` + `${prompt}\nA: `;
-        console.log(promptWithContext);
+        let promptWithContext = preContext + `${context}\n` + `Question: ${postProcessedPrompt}\nAnswer: `;
         
+        if (!context.length) return `It looks like I don't have the necessary information available to me to answer your quesiton. Please try asking it again in a different way.`;
         const response = await this.openaiServices.getModelResponse(this.openAiResponseModel,{
             prompt: promptWithContext,
             n: this.n,
             max_tokens: this.maxResponseTokens,
             temperature: this.temperature
         })
+        
+        if (!response.choices[0].text) return `I'm sorry, I've had a bit of a hiccup, please try submitting your question again!`;
         await this.finnhubService.repo.insertPromptResponse({
             userId, 
             symbol, 
@@ -153,7 +177,8 @@ export class SearchAndRespond {
             response: response.choices[0].text || '', 
             contextLength: context.split(' ').length
         })
-        return response;
+        
+        return response.choices[0].text.replace('"', '').replace('"', '').replace('\n', '');
     }
 }
 

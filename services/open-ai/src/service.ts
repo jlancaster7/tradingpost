@@ -116,6 +116,8 @@ export default class FinnhubService {
         let transcripts: TranscriptWithDetailTable[] = [];
         for (let d of symbols) {
             const o = await this.repo.getTranscriptsWithDetails(d, new Date('1/1/2017'), new Date(), 'question_answer');
+            throw new Error("test");
+            
             transcripts.push(...o)
         }
         
@@ -140,7 +142,7 @@ export default class FinnhubService {
                 prompt = ''; response = ''; promptTranscriptId = ''; responseTranscriptId = ''; promptPosition = ''; responsePosition = '';
                 continue;
             }
-            if (transcripts[i].participantRole === 'analyst' ) {
+            if (transcripts[i].participantRole === 'analyst' || (transcripts[i].participantName === 'Martin Viecha' && regexGen('question').test(transcripts[i].speech.toLocaleLowerCase()) )) {
                 if (transcripts[i].speech.length < 40 || (transcripts[i].speech.length < 80 && (regexGen('thank').test(transcripts[i].speech.toLocaleLowerCase()) || regexGen('congrat').test(transcripts[i].speech.toLocaleLowerCase())))) {
                     continue;
                 }
@@ -163,6 +165,7 @@ export default class FinnhubService {
                 promptPosition = String(transcripts[i].callOrdering);
                 
             }
+             
             else if (transcripts[i].participantRole === 'executive' && prompt !== ''){
                 
                 if (transcripts[i].speech.length < 150 && regexGen('repeat').test(transcripts[i].speech.toLocaleLowerCase()) && regexGen('sorry').test(transcripts[i].speech.toLocaleLowerCase())) {

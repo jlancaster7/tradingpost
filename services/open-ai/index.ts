@@ -99,12 +99,11 @@ const setupRoutes = async (app: Express.Application, respond: SearchAndRespond, 
             }
 
             const response = await respond.answerQuestionUsingContext(req.body.symbol, req.body.prompt, token.sub);
-            if (response.choices[0].text) {
-                const parsedResponse = response.choices[0].text.replace('"', '').replace('"', '').replace('\n', '');
+            if (response) {
                 const endTime = new Date()
                 console.log(endTime.valueOf() - startTime.valueOf())
                 console.log(`Returning Response ${endTime.toTimeString()}`)
-                return res.json({answer: parsedResponse});
+                return res.json({answer: response});
             }
             else {
                 return res.json({answer: '', statusCode: 403});
