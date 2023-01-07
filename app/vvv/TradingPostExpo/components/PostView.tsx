@@ -168,19 +168,7 @@ const HardcodedReportingReasons = [
         value: "Eating disorders"
     },
 ];
-/*
-const ReportingTabReason: React.FC<any> = (props: any) => {
-    return <ElevatedSection title={""} style={{marginHorizontal: sizes.rem2 / 2, marginBottom: sizes.rem1}}>
-        <View style={{marginBottom: -sizes.rem0_5, paddingVertical: 2}}>
-            <View style={{flexDirection: "row", width: "100%", marginBottom: sizes.rem0_5}}>
-                <View style={[flex, {marginLeft: sizes.rem0_5}]}>
-                    {props.children}
-                </View>
-            </View>
-        </View>
-    </ElevatedSection>
-}
-*/
+
 export function PostView(props: { post: Interface.IElasticPostExt }) {
     const {post} = props
     const nav = useNavigation<NavigationProp<RootStackParamList>>();
@@ -222,26 +210,6 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                             </Pressable>
                             )
                         })
-                    }
-                    {/*
-                        HardcodedReportingReasons.map(h => {
-                            return <ReportingTabReason key={h.value}>
-                                <Pressable onPress={async () => {
-                                    setModalVisible(false)
-                                    await Api.Post.extensions.report({
-                                        postId: post._id,
-                                        reason: h.value
-                                    })
-                                }}>
-                                    <View>
-                                        <Text>
-                                            {h.text}
-                                        </Text>
-                                    </View>
-                                </Pressable>
-                            </ReportingTabReason>
-                        })
-                        */
                     }
                 </ScrollView>
                 <Button style={{marginTop: 10}} onPress={() => setModalVisible(false)}>Cancel</Button>
