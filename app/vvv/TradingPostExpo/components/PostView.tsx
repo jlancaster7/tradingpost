@@ -12,7 +12,7 @@ import {Button, Card, Modal} from '@ui-kitten/components'
 import {flex, fonts, row, shadow, sizes} from '../style'
 
 import {IconifyIcon} from './IconfiyIcon'
-import {Subheader} from './Headers'
+import {Header, Subheader} from './Headers'
 import {PrimaryChip} from './PrimaryChip'
 import {
     BookmarkActive,
@@ -36,6 +36,7 @@ import {NavigationProp, useNavigation} from "@react-navigation/native"
 import {RootStackParamList} from '../navigation/pages'
 import {ShareButton} from './ShareButton'
 import {ElevatedSection} from "./Section";
+import { useToast } from 'react-native-toast-notifications'
 
 
 const postTotalVerticalMargin = sizes.rem1;
@@ -167,7 +168,7 @@ const HardcodedReportingReasons = [
         value: "Eating disorders"
     },
 ];
-
+/*
 const ReportingTabReason: React.FC<any> = (props: any) => {
     return <ElevatedSection title={""} style={{marginHorizontal: sizes.rem2 / 2, marginBottom: sizes.rem1}}>
         <View style={{marginBottom: -sizes.rem0_5, paddingVertical: 2}}>
@@ -179,7 +180,7 @@ const ReportingTabReason: React.FC<any> = (props: any) => {
         </View>
     </ElevatedSection>
 }
-
+*/
 export function PostView(props: { post: Interface.IElasticPostExt }) {
     const {post} = props
     const nav = useNavigation<NavigationProp<RootStackParamList>>();
@@ -190,16 +191,39 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
     const [showStatus, setShowStatus] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
 
+    const toast = useToast()
+
     return <View>
         <Modal
             visible={modalVisible}
             backdropStyle={styles.backdrop}
             onBackdropPress={() => setModalVisible(false)}
             style={{width: '100%', alignItems: 'center'}}
-        >
+            >
             <Card style={{width: '90%'}}>
+                <Header text='Reason for Reporting Post' />
                 <ScrollView style={{height: 400}}>
                     {
+                        HardcodedReportingReasons.map(h => {
+                            return (
+                            <Pressable onPress={async () => {
+                                setModalVisible(false)
+                                toast.show('Post has been reported!')
+                                await Api.Post.extensions.report({
+                                    postId: post._id,
+                                    reason: h.value
+                                })
+                            }}>
+                                <ElevatedSection title=''>
+                                    <Text>
+                                        {h.text}    
+                                    </Text>
+                                </ElevatedSection>
+                            </Pressable>
+                            )
+                        })
+                    }
+                    {/*
                         HardcodedReportingReasons.map(h => {
                             return <ReportingTabReason key={h.value}>
                                 <Pressable onPress={async () => {
@@ -217,9 +241,10 @@ export function PostView(props: { post: Interface.IElasticPostExt }) {
                                 </Pressable>
                             </ReportingTabReason>
                         })
+                        */
                     }
                 </ScrollView>
-                <Button onPress={() => setModalVisible(false)}>Cancel</Button>
+                <Button style={{marginTop: 10}} onPress={() => setModalVisible(false)}>Cancel</Button>
             </Card>
         </Modal>
 
