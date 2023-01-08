@@ -2,7 +2,7 @@
   "expo": {
     "name": "TradingPost",
     "slug": "TradingPost",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "tp",
@@ -67,6 +67,13 @@
         {
           "icon": "./assets/logo/android/logo_96.jpg",
           "color": "#282869"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow TradingPost access to photos to upload a profile image from your photos library.",
+          "cameraPermission": "Allow TradingPost to access your camera to take your profile picture."
         }
       ]
     ]

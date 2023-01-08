@@ -6,7 +6,7 @@ const Footer = () => {
     return (
         <div className="footer" >
             <div className="copyright">
-                <p>© 2022 Tradingpost</p>
+                <p>© 2022 TradingPost</p>
             </div>
             <div className="footerlinks">
                 <a href={"/privacy-policy"}

@@ -23,7 +23,31 @@ body {
     height: 100%;
 }
 
+.cursor {
+    animation: blinkingText 1s infinite;
+}
 
+@keyframes blinkingText {
+    0% {
+        opacity: 1;
+    }
+
+    49% {
+        opacity: 1;
+    }
+
+    60% {
+        opacity: 0;
+    }
+
+    99% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
 
 .privacyPolicy {
     display: flex;
@@ -37,7 +61,7 @@ body {
         align-items: center;
         background-color: #050B2C;
         margin: 0 auto;
-        padding: 2vh;
+        padding: 0 2vh 0;
     }
 
     .navbar .title {
@@ -73,10 +97,7 @@ body {
 
     .navbar .loginButton {
         display: none;
-        position: absolute;
-        right: 7%;
     }
-
 
     .footer {
         background-color: #0B2075;
@@ -84,7 +105,7 @@ body {
         flex-direction: column;
         justify-content: center;
         font-size: 14px;
-        padding: 1.25vw;
+        padding: 0.25vw 1.25vw 0.25vw;
     }
 
     .footer .copyright {
@@ -93,7 +114,7 @@ body {
         font-size: 14px;
         text-align: center;
         align-self: center;
-        padding: 5%;
+        padding: 1vh;
     }
 
     .footer .copyright p {
@@ -105,7 +126,7 @@ body {
         width: 100%;
         text-align: center;
         align-self: center;
-        margin-bottom: 5%;
+        margin-bottom: 1vh;
 
     }
 
@@ -116,11 +137,11 @@ body {
 
     .socialMedia {
         text-align: center;
-        margin-bottom: 5%;
+        margin-bottom: 1vh;
     }
 
     .socialMedia a {
-        padding: 5%;
+        padding: 1vh 5vw 0;
     }
 
     .socialMedia img {
@@ -541,17 +562,24 @@ body {
     }
 
     .aboutStory {
-        width: 90%;
-        padding: 7%;
+        
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: 3vh 0 7vh;
     }
 
     .aboutStory h2 {
+        width: 80%;
+        text-align: center;
         font-weight: 600;
         font-size: 28px;
         font-size: 3.325vh;
     }
 
     .aboutStory p {
+        width: 80%;
         margin-top: 3%;
         font-size: 18px;
         font-size: 2.1375vh;
@@ -565,6 +593,7 @@ body {
         background-position-y: 1%;
         background-position-x: 40%;
         padding: 1vw;
+        min-height: 80vh;
     }
 
     
@@ -604,6 +633,7 @@ body {
     }
     .chatgptTop .iconList .MuiImageList-root {
         line-height: 6vh;
+        justify-items: center;
     }
     .chatgptTop .iconList .MuiImageListItem-root {
         width: 6vh;
@@ -633,78 +663,249 @@ body {
         transition: opacity 1s;
         transition-timing-function: cubic-bezier(0.42,0,0.58,1)
     }
-    
+    .chatgptTop .questionInput .tipsButton {
+        background-color: #050B2C;
+        border-style: solid;
+        border-width: 1px;
+        margin: 10px 5px 0;
+        border-color: white;
+
+        
+        height: 3vh;
+        color: white;
+        font-size: small;
+        font-weight: 600;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1;
+    }
+    .chatgptTop .questionInput .tips {
+        margin: 10px 0 10px;
+        padding: 1vw;
+        background-color:rgba(255,255,255,.9);
+        border-radius: 10px;
+        width: 90vw;
+
+    }
+    .chatgptTop .questionInput .tips li {
+        padding: 0;
+        
+        text-align: left;
+        font-size: small;
+    }
     
     .chatgptTop .questionInput {
         text-align: center;
-        margin-bottom: 20px;
+    }
+    .chatgptTop .questionInput .tokenCounter {
+        display: flex;
+        justify-content: center;
+    }
+    .chatgptTop .questionInput .tokenCounter p {
+        font-size: small;
     }
     .chatgptTop .questionInput .questionForm{
-        text-align: center;
+        
         position: relative;
         display: flex;
         align-items: center;
-        flex-direction: column;
+        justify-content: center;
+        flex-direction: row;
         z-index: 1;
-        padding: 1.25vw;
+        padding: 1.25vh 1.25vw 0vh;
+        margin-bottom: 5vh;
     }
-    .chatgptTop .questionInput .questionForm .questionInput{
+    .chatgptTop .questionInput .questionForm .questionInputBox{
         padding: 1vw;
         border-radius: 10px;
         width: 75vw;
-        font-size: 18px;
+        font-size: 14px;
         text-align: left;
-        height: 5vh;
+        height: 4vh;
         margin-right: 1%;
         background-color: rgba(255,255,255,0.9);
+        
+
     }
     .chatgptTop .questionInput .questionForm .questionSubmitButton {
-        margin-top: 2vh;
-        margin-right: 2.5vw;
-        background-color: #35A265;
-        padding: 2vw;
-        width: 35vw;
-        height: 6vh;
-        color: white;
-        font-size: 18px;
-        font-weight: 600;
-        border-radius: 10px;
-    }
-    .chatgptTop .questionInput .questionForm .resetButton {
-        margin-top: 2vh;
-        margin-left: 2.5vw;
+        padding: 2.5vh 3.5vw 2.5vh;
+        
         background-color: #EC5328;
-        padding: 2vw;
-        width: 35vw;
-        height: 6vh;
-        color: white;
-        font-size: 18px;
-        font-weight: 600;
+        height: 4vh;        
         border-radius: 10px;
+        
     }
-    .chatgptTop .questionInput .questionForm .buttonGroup {
+    .chatgptTop .questionInput .chatgptAnswer {
+        background-color:rgba(5, 11, 44, 0.9);
+        padding: 1vh 0 1vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+    .chatgptTop .questionInput .chatgptAnswer .chatBox {
+        display: flex;
+        flex-direction: column;
+        background-color:rgba(255,255,255,.9);
+        width: 90vw; 
+        border-radius: 5px;
+        padding: 1vw;
+    }
+    .chatgptTop .questionInput .chatgptAnswer .chatBox p {
+        font-size: 14px;
+        color: black;
+        margin: 0;
+        padding: 0;
+        
+    }
+
+
+    .loginBase {
+        background-color: #050B2C;
+        background-image: url('/MobileClouds.svg');
+        background-size: 60%;
+        background-repeat: no-repeat;
+        background-position-y: 20%;
+        background-position-x: 40%;
+        padding: 1vw;
+        min-height: 79.8vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .loginBase p {
+        font-size: medium;
+    }
+    .loginBase .loginForm {
+        background-color: rgb(229, 229, 229);
+        border-radius: 10px;
+        padding: 5vh 5vh 5vh;
+        
+        display: flex;
+        align-items: center;
+        border-color: rgba(0, 0, 0, 0.7);
+        flex-direction: column;
+        box-shadow: 4px 4px .25px rgba(224, 224, 224, 0.125);
+    }
+    .loginBase .loginForm .title {
+        
+        margin-bottom: 7vh;
+        
+    }
+    .loginBase .loginForm .title h1 {
+        overflow: visible;
+        font-size: 4vh;
+        text-align: center;
+    }
+    .loginBase .loginForm .accountInfo {
+        width: 60vw;
+        height: 5vh;
+        border-radius: 10px;
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .loginEmailBox {
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .loginEmailBox .loginEmail {
+        width: 60vw;
+        height: 5vh;
+        border-radius: 10px;
+        
+    }
+    .loginBase .loginForm .loginPassword {
+        width: 60vw;
+        height: 5vh;
+        border-radius: 10px;
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .confirmLoginPasswordBox {
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .confirmLoginPasswordBox .confirmLoginPassword {
+        width: 60vw;
+        height: 5vh;
+        border-radius: 10px;
+        
+    }
+    .loginBase .loginForm .buttonGroup {
+        display: flex;
+        align-items: center;
+    }
+    .loginBase .loginForm .buttonGroup .createAccount {
+        background-color: #EC5328;
+        color: white;
+        font-size: medium;
+        width: 30vw;
+        height: 6vh;        
+        border-radius: 10px;
+        border-color: rgba(0, 0, 0, 0.3);
+        margin-right: 0.5vw;
+        box-shadow: 2px 2px 0.25px rgba(0, 0, 0, 0.125);
+    }
+    .loginBase .loginForm .buttonGroup .login {
+        background-color: #35A265;
+        color: white;
+        font-size: medium;
+        width: 30vw;
+        height: 6vh;        
+        border-radius: 10px;
+        border-color: rgba(0, 0, 0, 0.3);
+        margin-left: 0.5vw;
+        box-shadow: 2px 2px 0.25px rgba(0, 0, 0, 0.125);
+    }
+    .loginBase .loginForm .createAccountLine {
         display: flex;
         flex-direction: row;
+        align-items: center;
+        padding: 10vh 0 3vh;
     }
-    .chatgptBottom {
-        background-color:rgba(5, 11, 44, 0.9);
-        height: 90vh;
-        flex-wrap: wrap;
-        justify-content: center
+    .loginBase .loginForm .signInLine {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 3vh 0 1vh;
     }
-    .chatgptBottom .middle {
-        background-color:rgba(255,255,255,.9);
-        width: 90vw;   
-        height: 90vh;
+    .loginBase .loginForm .createAccountLine .createLinkButton {
+        color: #0F33AF;
+        font-weight: 600;
+        font-size: medium;
+        background-color: transparent;
+        border-color: transparent;
+        
     }
-    .chatgptBottom .middle h1 {
-        background-color:rgba(255,255,255,0.9);
-        text-align: center;
-        padding: 4vh 5vw 4vh;
+    .loginBase .loginForm .signInLine .createLinkButton {
+        color: #0F33AF;
+        font-weight: 600;
+        font-size: medium;
+        background-color: transparent;
+        border-color: transparent;
+        
     }
-    .chatgptBottom .middle p {
-        text-align: center;
-        margin: 4vh 5vw 0;
+    .verifyBase {
+        background-color: #050B2C;
+        background-image: url('/MobileClouds.svg');
+        background-size: 60%;
+        background-repeat: no-repeat;
+        background-position-y: 20%;
+        background-position-x: 40%;
+        padding: 1vw;
+        min-height: 79.8vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .verifyBase .verifyMessage {
+        background-color: rgb(229, 229, 229);
+        border-radius: 10px;
+        padding: 5vh 5vh 5vh;
+        
+        display: flex;
+        align-items: center;
+        border-color: rgba(0, 0, 0, 0.7);
+        flex-direction: column;
+        box-shadow: 4px 4px .25px rgba(224, 224, 224, 0.125);
+        max-width: 50vw;
     }
 
    
@@ -715,7 +916,7 @@ body {
         width: 4vh;
         height: 3.5vh;
         right: 3vh;
-        top: 3vh;
+        top: 3.5vh;
     }
 
     /* Color/shape of burger icon bars */
@@ -753,6 +954,7 @@ body {
     /* General sidebar styles */
     .bm-menu {
         background: white;
+        width: 80%;
         padding: 2.5em 1.5em 0;
         font-size: 1.15em;
     }
@@ -775,7 +977,7 @@ body {
         color: #050B2C;
         padding: 10px 15px 30px;
         margin-bottom: 10px;
-        font-size: 28px;
+        font-size: 22px;
         font-weight: 600;
         text-align: left;
         text-decoration: none;
@@ -792,7 +994,7 @@ body {
         width: 50%;
         color: #050B2C;
 
-        font-size: 28px;
+        font-size: 22px;
         font-weight: 600;
         text-align: left;
     }
@@ -863,25 +1065,41 @@ body {
     }
 
     .navbar .loginButton {
-        display: block;
+        display: flex;
         position: absolute;
-        right: 7%;
+        right: 2%;
+    }
+    .navbar .loginButton .loggedInUserDisplay {
+        padding: 0 10px 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        
+    }
+    .navbar .loginButton .loggedInUserDisplay p {
+        color: white;
+        font-size: small;
     }
 
     .navbar .loginButton button {
-        background: none;
+        background-color: #050B2C;
         border-style: solid;
         border-width: 3px;
+        margin: 0 5px 0;
         border-color: white;
 
         width: 8vw;
-        height: 3vw;
+        height: 3.5vw;
         color: white;
-        font-size: 1vw;
+        font-size: .95vw;
         font-weight: 600;
         border-radius: 10px;
         text-align: center;
         z-index: 1;
+    }
+    .navbar .loginButton button:hover {
+        background-color: #424c85;
     }
 
     .footer {
@@ -1392,10 +1610,10 @@ body {
         background-image: url('/MobileClouds.svg');
         background-size: 60%;
         background-repeat: no-repeat;
-        background-position-y: 1%;
+        background-position-y: 30%;
         background-position-x: 40%;
         padding: 1vw;
-        height: 79.8vh;
+        min-height: 79.8vh;
     }
 
     
@@ -1404,7 +1622,7 @@ body {
         text-align: center;
         font-size: 42px;
         font-weight: 800;
-        margin-top: 5%;
+        margin-top: 0%;
         padding: 2vh;
     }
     .chatgptTop .title .titleWhite {
@@ -1424,7 +1642,7 @@ body {
         margin-top: 2vh;
     }
     .chatgptTop .iconList {
-        margin: 2vh 23vw 2vh;
+        margin: 2vh 28vw 2vh;
         justify-content: center;
     }
     .chatgptTop .iconList p {
@@ -1433,11 +1651,11 @@ body {
         margin: 0 0 -2vh
     }
     .chatgptTop .iconList .MuiImageList-root {
-        line-height: 6vw;
+        line-height: 5vw;
     }
     .chatgptTop .iconList .MuiImageListItem-root {
-        width: 6vw;
-        height: 6vw;
+        width: 5vw;
+        height: 5vw;
         resize: 'block'; 
         border-radius: 15px;
         align-content: center;
@@ -1467,46 +1685,111 @@ body {
     
     .chatgptTop .questionInput {
         text-align: center;
-        margin-bottom: 20px;
+        
+    }
+    .chatgptTop .questionInput .tokenCounter {
+        display: flex;
+        justify-content: center;
+    }
+    .chatgptTop .questionInput .tokenCounter p {
+        font-size: small;
+    }
+    .chatgptTop .questionInput .tipsButton {
+        background-color: #050B2C;
+        border-style: solid;
+        border-width: 1px;
+        margin: 0 5px 0;
+        border-color: white;
+
+        
+        height: 3vw;
+        color: white;
+        font-size: 1vw;
+        font-weight: 600;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1;
+    }
+    .chatgptTop .questionInput .tips {
+        margin-top: 10px;
+        padding: 1vw;
+        background-color:rgba(255,255,255,.9);
+        border-radius: 10px;
+        width: 41vw;
+
+    }
+    .chatgptTop .questionInput .tips li {
+        padding: 0;
+        
+        text-align: left;
+        font-size: small;
+    }
+    .chatgptTop .questionInput .tips {
+        margin-top: 10px;
+        padding: 1vw;
+        background-color:rgba(255,255,255,.9);
+        border-radius: 10px;
+        width: 41vw;
+
+    }
+    .chatgptTop .questionInput .tips li {
+        padding: 0;
+        
+        text-align: left;
+        font-size: small;
     }
     .chatgptTop .questionInput .questionForm{
-        text-align: center;
+        
         position: relative;
         display: flex;
         align-items: center;
-        flex-direction: column;
+        justify-content: center;
+        flex-direction: row;
         z-index: 1;
         padding: 1.25vw;
     }
-    .chatgptTop .questionInput .questionForm .questionInput{
+    .chatgptTop .questionInput .questionForm .questionInputBox{
         padding: 1vw;
         border-radius: 10px;
-        width: 45vw;
+        width: 35vw;
         font-size: 18px;
         text-align: left;
         height: 4vh;
         margin-right: 1%;
         background-color: rgba(255,255,255,0.9);
-        overflow-wrap: normal
+        
 
     }
     .chatgptTop .questionInput .questionForm .questionSubmitButton {
-        margin-top: 2vh;
+        padding: 3.5vh 1.5vw 3.5vh;
+        
         background-color: #EC5328;
-        padding: 1vw;
-        width: 14vw;
-        color: white;
-        font-size: 18px;
-        font-weight: 600;
+        height: 4vh;        
         border-radius: 10px;
     }
-    .chatgptBottom {
+    .chatgptTop .questionInput .chatgptAnswer {
         background-color:rgba(5, 11, 44, 0.9);
+        padding: 1vh 0 1vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+    .chatgptTop .questionInput .chatgptAnswer .chatBox {
+        display: flex;
+        flex-direction: column;
+        background-color:rgba(255,255,255,.9);
+        width: 41vw; 
+        border-radius: 5px;
+        padding: 1vw;
+    }
+    .chatgptTop .questionInput .chatgptAnswer .chatBox p {
+        font-size: 18px;
+        color: black;
+        margin: 0;
+        padding: 0;
         
-        
-        height: 90vh;
-        
-        justify-content: center
     }
     .chatgptBottom .middle {
         background-color:rgba(255,255,255,.9);
@@ -1523,8 +1806,154 @@ body {
         text-align: center;
         padding: 4vh 5vw 0;
     }
+
+    .loginBase {
+        background-color: #050B2C;
+        background-image: url('/MobileClouds.svg');
+        background-size: 60%;
+        background-repeat: no-repeat;
+        background-position-y: 20%;
+        background-position-x: 40%;
+        padding: 1vw;
+        min-height: 79.8vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .loginBase p {
+        font-size: medium;
+    }
+    .loginBase .loginForm {
+        background-color: rgb(229, 229, 229);
+        border-radius: 10px;
+        padding: 5vh 5vh 5vh;
+        
+        display: flex;
+        align-items: center;
+        border-color: rgba(0, 0, 0, 0.7);
+        flex-direction: column;
+        box-shadow: 4px 4px .25px rgba(224, 224, 224, 0.125);
+    }
+    .loginBase .loginForm .title {
+        
+        margin-bottom: 7vh;
+        
+    }
+    .loginBase .loginForm .title h1 {
+        overflow: visible;
+        font-size: 4vh;
+        text-align: center;
+    }
+    .loginBase .loginForm .accountInfo {
+        width: 20vw;
+        height: 5vh;
+        border-radius: 10px;
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .loginEmailBox {
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .loginEmailBox .loginEmail {
+        width: 20vw;
+        height: 5vh;
+        border-radius: 10px;
+        
+    }
+    .loginBase .loginForm .loginPassword {
+        width: 20vw;
+        height: 5vh;
+        border-radius: 10px;
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .confirmLoginPasswordBox {
+        margin-bottom: 2vh;
+    }
+    .loginBase .loginForm .confirmLoginPasswordBox .confirmLoginPassword {
+        width: 20vw;
+        height: 5vh;
+        border-radius: 10px;
+        
+    }
+    .loginBase .loginForm .buttonGroup {
+        display: flex;
+        align-items: center;
+    }
+    .loginBase .loginForm .buttonGroup .createAccount {
+        background-color: #EC5328;
+        color: white;
+        font-size: medium;
+        width: 12.25vw;
+        height: 6vh;        
+        border-radius: 10px;
+        border-color: rgba(0, 0, 0, 0.3);
+        margin-right: 0.5vw;
+        box-shadow: 2px 2px 0.25px rgba(0, 0, 0, 0.125);
+    }
+    .loginBase .loginForm .buttonGroup .login {
+        background-color: #35A265;
+        color: white;
+        font-size: medium;
+        width: 12.25vw;
+        height: 6vh;        
+        border-radius: 10px;
+        border-color: rgba(0, 0, 0, 0.3);
+        margin-left: 0.5vw;
+        box-shadow: 2px 2px 0.25px rgba(0, 0, 0, 0.125);
+    }
+    .loginBase .loginForm .createAccountLine {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 10vh 0 3vh;
+    }
+    .loginBase .loginForm .createAccountLine .createLinkButton {
+        color: #0F33AF;
+        font-weight: 600;
+        font-size: medium;
+        background-color: transparent;
+        border-color: transparent;
+    }
+    .loginBase .loginForm .signInLine {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 3vh 0 1vh;
+    }
+    .loginBase .loginForm .signInLine .createLinkButton {
+        color: #0F33AF;
+        font-weight: 600;
+        font-size: medium;
+        background-color: transparent;
+        border-color: transparent;
+        
+    }
     .bm-burger-button {
         display: none;
+    }
+    .verifyBase {
+        background-color: #050B2C;
+        background-image: url('/MobileClouds.svg');
+        background-size: 60%;
+        background-repeat: no-repeat;
+        background-position-y: 20%;
+        background-position-x: 40%;
+        padding: 1vw;
+        min-height: 79.8vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .verifyBase .verifyMessage {
+        background-color: rgb(229, 229, 229);
+        border-radius: 10px;
+        padding: 5vh 5vh 5vh;
+        
+        display: flex;
+        align-items: center;
+        border-color: rgba(0, 0, 0, 0.7);
+        flex-direction: column;
+        box-shadow: 4px 4px .25px rgba(224, 224, 224, 0.125);
+        max-width: 80%;
     }
 
 }

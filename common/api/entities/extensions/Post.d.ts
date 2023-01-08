@@ -42,4 +42,8 @@ export default class extends Extension {
         width: number;
         height: number;
     }) => Promise<{}>;
+    report: (settings: {
+        postId: string;
+        reason: string;
+    }) => Promise<{}>;
 }

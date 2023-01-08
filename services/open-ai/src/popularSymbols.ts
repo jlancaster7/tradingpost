@@ -1,11 +1,11 @@
 
 import 'dotenv/config';
 import pgPromise from "pg-promise";
-import ElasticService from '../../../common/elastic';
-import { DefaultConfig } from "../../../common/configuration";
+import ElasticService from '@tradingpost/common/elastic';
+import { DefaultConfig } from "@tradingpost/common/configuration";
 import {Client as ElasticClient} from '@elastic/elasticsearch';
-import { execProc } from "../../../common/db"
-import { ISecurityList } from '../../../common/api/entities/interfaces'
+import { execProc } from "@tradingpost/common/db"
+import { ISecurityList } from '@tradingpost/common/api/entities/interfaces'
 
 const run = async () => {
     console.log('start')

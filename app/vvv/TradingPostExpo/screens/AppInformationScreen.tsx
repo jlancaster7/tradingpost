@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, useWindowDimensions, View, Text } from "react-native";
 import { Api, Interface } from "@tradingpost/common/api";
-import { elevated, flex, fonts, sizes } from "../style";
+import { elevated, flex, fonts, paddView, sizes } from "../style";
 import { ClimbingMountain, Studying, Debate, Analyze } from "../images";
 import { AppColors } from "../constants/Colors";
 import { ExitButton } from "../components/AddButton";
@@ -10,6 +10,7 @@ import { useData } from "../lds";
 import { SecondaryButton } from "../components/SecondaryButton";
 
 export function AppInformationScreen(props: any) {
+    
     const [sliderState, setSliderState] = useState({ currentPage: 0 });
     let { width: widthOg, height } = useWindowDimensions();
     let width = Math.min(widthOg, 680);
@@ -18,7 +19,7 @@ export function AppInformationScreen(props: any) {
     const setSliderPage = (event: any) => {
         const { currentPage } = sliderState;
         const { x } = event.nativeEvent.contentOffset;
-        const indexOfNextScreen = Math.floor(x / width);
+        const indexOfNextScreen = Math.floor((x + 1) / width);
         if (indexOfNextScreen !== currentPage) {
             setSliderState({
                 ...sliderState,
@@ -29,8 +30,8 @@ export function AppInformationScreen(props: any) {
     const paragraphSize = height >= 760 ? fonts.medium : fonts.small
     const { currentPage: pageIndex } = sliderState;
 
-    return <View style={flex}>
-        <View style={{ zIndex: 1, position: 'absolute', top: 30, left: 10, flexDirection: 'row', alignItems: 'center' }}>
+    return <View>
+        <View style={{ zIndex: 1, position: 'absolute', top: 50, left: 10, flexDirection: 'row', alignItems: 'center' }}>
             <ExitButton height={36} width={36} color={'#708090'} style={{ height: 36, width: 36, }}
                 onPress={() => {
                     if (result) {
@@ -46,7 +47,7 @@ export function AppInformationScreen(props: any) {
             <Text style={{ color: '#708090', marginLeft: 10 }}>{"Exit Introduction"}</Text>
         </View>
         <ScrollView
-            style={flex}
+          
             horizontal={true}
             scrollEventThrottle={16}
             pagingEnabled={true}
@@ -112,7 +113,7 @@ export function AppInformationScreen(props: any) {
                         </Text>
                     </View>
                     <Text style={{ padding: sizes.rem1, fontSize: paragraphSize, fontFamily: 'K2D', textAlign: 'center', }}>
-                        {"Connect your portfolio to TradingPost and control who can view your articles, charts, trades, and watchlists.\n\nMake it public, share with friends and family, or build a paying subscriber base."}
+                        {"Connect your portfolio to TradingPost and control who can view your articles, charts, trades, and watchlists.\n\nMake it public or share with friends and family."}
                     </Text>
                 </View>
             </View>

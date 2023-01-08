@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ChatGPTBlockOne from "../../components/ChatGPTBlockOne";
+import AuthenticatedRoute from "../../components/AuthenticatedRoute";
 
 
 function ChatGPT() {
@@ -9,5 +10,4 @@ function ChatGPT() {
         </>
     );
 }
-
-export default ChatGPT;
+export default AuthenticatedRoute(ChatGPT);

@@ -1,4 +1,5 @@
 import { IDatabase, IMain } from "pg-promise";
+import { IUserGet } from "@tradingpost/common/api/entities/interfaces";
 import { 
     Transcript, 
     TranscriptTable, 
@@ -8,16 +9,21 @@ import {
     TranscriptListTable,
     TranscriptWithDetailTable, 
     TranscriptEmbedding,
-    TranscriptEmbeddingTable
+    TranscriptEmbeddingTable,
+    PromptResponse,
+    CreateUserInfo
 } from './interfaces';
+import { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsCommand, _Object } from "@aws-sdk/client-s3";
 
 export default class Repository {
     private db: IDatabase<any>;
     private readonly pgp: IMain;
+    private readonly s3: S3Client;
 
-    constructor(db: IDatabase<any>, pgp: IMain) {
+    constructor(db: IDatabase<any>, pgp: IMain, s3: S3Client) {
         this.db = db;
         this.pgp = pgp;
+        this.s3 = s3;
     }
     upsertTranscriptList = async (data: TranscriptList[]): Promise<number> => {
         try {
@@ -116,57 +122,64 @@ export default class Repository {
             return 0;
         }
     }
-    getTranscriptEmedding = async(symbol: string): Promise<TranscriptEmbeddingTable[]> => {
-        let query = `SELECT te.id,
-                            te.transcript_id,
-                            te.speech,
-                            te.embedding,
-                            transcript_training_id,
-                            te.created_at,
-                            te.updated_at
-                     FROM transcript_embedding te
-                     LEFT JOIN transcript_list tl
-                        ON te.transcript_id = tl.transcript_id
-                     WHERE tl.symbol = $1 AND tl.year > 2017
-                     `
-        const response = await this.db.query(query, [symbol]);
+    insertPromptResponse = async(data: PromptResponse) => {
+        try {
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'user_id', prop: 'userId'}, 
+                {name: 'symbol', prop: 'symbol'}, 
+                {name: 'prompt', prop: 'prompt'},
+                {name: 'response', prop: 'response'},
+                {name: 'context_length', prop: 'contextLength'},
+            ], {table: 'data_prompt_response'})
+    
+            const query = this.pgp.helpers.insert(data, cs) //+ ` ON CONFLICT DO NOTHING`
+            const result = await this.db.result(query);
 
-        let result: TranscriptEmbeddingTable[] = [];
-
-        response.forEach((item: any, index: number) => {
-            let o: TranscriptEmbeddingTable ={
-                id: item.id,
-                transcriptId: item.transcript_id,
-                speech: item.speech,
-                embedding: item.embedding,
-                transcriptTrainingId: item.transcript_training_id,
-                created_at: item.created_at,
-                updated_at: item.updated_at
-            }
-            result.push(o);
-        })
-        return result;
+            return result.rowCount;
+        } catch (err) {
+            console.error(err)
+            return 0;
+        }
     }
-    getTrainingSet = async (): Promise<TranscriptTrainingSetTable[]> => {
-        let query = `SELECT id,
-                            transcript_id,
-                            training_set_id,
-                            prompt,
-                            prompt_position,
-                            response,
-                            response_position,
-                            type,
-                            created_at,
-                            updated_at
-                     FROM transcript_training_set tts
-                     `;
-        const response = await this.db.query(query);
+    getSymbolMostRecent = async (symbol: string): Promise<string> => {
+        let query = `SELECT quarter, year FROM transcript_list where symbol = $1 ORDER BY year DESC, quarter DESC LIMIT 1`;
+        const response = await this.db.query(query, [symbol])
 
-        let result: TranscriptTrainingSetTable[] = [];
+        if (!response.length) return '';
+
+        return `Q${response[0].quarter} ${response[0].year}`
+    }
+    
+    getS3TranscriptEmbeddings = async(symbol: string ): Promise<TranscriptEmbedding[]>  => {
+        return await this._getFileFromS3<TranscriptEmbedding>(symbol);
+    }
+    getTrainingSet = async (tickers: string[]): Promise<(TranscriptTrainingSetTable & {symbol: string})[]> => {
+        let query = `SELECT tts.id,
+                            tl.symbol,
+                            tts.transcript_id,
+                            tts.training_set_id,
+                            tts.prompt,
+                            tts.prompt_position,
+                            tts.response,
+                            tts.response_position,
+                            tts.type,
+                            tts.created_at,
+                            tts.updated_at
+                     FROM transcript_training_set tts
+                     INNER JOIN transcript_list tl
+                        on tl.transcript_id = tts.transcript_id
+                     WHERE tl.symbol in ($1:list)
+                     ORDER BY tl.symbol asc;
+                     `;
+        
+        const response = await this.db.query(query, [tickers]);
+
+        let result: (TranscriptTrainingSetTable & {symbol: string})[] = [];
 
         response.forEach((item: any, index: number) => {
-            let o: TranscriptTrainingSetTable = {
+            let o: (TranscriptTrainingSetTable & {symbol: string}) = {
                 id: item.id,
+                symbol: item.symbol,
                 transcriptId: item.transcript_id,
                 trainingSetId: item.training_set_id,
                 prompt: item.prompt,
@@ -210,8 +223,9 @@ export default class Repository {
             params.push(session);
         }
         query += ' order by tl.year, tl.quarter, t.call_ordering'
+        
         const response = await this.db.query(query, params);
-
+        console.log(response);
         let result: TranscriptWithDetailTable[] = [];
 
         response.forEach((item: any, index: number) => {
@@ -337,6 +351,67 @@ export default class Repository {
             result.push(o);
         })
         return result;
+    }
+    getTokensused = async (userId: string): Promise<number> => {
+        const month = (new Date()).getMonth() + 1;
+        const year = (new Date()).getFullYear();
+        const query = `SELECT count(*) as tokens_used
+                       FROM data_prompt_response
+                       WHERE user_id = $1 
+                       AND created_at >= '${month}/1/${year}'`;
+        const response = await this.db.query(query, [userId]);
+
+        return parseInt(response[0].tokens_used);
+    }
+    getTradingPostUser = async (userId: string): Promise<IUserGet> => {
+        
+        const result = await this.db.query(`SELECT * FROM public.api_user_get ($1)`, [JSON.stringify({data: {id: userId}})])
+        if (!result.length) throw new Error("User not found!");
+        
+        return result[0] as IUserGet;
+    }
+    verifyToken = async (userId: string) => {
+        return await this.db.query(`UPDATE tp.local_login 
+                                           SET verified = true 
+                                           WHERE user_id = $1`, [userId]);
+    }
+    createUser = async (data: CreateUserInfo) => {
+        return await this.db.query(`SELECT * from tp.api_local_login_create_user ($1)`, [JSON.stringify({data})])
+    }
+    deleteLogin = async (email: string) => {
+        return await this.db.query('DELETE FROM tp.local_login WHERE email = $1', [email]);
+    }
+    _getFileFromS3 = async <T>(key: string, mapFn?: (data: T) => T): Promise<T[]> => {
+        
+        const streamToString = (stream: any) =>
+            new Promise<string>((resolve, reject) => {
+                const chunks: any[] = [];
+                stream.on("data", (chunk: any) => chunks.push(chunk));
+                stream.on("error", reject);
+                stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+            });
+        const bucketList = await this.s3.send(new ListObjectsCommand({
+            Bucket: `tradingpost-embedding`,
+            Prefix: key
+        }))
+        
+        let mostRecentEmbeddings: _Object;
+        if (bucketList.Contents) {
+            mostRecentEmbeddings = (bucketList.Contents?.sort((a, b) => (b.LastModified?.valueOf() || 0) - (a.LastModified?.valueOf() || 0)))[0]
+        }
+        else {
+            throw new Error(`No object found in folder with key ${key}`);
+        }
+        
+        const data = (async () => JSON.parse(
+            await streamToString((
+              await this.s3.send(new GetObjectCommand({
+                Bucket: 'tradingpost-embedding',
+                Key: mostRecentEmbeddings.Key,
+              }))).Body)))()
+
+        
+        return data;
     }
 
 }

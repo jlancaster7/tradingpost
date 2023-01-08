@@ -167,6 +167,7 @@ export default class Spotify {
                 for (let i = 0; i < body.items.length; i++) {
                     if (startDate > new Date(body.items[i].release_date)) {
                         fetchUrl = null
+                        //continue;
                     }
 
                     const embeddedResponse = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${body.items[i].id}`);

@@ -6,6 +6,7 @@ import {
     FineTuneJobInput, 
     ModelResponseInput 
 } from './interfaces';
+import { PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase';
 
 export class OpenAIClass {
     readonly apiKey: string;
@@ -139,8 +140,7 @@ export class OpenAIClass {
 
         const response = await this.openAI.createCompletion(modelInput);
         if (response.status !== 200) {
-            throw response;
-            
+            throw new PublicError("Call to OpenAI failed. Please try again!", 401);
         }
         return response.data;
     }

@@ -5,6 +5,12 @@ import FinnhubService from './service';
 import { OpenAIClass } from './openAI';
 import { Configuration, OpenAIApi, OpenAIFile, CreateEmbeddingResponseDataInner } from 'openai';
 import { TranscriptEmbedding, TranscriptEmbeddingTable } from './interfaces';
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+
+
+const client = new S3Client({
+    region: "us-east-1"
+});
 
 
 export class ImportAndCreate {
@@ -29,33 +35,90 @@ export class ImportAndCreate {
         await this.finnhubService.createMATrainingSet(availableTickers, trainingSetId)
         console.log(`MD for training set id ${trainingSetId} has been processed and inserted into the DB.`)
     }
-    createEmbeddings = async () => {
-        //const {openaitraining, openairesponse, finnhubService} = await init();
-        const transcripts = await this.finnhubService.getTrainingSet();
+    createEmbeddings = async (tickers: string[]) => {
+        
+        for (let t of tickers) {
+            const transcripts = await this.finnhubService.getTrainingSet([t]);
     
+            const total = transcripts.length, 
+                batchSize = 50, 
+                embedModelName = 'text-embedding-ada-002';
+            let batchList = [], 
+                textList = [], 
+                embedList: CreateEmbeddingResponseDataInner[] = [], 
+                upsertCounter = 0, 
+                counter = 0, 
+                embeddings: TranscriptEmbedding[] = [];
+            
+            console.log(`Creating Embeddings for ${total} pieces of text for ${t}`)
+            for (let d of transcripts) {
+                batchList.push(d)
+                if (batchList.length === batchSize){
+                    textList = batchList.map(a => a.prompt)
+                    try {
+                        embedList = await this.openaiServices.getModelEmbeddings(embedModelName, textList) 
+                        
+                    } catch (err) {
+                        console.error(err)
+                        continue;
+                    }
+                    
+                    if (batchList.length !== embedList.length) throw new Error("batchList and embedList were of different sizes.");
+                    for (let i = 0; i < batchList.length; i++) {
+                        if (batchList[i].type === 'MD') {
+                            embeddings.push({
+                                transcriptId: batchList[i].transcriptId,
+                                speech: batchList[i].prompt,
+                                embedding: JSON.stringify(embedList[i].embedding),
+                                transcriptTrainingId: batchList[i].id
+                            })
+                        }
+                        else if (batchList[i].type === 'Q&A') {
+                            embeddings.push({
+                                transcriptId: batchList[i].transcriptId,
+                                speech: batchList[i].response,
+                                embedding: JSON.stringify(embedList[i].embedding),
+                                transcriptTrainingId: batchList[i].id
+                            })
+                        }
+                    }
+                    counter += batchSize;
+                    console.log(`${counter} of ${total} completed.`)
+                    if (!(counter % 2000) && counter !== 0) {
+                        const upsertResult = await this.finnhubService.repo.upsertTranscriptEmbedding(embeddings);
+                        upsertCounter += upsertResult;
+                        embeddings = []
+                        console.log(`Successfully uploaded ${upsertCounter} of ${total} embeddings to s3 for ${t}`);
+                    }
+                    batchList = []; textList = []; embedList = [];
+                }
+            }
+            const upsertResult = await this.finnhubService.repo.upsertTranscriptEmbedding(embeddings);
+            upsertCounter += upsertResult;
+            console.log(`Successfully uploaded ${upsertCounter} embeddings to s3 for ${t}`);
+        }
+        
+    }
+    createEmbeddings2 = async (tickers: string[]) => {
+        const transcripts = await this.finnhubService.getTrainingSet(tickers);
         const total = transcripts.length, 
             batchSize = 50, 
             embedModelName = 'text-embedding-ada-002';
-        let batchList = [], 
-            textList = [], 
-            embedList: CreateEmbeddingResponseDataInner[] = [], 
-            upsertCounter = 0, 
-            counter = 0, 
+        let batchList = [],
+            embedList: CreateEmbeddingResponseDataInner[] = [],
+            counter = 0,
             embeddings: TranscriptEmbedding[] = [];
-        
-        console.log(`Creating Embeddings for ${total} pieces of text`)
-        for (let d of transcripts) {
-            batchList.push(d)
-            if (batchList.length === batchSize){
-                textList = batchList.map(a => a.prompt)
+        for (let i = 0; i < transcripts.length; i++) {
+            batchList.push(transcripts[i])
+
+            if (batchList.length === batchSize || (!transcripts[i+1] || transcripts[i].symbol !== transcripts[i+1].symbol)) {
                 try {
-                    embedList = await this.openaiServices.getModelEmbeddings(embedModelName, textList) 
+                    embedList = await this.openaiServices.getModelEmbeddings(embedModelName, batchList.map(a => a.prompt)) 
                     
                 } catch (err) {
                     console.error(err)
                     continue;
                 }
-                
                 if (batchList.length !== embedList.length) throw new Error("batchList and embedList were of different sizes.");
                 for (let i = 0; i < batchList.length; i++) {
                     if (batchList[i].type === 'MD') {
@@ -76,19 +139,31 @@ export class ImportAndCreate {
                     }
                 }
                 counter += batchSize;
-                console.log(`${counter} of ${total} completed.`)
-                if (!(counter % 2000) && counter !== 0) {
-                    const upsertResult = await this.finnhubService.repo.upsertTranscriptEmbedding(embeddings);
-                    upsertCounter += upsertResult;
-                    embeddings = []
-                    console.log(`Successfully upserted ${upsertCounter} of ${total} embeddings to the table`);
+                console.log(`${counter} of ${total} processed.`)
+                if (!transcripts[i+1] || transcripts[i].symbol !== transcripts[i+1].symbol) {
+                    try {
+                        await this.uploadEmbeddings(transcripts[i].symbol, embeddings);
+                        console.log(`${embeddings.length} embeddings uploaded for ${transcripts[i].symbol} uploaded to s3.`)
+                    } catch (err) {
+                        console.error(err)
+                        console.error(`Embeddings for ${transcripts[i].symbol} failed to upload to s3.`)
+                    }
+                    embeddings = [];
                 }
-                batchList = []; textList = []; embedList = [];
+                batchList = [];
             }
         }
-        const upsertResult = await this.finnhubService.repo.upsertTranscriptEmbedding(embeddings);
-        upsertCounter += upsertResult;
-        console.log(`Successfully upserted ${upsertCounter} embeddings to the table`);
+    }
+    uploadEmbeddings = async (symbol: string, data: TranscriptEmbedding[]) => {
+        const buf = Buffer.from(JSON.stringify(data));
+        const timeStamp = (new Date()).toISOString();
+        const result = await client.send(new PutObjectCommand({
+            Bucket: "tradingpost-embedding",
+            Key: `${symbol}/${timeStamp}`,
+            ContentEncoding: 'base64',
+            ContentType: 'application/json',
+            Body: buf
+        }))
     }
 }
 

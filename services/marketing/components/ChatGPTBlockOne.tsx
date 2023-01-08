@@ -1,22 +1,63 @@
+
 import React, { useState, useRef, createRef, useEffect } from "react";
-import { ImageList, ImageListItem, ImageListItemBar } from '@mui/material'
+import { ImageList, ImageListItem, ImageListItemBar, IconButton  } from '@mui/material'
 import {
     CSSTransition
   } from 'react-transition-group';
+  import SendIcon from '@mui/icons-material/Send';
 import { ToastContainer, toast } from 'react-toastify';
-
 import 'react-toastify/dist/ReactToastify.css';
+import { getToken, saveToken } from "./hooks/useToken";
+import { notify } from "./utils";
+import Typewriter from "./Typewriter";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+//const baseUrl = 'https://openai.tradingpostapp.com' || 'http://localhost:8082'
+const baseUrl = process.env.NEXT_PUBLIC_OPENAI_API_URL 
 
 const ChatGPTBlockOne = () => {
+    const [token, setToken] = useState(''),
+          [user, setUser] = useState<any>(null),
+          [isAuthed, setIsAuthed] = useState(false),
+          [hideTips, setHideTips] = useState(true);
+
+    useEffect(() => {
+        const newToken = getToken();
+        setToken(newToken);
+        if (newToken) {
+            fetch(baseUrl + '/getAccount', {
+                method: 'GET',
+                headers: {
+                    "Content-Type": "application/json",
+                    "authorization": 'Bearer ' + newToken
+                }
+            })
+            .then(result => result.json())
+            .then(user => {
+                if (user.userId) {
+                    setUser(user)
+                    setIsAuthed(true)
+                }
+                else if (user.statusCode === 401) {
+                    notify(user.msg)
+                }
+                else {
+                    notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
+                }
+            })
+            .catch(err => {
+                console.error(err)
+                notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
+            })
+        }
+    }, [])
+    
     const [question, setQuestion] = useState(""),
-          [answer, setAnswer] = useState(""),
+          [answer, setAnswer] = useState<any[]>([]),
           [isMobile, setIsMobile] = useState(false),
-          [submittedQuestion, setSubmittedQuestion] = useState(''),
           [questionSubmitted, setQuestionSubmitted] = useState(false),
           [inProp, setInProp] = useState(false),
-          scrollRef = createRef<any>(),
+          [cursor, setCursor] = useState(false),
           [windowSize, setWindowSize] = useState({
         innerWidth: 0,
         innerHeight: 0,
@@ -25,34 +66,81 @@ const ChatGPTBlockOne = () => {
     const handleSubmit = (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         if (question === '') {
-            notify()
+            notify(`Please enter a question and try asking Michael again.`)
         } else {
+            
+            if (user.verified) {
+                if (user.totalTokens - user.tokensUsed <= 0) {
+                    notify("You're all out of tokens!")
+                    return
+                }
+            }
+            else {
+                if (user.totalTokens - user.tokensUsed <= 15) {
+                    notify('To use your remaining 15 tokens please verify your email address! A verification email was sent from no-reply@tradingpostapp.com.');
+                    return
+                }
+            }
             setQuestionSubmitted(true);
-            setSubmittedQuestion(question)
+            const time = (new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            setAnswer((p: any[]) => {
+                p.push({author: 'User', response: question, time});
+                return p;
+            })
+            setCursor(true)
             fetch(baseUrl + '/chatGPT/prompt', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
+                    "authorization": 'Bearer ' + token
                 },
                 body: JSON.stringify({
                     symbol: list[0].symbol,
-                    prompt: submittedQuestion
+                    prompt: question
                 })
             })
-            .then(result => result.json())
-            .then(text => setAnswer(text.answer))
-            .catch((err) => console.error(err))
+            .then(result => {
+                setQuestion('')
+                
+                return result.json()
+            })
+            .then(text => {
+                setCursor(false)
+                if (text.answer !== '') {
+                    setAnswer((p: any[]) => {
+                        const newAnswer = p.slice(0);
+                        const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                        newAnswer.push({author: 'Michael', response: text.answer, time})
+                        setQuestion('')
+                        return newAnswer;
+                    })
+                    user.tokensUsed +=1
+                    setUser(user);
+                }
+                else if (text.statusCode === 401) {
+                    notify(text.msg)
+                }
+                else {
+                    notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
+                }
+                
+            })
+            .catch((err) => {
+                notify(`Unknown error. Please email contact@tradingpostapp.com for help.`)
+                saveToken({token: ''})
+                //console.error(err)
+            })
+            .finally(() => {
+                setQuestionSubmitted(false)
+            })
         }   
     }
     const resetQuestion = (e?: { preventDefault: () => void; }) => {
         if (e) e.preventDefault();
         setQuestion('');
-        setAnswer('');
+        setAnswer([]);
         setQuestionSubmitted(false);   
-    }
-    const notify = () => {
-        toast(`Please enter a question and try asking Michael again.`,
-                {position: toast.POSITION.TOP_CENTER})
+        setHideTips(true);
     }
 
     useEffect(() => {
@@ -72,36 +160,6 @@ const ChatGPTBlockOne = () => {
     },[windowSize, isMobile])
 
     useEffect(() => {
-        if (questionSubmitted) scrollRef.current?.scrollIntoView({behavior: 'smooth'});
-
-    }, [questionSubmitted])
-
-    let data: any[] = [
-        {symbol: 'AAPL', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/AAPL.png'}, 
-        {symbol: 'ABNB', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/ABNB.png'}, 
-        {symbol: 'ADBE', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/ADBE-1671486682003.png'}, 
-        {symbol: 'AMZN', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/AMZN.png'}, 
-        {symbol: 'COST', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/COST.png'}, 
-        {symbol: 'CRM', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/CRM.png'}, 
-        {symbol: 'CRWD', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/CRWD-1671487114964.png'}, 
-        {symbol: 'DDOG', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/DDOG-1671487143454.jpg'}, 
-        {symbol: 'DIS', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/DIS.png'}, 
-        {symbol: 'GOOG', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/GOOG-1666113693819.jpg'}, 
-        {symbol: 'META', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/META-1671487025787.jpg'}, 
-        {symbol: 'MSFT', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/MSFT.png'}, 
-        {symbol: 'NVDA', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/NVDA.png'}, 
-        {symbol: 'SNAP', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/SNAP-1671486920339.png'}, 
-        {symbol: 'SNOW', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/SNOW-1671486875966.jpg'}, 
-        {symbol: 'TGT', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/TGT.png'}, 
-        {symbol: 'TSLA', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/TSLA-1671486638257.jpg'}, 
-        {symbol: 'V', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/V.png'}, 
-    ]
-    for (let i = 0; i < data.length; i++) {
-        const ref = createRef<any>()
-        data[i].nodeRef = ref
-    }
-    const [list, setList] = useState(data);
-    useEffect(() => {
         if (list.length > 1) return;
        (async () => {
             setList(() => data)
@@ -109,7 +167,30 @@ const ChatGPTBlockOne = () => {
         })()
     }, [inProp])
 
-    return (<>
+    let data: any[] = [
+        {symbol: 'AAPL', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/AAPL.png', nodeRef: createRef<any>()}, 
+        {symbol: 'ABNB', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/ABNB.png', nodeRef: createRef<any>()}, 
+        {symbol: 'ADBE', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/ADBE-1671486682003.png', nodeRef: createRef<any>()}, 
+        {symbol: 'AMZN', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/AMZN.png', nodeRef: createRef<any>()}, 
+        {symbol: 'COST', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/COST.png', nodeRef: createRef<any>()}, 
+        {symbol: 'CRM', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/CRM.png', nodeRef: createRef<any>()}, 
+        {symbol: 'CRWD', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/CRWD-1671487114964.png', nodeRef: createRef<any>()}, 
+        {symbol: 'DDOG', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/DDOG-1671487143454.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'DIS', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/DIS.png', nodeRef: createRef<any>()}, 
+        {symbol: 'GOOGL', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/GOOG-1666113693819.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'META', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/META-1671487025787.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'MSFT', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/MSFT.png', nodeRef: createRef<any>()}, 
+        {symbol: 'NVDA', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/NVDA.png', nodeRef: createRef<any>()}, 
+        {symbol: 'SNAP', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/SNAP-1671486920339.png', nodeRef: createRef<any>()}, 
+        {symbol: 'SNOW', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/SNOW-1671486875966.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'TGT', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/TGT.png', nodeRef: createRef<any>()}, 
+        {symbol: 'TSLA', logoUrl: 'https://tradingpost-images.s3.us-east-1.amazonaws.com/TSLA-1671486638257.jpg', nodeRef: createRef<any>()}, 
+        {symbol: 'V', logoUrl: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/V.png', nodeRef: createRef<any>()}, 
+    ]
+
+    const [list, setList] = useState(data);
+    
+    return (!token ? null : <>
         <div className="chatgptTop">    
             <h1 className="title">
                 <span className="titleWhite">ChatWithManagement</span>
@@ -117,7 +198,7 @@ const ChatGPTBlockOne = () => {
                 <span className="titleGreen">GPT</span>
             </h1>
             <p>
-                Ask any quesiton you may have and our A.I.-powered analyst, Michael, will try and find an answer for you!
+                Ask any quesiton you may have and our A.I.-powered analyst, Michael, will find an answer for you.
             </p>
             <p className="selectCompany">
                 Select a Company:
@@ -132,29 +213,25 @@ const ChatGPTBlockOne = () => {
                     >
                     {list.map((item) => {
                         return (<>
-                            <CSSTransition
-                                key={`${item.logoUrl}_css_transition`}
-                                nodeRef={item.nodeRef}
-                                in={inProp}
-                                timeout={1500}
-                                classNames="item"
-                                >
-                                <ImageListItem 
-                                    key={`${item.logoUrl}_image_list_item`}
-                                    ref={item.nodeRef}
-
-                                    onClick={async () => {
-                                        setInProp(!inProp)
-                                        if (list.length === 1) return
-                                        await sleep(1000);
-                                        setList((g) => g.filter((d) => d.logoUrl === item.logoUrl))
-                                    }}>
-                                    <img 
-                                        key={`${item.logoUrl}_img`}
-                                        src={`${item.logoUrl}`}
-                                        alt={item.symbol}
-                                        loading='lazy'
-                                    />
+                            <CSSTransition key={`${item.logoUrl}_css_transition`}
+                                           nodeRef={item.nodeRef}
+                                           in={inProp}
+                                           timeout={1500}
+                                           classNames="item"
+                                           >
+                                <ImageListItem key={`${item.logoUrl}_image_list_item`}
+                                               ref={item.nodeRef}
+                                               onClick={async (e) => {
+                                                   setInProp(!inProp)
+                                                   if (list.length === 1) return
+                                                   await sleep(1000);
+                                                   setList((g) => g.filter((d) => d.logoUrl === item.logoUrl))
+                                                   }}>
+                                    <img key={`${item.logoUrl}_img`}
+                                         src={`${item.logoUrl}`}
+                                         alt={item.symbol}
+                                         loading='lazy'
+                                         />
                                 </ImageListItem>
                             </CSSTransition>
                             </>
@@ -166,37 +243,82 @@ const ChatGPTBlockOne = () => {
                 </p>
             </div>
             <div className="questionInput" 
-                style={list.length === 1 ? {display: 'block'} : {display: 'none'}}>
-                <form className="questionForm" >
-                    <input className="questionInput" placeholder="Enter your question here"
-                        onChange={(e) => setQuestion(e.target.value)} 
-                        value={question}
-                        //disabled={questionSubmitted}
-                        />
-                    <div className="buttonGroup">
-                        <button className="questionSubmitButton" 
-                            onClick={handleSubmit}>
-                            {'Ask Michael'}
-                        </button>
-                        <button className="resetButton" 
-                            onClick={resetQuestion}
-                            style={questionSubmitted ? {}: {display: 'none'}}>
-                            {'Reset'}
-                        </button>
+                 style={list.length === 1 ? {display: 'block'} : {display: 'none'}}
+                >
+                <div className="chatgptAnswer"
+                     style={answer.length > 0 ? {display: 'flex'} : {display: 'none'}}
+                    >
+                    <div className="chatBox"
+                         >
+                        {answer.map(a => {
+                            return (
+                                <div style={a.author === 'User' ? {alignSelf: 'flex-start', maxWidth: '60%'} : {alignSelf: 'flex-end', maxWidth: '60%'}}>
+                                    <p style={a.author === 'User' ? {textAlign: 'left', wordBreak: 'normal', whiteSpace: 'normal'} : {textAlign: 'left', wordBreak: 'normal', whiteSpace: 'normal'}}>
+                                        {`${a.response}`}
+                                    </p>
+                                    <p style={a.author === 'User' ? {textAlign: 'left', fontSize: '14px', opacity: 0.9, marginLeft: '10px'} : {textAlign: 'right', fontSize: '14px', opacity: 0.9, marginRight: '10px'}}>
+                                        {`${a.author} - ${a.time}`}
+                                    </p>
+                                </div>
+                            )
+                        }
+                        )}
+                        {cursor ? 
+                            <div style={{alignSelf: 'flex-end'}}>
+                                <Typewriter mount={cursor} text='Michael is typing...' cursor={true} />
+                            </div> 
+                            : null
+                        }
                     </div>
-                    <ToastContainer />
+                </div>
+                <form className="questionForm">
+                    <input className="questionInputBox" 
+                           placeholder="Enter your question here"
+                           onChange={(e) => setQuestion(e.target.value)} 
+                           onKeyPress={(e) => {if ( e.key === 'Enter') handleSubmit(e)}}
+                           value={question}
+                           disabled={questionSubmitted}
+                           />
+                    <div className="buttonGroup">
+                        <IconButton className="questionSubmitButton" 
+                                    onClick={handleSubmit}
+                                    disabled={questionSubmitted}
+                                    >
+                            <SendIcon />
+                        </IconButton >
+                        
+                    </div>
+
                 </form>
+                <div className="tokenCounter">
+                    <p>
+                        {user ? `Tokens Remaining: ${user.totalTokens - user.tokensUsed}` : ''}
+                    </p>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', flexDirection: 'column'}}>
+                    <button className="tipsButton"
+                            onClick={() => setHideTips(!hideTips)}>
+                        Tips and tricks
+                    </button>
+                    <div className="tips" style={hideTips ? {display: 'none'} : {display: 'inherit'}}>
+                        <ol type="1">
+                            <li>
+                                <span style={{fontWeight: '700'}}>Be specific about the time period (ie quarter, year) that you are referring to.</span>
+                                <br />
+                                &emsp;Example: 
+                                <br />
+                                &emsp;&emsp;Good - How much did revenue grow in Q1 2022?
+                                <br />
+                                &emsp;&emsp;Bad - How much did revenue grow last quarter?
+                            </li>
+                        </ol>
+                        
+                    </div>
+
+                    
+                </div>
             </div>
-        </div>
-        <div 
-            className="chatgptBottom" 
-            ref={scrollRef}
-            style={questionSubmitted ? {display: 'flex'} : {display: 'none'}}
-            >
-            <div className="middle" >
-                <h1>{submittedQuestion}</h1>
-                <p>{answer}</p>
-            </div>
+            <ToastContainer />
         </div>
         </>
     );

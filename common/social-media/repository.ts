@@ -931,7 +931,8 @@ export default class Repository {
             ], {table: 'spotify_episodes'});
 
             // TODO: this query should update certain fields on conflict, if we are trying to update a profile
-            const query = this.pgp.helpers.insert(episodes, cs) + ' ON CONFLICT DO NOTHING';
+            const query = this.pgp.helpers.insert(episodes, cs) + ` ON CONFLICT ON CONSTRAINT spotify_episodes_spotify_episode_id_key  DO UPDATE SET
+                                                                        embed = EXCLUDED.embed`;
             const results = await this.db.result(query);
             if (!results) return 0;
             return results.rowCount;

@@ -20,6 +20,8 @@ type ConfigKeys =
     | "sendgrid"
     | "finicity"
     | "robinhood"
+    | "openai"
+    | "finnhub"
 
 
 
@@ -87,6 +89,12 @@ export interface ConfigPaths extends Record<ConfigKeys, unknown> {
     substack: {}
     sendgrid: {
         key: string
+    }
+    openai: {
+        OPENAI_API_KEY: string
+    }
+    finnhub: {
+        FINNHUB_API_KEY: string
     }
 }
 

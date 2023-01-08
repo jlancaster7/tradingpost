@@ -63,8 +63,8 @@ export default class FinnhubService {
         else return undefined;     
     }
 
-    getTrainingSet = async (): Promise<TranscriptTrainingSetTable[]> => {
-        const transcripts = await this.repo.getTrainingSet();
+    getTrainingSet = async (tickers: string[]): Promise<(TranscriptTrainingSetTable & {symbol: string}) []> => {
+        const transcripts = await this.repo.getTrainingSet(tickers);
         return transcripts;
 
     }
@@ -116,6 +116,8 @@ export default class FinnhubService {
         let transcripts: TranscriptWithDetailTable[] = [];
         for (let d of symbols) {
             const o = await this.repo.getTranscriptsWithDetails(d, new Date('1/1/2017'), new Date(), 'question_answer');
+            throw new Error("test");
+            
             transcripts.push(...o)
         }
         
@@ -140,7 +142,7 @@ export default class FinnhubService {
                 prompt = ''; response = ''; promptTranscriptId = ''; responseTranscriptId = ''; promptPosition = ''; responsePosition = '';
                 continue;
             }
-            if (transcripts[i].participantRole === 'analyst' ) {
+            if (transcripts[i].participantRole === 'analyst' || (transcripts[i].participantName === 'Martin Viecha' && regexGen('question').test(transcripts[i].speech.toLocaleLowerCase()) )) {
                 if (transcripts[i].speech.length < 40 || (transcripts[i].speech.length < 80 && (regexGen('thank').test(transcripts[i].speech.toLocaleLowerCase()) || regexGen('congrat').test(transcripts[i].speech.toLocaleLowerCase())))) {
                     continue;
                 }
@@ -163,6 +165,7 @@ export default class FinnhubService {
                 promptPosition = String(transcripts[i].callOrdering);
                 
             }
+             
             else if (transcripts[i].participantRole === 'executive' && prompt !== ''){
                 
                 if (transcripts[i].speech.length < 150 && regexGen('repeat').test(transcripts[i].speech.toLocaleLowerCase()) && regexGen('sorry').test(transcripts[i].speech.toLocaleLowerCase())) {
@@ -201,7 +204,8 @@ export default class FinnhubService {
             if (!Object.keys(transcript).length) continue;
             
             const mappedTranscript = this.mapTranscript(transcript);
-            transcripts.push(...mappedTranscript);
+            const cleanedTranscript = this.sessionCleanUp(symbol, mappedTranscript);
+            transcripts.push(...cleanedTranscript);
         }
         console.log(`Inserting ${transcripts.length} speakers in transcripts for ${symbol}`)
         this.repo.upsertTranscript(transcripts);
@@ -216,9 +220,32 @@ export default class FinnhubService {
         }
         return role;
     }
+    sessionCleanUp = (symbol: string, transcript: Transcript[]) => {
+        const callOrderingIssue = ['META', 'AMZN', 'ADBE', 'SNOW', 'GOOGL', 'NVDA', 'TGT', 'CRM', 'CRWD', 'SNAP', 'DDOG']
+        if (!callOrderingIssue.includes(symbol)) {
+            return transcript;
+        }
+        else {
+            transcript.sort((a, b) => a.callOrdering - b.callOrdering)
+            for (let i = 1; i < transcript.length - 1; i++) {
+                if (transcript[i - 1].session === 'management_discussion' && transcript[i].session === 'question_answer' && transcript[i + 1].participantRole === 'Operator') {
+                    transcript[i].session = 'management_discussion'
+                    return transcript;
+                }
+            }
+            return transcript;
+        }
+
+    }
     mapTranscriptList = (data: TranscriptListResponse): TranscriptList[] => {
         let result: TranscriptList[] = []
-        data.transcripts.forEach((item) => {
+        const filteredData = data.transcripts.filter((v, i, s) => {
+            const dupIndex = s.findIndex(v2 => v2.title === v.title && v2.id !== v.id)
+            if (dupIndex === -1 || ((new Date(v.time)).valueOf() > (new Date(s[dupIndex].time)).valueOf())) return true;
+            else return false;
+        })
+        console.log(`${data.symbol} - Length of Filtered transcript list: ${filteredData.length} vs unfiltered list: ${data.transcripts.length}`)
+        filteredData.forEach((item) => {
             const o = {
                 symbol: data.symbol,
                 transcriptId: item.id,

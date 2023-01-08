@@ -139,3 +139,28 @@ export type TranscriptEmbedding = {
     transcriptTrainingId: number
 }
 export type TranscriptEmbeddingTable = TranscriptEmbedding & TableInfo;
+
+export type PromptResponse = {
+    userId: string
+    symbol: string
+    prompt: string
+    response: string
+    contextLength: number
+}
+export type AccountInfo = {
+    userId: string
+    userName: string
+    firstName: string
+    lastName: string
+    email: string
+    verified?: boolean
+    tokensUsed: number
+    totalTokens: number
+}
+export type CreateUserInfo = {
+    email: string,
+    first_name: string,
+    last_name: string,
+    handle: string,
+    dummy: boolean
+}

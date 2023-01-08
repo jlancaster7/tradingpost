@@ -42,9 +42,15 @@ class SpotifyService {
     }
 
     map = (items: SpotifyEpisodeAndUser[]): SearchBody[] => {
-        return items.map((si: SpotifyEpisodeAndUser) => {
-            if (!('html' in si.episode_embed) || si.episode_embed === null) console.log(si);
-
+        const result = items.filter(a => {
+            if (a.episode_embed && Object.keys(a.episode_embed).includes('html')) {
+                return true
+            } else {
+                console.error(a)
+                return false
+            }
+        })
+        return result.map((si: SpotifyEpisodeAndUser) => {
             let obj: SearchBody = {
                 id: `spotify_${si.spotify_episode_id}`,
                 content: {
