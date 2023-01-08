@@ -438,7 +438,7 @@ export default ensureServerExtensions<User>({
 
         //TODO: make this token expire faster and attach this to a code ( to prevent multiple tokens from working)
         const token = jwt.sign({ verified: true }, authKey, { subject: r.extra.userId });
-
+    
         await sendByTemplate({
             to: user.email,
             templateId: "d-23c8fc09ded942d386d7c888a95a0653",
