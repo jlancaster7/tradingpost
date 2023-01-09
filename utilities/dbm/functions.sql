@@ -23,7 +23,7 @@
   
     CREATE OR REPLACE FUNCTION public.api_block_list_insert(
         request jsonb)
-        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
         LANGUAGE 'plpgsql'
     AS $BODY$
     DECLARE
@@ -33,7 +33,7 @@ _idField BIGINT;
   blocked_user_id,
 blocked_by_id)
 VALUES ((request->'data'->>'blocked_user_id')::UUID,
-(request->>'user_id')::UUID)
+(request->'data'->>'blocked_by_id')::UUID)
 returning public.data_block_list.id INTO _idField;
 return query SELECT * FROM public.view_block_list_get(request) as v WHERE v.id = _idField;
     END;
@@ -46,7 +46,7 @@ return query SELECT * FROM public.view_block_list_get(request) as v WHERE v.id =
   
     CREATE OR REPLACE FUNCTION public.api_block_list_get(
         request jsonb)
-        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -60,7 +60,7 @@ return query SELECT * FROM public.view_block_list_get(request) as v WHERE v.id =
   
     CREATE OR REPLACE FUNCTION public.api_block_list_list(
         request jsonb)
-        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
         LANGUAGE 'plpgsql'
     AS $BODY$
     

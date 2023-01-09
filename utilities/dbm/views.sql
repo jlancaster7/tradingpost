@@ -31,12 +31,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_block_list_insert(
         request jsonb)
-        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"id" BIGINT)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT CASE WHEN d.user_id = (request->>'user_id')::UUID THEN d."blocked_by_id" END as "blocked_by_id", d."blocked_user_id" FROM public.data_block_list as d;
+  RETURN QUERY SELECT d."blocked_by_id", d."blocked_user_id", d."id" FROM public.data_block_list as d;
     END;
     $BODY$;
 
@@ -297,12 +297,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_block_list_list(
         request jsonb)
-        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT CASE WHEN d.user_id = (request->>'user_id')::UUID THEN d."blocked_by_id" END as "blocked_by_id", d."blocked_user_id", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."blocked_by_id") as "blocked_user" FROM public.data_block_list as d;
+  RETURN QUERY SELECT d."blocked_by_id", d."blocked_user_id", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."blocked_by_id") as "blocked_user", d."id" FROM public.data_block_list as d;
     END;
     $BODY$;
 
@@ -311,12 +311,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_block_list_get(
         request jsonb)
-        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT CASE WHEN d.user_id = (request->>'user_id')::UUID THEN d."blocked_by_id" END as "blocked_by_id", d."blocked_user_id", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."blocked_by_id") as "blocked_user" FROM public.data_block_list as d;
+  RETURN QUERY SELECT d."blocked_by_id", d."blocked_user_id", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."blocked_by_id") as "blocked_user", d."id" FROM public.data_block_list as d;
     END;
     $BODY$;
 

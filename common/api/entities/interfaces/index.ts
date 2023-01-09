@@ -14,18 +14,21 @@ export interface IAlertGet {
 export interface IBlockListList {
         blocked_by_id: string,
     blocked_user_id: string,
-    blocked_user: IUserList[]
+    blocked_user: IUserList[],
+    id: number
     };
 
 export interface IBlockListGet {
         blocked_by_id: string,
     blocked_user_id: string,
-    blocked_user: IUserList[]
+    blocked_user: IUserList[],
+    id: number
     };
 
 export interface IBlockListInsert {
         blocked_by_id: string,
-    blocked_user_id: string
+    blocked_user_id: string,
+    id: number
     };
 
 export interface IBookmarkList {

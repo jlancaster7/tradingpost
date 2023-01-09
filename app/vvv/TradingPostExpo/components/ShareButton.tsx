@@ -13,7 +13,6 @@ export const ShareButton = (props: { style?: ViewStyle, title: string, url: stri
         }, {
 
         })
-
     }}>
         <IconifyIcon icon={ShareIcon} style={props.style} currentColor={props.color || "black"} />
     </Pressable>

@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React from "react";
+import React, { useState } from "react";
 import { Button, Keyboard, Pressable, View } from "react-native";
-import { AppTitle } from "../images";
+import { AppTitle, EllipsesIcon } from "../images";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 import NotFoundScreen from "../screens/NotFoundScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
@@ -39,6 +39,8 @@ import { ShareButton } from "../components/ShareButton";
 import linking from "./LinkingConfiguration";
 import { useLinkBuilder, useRoute } from "@react-navigation/native";
 import { TwitterAuthWebViewScreen } from "../screens/TwitterAuthSceen";
+import { ExtendedMenuModal } from "../components/ExtendedMenuModal";
+import { Icon } from "@ui-kitten/components";
 
 
 Notifications.setNotificationHandler({
@@ -140,7 +142,7 @@ export function RootNavigator() {
             <Stack.Screen name="BrokeragePicker" component={BrokeragePickerScreen} />
             <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen} />
             <Stack.Screen name="RobinhoodLogin" component={RobhinhoodLoginScreen} />
-            <Stack.Screen name="TwitterAuthWebView" component={TwitterAuthWebViewScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="TwitterAuthWebView" component={TwitterAuthWebViewScreen} options={{ headerShown: false }} />
         </Stack.Group>
         <Stack.Group screenOptions={{
             headerStyle: {
@@ -156,10 +158,20 @@ export function RootNavigator() {
         }}>
             <Stack.Screen options={{
                 headerRight: () => {
-                    const route = useRoute();
-                    const buildLink = useLinkBuilder()
-                    const url = buildLink(route.name, route.params);
-                    return <ShareButton style={{ marginRight: 8, height: 32, width: 32 }} url={"https://m.tradingpostapp.com" + url || ""} title={"https://m.tradingpostapp.com" + url || ""} color="white" />
+                    // const route = useRoute();
+                    // const buildLink = useLinkBuilder()
+                    // const url = buildLink(route.name, route.params);
+                    const [modalVisible, setModalVisible] = useState(false);
+                    return <Pressable
+                        onPress={() => {
+                            setModalVisible(true);
+                        }}
+                    >
+                        <ExtendedMenuModal userId="" onShouldClose={(blocked) => {
+                            setModalVisible(false);
+                        }} visible={modalVisible} />
+                        <Icon  style={{ marginRight: 8, height: 32, width: 32, }} fill="white" name="more-horizontal" />
+                    </Pressable>
                 }
             }} name="Profile" component={ProfileScreen} />
         </Stack.Group>

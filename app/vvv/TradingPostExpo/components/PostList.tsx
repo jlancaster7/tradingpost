@@ -1,11 +1,11 @@
-import {Interface} from "@tradingpost/common/api";
+import { Interface } from "@tradingpost/common/api";
 import React from "react";
-import {Text} from "react-native";
-import {fonts} from "../style";
-import {DataOrQuery, List} from "./List";
-import {PostView} from "./PostView";
+import { Text } from "react-native";
+import { fonts } from "../style";
+import { DataOrQuery, List } from "./List";
+import { PostView } from "./PostView";
 
-export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>, datasetKey?: string }) {
+export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>, datasetKey?: string, onReloadNeeded?: () => void }) {
     return <List
         listKey={props.datasetKey || 'STATIC'}
         getItemLayout={(items, index, sizeCache) => {
@@ -23,9 +23,9 @@ export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>
         datasetKey={props.datasetKey}
         renderItem={(item) => {
             if (typeof item.item === "string") {
-                return <Text style={{textAlign: "center", fontSize: fonts.large}}>Loading More...</Text>
+                return <Text style={{ textAlign: "center", fontSize: fonts.large }}>Loading More...</Text>
             } else {
-                return <PostView key={item.index + "_" + item.item._id} post={item.item}/>
+                return <PostView key={item.index + "_" + item.item._id} post={item.item} onReloadNeeded={props.onReloadNeeded} />
             }
         }}
         noDataMessage={"No Posts Available"}

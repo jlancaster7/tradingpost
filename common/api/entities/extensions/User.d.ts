@@ -72,4 +72,10 @@ export default class User extends Extension {
         verificationToken: string;
     }) => Promise<{}>;
     sendEmailValidation: (settings?: undefined) => Promise<{}>;
+    setBlocked: (settings: {
+        userId: string;
+        block: boolean;
+    }) => Promise<{
+        userId: string;
+    }>;
 }

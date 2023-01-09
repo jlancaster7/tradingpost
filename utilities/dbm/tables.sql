@@ -1,11 +1,8 @@
 /* No changes to data_alert [alert]*/
 
-CREATE  TABLE data_block_list(
-    id BIGSERIAL PRIMARY KEY NOT NULL,
-    blocked_user_id UUID,
-    blocked_by_id UUID,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+ALTER TABLE data_block_list
+ALTER COLUMN blocked_user_id  SET NOT NULL,
+ALTER COLUMN blocked_by_id  SET NOT NULL;
 
 /* No changes to data_bookmark [bookmark]*/
 
