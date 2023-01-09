@@ -162,6 +162,19 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<{}>;
+    setBlocked: (req: {
+        body: {
+            userId: string;
+            block: boolean;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<{
+        userId: string;
+    }>;
 } & {
     get?: ((i: any, extra: {
         userId: string;

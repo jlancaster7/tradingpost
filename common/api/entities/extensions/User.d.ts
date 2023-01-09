@@ -1,7 +1,7 @@
 import { IUserList, IWatchlistList } from "../interfaces";
 import { Extension } from "./index";
 import { AccountGroupHPRsTable, TradingPostAccountGroupStats } from '../../../brokerage/interfaces';
-export type UploadProfilePicBody = {
+export declare type UploadProfilePicBody = {
     image: string;
 };
 export default class User extends Extension {
@@ -72,4 +72,10 @@ export default class User extends Extension {
         verificationToken: string;
     }) => Promise<{}>;
     sendEmailValidation: (settings?: undefined) => Promise<{}>;
+    setBlocked: (settings: {
+        userId: string;
+        block: boolean;
+    }) => Promise<{
+        userId: string;
+    }>;
 }
