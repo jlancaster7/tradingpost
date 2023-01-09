@@ -38,6 +38,20 @@ const client = new S3Client({
 
 
 export default ensureServerExtensions<User>({
+    setBlocked: async (req) => {
+
+        const pool = await getHivePool;
+        if (req.body.block)
+            await pool.query(`INSERT INTO data_block_list(blocked_user_id, blocked_by_id)
+                              VALUES ($1, $2)`, [req.body.userId, req.extra.userId])
+        else
+            await pool.query(`DELETE
+                              FROM data_block_list
+                              WHERE blocked_user_id = $1
+                                and blocked_by_id = $2`, [req.body.userId, req.extra.userId]);
+
+        return req.body;
+    },
     validateUser: async (req) => {
         //to do need to id match
 
@@ -438,7 +452,7 @@ export default ensureServerExtensions<User>({
 
         //TODO: make this token expire faster and attach this to a code ( to prevent multiple tokens from working)
         const token = jwt.sign({ verified: true }, authKey, { subject: r.extra.userId });
-    
+
         await sendByTemplate({
             to: user.email,
             templateId: "d-23c8fc09ded942d386d7c888a95a0653",

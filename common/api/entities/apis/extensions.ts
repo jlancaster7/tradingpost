@@ -1,5 +1,6 @@
 import * as Dummy  from "../extensions"
 export const Alert = Dummy
+export const BlockList = Dummy
 export const Bookmark = Dummy
 import * as Brokerage from '../extensions/Brokerage'
 import * as Comment from '../extensions/Comment'

@@ -5,6 +5,7 @@ import UpvoteApi from "./entities/apis/UpvoteApi"
 import UserApi from "./entities/apis/UserApi"
 import PostApi from "./entities/apis/PostApi"
 import WatchlistApi from "./entities/apis/WatchlistApi"
+import BlockListApi from "./entities/apis/BlockListApi"
 import WatchlistSavedApi from "./entities/apis/WatchlistSavedApi"
 import { execProc } from "../db"
 import SubscriptionApi from "./entities/apis/SubscriptionApi"
@@ -17,7 +18,8 @@ const caches: {
         profile: IUserList
         bookmarks: ExistsRecord,
         upvotes: ExistsRecord,
-        watchlists: number[]
+        watchlists: number[],
+        blocked: string[]
     }>,
     post: Record<string, {
         upvotes: number,
@@ -40,15 +42,16 @@ const idCache = <T, M extends keyof T, C extends keyof T>(allRecords: T[], match
 
 //TODO: Should write a little local hook for the client that get notified when there are updates to keep components in sync if they are using it 
 let userCacheInit = (async () => {
-    const [users, bookmarks, upvotes, watchlists, watchlistSaved] =
+    const [users, bookmarks, upvotes, watchlists, watchlistSaved, blockList] =
         await Promise.all([UserApi.internal.list(),
         BookmarkApi.internal.list(),
         UpvoteApi.internal.list(),
         WatchlistApi.internal.list(),
-        WatchlistSavedApi.internal.list()
+        WatchlistSavedApi.internal.list(),
+        BlockListApi.internal.list()
         ])
 
-    
+
     caches.user = {};
 
 
@@ -60,7 +63,9 @@ let userCacheInit = (async () => {
             watchlists: [
                 ...idCache(watchlists, { matchKey: "user_id", matchValue: u.id }, "id"),
                 ...idCache(watchlistSaved, { matchKey: "user_id", matchValue: u.id }, "watchlist_id")
-            ]
+            ],
+            blocked: idCache(blockList, { matchKey: "blocked_by_id", matchValue: u.id }, "blocked_user_id"),
+
             // bookmarks: (() => {
             //     const rcd: ExistsRecord = {}
             //     bookmarks.filter((b) => b.user_id === u.id).forEach((b) => {
@@ -88,10 +93,10 @@ export const getPriceCacheTask = (async () => {
         })
         caches.price.byTicker = priceByTicker;
     }
-    
+
     await updatePriceCache();
     setInterval(() => {
-        
+
         updatePriceCache();
     }, 5 * 60 * 1000)
     return caches.price
@@ -106,7 +111,7 @@ export const getUserCache = async () => {
 }
 export const getPostCache = async () => {
     await userCacheInit;
-    
+
     return caches.post;
 }
 
@@ -140,7 +145,8 @@ export const cacheMonitor = async <A extends MotitoredType>(api: A, action: stri
                     bookmarks: {},
                     profile: null as any,
                     upvotes: {},
-                    watchlists: []
+                    watchlists: [],
+                    blocked: []
                 })
                 user.profile = (await UserApi.internal.list({
                     data: {
@@ -148,6 +154,23 @@ export const cacheMonitor = async <A extends MotitoredType>(api: A, action: stri
                     }
                 }))[0];
                 break;
+
+
+        }
+        if (action === "setBlocked") {
+            const user = cache[currentUserId] || (cache[currentUserId] = {
+                bookmarks: {},
+                profile: null as any,
+                upvotes: {},
+                watchlists: [],
+                blocked: []
+            })
+            if (responseData.block) {
+                user.blocked.push(responseData.userId);
+            }
+            else {
+                user.blocked = user.blocked.filter(id => id === responseData.userId);
+            }
         }
     }
     else if (ensurePostApi(api)) {

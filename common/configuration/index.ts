@@ -24,7 +24,6 @@ type ConfigKeys =
     | "finnhub"
 
 
-
 export interface ConfigPaths extends Record<ConfigKeys, unknown> {
     robinhood: {
         clientId: string

@@ -1,18 +1,21 @@
 /* No changes to data_alert [alert]*/
 
-/* No changes to data_bookmark [bookmark]*/
-
-CREATE  TABLE data_brokerage(
+CREATE  TABLE data_block_list(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    blocked_user_id UUID,
+    blocked_by_id UUID,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+
+/* No changes to data_bookmark [bookmark]*/
+
+/* No changes to data_brokerage [brokerage]*/
 
 /* No changes to data_comment [comment]*/
 
 /* No changes to ibkr_account [ibkr]*/
 
-CREATE  TABLE data_notification(
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+/* No changes to data_notification [notification]*/
 
 /* No changes to data_platform_claim [platform_claim]*/
 
@@ -39,8 +42,7 @@ CREATE  TABLE tradingpost_transactio(
 
 /* No changes to data_upvote [upvote]*/
 
-ALTER TABLE data_user
-ADD COLUMN is_deleted BOOLEAN;
+/* No changes to data_user [user]*/
 
 /* No changes to data_watchlist [watchlist]*/
 

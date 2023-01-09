@@ -13,6 +13,34 @@
     $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.view_user_list(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.view_user_list(
+        request jsonb)
+        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json,"is_deleted" boolean)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."id", d."handle", d."tags", (concat(d."first_name",' ',d."last_name")) as "display_name", d."profile_url", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", "sub"."settings", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = true ) as "is_subscribed", exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = false ) as "is_pending" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."social_analytics", d."is_deleted" FROM public.data_user as d;
+    END;
+    $BODY$;
+
+
+    DROP FUNCTION IF EXISTS public.view_block_list_insert(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.view_block_list_insert(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT CASE WHEN d.user_id = (request->>'user_id')::UUID THEN d."blocked_by_id" END as "blocked_by_id", d."blocked_user_id" FROM public.data_block_list as d;
+    END;
+    $BODY$;
+
+
     DROP FUNCTION IF EXISTS public.view_bookmark_list(jsonb);
   
     CREATE OR REPLACE FUNCTION public.view_bookmark_list(
@@ -121,20 +149,6 @@
     
     BEGIN
   RETURN QUERY SELECT d."id", d."user_id", d."post_id" FROM public.data_upvote as d;
-    END;
-    $BODY$;
-
-
-    DROP FUNCTION IF EXISTS public.view_user_list(jsonb);
-  
-    CREATE OR REPLACE FUNCTION public.view_user_list(
-        request jsonb)
-        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json,"is_deleted" boolean)
-        LANGUAGE 'plpgsql'
-    AS $BODY$
-    
-    BEGIN
-  RETURN QUERY SELECT d."id", d."handle", d."tags", (concat(d."first_name",' ',d."last_name")) as "display_name", d."profile_url", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", "sub"."settings", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = true ) as "is_subscribed", exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = false ) as "is_pending" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."social_analytics", d."is_deleted" FROM public.data_user as d;
     END;
     $BODY$;
 
@@ -275,6 +289,34 @@
     
     BEGIN
   RETURN QUERY SELECT d."id", d."symbol", d."watchlist_id", d."note", (d."created_at") as "date_added" FROM public.data_watchlist_item as d;
+    END;
+    $BODY$;
+
+
+    DROP FUNCTION IF EXISTS public.view_block_list_list(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.view_block_list_list(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT CASE WHEN d.user_id = (request->>'user_id')::UUID THEN d."blocked_by_id" END as "blocked_by_id", d."blocked_user_id", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."blocked_by_id") as "blocked_user" FROM public.data_block_list as d;
+    END;
+    $BODY$;
+
+
+    DROP FUNCTION IF EXISTS public.view_block_list_get(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.view_block_list_get(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT CASE WHEN d.user_id = (request->>'user_id')::UUID THEN d."blocked_by_id" END as "blocked_by_id", d."blocked_user_id", (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."blocked_by_id") as "blocked_user" FROM public.data_block_list as d;
     END;
     $BODY$;
 

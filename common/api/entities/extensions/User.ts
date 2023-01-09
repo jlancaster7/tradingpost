@@ -1,6 +1,6 @@
-import {IUserGet, IUserList, IWatchlistList} from "../interfaces";
-import {ensureServerExtensions, Extension} from "./index"
-import {AccountGroupHPRsTable, TradingPostAccountGroupStats} from '../../../brokerage/interfaces'
+import { IUserGet, IUserList, IWatchlistList } from "../interfaces";
+import { ensureServerExtensions, Extension } from "./index"
+import { AccountGroupHPRsTable, TradingPostAccountGroupStats } from '../../../brokerage/interfaces'
 
 export type UploadProfilePicBody = { image: string };
 
@@ -19,4 +19,5 @@ export default class User extends Extension {
     validateUser = this._makeFetch<{ verificationToken: string }, {}>("validateUser", this._defaultPostRequest)
     //TODO: should thorttle this to prevent DDOS
     sendEmailValidation = this._makeFetch<undefined, {}>("sendEmailValidation", this._defaultPostRequest)
+    setBlocked = this._makeFetch<{ userId: string, block: boolean }, { userId: string }>("setBlocked", this._defaultPostRequest)
 }

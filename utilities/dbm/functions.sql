@@ -19,6 +19,57 @@
     $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.api_block_list_insert(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_block_list_insert(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    DECLARE
+_idField BIGINT;
+    BEGIN
+  INSERT INTO public.data_block_list(
+  blocked_user_id,
+blocked_by_id)
+VALUES ((request->'data'->>'blocked_user_id')::UUID,
+(request->>'user_id')::UUID)
+returning public.data_block_list.id INTO _idField;
+return query SELECT * FROM public.view_block_list_get(request) as v WHERE v.id = _idField;
+    END;
+    $BODY$;
+
+
+
+
+    DROP FUNCTION IF EXISTS public.api_block_list_get(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_block_list_get(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  return query SELECT * FROM public.view_block_list_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
+    END;
+    $BODY$;
+
+
+    DROP FUNCTION IF EXISTS public.api_block_list_list(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_block_list_list(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  return query SELECT * FROM public.view_block_list_list(request) as v WHERE CASE WHEN  request->'data' ? 'ids' THEN  v.id in (SELECT value::BIGINT from jsonb_array_elements_text(request->'data'->'ids')) ELSE true end;
+    END;
+    $BODY$;
+
+
 
 
 
