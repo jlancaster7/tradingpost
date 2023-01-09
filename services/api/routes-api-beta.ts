@@ -68,7 +68,7 @@ export const createRouterForApi = (versionCode: string) => {
 
                     console.error(ex);
                     res.status(400).json({
-                        message: "An unknown error has occured. Please contact help@tradingpost.app"
+                        message: "An unknown error has occured. Please contact contact@tradingpostapp.com"
                     });
                 }
             }

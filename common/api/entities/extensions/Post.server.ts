@@ -31,14 +31,26 @@ const userQueryTemplate = (async () =>
     await streamToString((
         await client.send(new GetObjectCommand({
             Bucket: s3Bucket,
-            Key: "post-query-templates/userFeed.json",
+            Key: "post-query-templates/userFeedv3.json",
         }))).Body))()
 
 const searchQueryTemplate = (async () =>
     await streamToString((
         await client.send(new GetObjectCommand({
             Bucket: s3Bucket,
-            Key: "post-query-templates/search.json",
+            Key: "post-query-templates/searchv3.json",
+        }))).Body))()
+const feedQueryTemplate = (async () =>
+    await streamToString((
+        await client.send(new GetObjectCommand({
+            Bucket: s3Bucket,
+            Key: "post-query-templates/feedv6.json",
+        }))).Body))()
+const multipartFeedQueryTemplate = (async () =>
+    await streamToString((
+        await client.send(new GetObjectCommand({
+            Bucket: s3Bucket,
+            Key: "post-query-templates/multipartFeedv1.json",
         }))).Body))()
 
 let postsPerPage = 10;
@@ -92,9 +104,39 @@ const searchQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions
         queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
 
     });
-
     return JSON.parse(queryString);
+}
+const feedQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions"]["feed"]>["0"]["data"], undefined>) => {
+  const template = await feedQueryTemplate;
+  let queryString = template;
+  Object.keys(data).forEach((k) => {
+      //TODO:::: Probably should do a reverse of this in the future ...and validate object types to make sure nothing bad is pass ...
+      const dataToReplace = data[k];
+      const dt = typeof dataToReplace;
+      if (dt !== "number" && dt !== "string" && !(dataToReplace instanceof Array))
+          throw new Error("Invalid data passed to searchQeury");
 
+
+      queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
+
+  });
+  return JSON.parse(queryString);
+}
+const multipartFeedQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions"]["feed"]>["0"]["data"], undefined>) => {
+  const template = await multipartFeedQueryTemplate;
+  let queryString = template;
+  Object.keys(data).forEach((k) => {
+      //TODO:::: Probably should do a reverse of this in the future ...and validate object types to make sure nothing bad is pass ...
+      const dataToReplace = data[k];
+      const dt = typeof dataToReplace;
+      if (dt !== "number" && dt !== "string" && !(dataToReplace instanceof Array))
+          throw new Error("Invalid data passed to searchQeury");
+
+
+      queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
+
+  });
+  return JSON.parse(queryString);
 }
 
 export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
@@ -106,6 +148,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         const page = Number(req.body.page);
         const userCache = (await getUserCache());
         const curUserData = userCache[req.extra.userId];
+        
         const postData = (await getPostCache())
         const pool = await getHivePool;
         const results = await pool.query<{ analyst_user_id: string }>(`SELECT dsp.user_id AS "analyst_user_id"
@@ -149,15 +192,15 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
                     return {"ids": {"values": [req.body.postId]}}
                 } else if (req.body.userId) {
                     //return searchQuery({user_id: req.body.userId})
-                    return newUserTest({user_id: req.body.userId, subscriptions: subscriptions})
+                    return userQuery({user_id: req.body.userId, subscriptions: subscriptions})
                 } else if (req.body.bookmarkedOnly) {
                     const query = bookmarkQuery(bookmarkItems);
-                    console.log(JSON.stringify(query));
                     return query
                 } else if (req.body.data)
-                    return newSearchTest({terms: String(req.body.data.terms), subscriptions: subscriptions});
+                    return searchQuery({terms: req.body.data.terms, subscriptions: subscriptions, blocks: curUserData.blocked});
                 else
-                    return newFeedTest(subscriptions);
+                    return feedQuery({subscriptions: subscriptions, blocks: curUserData.blocked})
+                    //return newFeedTest(subscriptions, curUserData.blocked);
             })()
         });
 
@@ -268,7 +311,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         )
         const subscriptions = results.rows.map(a => a.analyst_user_id);
         subscriptions.push(req.extra.userId)
-
+        
         //TODO::::Need to think through how this is sorted in the future... and make this less stupid..
 
         postsPerPage = 10;
@@ -287,16 +330,21 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             },
             maxRetries: 5,
         });
-        if (req.body.data) console.log(CreateMultiTermQuery(req.body.data, subscriptions))
+        if (req.body.data){
+            const query = await CreateMultiTermQuery(req.body.data, subscriptions, curUserData.blocked);
+            console.log(query.bool.should)
+
+        }
+        
         const response = await elasticClient.search<IElasticPost["_source"]>({
             index: indexName,
             size: postsPerPage,
             from: page * postsPerPage,
             query: await (async () => {
                 if (req.body.data) {
-                    return CreateMultiTermQuery(req.body.data, subscriptions)
+                    return CreateMultiTermQuery(req.body.data, subscriptions, curUserData.blocked)
                 } else {
-                    return newFeedTest(subscriptions);
+                    return feedQuery({subscriptions, blocks: curUserData.blocked});
                 }
             })()
 
@@ -325,7 +373,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
     }
 })
 
-export const CreateMultiTermQuery = (searchTerms: Record<string, string | number | (string | number)[]>, subscriptions: string[]) => {
+export const CreateMultiTermQuery = (searchTerms: Record<string, string | number | (string | number)[]>, subscriptions: string[], blocks: string[]) => {
     let multiMatchQueryPart = [];
     const key = Object.keys(searchTerms)[0]
     for (let d of Object.values(searchTerms[key])) {
@@ -337,8 +385,11 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
                 "boost": 1
             }
         }
-        multiMatchQueryPart.push(JSON.stringify(queryPart))
+        multiMatchQueryPart.push(queryPart)
     }
+    // @ts-ignore
+    return multipartFeedQuery({multiMatchQueryPart, subscriptions, blocks})
+    /*
     let query = `{"bool": {
       "should": [
       {
@@ -386,9 +437,22 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
                               }
                               ]
                             }
+                          },
+                          {
+                            "bool": {
+                              "must_not": [
+                                {
+                                  "terms": {
+                                    "user.id": ${JSON.stringify(blocks)}
+                                    
+                                  }
+                                  
+                                }
+                              ]
+                            }
                           }
                   ],
-                  "minimum_should_match": 2,
+                  "minimum_should_match": 3,
                   "boost": 1
                 }
               
@@ -452,9 +516,22 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
                             }
                             ]
                           }
+                        },
+                        {
+                          "bool": {
+                            "must_not": [
+                              {
+                                "terms": {
+                                  "user.id": ${JSON.stringify(blocks)}
+                                  
+                                }
+                                
+                              }
+                            ]
+                          }
                         }
                 ],
-                "minimum_should_match": 2,
+                "minimum_should_match": 3,
                 "boost": 1
               }
             
@@ -518,9 +595,22 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
                           }
                           ]
                         }
+                      },
+                      {
+                        "bool": {
+                          "must_not": [
+                            {
+                              "terms": {
+                                "user.id": ${JSON.stringify(blocks)}
+                                
+                              }
+                              
+                            }
+                          ]
+                        }
                       }
               ],
-              "minimum_should_match": 2,
+              "minimum_should_match": 3,
               "boost": 1
             }
           
@@ -584,9 +674,22 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
                         }
                         ]
                       }
+                    },
+                    {
+                      "bool": {
+                        "must_not": [
+                          {
+                            "terms": {
+                              "user.id": ${JSON.stringify(blocks)}
+                              
+                            }
+                            
+                          }
+                        ]
+                      }
                     }
             ],
-            "minimum_should_match": 2,
+            "minimum_should_match": 3,
             "boost": 1
           }
         
@@ -650,9 +753,22 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
                       }
                       ]
                     }
+                  },
+                  {
+                    "bool": {
+                      "must_not": [
+                        {
+                          "terms": {
+                            "user.id": ${JSON.stringify(blocks)}
+                            
+                          }
+                          
+                        }
+                      ]
+                    }
                   }
           ],
-          "minimum_should_match": 2,
+          "minimum_should_match": 3,
           "boost": 1
         }
       
@@ -677,11 +793,12 @@ export const CreateMultiTermQuery = (searchTerms: Record<string, string | number
   }
   }
 `
+
     console.log(query);
     return JSON.parse(query);
-
+*/
 }
-export const newFeedTest = (subscriptions: string[]): string => {
+export const newFeedTest = (subscriptions: string[], blocks: string[]): string => {
 
     const query = `{
         "function_score": {
@@ -723,10 +840,23 @@ export const newFeedTest = (subscriptions: string[]): string => {
                                       }
                                       ]
                                     }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must_not": [
+                                        {
+                                          "terms": {
+                                            "user.id": ${JSON.stringify(blocks)}
+                                            
+                                          }
+                                          
+                                        }
+                                      ]
+                                    }
                                   }
                                   
                                 ],
-                                "minimum_should_match": 2,
+                                "minimum_should_match": 3,
                                 "boost": 1
                               }},
                             "functions": [
@@ -777,10 +907,23 @@ export const newFeedTest = (subscriptions: string[]): string => {
                                       }
                                       ]
                                     }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must_not": [
+                                        {
+                                          "terms": {
+                                            "user.id": ${JSON.stringify(blocks)}
+                                            
+                                          }
+                                          
+                                        }
+                                      ]
+                                    }
                                   }
                                   
                                 ],
-                                "minimum_should_match": 2,
+                                "minimum_should_match": 3,
                                 "boost": 1
                               }},
                             "functions": [
@@ -832,10 +975,23 @@ export const newFeedTest = (subscriptions: string[]): string => {
                                       }
                                       ]
                                     }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must_not": [
+                                        {
+                                          "terms": {
+                                            "user.id": ${JSON.stringify(blocks)}
+                                            
+                                          }
+                                          
+                                        }
+                                      ]
+                                    }
                                   }
                                   
                                 ],
-                                "minimum_should_match": 2,
+                                "minimum_should_match": 3,
                                 "boost": 1
                               }
                             },
@@ -887,10 +1043,23 @@ export const newFeedTest = (subscriptions: string[]): string => {
                                       }
                                       ]
                                     }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must_not": [
+                                        {
+                                          "terms": {
+                                            "user.id": ${JSON.stringify(blocks)}
+                                            
+                                          }
+                                          
+                                        }
+                                      ]
+                                    }
                                   }
                                   
                                 ],
-                                "minimum_should_match": 2,
+                                "minimum_should_match": 3,
                                 "boost": 1
                               }}
                             ,
@@ -943,10 +1112,23 @@ export const newFeedTest = (subscriptions: string[]): string => {
                                       }
                                       ]
                                     }
+                                  },
+                                  {
+                                    "bool": {
+                                      "must_not": [
+                                        {
+                                          "terms": {
+                                            "user.id": ${JSON.stringify(blocks)}
+                                            
+                                          }
+                                          
+                                        }
+                                      ]
+                                    }
                                   }
                                   
                                 ],
-                                "minimum_should_match": 2,
+                                "minimum_should_match": 3,
                                 "boost": 1
                               }},
                             "functions": [
@@ -985,7 +1167,7 @@ export const newFeedTest = (subscriptions: string[]): string => {
 
 }
 
-export const newSearchTest = (props: { terms: string, subscriptions: string[] }): string => {
+export const newSearchTest = (props: { terms: string, subscriptions: string[], blocks: string[] }): string => {
     const query = `{
         "bool": {
             "should": [
@@ -1039,9 +1221,22 @@ export const newSearchTest = (props: { terms: string, subscriptions: string[] })
                                     }
                                     ]
                                   }
+                                },
+                                {
+                                  "bool": {
+                                    "must_not": [
+                                      {
+                                        "terms": {
+                                          "user.id": ${JSON.stringify(props.blocks)}
+                                          
+                                        }
+                                        
+                                      }
+                                    ]
+                                  }
                                 }
                                     ],
-                                    "minimum_should_match": 2,
+                                    "minimum_should_match": 3,
                                     "boost": 1
                                   }
                                 }
@@ -1116,9 +1311,22 @@ export const newSearchTest = (props: { terms: string, subscriptions: string[] })
                                     }
                                     ]
                                   }
+                                },
+                                {
+                                  "bool": {
+                                    "must_not": [
+                                      {
+                                        "terms": {
+                                          "user.id": ${JSON.stringify(props.blocks)}
+                                          
+                                        }
+                                        
+                                      }
+                                    ]
+                                  }
                                 }
                                     ],
-                                    "minimum_should_match": 2,
+                                    "minimum_should_match": 3,
                                     "boost": 1
                                   }
                                 }
@@ -1192,9 +1400,22 @@ export const newSearchTest = (props: { terms: string, subscriptions: string[] })
                                     }
                                     ]
                                   }
+                                },
+                                {
+                                  "bool": {
+                                    "must_not": [
+                                      {
+                                        "terms": {
+                                          "user.id": ${JSON.stringify(props.blocks)}
+                                          
+                                        }
+                                        
+                                      }
+                                    ]
+                                  }
                                 }
                                     ],
-                                    "minimum_should_match": 2,
+                                    "minimum_should_match": 3,
                                     "boost": 1
                                   }
                                 }
@@ -1260,9 +1481,22 @@ export const newSearchTest = (props: { terms: string, subscriptions: string[] })
                                     }
                                     ]
                                   }
+                                },
+                                {
+                                  "bool": {
+                                    "must_not": [
+                                      {
+                                        "terms": {
+                                          "user.id": ${JSON.stringify(props.blocks)}
+                                          
+                                        }
+                                        
+                                      }
+                                    ]
+                                  }
                                 }
                                     ],
-                                    "minimum_should_match": 2,
+                                    "minimum_should_match": 3,
                                     "boost": 1
                                   }
                                 }
@@ -1328,9 +1562,22 @@ export const newSearchTest = (props: { terms: string, subscriptions: string[] })
                                     }
                                     ]
                                   }
+                                },
+                                {
+                                  "bool": {
+                                    "must_not": [
+                                      {
+                                        "terms": {
+                                          "user.id": ${JSON.stringify(props.blocks)}
+                                          
+                                        }
+                                        
+                                      }
+                                    ]
+                                  }
                                 }
                                     ],
-                                    "minimum_should_match": 2,
+                                    "minimum_should_match": 3,
                                     "boost": 1
                                   }
                                 }

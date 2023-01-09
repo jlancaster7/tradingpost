@@ -102,11 +102,12 @@ declare const _default: {
     }) => Promise<void>) | undefined;
 };
 export default _default;
-export declare const CreateMultiTermQuery: (searchTerms: Record<string, string | number | (string | number)[]>, subscriptions: string[]) => any;
-export declare const newFeedTest: (subscriptions: string[]) => string;
+export declare const CreateMultiTermQuery: (searchTerms: Record<string, string | number | (string | number)[]>, subscriptions: string[], blocks: string[]) => Promise<any>;
+export declare const newFeedTest: (subscriptions: string[], blocks: string[]) => string;
 export declare const newSearchTest: (props: {
     terms: string;
     subscriptions: string[];
+    blocks: string[];
 }) => string;
 export declare const newUserTest: (props: {
     user_id: string;
