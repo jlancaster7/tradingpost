@@ -20,4 +20,5 @@ export default class User extends Extension {
     //TODO: should thorttle this to prevent DDOS
     sendEmailValidation = this._makeFetch<undefined, {}>("sendEmailValidation", this._defaultPostRequest)
     setBlocked = this._makeFetch<{ userId: string, block: boolean }, { userId: string }>("setBlocked", this._defaultPostRequest)
+    getBlocked = this._makeFetch<undefined, IUserList[]>("getBlocked", this._defaultPostRequest)
 }

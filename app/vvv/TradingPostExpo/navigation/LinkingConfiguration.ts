@@ -46,6 +46,7 @@ const linking: LinkingOptions<any> = {
                     }
                 }
             },
+            BlockedUsers:"blocked",
             Profile: "profile",
             PostScreen: "post",
             AccountInformation: "account",

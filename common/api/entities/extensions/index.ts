@@ -25,11 +25,11 @@ export class Extension {
         }) as (S extends undefined ? (req: {
             page: number
         }) => Promise<T> : (
-                req: {
-                    $page: number,
-                    $limit?: number,
-                    settings: S
-                }) => Promise<T>)
+            req: {
+                $page: number,
+                $limit?: number,
+                settings: S
+            }) => Promise<T>)
     }
 }
 
@@ -69,7 +69,7 @@ interface IRequest<
     ReqBody = any,
     ReqQuery = ParsedQs,
     Locals extends Record<string, any> = Record<string, any>
-    > extends
+> extends
     //http.IncomingMessage,
     Express.Request {
 

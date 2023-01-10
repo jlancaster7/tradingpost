@@ -22,6 +22,7 @@ import { YourContentComponent } from "../components/YourContentComponent";
 import { IUserGet, IUserUpdate } from "@tradingpost/common/api/entities/interfaces";
 import { Log } from "../utils/logger";
 import { LinkBrokerageComponent } from "../components/LinkBrokerageComponent";
+import { SecondaryButton } from "../components/SecondaryButton";
 
 export function AccountInfoScreen(props?: any) {
     const { loginState, signIn, signOut } = useAppUser(),
@@ -304,7 +305,7 @@ const AdvancedTabContent = (props: { appUser: IUserGet | undefined, signOut: any
     }
 
     const alert = Platform.OS === 'web' ? alertPolyfill : Alert.alert;
-
+    const linkTo = useLinkTo();
 
     return <ElevatedSection title="" style={{ padding: 5 }}>
         <View>
@@ -350,6 +351,16 @@ const AdvancedTabContent = (props: { appUser: IUserGet | undefined, signOut: any
         <Section title='Management' style={{ padding: 10 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 }}>
                 <Text style={{ fontSize: 14, alignSelf: 'center' }}>
+                    Blocked Users
+                </Text>
+                <SecondaryButton style={{ width: "40%" }} onPress={() => {
+                    linkTo("/blocked")
+                }}>
+                    View
+                </SecondaryButton>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 5 }}>
+                <Text style={{ fontSize: 14, alignSelf: 'center' }}>
                     Delete Account
                 </Text>
                 <PrimaryButton style={{ width: "40%", backgroundColor: "#D81222", borderColor: "#D81222" }} onPress={async () => {
@@ -376,6 +387,7 @@ const AdvancedTabContent = (props: { appUser: IUserGet | undefined, signOut: any
                     FOREVER
                 </PrimaryButton>
             </View>
+
         </Section>
     </ElevatedSection>
 

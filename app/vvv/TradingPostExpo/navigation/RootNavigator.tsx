@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import React, { useState } from "react";
-import { Button, Keyboard, Pressable, View } from "react-native";
-import { AppTitle, EllipsesIcon } from "../images";
+import { useState } from "react";
+import { Keyboard, Pressable, View } from "react-native";
+import { AppTitle } from "../images";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 import NotFoundScreen from "../screens/NotFoundScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
@@ -35,13 +35,11 @@ import { Log } from "../utils/logger";
 import { BrokeragePickerScreen } from "../screens/BrokeragePickerScreen";
 import { IbkrInfoScreen } from "../screens/IbkrInfoScreen";
 import { RobhinhoodLoginScreen } from "../screens/RobinhoodLoginScreen";
-import { ShareButton } from "../components/ShareButton";
-import linking from "./LinkingConfiguration";
-import { useLinkBuilder, useRoute } from "@react-navigation/native";
 import { TwitterAuthWebViewScreen } from "../screens/TwitterAuthSceen";
 import { ExtendedMenuModal } from "../components/ExtendedMenuModal";
 import { Icon } from "@ui-kitten/components";
-
+import { BlockScreen } from '../screens/BlockListScreen'
+import { useRoute } from "@react-navigation/native";
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -142,6 +140,7 @@ export function RootNavigator() {
             <Stack.Screen name="BrokeragePicker" component={BrokeragePickerScreen} />
             <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen} />
             <Stack.Screen name="RobinhoodLogin" component={RobhinhoodLoginScreen} />
+            <Stack.Screen name="BlockedUsers" component={BlockScreen} />
             <Stack.Screen name="TwitterAuthWebView" component={TwitterAuthWebViewScreen} options={{ headerShown: false }} />
         </Stack.Group>
         <Stack.Group screenOptions={{
@@ -158,7 +157,7 @@ export function RootNavigator() {
         }}>
             <Stack.Screen options={{
                 headerRight: () => {
-                    // const route = useRoute();
+                    const route = useRoute();
                     // const buildLink = useLinkBuilder()
                     // const url = buildLink(route.name, route.params);
                     const [modalVisible, setModalVisible] = useState(false);
@@ -167,10 +166,10 @@ export function RootNavigator() {
                             setModalVisible(true);
                         }}
                     >
-                        <ExtendedMenuModal userId="" onShouldClose={(blocked) => {
+                        <ExtendedMenuModal userId={(route.params as any)?.userId || ""} onShouldClose={(blocked) => {
                             setModalVisible(false);
                         }} visible={modalVisible} />
-                        <Icon  style={{ marginRight: 8, height: 32, width: 32, }} fill="white" name="more-horizontal" />
+                        <Icon style={{ marginRight: 8, height: 32, width: 32, }} fill="white" name="more-horizontal" />
                     </Pressable>
                 }
             }} name="Profile" component={ProfileScreen} />

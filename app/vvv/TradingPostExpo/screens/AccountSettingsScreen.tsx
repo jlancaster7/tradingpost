@@ -19,6 +19,7 @@ import { bannerText, flex, paddView, paddViewWhite, sizes, thinBannerText } from
 import { PrimaryButton } from "../components/PrimaryButton"
 import { useAppUser } from "../Authentication"
 import { RootStackScreenProps } from "../navigation/pages";
+import { SecondaryButton } from "../components/SecondaryButton";
 
 
 export function AccountSettingsScreen(props: RootStackScreenProps<"AccountSettings">) {

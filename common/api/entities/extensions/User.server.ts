@@ -2,6 +2,7 @@ import User from "./User"
 import { ensureServerExtensions } from "."
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import UserApi, { IUserGet, IUserList } from '../apis/UserApi'
+import BlockListApi, { IBlockListList, } from '../apis/BlockListApi'
 import { DefaultConfig } from "../../../configuration";
 import { Client as ElasticClient } from '@elastic/elasticsearch';
 import ElasticService from "../../../elastic";
@@ -20,6 +21,7 @@ import { parse } from "url";
 import { google } from 'googleapis'
 import { PublicError } from "../static/EntityApiBase";
 import Repository from "../../../social-media/repository";
+import { userInfo } from "os";
 
 export interface ITokenResponse {
     "token_type": "bearer",
@@ -38,6 +40,20 @@ const client = new S3Client({
 
 
 export default ensureServerExtensions<User>({
+    getBlocked: async (req) => {
+        const cache = await getUserCache();
+        const blockList = cache[req.extra.userId]?.blocked || [];
+        if (!blockList.length)
+            return [];
+        else
+            return await UserApi.internal.list({
+                data: {
+                    ids: blockList
+                }
+            });
+
+
+    },
     setBlocked: async (req) => {
 
         const pool = await getHivePool;

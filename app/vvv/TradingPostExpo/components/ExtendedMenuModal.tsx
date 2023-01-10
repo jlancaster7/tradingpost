@@ -6,6 +6,10 @@ import { Header } from "./Headers"
 import { ElevatedSection } from "./Section"
 import { Api } from '@tradingpost/common/api'
 import { useState } from "react"
+import { Picker } from "./Picker"
+import { PrimaryButton } from "./PrimaryButton"
+import { SecondaryButton } from "./SecondaryButton"
+import { KeyboardAvoidingInput } from "./KeyboardAvoidingInput"
 
 
 const styles = StyleSheet.create({
@@ -96,15 +100,19 @@ export const ExtendedMenuModal = (props: { userId: string, postId?: string, visi
     const { visible, onShouldClose, postId, userId } = props;
     const toast = useToast();
     const [menuCategory, setMenuCategory] = useState<keyof typeof categories>();
+    const [menuValue, setMenuValue] = useState<string>();
+    const [details, setDetails] = useState<string>();
+
+    const closeMenu = (block: boolean) => {
+        setMenuValue(undefined);
+        setMenuCategory(undefined);
+        onShouldClose(block);
+    }
 
     return <Modal
         visible={visible}
         backdropStyle={styles.backdrop}
-        onBackdropPress={() => {
-            setMenuCategory(undefined);
-            onShouldClose(false)
-        }
-        }
+        onBackdropPress={() => closeMenu(false)}
         style={{ width: '100%', alignItems: 'center' }}
     >
         <Card style={{ width: '90%' }}>
@@ -122,15 +130,14 @@ export const ExtendedMenuModal = (props: { userId: string, postId?: string, visi
                                     url: link,
                                     message: link
                                 }, {})
-                                onShouldClose(false);
-
+                                closeMenu(false);
                                 break;
                             case "user_block":
                                 Api.User.extensions.setBlocked({
                                     userId,
                                     block: true
                                 });
-                                onShouldClose(true);
+                                closeMenu(true);
                                 break;
                             default:
                                 setMenuCategory(cat);
@@ -145,32 +152,52 @@ export const ExtendedMenuModal = (props: { userId: string, postId?: string, visi
                     </Pressable>
 
                 })}
-                {menuCategory === "post_report" && postId && HardcodedReportingReasons.map(h => {
-                    return (
-                        <Pressable onPress={async () => {
-                            onShouldClose(false);
-                            toast.show('Post has been reported!')
-                            setMenuCategory(undefined);
-                            await Api.Post.extensions.report({
-                                postId: postId,
-                                reason: h.value
+                {menuCategory === "post_report" && postId &&
+                    <><Picker
+                        placeholder={"Pick A Reason"}
+                        value={menuValue}
+                        onSelect={(item) => {
+                            setMenuValue(HardcodedReportingReasons[item.row].value)
+                        }}
+                        items={
+                            HardcodedReportingReasons.map(h => {
+                                return {
+                                    label: h.text,
+                                    value: h.value
+                                }
                             })
-                        }}>
-                            <ElevatedSection title=''>
-                                <Text>
-                                    {h.text}
-                                </Text>
-                            </ElevatedSection>
-                        </Pressable>
-                    )
-                })}
+                        } />
+                        {menuValue && <KeyboardAvoidingInput
+                            value={details}
+                            displayButton={false}
+                            numLines={3}
+                            placeholder={'Reason Details...'}
+                            setValue={(text: string) => {
+                                setDetails(text);
+                            }}
+                        />}
+                    </>
+                }
             </ScrollView>
-            <Button style={{ marginTop: 10 }} onPress={() => {
-                onShouldClose(false)
-                setMenuCategory(undefined);
+
+            {postId && menuCategory === "post_report" && menuValue && <PrimaryButton
+
+                style={{ marginTop: 10 }}
+                onPress={async () => {
+
+                    toast.show('Post has been reported!')
+                    closeMenu(false);
+                    await Api.Post.extensions.report({
+                        postId: postId,
+                        reason: "",
+                        details: details || ""
+                    })
+                }} >Report</PrimaryButton>}
+            <SecondaryButton style={{ marginTop: 10 }} onPress={() => {
+                closeMenu(false);
             }
 
-            }>Cancel</Button>
+            }>Cancel</SecondaryButton>
         </Card>
     </Modal>
 

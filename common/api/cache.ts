@@ -169,7 +169,7 @@ export const cacheMonitor = async <A extends MotitoredType>(api: A, action: stri
                 user.blocked.push(responseData.userId);
             }
             else {
-                user.blocked = user.blocked.filter(id => id === responseData.userId);
+                user.blocked = user.blocked.filter(id => id !== responseData.userId);
             }
         }
     }

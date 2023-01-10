@@ -175,6 +175,14 @@ declare const _default: {
     }) => Promise<{
         userId: string;
     }>;
+    getBlocked: (req: {
+        body: undefined;
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<IUserList[]>;
 } & {
     get?: ((i: any, extra: {
         userId: string;

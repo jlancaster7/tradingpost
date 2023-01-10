@@ -87,6 +87,7 @@ declare const _default: {
         body: {
             postId: string;
             reason: string;
+            details: string;
         };
         extra: {
             userId: string;
