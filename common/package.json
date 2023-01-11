@@ -1,6 +1,6 @@
 {
   "name": "@tradingpost/common",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Code common to other repos",
   "main": "index.js",
   "scripts": {

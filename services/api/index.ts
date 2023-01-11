@@ -14,7 +14,6 @@ import createRouterForApi from './routes-api-beta';
 
 (globalThis as any)["fetch" as any] = fetch;
 //fromWebToken()
-
  
 const app = express();
 const port = process.env.PORT || 8082; // default port to listen
