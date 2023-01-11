@@ -172,7 +172,7 @@ export function PostView(props: { post: Interface.IElasticPostExt, onReloadNeede
                             <ScrollView nestedScrollEnabled horizontal showsHorizontalScrollIndicator={false}>
                                 <View style={[row, props.post.ext.user?.tags ? { display: 'flex' } : { display: 'none' }]}>
                                     {props.post.ext.user?.tags && (props.post.ext.user?.tags).map((chip, i) =>
-                                        <PrimaryChip isAlt key={i} label={chip} />)}
+                                        <PrimaryChip isAlt key={i} label={chip} style={{backgroundColor:'rgba(53, 162, 101, 0.50)'}}/>)}
                                 </View>
                             </ScrollView>
                         </View>
@@ -246,7 +246,7 @@ export function PostView(props: { post: Interface.IElasticPostExt, onReloadNeede
                                         paddingRight: sizes.rem0_5,
                                         color: '#9D9D9D'
                                     }}>
-                                    {'-'}
+                                   
                                 </Text>}
                             </Button>
                             {<Button
@@ -276,7 +276,7 @@ export function PostView(props: { post: Interface.IElasticPostExt, onReloadNeede
                                     fontWeight: 'normal',
                                     paddingHorizontal: sizes.rem1,
                                     color: '#9D9D9D'
-                                }}>{upvoteCount}</Text>}
+                                }}>{upvoteCount ? upvoteCount : '-'}</Text>}
                             </Button>}
                             <ShareButton url={"https://m.tradingpostapp.com/post?id=" + props.post._id}
                                 title={"https://m.tradingpostapp.com/post?id=" + props.post._id} style={{

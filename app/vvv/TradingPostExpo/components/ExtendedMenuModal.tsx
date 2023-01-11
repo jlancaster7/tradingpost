@@ -193,11 +193,11 @@ export const ExtendedMenuModal = (props: { userId: string, postId?: string, visi
                         details: details || ""
                     })
                 }} >Report</PrimaryButton>}
-            <SecondaryButton style={{ marginTop: 10 }} onPress={() => {
+            {/*<SecondaryButton style={{ marginTop: 10 }} onPress={() => {
                 closeMenu(false);
             }
 
-            }>Cancel</SecondaryButton>
+            }>Cancel</SecondaryButton>*/}
         </Card>
     </Modal>
 
