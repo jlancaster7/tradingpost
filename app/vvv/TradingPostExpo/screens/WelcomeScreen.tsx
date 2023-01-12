@@ -198,18 +198,23 @@ export default ({ navigation }: RootStackScreenProps<"Root">) => {
 
     </View>
         {!selectedIndex && Platform.OS !== "web" && <Pressable
+            style={{
+                position: "absolute",
+                bottom: sizes.rem1,
+                right: sizes.rem1,
+                padding: 15,
+                paddingBottom: 10 
+            }}
             onPress={() => {
                 navigation.navigate('AppInformation')
             }}>
             <Text style={{
                 textAlign: "right",
-                position: "absolute",
-                bottom: sizes.rem1,
-                right: sizes.rem1,
+                
                 fontSize: fonts.large,
                 lineHeight: fonts.large * 1.5
             }}>
-                What is TradingPost{">>"}
+                {"What is TradingPost >>"}
             </Text>
         </Pressable>}
     </>

@@ -293,8 +293,8 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
     if (props.submitRef)
         props.submitRef.current.submit = submit;
 
-    return <ElevatedSection title="Primary Subscription">
-        <Text style={{ marginVertical: sizes.rem1 }}>
+    return <ElevatedSection title="Subscription" style={{minWidth: '100%'}}>
+        {/*<Text style={{ marginVertical: sizes.rem1 }}>
             Set a cost associated with subscribing to your account.
         </Text>
         <Picker
@@ -312,7 +312,7 @@ export const SubscriptionSettingsView = (props: { navigation?: NavigationProp<an
                     value: cost
                 }
             })]}
-        />
+        />*/}
         <SwitchField label='Approve New Subscribers?'
             checked={subscription.data?.settings.approve_new}
             onChange={() => { subscription.update({ settings: { approve_new: !subscription.data?.settings.approve_new } }) }}
