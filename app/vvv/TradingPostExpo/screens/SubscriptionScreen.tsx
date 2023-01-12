@@ -106,7 +106,7 @@ export const SubscriptionScreen = (props: RootStackScreenProps<"Subscription">) 
                                     return '@' + k[0].user[0].handle
                                 }
                             },
-                            {
+                            /*{
                                 alias: "Cost",
                                 align: "left",
                                 field: "subscription",
@@ -120,7 +120,7 @@ export const SubscriptionScreen = (props: RootStackScreenProps<"Subscription">) 
                                 stringify: (k: ISubscriberList["subscription"]) => {
                                     return String(String(k[0].cost) === '$0.00' ? 'Free' : k[0].cost)
                                 }
-                            },
+                            },*/
                             {
                                 alias: "Since",
                                 field: "start_date",
@@ -179,8 +179,10 @@ export const SubscriptionScreen = (props: RootStackScreenProps<"Subscription">) 
                                                 backgroundColor: "#35A265", borderColor: "#35A265",
                                                 minHeight: 26,
                                                 height: 26,
-                                                minWidth: 70,
-                                                width: 70
+                                                minWidth: 80,
+                                                width: 80,
+                                                paddingVertical: 0,
+                                                paddingHorizontal: 0
                                             }}
                                             onPress={async () => {
                                                 item.item.approved = true;
