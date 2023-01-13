@@ -16,8 +16,8 @@ const create = async (Init: initOutput) => {
     const importAndCreate = new ImportAndCreate(Init);
 
     //await importAndCreate.createMDTrainingSet();
-    await importAndCreate.createQATrainingSet();
-    //await importAndCreate.createEmbeddings2(['TSLA']);
+    //await importAndCreate.createQATrainingSet();
+    await importAndCreate.createEmbeddings2(availableTickers);
 }
 
 const respond = async (Init: initOutput) => {
@@ -26,7 +26,7 @@ const respond = async (Init: initOutput) => {
         //,gpu
         );
 
-    const response = await respond.answerQuestionUsingContext('ADBE', 'How much did revenue grow in Q1 2022?')
+    const response = await respond.answerQuestion('ADBE', 'How much did revenue grow in Q1 2022?')
     
     console.log(response)
 
@@ -51,7 +51,7 @@ const respondTest = async (Init: initOutput) => {
             for (let q = 1; q <= maxQuarter; q++) {
                 const prompt = `How much did revenue grow in Q${q} ${y}?`
                 try {
-                    const response = await respond.answerQuestionUsingContext(t, prompt)
+                    const response = await respond.answerQuestion(t, prompt)
                     writeStream.write(t + '|' + prompt + '|' + response + '\n')
                     //responseResults.push({prompt, response});
                 }

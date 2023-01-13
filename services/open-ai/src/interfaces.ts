@@ -95,6 +95,8 @@ export type TranscriptTrainingSet = {
     response: string
     responsePosition: string
     type: string
+    quarter?: string
+    year?: string
 }
 
 export type TranscriptTrainingSetTable = TranscriptTrainingSet & TableInfo;
@@ -137,6 +139,7 @@ export type TranscriptEmbedding = {
     speech: string
     embedding: string
     transcriptTrainingId: number
+    period: string
 }
 export type TranscriptEmbeddingTable = TranscriptEmbedding & TableInfo;
 

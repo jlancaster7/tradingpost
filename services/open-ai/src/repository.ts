@@ -156,6 +156,8 @@ export default class Repository {
     getTrainingSet = async (tickers: string[]): Promise<(TranscriptTrainingSetTable & {symbol: string})[]> => {
         let query = `SELECT tts.id,
                             tl.symbol,
+                            tl.quarter,
+                            tl.year,
                             tts.transcript_id,
                             tts.training_set_id,
                             tts.prompt,
@@ -180,6 +182,8 @@ export default class Repository {
             let o: (TranscriptTrainingSetTable & {symbol: string}) = {
                 id: item.id,
                 symbol: item.symbol,
+                quarter: item.quarter,
+                year: item.year,
                 transcriptId: item.transcript_id,
                 trainingSetId: item.training_set_id,
                 prompt: item.prompt,

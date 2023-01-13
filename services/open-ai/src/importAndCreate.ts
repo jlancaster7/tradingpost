@@ -35,70 +35,7 @@ export class ImportAndCreate {
         await this.finnhubService.createMATrainingSet(availableTickers, trainingSetId)
         console.log(`MD for training set id ${trainingSetId} has been processed and inserted into the DB.`)
     }
-    createEmbeddings = async (tickers: string[]) => {
-        
-        for (let t of tickers) {
-            const transcripts = await this.finnhubService.getTrainingSet([t]);
     
-            const total = transcripts.length, 
-                batchSize = 50, 
-                embedModelName = 'text-embedding-ada-002';
-            let batchList = [], 
-                textList = [], 
-                embedList: CreateEmbeddingResponseDataInner[] = [], 
-                upsertCounter = 0, 
-                counter = 0, 
-                embeddings: TranscriptEmbedding[] = [];
-            
-            console.log(`Creating Embeddings for ${total} pieces of text for ${t}`)
-            for (let d of transcripts) {
-                batchList.push(d)
-                if (batchList.length === batchSize){
-                    textList = batchList.map(a => a.prompt)
-                    try {
-                        embedList = await this.openaiServices.getModelEmbeddings(embedModelName, textList) 
-                        
-                    } catch (err) {
-                        console.error(err)
-                        continue;
-                    }
-                    
-                    if (batchList.length !== embedList.length) throw new Error("batchList and embedList were of different sizes.");
-                    for (let i = 0; i < batchList.length; i++) {
-                        if (batchList[i].type === 'MD') {
-                            embeddings.push({
-                                transcriptId: batchList[i].transcriptId,
-                                speech: batchList[i].prompt,
-                                embedding: JSON.stringify(embedList[i].embedding),
-                                transcriptTrainingId: batchList[i].id
-                            })
-                        }
-                        else if (batchList[i].type === 'Q&A') {
-                            embeddings.push({
-                                transcriptId: batchList[i].transcriptId,
-                                speech: batchList[i].response,
-                                embedding: JSON.stringify(embedList[i].embedding),
-                                transcriptTrainingId: batchList[i].id
-                            })
-                        }
-                    }
-                    counter += batchSize;
-                    console.log(`${counter} of ${total} completed.`)
-                    if (!(counter % 2000) && counter !== 0) {
-                        const upsertResult = await this.finnhubService.repo.upsertTranscriptEmbedding(embeddings);
-                        upsertCounter += upsertResult;
-                        embeddings = []
-                        console.log(`Successfully uploaded ${upsertCounter} of ${total} embeddings to s3 for ${t}`);
-                    }
-                    batchList = []; textList = []; embedList = [];
-                }
-            }
-            const upsertResult = await this.finnhubService.repo.upsertTranscriptEmbedding(embeddings);
-            upsertCounter += upsertResult;
-            console.log(`Successfully uploaded ${upsertCounter} embeddings to s3 for ${t}`);
-        }
-        
-    }
     createEmbeddings2 = async (tickers: string[]) => {
         const transcripts = await this.finnhubService.getTrainingSet(tickers);
         const total = transcripts.length, 
@@ -126,7 +63,8 @@ export class ImportAndCreate {
                             transcriptId: batchList[i].transcriptId,
                             speech: batchList[i].prompt,
                             embedding: JSON.stringify(embedList[i].embedding),
-                            transcriptTrainingId: batchList[i].id
+                            transcriptTrainingId: batchList[i].id,
+                            period: `Q${batchList[i].quarter} ${batchList[i].year}`
                         })
                     }
                     else if (batchList[i].type === 'Q&A') {
@@ -134,7 +72,8 @@ export class ImportAndCreate {
                             transcriptId: batchList[i].transcriptId,
                             speech: batchList[i].response,
                             embedding: JSON.stringify(embedList[i].embedding),
-                            transcriptTrainingId: batchList[i].id
+                            transcriptTrainingId: batchList[i].id,
+                            period: `Q${batchList[i].quarter} ${batchList[i].year}`
                         })
                     }
                 }
