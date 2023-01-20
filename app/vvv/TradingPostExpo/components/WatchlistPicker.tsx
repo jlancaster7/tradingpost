@@ -32,8 +32,8 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
     const [searchText, setSearchText] = useState(""),
         { selectedItems } = props,
         [data, setData] = useState<(Interface.ISecurityList | {})[]>([]),
-        [datasetKey, setDatasetKey] = useState(""),
-        { securities: {
+        [datasetKey, setDatasetKey] = useState("")
+    let { securities: {
             list: securities
         } } = useSecuritiesList()
 
@@ -43,6 +43,7 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
     //This is a all part of just getting done quickly.. need ot clean this up 
     useEffect(() => {
         if (securities.length && props.securitiesLoaded) {
+            securities = securities.filter(a => a.symbol !== 'GOOGL')
             props.securitiesLoaded()
         }
 
