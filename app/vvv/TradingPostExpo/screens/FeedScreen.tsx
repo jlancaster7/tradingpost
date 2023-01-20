@@ -60,6 +60,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
 }
 
 export const PlatformSelector = (props: {platforms: string[], setPlatformClicked: React.Dispatch<React.SetStateAction<string>>}) => {
+    const { width: windowWidth } = useWindowDimensions();
     return (
         <View style={{marginHorizontal: sizes.rem2 / 2, flexDirection: 'row', justifyContent: 'center'}}>
             {["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"].map((item) => {
@@ -69,10 +70,10 @@ export const PlatformSelector = (props: {platforms: string[], setPlatformClicked
                                         key={`socialV_${item}`} 
                                         style={[{ flex: 1,
                                                     aspectRatio: 1,
-                                                    alignSelf: 'center',
+                                                    alignItems: 'center',
                                                     justifyContent: 'center',
                                                     marginTop: sizes.rem1,
-                                                    marginHorizontal: 8,
+                                                    marginHorizontal: -0.25*((windowWidth-320)**(1/3)) + 0.0002*((windowWidth-320)**(1/2)) + 0.083*((windowWidth-320)**(1)) + 4,
                                                     
                                                 }, props.platforms.includes(item) ? {borderStyle: 'solid', borderWidth: 2 ,borderColor: 'rgba(53, 162, 101, 1)',  backgroundColor: '#F0F0F0'} : {}
                                                 ]}
@@ -87,7 +88,7 @@ export const PlatformSelector = (props: {platforms: string[], setPlatformClicked
                                                     icon={logo} 
                                                     svgProps={{  }}
                                                     
-                                                    style={{  aspectRatio: 1, backgroundColor: 'transparent' }}
+                                                    style={{  aspectRatio: 1, backgroundColor: 'transparent', justifyContent: 'center' }}
                                                     currentColor={item === 'Substack' ? socialStyle.substackColor : undefined} />
                                                     :  <SvgExpo style={{ height: "100%", aspectRatio: 1 }}>
                                                             <Logo />
