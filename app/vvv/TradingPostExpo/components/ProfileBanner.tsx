@@ -12,7 +12,7 @@ import ProfileBg from '../assets/profile/profileBg.png'
 import { NavigationProp } from "@react-navigation/native";
 import { AppColors } from "../constants/Colors";
 import { Interface } from "@tradingpost/common/api";
-
+import { social as socialStyle } from '../style'
 
 
 export const profileImageSize = sizes.rem6;
@@ -123,14 +123,17 @@ export function ProfileBanner<T extends boolean>(props: { subscriberCount: numbe
 const SocialBar = (props: { claims: string[] }) => {
     //{social.TwitterLogo, social.LinkedInLogo, social.YouTubeLogo}
     return <>
-        {["Twitter", "YouTube", "Spotify"].map((logoName, i) => {
+        {["Twitter", "YouTube", "Spotify", "Substack"].map((logoName, i) => {
             //social.TwitterLogo, social.LinkedInLogo, social.YouTubeLogo
             //social.TwitterLogo, social.LinkedInLogo, social.YouTubeLogo
             const logo = social[logoName + "Logo" as keyof typeof social];
             return props.claims.find((c) => c.toLowerCase() === logoName.toLowerCase()) ?
                 <View key={`socialV_${i}`} style={{ height: "100%", aspectRatio: 1 }}>
                     <IconifyIcon key={`social_${i}`} icon={logo} svgProps={{ height: "75%" }}
-                        style={{ height: "75%", margin: "12.5%", aspectRatio: 1 }} />
+                        style={{ height: "75%", margin: "12.5%", 
+                        aspectRatio: 1 }} 
+                        currentColor={logoName === 'Substack' ? socialStyle.substackColor : undefined}
+                        />
                 </View> : undefined
         })}
     </>

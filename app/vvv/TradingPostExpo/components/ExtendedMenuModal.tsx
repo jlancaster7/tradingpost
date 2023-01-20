@@ -120,7 +120,9 @@ export const ExtendedMenuModal = (props: { userId: string, postId?: string, visi
             <ScrollView style={{ maxHeight: 400 }}>
                 {!menuCategory && Object.keys(categories).filter((k) => postId || k.substring(0, 5) !== "post_").map((k) => {
                     const item = categories[k as keyof typeof categories];
-                    return <Pressable onPress={async () => {
+                    return <Pressable 
+                                key={`id_${k}`}
+                                onPress={async () => {
                         const cat = k as keyof typeof categories
                         switch (cat) {
                             case "user_share":
