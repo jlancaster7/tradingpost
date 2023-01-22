@@ -16,7 +16,7 @@ PODS:
     - React-Core
   - EXNotifications (0.16.1):
     - ExpoModulesCore
-  - Expo (46.0.19):
+  - Expo (46.0.20):
     - ExpoModulesCore
   - ExpoCrypto (11.0.0):
     - ExpoModulesCore
@@ -572,7 +572,7 @@ SPEC CHECKSUMS:
   EXFont: 06df627203afcb8a3b3152ec06eb2f11f46f0cff
   EXImageLoader: b88e053d760f85a82405b1db2de4abf11978fc9f
   EXNotifications: 9a2aa201deb19dfe1dbe0e370eeb2922de0d2422
-  Expo: 2aa7370e08c458536b7089120e84ed8bd204357b
+  Expo: c2afed3f226befffaed962e9bacb5e0296acd254
   ExpoCrypto: e534314db0e1a17ae12b5140d529bd0c5efcbc6a
   ExpoImageManipulator: f4e286afa83c1c618de8701b0812ee0b647895fc
   ExpoImagePicker: ca4207f2952a78e6dac2d7852d7e170dd2eaf1d0

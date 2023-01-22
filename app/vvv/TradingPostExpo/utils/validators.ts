@@ -7,5 +7,11 @@ export function isRequired(value: string | undefined) {
 }
 
 export function isAlphaNumeric(value: string | undefined) {
-    return /^[a-z0-9\_]+$/i.test(value||"")
+    return /^[a-z0-9\_]+$/i.test(value || "")
+}
+
+export function isNotUndefinedOrNull(value: any): boolean {
+    if (value === undefined) return false;
+    if (value === null) return false;
+    return true;
 }
