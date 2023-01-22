@@ -16,7 +16,7 @@ import { GPTAccount } from './src/gptAccount';
 const run = async () => {
     
     const app: Express.Application = Express();
-    const port = process.env.PORT || 8082;
+    const port = process.env.PORT || 8085;
     app.use(Express.json())
     app.use(cors());
     app.use(bodyParser.json());
@@ -98,7 +98,7 @@ const setupRoutes = async (app: Express.Application, respond: SearchAndRespond, 
                 if (result.totalTokens - result.tokensUsed <= 15) throw new PublicError("To use your remaining 15 tokens please verify your email address! A verification email was sent from no-reply@tradingpostapp.com.", 401);
             }
 
-            const response = await respond.answerQuestionUsingContext(req.body.symbol, req.body.prompt, token.sub);
+            const response = await respond.answerQuestion(req.body.symbol, req.body.prompt, token.sub);
             if (response) {
                 const endTime = new Date()
                 console.log(endTime.valueOf() - startTime.valueOf())

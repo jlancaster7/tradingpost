@@ -168,6 +168,7 @@ export const social = {
     YouTubeLogo,
     SubstackLogo,
     SpotifyLogo,
+    //TradingPostLogo: LogoNoBg
 }
 
 

@@ -31,7 +31,7 @@ export function IbkrInfoScreen(props: any) {
 
             accountIds.update({ids: [...accountIds.data.ids, submittedText]});
             console.log('use effect')
-            console.log(accountIds)
+            //console.log(accountIds)
             setSubmittedText('')
         })()
 

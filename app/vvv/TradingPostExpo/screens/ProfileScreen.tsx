@@ -380,7 +380,7 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                         let style;
                         if (appUser && user && user?.id !== appUser?.id) {
                             if (!user.subscription?.is_subscribed && !user.subscription?.is_pending) {
-                                children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : "(Free)"}`
+                                children = `Subscribe ${(user.subscription?.cost as any) !== "$0.00" ? `${user.subscription.cost}/mo.` : ""}`
                                 onPress = async () => {
                                     await Api.Subscriber.extensions.insertWithNotification({
                                         subscription_id: user.subscription.id,
