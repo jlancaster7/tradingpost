@@ -54,8 +54,12 @@ const addAvailableApi = (version: string) => {
         console.error(ex);
     }
 }
-addAvailableApi("1.5.0")
-addAvailableApi("1.4.0")
+
+addAvailableApi("1.9.1")
+addAvailableApi("1.9.0")
+addAvailableApi("1.8.0")
+
+
 // start the express server
 app.listen(port, () => {
     // tslint:disable-next-line:no-console

@@ -1,10 +1,11 @@
-import {version} from '../../../package.json'
+import { version } from '../../../package.json'
 
 let apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8082";
 
+const versionParts = version.split(".")
 export let versionCode =
     process.env.API_VERSION_CODE ||
-    version ||
+    versionParts[0] + '.' + versionParts[1] ||
     "alpha"
 
 let callbackUrl = "https://m.tradingpostapp.com"
@@ -67,7 +68,7 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
     async get(id: string | number) {
         const resp = await fetch(this.makeUrl("get"), {
             method: "POST",
-            body: JSON.stringify({id}),
+            body: JSON.stringify({ id }),
             headers: EntityApiBase.makeHeaders()
         });
         return EntityApiBase.handleFetchResponse<TGet>(resp);
@@ -94,7 +95,7 @@ export abstract class EntityApiBase<TGet, TList, TInsert, TUpdate> {
     async update(id: string | number, item: TUpdate) {
         const resp = await fetch(this.makeUrl("update"), {
             method: "POST",
-            body: JSON.stringify({...item, id}),
+            body: JSON.stringify({ ...item, id }),
             headers: EntityApiBase.makeHeaders()
         });
         return EntityApiBase.handleFetchResponse<TGet>(resp)

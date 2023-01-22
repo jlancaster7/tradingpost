@@ -7,14 +7,16 @@ import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 
 export const createRouterForApi = (versionCode: string) => {
 
-    const { DefaultConfig } = require("tp_common_" + versionCode + "/configuration"),
-        { EntityApi, RequestSettings } = require('tp_common_' + versionCode + '/api/entities/static/EntityApi'),
-        { createLogin, createUser, forgotPassword, loginPass, loginToken, resetPassword, } = require('tp_common_' + versionCode + '/api/auth'),
-        { PublicError } = require('tp_common_' + versionCode + '/api/entities/static/EntityApiBase'),
-        { cacheMonitor } = require('tp_common_' + versionCode + '/api/cache'),
-        { addToWaitlist } = require('tp_common_' + versionCode + '/api/waitlist'),
-        UserApi = require('tp_common_' + versionCode + '/api/entities/apis/UserApi'),
-        SecurityApi = require('tp_common_' + versionCode + '/api/entities/static/SecurityApi');
+    const baseRoute = join(__dirname, "tradingpost-common-" + versionCode)
+
+    const { DefaultConfig } = require(baseRoute + "/configuration"),
+        { EntityApi, RequestSettings } = require(baseRoute + '/api/entities/static/EntityApi'),
+        { createLogin, createUser, forgotPassword, loginPass, loginToken, resetPassword, } = require(baseRoute + '/api/auth'),
+        { PublicError } = require(baseRoute + '/api/entities/static/EntityApiBase'),
+        { cacheMonitor } = require(baseRoute + '/api/cache'),
+        { addToWaitlist } = require(baseRoute + '/api/waitlist'),
+        UserApi = require(baseRoute + '/api/entities/apis/UserApi'),
+        SecurityApi = require(baseRoute + '/api/entities/static/SecurityApi');
 
     const router = Express.Router();
     const baseFormat = '/:entity/:action';
