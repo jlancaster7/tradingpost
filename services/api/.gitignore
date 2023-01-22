@@ -1,5 +1,5 @@
-!tradingpost-common-*
-!./tradingpost-common-*/**
 *.js
 *.d.ts
 *.js.map
+!tradingpost-common-*
+!tradingpost-common-*/**
