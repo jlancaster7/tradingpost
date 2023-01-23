@@ -1,8 +1,10 @@
 import fetch, {Response} from 'node-fetch';
 import {URL} from 'url';
-import {
-    HTTPConfiguration 
-} from './interfaces'
+export interface HTTPConfiguration {
+    method: string
+    headers?: Record<string, string>
+    body?: any
+}
 
 
 const HTTPConfigurationDefaults = {

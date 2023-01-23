@@ -1,0 +1,5 @@
+.radio {
+    display: flex;
+    align-items: left;
+    padding: 10px;
+}

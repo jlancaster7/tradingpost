@@ -1,0 +1,135 @@
+{
+    "FilingSummary": {
+        "Version": [
+            "3.22.2.2"
+        ],
+        "ProcessingTime": [
+            ""
+        ],
+        "ReportFormat": [
+            "html"
+        ],
+        "ContextCount": [
+            "12"
+        ],
+        "ElementCount": [
+            "23"
+        ],
+        "EntityCount": [
+            "1"
+        ],
+        "FootnotesReported": [
+            "false"
+        ],
+        "SegmentCount": [
+            "11"
+        ],
+        "ScenarioCount": [
+            "0"
+        ],
+        "TuplesReported": [
+            "false"
+        ],
+        "UnitCount": [
+            "0"
+        ],
+        "MyReports": [
+            {
+                "Report": [
+                    {
+                        "$": {
+                            "instance": "d400465d8k.htm"
+                        },
+                        "IsDefault": [
+                            "false"
+                        ],
+                        "HasEmbeddedReports": [
+                            "false"
+                        ],
+                        "HtmlFileName": [
+                            "R1.htm"
+                        ],
+                        "LongName": [
+                            "100000 - Document - Document and Entity Information"
+                        ],
+                        "ReportType": [
+                            "Sheet"
+                        ],
+                        "Role": [
+                            "http://www.apple.com//20221106/taxonomy/role/DocumentDocumentAndEntityInformation"
+                        ],
+                        "ShortName": [
+                            "Document and Entity Information"
+                        ],
+                        "MenuCategory": [
+                            "Cover"
+                        ],
+                        "Position": [
+                            "1"
+                        ]
+                    },
+                    {
+                        "IsDefault": [
+                            "false"
+                        ],
+                        "HasEmbeddedReports": [
+                            "false"
+                        ],
+                        "LongName": [
+                            "All Reports"
+                        ],
+                        "ReportType": [
+                            "Book"
+                        ],
+                        "ShortName": [
+                            "All Reports"
+                        ]
+                    }
+                ]
+            }
+        ],
+        "InputFiles": [
+            {
+                "File": [
+                    {
+                        "_": "d400465d8k.htm",
+                        "$": {
+                            "doctype": "8-K",
+                            "original": "d400465d8k.htm"
+                        }
+                    },
+                    "aapl-20221106.xsd",
+                    "aapl-20221106_def.xml",
+                    "aapl-20221106_lab.xml",
+                    "aapl-20221106_pre.xml",
+                    "d400465dex991.htm"
+                ]
+            }
+        ],
+        "SupplementalFiles": [
+            {
+                "File": [
+                    "g400465g56j44.jpg"
+                ]
+            }
+        ],
+        "BaseTaxonomies": [
+            {
+                "BaseTaxonomy": [
+                    {
+                        "_": "http://xbrl.sec.gov/dei/2021q4",
+                        "$": {
+                            "items": "52"
+                        }
+                    }
+                ]
+            }
+        ],
+        "HasPresentationLinkbase": [
+            "true"
+        ],
+        "HasCalculationLinkbase": [
+            "false"
+        ]
+    }
+}

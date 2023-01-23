@@ -1,0 +1,27 @@
+{
+    "youtube": {
+        "weight": 1.2,
+        "origin": "now",
+        "scale": "7d"
+    },
+    "tweet": {
+        "weight": 1,
+        "origin": "now",
+        "scale": "12h"
+    },
+    "substack": {
+        "weight": 1.2,
+        "origin": "now",
+        "scale": "7d"
+    },
+    "spotify": {
+        "weight": 1.2,
+        "origin": "now",
+        "scale": "7d"
+    }, 
+    "tradingpost": {
+        "weight": 1.5,
+        "origin": "now",
+        "scale": "7d"
+    }
+}
