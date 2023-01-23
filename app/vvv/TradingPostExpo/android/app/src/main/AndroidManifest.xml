@@ -29,9 +29,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="myapp"/>
-        <data android:scheme="com.tradingpostapp"/>
         <data android:scheme="tp"/>
+        <data android:scheme="com.tradingpostapp"/>
       </intent-filter>
       <intent-filter data-generated="true" android:autoVerify="true">
         <action android:name="android.intent.action.VIEW"/>
