@@ -19,11 +19,13 @@ export function PostScreen(props: RootStackScreenProps<"PostScreen">) {
 
     useEffect(() => {
         if (!post) {
+            console.log("LOADING THE POST" + props.route.params.id)
             //lookup posts 
             Api.Post.extensions.feed({
                 page: 0,
                 postId: props.route.params.id
             }).then((r) => {
+                console.log("DONE LOADING THE POST")
                 setPost(r[0]);
             }).catch(ex => {
                 console.error(ex);

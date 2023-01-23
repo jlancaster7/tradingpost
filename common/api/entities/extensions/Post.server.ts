@@ -239,7 +239,8 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
       from: page * postsPerPage,
       query: await (async () => {
         if (req.body.postId) {
-          return { "ids": { "values": [req.body.postId] } }
+          const output= { "ids": { "values": [req.body.postId] } }
+          return output;
         } else if (req.body.userId) {
           //return searchQuery({user_id: req.body.userId})
           return userQuery({ user_id: req.body.userId, subscriptions: subscriptions })
@@ -256,7 +257,7 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
 
     //TODO::: Need to limit terms on this
     const { hits } = response.hits;
-
+    console.log("My response has this man hits " + hits.length)
     hits.forEach((h) => {
       (h as IElasticPostExt).ext = {
         user: userCache[h._source?.user.id || ""]?.profile,

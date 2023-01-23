@@ -284,8 +284,8 @@ export function PostView(props: { post: Interface.IElasticPostExt, onReloadNeede
                                     color: '#9D9D9D'
                                 }}>{upvoteCount ? upvoteCount : '-'}</Text>}
                             </Button>}
-                            <ShareButton url={"https://m.tradingpostapp.com/post?id=" + props.post._id}
-                                         title={"https://m.tradingpostapp.com/post?id=" + props.post._id} style={{
+                            <ShareButton url={"https://m.tradingpostapp.com/post?id=" + encodeURIComponent(props.post._id)}
+                                         title={"https://m.tradingpostapp.com/post?id=" + encodeURIComponent(props.post._id)} style={{
                                 height: 24,
                                 width: 24, marginRight: 10
                             }}
