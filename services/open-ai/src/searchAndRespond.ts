@@ -129,31 +129,29 @@ export class SearchAndRespond {
         embeddings.sort((a ,b) => (b.dist || -100) - (a.dist || 100))
         let result = ''
         const uniqueEmbeddings = embeddings.filter((item, i, array) => {
-                return i === array.findIndex((t) => {
-                    return t.transcriptTrainingId === item.transcriptTrainingId
-                })
+                return i === array.findIndex((t) => t.transcriptTrainingId === item.transcriptTrainingId)
             })
-        
         for (let i = 0; i < uniqueEmbeddings.length; i++) {
             if (result.split(' ').length > 1500) {
                 return result;
             }
-            else {
-                result += `* ${uniqueEmbeddings[i].speech} \n`;
-            }
+            else result += `* ${uniqueEmbeddings[i].speech} \n`;
         }
         return result;
     }
 
-    findMostSimilarSpeech = async (symbol: string, prompt: string |string[], periods: string[], agg: boolean): Promise<string[]>  => {
+    findMostSimilarSpeech = async (symbol: string, prompt: string |string[], periods: string[], agg: boolean): Promise<[string[], string[]]>  => {
         if (typeof prompt === 'string') prompt = [prompt]
         
         const embeddings = await this.finnhubService.repo.getS3TranscriptEmbeddings(symbol);
         const periodWeighting = this.createPeriodWeights(periods)
         
         let embeddingsWithDist: (TranscriptEmbedding & {dist?: number})[] = embeddings;
+        let embeddingsWithDistTimeAdjusted: (TranscriptEmbedding & {dist?: number})[] = JSON.parse(JSON.stringify(embeddings));
         let result = []
+        let resultTimeAdjusted = []
         let topEmbeddings = []
+        let topEmbeddingsTimeAdjusted = []
         for (let q of prompt) {
 
             const promptEmbedding = [(await this.openaiServices.getModelEmbeddings(this.openAiEmbedModel, q))[0].embedding];
@@ -161,27 +159,35 @@ export class SearchAndRespond {
             distances = this.gpuCosineSimilarity(promptEmbedding, embeddings.map(a => JSON.parse(a.embedding) as number[]))
             
             for (let i = 0; i < embeddingsWithDist.length; i++) {
-                embeddingsWithDist[i].dist = distances[i] * (periodWeighting[embeddingsWithDist[i].period] || 1)   
+                embeddingsWithDist[i].dist = distances[i] 
+                
+            }
+            for (let i = 0; i < embeddingsWithDistTimeAdjusted.length; i++) {
+                embeddingsWithDistTimeAdjusted[i].dist = distances[i] * (periodWeighting[embeddingsWithDistTimeAdjusted[i].period] || 1)
             }
             embeddingsWithDist.sort((a ,b) => (b.dist || -100) - (a.dist || 100))
+            embeddingsWithDistTimeAdjusted.sort((a ,b) => (b.dist || -100) - (a.dist || 100))
             if (agg) {
                 topEmbeddings.push(...embeddingsWithDist.filter(a => (a.dist || 0) > 0.75))
+                topEmbeddingsTimeAdjusted.push(...embeddingsWithDistTimeAdjusted.filter(a => (a.dist || 0) > 0.75))
             }
             else {
                 result.push(this.findUniqueEmbeddings(embeddingsWithDist.filter(a => (a.dist || 0) > 0.75)))
-                
+                resultTimeAdjusted.push(this.findUniqueEmbeddings(embeddingsWithDistTimeAdjusted.filter(a => (a.dist || 0) > 0.75)))
             }
         }
         if (agg) {
             result.push(this.findUniqueEmbeddings(topEmbeddings))
+            resultTimeAdjusted.push(this.findUniqueEmbeddings(topEmbeddingsTimeAdjusted))
         }
-        return result;
+        return [result, resultTimeAdjusted];
     }
     timePeriodProcessing = async (symbol: string, prompt: string): Promise<[string, string[]]> => {
         const mostRecentQuarter = await this.finnhubService.repo.getSymbolMostRecent(symbol);
-        
+        const mostRecentYear = mostRecentQuarter.split(' ')[0].split('')[1] === '4' ? mostRecentQuarter.split(' ')[1] : String(parseInt(mostRecentQuarter.split(' ')[1]) - 1);
+        /*
         //const timePeriodPrompt = `In the text following 'Q:', is a specific quarter or year being referenced? If yes, then after 'A:' we will explicitly write which quarters or years are being referenced. We will only return the list. If no quarter or year is referenced in the text after 'Q:' or if the text after 'Q:' asks about which quarter or year something occured in, we will write 'None' after 'A:'.  If the text after 'Q:' refers to specific quarters or years but uses absstract words like latest, most recent, or last, we should writer a list of quarters or years starting with ${mostRecentQuarter} after 'A:'. However, if the text after 'Q:' does not abstractly reference quarters or years using these words, then return 'None'. The format of the Quarters and Years is QQ YYYY, an example of the format for the second quarter of 2021 would be Q2 2021. 'Q:' ${prompt} 'A:' `;
-        const isTimePeriodPrompt = `The following question will reference a set of text that will be labeled as Reference Text. The question that you will be answering will be referring to the Reference Text. In order to best answer the question about the Reference Text, you may use information in the Context provided and your general knowledge. Please try to answer the question about the Reference Text as best you can. Your answer should be a list of quarters and years in descending chronological order and nothing else.  \nContext: An example of the proper formating for a specific quarter is as follows: the second quarter of 2021 would be formatted as Q1 2021. An example of a correctly answered question is: "Question: How much did revenue grow last quarter? Answer: ${mostRecentQuarter}". \nReference Text: ${prompt} \nQuestion: Is a quarter, year or range of quarters and years referred to in the question? \nAnswer:`
+        const isTimePeriodPrompt = `The following question will reference a set of text that will be labeled as Reference Text. The question that you will be answering will be referring to the Reference Text. In order to best answer the question about the Reference Text, you may use information in the Context provided and your general knowledge. Please try to answer the question about the Reference Text as best you can. \nContext: An example of the proper formating for a specific quarter is as follows: the second quarter of 2021 would be formatted as Q1 2021. An example of a correctly answered question is: "Question: How much did revenue grow last quarter? Answer: Yes". \nReference Text: ${prompt} \nQuestion: Yes or No: Is a quarter, year, span of quarters or span of years referred to in the question? \nAnswer:`
         console.log(isTimePeriodPrompt)
         const isTimePeriodInfo = (await this.openaiServices.getModelResponse(this.openAiResponseModel, {
             prompt: isTimePeriodPrompt,
@@ -193,13 +199,17 @@ export class SearchAndRespond {
         let timePeriodText = '';
         let timePeriodList: string[] = [];
 
-        const noneRegex = new RegExp('none', 'i')
+        const noneRegex = new RegExp('no', 'i')
         if (noneRegex.test(isTimePeriodInfo || '')) {
-            timePeriodText = `No time period was referenced in the question. The quarter and year that we have earnings transcripts, press releases and reports available for is ${mostRecentQuarter}. However, it may be necessary to first ask a question that helps determine what quarter or quarters we should consider if it is unclear.`;
+            timePeriodText = `No time period was referenced in the question. The most recent quarter that the company has released an earnings release for, reported financial metrics and hosted and earnings call for is ${mostRecentQuarter}. However, it may be necessary to first ask a question that helps determine what quarter or quarters we should consider if it is unclear.`;
             timePeriodList = [mostRecentQuarter]
         }
         else {
-            const timePeriodPrompt = `The following question will reference a set of text that will be labeled as Reference Text. The question that you will be answering will be referring to the Reference Text. In order to best answer the question about the Reference Text, you may use information in the Context provided and your general knowledge. Please try to answer the question about the Reference Text as best you can. Your answer should be a list of quarters and years and nothing else. If you can't answer the question accurately, please answer with None. \nContext: The most recent quarter reported by the company is ${mostRecentQuarter}. An example of the proper formating for a specific quarter is as follows: the second quarter of 2021 would be formatted as Q1 2021. \nReference Text: ${prompt} \nQuestion: What quarter, year or range of quarters or years is the question referring to? \nAnswer:`
+        */
+            const noneRegex = new RegExp('none', 'i')
+            let timePeriodText = '';
+            let timePeriodList: string[] = [];
+            const timePeriodPrompt = `The following question will reference a set of text that will be labeled as Reference Text. The question that you will be answering will be referring to the Reference Text. In order to best answer the question about the Reference Text, you may use information in the Context provided and your general knowledge. Please try to answer the question about the Reference Text as best you can. Your answer should be a list of quarters and years and nothing else. If you can't answer the question accurately, please answer with None. \nContext: As an example of the formatting of quarters, Q4 2021 is equivelant to the fourth quarter of 2021, there are 4 quarters in a year. The most recently quarter reported for the company is ${mostRecentQuarter}. The last quarter in which the company reported financial metrics is ${mostRecentQuarter}.  If the question refers to the last quarter or last quarters, the list should start with the most recently reported quarter. If the question refers to the last year or latest years, the list should start with Q4 ${mostRecentYear}. If the question refers to a specific quarter and year, return that.  \nReference Text: ${prompt} \nQuestion: What quarter, year, span of quarters or span of years is the question referring to? \nAnswer:`
             console.log(timePeriodPrompt)
             const timePeriodInfo = (await this.openaiServices.getModelResponse(this.openAiResponseModel, {
                 prompt: timePeriodPrompt,
@@ -221,7 +231,7 @@ export class SearchAndRespond {
                 timePeriodText = `The time periods being referenced in the question is ${timePeriodInfo}.`;
                 timePeriodList = timePeriodInfo.split(', ')
             }   
-        }
+        //}
         return [timePeriodText, timePeriodList]
     }
     abbrivationProcessing = (prompt: string) => {
@@ -232,7 +242,7 @@ export class SearchAndRespond {
             processedPrompt += '\neps stands for earnings per share.' 
         }
         if (opMarginRegex.test(prompt)) {
-            processedPrompt += '\noperating margin equals operating income divided by total company revenue.'
+            processedPrompt += '\noperating margin equals operating income divided by revenue or sales.'
         }
         return processedPrompt;
     }
@@ -240,7 +250,7 @@ export class SearchAndRespond {
         
         const [timePeriodText, timePeriodList] = await this.timePeriodProcessing(symbol, prompt);
         
-        let postProcessedPrompt = timePeriodText + '\n' + prompt;
+        let postProcessedPrompt = timePeriodText ? timePeriodText + '\n' + prompt : prompt;
         
         postProcessedPrompt = this.abbrivationProcessing(postProcessedPrompt);
         let questionList: string[] = [];
@@ -260,10 +270,10 @@ export class SearchAndRespond {
             max_tokens: 400,
             temperature: 0
         })
-        console.log(leadingQuestionAnswer);
+        //console.log(leadingQuestionAnswer);
         
         const questionList = leadingQuestionAnswer.choices[0].text?.split(/\n/).map(a => a.replace(/^\d\. /, '')).filter(a => a !== '')
-        console.log(questionList)
+        //console.log(questionList)
         
         return questionList || []
     }
@@ -271,7 +281,7 @@ export class SearchAndRespond {
         let preContext = ''
         if (save) {
             //preContext = `Answer the question as truthfully as possible using the provided context, and if the answer is not in the available context, then provide a related and relevant question that could be answered and answer that question. The following context is a list of excerpts from earnings call transcripts and is separated by a * and then the quarter and year in which the information is from. An example for the first quarter of 2021 would be * Q1 2021. Do not use outdated information when making statements about what is happening today. Do not use information from one time period to answer a question about another time period. Be clear about what period you are talking about when answering the question. Context:\n`;
-            preContext = `Answer the question as truthfully as possible using the provided context, and if the answer is not in the available context, then provide a related and relevant question that could be answered and answer that question. The following context is a list of excerpts from earnings call transcripts and is separated by a * and then the quarter and year in which the information is from. An example for the first quarter of 2021 would be * Q1 2021. Do not use outdated information when making statements about what is happening today. Do not use information from one time period to answer a question about another time period. Be clear about what period you are talking about when answering the question. Context:\n`;
+            preContext = `Answer the question as truthfully as possible using the provided context, and if the answer is not in the available context, then say, I can't find a specific answer for you, but here is some information I found that may be helpful:, and then summarize facts that are relevant to the question that the user may find useful. The following context is a list of excerpts from earnings call transcripts and is separated by a * and then the quarter and year in which the information is from. An example for the first quarter of 2021 would be * Q1 2021. Do not use outdated information when making statements about what is happening today. Do not use information from one quarter to answer a question about another quarter. Be clear about what period you are talking about when answering the question. Context:\n`;
         }
         else {
             preContext = `Answer the question as truthfully as possible using the provided context, and if the answer is not in the available context, then return None. The following context is a list of excerpts from earnings call transcripts and is separated by a * and then the quarter and year in which the information is from. An example for the first quarter of 2021 would be * Q1 2021. Do not use outdated information when making statements about what is happening today. Do not use information from one time period to answer a question about another time period. Be clear about what period you are talking about when answering the question. Context:\n`;
@@ -302,11 +312,16 @@ export class SearchAndRespond {
         //const preContext = `Answer the question as truthfully as possible using the provided context, and if the answer is not in the available context, then provide a related and relevant question that could be answered and answer that question. The following context is a list of excerpts from earnings call transcripts and is separated by a * and then the quarter and year in which the information is from. An example for the first quarter of 2021 would be * Q1 2021. Do not use outdated information when making statements about what is happening today. Do not use information from one time period to answer a question about another time period. Be clear about what period you are talking about when answering the question. Context:\n`;
         
         let [postProcessedPrompt, questionList, timePeriods] = await this.promptProcessing(symbol, prompt, iterate);
-        if (!questionList.length) questionList.push(postProcessedPrompt);
+        if (!questionList.length) questionList.push(prompt);
+        console.log(questionList)
         const context = await this.findMostSimilarSpeech(symbol, questionList, timePeriods, true)
+        console.log(context[1][0])
+        const timeRankedresponse = await this.answerQuestionUsingContext(postProcessedPrompt ,context[1][0], userId, symbol, true);
+        console.log(timeRankedresponse)
+        const noAnswerRegEx = new RegExp(`I can't find a specific answer for you`, 'i');
+        if (noAnswerRegEx.test(timeRankedresponse)) return await this.answerQuestionUsingContext(postProcessedPrompt ,context[0][0], userId, symbol, true);
+        else return timeRankedresponse;
         
-        const response = await this.answerQuestionUsingContext(postProcessedPrompt ,context[0], userId, symbol, true);
-        return response;
     }
 }
 

@@ -9,6 +9,7 @@
     "@tradingpost/common": "file:tradingpost-common-1.6.3.tgz",
     "@types/node-fetch": "^2.6.2",
     "body-parser": "^1.20.0",
+    "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
     "express": "^4.18.2",

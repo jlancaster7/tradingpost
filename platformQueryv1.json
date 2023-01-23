@@ -1,0 +1,67 @@
+{
+    "function_score": {
+        "query": { 
+        "bool": {
+            "should": [
+              {
+                "match": {
+                  "postType": ${platform}
+                  }
+              },
+              {
+                "terms": {
+                  "subscription_level": [
+                    "standard"
+                    ]
+                }
+              },
+              {
+                "bool": {
+                  "must": [
+                  {
+                    "terms": {
+                      "user.id": 
+                            ${subscriptions}
+                        
+                    }
+                  },
+                  {
+                    "match": {
+                      "subscription_level": "premium"
+                    }
+                  }
+                  ]
+                }
+              },
+              {
+                "bool": {
+                  "must_not": [
+                    {
+                      "terms": {
+                        "user.id": ${blocks}
+                        
+                      }
+                      
+                    }
+                  ]
+                }
+              }
+              
+            ],
+            "minimum_should_match": 3,
+            "boost": 1
+          }},
+        "functions": [
+            {
+            "exp": {
+                "platformCreatedAt": {
+                  "origin": ${platformOrigin},
+                  "scale": ${platformScale}
+                }
+            },
+            "weight": ${platformWeight}
+            }
+        ],
+        "boost_mode": "replace"
+    }
+}

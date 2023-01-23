@@ -1,3 +1,5 @@
 *.js
 *.d.ts
 *.js.map
+!tradingpost-common-*
+!tradingpost-common-*/**

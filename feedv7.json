@@ -1,0 +1,21 @@
+{
+    "function_score": {
+        "query": {
+            "bool": {
+                "should": ${platformQuery},
+                "minimum_should_match": 1,
+                "boost": 1
+        }
+    },
+    "functions": [
+          {
+          "random_score": {
+              "seed": 2,
+              "field": "_seq_no"
+          }
+        }
+    ],
+    "boost": 1,
+    "boost_mode": "avg"
+    }
+}
