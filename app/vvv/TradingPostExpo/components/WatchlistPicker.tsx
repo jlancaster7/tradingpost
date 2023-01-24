@@ -112,8 +112,8 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
             const gap = Array.from({ length: numItemsPerRow - (items.length % numItemsPerRow) }, () => empty);
             if (gap.length !== 4)
                 items.push(...gap);
-
-            setData(items)
+            // @ts-ignore
+            setData(items.filter(a => a.symbol !== 'GOOGL'))
             setDatasetKey(searchText);
         }, 333) as any;
     }, [searchText, securities, selectedItems])
