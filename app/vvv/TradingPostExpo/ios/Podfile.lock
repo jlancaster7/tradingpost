@@ -7,10 +7,17 @@ PODS:
     - ExpoModulesCore
   - EXDevice (4.3.0):
     - ExpoModulesCore
+  - EXErrorRecovery (3.2.0):
+    - ExpoModulesCore
   - EXFileSystem (14.1.0):
     - ExpoModulesCore
   - EXFont (10.2.1):
     - ExpoModulesCore
+  - EXGL (11.4.0):
+    - EXGL_CPP
+    - ExpoModulesCore
+  - EXGL_CPP (11.4.0):
+    - React-jsi
   - EXImageLoader (3.2.0):
     - ExpoModulesCore
     - React-Core
@@ -382,8 +389,11 @@ DEPENDENCIES:
   - EXApplication (from `../node_modules/expo-application/ios`)
   - EXConstants (from `../node_modules/expo-constants/ios`)
   - EXDevice (from `../node_modules/expo-device/ios`)
+  - EXErrorRecovery (from `../node_modules/expo-error-recovery/ios`)
   - EXFileSystem (from `../node_modules/expo-file-system/ios`)
   - EXFont (from `../node_modules/expo-font/ios`)
+  - EXGL (from `../node_modules/expo-gl/ios`)
+  - EXGL_CPP (from `../node_modules/expo-gl-cpp/cpp`)
   - EXImageLoader (from `../node_modules/expo-image-loader/ios`)
   - EXNotifications (from `../node_modules/expo-notifications/ios`)
   - Expo (from `../node_modules/expo`)
@@ -453,10 +463,16 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-constants/ios"
   EXDevice:
     :path: "../node_modules/expo-device/ios"
+  EXErrorRecovery:
+    :path: "../node_modules/expo-error-recovery/ios"
   EXFileSystem:
     :path: "../node_modules/expo-file-system/ios"
   EXFont:
     :path: "../node_modules/expo-font/ios"
+  EXGL:
+    :path: "../node_modules/expo-gl/ios"
+  EXGL_CPP:
+    :path: "../node_modules/expo-gl-cpp/cpp"
   EXImageLoader:
     :path: "../node_modules/expo-image-loader/ios"
   EXNotifications:
@@ -568,8 +584,11 @@ SPEC CHECKSUMS:
   EXApplication: e418d737a036e788510f2c4ad6c10a7d54d18586
   EXConstants: 7c44785d41d8e959d527d23d29444277a4d1ee73
   EXDevice: 7647ca9b1fd8b269dfd896a7643d659343358054
+  EXErrorRecovery: 74d71ee59f6814315457b09d68e86aa95cc7d05d
   EXFileSystem: 927e0a8885aa9c49e50fc38eaba2c2389f2f1019
   EXFont: 06df627203afcb8a3b3152ec06eb2f11f46f0cff
+  EXGL: af303c96595c2879a83d0cdc429ee12639f6d78c
+  EXGL_CPP: 26d0d7639ec8fcf9133c2883926ca7a005625ee6
   EXImageLoader: b88e053d760f85a82405b1db2de4abf11978fc9f
   EXNotifications: 9a2aa201deb19dfe1dbe0e370eeb2922de0d2422
   Expo: c2afed3f226befffaed962e9bacb5e0296acd254
