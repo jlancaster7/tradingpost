@@ -1,0 +1,12 @@
+name: Pipeline Name
+
+on:
+  push:
+jobs: 
+
+  Notify_Teams:
+    uses: thechetantalwar/teams-notify@8a78811f5e8f58cdd204efebd79158006428c46b
+    with: 
+      teams_webhook_url: https://hivemindstudios.webhook.office.com/webhookb2/51cb62f3-5069-471b-b6aa-783275b9ca9c@c0257b77-4221-43b4-802e-272f0af9f1ff/IncomingWebhook/472c91cc11b64d1ea488a8ee94846ce9/c379e021-7292-4a1e-a815-32edef2d0444
+      # Message to be sent
+      message: dklfjald
