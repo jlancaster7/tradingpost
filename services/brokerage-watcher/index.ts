@@ -30,12 +30,12 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     return parseFloat(value);
 });
 
-const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Client) => {
+const uploadFileToS3 = async (filePath: string, accountId: string, filename: string, s3Client: S3Client) => {
     try {
         const fileStream = fs.createReadStream(filePath);
         await s3Client.send(new PutObjectCommand({
             Bucket: "tradingpost-brokerage-files",
-            Key: `ibkr/${filename}`,
+            Key: `ibkr/${accountId}/${filename}`,
             Body: fileStream
         }));
     } catch (e) {
@@ -78,7 +78,7 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
             const [ibkrUserId, fileType, date] = filenameWithoutExt.split("_");
             const dateDateTime = DateTime.fromFormat(date, "yyyyMMdd", {
                 zone: "America/New_York"
-            });
+            }).set({hour: 16, minute: 0, second: 0, millisecond: 0});
 
             const ibkrAccount = await repo.getIbkrAccount(ibkrUserId);
             if (!ibkrAccount) throw new Error("could not find ibkr account for account id");
@@ -100,7 +100,7 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
 
             if (existingTask === null) {
                 await repo.upsertBrokerageTasks([updatedTask])
-                await uploadFileToS3(path, filename, s3Client)
+                await uploadFileToS3(path, ibkrUserId, filename, s3Client)
                 continue
             }
 
@@ -116,12 +116,11 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
 
             if (existingTask.data.filenames.length === 7) existingTask.status = BrokerageTaskStatusType.Pending
 
-            console.log("UPdating Task: ", existingTask.id, existingTask.data)
             await repo.updateTask(existingTask.id, {
                 status: existingTask.status,
                 data: existingTask.data
             })
-            await uploadFileToS3(path, filename, s3Client)
+            await uploadFileToS3(path, ibkrUserId, filename, s3Client)
         }
     }
 

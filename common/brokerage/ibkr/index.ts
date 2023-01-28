@@ -92,7 +92,7 @@ export class Service {
         if (remainingTasks.length <= 0) await this._portfolioSummaryService.computeAccountGroupSummary(userId)
     }
 
-    _getFileFromS3 = async <T>(key: string, mapFn?: (data: T) => T): Promise<T[]> => {
+    _getFileFromS3 = async <T>(key: string, userId: string, mapFn?: (data: T) => T): Promise<T[]> => {
         const streamToString = async (stream: any): Promise<T[]> =>
             new Promise((resolve, reject) => {
                 const chunks: T[] = [];
@@ -105,7 +105,7 @@ export class Service {
 
         const data = await this._s3Client.send(new GetObjectCommand({
             Bucket: "tradingpost-brokerage-files",
-            Key: "ibkr/" + key
+            Key: "ibkr/" + userId + "/" + key
         }));
 
         return await streamToString(data.Body);
@@ -121,7 +121,7 @@ export class Service {
         if (currentAccounts.length <= 0 || !masterAccount) throw new Error(`no ibkr account found for id ${brokerageUserId}`);
 
         const fileName = this._formatFileName(brokerageUserId, "Account", dateToProcess);
-        const accounts = await this._getFileFromS3(fileName, (data: IbkrAccountCsv) => {
+        const accounts = await this._getFileFromS3(fileName, brokerageUserId, (data: IbkrAccountCsv) => {
             let x: IbkrAccountCsv = {
                 AccountID: data.AccountID,
                 AccountRepresentative: data.AccountRepresentative,
@@ -179,7 +179,7 @@ export class Service {
     }
 
     _importSecurity = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrSecurity[]> => {
-        const ibkrSecurities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Security", dateToProcess), (data: IbkrSecurityCsv) => {
+        const ibkrSecurities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Security", dateToProcess), brokerageUserId, (data: IbkrSecurityCsv) => {
             let x: IbkrSecurityCsv = {
                 AssetType: data.AssetType,
                 BBGlobalID: data.BBGlobalID,
@@ -251,7 +251,7 @@ export class Service {
     }
 
     _importActivity = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrActivity[]> => {
-        const activities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Activity", dateToProcess), (s: IbkrActivityCsv) => {
+        const activities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Activity", dateToProcess), brokerageUserId, (s: IbkrActivityCsv) => {
             let x: IbkrActivityCsv = {
                 UnitPrice: s.UnitPrice,
                 TransactionType: s.TransactionType,
@@ -361,7 +361,7 @@ export class Service {
     }
 
     _importCashReport = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrCashReport[]> => {
-        const cashReports = await this._getFileFromS3(this._formatFileName(brokerageUserId, "CashReport", dateToProcess), (s: IbkrCashReportCsv) => {
+        const cashReports = await this._getFileFromS3(this._formatFileName(brokerageUserId, "CashReport", dateToProcess), brokerageUserId, (s: IbkrCashReportCsv) => {
             let x: IbkrCashReportCsv = {
                 AccountID: s.AccountID,
                 Currency: s.Currency,
@@ -400,7 +400,7 @@ export class Service {
     }
 
     _importNav = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrNav[]> => {
-        const navs = await this._getFileFromS3(this._formatFileName(brokerageUserId, "NAV", dateToProcess), (s: IbkrNavCsv) => {
+        const navs = await this._getFileFromS3(this._formatFileName(brokerageUserId, "NAV", dateToProcess), brokerageUserId, (s: IbkrNavCsv) => {
             let x: IbkrNavCsv = {
                 AccountID: s.AccountID,
                 Options: s.Options,
@@ -461,7 +461,7 @@ export class Service {
     }
 
     _importPl = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrPl[]> => {
-        const pls = await this._getFileFromS3(this._formatFileName(brokerageUserId, "PL", dateToProcess), (s: IbkrPlCsv) => {
+        const pls = await this._getFileFromS3(this._formatFileName(brokerageUserId, "PL", dateToProcess), brokerageUserId, (s: IbkrPlCsv) => {
             let x: IbkrPlCsv = {
                 AccountID: s.AccountID,
                 AssetType: s.AssetType,
@@ -523,7 +523,7 @@ export class Service {
     }
 
     _importPosition = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrPosition[]> => {
-        const positions = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Position", dateToProcess), (s: IbkrPositionCsv) => {
+        const positions = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Position", dateToProcess), brokerageUserId, (s: IbkrPositionCsv) => {
             let x: IbkrPositionCsv = {
                 AccountID: s.AccountID,
                 AssetType: s.AssetType,

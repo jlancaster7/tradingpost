@@ -3,18 +3,29 @@ import Constants, {AppOwnership} from 'expo-constants'
 import {useURL} from 'expo-linking'
 import {parse} from 'url'
 
+const hackyGetLocalIp = (logUrl?: string): string => {
+    if (!logUrl) throw new Error("could not find log url for ios device");
+    const [protocol, url, portWithPath] = logUrl.split(":");
+    const newUrl = `http:${url}:8082`;
+    console.log("NEW URL: ", newUrl)
+    return newUrl;
+}
+
 if (!__DEV__) {
     configApi({
         apiBaseUrl: "https://api.tradingpostapp.com"
     })
 } else if (__DEV__ && (AppOwnership.Expo === Constants.appOwnership || AppOwnership.Standalone === Constants.appOwnership || !Constants.appOwnership)) {
-
-    if (Constants.manifest?.hostUri) {
+    if (Constants.platform?.ios) {
+        configApi({
+            apiBaseUrl: hackyGetLocalIp(Constants.manifest?.logUrl)
+        })
+    } else if (Constants.manifest?.hostUri) {
         configApi({
             apiBaseUrl: `http://${Constants.manifest?.hostUri?.split(":")[0]}:8082`
         })
     } else {
-
+        console.log("HERE....")
         //manual ip for api server... have been trying to find a way to avoid this...
         configApi({
             apiBaseUrl: `http://${Constants.expoConfig?.extra?.localIp || "localhost"}:8082`
@@ -43,6 +54,7 @@ import {EvaIconsPack} from '@ui-kitten/eva-icons';
 
 import {getSecurityList} from './SecurityList'
 import {Platform} from 'react-native'
+import * as constants from "constants";
 
 export default function App() {
     console.log("Started")

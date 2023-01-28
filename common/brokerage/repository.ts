@@ -63,7 +63,6 @@ import {
     RobinhoodPosition, RobinhoodTransaction,
     RobinhoodUser, RobinhoodUserTable
 } from "./robinhood/interfaces";
-import internal from "stream";
 
 export default class Repository implements IBrokerageRepository, ISummaryRepository {
     private db: IDatabase<any>;
