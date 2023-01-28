@@ -1,4 +1,4 @@
-import { FinicityUser, IFinicityRepository, TradingPostUser } from "../interfaces";
+import { FinicityAccount, FinicityUser, IFinicityRepository, TradingPostUser } from "../interfaces";
 import Finicity from "../../finicity";
 import { DateTime } from "luxon";
 import { Transformer as FinicityTransformer } from "./transformer";
@@ -19,13 +19,13 @@ export declare class Service {
         tradingPostInstitutionId: number;
         finicityInstitutionId: number;
     }>;
-    importAccounts: (userId: string) => Promise<void>;
-    importHoldings: (userId: string, brokerageIds?: string[] | number[]) => Promise<void>;
+    importAccounts: (finicityUserId: string) => Promise<FinicityAccount[]>;
+    importHoldings: (tpUserId: string, brokerageUserId: string, accountIds: string[]) => Promise<void>;
     updateTradingpostBrokerageAccountError: (accounts: {
         accountId: number;
         error: boolean;
         errorCode: number;
     }[]) => Promise<void>;
-    importTransactions: (userId: string, brokerageIds?: string[] | number[]) => Promise<void>;
+    importTransactions: (tpUserId: string, brokerageUserId: string, accountIds: string[]) => Promise<void>;
     removeAccounts: (brokerageCustomerId: string, accountIds: string[]) => Promise<number[]>;
 }

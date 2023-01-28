@@ -15,6 +15,7 @@ import {init} from "../../../db";
 import Repository from "../../../brokerage/repository";
 import {DefaultConfig} from "../../../configuration";
 import {DateTime} from "luxon";
+import {DirectoryService} from "aws-sdk";
 
 const loginUrl = 'https://api.robinhood.com/oauth2/token/';
 const pingUrl = (id: string) => `https://api.robinhood.com/push/${id}/get_prompts_status`;
@@ -153,7 +154,8 @@ export default ensureServerExtensions<Brokerage>({
                 officialName: "",
                 subtype: "",
                 hiddenForDeletion: false,
-                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
+                authenticationService: "Robinhood"
             }])
 
             return {
@@ -212,7 +214,8 @@ export default ensureServerExtensions<Brokerage>({
                 data: {brokerage: req.body.brokerage, accountId: req.body.accountId},
                 error: null,
                 brokerageUserId: tpAccount.accountNumber,
-                brokerage: req.body.brokerage
+                brokerage: req.body.brokerage,
+                messageId: null
             }
         ]);
 
@@ -270,7 +273,8 @@ export default ensureServerExtensions<Brokerage>({
                 accountNumber: ai,
                 name: '',
                 subtype: null,
-                officialName: null
+                officialName: null,
+                authenticationService: "Ibkr"
             }
             return x;
         })

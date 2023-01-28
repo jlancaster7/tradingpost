@@ -183,7 +183,7 @@ export default class BaseTransformer {
     }
 
     upsertAccounts = async (accounts: TradingPostBrokerageAccounts[]) => {
-        await this._baseRepo.upsertTradingPostBrokerageAccounts(accounts);
+        return await this._baseRepo.upsertTradingPostBrokerageAccounts(accounts);
     }
 
     upsertPositions = async (positions: TradingPostCurrentHoldings[], accountIds: number[]) => {
@@ -203,6 +203,13 @@ export default class BaseTransformer {
         await this._baseRepo.upsertTradingPostHistoricalHoldings(rollup);
     }
 
+    getStartDate = async (currentHoldings: TradingPostCurrentHoldings[]): Promise<DateTime> => {
+        if (currentHoldings.length > 0) return currentHoldings[0].holdingDate;
+
+        // Get Last Trading Day
+        return DateTime.now()
+    }
+
     computeHoldingsHistory = async (tpAccountId: number) => {
         const oldestTx = await this._baseRepo.getOldestTransaction(tpAccountId);
         if (!oldestTx) throw new Error("no transactions for");
@@ -215,6 +222,7 @@ export default class BaseTransformer {
 
         // Get Current Holdings
         const currentHoldings = await this._baseRepo.getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(tpAccountId);
+        const startDate = await this.getStartDate(currentHoldings);
 
         // TODO: We could recomptue old holdings history...
         if (currentHoldings.length <= 0) throw new Error("no holdings available for account " + tpAccountId);
@@ -237,7 +245,6 @@ export default class BaseTransformer {
         // Get Trading Days we will compute history for
         // In our db we will have a single row for each security on each day, so with 2 securities we'll have two rows for today
 
-        let startDate = DateTime.now().setZone("America/New_York");
         const initialHistoricalHolding: historicalAccount = {
             date: startDate,
             cash: 0,
@@ -246,13 +253,7 @@ export default class BaseTransformer {
 
         for (const holding of currentHoldings) {
             if (holding.symbol === 'USD:CUR') {
-                startDate = holding.priceAsOf.setZone("America/New_York").set({
-                    hour: 16,
-                    minute: 0,
-                    second: 0,
-                    millisecond: 0
-                });
-                initialHistoricalHolding.date = holding.priceAsOf.setZone("America/New_York").set({
+                initialHistoricalHolding.date = holding.holdingDate.setZone("America/New_York").set({
                     hour: 16,
                     minute: 0,
                     second: 0,
@@ -262,25 +263,26 @@ export default class BaseTransformer {
                 continue;
             }
 
-            initialHistoricalHolding.date = holding.priceAsOf.setZone("America/New_York").set({
+            initialHistoricalHolding.date = holding.holdingDate.setZone("America/New_York").set({
                 hour: 16,
                 minute: 0,
                 second: 0,
                 millisecond: 0
             });
+
             initialHistoricalHolding.holdings.push({
                 optionId: holding.optionId,
                 price: holding.price,
                 accountId: tpAccountId,
                 costBasis: holding.costBasis,
-                date: holding.priceAsOf.setZone("America/New_York").set({
+                date: holding.holdingDate.setZone("America/New_York").set({
                     hour: 16,
                     minute: 0,
                     second: 0,
                     millisecond: 0
                 }),
                 currency: "USD",
-                priceAsOf: holding.priceAsOf.setZone("America/New_York").set({
+                priceAsOf: holding.holdingDate.setZone("America/New_York").set({
                     hour: 16,
                     minute: 0,
                     second: 0,
@@ -543,7 +545,9 @@ const rollupHistoricalHoldings = async (historicalHoldings: TradingPostHistorica
 
         roll.push(latest);
         latest = hh;
-    })
+    });
+
+    latest !== null ? roll.push(latest) : null
     return roll;
 }
 

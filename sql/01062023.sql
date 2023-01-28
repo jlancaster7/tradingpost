@@ -9,3 +9,9 @@ CREATE TABLE flagged_content_log
     created_at       TIMESTAMPTZ                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
+
+ALTER TABLE brokerage_task
+    ADD COLUMN message_id TEXT UNIQUE;
+
+ALTER TABLE tradingpost_brokerage_account
+    ADD COLUMN authentication_service TEXT;

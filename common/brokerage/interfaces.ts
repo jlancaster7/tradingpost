@@ -44,8 +44,6 @@ export interface IBrokerageRepository {
 export interface IFinicityRepository {
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 
-    getTradingPostBrokerageAccountsByBrokerage(userId: string, brokerageName: string): Promise<TradingPostBrokerageAccountsTable[]>
-
     updateErrorStatusOfAccount(accountId: number, error: boolean, errorCode: number): Promise<void>
 
     getTradingPostUserByFinicityCustomerId(finicityCustomerId: string): Promise<TradingPostUser | null>
@@ -665,6 +663,7 @@ export type TradingPostBrokerageAccounts = {
     error: boolean
     errorCode: number
     accountStatus: TradingPostBrokerageAccountStatus
+    authenticationService: string | null
 }
 
 export type TradingPostBrokerageAccountsTable = TradingPostBrokerageAccounts & TableInfoV2;
@@ -785,6 +784,7 @@ export type BrokerageTask = {
     finished: DateTime | null
     data: any | null
     error: any | null
+    messageId: string | null
 }
 
 export type BrokerageTaskTable = {

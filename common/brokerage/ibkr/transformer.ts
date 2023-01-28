@@ -125,7 +125,7 @@ const transformTransactionType = (transactionType: string): InvestmentTransactio
         case "DVPOUT": // Outgoing DVP
             throw new Error("no transaction type for outgoing dvp");
         case "EXE": // Exercise
-                    // TODO: Check if its a call or a put before
+            // TODO: Check if its a call or a put before
             return InvestmentTransactionType.buy
         case "EXP": // Expire
             return InvestmentTransactionType.cancel
@@ -201,7 +201,8 @@ export default class IbkrTransformer extends BaseTransformer {
                 institutionId: 6723,
                 officialName: "Interactive Brokers",
                 hiddenForDeletion: false,
-                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
+                authenticationService: "Ibkr"
             }
             return x;
         });

@@ -69,7 +69,7 @@ functions:
       memorySize: 512
       events:
         - sqs:
-            arn: 123
+            arn: arn:aws:sqs:us-east-1:670171407375:brokerage-task-queue
             batchSize: 1
 
   ###### Accumulate Securities Metadata

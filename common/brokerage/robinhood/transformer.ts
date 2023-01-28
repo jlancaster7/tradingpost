@@ -113,7 +113,8 @@ export default class Transformer extends TransformerBase {
                 status: "active",
                 brokerName: DirectBrokeragesType.Robinhood,
                 hiddenForDeletion: false,
-                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
+                authenticationService: "Robinhood"
             }
 
             return x

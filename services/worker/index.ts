@@ -13,6 +13,8 @@ import {
     DirectBrokeragesType
 } from "@tradingpost/common/brokerage/interfaces";
 import {DateTime} from "luxon";
+import {SQSClient, SendMessageCommand} from "@aws-sdk/client-sqs";
+
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -46,6 +48,10 @@ const run = async () => {
     const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
     await finicity.init()
 
+    const sqsClient = new SQSClient({
+        region: "us-east-1"
+    });
+
     const app = express();
     const port = process.env.PORT || 8080;
 
@@ -53,16 +59,16 @@ const run = async () => {
     app.use(cors());
 
     app.get("/", (req: Request, res: Response) => {
-        res.send({Hello: "World", port: port});
+        res.send({Hello: "World"});
     });
 
     app.post("/finicity/webhook", async (req: Request, res: Response) => {
         const body = req.body;
 
+        // Spoofing Detected
         const signature = crypto.createHmac('sha256', finicityCfg.partnerSecret).update(JSON.stringify(body)).digest('hex')
         if (req.get('x-finicity-signature') !== signature && process.env.NODE_ENV !== 'development') {
-            // Spoofing Detected
-            throw new Error("request signature from finicity is invalid");
+            throw new Error("request signature is invalid");
         }
 
         if (req.body.eventType === 'added') {
@@ -70,40 +76,51 @@ const run = async () => {
             const {customerId} = req.body;
             const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
             if (!tpUser) throw new Error("finicity user does not exist")
-
-            await repository.upsertBrokerageTasks([{
-                type: BrokerageTaskType.NewAccount,
-                userId: tpUser.id,
-                status: BrokerageTaskStatusType.Pending,
-                data: null,
-                started: null,
-                finished: null,
-                brokerage: DirectBrokeragesType.Finicity,
-                date: DateTime.now().setZone("America/New_York"),
-                brokerageUserId: customerId,
-                error: null
-            }]);
+            const command = new SendMessageCommand({
+                MessageBody: JSON.stringify({
+                    type: BrokerageTaskType.NewAccount,
+                    userId: tpUser.id,
+                    status: BrokerageTaskStatusType.Pending,
+                    data: null,
+                    started: null,
+                    finished: null,
+                    brokerage: DirectBrokeragesType.Finicity,
+                    date: DateTime.now().setZone("America/New_York"),
+                    brokerageUserId: customerId,
+                    error: null,
+                    messageId: null
+                }),
+                DelaySeconds: 0,
+                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+            });
+            await sqsClient.send(command)
         }
 
         if (req.body.eventType === 'accountsDeleted') {
-            console.log("Account Deleted")
+            console.log("Deleting Account")
             const {customerId, eventId, payload} = req.body
             const {accounts} = payload;
             const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
             if (!tpUser) throw new Error("finicity user does not exist")
 
-            await repository.upsertBrokerageTasks([{
-                type: BrokerageTaskType.DeleteAccount,
-                finished: null,
-                brokerageUserId: customerId,
-                date: DateTime.now().setZone("America/New_York"),
-                started: null,
-                data: {accounts: accounts},
-                brokerage: DirectBrokeragesType.Finicity,
-                status: BrokerageTaskStatusType.Pending,
-                userId: tpUser.id,
-                error: null
-            }]);
+            const command = new SendMessageCommand({
+                MessageBody: JSON.stringify({
+                    type: BrokerageTaskType.DeleteAccount,
+                    finished: null,
+                    brokerageUserId: customerId,
+                    date: DateTime.now().setZone("America/New_York"),
+                    started: null,
+                    data: {accounts: accounts},
+                    brokerage: DirectBrokeragesType.Finicity,
+                    status: BrokerageTaskStatusType.Pending,
+                    userId: tpUser.id,
+                    error: null,
+                    messageId: null
+                }),
+                DelaySeconds: 0,
+                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+            });
+            await sqsClient.send(command)
         }
 
         if (req.body.eventType === 'credentialsUpdated') {
@@ -112,18 +129,24 @@ const run = async () => {
             const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
             if (!tpUser) throw new Error("finicity user does not exist")
 
-            await repository.upsertBrokerageTasks([{
-                type: BrokerageTaskType.UpdateAccount,
-                finished: null,
-                brokerageUserId: customerId,
-                date: DateTime.now().setZone("America/New_York"),
-                started: null,
-                data: null,
-                brokerage: DirectBrokeragesType.Finicity,
-                status: BrokerageTaskStatusType.Pending,
-                userId: tpUser.id,
-                error: null
-            }])
+            const command = new SendMessageCommand({
+                MessageBody: JSON.stringify({
+                    type: BrokerageTaskType.UpdateAccount,
+                    finished: null,
+                    brokerageUserId: customerId,
+                    date: DateTime.now().setZone("America/New_York"),
+                    started: null,
+                    data: null,
+                    brokerage: DirectBrokeragesType.Finicity,
+                    status: BrokerageTaskStatusType.Pending,
+                    userId: tpUser.id,
+                    error: null,
+                    messageId: null
+                }),
+                DelaySeconds: 0,
+                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+            });
+            await sqsClient.send(command)
         }
 
         return res.send()

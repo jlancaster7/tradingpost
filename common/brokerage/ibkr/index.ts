@@ -27,7 +27,6 @@ import {PortfolioSummaryService} from "../portfolio-summary";
 
 type RepositoryInterface = {
     getBrokerageTasks(params: { brokerage?: string, userId?: string, status?: BrokerageTaskStatusType }): Promise<BrokerageTaskTable[]>
-    getTradingPostBrokerageAccountsByBrokerage(userId: string, brokerageName: string): Promise<TradingPostBrokerageAccountsTable[]>
     getIbkrAccount(accountId: string): Promise<IbkrAccountTable | null>
     getIbkrMasterAndSubAccounts(accountId: string): Promise<IbkrAccountTable[]>
     upsertIbkrAccounts(accounts: IbkrAccount[]): Promise<void>

@@ -15,8 +15,6 @@ import {DateTime} from "luxon";
 import {DirectBrokeragesType, TradingPostBrokerageAccountsTable, TradingPostInstitutionTable} from "../interfaces";
 
 interface Repository {
-    getTradingPostBrokerageAccountsByBrokerage(userId: string, brokerageName: string): Promise<TradingPostBrokerageAccountsTable[]>
-
     getInstitutionByName(name: string): Promise<TradingPostInstitutionTable | null>
 
     getRobinhoodUser(userId: string): Promise<RobinhoodUserTable | null>
@@ -71,13 +69,13 @@ export class Service {
         await this.positions(userId);
         await this.transactions(userId);
 
-        const tpAccounts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Robinhood);
-        for (let i = 0; i < tpAccounts.length; i++) {
-            const tpAccount = tpAccounts[i];
-            await this._transformer.computeHoldingsHistory(tpAccount.id);
-        }
-
-        await this._portfolioSummaryService.computeAccountGroupSummary(userId);
+        //const tpAccounts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Robinhood);
+        // for (let i = 0; i < tpAccounts.length; i++) {
+        //     const tpAccount = tpAccounts[i];
+        //     await this._transformer.computeHoldingsHistory(tpAccount.id);
+        // }
+        //
+        // await this._portfolioSummaryService.computeAccountGroupSummary(userId);
     }
 
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {

@@ -107,7 +107,7 @@ export class Transformer extends BaseTransformer {
         this.repository = repository
     }
 
-    accounts = async (userId: string, finAccounts: FinicityAccount[]): Promise<void> => {
+    accounts = async (userId: string, finAccounts: FinicityAccount[]): Promise<number[]> => {
         let tpAccounts: TradingPostBrokerageAccounts[] = [];
         for (let i = 0; i < finAccounts.length; i++) {
             const account = finAccounts[i];
@@ -128,13 +128,15 @@ export class Transformer extends BaseTransformer {
                 error: account.aggregationStatusCode === 103 || account.aggregationStatusCode === 185,
                 errorCode: account.aggregationStatusCode,
                 hiddenForDeletion: false,
-                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
+                authenticationService: "Finicity"
             });
         }
-        await this.upsertAccounts(tpAccounts);
+
+        return await this.upsertAccounts(tpAccounts);
     }
 
-    holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], holdingDate: DateTime | null, currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<void> => {
+    holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<void> => {
         let internalAccount = await this.getFinicityToTradingPostAccount(userId, accountId);
         if (internalAccount === undefined || internalAccount === null) throw new Error(`account id(${accountId}) does not exist for holding`)
 
@@ -147,7 +149,13 @@ export class Transformer extends BaseTransformer {
         cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
 
         let tpHoldings: TradingPostCurrentHoldings[] = [];
-        let isCashSecurity = false;
+        let hasCashSecurity = false;
+        const holdingDate = DateTime.now().setZone("America/New_York").set({
+            hour: 16,
+            minute: 0,
+            second: 0,
+            millisecond: 0
+        }).minus({day: 1});
 
         // TODO: revisit this ... do we want to completely botch the holdings / etc when a holding fails?
         //  at the end of the day, how do we want to present the state of holdings itself to users? In an incomplete,
@@ -159,8 +167,10 @@ export class Transformer extends BaseTransformer {
                 let holding = finHoldings[i];
 
                 const security = await this._resolveSecurity(holding, securitiesMap, cashSecuritiesMap);
-                if (security.issueType.toLowerCase() === 'cash') isCashSecurity = true;
+                if (security.issueType.toLowerCase() === 'cash') hasCashSecurity = true;
 
+                // TODO: ... Do we want to keep this... Finicity seems to be all over he map with pricing and
+                //  we might not be able to rely on them...?
                 let priceAsOf = holdingDate;
                 if (holding.currentPriceDate) priceAsOf = DateTime.fromSeconds(holding.currentPriceDate)
                 if (priceAsOf === undefined || priceAsOf === null) {
@@ -195,7 +205,7 @@ export class Transformer extends BaseTransformer {
                         quantity: holding.units,
                         currency: cur,
                         optionId: optionId,
-                        holdingDate: DateTime.now()
+                        holdingDate: holdingDate
                     })
                     continue
                 }
@@ -206,13 +216,13 @@ export class Transformer extends BaseTransformer {
                     securityType: security.issueType === 'Cash' ? SecurityType.cashEquivalent : SecurityType.equity,
                     price: holding.currentPrice,
                     priceAsOf: priceAsOf,
-                    priceSource: '',
+                    priceSource: 'Finicity',
                     value: parseFloat(holding.marketValue),
                     costBasis: holding.costBasis,
                     quantity: holding.units,
                     currency: cur,
                     optionId: null,
-                    holdingDate: DateTime.now()
+                    holdingDate: holdingDate
                 })
             } catch (err) {
                 console.error(err)
@@ -220,21 +230,22 @@ export class Transformer extends BaseTransformer {
         }
 
         // Add a cash security is the broker doesn't display it this way
-        if (accountDetails && accountDetails.availableCashBalance && !isCashSecurity) {
+        if (accountDetails && accountDetails.availableCashBalance && !hasCashSecurity) {
             let cashSecurityId = cashSecurities.find(a => a.currency === 'USD')?.toSecurityId;
+            if (!cashSecurityId) throw new Error("could not find cash security")
             tpHoldings.push({
                 accountId: internalAccount.id, // TradingPost Brokerage Account ID
-                // @ts-ignore
                 securityId: cashSecurityId,
                 securityType: SecurityType.cashEquivalent,
                 price: 1,
                 priceAsOf: DateTime.fromSeconds(accountDetails.dateAsOf),
-                priceSource: '',
+                priceSource: "Finicity",
                 value: accountDetails.availableCashBalance,
                 costBasis: null,
                 quantity: accountDetails.availableCashBalance,
                 currency: 'USD',
                 optionId: null,
+                holdingDate: holdingDate
             })
         }
 
@@ -323,7 +334,7 @@ export class Transformer extends BaseTransformer {
             let x: TradingPostHistoricalHoldings = {
                 costBasis: h.costBasis,
                 quantity: h.quantity,
-                date: h.holdingDate.setZone("America/New_York").set({hour: 0, minute: 0, second: 0, millisecond: 0}),
+                date: h.holdingDate,
                 value: h.value,
                 optionId: h.optionId,
                 currency: h.currency,
@@ -332,7 +343,7 @@ export class Transformer extends BaseTransformer {
                 securityType: h.securityType,
                 securityId: h.securityId,
                 price: h.price,
-                accountId: h.accountId
+                accountId: h.accountId,
             }
             return x
         });
