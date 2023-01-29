@@ -66,15 +66,11 @@ export class Service {
         const brokerage = await this._repo.getTradingPostBrokerageAccountByUser(userId, DirectBrokeragesType.Ibkr, brokerageUserId)
         if (!brokerage) throw new Error("could not find brokerage");
 
-        if (brokerage.updatedAt.toUnixInteger() > lastUpdated.toUnixInteger()) {
-            console.log("not computing account group summary");
-            return
-        }
+        if (brokerage.updatedAt.toUnixInteger() > lastUpdated.toUnixInteger()) return
 
         if (lastUpdated.toUnixInteger() > brokerage.updatedAt.toUnixInteger()) throw new Error("how did this happen???");
 
         try {
-            console.log("Computing Account Group Summary");
             await this._portfolioSummaryService.computeAccountGroupSummary(userId)
         } catch (e) {
             console.error(e)

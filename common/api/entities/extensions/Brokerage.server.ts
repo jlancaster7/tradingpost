@@ -15,7 +15,7 @@ import {init} from "../../../db";
 import Repository from "../../../brokerage/repository";
 import {DefaultConfig} from "../../../configuration";
 import {DateTime} from "luxon";
-import {DirectoryService} from "aws-sdk";
+import {SendMessageCommand} from '@aws-sdk/client-sqs';
 
 const loginUrl = 'https://api.robinhood.com/oauth2/token/';
 const pingUrl = (id: string) => `https://api.robinhood.com/push/${id}/get_prompts_status`;
@@ -59,7 +59,7 @@ export default ensureServerExtensions<Brokerage>({
     robinhoodLogin: async (req): Promise<RobinhoodLoginResponse> => {
         const robinhoodCredentials = await DefaultConfig.fromCacheOrSSM("robinhood");
         const {username, password, mfaCode, challengeResponseId} = req.body;
-        const {pgp, pgClient} = await init;
+        const {pgp, pgClient, sqsClient} = await init;
         const brokerageRepo = new Repository(pgClient, pgp);
 
         let tpBrokerageAccount: TradingPostBrokerageAccountsTable | null = null;
@@ -156,7 +156,25 @@ export default ensureServerExtensions<Brokerage>({
                 hiddenForDeletion: false,
                 accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
                 authenticationService: "Robinhood"
-            }])
+            }]);
+
+            await sqsClient.send(new SendMessageCommand({
+                MessageBody: JSON.stringify({
+                    type: BrokerageTaskType.NewAccount,
+                    userId: req.extra.userId,
+                    status: BrokerageTaskStatusType.Pending,
+                    data: null,
+                    started: null,
+                    finished: null,
+                    brokerage: DirectBrokeragesType.Robinhood,
+                    date: DateTime.now().setZone("America/New_York"),
+                    brokerageUserId: username,
+                    error: null,
+                    messageId: null
+                }),
+                DelaySeconds: 0,
+                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+            }))
 
             return {
                 status: RobinhoodLoginStatus.SUCCESS,
@@ -200,11 +218,12 @@ export default ensureServerExtensions<Brokerage>({
     },
     scheduleForDeletion: async (req) => {
         // Change TP account ID to hidden and publish event to remove account
-        const {pgp, pgClient} = await init;
+        const {pgp, pgClient, sqsClient} = await init;
         const brokerageRepo = new Repository(pgClient, pgp);
         const tpAccount = await brokerageRepo.getTradingPostBrokerageAccount(req.body.accountId);
-        await brokerageRepo.upsertBrokerageTasks([
-            {
+
+        await sqsClient.send(new SendMessageCommand({
+            MessageBody: JSON.stringify({
                 status: BrokerageTaskStatusType.Pending,
                 date: DateTime.now(),
                 userId: req.extra.userId,
@@ -216,14 +235,16 @@ export default ensureServerExtensions<Brokerage>({
                 brokerageUserId: tpAccount.accountNumber,
                 brokerage: req.body.brokerage,
                 messageId: null
-            }
-        ]);
+            }),
+            DelaySeconds: 0,
+            QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+        }));
 
         await brokerageRepo.scheduleTradingPostAccountForDeletion(req.body.accountId);
         return {};
     },
     createIbkrAccounts: async (req) => {
-        const {pgp, pgClient} = await init;
+        const {pgp, pgClient, sqsClient} = await init;
         const repository = new Repository(pgClient, pgp);
         const ibkrAccounts = req.body.account_ids.map(ai => {
             let x: IbkrAccount = {
@@ -253,6 +274,7 @@ export default ensureServerExtensions<Brokerage>({
             }
             return x;
         });
+
         await repository.upsertIbkrAccounts(ibkrAccounts);
 
         const ibkrInstitution = await repository.getInstitutionByName("Interactive Brokers - Account Management");
@@ -277,9 +299,29 @@ export default ensureServerExtensions<Brokerage>({
                 authenticationService: "Ibkr"
             }
             return x;
-        })
-        await repository.upsertTradingPostBrokerageAccounts(tpAccounts);
+        });
 
+        await repository.upsertTradingPostBrokerageAccounts(tpAccounts);
+        for (let i = 0; i < req.body.account_ids.length; i++) {
+            const ai = req.body.account_ids[i];
+            await sqsClient.send(new SendMessageCommand({
+                MessageBody: JSON.stringify({
+                    type: BrokerageTaskType.NewAccount,
+                    userId: req.extra.userId,
+                    status: BrokerageTaskStatusType.Pending,
+                    data: null,
+                    started: null,
+                    finished: null,
+                    brokerage: DirectBrokeragesType.Ibkr,
+                    date: DateTime.now().setZone("America/New_York"),
+                    brokerageUserId: ai,
+                    error: null,
+                    messageId: null
+                }),
+                DelaySeconds: 0,
+                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+            }))
+        }
         return {}
     }
 })

@@ -6,6 +6,7 @@ import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
 import Repository from "../brokerage/repository";
 import {Service} from "../brokerage/finicity";
 import {Transformer} from "../brokerage/finicity/transformer";
+import {SQSClient} from "@aws-sdk/client-sqs";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -53,10 +54,14 @@ export const init = (async () => {
     const finicitySrv = new Service(finicity, repository, finicityTransformer);
 
     const portfolioSummarySrv = new PortfolioSummaryService(repository)
+    const sqsClient = new SQSClient({
+        region: 'us-east-1',
+    })
 
     return {
         finicitySrv,
         portfolioSummarySrv,
+        sqsClient,
         pgp,
         pgClient
     }

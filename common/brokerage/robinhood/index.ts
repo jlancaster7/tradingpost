@@ -113,7 +113,7 @@ export class Service {
 
     public accounts = async (userId: string, institutionId: number): Promise<number[]> => {
         const robinhoodUser = await this._repo.getRobinhoodUser(userId);
-        if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
+        if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist");
 
         let [accounts, nextUrl] = await this._apiAndUpdate<[Account[], string | null]>(robinhoodUser, RHApi.accounts, {})
         let transformedAccounts = await this._transformAccounts(accounts, robinhoodUser.id);
