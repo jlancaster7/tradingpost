@@ -19,7 +19,7 @@ import {
     DirectBrokeragesType
 } from "@tradingpost/common/brokerage/interfaces";
 import {DateTime} from "luxon";
-import {SQSClient, ReceiveMessageCommand, DeleteMessageCommand} from "@aws-sdk/client-sqs";
+import {DeleteMessageCommand, ReceiveMessageCommand, SQSClient} from "@aws-sdk/client-sqs";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -39,11 +39,14 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
 
 let pgClient: IDatabase<any>;
 let pgp: IMain;
+let sqsClient: SQSClient;
 
 interface Process {
     add(userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void>
 
     update(userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void>
+
+    calculatePortfolioStatistics(userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void>
 }
 
 let processMap: Record<string, Process> = {};
@@ -88,8 +91,10 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         const robinhoodTransformer = new RobinhoodTransformer(repository);
         const finicityTransformer = new FinicityTransformer(repository);
 
+        sqsClient = new SQSClient({region: 'us-east-1'});
+
         processMap[DirectBrokeragesType.Robinhood] = new RobinhoodService(robinhoodCfg.clientId, robinhoodCfg.scope, robinhoodCfg.expiresIn, repository, robinhoodTransformer, portfolioSummaryService);
-        processMap[DirectBrokeragesType.Ibkr] = new IbkrService(repository, s3Client, portfolioSummaryService);
+        processMap[DirectBrokeragesType.Ibkr] = new IbkrService(repository, s3Client, portfolioSummaryService, sqsClient);
         processMap[DirectBrokeragesType.Finicity] = new FinicityService(finicity, repository, finicityTransformer);
     }
 
@@ -109,6 +114,8 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
             await broker.update(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else if (taskDefinition.type === BrokerageTaskType.NewAccount) {
             await broker.add(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
+        } else if (taskDefinition.type === BrokerageTaskType.UpdatePortfolioStatistics) {
+            await broker.calculatePortfolioStatistics(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else throw new Error("undefined type")
 
         await repository.updateTask(taskId, {
@@ -123,6 +130,7 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
             error.stack = e.stack ? e.stack : '';
             error.name = e.name;
         }
+
         if (taskId) await repository.updateTask(taskId, {
             status: BrokerageTaskStatusType.Failed,
             finished: DateTime.now().setZone("America/New_York"),

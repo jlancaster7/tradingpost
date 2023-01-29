@@ -15,3 +15,5 @@ ALTER TABLE brokerage_task
 
 ALTER TABLE tradingpost_brokerage_account
     ADD COLUMN authentication_service TEXT;
+
+ALTER TYPE brokerage_task_type ADD VALUE 'UPDATE_PORTFOLIO_STATISTICS';

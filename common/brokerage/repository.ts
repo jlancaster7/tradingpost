@@ -82,6 +82,17 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         await this.db.none(query, [error, errorCode, accountId])
     }
 
+    updateTradingPostBrokerageAccountLastUpdated = async (userId: string, brokerageUserId: string, brokerageName: string): Promise<DateTime> => {
+        const query = `UPDATE tradingpost_brokerage_account
+                       SET updated_at = NOW()
+                       WHERE user_id = $1
+                         AND account_number = $2
+                         AND broker_name = $3 RETURNING updated_at;`
+        const res = await this.db.oneOrNone(query, [userId, brokerageUserId, brokerageName]);
+        if (!res) throw new Error("could not update brokerage account last_updated");
+        return DateTime.fromJSDate(res.updated_at);
+    }
+
     getCashSecurityId = async (): Promise<GetSecurityBySymbol> => {
         const query = `SELECT id,
                               symbol,
@@ -241,7 +252,55 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         })
     }
 
-    getTradingPostBrokerageAccount = async (accountId: number): Promise<TradingPostBrokerageAccountsTable> => {
+    getTradingPostBrokerageAccountByUser = async (tpUserId: string, brokerageName: string, accountNumber: string): Promise<TradingPostBrokerageAccountsTable | null> => {
+        const query = `SELECT id,
+                              user_id,
+                              institution_id,
+                              broker_name,
+                              status,
+                              account_number,
+                              mask,
+                              name,
+                              official_name,
+                              type,
+                              subtype,
+                              updated_at,
+                              created_at,
+                              error,
+                              error_code,
+                              hidden_for_deletion,
+                              account_status,
+                              authentication_service
+                       FROM tradingpost_brokerage_account
+                       WHERE user_id = $1
+                         AND broker_name = $2
+                         AND account_number = $3;`
+        const result = await this.db.oneOrNone(query, [tpUserId, brokerageName, accountNumber]);
+        if (!result) return null;
+
+        return {
+            name: result.name,
+            status: result.status,
+            createdAt: DateTime.fromJSDate(result.created_at),
+            updatedAt: DateTime.fromJSDate(result.updated_at),
+            userId: result.user_id,
+            mask: result.mask,
+            id: result.id,
+            brokerName: result.broker_name,
+            type: result.type,
+            subtype: result.subtype,
+            accountNumber: result.account_number,
+            officialName: result.official_name,
+            institutionId: result.institution_id,
+            error: result.error,
+            errorCode: result.error_code,
+            hiddenForDeletion: result.hidden_for_deletion,
+            accountStatus: result.account_status,
+            authenticationService: result.authentication_service
+        }
+    }
+
+    getTradingPostBrokerageAccount = async (accountId: number, tpUserId?: string, brokerageName?: string): Promise<TradingPostBrokerageAccountsTable> => {
         const query = `SELECT id,
                               user_id,
                               institution_id,

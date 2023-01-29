@@ -63,6 +63,10 @@ export class Service {
         this._portfolioSummaryService = portfolioSummarySrv;
     }
 
+    public calculatePortfolioStatistics = async (userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void> => {
+        return
+    }
+
     public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         const institution = await this._repo.getInstitutionByName("Robinhood");
         if (!institution) throw new Error("Robinhood institution is not defined");

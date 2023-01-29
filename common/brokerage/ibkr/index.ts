@@ -1,7 +1,7 @@
 import IbkrTransformer, {TransformerRepository} from "./transformer";
 import {
     BrokerageTaskStatusType,
-    BrokerageTaskTable,
+    BrokerageTaskTable, BrokerageTaskType, DirectBrokeragesType,
     IbkrAccount,
     IbkrAccountCsv,
     IbkrAccountTable,
@@ -16,12 +16,13 @@ import {
     IbkrPosition,
     IbkrPositionCsv,
     IbkrSecurity,
-    IbkrSecurityCsv,
+    IbkrSecurityCsv, TradingPostBrokerageAccountsTable,
 } from "../interfaces";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {DateTime} from "luxon";
 import csv from 'csv-parser';
 import {PortfolioSummaryService} from "../portfolio-summary";
+import {SendMessageCommand, SQSClient} from "@aws-sdk/client-sqs";
 
 type RepositoryInterface = {
     getBrokerageTasks(params: { brokerage?: string, userId?: string, status?: BrokerageTaskStatusType }): Promise<BrokerageTaskTable[]>
@@ -35,6 +36,7 @@ type RepositoryInterface = {
     upsertIbkrPls(pls: IbkrPl[]): Promise<void>
     upsertIbkrPositions(positions: IbkrPosition[]): Promise<void>
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
+    getTradingPostBrokerageAccountByUser(tpUserId: string, brokerageName: string, accountNumber: string): Promise<TradingPostBrokerageAccountsTable | null>
 } & TransformerRepository
 
 export class Service {
@@ -42,17 +44,41 @@ export class Service {
     private _repo: RepositoryInterface;
     private _s3Client: S3Client;
     private _portfolioSummaryService: PortfolioSummaryService;
+    private _sqsClient: SQSClient;
 
-    constructor(repo: RepositoryInterface, s3Client: S3Client, portfolioSummaryService: PortfolioSummaryService) {
+    constructor(repo: RepositoryInterface, s3Client: S3Client, portfolioSummaryService: PortfolioSummaryService, sqsClient: SQSClient) {
         this._repo = repo;
         this._transformer = new IbkrTransformer(repo);
         this._s3Client = s3Client;
         this._portfolioSummaryService = portfolioSummaryService;
+        this._sqsClient = sqsClient;
     }
 
     public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         // Create email and ship it out
         return;
+    }
+
+    public calculatePortfolioStatistics = async (userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void> => {
+        const lastUpdatedIso = (data as { lastUpdated: string }).lastUpdated;
+        const lastUpdated = DateTime.fromISO(lastUpdatedIso);
+        if (!lastUpdated.isValid) throw new Error("incorrect timestamp!")
+        const brokerage = await this._repo.getTradingPostBrokerageAccountByUser(userId, DirectBrokeragesType.Ibkr, brokerageUserId)
+        if (!brokerage) throw new Error("could not find brokerage");
+
+        if (brokerage.updatedAt.toUnixInteger() > lastUpdated.toUnixInteger()) {
+            console.log("not computing account group summary");
+            return
+        }
+
+        if (lastUpdated.toUnixInteger() > brokerage.updatedAt.toUnixInteger()) throw new Error("how did this happen???");
+
+        try {
+            console.log("Computing Account Group Summary");
+            await this._portfolioSummaryService.computeAccountGroupSummary(userId)
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
@@ -78,11 +104,25 @@ export class Service {
         await this._importNav(brokerageUserId, date);
         await this._importPl(brokerageUserId, date);
 
-        try {
-            await this._portfolioSummaryService.computeAccountGroupSummary(userId)
-        } catch (e) {
-            console.error(e)
-        }
+        const brokerageAcc = await this._repo.getTradingPostBrokerageAccountByUser(userId, DirectBrokeragesType.Ibkr, brokerageUserId);
+        if (!brokerageAcc) throw new Error("could not find brokerage");
+        await this._sqsClient.send(new SendMessageCommand({
+            MessageBody: JSON.stringify({
+                type: BrokerageTaskType.UpdatePortfolioStatistics,
+                userId: userId,
+                status: BrokerageTaskStatusType.Pending,
+                data: {lastUpdated: brokerageAcc.updatedAt},
+                started: null,
+                finished: null,
+                brokerage: DirectBrokeragesType.Ibkr,
+                date: DateTime.now().setZone("America/New_York"),
+                brokerageUserId: brokerageUserId,
+                error: null,
+                messageId: null
+            }),
+            DelaySeconds: 0,
+            QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+        }));
     }
 
     _getFileFromS3 = async <T>(key: string, userId: string, mapFn?: (data: T) => T): Promise<T[]> => {
@@ -169,8 +209,8 @@ export class Service {
             }
             return n;
         })
-        await this._repo.upsertIbkrAccounts(ibkrAccounts);
 
+        await this._repo.upsertIbkrAccounts(ibkrAccounts);
         return ibkrAccounts;
     }
 

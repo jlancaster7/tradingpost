@@ -36,6 +36,8 @@ export interface TransformerRepository extends BaseRepository {
     getTradingPostBrokerageWithMostRecentHolding(tpUserId: string, brokerage: string): Promise<TradingPostCurrentHoldingsTableWithMostRecentHolding[]>
 
     getOptionContractsByExternalIds(externalIds: string[]): Promise<OptionContractTable[]>
+
+    updateTradingPostBrokerageAccountLastUpdated(userId: string, brokerageUserId: string, brokerageName: string): Promise<DateTime>
 }
 
 const transformSecurityType = (type: string): SecurityType => {
@@ -178,9 +180,15 @@ export default class IbkrTransformer extends BaseTransformer {
     accounts = async (processDate: DateTime, tpUserId: string, accounts: IbkrAccount[]): Promise<number[]> => {
         // Pull accounts, see if already exists, if so, then don't update(unless process_date is different)
         // upsert account then
+        // We only want to update our master account with last_updated so that we know
         const tpAccounts = await this._repository.getTradingPostBrokerageAccounts(tpUserId);
+        let accountIdToLastUpdate = null;
         let filteredAccounts = accounts.filter(acc => {
-            if (acc.masterAccountId === null) return false;
+            if (acc.masterAccountId === null) {
+                accountIdToLastUpdate = acc.accountId;
+                return false;
+            }
+
             const tpAccount = tpAccounts.find(a => a.accountNumber === acc.accountId)
             if (!tpAccount) return true
             return tpAccount.updatedAt.toUnixInteger() < processDate.toUnixInteger();
@@ -206,8 +214,10 @@ export default class IbkrTransformer extends BaseTransformer {
             }
             return x;
         });
-
-        return await this.upsertAccounts(transformedAccounts);
+        const newAccountNumbers = await this.upsertAccounts(transformedAccounts);
+        if (!accountIdToLastUpdate) throw new Error("could not get account id to last update");
+        await this._repository.updateTradingPostBrokerageAccountLastUpdated(tpUserId, accountIdToLastUpdate, DirectBrokeragesType.Ibkr)
+        return newAccountNumbers;
     }
 
     securities = async (processDate: DateTime, tpUserId: string, securitiesAndOptions: IbkrSecurity[]) => {

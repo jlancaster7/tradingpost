@@ -1,4 +1,5 @@
 import {
+    DirectBrokeragesType,
     FinicityAccount,
     FinicityHolding,
     FinicityInstitution,
@@ -23,6 +24,10 @@ export class Service {
         this.repository = repository;
         this.transformer = transformer;
         this.portSummarySrv = portfolioSummaryStats;
+    }
+
+    public calculatePortfolioStatistics = async (userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void> => {
+        return
     }
 
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
