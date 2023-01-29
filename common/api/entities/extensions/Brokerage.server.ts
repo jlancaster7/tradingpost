@@ -301,7 +301,8 @@ export default ensureServerExtensions<Brokerage>({
             return x;
         });
 
-        await repository.upsertTradingPostBrokerageAccounts(tpAccounts);
+        const newTpAccountIds = await repository.upsertTradingPostBrokerageAccounts(tpAccounts);
+        await repository.addTradingPostAccountGroup(req.extra.userId, 'default', newTpAccountIds, 10117);
         for (let i = 0; i < req.body.account_ids.length; i++) {
             const ai = req.body.account_ids[i];
             await sqsClient.send(new SendMessageCommand({

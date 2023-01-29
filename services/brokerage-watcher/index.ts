@@ -53,15 +53,12 @@ const uploadFileToS3 = async (filePath: string, accountId: string, filename: str
         database: pgCfg.database
     });
 
-    console.log("Waiting to connection?")
     await pgClient.connect()
     const repo = new Repository(pgClient, pgp);
     const s3Client = new S3Client({region: "us-east-1"});
     const sqsClient = new SQSClient({region: "us-east-1"});
 
-    console.log("Here..?")
     const ibkrWatchDirectory = process.env.IBKR_DIRECTORY as string;
-    console.log(ibkrWatchDirectory)
 
     let filesToProcess: string[] = [];
     chokidar.watch(ibkrWatchDirectory).on('add', (path) => filesToProcess.push(path));
@@ -86,7 +83,6 @@ const uploadFileToS3 = async (filePath: string, accountId: string, filename: str
             }).set({hour: 16, minute: 0, second: 0, millisecond: 0});
 
             const key = `${ibkrUserId}-${dateDateTime.toISO()}`;
-            console.log("New File ", key)
             const newF = mapOfFiles[key];
             if (!newF) {
                 const s = new Set<string>();
@@ -104,7 +100,6 @@ const uploadFileToS3 = async (filePath: string, accountId: string, filename: str
             const ibkrAccount = await repo.getIbkrAccount(ibkrUserId);
             if (!ibkrAccount) throw new Error("could not find ibkr account for account id");
 
-            console.log("Adding To SQS!")
             let fileNames = [...newF];
             await sqsClient.send(new SendMessageCommand({
                 MessageBody: JSON.stringify({
@@ -126,7 +121,6 @@ const uploadFileToS3 = async (filePath: string, accountId: string, filename: str
             }));
 
             delete mapOfFiles[key];
-            console.log(mapOfFiles)
         }
     }
 
