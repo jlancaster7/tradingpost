@@ -97,8 +97,8 @@ export default class Transformer extends TransformerBase {
         return res;
     }
 
-    accounts = async (userId: string, institutionId: number, user: RobinhoodUserTable, accounts: RobinhoodAccount[]) => {
-        await this.upsertAccounts(accounts.map(acc => {
+    accounts = async (userId: string, institutionId: number, user: RobinhoodUserTable, accounts: RobinhoodAccount[]): Promise<number[]> => {
+        return await this.upsertAccounts(accounts.map(acc => {
             let x: TradingPostBrokerageAccounts = {
                 userId: userId,
                 accountNumber: acc.accountNumber,

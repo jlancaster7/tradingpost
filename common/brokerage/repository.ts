@@ -2551,6 +2551,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     addAccountGroupReturns = async (accountGroupReturns: AccountGroupHPRs[]): Promise<number> => {
+        if (accountGroupReturns.length <= 0) return 0;
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'account_group_id', prop: 'accountGroupId'},
             {name: 'date', prop: 'date'},

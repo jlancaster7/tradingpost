@@ -20,6 +20,7 @@ import {
 import {DateTime} from "luxon";
 import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer"
+import {filter} from "mathjs";
 
 export interface TransformerRepository extends BaseRepository {
     getTradingPostBrokerageAccountsByBrokerageAndIds(userId: string, brokerage: string, brokerageAccountIds: string[]): Promise<TradingPostBrokerageAccountsTable[]>
@@ -174,11 +175,10 @@ export default class IbkrTransformer extends BaseTransformer {
         this._repository = repository;
     }
 
-    accounts = async (processDate: DateTime, tpUserId: string, accounts: IbkrAccount[]) => {
+    accounts = async (processDate: DateTime, tpUserId: string, accounts: IbkrAccount[]): Promise<number[]> => {
         // Pull accounts, see if already exists, if so, then don't update(unless process_date is different)
         // upsert account then
         const tpAccounts = await this._repository.getTradingPostBrokerageAccounts(tpUserId);
-
         let filteredAccounts = accounts.filter(acc => {
             if (acc.masterAccountId === null) return false;
             const tpAccount = tpAccounts.find(a => a.accountNumber === acc.accountId)
@@ -207,7 +207,7 @@ export default class IbkrTransformer extends BaseTransformer {
             return x;
         });
 
-        await this.upsertAccounts(transformedAccounts);
+        return await this.upsertAccounts(transformedAccounts);
     }
 
     securities = async (processDate: DateTime, tpUserId: string, securitiesAndOptions: IbkrSecurity[]) => {

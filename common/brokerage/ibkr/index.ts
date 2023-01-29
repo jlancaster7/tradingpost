@@ -2,7 +2,6 @@ import IbkrTransformer, {TransformerRepository} from "./transformer";
 import {
     BrokerageTaskStatusType,
     BrokerageTaskTable,
-    DirectBrokeragesType,
     IbkrAccount,
     IbkrAccountCsv,
     IbkrAccountTable,
@@ -18,7 +17,6 @@ import {
     IbkrPositionCsv,
     IbkrSecurity,
     IbkrSecurityCsv,
-    TradingPostBrokerageAccountsTable
 } from "../interfaces";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {DateTime} from "luxon";
@@ -60,11 +58,9 @@ export class Service {
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         // Accounts
         const ibkrAccounts = await this._importAccount(brokerageUserId, date);
-        await this._transformer.accounts(date, userId, ibkrAccounts);
+        const newAccountIds = await this._transformer.accounts(date, userId, ibkrAccounts);
 
-        const internalAccounts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Ibkr)
-        const acctIds = internalAccounts.map(acc => acc.id);
-        await this._repo.addTradingPostAccountGroup(userId, 'default', acctIds, 10117)
+        await this._repo.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117)
 
         // Securities
         const securities = await this._importSecurity(brokerageUserId, date);
@@ -82,13 +78,11 @@ export class Service {
         await this._importNav(brokerageUserId, date);
         await this._importPl(brokerageUserId, date);
 
-        const remainingTasks = await this._repo.getBrokerageTasks({
-            brokerage: DirectBrokeragesType.Ibkr,
-            userId: userId,
-            status: BrokerageTaskStatusType.Pending
-        });
-
-        if (remainingTasks.length <= 0) await this._portfolioSummaryService.computeAccountGroupSummary(userId)
+        try {
+            await this._portfolioSummaryService.computeAccountGroupSummary(userId)
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     _getFileFromS3 = async <T>(key: string, userId: string, mapFn?: (data: T) => T): Promise<T[]> => {
@@ -146,7 +140,8 @@ export class Service {
             }
             return x;
         });
-        await this._repo.upsertIbkrAccounts(accounts.map((acc: IbkrAccountCsv) => {
+
+        const ibkrAccounts = accounts.map((acc: IbkrAccountCsv) => {
             let n: IbkrAccount = {
                 accountId: acc.AccountID,
                 accountProcessDate: dateToProcess,
@@ -173,8 +168,10 @@ export class Service {
                 van: acc.Van !== '' ? acc.Van : null
             }
             return n;
-        }));
-        return currentAccounts;
+        })
+        await this._repo.upsertIbkrAccounts(ibkrAccounts);
+
+        return ibkrAccounts;
     }
 
     _importSecurity = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrSecurity[]> => {
@@ -297,7 +294,7 @@ export class Service {
         });
 
         const activitiesMapped = activities.map((s: IbkrActivityCsv) => {
-            let orderTime: DateTime | null = DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss");
+            let orderTime: DateTime | null = DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss")
             if (!orderTime.isValid) orderTime = null;
 
             let settleDate: DateTime | null = DateTime.fromFormat(s.SettleDate, "yyyyMMdd")
@@ -558,7 +555,9 @@ export class Service {
         });
         const positionsMapped = positions.map((s: IbkrPositionCsv) => {
             if (s.ReportDate === '') throw new Error("no report date available for position");
-            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
+            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd').setZone("America/New_York").set({
+                hour: 16, minute: 0, second: 0, millisecond: 0
+            });
             let x: IbkrPosition = {
                 fileDate: dateToProcess,
                 accountId: s.AccountID,

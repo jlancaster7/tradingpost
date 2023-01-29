@@ -12,7 +12,7 @@ import {
 } from "./interfaces";
 import * as RHApi from "./api";
 import {DateTime} from "luxon";
-import {DirectBrokeragesType, TradingPostBrokerageAccountsTable, TradingPostInstitutionTable} from "../interfaces";
+import {DirectBrokeragesType, TradingPostInstitutionTable} from "../interfaces";
 
 interface Repository {
     getInstitutionByName(name: string): Promise<TradingPostInstitutionTable | null>
@@ -42,6 +42,8 @@ interface Repository {
     upsertRobinhoodOption(option: RobinhoodOption): Promise<number | null>
 
     getRobinhoodOptionsByExternalIds(externalIds: string[]): Promise<RobinhoodOptionTable[]>
+
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 }
 
 export class Service {
@@ -65,17 +67,17 @@ export class Service {
         const institution = await this._repo.getInstitutionByName("Robinhood");
         if (!institution) throw new Error("Robinhood institution is not defined");
 
-        await this.accounts(userId, institution.id);
+        const newAccountIds = await this.accounts(userId, institution.id);
         await this.positions(userId);
         await this.transactions(userId);
 
-        //const tpAccounts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Robinhood);
-        // for (let i = 0; i < tpAccounts.length; i++) {
-        //     const tpAccount = tpAccounts[i];
-        //     await this._transformer.computeHoldingsHistory(tpAccount.id);
-        // }
-        //
-        // await this._portfolioSummaryService.computeAccountGroupSummary(userId);
+        await this._repo.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117)
+
+        for (let i = 0; i < newAccountIds.length; i++) {
+            await this._transformer.computeHoldingsHistory(newAccountIds[i]);
+        }
+
+        await this._portfolioSummaryService.computeAccountGroupSummary(userId);
     }
 
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
@@ -105,7 +107,7 @@ export class Service {
         }
     }
 
-    public accounts = async (userId: string, institutionId: number) => {
+    public accounts = async (userId: string, institutionId: number): Promise<number[]> => {
         const robinhoodUser = await this._repo.getRobinhoodUser(userId);
         if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
 
@@ -123,7 +125,7 @@ export class Service {
             allTransformedAccounts = [...allTransformedAccounts, ...transformedAccounts];
         }
 
-        await this._transformer.accounts(userId, institutionId, robinhoodUser, transformedAccounts);
+        return await this._transformer.accounts(userId, institutionId, robinhoodUser, transformedAccounts);
     }
 
     public positions = async (userId: string) => {
