@@ -17,8 +17,10 @@ if (!__DEV__) {
     })
 } else if (__DEV__ && (AppOwnership.Expo === Constants.appOwnership || AppOwnership.Standalone === Constants.appOwnership || !Constants.appOwnership)) {
     if (Constants.platform?.ios) {
+        const u = hackyGetLocalIp(Constants.manifest?.logUrl);
+        console.log("HERE WITH URL: ", u);
         configApi({
-            apiBaseUrl: hackyGetLocalIp(Constants.manifest?.logUrl)
+            apiBaseUrl: u
         })
     } else if (Constants.manifest?.hostUri) {
         configApi({

@@ -74,6 +74,13 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         this.pgp = pgp;
     }
 
+    execTx = async (fn: (r: Repository) => Promise<void>): Promise<void> => {
+        await this.db.tx(async t => {
+            const repo = new Repository(t, this.pgp);
+            await fn(repo);
+        });
+    }
+
     updateErrorStatusOfAccount = async (accountId: number, error: boolean, errorCode: number): Promise<void> => {
         const query = `UPDATE tradingpost_brokerage_account
                        SET error      = $1,
