@@ -19,7 +19,7 @@ import {
     DirectBrokeragesType
 } from "@tradingpost/common/brokerage/interfaces";
 import {DateTime} from "luxon";
-import {DeleteMessageCommand, ReceiveMessageCommand, SQSClient} from "@aws-sdk/client-sqs";
+import {SQSClient} from "@aws-sdk/client-sqs";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -142,34 +142,36 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
     return true
 }
 
-(async () => {
-    const sqsClient = new SQSClient({region: "us-east-1"});
-    while (true) {
-        const command = new ReceiveMessageCommand({
-            VisibilityTimeout: 10,
-            QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue"
-        });
-
-        const response = await sqsClient.send(command);
-        if (!response.Messages) return
-
-        for (let i = 0; i < response.Messages.length; i++) {
-            const message = response.Messages[i]
-            if (!message.Body || !message.MessageId) continue
-            const taskDefinition = createTaskDefinitionFromMessage(message.Body);
-            console.log("New Message");
-            const result = await run(taskDefinition, message.MessageId);
-            if (!result) return;
-
-            const msgDeleteCmd = new DeleteMessageCommand({
-                ReceiptHandle: message.ReceiptHandle,
-                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue"
-            })
-
-            await sqsClient.send(msgDeleteCmd)
-        }
-    }
-})()
+// (async () => {
+//     const sqsClient = new SQSClient({region: "us-east-1"});
+//     while (true) {
+//         const command = new ReceiveMessageCommand({
+//             VisibilityTimeout: 10,
+//             QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue"
+//         });
+//
+//         const response = await sqsClient.send(command);
+//         if (!response.Messages) return
+//
+//         for (let i = 0; i < response.Messages.length; i++) {
+//             const message = response.Messages[i]
+//             if (!message.Body || !message.MessageId) continue
+//             const taskDefinition = createTaskDefinitionFromMessage(message.Body);
+//             console.log("New Message");
+//             const result = await run(taskDefinition, message.MessageId);
+//             console.log("Finito")
+//             if (!result) return;
+//
+//
+//             // const msgDeleteCmd = new DeleteMessageCommand({
+//             //     ReceiptHandle: message.ReceiptHandle,
+//             //     QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue"
+//             // })
+//             //
+//             // await sqsClient.send(msgDeleteCmd)
+//         }
+//     }
+// })()
 
 export const handler = async (event: SQSEvent, context: Context) => {
     for (let i = 0; i < event.Records.length; i++) {

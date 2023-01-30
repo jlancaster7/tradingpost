@@ -3431,7 +3431,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                            access_token=$5,
                            refresh_token=$6,
                            updated_at=NOW()
-                       WHERE username = $7`
+                       WHERE username = $7
+                         AND user_id = $1;`
         await this.db.query(query, [user.userId, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken, user.username])
     }
 
@@ -4067,6 +4068,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     getTradingPostOptionsWithRobinhoodOptionIds = async (rhOptionIds: number[]): Promise<OptionContractTableWithRobinhoodId[]> => {
+        if(rhOptionIds.length <= 0) return [];
         const query = `select ro.id as internal_robinhood_option_id,
                               so.id,
                               so.security_id,

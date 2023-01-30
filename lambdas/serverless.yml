@@ -60,17 +60,17 @@ functions:
           rate: cron(0 10 ? * MON-FRI *) # 7:00 AM EST
           enabled: true
 
-    ###### Brokerage Task Runner
-    brokerage-task-runner:
-      handler: brokerage/task-runner.handler
-      description: Runs brokerage tasks that are pushed to SQS queue -- rather than on cadence
-      logRetentionInDays: 14
-      timeout: 900
-      memorySize: 512
-      events:
-        - sqs:
-            arn: arn:aws:sqs:us-east-1:670171407375:brokerage-task-queue
-            batchSize: 1
+  ###### Brokerage Task Runner
+  brokerage-task-runner:
+    handler: brokerage/task-runner.handler
+    description: Runs brokerage tasks that are pushed to SQS queue -- rather than on cadence
+    logRetentionInDays: 14
+    timeout: 900
+    memorySize: 1024
+    events:
+      - sqs:
+          arn: arn:aws:sqs:us-east-1:670171407375:brokerage-task-queue
+          batchSize: 1
 
   ###### Accumulate Securities Metadata
   add-meta-data:

@@ -55,6 +55,8 @@ export default class Transformer extends TransformerBase {
     }
 
     _getOptions = async (rhOptionIds: number[]): Promise<Record<number, number>> => {
+        if (rhOptionIds.length <= 0) return {};
+
         const tpOptions = await this._repo.getTradingPostOptionsWithRobinhoodOptionIds(rhOptionIds);
         let internalRhOptionToInternalTpOption: Record<number, number> = {};
         rhOptionIds.forEach(r => internalRhOptionToInternalTpOption[r] = 0);
@@ -221,6 +223,10 @@ export default class Transformer extends TransformerBase {
             }
 
             const investmentType = rhTxTypeToTpTxType(rhTx.type, rhTx.side);
+            let executionQty = rhTx.executionsQuantity;
+            if (investmentType === InvestmentTransactionType.cancel) executionQty = executionQty * -1
+            if (investmentType === InvestmentTransactionType.sell) executionQty = executionQty * -1
+            if (investmentType === InvestmentTransactionType.short) executionQty = executionQty * -1
 
             tpTransactions.push({
                 accountId: internalAccount.id,
@@ -233,7 +239,7 @@ export default class Transformer extends TransformerBase {
                 securityType: securityType,
                 fees: rhTx.fees ? parseFloat(rhTx.fees) : 0,
                 securityId: security.id,
-                quantity: rhTx.executionsQuantity,
+                quantity: executionQty,
                 accountGroupId: undefined,
                 optionInfo: null,
             });
@@ -283,6 +289,9 @@ const rhTxTypeToTpTxType = (rhType: string | null, side: string | null): Investm
             if (side === null) throw new Error("no side to limit");
             if (side === 'buy') return InvestmentTransactionType.buy;
             if (side === 'sell') return InvestmentTransactionType.sell;
+        }
+        case 'expiration': {
+            return InvestmentTransactionType.cancel
         }
         default:
             throw new Error(`rh type ${rhType} not detected`)

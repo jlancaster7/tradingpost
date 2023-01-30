@@ -2,7 +2,7 @@ import {default as RobinhoodTransformer} from "./transformer";
 import {PortfolioSummaryService} from "../portfolio-summary";
 import {
     Account, AchTransfer, Dividend,
-    Instrument, Option, OptionOrder, OptionPosition,
+    Instrument, Option, OptionEvent, OptionOrder, OptionPosition,
     Order,
     Position,
     RobinhoodAccount,
@@ -264,6 +264,15 @@ export class Service {
             let transformedSweeps = await this._transformSweeps(sweepTxs, accountMap, cash);
             allTransactions = [...allTransactions, ...transformedSweeps];
             if (sweepNextUrl === null) break;
+        }
+
+        let optionEvents: OptionEvent[] = [];
+        let optionEventsNextUrl: string | null = null;
+        while (true) {
+            [optionEvents, optionEventsNextUrl] = await this._apiAndUpdate<[OptionEvent[], string | null]>(robinhoodUser, RHApi.optionEvents, {}, optionEventsNextUrl === null ? undefined : optionEventsNextUrl);
+            let transformedOptionsEvents = await this._transformOptionEvents(robinhoodUser, optionEvents, accountMap, optionsMap);
+            allTransactions = [...allTransactions, ...transformedOptionsEvents];
+            if (optionEventsNextUrl === null) break;
         }
 
         await this._repo.upsertRobinhoodTransactions(allTransactions);
@@ -779,6 +788,91 @@ export class Service {
         }
 
         return transformedOptions;
+    }
+
+    private _transformOptionEvents = async (robinhoodUser: RobinhoodUser, optionEvents: OptionEvent[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodTransaction[]> => {
+        let transformedTxs: RobinhoodTransaction[] = [];
+        for (let i = 0; i < optionEvents.length; i++) {
+            let oe = optionEvents[i];
+            if (oe.account_number === null) {
+                console.warn("no account number for option")
+                continue
+            }
+
+            const internalAccount = accountMap[oe.account_number];
+
+            const optionSplit: string[] = oe.option.split("/");
+            const optionNumber = optionSplit[optionSplit.length - 2];
+
+
+            if (!(optionNumber in optionMap)) {
+                const newOption = await this._addOption(robinhoodUser, optionNumber);
+                if (newOption === null) {
+                    console.warn("could not add option")
+                    continue;
+                }
+
+                optionMap[newOption.externalId] = newOption;
+            }
+
+            const internalOption = optionMap[optionNumber];
+            const expiredTimestamp = DateTime.fromISO(oe.created_at);
+            transformedTxs.push({
+                url: oe.option,
+                executionsTimestamp: expiredTimestamp,
+                extendedHours: null,
+                externalCreatedAt: oe.created_at,
+                trigger: null,
+                internalOptionId: internalOption.id,
+                rejectReason: null,
+                stopPrice: null,
+                side: oe.direction,
+                refId: oe.source_ref_id,
+                ratioQuantity: null,
+                quantity: oe.quantity,
+                externalId: oe.id,
+                processedQuantity: null,
+                price: oe.underlying_price,
+                positionUrl: oe.position,
+                positionEffect: null,
+                optionLegId: null,
+                pendingQuantity: null,
+                lastTransactionAt: null,
+                investmentScheduleId: null,
+                internalInstrumentId: internalOption.internalInstrumentId,
+                type: oe.type,
+                internalAccountId: internalAccount.id,
+                instrumentId: null,
+                fees: null,
+                externalUpdatedAt: oe.updated_at,
+                instrumentUrl: null,
+                executionsSettlementDate: oe.event_date,
+                executionsQuantity: parseFloat(oe.quantity),
+                executionsPrice: parseFloat(oe.underlying_price),
+                executionsId: oe.id,
+                dollarBasedAmount: null,
+                direction: oe.direction,
+                cumulativeQuantity: oe.quantity,
+                chainSymbol: internalOption.chainSymbol,
+                cancelUrl: null,
+                canceledQuantity: null,
+                averagePrice: null,
+                chainId: internalOption.chainId,
+                accountNumber: oe.account_number,
+                state: oe.state,
+                cancel: null,
+                accountUrl: internalAccount.url,
+                rate: null,
+                cashDividendId: null,
+                expectedLandingDateTime: null,
+                achRelationship: null,
+                expectedLandingDate: null,
+                position: oe.position,
+                withholding: null,
+            })
+        }
+
+        return transformedTxs;
     }
 
     private _transformOptionOrders = async (robinhoodUser: RobinhoodUser, optionOrders: OptionOrder[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodTransaction[]> => {

@@ -7,7 +7,7 @@ import {
     Order,
     Portfolio,
     Instrument,
-    RecentDayTrade, OptionOrder, OptionPosition, Dividend, AchTransfer, Sweep, Option
+    RecentDayTrade, OptionOrder, OptionPosition, Dividend, AchTransfer, Sweep, Option, OptionEvent
 } from "./interfaces";
 
 /**
@@ -141,6 +141,20 @@ export const optionOrders = async (_accessToken: string, params: {}, pageUrl?: s
     const nextUrl = response.next ? response.next as string : null;
     const results = response.results;
     return [results as OptionOrder[], nextUrl];
+}
+
+export const optionEvents = async (_accessToken: string, params: {}, pageUrl?: string): Promise<[OptionEvent[], string | null]> => {
+    const url = _buildUrl(new URL("https://api.robinhood.com/options/events"), params);
+    const response = await _do<Record<string, any>>(pageUrl ? pageUrl : url.toString(), {
+        method: "GET",
+        headers: {
+            'Authorization': `Bearer ${_accessToken}`
+        }
+    });
+
+    const nextUrl = response.next ? response.next as string : null;
+    const results = response.results;
+    return [results as OptionEvent[], nextUrl];
 }
 
 export const dividends = async (_accessToken: string, params: {}, pageUrl?: string): Promise<[Dividend[], string | null]> => {

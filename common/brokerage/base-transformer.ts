@@ -116,8 +116,33 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         return holdings
     },
     [InvestmentTransactionType.cancel]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        // TODO: ... should investigate but we werent processing "pending" transactions to begin with
-        //  so, in theory, this shouldnt happen
+        if(tx.optionId === null) return holdings;
+
+        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId && h.optionId === tx.optionId)
+        if (hIdx === -1) {
+            holdings.holdings.push({
+                optionId: tx.optionId,
+                priceAsOf: tx.date,
+                price: tx.price,
+                securityId: tx.securityId,
+                quantity: (-1 * tx.quantity),
+                accountId: tx.accountId || 0,
+                date: tx.date,
+                costBasis: 0,
+                priceSource: '',
+                securityType: tx.securityType,
+                value: tx.price * (-1 * tx.quantity),
+                currency: 'USD'
+            })
+            return holdings
+        }
+
+        const h = holdings.holdings[hIdx];
+        h.quantity = h.quantity + (-1 * tx.quantity);
+        h.value = h.quantity * h.price;
+        holdings.holdings[hIdx] = h;
+        return holdings
+
         return holdings;
     },
     [InvestmentTransactionType.fee]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {

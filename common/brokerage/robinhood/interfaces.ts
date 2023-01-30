@@ -339,6 +339,27 @@ export type OptionPosition = {
     option_id: string | null
 }
 
+export type OptionEvent = {
+    account: string
+    account_number: string
+    cash_component: string
+    chain_id: string
+    created_at: string
+    direction: string
+    equity_components: []
+    event_date: string
+    id: string
+    option: string
+    position: string
+    quantity: string
+    source_ref_id: string
+    state: string
+    total_cash_amount: string
+    type: string
+    underlying_price: string
+    updated_at: string
+}
+
 export type OptionOrder = {
     account_number: string | null
     cancel_url: string | null
