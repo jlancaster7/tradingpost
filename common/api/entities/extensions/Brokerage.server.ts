@@ -140,24 +140,6 @@ export default ensureServerExtensions<Brokerage>({
                 deviceToken: fauxDeviceToken,
             });
 
-            await brokerageRepo.upsertTradingPostBrokerageAccounts([{
-                status: "active",
-                userId: req.extra.userId,
-                type: "brokerage",
-                brokerName: "Robinhood",
-                institutionId: 9858,
-                accountNumber: username,
-                name: "",
-                mask: "",
-                errorCode: 0,
-                error: false,
-                officialName: "",
-                subtype: "",
-                hiddenForDeletion: false,
-                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
-                authenticationService: "Robinhood"
-            }]);
-
             await sqsClient.send(new SendMessageCommand({
                 MessageBody: JSON.stringify({
                     type: BrokerageTaskType.NewAccount,
