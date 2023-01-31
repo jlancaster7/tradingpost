@@ -8,6 +8,7 @@ import {ElevatedSection, Section, Subsection} from "../components/Section"
 import {Bank, IBKR, RobinhoodLogo} from '../images';
 import {Header, Subheader} from "../components/Headers";
 import {useNavigation} from "@react-navigation/native";
+import { useToast } from "react-native-toast-notifications";
 
 
 export function BrokeragePickerScreen() {
@@ -15,6 +16,7 @@ export function BrokeragePickerScreen() {
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
     const intervalRef = useRef<any>();
+    const toast = useToast();
 
     const openLink = async () => {
         const {link} = await Api.User.extensions.generateBrokerageLink(undefined);
@@ -24,6 +26,7 @@ export function BrokeragePickerScreen() {
                 dismissBrowser()
                 clearInterval(intervalRef.current);
                 await AsyncStorage.removeItem("auth-finicity-code");
+                toast.show("You've successfully linked your brokerage account to TradingPost through Finicity!")
             }
         }, 2000);
 
