@@ -19,7 +19,6 @@ export const AuthScreen = (props: RootStackScreenProps<"Auth">) => {
         }
         //redundant but I may change this
         else if (platform === "finicity") {
-            console.log(props.route.params);
             AsyncStorage.setItem(`auth-${platform}-code`, "DONE!");
         }
         if (nav.canGoBack())
