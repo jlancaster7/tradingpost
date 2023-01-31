@@ -3,12 +3,12 @@ import {DefaultConfig} from "@tradingpost/common/configuration"
 import pgPromise from "pg-promise"
 import pg from 'pg';
 import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import {SendMessageCommand, SQSClient} from '@aws-sdk/client-sqs';
 import fs from "fs";
 import chokidar from 'chokidar';
 import {DateTime} from "luxon";
 import Repository from "@tradingpost/common/brokerage/repository";
 import {
-    BrokerageTask,
     BrokerageTaskStatusType,
     BrokerageTaskType,
     DirectBrokeragesType
@@ -30,12 +30,12 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
     return parseFloat(value);
 });
 
-const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Client) => {
+const uploadFileToS3 = async (filePath: string, accountId: string, filename: string, s3Client: S3Client) => {
     try {
         const fileStream = fs.createReadStream(filePath);
         await s3Client.send(new PutObjectCommand({
             Bucket: "tradingpost-brokerage-files",
-            Key: `ibkr/${filename}`,
+            Key: `ibkr/${accountId}/${filename}`,
             Body: fileStream
         }));
     } catch (e) {
@@ -56,12 +56,14 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
     await pgClient.connect()
     const repo = new Repository(pgClient, pgp);
     const s3Client = new S3Client({region: "us-east-1"});
+    const sqsClient = new SQSClient({region: "us-east-1"});
 
     const ibkrWatchDirectory = process.env.IBKR_DIRECTORY as string;
 
     let filesToProcess: string[] = [];
     chokidar.watch(ibkrWatchDirectory).on('add', (path) => filesToProcess.push(path));
 
+    let mapOfFiles: Record<string, Set<string>> = {};
     const run = async () => {
         while (true) {
             if (filesToProcess.length <= 0) {
@@ -78,50 +80,47 @@ const uploadFileToS3 = async (filePath: string, filename: string, s3Client: S3Cl
             const [ibkrUserId, fileType, date] = filenameWithoutExt.split("_");
             const dateDateTime = DateTime.fromFormat(date, "yyyyMMdd", {
                 zone: "America/New_York"
-            });
+            }).set({hour: 16, minute: 0, second: 0, millisecond: 0});
 
-            const ibkrAccount = await repo.getIbkrAccount(ibkrUserId);
-            if (!ibkrAccount) throw new Error("could not find ibkr account for account id");
-            const existingTask = await repo.getExistingTaskByDate(DirectBrokeragesType.Ibkr, BrokerageTaskType.NewData, dateDateTime, ibkrAccount.userId, ibkrUserId);
-            let updatedTask: BrokerageTask = {
-                date: dateDateTime,
-                started: null,
-                userId: ibkrAccount.userId,
-                finished: null,
-                type: BrokerageTaskType.NewData,
-                status: BrokerageTaskStatusType.Partial,
-                data: {
-                    filenames: [fileType],
-                },
-                brokerage: DirectBrokeragesType.Ibkr,
-                brokerageUserId: ibkrUserId,
-                error: null,
-            }
-
-            if (existingTask === null) {
-                await repo.upsertBrokerageTasks([updatedTask])
-                await uploadFileToS3(path, filename, s3Client)
+            const key = `${ibkrUserId}-${dateDateTime.toISO()}`;
+            const newF = mapOfFiles[key];
+            if (!newF) {
+                const s = new Set<string>();
+                s.add(fileType);
+                mapOfFiles[key] = s;
+                await uploadFileToS3(path, ibkrUserId, filename, s3Client)
                 continue
             }
 
-            if (existingTask.status === BrokerageTaskStatusType.Running
-                || existingTask.status === BrokerageTaskStatusType.Pending
-                || existingTask.status === BrokerageTaskStatusType.Failed
-                || existingTask.status === BrokerageTaskStatusType.Successful) continue;
-            if (existingTask.data.filenames.length === 7) continue;
+            newF.add(fileType);
+            await uploadFileToS3(path, ibkrUserId, filename, s3Client)
 
-            if (existingTask.data?.filenames.includes(fileType)) continue;
+            if (newF.size !== 7) continue
 
-            existingTask.data.filenames = [...existingTask.data?.filenames, fileType];
+            const ibkrAccount = await repo.getIbkrAccount(ibkrUserId);
+            if (!ibkrAccount) throw new Error("could not find ibkr account for account id");
 
-            if (existingTask.data.filenames.length === 7) existingTask.status = BrokerageTaskStatusType.Pending
+            let fileNames = [...newF];
+            await sqsClient.send(new SendMessageCommand({
+                MessageBody: JSON.stringify({
+                    date: dateDateTime,
+                    userId: ibkrAccount.userId,
+                    started: null,
+                    finished: null,
+                    type: BrokerageTaskType.NewData,
+                    status: BrokerageTaskStatusType.Pending,
+                    data: {
+                        filenames: fileNames,
+                    },
+                    brokerage: DirectBrokeragesType.Ibkr,
+                    brokerageUserId: ibkrUserId,
+                    error: null,
+                }),
+                DelaySeconds: 0,
+                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+            }));
 
-            console.log("UPdating Task: ", existingTask.id, existingTask.data)
-            await repo.updateTask(existingTask.id, {
-                status: existingTask.status,
-                data: existingTask.data
-            })
-            await uploadFileToS3(path, filename, s3Client)
+            delete mapOfFiles[key];
         }
     }
 

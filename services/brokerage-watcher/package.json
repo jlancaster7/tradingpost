@@ -17,7 +17,8 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.196.0",
-    "@tradingpost/common": "file:tradingpost-common-1.6.0.tgz",
+    "@aws-sdk/client-sqs": "^3.259.0",
+    "@tradingpost/common": "file:../../common",
     "chokidar": "^3.5.3",
     "dotenv": "^16.0.3",
     "luxon": "^3.0.4",

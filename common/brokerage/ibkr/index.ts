@@ -1,8 +1,7 @@
 import IbkrTransformer, {TransformerRepository} from "./transformer";
 import {
     BrokerageTaskStatusType,
-    BrokerageTaskTable,
-    DirectBrokeragesType,
+    BrokerageTaskTable, BrokerageTaskType, DirectBrokeragesType,
     IbkrAccount,
     IbkrAccountCsv,
     IbkrAccountTable,
@@ -17,17 +16,16 @@ import {
     IbkrPosition,
     IbkrPositionCsv,
     IbkrSecurity,
-    IbkrSecurityCsv,
-    TradingPostBrokerageAccountsTable
+    IbkrSecurityCsv, TradingPostBrokerageAccountsTable,
 } from "../interfaces";
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import {DateTime} from "luxon";
 import csv from 'csv-parser';
 import {PortfolioSummaryService} from "../portfolio-summary";
+import {SendMessageCommand, SQSClient} from "@aws-sdk/client-sqs";
 
 type RepositoryInterface = {
     getBrokerageTasks(params: { brokerage?: string, userId?: string, status?: BrokerageTaskStatusType }): Promise<BrokerageTaskTable[]>
-    getTradingPostBrokerageAccountsByBrokerage(userId: string, brokerageName: string): Promise<TradingPostBrokerageAccountsTable[]>
     getIbkrAccount(accountId: string): Promise<IbkrAccountTable | null>
     getIbkrMasterAndSubAccounts(accountId: string): Promise<IbkrAccountTable[]>
     upsertIbkrAccounts(accounts: IbkrAccount[]): Promise<void>
@@ -38,6 +36,7 @@ type RepositoryInterface = {
     upsertIbkrPls(pls: IbkrPl[]): Promise<void>
     upsertIbkrPositions(positions: IbkrPosition[]): Promise<void>
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
+    getTradingPostBrokerageAccountByUser(tpUserId: string, brokerageName: string, accountNumber: string): Promise<TradingPostBrokerageAccountsTable | null>
 } & TransformerRepository
 
 export class Service {
@@ -45,12 +44,14 @@ export class Service {
     private _repo: RepositoryInterface;
     private _s3Client: S3Client;
     private _portfolioSummaryService: PortfolioSummaryService;
+    private _sqsClient: SQSClient;
 
-    constructor(repo: RepositoryInterface, s3Client: S3Client, portfolioSummaryService: PortfolioSummaryService) {
+    constructor(repo: RepositoryInterface, s3Client: S3Client, portfolioSummaryService: PortfolioSummaryService, sqsClient: SQSClient) {
         this._repo = repo;
         this._transformer = new IbkrTransformer(repo);
         this._s3Client = s3Client;
         this._portfolioSummaryService = portfolioSummaryService;
+        this._sqsClient = sqsClient;
     }
 
     public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
@@ -58,14 +59,30 @@ export class Service {
         return;
     }
 
+    public calculatePortfolioStatistics = async (userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void> => {
+        const lastUpdatedIso = (data as { lastUpdated: string }).lastUpdated;
+        const lastUpdated = DateTime.fromISO(lastUpdatedIso);
+        if (!lastUpdated.isValid) throw new Error("incorrect timestamp!")
+        const brokerage = await this._repo.getTradingPostBrokerageAccountByUser(userId, DirectBrokeragesType.Ibkr, brokerageUserId)
+        if (!brokerage) throw new Error("could not find brokerage");
+
+        if (brokerage.updatedAt.toUnixInteger() > lastUpdated.toUnixInteger()) return
+
+        if (lastUpdated.toUnixInteger() > brokerage.updatedAt.toUnixInteger()) throw new Error("how did this happen???");
+
+        try {
+            await this._portfolioSummaryService.computeAccountGroupSummary(userId)
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         // Accounts
         const ibkrAccounts = await this._importAccount(brokerageUserId, date);
-        await this._transformer.accounts(date, userId, ibkrAccounts);
+        const newAccountIds = await this._transformer.accounts(date, userId, ibkrAccounts);
 
-        const internalAccounts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Ibkr)
-        const acctIds = internalAccounts.map(acc => acc.id);
-        await this._repo.addTradingPostAccountGroup(userId, 'default', acctIds, 10117)
+        await this._repo.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117)
 
         // Securities
         const securities = await this._importSecurity(brokerageUserId, date);
@@ -83,16 +100,28 @@ export class Service {
         await this._importNav(brokerageUserId, date);
         await this._importPl(brokerageUserId, date);
 
-        const remainingTasks = await this._repo.getBrokerageTasks({
-            brokerage: DirectBrokeragesType.Ibkr,
-            userId: userId,
-            status: BrokerageTaskStatusType.Pending
-        });
-
-        if (remainingTasks.length <= 0) await this._portfolioSummaryService.computeAccountGroupSummary(userId)
+        const brokerageAcc = await this._repo.getTradingPostBrokerageAccountByUser(userId, DirectBrokeragesType.Ibkr, brokerageUserId);
+        if (!brokerageAcc) throw new Error("could not find brokerage");
+        await this._sqsClient.send(new SendMessageCommand({
+            MessageBody: JSON.stringify({
+                type: BrokerageTaskType.UpdatePortfolioStatistics,
+                userId: userId,
+                status: BrokerageTaskStatusType.Pending,
+                data: {lastUpdated: brokerageAcc.updatedAt},
+                started: null,
+                finished: null,
+                brokerage: DirectBrokeragesType.Ibkr,
+                date: DateTime.now().setZone("America/New_York"),
+                brokerageUserId: brokerageUserId,
+                error: null,
+                messageId: null
+            }),
+            DelaySeconds: 0,
+            QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+        }));
     }
 
-    _getFileFromS3 = async <T>(key: string, mapFn?: (data: T) => T): Promise<T[]> => {
+    _getFileFromS3 = async <T>(key: string, userId: string, mapFn?: (data: T) => T): Promise<T[]> => {
         const streamToString = async (stream: any): Promise<T[]> =>
             new Promise((resolve, reject) => {
                 const chunks: T[] = [];
@@ -105,7 +134,7 @@ export class Service {
 
         const data = await this._s3Client.send(new GetObjectCommand({
             Bucket: "tradingpost-brokerage-files",
-            Key: "ibkr/" + key
+            Key: "ibkr/" + userId + "/" + key
         }));
 
         return await streamToString(data.Body);
@@ -121,7 +150,7 @@ export class Service {
         if (currentAccounts.length <= 0 || !masterAccount) throw new Error(`no ibkr account found for id ${brokerageUserId}`);
 
         const fileName = this._formatFileName(brokerageUserId, "Account", dateToProcess);
-        const accounts = await this._getFileFromS3(fileName, (data: IbkrAccountCsv) => {
+        const accounts = await this._getFileFromS3(fileName, brokerageUserId, (data: IbkrAccountCsv) => {
             let x: IbkrAccountCsv = {
                 AccountID: data.AccountID,
                 AccountRepresentative: data.AccountRepresentative,
@@ -147,7 +176,8 @@ export class Service {
             }
             return x;
         });
-        await this._repo.upsertIbkrAccounts(accounts.map((acc: IbkrAccountCsv) => {
+
+        const ibkrAccounts = accounts.map((acc: IbkrAccountCsv) => {
             let n: IbkrAccount = {
                 accountId: acc.AccountID,
                 accountProcessDate: dateToProcess,
@@ -174,12 +204,14 @@ export class Service {
                 van: acc.Van !== '' ? acc.Van : null
             }
             return n;
-        }));
-        return currentAccounts;
+        })
+
+        await this._repo.upsertIbkrAccounts(ibkrAccounts);
+        return ibkrAccounts;
     }
 
     _importSecurity = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrSecurity[]> => {
-        const ibkrSecurities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Security", dateToProcess), (data: IbkrSecurityCsv) => {
+        const ibkrSecurities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Security", dateToProcess), brokerageUserId, (data: IbkrSecurityCsv) => {
             let x: IbkrSecurityCsv = {
                 AssetType: data.AssetType,
                 BBGlobalID: data.BBGlobalID,
@@ -251,7 +283,7 @@ export class Service {
     }
 
     _importActivity = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrActivity[]> => {
-        const activities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Activity", dateToProcess), (s: IbkrActivityCsv) => {
+        const activities = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Activity", dateToProcess), brokerageUserId, (s: IbkrActivityCsv) => {
             let x: IbkrActivityCsv = {
                 UnitPrice: s.UnitPrice,
                 TransactionType: s.TransactionType,
@@ -298,7 +330,7 @@ export class Service {
         });
 
         const activitiesMapped = activities.map((s: IbkrActivityCsv) => {
-            let orderTime: DateTime | null = DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss");
+            let orderTime: DateTime | null = DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss")
             if (!orderTime.isValid) orderTime = null;
 
             let settleDate: DateTime | null = DateTime.fromFormat(s.SettleDate, "yyyyMMdd")
@@ -361,7 +393,7 @@ export class Service {
     }
 
     _importCashReport = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrCashReport[]> => {
-        const cashReports = await this._getFileFromS3(this._formatFileName(brokerageUserId, "CashReport", dateToProcess), (s: IbkrCashReportCsv) => {
+        const cashReports = await this._getFileFromS3(this._formatFileName(brokerageUserId, "CashReport", dateToProcess), brokerageUserId, (s: IbkrCashReportCsv) => {
             let x: IbkrCashReportCsv = {
                 AccountID: s.AccountID,
                 Currency: s.Currency,
@@ -400,7 +432,7 @@ export class Service {
     }
 
     _importNav = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrNav[]> => {
-        const navs = await this._getFileFromS3(this._formatFileName(brokerageUserId, "NAV", dateToProcess), (s: IbkrNavCsv) => {
+        const navs = await this._getFileFromS3(this._formatFileName(brokerageUserId, "NAV", dateToProcess), brokerageUserId, (s: IbkrNavCsv) => {
             let x: IbkrNavCsv = {
                 AccountID: s.AccountID,
                 Options: s.Options,
@@ -461,7 +493,7 @@ export class Service {
     }
 
     _importPl = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrPl[]> => {
-        const pls = await this._getFileFromS3(this._formatFileName(brokerageUserId, "PL", dateToProcess), (s: IbkrPlCsv) => {
+        const pls = await this._getFileFromS3(this._formatFileName(brokerageUserId, "PL", dateToProcess), brokerageUserId, (s: IbkrPlCsv) => {
             let x: IbkrPlCsv = {
                 AccountID: s.AccountID,
                 AssetType: s.AssetType,
@@ -523,7 +555,7 @@ export class Service {
     }
 
     _importPosition = async (brokerageUserId: string, dateToProcess: DateTime): Promise<IbkrPosition[]> => {
-        const positions = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Position", dateToProcess), (s: IbkrPositionCsv) => {
+        const positions = await this._getFileFromS3(this._formatFileName(brokerageUserId, "Position", dateToProcess), brokerageUserId, (s: IbkrPositionCsv) => {
             let x: IbkrPositionCsv = {
                 AccountID: s.AccountID,
                 AssetType: s.AssetType,
@@ -559,7 +591,9 @@ export class Service {
         });
         const positionsMapped = positions.map((s: IbkrPositionCsv) => {
             if (s.ReportDate === '') throw new Error("no report date available for position");
-            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
+            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd').setZone("America/New_York").set({
+                hour: 16, minute: 0, second: 0, millisecond: 0
+            });
             let x: IbkrPosition = {
                 fileDate: dateToProcess,
                 accountId: s.AccountID,

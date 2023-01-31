@@ -237,13 +237,9 @@ export class PortfolioSummaryService implements ISummaryService {
     }
 
     computeAccountGroupSummary = async (userId: string, startDate: DateTime = DateTime.fromJSDate(new Date('1/1/2010')), endDate: DateTime = DateTime.now()): Promise<TradingPostAccountGroupStats> => {
-
         const account_group = await this.getAccountGroupByName(userId, 'default');
-        
         const currentHoldings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId);
-
         const historicalHoldings = await this.repository.getTradingPostHoldingsByAccountGroup(userId, account_group.accountGroupId, startDate, endDate);
-
         const trades = await this.getTrades(userId, undefined, true);
 
         const returns = await this.computeAccountGroupHPRs(historicalHoldings, trades);

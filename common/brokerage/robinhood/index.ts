@@ -2,7 +2,7 @@ import {default as RobinhoodTransformer} from "./transformer";
 import {PortfolioSummaryService} from "../portfolio-summary";
 import {
     Account, AchTransfer, Dividend,
-    Instrument, Option, OptionOrder, OptionPosition,
+    Instrument, Option, OptionEvent, OptionOrder, OptionPosition,
     Order,
     Position,
     RobinhoodAccount,
@@ -12,11 +12,9 @@ import {
 } from "./interfaces";
 import * as RHApi from "./api";
 import {DateTime} from "luxon";
-import {DirectBrokeragesType, TradingPostBrokerageAccountsTable, TradingPostInstitutionTable} from "../interfaces";
+import {DirectBrokeragesType, TradingPostInstitutionTable} from "../interfaces";
 
 interface Repository {
-    getTradingPostBrokerageAccountsByBrokerage(userId: string, brokerageName: string): Promise<TradingPostBrokerageAccountsTable[]>
-
     getInstitutionByName(name: string): Promise<TradingPostInstitutionTable | null>
 
     getRobinhoodUser(userId: string): Promise<RobinhoodUserTable | null>
@@ -44,6 +42,8 @@ interface Repository {
     upsertRobinhoodOption(option: RobinhoodOption): Promise<number | null>
 
     getRobinhoodOptionsByExternalIds(externalIds: string[]): Promise<RobinhoodOptionTable[]>
+
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 }
 
 export class Service {
@@ -63,18 +63,22 @@ export class Service {
         this._portfolioSummaryService = portfolioSummarySrv;
     }
 
+    public calculatePortfolioStatistics = async (userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void> => {
+        return
+    }
+
     public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         const institution = await this._repo.getInstitutionByName("Robinhood");
         if (!institution) throw new Error("Robinhood institution is not defined");
 
-        await this.accounts(userId, institution.id);
+        const newAccountIds = await this.accounts(userId, institution.id);
         await this.positions(userId);
         await this.transactions(userId);
 
-        const tpAccounts = await this._repo.getTradingPostBrokerageAccountsByBrokerage(userId, DirectBrokeragesType.Robinhood);
-        for (let i = 0; i < tpAccounts.length; i++) {
-            const tpAccount = tpAccounts[i];
-            await this._transformer.computeHoldingsHistory(tpAccount.id);
+        await this._repo.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117)
+
+        for (let i = 0; i < newAccountIds.length; i++) {
+            await this._transformer.computeHoldingsHistory(newAccountIds[i]);
         }
 
         await this._portfolioSummaryService.computeAccountGroupSummary(userId);
@@ -107,9 +111,9 @@ export class Service {
         }
     }
 
-    public accounts = async (userId: string, institutionId: number) => {
+    public accounts = async (userId: string, institutionId: number): Promise<number[]> => {
         const robinhoodUser = await this._repo.getRobinhoodUser(userId);
-        if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
+        if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist");
 
         let [accounts, nextUrl] = await this._apiAndUpdate<[Account[], string | null]>(robinhoodUser, RHApi.accounts, {})
         let transformedAccounts = await this._transformAccounts(accounts, robinhoodUser.id);
@@ -125,7 +129,7 @@ export class Service {
             allTransformedAccounts = [...allTransformedAccounts, ...transformedAccounts];
         }
 
-        await this._transformer.accounts(userId, institutionId, robinhoodUser, transformedAccounts);
+        return await this._transformer.accounts(userId, institutionId, robinhoodUser, transformedAccounts);
     }
 
     public positions = async (userId: string) => {
@@ -260,6 +264,15 @@ export class Service {
             let transformedSweeps = await this._transformSweeps(sweepTxs, accountMap, cash);
             allTransactions = [...allTransactions, ...transformedSweeps];
             if (sweepNextUrl === null) break;
+        }
+
+        let optionEvents: OptionEvent[] = [];
+        let optionEventsNextUrl: string | null = null;
+        while (true) {
+            [optionEvents, optionEventsNextUrl] = await this._apiAndUpdate<[OptionEvent[], string | null]>(robinhoodUser, RHApi.optionEvents, {}, optionEventsNextUrl === null ? undefined : optionEventsNextUrl);
+            let transformedOptionsEvents = await this._transformOptionEvents(robinhoodUser, optionEvents, accountMap, optionsMap);
+            allTransactions = [...allTransactions, ...transformedOptionsEvents];
+            if (optionEventsNextUrl === null) break;
         }
 
         await this._repo.upsertRobinhoodTransactions(allTransactions);
@@ -775,6 +788,91 @@ export class Service {
         }
 
         return transformedOptions;
+    }
+
+    private _transformOptionEvents = async (robinhoodUser: RobinhoodUser, optionEvents: OptionEvent[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodTransaction[]> => {
+        let transformedTxs: RobinhoodTransaction[] = [];
+        for (let i = 0; i < optionEvents.length; i++) {
+            let oe = optionEvents[i];
+            if (oe.account_number === null) {
+                console.warn("no account number for option")
+                continue
+            }
+
+            const internalAccount = accountMap[oe.account_number];
+
+            const optionSplit: string[] = oe.option.split("/");
+            const optionNumber = optionSplit[optionSplit.length - 2];
+
+
+            if (!(optionNumber in optionMap)) {
+                const newOption = await this._addOption(robinhoodUser, optionNumber);
+                if (newOption === null) {
+                    console.warn("could not add option")
+                    continue;
+                }
+
+                optionMap[newOption.externalId] = newOption;
+            }
+
+            const internalOption = optionMap[optionNumber];
+            const expiredTimestamp = DateTime.fromISO(oe.created_at);
+            transformedTxs.push({
+                url: oe.option,
+                executionsTimestamp: expiredTimestamp,
+                extendedHours: null,
+                externalCreatedAt: oe.created_at,
+                trigger: null,
+                internalOptionId: internalOption.id,
+                rejectReason: null,
+                stopPrice: null,
+                side: oe.direction,
+                refId: oe.source_ref_id,
+                ratioQuantity: null,
+                quantity: oe.quantity,
+                externalId: oe.id,
+                processedQuantity: null,
+                price: oe.underlying_price,
+                positionUrl: oe.position,
+                positionEffect: null,
+                optionLegId: null,
+                pendingQuantity: null,
+                lastTransactionAt: null,
+                investmentScheduleId: null,
+                internalInstrumentId: internalOption.internalInstrumentId,
+                type: oe.type,
+                internalAccountId: internalAccount.id,
+                instrumentId: null,
+                fees: null,
+                externalUpdatedAt: oe.updated_at,
+                instrumentUrl: null,
+                executionsSettlementDate: oe.event_date,
+                executionsQuantity: parseFloat(oe.quantity),
+                executionsPrice: parseFloat(oe.underlying_price),
+                executionsId: oe.id,
+                dollarBasedAmount: null,
+                direction: oe.direction,
+                cumulativeQuantity: oe.quantity,
+                chainSymbol: internalOption.chainSymbol,
+                cancelUrl: null,
+                canceledQuantity: null,
+                averagePrice: null,
+                chainId: internalOption.chainId,
+                accountNumber: oe.account_number,
+                state: oe.state,
+                cancel: null,
+                accountUrl: internalAccount.url,
+                rate: null,
+                cashDividendId: null,
+                expectedLandingDateTime: null,
+                achRelationship: null,
+                expectedLandingDate: null,
+                position: oe.position,
+                withholding: null,
+            })
+        }
+
+        return transformedTxs;
     }
 
     private _transformOptionOrders = async (robinhoodUser: RobinhoodUser, optionOrders: OptionOrder[], accountMap: Record<string, RobinhoodAccountTable>, optionMap: Record<string, RobinhoodOptionTable>): Promise<RobinhoodTransaction[]> => {

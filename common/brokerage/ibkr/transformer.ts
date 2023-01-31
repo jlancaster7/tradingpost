@@ -20,6 +20,7 @@ import {
 import {DateTime} from "luxon";
 import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer"
+import {filter} from "mathjs";
 
 export interface TransformerRepository extends BaseRepository {
     getTradingPostBrokerageAccountsByBrokerageAndIds(userId: string, brokerage: string, brokerageAccountIds: string[]): Promise<TradingPostBrokerageAccountsTable[]>
@@ -35,6 +36,8 @@ export interface TransformerRepository extends BaseRepository {
     getTradingPostBrokerageWithMostRecentHolding(tpUserId: string, brokerage: string): Promise<TradingPostCurrentHoldingsTableWithMostRecentHolding[]>
 
     getOptionContractsByExternalIds(externalIds: string[]): Promise<OptionContractTable[]>
+
+    updateTradingPostBrokerageAccountLastUpdated(userId: string, brokerageUserId: string, brokerageName: string): Promise<DateTime>
 }
 
 const transformSecurityType = (type: string): SecurityType => {
@@ -125,7 +128,7 @@ const transformTransactionType = (transactionType: string): InvestmentTransactio
         case "DVPOUT": // Outgoing DVP
             throw new Error("no transaction type for outgoing dvp");
         case "EXE": // Exercise
-                    // TODO: Check if its a call or a put before
+            // TODO: Check if its a call or a put before
             return InvestmentTransactionType.buy
         case "EXP": // Expire
             return InvestmentTransactionType.cancel
@@ -174,13 +177,18 @@ export default class IbkrTransformer extends BaseTransformer {
         this._repository = repository;
     }
 
-    accounts = async (processDate: DateTime, tpUserId: string, accounts: IbkrAccount[]) => {
+    accounts = async (processDate: DateTime, tpUserId: string, accounts: IbkrAccount[]): Promise<number[]> => {
         // Pull accounts, see if already exists, if so, then don't update(unless process_date is different)
         // upsert account then
+        // We only want to update our master account with last_updated so that we know
         const tpAccounts = await this._repository.getTradingPostBrokerageAccounts(tpUserId);
-
+        let accountIdToLastUpdate = null;
         let filteredAccounts = accounts.filter(acc => {
-            if (acc.masterAccountId === null) return false;
+            if (acc.masterAccountId === null) {
+                accountIdToLastUpdate = acc.accountId;
+                return false;
+            }
+
             const tpAccount = tpAccounts.find(a => a.accountNumber === acc.accountId)
             if (!tpAccount) return true
             return tpAccount.updatedAt.toUnixInteger() < processDate.toUnixInteger();
@@ -201,12 +209,15 @@ export default class IbkrTransformer extends BaseTransformer {
                 institutionId: 6723,
                 officialName: "Interactive Brokers",
                 hiddenForDeletion: false,
-                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING
+                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
+                authenticationService: "Ibkr"
             }
             return x;
         });
-
-        await this.upsertAccounts(transformedAccounts);
+        const newAccountNumbers = await this.upsertAccounts(transformedAccounts);
+        if (!accountIdToLastUpdate) throw new Error("could not get account id to last update");
+        await this._repository.updateTradingPostBrokerageAccountLastUpdated(tpUserId, accountIdToLastUpdate, DirectBrokeragesType.Ibkr)
+        return newAccountNumbers;
     }
 
     securities = async (processDate: DateTime, tpUserId: string, securitiesAndOptions: IbkrSecurity[]) => {

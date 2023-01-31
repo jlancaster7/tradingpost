@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@aws-sdk/client-s3": "^3.198.0",
+    "@aws-sdk/client-sqs": "^3.259.0",
     "@elastic/elasticsearch": "^8.2.1",
     "@sparticuz/chromium": "^107.0.0",
     "@tradingpost/common": "file:../common",
