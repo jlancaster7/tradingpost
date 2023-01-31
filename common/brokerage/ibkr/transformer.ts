@@ -128,7 +128,7 @@ const transformTransactionType = (transactionType: string): InvestmentTransactio
         case "DVPOUT": // Outgoing DVP
             throw new Error("no transaction type for outgoing dvp");
         case "EXE": // Exercise
-            // TODO: Check if its a call or a put before
+                    // TODO: Check if its a call or a put before
             return InvestmentTransactionType.buy
         case "EXP": // Expire
             return InvestmentTransactionType.cancel
@@ -262,8 +262,8 @@ export default class IbkrTransformer extends BaseTransformer {
 
         const tpOptions = options.map(opt => {
             let optionType = "";
-            if (optionType === "C" || optionType === null) optionType = "Call";
-            else if (optionType === "P") optionType = "Put";
+            if (opt.optionType === null || opt.optionType === '' || opt.optionType.toLowerCase() === "c") optionType = "Call";
+            else if (opt.optionType.toLowerCase() === "p") optionType = "Put";
 
             if (opt.expirationDate === null) throw new Error("no expiration date set for option");
             if (opt.optionStrike === null) throw new Error("no option strike price");
@@ -275,9 +275,9 @@ export default class IbkrTransformer extends BaseTransformer {
                 strikePrice: opt.optionStrike,
                 externalId: opt.symbol
             }
-
             return x;
         })
+
         await this._repository.upsertOptionContracts(tpOptions);
     }
 

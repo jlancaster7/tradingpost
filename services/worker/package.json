@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.259.0",
-    "@tradingpost/common": "file:tradingpost-common-1.9.2.tgz",
+    "@tradingpost/common": "file:../../common",
     "body-parser": "^1.18.3",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",

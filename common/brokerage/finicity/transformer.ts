@@ -1,4 +1,5 @@
 import {
+    DirectBrokeragesType,
     FinicityAccount,
     FinicityHolding,
     FinicityInstitution,
@@ -119,7 +120,7 @@ export class Transformer extends BaseTransformer {
                 institutionId: institution.id,
                 brokerName: institution.name,
                 status: account.status,
-                accountNumber: account.number,
+                accountNumber: account.accountId,
                 mask: account.accountNumberDisplay,
                 name: account.name,
                 officialName: account.number,
@@ -129,7 +130,7 @@ export class Transformer extends BaseTransformer {
                 errorCode: account.aggregationStatusCode,
                 hiddenForDeletion: false,
                 accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
-                authenticationService: "Finicity"
+                authenticationService: DirectBrokeragesType.Finicity
             });
         }
 

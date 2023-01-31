@@ -25,7 +25,6 @@ import {PortfolioSummaryService} from "../portfolio-summary";
 import {SendMessageCommand, SQSClient} from "@aws-sdk/client-sqs";
 
 type RepositoryInterface = {
-    getBrokerageTasks(params: { brokerage?: string, userId?: string, status?: BrokerageTaskStatusType }): Promise<BrokerageTaskTable[]>
     getIbkrAccount(accountId: string): Promise<IbkrAccountTable | null>
     getIbkrMasterAndSubAccounts(accountId: string): Promise<IbkrAccountTable[]>
     upsertIbkrAccounts(accounts: IbkrAccount[]): Promise<void>
@@ -52,6 +51,10 @@ export class Service {
         this._s3Client = s3Client;
         this._portfolioSummaryService = portfolioSummaryService;
         this._sqsClient = sqsClient;
+    }
+
+    public remove = async (userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void> => {
+
     }
 
     public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
@@ -102,6 +105,7 @@ export class Service {
 
         const brokerageAcc = await this._repo.getTradingPostBrokerageAccountByUser(userId, DirectBrokeragesType.Ibkr, brokerageUserId);
         if (!brokerageAcc) throw new Error("could not find brokerage");
+
         await this._sqsClient.send(new SendMessageCommand({
             MessageBody: JSON.stringify({
                 type: BrokerageTaskType.UpdatePortfolioStatistics,
@@ -258,10 +262,10 @@ export class Service {
                 cusip: s.CUSIP,
                 deliveryMonth: s.DeliveryMonth !== '' ? s.DeliveryMonth : null,
                 description: s.Description !== '' ? s.Description : null,
-                expirationDate: s.ExpirationDate !== '' ? DateTime.fromFormat(s.ExpirationDate, "yyyyMMdd") : null,
-                issueDate: s.IssueDate !== '' ? DateTime.fromFormat(s.IssueDate, "yyyyMMdd") : null,
+                expirationDate: s.ExpirationDate !== '' ? DateTime.fromFormat(s.ExpirationDate, "yyyyMMdd", {zone: "America/New_York"}) : null,
+                issueDate: s.IssueDate !== '' ? DateTime.fromFormat(s.IssueDate, "yyyyMMdd", {zone: "America/New_York"}) : null,
                 issuer: s.Issuer !== '' ? s.Issuer : null,
-                maturityDate: s.MaturityDate !== '' ? DateTime.fromFormat(s.MaturityDate, "yyyyMMdd") : null,
+                maturityDate: s.MaturityDate !== '' ? DateTime.fromFormat(s.MaturityDate, "yyyyMMdd", {zone: "America/New_York"}) : null,
                 multiplier: s.Multiplier !== '' ? parseFloat(s.Multiplier) : null,
                 type: s.Type,
                 optionStrike: s.OptionStrike !== '' ? parseFloat(s.OptionStrike) : null,
@@ -330,16 +334,16 @@ export class Service {
         });
 
         const activitiesMapped = activities.map((s: IbkrActivityCsv) => {
-            let orderTime: DateTime | null = DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss")
+            let orderTime: DateTime | null = DateTime.fromFormat(s.OrderTime, "yyyyMMdd;hh:mm:ss", {zone: "America/New_York"});
             if (!orderTime.isValid) orderTime = null;
 
-            let settleDate: DateTime | null = DateTime.fromFormat(s.SettleDate, "yyyyMMdd")
+            let settleDate: DateTime | null = DateTime.fromFormat(s.SettleDate, "yyyyMMdd", {zone: "America/New_York"});
             if (!settleDate.isValid) settleDate = null;
 
-            let tradeDate: DateTime | null = DateTime.fromFormat(s.TradeDate, "yyyyMMdd");
+            let tradeDate: DateTime | null = DateTime.fromFormat(s.TradeDate, "yyyyMMdd", {zone: "America/New_York"});
             if (!tradeDate.isValid) tradeDate = null;
 
-            let tradeTimeDt: DateTime = DateTime.fromFormat(s.TradeTime, "hh:mm:ss")
+            let tradeTimeDt: DateTime = DateTime.fromFormat(s.TradeTime, "hh:mm:ss", {zone: "America/New_York"});
             let tradeTime: string | null = tradeTimeDt.isValid ? tradeTimeDt.toSQLTime() : null;
 
             let x: IbkrActivity = {
@@ -420,7 +424,7 @@ export class Service {
                 ibukl: s.IBUKL !== '' ? parseFloat(s.IBUKL) : null,
                 type: s.Type !== '' ? s.Type : null,
                 label: s.Label !== '' ? s.Label : null,
-                reportDate: s.ReportDate !== '' ? DateTime.fromFormat(s.ReportDate, "yyyyMMdd") : null,
+                reportDate: s.ReportDate !== '' ? DateTime.fromFormat(s.ReportDate, "yyyyMMdd", {zone: "America/New_York"}) : null,
                 paxos: s.PAXOS !== '' ? parseFloat(s.PAXOS) : null,
                 securities: s.Securities !== '' ? parseFloat(s.Securities) : null,
                 total: s.Total !== '' ? parseFloat(s.Total) : null
@@ -459,6 +463,7 @@ export class Service {
             }
             return x;
         });
+
         const navsMapped = navs.map((s: IbkrNavCsv) => {
             let x: IbkrNav = {
                 fileDate: dateToProcess,
@@ -488,6 +493,7 @@ export class Service {
             }
             return x;
         });
+
         await this._repo.upsertIbkrNav(navsMapped);
         return navsMapped
     }
@@ -520,9 +526,10 @@ export class Service {
             }
             return x;
         });
+
         const plsMapped = pls.map((s: IbkrPlCsv) => {
             if (s.ReportDate === '') throw new Error("no report date available for pls");
-            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd');
+            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd', {zone: "America/New_York"});
             let x: IbkrPl = {
                 fileDate: dateToProcess,
                 accountId: s.AccountID,
@@ -550,6 +557,7 @@ export class Service {
             }
             return x;
         });
+
         await this._repo.upsertIbkrPls(plsMapped);
         return plsMapped;
     }
@@ -589,11 +597,13 @@ export class Service {
             }
             return x;
         });
+
         const positionsMapped = positions.map((s: IbkrPositionCsv) => {
             if (s.ReportDate === '') throw new Error("no report date available for position");
-            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd').setZone("America/New_York").set({
+            const reportDate = DateTime.fromFormat(s.ReportDate, 'yyyyMMdd', {zone: "America/New_York"}).set({
                 hour: 16, minute: 0, second: 0, millisecond: 0
             });
+
             let x: IbkrPosition = {
                 fileDate: dateToProcess,
                 accountId: s.AccountID,
@@ -613,7 +623,7 @@ export class Service {
                 marketValueInBase: s.MarketValueInBase !== '' ? parseFloat(s.MarketValueInBase) : null,
                 masterAccountId: s.MasterAccountID !== '' ? s.MasterAccountID : null,
                 multiplier: s.Multiplier !== '' ? parseFloat(s.Multiplier) : null,
-                openDateTime: s.OpenDateTime !== '' ? DateTime.fromFormat(s.OpenDateTime, "yyyyMMdd;hh:mm:ss") : null,
+                openDateTime: s.OpenDateTime !== '' ? DateTime.fromFormat(s.OpenDateTime, "yyyyMMdd;hh:mm:ss", {zone: "America/New_York"}) : null,
                 quantity: s.Quantity !== '' ? parseFloat(s.Quantity) : null,
                 securityDescription: s.SecurityDescription !== '' ? s.SecurityDescription : null,
                 originatingOrderId: s.OriginatingOrderID !== '' ? s.OriginatingOrderID : null,
@@ -628,6 +638,7 @@ export class Service {
             }
             return x;
         });
+
         await this._repo.upsertIbkrPositions(positionsMapped);
         return positionsMapped;
     }
