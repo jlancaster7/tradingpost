@@ -6,19 +6,13 @@ export interface IBrokerageRepository {
 
     getCashSecurityId(): Promise<GetSecurityBySymbol>
 
-    addTradingPostBrokerageAccounts(brokerageAccounts: TradingPostBrokerageAccounts[]): Promise<void>
-
     upsertTradingPostBrokerageAccounts(accounts: TradingPostBrokerageAccounts[]): Promise<number[]>
 
     upsertTradingPostCurrentHoldings(currentHoldings: TradingPostCurrentHoldings[]): Promise<void>
 
     updateErrorStatusOfAccount(accountId: number, error: boolean, errorCode: number): Promise<void>
 
-    addTradingPostTransactions(transactions: TradingPostTransactions[]): Promise<void>
-
     upsertTradingPostTransactions(transactions: TradingPostTransactions[]): Promise<void>
-
-    addTradingPostHistoricalHoldings(historicalHoldings: TradingPostHistoricalHoldings[]): Promise<void>
 
     upsertTradingPostHistoricalHoldings(historicalHoldings: TradingPostHistoricalHoldings[]): Promise<void>
 
@@ -42,6 +36,12 @@ export interface IBrokerageRepository {
 }
 
 export interface IFinicityRepository {
+    getTradingPostBrokerageAccountsByBrokerageNumbersAndAuthService(tpUserId: string, brokerageNumbers: string[], authenticationService: string): Promise<TradingPostBrokerageAccountsTable[]>
+
+    getTradingPostBrokerageAccountByUser(tpUserId: string, authenticationService: string, accountNumber: string): Promise<TradingPostBrokerageAccountsTable | null>
+
+    deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
+
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 
     updateErrorStatusOfAccount(accountId: number, error: boolean, errorCode: number): Promise<void>
@@ -50,11 +50,7 @@ export interface IFinicityRepository {
 
     getFinicityAccountByTradingpostBrokerageAccountId(tpBrokerageAccountId: number): Promise<FinicityAndTradingpostBrokerageAccount | null>
 
-    getFinicityAccountByFinicityAccountId(finicityAccountId: string): Promise<FinicityAccountAndInstitution>
-
     getFinicityUserByFinicityCustomerId(customerId: string): Promise<FinicityUser | null>
-
-    getFinicityUserByFinicityUserId(userId: string): Promise<FinicityUser | null>
 
     getFinicityUser(userId: string): Promise<FinicityUser | null>
 
@@ -63,8 +59,6 @@ export interface IFinicityRepository {
     upsertFinicityInstitutions(institutions: FinicityInstitution[]): Promise<void>
 
     upsertFinicityInstitution(institution: FinicityInstitution): Promise<number>
-
-    getTradingPostInstitutionsWithFinicityInstitutionId(): Promise<TradingPostInstitutionWithFinicityInstitutionId[]>
 
     getTradingPostInstitutionByFinicityId(finicityInstitutionId: number): Promise<TradingPostInstitutionWithFinicityInstitutionId | null>
 
@@ -77,10 +71,6 @@ export interface IFinicityRepository {
     upsertFinicityHoldings(holdings: FinicityHolding[]): Promise<void>
 
     upsertFinicityTransactions(transactions: FinicityTransaction[]): Promise<void>
-
-    getFinicityHoldings(finicityUserId: number): Promise<FinicityHolding[]>
-
-    getFinicityTransactions(finicityUserId: number): Promise<FinicityTransaction[]>
 
     deleteFinicityHoldings(accountIds: number[]): Promise<void>
 
@@ -97,8 +87,6 @@ export interface ISummaryRepository {
 
     getTradingPostAccountGroups(userId: string): Promise<TradingPostAccountGroups[]>
 
-    getTradingPostHoldingsByAccount(userId: string, accountId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]>
-
     getTradingPostHoldingsByAccountGroup(userId: string, accountGroupId: number, startDate: DateTime, endDate: DateTime): Promise<HistoricalHoldings[]>
 
     getTradingPostCurrentHoldingsByAccountGroup(accountGroupId: number): Promise<HistoricalHoldings[]>
@@ -110,8 +98,6 @@ export interface ISummaryRepository {
     getDailySecurityPrices(securityId: number, startDate: DateTime, endDate: DateTime): Promise<SecurityPrices[]>
 
     getSecurities(securityIds: number[]): Promise<GetSecurityBySymbol[]>
-
-    getAccountGroupHPRsLatestDate(accountGroupId: number): Promise<any>
 
     getAccountGroupSummary(accountGroupId: number): Promise<TradingPostAccountGroupStats>
 
@@ -315,6 +301,8 @@ export type FinicityAccount = {
     txPushId: string
     txPushSigningKey: string
 }
+
+export type FinicityAccountWithTpUser = { tpUserId: string } & FinicityAccount
 
 export type FinicityHolding = {
     id: number

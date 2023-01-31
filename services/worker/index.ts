@@ -63,94 +63,130 @@ const run = async () => {
     });
 
     app.post("/finicity/webhook", async (req: Request, res: Response) => {
-        const body = req.body;
+            const body = req.body;
 
-        // Spoofing Detected
-        const signature = crypto.createHmac('sha256', finicityCfg.partnerSecret).update(JSON.stringify(body)).digest('hex')
-        if (req.get('x-finicity-signature') !== signature && process.env.NODE_ENV !== 'development') {
-            throw new Error("request signature is invalid");
+            // Spoofing Detected
+            const signature = crypto.createHmac('sha256', finicityCfg.partnerSecret).update(JSON.stringify(body)).digest('hex')
+            if (req.get('x-finicity-signature') !== signature && process.env.NODE_ENV !== 'development') {
+                throw new Error("request signature is invalid");
+            }
+
+            console.log(req.body);
+
+            if (req.body.eventType === 'added') {
+                console.log("Adding Account")
+                const {customerId} = req.body;
+                const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
+                if (!tpUser) throw new Error("finicity user does not exist")
+                const command = new SendMessageCommand({
+                    MessageBody: JSON.stringify({
+                        type: BrokerageTaskType.NewAccount,
+                        userId: tpUser.id,
+                        status: BrokerageTaskStatusType.Pending,
+                        data: null,
+                        started: null,
+                        finished: null,
+                        brokerage: DirectBrokeragesType.Finicity,
+                        date: DateTime.now().setZone("America/New_York"),
+                        brokerageUserId: customerId,
+                        error: null,
+                        messageId: null
+                    }),
+                    DelaySeconds: 0,
+                    QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+                });
+                await sqsClient.send(command)
+            }
+
+            if (req.body.eventType === 'accountsDeleted') {
+                console.log("Deleting Account")
+                const {customerId, eventId, payload} = req.body
+                const {accounts} = payload;
+                const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
+                if (!tpUser) throw new Error("finicity user does not exist")
+
+                const command = new SendMessageCommand({
+                    MessageBody: JSON.stringify({
+                        type: BrokerageTaskType.DeleteAccount,
+                        finished: null,
+                        brokerageUserId: customerId,
+                        date: DateTime.now().setZone("America/New_York"),
+                        started: null,
+                        data: {accounts: accounts},
+                        brokerage: DirectBrokeragesType.Finicity,
+                        status: BrokerageTaskStatusType.Pending,
+                        userId: tpUser.id,
+                        error: null,
+                        messageId: null
+                    }),
+                    DelaySeconds: 0,
+                    QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+                });
+                await sqsClient.send(command)
+            }
+
+            if (req.body.eventType === 'institutionLoginDeleted') {
+                console.log("Removing Institution");
+                const {customerId, eventType, eventId, payload} = req.body;
+                const {institutionLoginId} = payload;
+                const faAccounts = await repository.getFinicityAccountByInstitutionLoginIdAndCustomerId(customerId, institutionLoginId);
+                if (faAccounts.length <= 0) throw new Error("could not find finicity account for institution login deletion");
+
+                const accounts: { finicityAccountId: number; finicityAccountNumber: string; }[] = [];
+                faAccounts.forEach(fa => accounts.push({finicityAccountId: fa.id, finicityAccountNumber: fa.accountId}))
+
+                const command = new SendMessageCommand({
+                    MessageBody: JSON.stringify({
+                        type: BrokerageTaskType.DeleteAccount,
+                        finished: null,
+                        brokerageUserId: customerId,
+                        date: DateTime.now().setZone("America/New_York"),
+                        started: null,
+                        data: {
+                            accounts: accounts
+                        },
+                        brokerage: DirectBrokeragesType.Finicity,
+                        status: BrokerageTaskStatusType.Pending,
+                        userId: faAccounts[0].tpUserId,
+                        error: null,
+                        messageId: null
+                    }),
+                    DelaySeconds: 0,
+                    QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+                });
+                await sqsClient.send(command)
+            }
+
+            if (req.body.eventType === 'credentialsUpdated') {
+                console.log("Credentials Updating")
+                const {institutionLoginId, customerId} = req.body.payload;
+                const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
+                if (!tpUser) throw new Error("finicity user does not exist")
+
+                const command = new SendMessageCommand({
+                    MessageBody: JSON.stringify({
+                        type: BrokerageTaskType.UpdateAccount,
+                        finished: null,
+                        brokerageUserId: customerId,
+                        date: DateTime.now().setZone("America/New_York"),
+                        started: null,
+                        data: null,
+                        brokerage: DirectBrokeragesType.Finicity,
+                        status: BrokerageTaskStatusType.Pending,
+                        userId: tpUser.id,
+                        error: null,
+                        messageId: null
+                    }),
+                    DelaySeconds: 0,
+                    QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+                });
+                await sqsClient.send(command)
+            }
+
+            return res.send()
         }
-
-        if (req.body.eventType === 'added') {
-            console.log("Adding Account")
-            const {customerId} = req.body;
-            const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
-            if (!tpUser) throw new Error("finicity user does not exist")
-            const command = new SendMessageCommand({
-                MessageBody: JSON.stringify({
-                    type: BrokerageTaskType.NewAccount,
-                    userId: tpUser.id,
-                    status: BrokerageTaskStatusType.Pending,
-                    data: null,
-                    started: null,
-                    finished: null,
-                    brokerage: DirectBrokeragesType.Finicity,
-                    date: DateTime.now().setZone("America/New_York"),
-                    brokerageUserId: customerId,
-                    error: null,
-                    messageId: null
-                }),
-                DelaySeconds: 0,
-                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
-            });
-            await sqsClient.send(command)
-        }
-
-        if (req.body.eventType === 'accountsDeleted') {
-            console.log("Deleting Account")
-            const {customerId, eventId, payload} = req.body
-            const {accounts} = payload;
-            const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
-            if (!tpUser) throw new Error("finicity user does not exist")
-
-            const command = new SendMessageCommand({
-                MessageBody: JSON.stringify({
-                    type: BrokerageTaskType.DeleteAccount,
-                    finished: null,
-                    brokerageUserId: customerId,
-                    date: DateTime.now().setZone("America/New_York"),
-                    started: null,
-                    data: {accounts: accounts},
-                    brokerage: DirectBrokeragesType.Finicity,
-                    status: BrokerageTaskStatusType.Pending,
-                    userId: tpUser.id,
-                    error: null,
-                    messageId: null
-                }),
-                DelaySeconds: 0,
-                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
-            });
-            await sqsClient.send(command)
-        }
-
-        if (req.body.eventType === 'credentialsUpdated') {
-            console.log("Credentials Updating")
-            const {institutionLoginId, customerId} = req.body.payload;
-            const tpUser = await repository.getTradingPostUserByFinicityCustomerId(customerId);
-            if (!tpUser) throw new Error("finicity user does not exist")
-
-            const command = new SendMessageCommand({
-                MessageBody: JSON.stringify({
-                    type: BrokerageTaskType.UpdateAccount,
-                    finished: null,
-                    brokerageUserId: customerId,
-                    date: DateTime.now().setZone("America/New_York"),
-                    started: null,
-                    data: null,
-                    brokerage: DirectBrokeragesType.Finicity,
-                    status: BrokerageTaskStatusType.Pending,
-                    userId: tpUser.id,
-                    error: null,
-                    messageId: null
-                }),
-                DelaySeconds: 0,
-                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
-            });
-            await sqsClient.send(command)
-        }
-
-        return res.send()
-    });
+    )
+    ;
 
     app.listen(port, function () {
         console.log(`Server running at http://127.0.0.1:%s`, port)

@@ -30,6 +30,30 @@ export class Service {
         return
     }
 
+    public remove = async (userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void> => {
+        const {accounts} = data as { accounts: { finicityAccountId: number, finicityAccountNumber: string }[] };
+
+        let finAccountIds: number[] = [];
+        let finAccountsNumbers: string[] = [];
+
+        accounts.forEach(a => {
+            finAccountIds.push(a.finicityAccountId);
+            finAccountsNumbers.push(a.finicityAccountNumber);
+        });
+
+        const tpAccounts = await this.repository.getTradingPostBrokerageAccountsByBrokerageNumbersAndAuthService(userId, finAccountsNumbers, DirectBrokeragesType.Finicity);
+
+        let tpAccountIds: number[] = [];
+        tpAccounts.forEach(tp => tpAccountIds.push(tp.id));
+        // Remove TP first since user should be reflected right away, though we have that deletion status
+        await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds);
+
+        // Remove Finicity Stuff for the account number
+        await this.repository.deleteFinicityHoldings(finAccountIds);
+        await this.repository.deleteFinicityTransactions(finAccountIds);
+        await this.repository.deleteFinicityAccounts(finAccountIds);
+    }
+
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         await this.importHoldings(userId, brokerageUserId, []);
         await this.importTransactions(userId, brokerageUserId, []);

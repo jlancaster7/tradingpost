@@ -1,13 +1,14 @@
 import React, {useEffect, useState, useMemo, useRef} from "react"
 import {View, Text, Animated, Pressable, Image} from "react-native"
 import {Api} from "@tradingpost/common/api";
-import {openBrowserAsync} from 'expo-web-browser';
+import {dismissBrowser, openBrowserAsync} from 'expo-web-browser';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {elevated, flex, fonts, paddView, paddViewWhite, row, sizes} from "../style"
 import {ElevatedSection, Section, Subsection} from "../components/Section"
 import {Bank, IBKR, RobinhoodLogo} from '../images';
 import {Header, Subheader} from "../components/Headers";
 import {useNavigation} from "@react-navigation/native";
+import { useToast } from "react-native-toast-notifications";
 
 
 export function BrokeragePickerScreen() {
@@ -15,29 +16,24 @@ export function BrokeragePickerScreen() {
     const opacityAnim = useRef(new Animated.Value(0)).current;
     const [accounts, setAccounts] = useState<Awaited<ReturnType<typeof Api.User.extensions.getBrokerageAccounts>>>()
     const intervalRef = useRef<any>();
+    const toast = useToast();
 
     const openLink = async () => {
         const {link} = await Api.User.extensions.generateBrokerageLink(undefined);
+        intervalRef.current = setInterval(async () => {
+            if (await AsyncStorage.getItem("auth-finicity-code")) {
+                setAccounts(await Api.User.extensions.getBrokerageAccounts())
+                dismissBrowser()
+                clearInterval(intervalRef.current);
+                await AsyncStorage.removeItem("auth-finicity-code");
+                toast.show("You've successfully linked your brokerage account to TradingPost through Finicity!")
+            }
+        }, 2000);
+
         const browserName = "finicity_auth";
         await openBrowserAsync(link, {"windowName": browserName});
         clearInterval(intervalRef.current);
-
-        intervalRef.current = setInterval(async () => {
-            console.log("WTF");
-            if (await AsyncStorage.getItem("auth-finicity-code")) {
-                console.log("CODE HAS BEEN FOUND");
-                setAccounts(await Api.User.extensions.getBrokerageAccounts())
-            }
-        }, 5000)
     }
-    //cleanup
-    useEffect(() => {
-        AsyncStorage.removeItem("auth-finicity-code");
-        return () => {
-            clearInterval(intervalRef.current);
-            AsyncStorage.removeItem("auth-finicity-code");
-        }
-    }, [])
 
     useEffect(() => {
         Animated.timing(

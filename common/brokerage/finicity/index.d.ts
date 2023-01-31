@@ -10,6 +10,7 @@ export declare class Service {
     private readonly portSummarySrv;
     constructor(finicity: Finicity, repository: IFinicityRepository, transformer: FinicityTransformer, portfolioSummaryStats?: PortfolioSummaryService);
     calculatePortfolioStatistics: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
+    remove: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
     update: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
     add: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
     getTradingPostUserAssociatedWithBrokerageUser: (brokerageUserId: string) => Promise<TradingPostUser>;

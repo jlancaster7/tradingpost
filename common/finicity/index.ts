@@ -332,6 +332,7 @@ export default class Service {
                 webhook: webhook,
                 webhookContentType: webhookContentType,
                 redirectUri: finicityCallbackUrl,
+                experience: "c201a18b-728f-460c-b964-d566273a6e33"
             }),
             headers,
         });

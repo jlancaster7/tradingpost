@@ -67,6 +67,7 @@ functions:
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1024
+    reservedConcurrency: 5
     events:
       - sqs:
           arn: arn:aws:sqs:us-east-1:670171407375:brokerage-task-queue

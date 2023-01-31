@@ -37,8 +37,6 @@ interface Repository {
 
     upsertRobinhoodTransactions(txs: RobinhoodTransaction[]): Promise<void>
 
-    upsertRobinhoodOptions(options: RobinhoodOption[]): Promise<void>
-
     upsertRobinhoodOption(option: RobinhoodOption): Promise<number | null>
 
     getRobinhoodOptionsByExternalIds(externalIds: string[]): Promise<RobinhoodOptionTable[]>
@@ -61,6 +59,10 @@ export class Service {
         this._transformer = transformer;
         this._repo = repo;
         this._portfolioSummaryService = portfolioSummarySrv;
+    }
+
+    public remove = async (userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void> => {
+
     }
 
     public calculatePortfolioStatistics = async (userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void> => {

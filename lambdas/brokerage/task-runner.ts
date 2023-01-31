@@ -46,6 +46,8 @@ interface Process {
 
     update(userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void>
 
+    remove(userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void>
+
     calculatePortfolioStatistics(userId: string, brokerageUserId: string, date: DateTime, data?: any): Promise<void>
 }
 
