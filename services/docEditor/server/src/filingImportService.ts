@@ -1,7 +1,7 @@
 import fetch, {Response} from 'node-fetch';
 import fs from 'fs';
 import DirectSecApi from "./secDirect";
-import { htmlParser } from "./htmlParse";
+import { pressReleaseParser } from "./htmlParse";
 import { HTTPConfigurationDefaults } from './interfaces';
 
 export default class FilingImportService  {
@@ -17,7 +17,7 @@ export default class FilingImportService  {
             const fileName = `${ticker} - ${f.filingDate} - ${f.form}`;
             console.log(fileName);
             const filingHtml = await (await fetch(f.prHtmlUrl, HTTPConfigurationDefaults)).text()
-            const taggedFilingHtml = await htmlParser(filingHtml)
+            const taggedFilingHtml = await pressReleaseParser(filingHtml)
             fs.writeFileSync(this.saveLocation + `${fileName}.html`, taggedFilingHtml)
         }
     }

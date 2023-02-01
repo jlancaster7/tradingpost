@@ -14,12 +14,12 @@ const AboutBlockOne = () => {
                     <span className="missionWhite">Investor</span>
                 </h1>
                 <p>While there are no short cuts on the path to growing your wealth, there's no point in
-                    taking the long way to get there! TradingPost helps filter out the noise, providing
+                    being led astray by false gurus or scamsters! TradingPost helps filter out the noise, providing
                     both the creators and consumers of investing content the tools and resources they need.
                 </p>
                 <p>
-                    Whether it be through our consolidated and curated content feed, providing access to skilled
-                    investors and traders, or the courses in our Academy; everything we do is to help you find the
+                    Whether it be through our consolidated and curated content feed or providing access to skilled
+                    investors and traders; everything we do is to help you find the
                     information you are looking for. The information that you need.
                 </p>
             </div>
@@ -55,6 +55,7 @@ const AboutBlockOne = () => {
                     with the tools and resources that are necessary for this amazing community to continue to thrive.
                 </p>
             </div>
+            
         </div>
     );
 }

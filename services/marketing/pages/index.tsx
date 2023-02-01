@@ -4,6 +4,7 @@ import HomeBlockOne from '../components/HomeBlockOne';
 import HomeBlockTwo from '../components/HomeBlockTwo';
 import HomeBlockThree from '../components/HomeBlockThree';
 import HomeBlockFour from '../components/HomeBlockFour'
+import PageBottom from "../components/PageBottom";
 
 function Home() {
     return (
@@ -13,6 +14,7 @@ function Home() {
             <HomeBlockTwo/>
             <HomeBlockThree/>
             <HomeBlockFour/>
+            <PageBottom />
         </>
     );
 }

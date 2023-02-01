@@ -3,9 +3,7 @@ import fs from 'fs';
 import * as cheerio from 'cheerio';
 import { labels } from '../../my-app/src/data/externalData'
 
-export const htmlParser = async (html: string) => {
-
-    
+export const pressReleaseParser = async (html: string) => {    
     try {
             const $ = cheerio.load(html.toString());
         

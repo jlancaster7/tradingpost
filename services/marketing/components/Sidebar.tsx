@@ -24,15 +24,15 @@ const SideMenu: React.FunctionComponent<SideMenuProps> = ({pageWrapId, outerCont
                 <Image src={HomeIconSvg} alt="home icon"/>
                 <p>Home</p>
             </a>
-            <a className="menu-item" href="/chatGPT">
+            {/*<a className="menu-item" href="/chatGPT">
                 <Image src={HomeIconSvg} alt="home icon"/>
                 <p>chatGPT <span style={{fontStyle: 'italic'}}>beta</span></p>
-            </a>
+            </a>*/}
             <a className="menu-item" href="/about">
                 <Image src={AboutSvg} alt="about icon"/>
                 About
             </a>
-            <a className="menu-item"
+            {/*<a className="menu-item"
                 onClick={() => {
                     if (!isAuthed) {
                         window.location.href = '/chatGPT/login';
@@ -45,7 +45,7 @@ const SideMenu: React.FunctionComponent<SideMenuProps> = ({pageWrapId, outerCont
                 >
                 <Image src={LoginSvg} alt="login icon"/>
                 {!isAuthed ? 'Login' : 'Logout'}
-            </a>
+            </a>*/}
             <a style={{padding: 0, borderRadius: '20px'}}className="menu-item" href="https://m.tradingpostapp.com">
                 <Image style={{width: '30%', marginRight: '10px'}}
                        src={TPLogo} alt="about icon"/>

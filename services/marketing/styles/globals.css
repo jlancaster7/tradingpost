@@ -266,33 +266,38 @@ body {
 
         display: flex;
         flex-direction: column;
-        justify-content: center;
         align-items: center;
-        position: relative;
-        z-index: 0;
+        justify-content: center;
+        
+        z-index: 1;
         padding: 0;
-        visibility: hidden;
+        
+    }
+    .home .appStoreIcons a {
+        display: flex;
+        justify-content: center;
     }
 
     .home .appStoreIcons .playstore {
         content: url('/MobilePlaystore.svg');
-        min-width: 100%;
-        min-height: 100%;
-        margin-bottom: 5%;
+        
+        width: 80%;
+        height: 10vh;
+        margin-bottom: -10px;
     }
 
     .home .appStoreIcons .appstore {
         content: url('/MobileAppstore.svg');
-        min-width: 100%;
-        min-height: 100%;
-        margin-bottom: 5%;
+        width: 80%;
+        height: 10vh;
+        
     }
 
     .home .illustrations {
         text-align: center;
         position: relative;
         top: 0;
-        margin-top: -30%;
+        margin-top: 0%;
         margin-bottom: 5%;
     }
 
@@ -577,7 +582,61 @@ body {
         font-size: 28px;
         font-size: 3.325vh;
     }
+    .pageBottom {
+        text-align: center;
+        width: 100%;
+        padding-top: 2vh;
+        padding-bottom: 2vh;
+        background-color: #050B2C;
+    }
+    .pageBottom p {
+        color: white;
+        margin-bottom: 10px;
+    }
+    .pageBottom .webAppLinkContainer {
+        display: flex;
+        max-width: 60%;
+        align-items: center;
+        justify-content: center;
+        margin: 5% 20% 5%;
+        border-style: solid;
+        border-color: white;
+        
+        
+        height: 40px;
+        border-radius: 10px;
+    }
+    .pageBottom .webAppLinkContainer .webAppLink {
+        color: white;
+        font-size: larger;
+        margin-top: 2vh;
+        margin-bottom: 2vh;
+        
+    }
 
+    .pageBottom .appStoreIcons {
+        text-align: center;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        z-index: 1;
+        
+    }
+
+    .pageBottom .appStoreIcons .playstore {
+        content: url('/Playstore.svg');
+        padding: 0.5vw;
+        width: 50%;
+        height: 10vh;
+    }
+
+    .pageBottom .appStoreIcons .appstore {
+        content: url('/Appstore.svg');
+        padding: 0.5vw;
+        width: 50%;
+        height: auto;
+    }
     .aboutStory p {
         width: 80%;
         margin-top: 3%;
@@ -1020,7 +1079,7 @@ body {
     }
 
     .navbar .title {
-        margin-left: 7%;
+        margin-left: 12%;
         font-size: 32px;
         font-weight: 500;
         padding: 1vw;
@@ -1067,7 +1126,7 @@ body {
     .navbar .loginButton {
         display: flex;
         position: absolute;
-        right: 2%;
+        right: 12%;
     }
     .navbar .loginButton .loggedInUserDisplay {
         padding: 0 10px 0;
@@ -1089,10 +1148,10 @@ body {
         margin: 0 5px 0;
         border-color: white;
 
-        width: 8vw;
-        height: 3.5vw;
+        width: 160px;
+        height: 60px;
         color: white;
-        font-size: .95vw;
+        font-size: 16px;
         font-weight: 600;
         border-radius: 10px;
         text-align: center;
@@ -1172,7 +1231,7 @@ body {
     .home {
         background-color: #050B2C;
         background-image: url('/Clouds.png');
-        background-size: 90%;
+        background-size: 75%;
         background-repeat: no-repeat;
         background-position-y: 0%;
         background-position-x: 50%;
@@ -1202,8 +1261,8 @@ body {
         color: white;
         font-size: 20px;
 
-        margin-left: 29%;
-        margin-right: 29%;
+        margin-left: 35%;
+        margin-right: 35%;
         padding: 1vw;
     }
 
@@ -1261,7 +1320,7 @@ body {
         text-align: center;
         position: relative;
         z-index: 1;
-        visibility: hidden;
+        
     }
 
     .home .appStoreIcons .playstore {
@@ -1282,12 +1341,12 @@ body {
         text-align: center;
         position: relative;
         top: 0;
-        margin-top: -10%;
+        margin-top: -5%;
         margin-bottom: 5%;
     }
 
     .home .illustrations .illustrationImg {
-        width: 87%;
+        width: 75%;
         height: auto;
         content: url('/DesktopIllustration.svg');
         alt: '';
@@ -1562,7 +1621,7 @@ body {
 
         font-weight: 500;
         padding-bottom: 2vh;
-        margin: 0 20% 0;
+        margin: 0 30% 0;
     }
 
     .aboutTop .mission .missionWhite {
@@ -1579,7 +1638,7 @@ body {
 
         padding-bottom: 1vw;
 
-        margin: 0 22% 0;
+        margin: 0 30% 0;
 
     }
 
@@ -1601,9 +1660,49 @@ body {
 
     .aboutStory p {
 
-        margin: 3% 30% 0%;
+        margin: 2% 30% 0%;
         font-size: 16px;
 
+    }
+    .pageBottom {
+        text-align: center;
+        width: 100%;
+        padding-top: 2vw;
+        padding-bottom: 2vw;
+        background-color: #050B2C;
+    }
+    .pageBottom p {
+        color: white;
+        margin-bottom: 10px;
+    }
+    .pageBottom a:hover {
+        color: grey;
+    }
+    .pageBottom h1 {
+        color: white;
+        font-size: larger;
+        text-decoration: underline;
+        
+    }
+    .pageBottom .appStoreIcons {
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        
+    }
+
+    .pageBottom .appStoreIcons .playstore {
+        content: url('/Playstore.svg');
+        padding: 0.5vw;
+        width: 10vw;
+        height: auto;
+    }
+
+    .pageBottom .appStoreIcons .appstore {
+        content: url('/Appstore.svg');
+        padding: 0.5vw;
+        width: 10vw;
+        height: auto;
     }
     .chatgptTop {
         background-color: #050B2C;

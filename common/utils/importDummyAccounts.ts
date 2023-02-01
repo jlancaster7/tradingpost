@@ -68,7 +68,7 @@ const createDummyAccounts = async () => {
             settings: {"analyst": false, "portfolio_display": {"trades": false, "holdings": false, "performance": false}, "push_notifications": {"upvotes": false, "mentions": false, "watchlist_changes": false}},
             bio: `This user hasn't claimed their profile yet!`,
             banner_url: '',
-            tags: data[i][1] ? data[i][1].split('|') : [],
+            tags: JSON.stringify(data[i][1] ? data[i][1].split('|') : []),
             dummy: true,
             is_deleted: false,
             has_profile_pic: false

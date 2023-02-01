@@ -15,9 +15,9 @@ const Navbar = (props: {isAuthed: boolean, user: any}) => {
                 <a href="/about" style={{
                     color: "white",
                 }}>About</a>
-                <a href="/chatGPT" style={{
+                {/*<a href="/chatGPT" style={{
                     color: "white",
-                }}>chatGPT <span style={{color: 'white', fontStyle: 'italic'}}>beta</span></a>
+                }}>chatGPT <span style={{color: 'white', fontStyle: 'italic'}}>beta</span></a>*/}
             </div>
             <div className="loginButton">
                 <div className="loggedInUserDisplay">
@@ -29,7 +29,7 @@ const Navbar = (props: {isAuthed: boolean, user: any}) => {
                     </p>
                 </div>
                 
-                <button type="button" 
+                {/*<button type="button" 
                         onClick={() => {
                             if (!props.isAuthed) {
                                 window.location.href = '/chatGPT/login';
@@ -41,13 +41,13 @@ const Navbar = (props: {isAuthed: boolean, user: any}) => {
                         }}
                         >
                     {!props.isAuthed ? `Login` : 'Logout'}
-                </button>
+                    </button>*/}
                 <button type="button"
                         onClick={() => {
                             window.location.href = 'https://m.tradingpostapp.com';
                         }}
                         >
-                    Go to TradingPost
+                    Go to TradingPost Web App
                 </button>
             </div>
         </nav>

@@ -34,16 +34,16 @@ const SplashBlock = () => {
             <p className="belowPromise">Searching for quality research is time consuming and frustrating.
                 We find the best stock market analysis on the internet so you don't have to.</p>
 
-            <HandleEmailForm email={email}
+            {/*<HandleEmailForm email={email}
                              setEmail={setEmail}
                              handleSubmit={handleSubmit}
                              isEmailedSubmitted={isEmailSubmitted}
-            />
+            />*/}
             <div className="appStoreIcons">
-                <a href="https://play.google.com/store/" target="_blank" rel="noreferrer">
+                <a href="https://play.google.com/store/apps/details?id=com.tradingpostapp" target="_blank" rel="noreferrer">
                     <span className="playstore"/>
                 </a>
-                <a href="https://www.apple.com/app-store/" target="_blank" rel="noreferrer">
+                <a href="https://apps.apple.com/us/app/tradingpost-app/id6443603177" target="_blank" rel="noreferrer">
                     <span className="appstore" />
                 </a>
             </div>

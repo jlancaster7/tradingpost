@@ -60,7 +60,8 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
 }
 
 export const PlatformSelector = (props: {platforms: string[], setPlatformClicked: React.Dispatch<React.SetStateAction<string>>}) => {
-    const { width: windowWidth } = useWindowDimensions();
+    let { width: windowWidth } = useWindowDimensions();
+    windowWidth = windowWidth > 680 ? 680 : windowWidth
     return (
         <View style={{marginHorizontal: sizes.rem2 / 2, flexDirection: 'row', justifyContent: 'center'}}>
             {["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"].map((item) => {
