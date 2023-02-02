@@ -12,6 +12,7 @@ import {BrokerageTaskStatusType, BrokerageTaskType, DirectBrokeragesType} from "
 import {SendMessageCommand, SQSClient} from "@aws-sdk/client-sqs";
 import {S3Client, ListObjectsCommand} from "@aws-sdk/client-s3";
 import BaseTransformer from "./brokerage/base-transformer";
+import {sleep} from "./utils/sleep";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -47,10 +48,10 @@ const run = async (tokenFile?: string) => {
     const portSummaryStats = new PortfolioSummaryService(repository);
     // const finicitySrv = new Service(finicity, repository, finicityTransformer, portSummaryStats);
 
-    const baseTransformer = new BaseTransformer(repository);
-    await baseTransformer.computeHoldingsHistory(479);
+    // const baseTransformer = new BaseTransformer(repository);
+    // await baseTransformer.computeHoldingsHistory(479);
     // await repository.addTradingPostAccountGroup('555dd202-664e-4708-994a-2fc591d62b35', 'default', [479], 10117)
-    await portSummaryStats.computeAccountGroupSummary('555dd202-664e-4708-994a-2fc591d62b35');
+    // await portSummaryStats.computeAccountGroupSummary('555dd202-664e-4708-994a-2fc591d62b35');
 
 
     // await finicitySrv.remove("a0c8491b-1bac-4c25-b255-c656ee3cedd1", "421720186", DateTime.now(), {

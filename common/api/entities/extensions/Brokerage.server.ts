@@ -16,6 +16,7 @@ import Repository from "../../../brokerage/repository";
 import {DefaultConfig} from "../../../configuration";
 import {DateTime} from "luxon";
 import {SendMessageCommand} from '@aws-sdk/client-sqs';
+import {PortfolioSummaryService} from "../../../brokerage/portfolio-summary";
 
 const loginUrl = 'https://api.robinhood.com/oauth2/token/';
 const pingUrl = (id: string) => `https://api.robinhood.com/push/${id}/get_prompts_status`;
@@ -176,8 +177,8 @@ export default ensureServerExtensions<Brokerage>({
             const response = await fetch(pingUrl(requestId), {
                 method: "GET"
             });
+
             const body = await response.json();
-            console.log(body);
             if ('detail' in body) {
                 console.error("pinging the hood for challenge status: ", body.detail);
                 return {challengeStatus: RobinhoodChallengeStatus.Unknown}
@@ -202,8 +203,13 @@ export default ensureServerExtensions<Brokerage>({
         // Change TP account ID to hidden and publish event to remove account
         const {pgp, pgClient, sqsClient} = await init;
         const brokerageRepo = new Repository(pgClient, pgp);
-        const tpAccount = await brokerageRepo.getTradingPostBrokerageAccount(req.body.accountId);
+        const tpAccounts = await brokerageRepo.getTradingPostBrokerageAccounts(req.extra.userId);
+        if (tpAccounts.length <= 0) return {}
 
+        const tpAccount = tpAccounts.find(tp => tp.id === req.body.accountId);
+        if (!tpAccount) return {};
+
+        await brokerageRepo.deleteTradingPostBrokerageAccounts([req.body.accountId]);
         await sqsClient.send(new SendMessageCommand({
             MessageBody: JSON.stringify({
                 status: BrokerageTaskStatusType.Pending,
@@ -221,8 +227,12 @@ export default ensureServerExtensions<Brokerage>({
             DelaySeconds: 0,
             QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
         }));
+        
+        if (tpAccounts.length <= 1) return {}
 
-        await brokerageRepo.scheduleTradingPostAccountForDeletion(req.body.accountId);
+        const portSummary = new PortfolioSummaryService(brokerageRepo);
+        await portSummary.computeAccountGroupSummary(req.extra.userId);
+
         return {};
     },
     createIbkrAccounts: async (req) => {
