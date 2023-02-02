@@ -281,6 +281,10 @@ makeRoute(baseFormat, function (req) {
                     internalHandler = entity.internal[req.params.action];
                     extensionHandler = entity.internal.extensions[req.params.action];
                     if (!(req.params.action !== "extensions" && internalHandler)) return [3 /*break*/, 8];
+                    //TODO: Eventually this should be made more modular/ as "middleware"
+                    if (entity.constructor.name === UserApi_1.default.constructor.name && req.params.action === "update") {
+                        delete req.body.profile_url;
+                    }
                     settings = {
                         user_id: token.sub,
                         data: req.body,

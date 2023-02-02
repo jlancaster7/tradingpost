@@ -187,6 +187,10 @@ makeRoute(baseFormat, (req) => {
         const internalHandler = entity.internal[req.params.action as keyof (typeof entity)["internal"]];
         const extensionHandler = entity.internal.extensions[req.params.action]
         if (req.params.action !== "extensions" && internalHandler) {
+            //TODO: Eventually this should be made more modular/ as "middleware"
+            if ((entity as any).constructor.name === UserApi.constructor.name && req.params.action === "update") {
+                delete req.body.profile_url;
+            }
 
             const settings: RequestSettings<any> = {
                 user_id: token.sub,

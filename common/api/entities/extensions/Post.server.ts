@@ -50,7 +50,7 @@ const newFeedQueryTemplate = (async () =>
   await streamToString((
     await client.send(new GetObjectCommand({
       Bucket: s3Bucket,
-      Key: "post-query-templates/feedv7.json",
+      Key: "post-query-templates/feedv8.json",
     }))).Body))()
 const platformQueryTemplate = (async () =>
   await streamToString((
@@ -170,6 +170,7 @@ const newFeedQuery = async (data: Exclude<Parameters<(typeof PostApi)["extension
     queryString = queryString.replace(new RegExp("\\${" + k + "}", "g"), JSON.stringify(dataToReplace))
 
   });
+  
   return JSON.parse(queryString);
 }
 const multipartFeedQuery = async (data: Exclude<Parameters<(typeof PostApi)["extensions"]["feed"]>["0"]["data"], undefined>) => {
@@ -436,7 +437,7 @@ export const createNewFeedQuery = async (subscriptions: string[], blocks: string
     });
     platformQueries.push(platformQueryPart);
   }
-  return newFeedQuery({platformQuery: platformQueries})
+  return newFeedQuery({platformQuery: platformQueries, subscriptions})
 }
 
 export const CreateMultiTermQuery = (searchTerms: Record<string, string | number | (string | number)[]>, subscriptions: string[], blocks: string[]) => {
