@@ -7,7 +7,7 @@
     "@aws-sdk/client-s3": "^3.261.0",
     "@aws-sdk/client-ssm": "^3.110.0",
     "@sendgrid/mail": "^7.7.0",
-    "@tradingpost/common": "file:../../common",
+    "@tradingpost/common": "^1.9.3",
     "@types/express": "^4.17.13",
     "@types/node-fetch": "^2.6.2",
     "body-parser": "^1.20.0",
@@ -33,7 +33,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "npx ts-node ./index.ts",
+    "start": "node ./",
     "dev": "tsc -b ../../common && tsc && node ./",
     "deploy": "npm run pre-publish && tsc && eb deploy",
     "pre-publish": "npm uninstall @tradingpost/common && npm install @tradingpost/common",

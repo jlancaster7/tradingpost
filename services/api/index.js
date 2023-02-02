@@ -54,7 +54,7 @@ var routes_api_beta_1 = __importDefault(require("./routes-api-beta"));
 globalThis["fetch"] = node_fetch_1.default;
 //fromWebToken()
 var app = (0, express_1.default)();
-var port = process.env.PORT || 8082; // default port to listen
+var port = process.env.PORT || 8080; // default port to listen
 app.get("/", healthcheck_1.healthCheck);
 app.use((0, cors_1.default)());
 //TODO: chage this to something reasonable 
