@@ -22,14 +22,17 @@ custom:
       - 'puppeteer-core'
     exclude:
       - pg-native
+  brokerage-queue:
+    dev: arn:aws:sqs:us-east-1:670171407375:brokerage-task-dev-queue
+    production: arn:aws:sqs:us-east-1:670171407375:brokerage-task-queue
 
 provider:
   stage: production
   name: aws
   architecture: x86_64
   environment:
-    CONFIGURATION_ENV: production
-    NODE_ENV: production
+    CONFIGURATION_ENV: development
+    NODE_ENV: development
   tags:
     service: tradingpost-background-job
   runtime: nodejs16.x
@@ -52,13 +55,14 @@ functions:
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1024
-    events:
-      - schedule:
-          rate: cron(0 11 ? * MON-FRI *) # 7:00 AM EDT
-          enabled: true
-      - schedule:
-          rate: cron(0 10 ? * MON-FRI *) # 7:00 AM EST
-          enabled: true
+    reservedConcurrency: 0
+  #    events:
+  #      - schedule:
+  #          rate: cron(0 11 ? * MON-FRI *) # 7:00 AM EDT
+  #          enabled: true
+  #      - schedule:
+  #          rate: cron(0 10 ? * MON-FRI *) # 7:00 AM EST
+  #          enabled: true
 
   ###### Brokerage Task Runner
   brokerage-task-runner:
@@ -67,10 +71,11 @@ functions:
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1024
-    reservedConcurrency: 5
+    reservedConcurrency: 1
     events:
       - sqs:
-          arn: arn:aws:sqs:us-east-1:670171407375:brokerage-task-queue
+
+          arn: ${self:custom.brokerage-queue.${opt:stage}}
           batchSize: 1
 
   ###### Accumulate Securities Metadata
@@ -80,20 +85,20 @@ functions:
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1024
-    reservedConcurrency: 1
-    events:
-      - schedule:
-          rate: cron(20 20 ? * MON-FRI *) # 4:20 PM EDT
-          enabled: true
-      - schedule:
-          rate: cron(20 19 ? * MON-FRI *) # 4:20 PM EST
-          enabled: true
-      - schedule:
-          rate: cron(0 12 ? * MON-FRI *) # 8:00 AM EDT
-          enabled: true
-      - schedule:
-          rate: cron(0 11 ? * MON-FRI *) # 8:00 AM EST
-          enabled: true
+    reservedConcurrency: 0
+  #    events:
+  #      - schedule:
+  #          rate: cron(20 20 ? * MON-FRI *) # 4:20 PM EDT
+  #          enabled: true
+  #      - schedule:
+  #          rate: cron(20 19 ? * MON-FRI *) # 4:20 PM EST
+  #          enabled: true
+  #      - schedule:
+  #          rate: cron(0 12 ? * MON-FRI *) # 8:00 AM EDT
+  #          enabled: true
+  #      - schedule:
+  #          rate: cron(0 11 ? * MON-FRI *) # 8:00 AM EST
+  #          enabled: true
 
   ###### Add Exchange Holidays
   add-holidays:
@@ -101,12 +106,12 @@ functions:
     description: Ingests market holidays once a year
     logRetentionInDays: 14
     timeout: 300
-    reservedConcurrency: 1
+    reservedConcurrency: 0
     memorySize: 1024
-    events:
-      - schedule:
-          rate: cron(0 0 1 1 ? *)
-          enabled: true
+  #    events:
+  #      - schedule:
+  #          rate: cron(0 0 1 1 ? *)
+  #          enabled: true
 
   ###### Collect Intraday-Pricing for Securities
   intraday-pricing:
@@ -114,15 +119,15 @@ functions:
     description: Ingests intraday pricing
     logRetentionInDays: 14
     timeout: 600
-    reservedConcurrency: 1
+    reservedConcurrency: 0
     memorySize: 1024
-    events:
-      - schedule:
-          rate: cron(* 12-20 ? * MON-FRI *)
-          enabled: true
-      - schedule:
-          rate: cron(2 20 ? * MON-FRI *)
-          enabled: true
+  #    events:
+  #      - schedule:
+  #          rate: cron(* 12-20 ? * MON-FRI *)
+  #          enabled: true
+  #      - schedule:
+  #          rate: cron(2 20 ? * MON-FRI *)
+  #          enabled: true
 
   ###### Collect End Of Day Pricing for Securities(Reconcile 4pm close price)
   eod-pricing:
@@ -130,28 +135,28 @@ functions:
     description: Ingests pricing for securities after market close & allow for 15min delay to kick in
     logRetentionInDays: 14
     timeout: 600
-    reservedConcurrency: 1
+    reservedConcurrency: 0
     memorySize: 1024
-    events:
-      - schedule:
-          rate: cron(20 20 ? * MON-FRI *)
-          enabled: true
-      - schedule:
-          rate: cron(20 19 ? * MON-FRI *)
-          enabled: true
+  #    events:
+  #      - schedule:
+  #          rate: cron(20 20 ? * MON-FRI *)
+  #          enabled: true
+  #      - schedule:
+  #          rate: cron(20 19 ? * MON-FRI *)
+  #          enabled: true
 
   ###### Remove old securities
   security-pruning:
     handler: market-data/security-pruning.run
     description: Prunes security data
-    reservedConcurrency: 1
+    reservedConcurrency: 0
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
-    events:
-      - schedule:
-          rate: cron(0 7 ? * MON-FRI *)
-          enabled: true
+  #    events:
+  #      - schedule:
+  #          rate: cron(0 7 ? * MON-FRI *)
+  #          enabled: true
 
   # ============== Social Media Lambdas ==============
 
@@ -162,14 +167,14 @@ functions:
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
-    reservedConcurrency: 1
-    events:
-      - schedule:
-          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7AM ET
-          enabled: true
-      - schedule:
-          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7PM ET
-          enabled: true
+    reservedConcurrency: 0
+  #    events:
+  #      - schedule:
+  #          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7AM ET
+  #          enabled: true
+  #      - schedule:
+  #          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7PM ET
+  #          enabled: true
 
   ###### Collect Substack Content
   substack:
@@ -178,14 +183,14 @@ functions:
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1600
-    reservedConcurrency: 1
-    events:
-      - schedule:
-          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7AM ET
-          enabled: true
-      - schedule:
-          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7PM ET
-          enabled: true
+    reservedConcurrency: 0
+  #    events:
+  #      - schedule:
+  #          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7AM ET
+  #          enabled: true
+  #      - schedule:
+  #          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7PM ET
+  #          enabled: true
 
   ###### Collect Twitter Content
   twitter:
@@ -194,11 +199,11 @@ functions:
     logRetentionInDays: 14
     timeout: 900
     memorySize: 1600
-    reservedConcurrency: 1
-    events:
-      - schedule:
-          rate: cron(*/5 * ? * MON-SUN *) # Run every 10 minutes every day
-          enabled: true
+    reservedConcurrency: 0
+  #    events:
+  #      - schedule:
+  #          rate: cron(*/1 * ? * MON-SUN *) # Run every 10 minutes every day
+  #          enabled: true
 
   ###### Collect YouTube Content
   youtube:
@@ -207,8 +212,8 @@ functions:
     logRetentionInDays: 14
     timeout: 600
     memorySize: 1024
-    reservedConcurrency: 1
-    events:
-      - schedule:
-          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7AM ET
-          enabled: true
+    reservedConcurrency: 0
+#    events:
+#      - schedule:
+#          rate: cron(0 * ? * MON-SUN *) # Run once a day at 7AM ET
+#          enabled: true

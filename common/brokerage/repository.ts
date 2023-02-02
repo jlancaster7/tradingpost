@@ -43,7 +43,7 @@ import {
     TradingPostCurrentHoldingsTableWithMostRecentHolding,
     SecurityTableWithLatestPriceRobinhoodId,
     TradingPostTransactionsByAccountGroup,
-    BrokerageTask
+    BrokerageTask, BrokerageTaskType, BrokerageTaskStatusType
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -72,6 +72,25 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             const repo = new Repository(t, this.pgp);
             await fn(repo);
         });
+    }
+
+    updateTask = async (taskId: number, params: { userId?: string, brokerage?: string, type?: BrokerageTaskType, date?: DateTime, brokerageUserId?: string, started?: DateTime, finished?: DateTime, status?: BrokerageTaskStatusType, error?: any, data?: any, messageId?: string }): Promise<void> => {
+        let query = `UPDATE brokerage_task
+                     SET `
+        let cnt = 1;
+        let paramPass: any = [];
+        Object.keys(params).forEach((key: string, idx: number) => {
+            // @ts-ignore
+            const val = params[key];
+            paramPass.push(val);
+            query += ` ${camelToSnakeCase(key)}=$${cnt}`
+            cnt++
+            if (idx < Object.keys(params).length - 1) query += ','
+        });
+
+        query += ` WHERE id = $` + (paramPass.length + 1)
+        paramPass.push(taskId);
+        await this.db.none(query, paramPass);
     }
 
     updateErrorStatusOfAccount = async (accountId: number, error: boolean, errorCode: number): Promise<void> => {
@@ -280,7 +299,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
-    getTradingPostBrokerageAccount = async (accountId: number): Promise<TradingPostBrokerageAccountsTable> => {
+    getTradingPostBrokerageAccount = async (accountId: number): Promise<TradingPostBrokerageAccountsTable | null> => {
         const query = `SELECT id,
                               user_id,
                               institution_id,
@@ -302,6 +321,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                        FROM tradingpost_brokerage_account
                        WHERE id = $1;`
         const result = await this.db.oneOrNone(query, [accountId])
+        if (!result) return null;
         return {
             name: result.name,
             status: result.status,
@@ -1328,6 +1348,18 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         await this.db.none(query, [accountIds])
     }
 
+    deleteTradingPostBrokerageData = async (accountId: number): Promise<void> => {
+        await this.db.none(`DELETE
+                            FROM tradingpost_current_holding
+                            where account_id = $1;`, [accountId]);
+        await this.db.none(`DELETE
+                            FROM tradingpost_historical_holding
+                            where account_id = $1;`, [accountId])
+        await this.db.none(`DELETE
+                            FROM tradingpost_transaction
+                            where account_id = $1;`, [accountId]);
+    }
+
     getTradingPostAccountGroups = async (userId: string): Promise<TradingPostAccountGroups[]> => {
         const query = `SELECT atg.id,
                               atg.account_group_id,
@@ -2007,12 +2039,12 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 BEGIN;
                     DELETE FROM TRADINGPOST_ACCOUNT_GROUP_STAT WHERE account_group_id IN ($1:list);
                     DELETE FROM ACCOUNT_GROUP_HPR WHERE account_group_id IN ($1:list);
-                    DELETE FROM _tradingpost_account_to_group WHERE account_id in ($1:list);
-                    DELETE FROM TRADINGPOST_ACCOUNT_GROUP WHERE id IN($1:list);
+                    DELETE FROM _TRADINGPOST_ACCOUNT_TO_GROUP WHERE account_id IN ($2:list);
+                    
                     DELETE FROM TRADINGPOST_HISTORICAL_HOLDING WHERE account_id IN ($2:list);
                     DELETE FROM TRADINGPOST_CURRENT_HOLDING WHERE account_id IN ($2:list);
                     DELETE FROM TRADINGPOST_TRANSACTION WHERE account_id IN ($2:list);
-                    DELETE FROM TRADINGPOST_BROKERAGE_ACCOUNT WHERE id IN ($1:list);
+                    DELETE FROM TRADINGPOST_BROKERAGE_ACCOUNT WHERE id IN ($2:list);
                 COMMIT;
                 `, [accountGroupIds, accountIds]);
     }
@@ -3324,13 +3356,14 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             brokerageTask.brokerage, brokerageTask.status, brokerageTask.type, brokerageTask.date, brokerageTask.brokerageUserId,
             brokerageTask.started, brokerageTask.finished, brokerageTask.data, brokerageTask.error, messageId
         ]);
+
         return insertResult.id;
     }
 
     scheduleTradingPostAccountForDeletion = async (accountId: number): Promise<void> => {
         const query = `UPDATE tradingpost_brokerage_account
                        SET hidden_for_deletion = TRUE
-                       WHERE id IN ($1);`
+                       WHERE id = $1;`
         await this.db.none(query, [accountId]);
     }
 }

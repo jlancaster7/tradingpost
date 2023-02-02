@@ -18,7 +18,7 @@ export interface IBrokerageRepository {
 
     getTradingPostBrokerageAccounts(userId: string): Promise<TradingPostBrokerageAccountsTable[]>
 
-    getTradingPostBrokerageAccount(accountId: number): Promise<TradingPostBrokerageAccountsTable>
+    getTradingPostBrokerageAccount(accountId: number): Promise<TradingPostBrokerageAccountsTable | null>
 
     getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(accountId: number): Promise<TradingPostCurrentHoldingsTableWithSecurity[]>
 
