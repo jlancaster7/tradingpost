@@ -6,7 +6,7 @@ export interface addSecurityPrice {
     low: number | null
     open: number | null
     price: number
-    time: Date
+    time: DateTime
     isEod: boolean
     isIntraday: boolean
 }
@@ -141,7 +141,6 @@ export interface getSecurityWithLatestPrice {
     high: number | null
     low: number | null
     open: number | null
-    eodId: number | null
     priceSource: PriceSourceType
 }
 

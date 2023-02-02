@@ -42,7 +42,7 @@ export default class Repository {
         await this.db.none(query);
     }
 
-    upsertSecuritiesPrices = async (securityPrices: addSecurityPrice[]) => {
+    upsertIntradayPrices = async (securityPrices: addSecurityPrice[]) => {
         if (securityPrices.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'security_id', prop: 'securityId'},
@@ -74,59 +74,48 @@ export default class Repository {
         await this.db.none(query);
     }
 
-    updatePricesById = async (securityPrices: updateSecurityPrice[]) => {
-        if (securityPrices.length <= 0) return
-        const cs = new this.pgp.helpers.ColumnSet([
-            {name: 'id', prop: 'id', cast: 'bigint'},
-            {name: 'security_id', prop: 'securityId', cast: 'bigint'},
-            {name: 'high', prop: 'high', cast: 'decimal'},
-            {name: 'low', prop: 'low', cast: 'decimal'},
-            {name: 'open', prop: 'open', cast: 'decimal'},
-            {name: 'price', prop: 'price', cast: 'decimal'},
-            {name: 'time', prop: 'time', cast: 'timestamptz'},
-            {name: 'is_eod', prop: 'isEod', cast: 'boolean'},
-            {name: 'is_intraday', prop: 'isIntraday', cast: 'boolean'}
-        ], {table: 'security_price'});
-
-        const query = this.pgp.helpers.update(securityPrices, cs) + ` WHERE v.id = t.id`
-        await this.db.none(query);
-    }
-
     getUsExchangeListedSecuritiesWithPricing = async (): Promise<getSecurityWithLatestPrice[]> => {
         const data = await this.db.query(`
-            WITH latest_pricing AS (SELECT sp.id,
-                                           sp.security_id,
+            WITH latest_pricing AS (SELECT sp.security_id,
                                            sp.time,
                                            sp.price,
-                                           sp."open",
+                                           sp.open,
                                            sp.low,
                                            sp.high
                                     FROM security_price sp
                                              INNER JOIN (SELECT security_id,
-                                                                max(time) time
-                                                         FROM security_price security_price
-                                                         WHERE time > NOW() - INTERVAL '5 Days'
+                                                                max(time) AS time
+                                                         FROM
+                                                             security_price security_price
+                                                         WHERE
+                                                             time >= date_trunc('day'
+                                                             , now()) - interval '4 day'
                                                            AND is_eod = TRUE
-                                                         GROUP BY security_id) AS max_prices
-                                                        ON
-                                                                    max_prices.security_id = sp.security_id
-                                                                AND max_prices.time = sp.time
+                                                         GROUP BY
+                                                             security_id) AS max_prices
+                                                        ON max_prices.security_id = sp.security_id
+                                                            AND max_prices.time = sp.time
                                     WHERE is_eod = TRUE)
-            SELECT s.id           AS security_id,
+            SELECT s.id AS security_id,
                    s.symbol,
-                   lp.time        AS time,
-                   lp.price       AS price,
-                   lp.high        AS high,
-                   lp.low         AS low,
-                   lp.open        AS open,
-                   lp.id          AS eod_id,
-                   s.price_source AS price_source
-            FROM SECURITY s
-                     LEFT JOIN
-                 latest_pricing lp ON
-                     s.id = lp.security_id
-            WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
-                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
+                   lp.time AS time,
+                lp.price AS price,
+                lp.high AS high,
+                lp.low AS low,
+                lp.open AS open,
+                s.price_source AS price_source
+            FROM
+                SECURITY s
+                LEFT JOIN latest_pricing lp
+            ON s.id = lp.security_id
+            WHERE
+                exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE'
+                , 'NASDAQ'
+                , 'New York Stock Exchange'
+                , 'NEW YORK STOCK EXCHANGE INC.'
+                , 'NYSE Arca'
+                , 'NYSE ARCA'
+                , 'NYSE MKT LLC')
               AND enable_utp = FALSE;`)
         return data.map((row: any) => {
             let obj: getSecurityWithLatestPrice = {
@@ -137,7 +126,6 @@ export default class Repository {
                 high: row.high,
                 low: row.low,
                 open: row.open,
-                eodId: row.eod_id,
                 priceSource: row.price_source
             }
             return obj
@@ -717,10 +705,7 @@ export default class Repository {
 
     getUsExchangeHolidays = async (): Promise<getUSExchangeHoliday[]> => {
         const data = await this.db.query(`
-            SELECT id,
-                   date,
-                   settlement_date,
-                   created_at
+            SELECT id, date, settlement_date, created_at
             FROM us_exchange_holiday;`)
         return data.map((row: any) => {
             let obj: getUSExchangeHoliday = {
@@ -735,10 +720,7 @@ export default class Repository {
 
     getCurrentAndFutureExchangeHolidays = async (): Promise<getUSExchangeHoliday[]> => {
         const data = await this.db.query(`
-            SELECT id,
-                   date,
-                   settlement_date,
-                   created_at
+            SELECT id, date, settlement_date, created_at
             FROM us_exchange_holiday;`)
         return data.map((row: any) => {
             let obj: getUSExchangeHoliday = {

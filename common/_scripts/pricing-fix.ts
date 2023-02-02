@@ -89,14 +89,14 @@ class PricingFix {
                         low: low,
                         high: high,
                         open: open,
-                        time: dt.toJSDate(),
+                        time: dt,
                         securityId: id,
                         isEod: false,
                         isIntraday: true
                     });
                 })
             }
-            await this.repository.upsertSecuritiesPrices(securityPrices)
+            await this.repository.upsertIntradayPrices(securityPrices)
         }
     }
 
@@ -182,7 +182,7 @@ class PricingFix {
                         low: low,
                         high: high,
                         open: open,
-                        time: dt.toJSDate(),
+                        time: dt,
                         isEod: true,
                         isIntraday: false
                     });
@@ -284,7 +284,7 @@ class PricingFix {
                         low: low,
                         high: high,
                         open: open,
-                        time: dt.toJSDate(),
+                        time: dt,
                         isEod: true,
                         isIntraday: false
                     });
@@ -319,6 +319,6 @@ class PricingFix {
     const iexCfg = await DefaultConfig.fromCacheOrSSM("iex");
 
     const pricingFix = new PricingFix(pgClient, pgp, iexCfg.key);
-    await pricingFix.iexHistorical();
+    await pricingFix.iexIntraday();
     console.log("Finished")
 })()

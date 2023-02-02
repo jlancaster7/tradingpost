@@ -13,6 +13,7 @@ import {SendMessageCommand, SQSClient} from "@aws-sdk/client-sqs";
 import {S3Client, ListObjectsCommand} from "@aws-sdk/client-s3";
 import BaseTransformer from "./brokerage/base-transformer";
 import {sleep} from "./utils/sleep";
+import {sort} from "mathjs";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -41,11 +42,17 @@ const run = async (tokenFile?: string) => {
         database: postgresConfiguration.database
     });
 
+    const n = DateTime.now();
+    const tm = n.plus({day: 1});
+    const arr = [n, tm];
+    const sorted = arr.sort((a, b) => a.toUnixInteger() - b.toUnixInteger())
+    console.log(sorted)
+
     // const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
-    const repository = new Repository(pgClient, pgp);
+    // const repository = new Repository(pgClient, pgp);
     // const finicity = new FinicityApi.default(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
     // const finicityTransformer = new Transformer(repository);
-    const portSummaryStats = new PortfolioSummaryService(repository);
+    // const portSummaryStats = new PortfolioSummaryService(repository);
     // const finicitySrv = new Service(finicity, repository, finicityTransformer, portSummaryStats);
 
     // const baseTransformer = new BaseTransformer(repository);

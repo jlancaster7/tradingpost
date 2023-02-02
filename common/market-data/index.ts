@@ -1,6 +1,6 @@
 import Repository from "./repository"
 import {addSecurityPrice, getSecurityWithLatestPrice, updateSecurityPrice} from "./interfaces";
-import IEX, {GetIntraDayPrices, GetOHLC, PermissionRequiredError} from "../iex";
+import IEX, {GetIntraDayPrices, PermissionRequiredError} from "../iex";
 import {DateTime} from "luxon";
 
 export default class MarketData {
@@ -15,113 +15,117 @@ export default class MarketData {
     }
 
     ingestEodOfDayPricing = async () => {
-        let securitiesWithEodAndLatestPrice = await this.repository.getUsExchangeListedSecuritiesWithPricing();
-        securitiesWithEodAndLatestPrice = securitiesWithEodAndLatestPrice.filter(sec => sec.priceSource === 'IEX');
-        const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securitiesWithEodAndLatestPrice, 100);
-
-        let newEodPrices: addSecurityPrice[] = [];
-        let oldEodPrices: updateSecurityPrice[] = [];
-
-        for (let i = 0; i < securityGroups.length; i++) {
-            const securityGroup = securityGroups[i];
-            const symbols = securityGroup.map(sec => sec.symbol);
-
-            try {
-                const response = await this.iex.bulk(symbols, ["ohlc"]);
-                [newEodPrices, oldEodPrices] = await this.processEndOfDayPricing(response, securityGroup, newEodPrices, oldEodPrices);
-            } catch (err) {
-                if (err instanceof PermissionRequiredError) {
-                    [newEodPrices, oldEodPrices] = await this.resolveEodPricing(securityGroup, newEodPrices, oldEodPrices)
-                    continue;
-                }
-                console.error(`could not fetch data for symbols=${symbols.join(',')} err=${err}`)
-            }
-        }
-
-        try {
-            await this.repository.updatePricesById(oldEodPrices)
-        } catch (err) {
-            console.error("updating security prices for eod pricing ", err)
-        }
-
-        try {
-            await this.repository.insertSecuritiesPrices(newEodPrices)
-        } catch (err) {
-            console.error("inserting security prices for eod pricing ", err)
-        }
+        // let securitiesWithEodAndLatestPrice = await this.repository.getUsExchangeListedSecuritiesWithPricing();
+        // securitiesWithEodAndLatestPrice = securitiesWithEodAndLatestPrice.filter(sec => sec.priceSource === 'IEX');
+        // const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securitiesWithEodAndLatestPrice, 100);
+        //
+        // let newEodPrices: addSecurityPrice[] = [];
+        // let oldEodPrices: updateSecurityPrice[] = [];
+        //
+        // let runningJobs: Promise<any>[] = [];
+        //
+        // for (let i = 0; i < securityGroups.length; i++) {
+        //     const securityGroup = securityGroups[i];
+        //     runningJobs.push((async () => {
+        //         const symbols = securityGroup.map(sec => sec.symbol);
+        //         try {
+        //             const response = await this.iex.bulk(symbols, ["ohlc"]);
+        //             const [newEodP, oldEodP] = await this.processEndOfDayPricing(response, securityGroup, newEodPrices, oldEodPrices);
+        //             newEodPrices = [...newEodPrices, ...newEodP];
+        //             oldEodPrices = [...oldEodPrices, ...oldEodP];
+        //         } catch (err) {
+        //             if (err instanceof PermissionRequiredError) {
+        //                 const [newEodP, oldEodP] = await this.resolveEodPricing(securityGroup, newEodPrices, oldEodPrices)
+        //                 newEodPrices = [...newEodPrices, ...newEodP];
+        //                 oldEodPrices = [...oldEodPrices, ...oldEodP];
+        //                 return
+        //             }
+        //
+        //             //if(err instanceof ) If calling IEX too much, check here...
+        //             console.error(`could not fetch data for symbols=${symbols.join(',')} err=${err}`)
+        //         }
+        //     })());
+        //
+        //     if (runningJobs.length == 3) {
+        //         await Promise.all(runningJobs);
+        //         runningJobs = [];
+        //     }
+        // }
+        //
+        // if (runningJobs.length > 0) await Promise.all(runningJobs);
     }
 
     private processEndOfDayPricing = async (response: Record<string, any>, securityGroup: getSecurityWithLatestPrice[], newEodPrices: addSecurityPrice[], oldEodPrices: updateSecurityPrice[]): Promise<[addSecurityPrice[], updateSecurityPrice[]]> => {
-        const todayAt400pm = DateTime.now().setZone("America/New_York").set({
-            minute: 0,
-            hour: 16,
-            second: 0,
-            millisecond: 0
-        });
-
-        const todayAt930am = DateTime.now().setZone("America/New_York").set({
-            minute: 30,
-            hour: 9,
-            second: 0,
-            millisecond: 0
-        });
-
-        for (let j = 0; j < securityGroup.length; j++) {
-            const sec = securityGroup[j];
-            let eodPrice = {
-                id: sec.eodId,
-                price: sec.price,
-                low: sec.low,
-                high: sec.high,
-                open: sec.open,
-                isEod: true,
-                isIntraday: false,
-                securityId: sec.securityId,
-                time: todayAt400pm,
-                isNew: true
-            }
-
-            if (sec.time && sec.time.setZone("America/New_York").toUnixInteger() >= todayAt930am.toUnixInteger()) {
-                eodPrice.isNew = false;
-            }
-
-            const iexSecurity = response[sec.symbol];
-            if (!iexSecurity) {
-                [newEodPrices, oldEodPrices] = this.validateIsEodPrice(sec.symbol, eodPrice, newEodPrices, oldEodPrices);
-                continue
-            }
-
-            const iexSecurityOhlc = iexSecurity['ohlc'] as GetOHLC;
-            if (!iexSecurityOhlc) {
-                [newEodPrices, oldEodPrices] = this.validateIsEodPrice(sec.symbol, eodPrice, newEodPrices, oldEodPrices);
-                continue
-            }
-
-            if (!eodPrice.price && !iexSecurityOhlc.close) continue;
-
-            const close = iexSecurityOhlc.close ? iexSecurityOhlc.close.price : eodPrice.price;
-            if (eodPrice.isNew) newEodPrices = [...newEodPrices, {
-                securityId: sec.securityId,
-                price: close!,
-                low: iexSecurityOhlc.low ? iexSecurityOhlc.low : close,
-                isEod: true,
-                isIntraday: false,
-                high: iexSecurityOhlc.high ? iexSecurityOhlc.high : close,
-                time: todayAt400pm.toJSDate(),
-                open: iexSecurityOhlc.open.price ? iexSecurityOhlc.open.price : close,
-            }]
-            else oldEodPrices = [...oldEodPrices, {
-                id: eodPrice.id!,
-                securityId: sec.securityId,
-                price: close!,
-                low: iexSecurityOhlc.low ? iexSecurityOhlc.low : close,
-                isEod: true,
-                isIntraday: false,
-                high: iexSecurityOhlc.high ? iexSecurityOhlc.high : close,
-                time: todayAt400pm.toJSDate(),
-                open: iexSecurityOhlc.open.price ? iexSecurityOhlc.open.price : close,
-            }]
-        }
+        // const todayAt400pm = DateTime.now().setZone("America/New_York").set({
+        //     minute: 0,
+        //     hour: 16,
+        //     second: 0,
+        //     millisecond: 0
+        // });
+        //
+        // const todayAt930am = DateTime.now().setZone("America/New_York").set({
+        //     minute: 30,
+        //     hour: 9,
+        //     second: 0,
+        //     millisecond: 0
+        // });
+        //
+        // for (let j = 0; j < securityGroup.length; j++) {
+        //     const sec = securityGroup[j];
+        //     let eodPrice = {
+        //         id: sec.eodId,
+        //         price: sec.price,
+        //         low: sec.low,
+        //         high: sec.high,
+        //         open: sec.open,
+        //         isEod: true,
+        //         isIntraday: false,
+        //         securityId: sec.securityId,
+        //         time: todayAt400pm,
+        //         isNew: true
+        //     }
+        //
+        //     if (sec.time && sec.time.setZone("America/New_York").toUnixInteger() >= todayAt930am.toUnixInteger()) {
+        //         eodPrice.isNew = false;
+        //     }
+        //
+        //     const iexSecurity = response[sec.symbol];
+        //     if (!iexSecurity) {
+        //         [newEodPrices, oldEodPrices] = this.validateIsEodPrice(sec.symbol, eodPrice, newEodPrices, oldEodPrices);
+        //         continue
+        //     }
+        //
+        //     const iexSecurityOhlc = iexSecurity['ohlc'] as GetOHLC;
+        //     if (!iexSecurityOhlc) {
+        //         [newEodPrices, oldEodPrices] = this.validateIsEodPrice(sec.symbol, eodPrice, newEodPrices, oldEodPrices);
+        //         continue
+        //     }
+        //
+        //     if (!eodPrice.price && !iexSecurityOhlc.close) continue;
+        //
+        //     const close = iexSecurityOhlc.close ? iexSecurityOhlc.close.price : eodPrice.price;
+        //     if (eodPrice.isNew) newEodPrices = [...newEodPrices, {
+        //         securityId: sec.securityId,
+        //         price: close!,
+        //         low: iexSecurityOhlc.low ? iexSecurityOhlc.low : close,
+        //         isEod: true,
+        //         isIntraday: false,
+        //         high: iexSecurityOhlc.high ? iexSecurityOhlc.high : close,
+        //         time: todayAt400pm.toJSDate(),
+        //         open: iexSecurityOhlc.open.price ? iexSecurityOhlc.open.price : close,
+        //     }]
+        //     else oldEodPrices = [...oldEodPrices, {
+        //         id: eodPrice.id!,
+        //         securityId: sec.securityId,
+        //         price: close!,
+        //         low: iexSecurityOhlc.low ? iexSecurityOhlc.low : close,
+        //         isEod: true,
+        //         isIntraday: false,
+        //         high: iexSecurityOhlc.high ? iexSecurityOhlc.high : close,
+        //         time: todayAt400pm.toJSDate(),
+        //         open: iexSecurityOhlc.open.price ? iexSecurityOhlc.open.price : close,
+        //     }]
+        // }
 
         return [newEodPrices, oldEodPrices];
     }
@@ -129,72 +133,92 @@ export default class MarketData {
     ingestPricing = async () => {
         let securities = await this.repository.getUsExchangeListedSecuritiesWithPricing();
         securities = securities.filter(sec => sec.priceSource === 'IEX')
+
         const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
-        let newSecurityPrices: addSecurityPrice[] = [];
-        let newEodPrices: addSecurityPrice[] = [];
-        let oldEodPrices: updateSecurityPrice[] = [];
+
+        let intradayPrices: addSecurityPrice[] = [];
+        let eodPrices: addSecurityPrice[] = []
+        let runningTasks: Promise<any>[] = [];
 
         for (let i = 0; i < securityGroups.length; i++) {
             const securityGroup = securityGroups[i];
-            const symbols = securityGroup.map(sec => sec.symbol);
-            try {
-                const response = await this.iex.bulk(symbols, ["intraday-prices"], {
-                    chartIEXOnly: true,
-                    chartIEXWhenNull: true
-                });
-                [newSecurityPrices, newEodPrices, oldEodPrices] = await this.processIntradayPrices(response, securityGroup, newSecurityPrices, newEodPrices, oldEodPrices);
-            } catch (err) {
-                if (err instanceof PermissionRequiredError) {
-                    [newSecurityPrices, newEodPrices, oldEodPrices] = await this.resolve(securityGroup, newSecurityPrices, newEodPrices, oldEodPrices)
-                    continue
+            runningTasks.push((async () => {
+                const symbols = securityGroup.map(sec => sec.symbol);
+                try {
+                    // Try/Catch for IEX Errors(Too many Requests/Permission/etc...) -- dealio hereio
+                    // Add in retries and such...
+                    const response = await this.iex.bulk(symbols, ["intraday-prices"], {
+                        chartIEXOnly: true,
+                        chartIEXWhenNull: true
+                    });
+
+                    const [intraday, eod] = await this._process(securityGroup, response);
+                    intradayPrices = [...intradayPrices, ...intraday]
+                    eodPrices = [...eodPrices, ...eod];
+
+                } catch (err) {
+                    if (err instanceof PermissionRequiredError) {
+                        for (let i = 0; i < securityGroup.length; i++) {
+                            const sec = securityGroup[i];
+                            try {
+                                const response = await this.iex.bulk([sec.symbol], ["intraday-prices"], {
+                                    chartIEXOnly: true,
+                                    chartIEXWhenNull: true
+                                });
+                                const [intraday, eod] = await this._process(securityGroup, response);
+                                intradayPrices = [...intradayPrices, ...intraday]
+                                eodPrices = [...eodPrices, ...eod];
+                            } catch (err) {
+                                if (err instanceof PermissionRequiredError) {
+                                    await this.repository.updateSecurityUtp(sec.securityId, true);
+                                    continue;
+                                }
+                                console.error(`fetching intraday prices from iex for symbol=${sec.symbol}`)
+                            }
+                        }
+                        return
+                    }
+                    console.error(`could not fetch prices from IEX symbols=${symbols.join(',')} error=${err}`)
                 }
-                console.error(`could not fetch prices from IEX symbols=${symbols.join(',')} error=${err}`)
+            })());
+
+            if (runningTasks.length === 8) {
+                await Promise.all(runningTasks);
+                try {
+                    await this.repository.upsertEodPrices(eodPrices)
+                } catch (e) {
+                    console.error(e)
+                    console.error("eod price")
+                }
+
+                try {
+                    await this.repository.upsertIntradayPrices(intradayPrices);
+                } catch (e) {
+                    console.error(e)
+                    console.log("intraday price")
+                }
+
+                eodPrices = [];
+                intradayPrices = [];
+                runningTasks = [];
             }
         }
 
+        if (runningTasks.length > 0) await Promise.all(runningTasks)
+
         try {
-            await this.repository.upsertSecuritiesPrices(newSecurityPrices);
+            await this.repository.upsertEodPrices(eodPrices)
         } catch (e) {
-            console.error("could not upsert security prices ", e)
+            console.error(e)
+            console.error("eod price")
         }
 
         try {
-            await this.repository.insertSecuritiesPrices(newEodPrices)
+            await this.repository.upsertIntradayPrices(intradayPrices);
         } catch (e) {
-            console.error("could not insert new eod security prices ", e)
+            console.error(e)
+            console.log("intraday price")
         }
-
-        try {
-            await this.repository.updatePricesById(oldEodPrices)
-        } catch (e) {
-            console.error("could not update eod security prices ", e)
-        }
-    }
-
-    validateIsEodPrice = (symbol: string, eodPrice: any, newEodPrices: addSecurityPrice[], oldEodPrices: updateSecurityPrice[]): [addSecurityPrice[], updateSecurityPrice[]] => {
-        if (!eodPrice.id) console.error(`could not find security/symbol -- symbol=${symbol}`)
-        else if (eodPrice.isNew) newEodPrices = [...newEodPrices, {
-            price: eodPrice.price!,
-            high: eodPrice.high,
-            low: eodPrice.low,
-            isEod: true,
-            isIntraday: false,
-            open: eodPrice.open,
-            time: eodPrice.time.toJSDate(),
-            securityId: eodPrice.securityId
-        }]
-        else oldEodPrices = [...oldEodPrices, {
-                id: eodPrice.id,
-                price: eodPrice.price!,
-                high: eodPrice.high,
-                low: eodPrice.low,
-                isEod: true,
-                isIntraday: false,
-                open: eodPrice.open,
-                time: eodPrice.time.toJSDate(),
-                securityId: eodPrice.securityId
-            }]
-        return [newEodPrices, oldEodPrices]
     }
 
     resolveEodPricing = async (securityGroup: getSecurityWithLatestPrice[], newEodPrices: addSecurityPrice[], oldEodPrices: updateSecurityPrice[]): Promise<[addSecurityPrice[], updateSecurityPrice[]]> => {
@@ -215,113 +239,115 @@ export default class MarketData {
         return [newEodPrices, oldEodPrices]
     }
 
-    resolve = async (securityGroup: getSecurityWithLatestPrice[], newSecurityPrices: addSecurityPrice[], newEodPrices: addSecurityPrice[], oldEodPrices: updateSecurityPrice[]): Promise<[addSecurityPrice[], addSecurityPrice[], updateSecurityPrice[]]> => {
-        for (let i = 0; i < securityGroup.length; i++) {
-            const sec = securityGroup[i];
-            try {
-                const response = await this.iex.bulk([sec.symbol], ["intraday-prices"], {
-                    chartIEXOnly: true,
-                    chartIEXWhenNull: true
-                });
-
-                [newSecurityPrices, newEodPrices, oldEodPrices] = await this.processIntradayPrices(response, [sec], newSecurityPrices, newEodPrices, oldEodPrices)
-            } catch (err) {
-                if (err instanceof PermissionRequiredError) {
-                    await this.repository.updateSecurityUtp(sec.securityId, true);
-                    continue
-                }
-                console.error(`fetching intraday prices from iex for symbol=${sec.symbol}`)
-            }
-        }
-
-        return [newSecurityPrices, newEodPrices, oldEodPrices]
-    }
-
-    private processIntradayPrices = async (response: Record<string, any>, securityGroup: getSecurityWithLatestPrice[], newSecurityPrices: addSecurityPrice[], newEodPrices: addSecurityPrice[], oldEodPrices: updateSecurityPrice[]): Promise<[addSecurityPrice[], addSecurityPrice[], updateSecurityPrice[]]> => {
-        const today930 = DateTime.now().setZone("America/New_York").set({
-            hour: 9,
-            minute: 30,
+    _process = async (securityGroup: getSecurityWithLatestPrice[], response: Record<string, any>) => {
+        const currentTime = DateTime.now().setZone("America/New_York").set({
+            hour: 16,
             second: 0,
             millisecond: 0
         });
 
+        let eodPrices: addSecurityPrice[] = [];
+        let intradayPrices: addSecurityPrice[] = [];
+
         for (let j = 0; j < securityGroup.length; j++) {
             const security = securityGroup[j];
-            let eodPrice = {
-                id: security.eodId,
-                securityId: security.securityId,
-                price: security.price,
-                time: today930,
-                high: security.price,
-                low: security.price,
-                open: security.price,
-                close: security.price,
-                isIntraday: false,
-                isEod: true,
-                isNew: true
-            }
-
-            if (security.time && security.time.setZone("America/New_York").toUnixInteger() >= today930.toUnixInteger()) {
-                eodPrice.isNew = false;
-                eodPrice.time = security.time.setZone("America/New_York");
-            }
 
             const iexSecurity = response[security.symbol];
             if (!iexSecurity) {
-                [newEodPrices, oldEodPrices] = this.validateIsEodPrice(security.symbol, eodPrice, newEodPrices, oldEodPrices)
+                // Check to see if we have made a record yet for today... for is_eod, if not, then do it with curr time
+                if (!security.time) continue;
+                if (security.time.day === currentTime.day) continue;
+                if (!security.price) continue;
+
+                // Rolling Yesterday Forward
+                eodPrices.push({
+                    price: security.price,
+                    high: security.high,
+                    low: security.low,
+                    isEod: true,
+                    isIntraday: false,
+                    open: security.open,
+                    time: currentTime,
+                    securityId: security.securityId
+                })
+
                 continue;
             }
 
             const iexSecurityPrices = iexSecurity['intraday-prices'] as GetIntraDayPrices[];
             if (!iexSecurityPrices || iexSecurityPrices.length <= 0) {
-                [newEodPrices, oldEodPrices] = this.validateIsEodPrice(security.symbol, eodPrice, newEodPrices, oldEodPrices)
+                if (!security.time) continue;
+                if (security.time.day === currentTime.day) continue;
+                if (!security.price) continue;
+
+                // Rolling Yesterday Forward
+                eodPrices.push({
+                    price: security.price,
+                    high: security.high,
+                    low: security.low,
+                    isEod: true,
+                    isIntraday: false,
+                    open: security.open,
+                    time: currentTime,
+                    securityId: security.securityId
+                })
                 continue;
             }
 
-            let latestTime: DateTime | null = null;
-            if (security.time) latestTime = security.time.setZone("America/New_York")
+            const iexSecurityPricesSorted = iexSecurityPrices
+                .map(p => {
+                    return {
+                        ...p, parsedTime: DateTime.fromFormat(`${p.date} ${p.minute}`, "yyyy-LL-dd HH:mm", {
+                            zone: "America/New_York"
+                        })
+                    };
+                })
+                .filter(p => p.parsedTime.isValid)
+                .sort((a, b) => a.parsedTime.toUnixInteger() - b.parsedTime.toUnixInteger());
 
-            iexSecurityPrices.forEach(iexSecPrice => {
-                const t = DateTime.fromFormat(`${iexSecPrice.date} ${iexSecPrice.minute}`, "yyyy-LL-dd HH:mm", {
-                    zone: "America/New_York"
-                });
+            let changed = false;
+            let securityPrice = security.price;
+            iexSecurityPricesSorted.forEach(p => {
+                if (!security.time) {
+                    security.time = p.parsedTime;
+                } else if (security.time.toUnixInteger() > p.parsedTime.toUnixInteger()) return;
 
-                if (!t.isValid) return;
-                if (t.hour === 16) return;
-                if (latestTime && latestTime.toUnixInteger() > t.toUnixInteger()) return;
-                if (security.price === null && iexSecPrice.close === null) return;
+                changed = true;
+                security.time = p.parsedTime
+                if (p.close) securityPrice = p.close
+                security.low = p.low
+                security.high = p.high
+                security.open = p.open
 
-                let high = iexSecPrice.high,
-                    low = iexSecPrice.low,
-                    close = (iexSecPrice.close !== null ? iexSecPrice.close : security.price)!,
-                    open = iexSecPrice.open;
 
-                if (high === null) high = close
-                if (low === null) low = close
-                if (open === null) open = close
-
-                newSecurityPrices = [...newSecurityPrices, {
-                    securityId: security.securityId,
-                    high: high,
-                    low: low,
-                    open: open,
-                    price: close,
-                    time: t.toJSDate(),
+                if (!p.close) return
+                intradayPrices.push({
+                    price: p.close,
+                    open: p.open,
+                    time: p.parsedTime,
+                    high: p.high,
+                    low: p.low,
                     isEod: false,
+                    securityId: security.securityId,
                     isIntraday: true
-                }]
-
-                eodPrice.time = t;
-                eodPrice.price = close;
-                eodPrice.open = open;
-                eodPrice.close = close;
-                eodPrice.low = low;
-                eodPrice.high = high;
-                [newEodPrices, oldEodPrices] = this.validateIsEodPrice(security.symbol, eodPrice, newEodPrices, oldEodPrices)
+                })
             });
+
+            if (!changed || !security.time || !securityPrice) continue;
+
+            eodPrices.push({
+                price: securityPrice,
+                low: security.low,
+                high: security.high,
+                open: security.open,
+                time: security.time,
+                isIntraday: false,
+                isEod: true,
+                securityId: security.securityId
+            })
         }
 
-        return [newSecurityPrices, newEodPrices, oldEodPrices]
+        return [intradayPrices, eodPrices];
     }
 }
 

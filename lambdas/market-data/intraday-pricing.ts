@@ -28,6 +28,9 @@ pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
 let pgClient: IDatabase<any>;
 let pgp: IMain;
 let iex: IEX;
+let repository: Repository;
+let marketData: MarketData;
+let marketHolidays: Holidays;
 
 const runLambda = async () => {
     if (!pgClient || !pgp) {
@@ -41,20 +44,20 @@ const runLambda = async () => {
         })
 
         await pgClient.connect();
-    }
 
-    if (!iex) {
         const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
         iex = new IEX(iexConfiguration.key);
-    }
 
-    const repository = new Repository(pgClient, pgp);
-    const marketData = new MarketData(repository, iex);
-    const marketHolidays = new Holidays(repository);
+        repository = new Repository(pgClient, pgp);
+        marketData = new MarketData(repository, iex);
+        marketHolidays = new Holidays(repository);
+
+    }
 
     const currentTime = DateTime.now().setZone("America/New_York")
     const time930Am = DateTime.now().setZone("America/New_York").set({minute: 30, second: 0, millisecond: 0, hour: 9})
     const time400pm = DateTime.now().setZone("America/New_York").set({minute: 0, second: 0, millisecond: 0, hour: 16})
+
     if (currentTime.toUnixInteger() < time930Am.toUnixInteger()) return;
     if (currentTime.toUnixInteger() > time400pm.toUnixInteger()) return;
     if (!await marketHolidays.isTradingDay(currentTime)) return
@@ -62,6 +65,7 @@ const runLambda = async () => {
     try {
         await marketData.ingestPricing();
     } catch (e) {
+        console.error(e)
         throw e;
     }
 }

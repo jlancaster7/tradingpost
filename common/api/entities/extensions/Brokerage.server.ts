@@ -227,7 +227,7 @@ export default ensureServerExtensions<Brokerage>({
             DelaySeconds: 0,
             QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
         }));
-        
+
         if (tpAccounts.length <= 1) return {}
 
         const portSummary = new PortfolioSummaryService(brokerageRepo);
