@@ -118,7 +118,7 @@ functions:
     description: Ingests intraday pricing
     logRetentionInDays: 14
     timeout: 600
-    reservedConcurrency: 0
+    reservedConcurrency: 1
     memorySize: 2048
     events:
       - schedule:
