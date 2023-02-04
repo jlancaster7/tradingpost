@@ -31,8 +31,8 @@ provider:
   name: aws
   architecture: x86_64
   environment:
-    CONFIGURATION_ENV: development
-    NODE_ENV: development
+    CONFIGURATION_ENV: production
+    NODE_ENV: production
   tags:
     service: tradingpost-background-job
   runtime: nodejs16.x

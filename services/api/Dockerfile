@@ -6,10 +6,9 @@ ARG NPM_TOKEN
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
-ENV NPM_TOKEN=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
-
 WORKDIR /usr/src/app
 COPY . /usr/src/app
+
 RUN npm install
 RUN npm install typescript -g
 RUN tsc -b

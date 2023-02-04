@@ -1,20 +1,17 @@
-//import { SSM } from '@aws-sdk/client-ssm'
 import 'dotenv/config'
-console.log("WTF");
 import express from 'express'
 import bodyParser from 'body-parser';
 import api from './routes-api-alpha'
 import cors from 'cors'
-import { healthCheck } from './healthcheck'
+import {healthCheck} from './healthcheck'
 import fetch from 'node-fetch'
-import { versionCode, PublicError } from '@tradingpost/common/api/entities/static/EntityApiBase'
-import { addToWaitlist } from '@tradingpost/common/api/waitlist';
+import {versionCode, PublicError} from '@tradingpost/common/api/entities/static/EntityApiBase'
+import {addToWaitlist} from '@tradingpost/common/api/waitlist';
 
 import createRouterForApi from './routes-api-beta';
 
 (globalThis as any)["fetch" as any] = fetch;
-//fromWebToken()
- 
+
 const app = express();
 const port = process.env.PORT || 8080; // default port to listen
 
@@ -22,14 +19,11 @@ app.get("/", healthCheck);
 
 app.use(cors())
 //TODO: chage this to something reasonable 
-app.use(bodyParser.json({ limit: "10mb" }))
+app.use(bodyParser.json({limit: "10mb"}))
 
 app.use((req, res, next) => {
     next();
 })
-//app.use("/api", api);
-// define a route handler for the default home page
-//app.use("/alpha", api);
 
 app.post('/waitlist/add', async (req, res) => {
     if (!req.body.email) {
@@ -49,8 +43,7 @@ const addAvailableApi = (version: string) => {
             app.use("/" + version, createRouterForApi(version))
             console.log("Adding api version " + version);
         }
-    }
-    catch (ex) {
+    } catch (ex) {
         console.error(ex);
     }
 }

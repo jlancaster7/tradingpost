@@ -319,6 +319,6 @@ class PricingFix {
     const iexCfg = await DefaultConfig.fromCacheOrSSM("iex");
 
     const pricingFix = new PricingFix(pgClient, pgp, iexCfg.key);
-    await pricingFix.iexHistorical();
+    await pricingFix.iexIntraday();
     console.log("Finished")
 })()
