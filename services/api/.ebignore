@@ -1,3 +1,7 @@
 .git/
+.git
 _scripts
 package
+node_modules
+node_modules/
+npm-debug.log

@@ -1,7 +1,8 @@
 import Repository from "./repository"
 import {addSecurityPrice, getSecurityWithLatestPrice, updateSecurityPrice} from "./interfaces";
-import IEX, {GetIntraDayPrices, PermissionRequiredError} from "../iex";
+import IEX, {GetIntraDayPrices, GetOHLC, PermissionRequiredError} from "../iex";
 import {DateTime} from "luxon";
+import {sec} from "mathjs";
 
 export default class MarketData {
 
@@ -15,44 +16,94 @@ export default class MarketData {
     }
 
     ingestEodOfDayPricing = async () => {
-        // let securitiesWithEodAndLatestPrice = await this.repository.getUsExchangeListedSecuritiesWithPricing();
-        // securitiesWithEodAndLatestPrice = securitiesWithEodAndLatestPrice.filter(sec => sec.priceSource === 'IEX');
-        // const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securitiesWithEodAndLatestPrice, 100);
-        //
-        // let newEodPrices: addSecurityPrice[] = [];
-        // let oldEodPrices: updateSecurityPrice[] = [];
-        //
-        // let runningJobs: Promise<any>[] = [];
-        //
-        // for (let i = 0; i < securityGroups.length; i++) {
-        //     const securityGroup = securityGroups[i];
-        //     runningJobs.push((async () => {
-        //         const symbols = securityGroup.map(sec => sec.symbol);
-        //         try {
-        //             const response = await this.iex.bulk(symbols, ["ohlc"]);
-        //             const [newEodP, oldEodP] = await this.processEndOfDayPricing(response, securityGroup, newEodPrices, oldEodPrices);
-        //             newEodPrices = [...newEodPrices, ...newEodP];
-        //             oldEodPrices = [...oldEodPrices, ...oldEodP];
-        //         } catch (err) {
-        //             if (err instanceof PermissionRequiredError) {
-        //                 const [newEodP, oldEodP] = await this.resolveEodPricing(securityGroup, newEodPrices, oldEodPrices)
-        //                 newEodPrices = [...newEodPrices, ...newEodP];
-        //                 oldEodPrices = [...oldEodPrices, ...oldEodP];
-        //                 return
-        //             }
-        //
-        //             //if(err instanceof ) If calling IEX too much, check here...
-        //             console.error(`could not fetch data for symbols=${symbols.join(',')} err=${err}`)
-        //         }
-        //     })());
-        //
-        //     if (runningJobs.length == 3) {
-        //         await Promise.all(runningJobs);
-        //         runningJobs = [];
-        //     }
-        // }
-        //
-        // if (runningJobs.length > 0) await Promise.all(runningJobs);
+        let securities = await this.repository.getUsExchangeListedSecuritiesWithPricing();
+        securities = securities.filter(sec => sec.priceSource === 'IEX')
+
+        const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
+        let eodPrices: addSecurityPrice[] = []
+        let runningTasks: Promise<any>[] = [];
+
+        for (let i = 0; i < securityGroups.length; i++) {
+            const securityGroup = securityGroups[i];
+            runningTasks.push((async () => {
+                const symbols = securityGroup.map(sec => sec.symbol);
+                try {
+                    const response = await this.iex.bulk(symbols, ["ohlc"]);
+                    const today4pm = DateTime.now().setZone("America/New_York").set({
+                        hour: 16,
+                        second: 0,
+                        minute: 0,
+                        millisecond: 0
+                    });
+
+                    for (let j = 0; j < securityGroup.length; j++) {
+                        const security = securityGroup[j];
+                        const iexSecurity = response[security.symbol];
+                        if (!iexSecurity) {
+                            // TODO: Roll-forward...?
+                            if (!security.time) continue;
+                            if (!security.price) continue;
+
+                            eodPrices.push({
+                                price: security.price,
+                                high: security.high,
+                                low: security.low,
+                                isEod: true,
+                                isIntraday: false,
+                                open: security.open,
+                                time: today4pm,
+                                securityId: security.securityId
+                            })
+                            continue;
+                        }
+
+                        const iexSecurityOhlc = iexSecurity['ohlc'] as GetOHLC;
+                        if (!iexSecurityOhlc) {
+                            if (!security.time) continue;
+                            if (!security.price) continue;
+                            eodPrices.push({
+                                price: security.price,
+                                high: security.high,
+                                low: security.low,
+                                isEod: true,
+                                securityId: security.securityId,
+                                time: today4pm,
+                                isIntraday: false,
+                                open: security.open
+                            });
+                            continue;
+                        }
+                    }
+
+                } catch (err) {
+                    if (err instanceof PermissionRequiredError) {
+                        // TODO: RESOVLE EOD PRICING
+                    }
+                    console.error(`could not fetch data for symbols=${symbols.join(',')} err=${err}`)
+                }
+            })());
+
+            if (runningTasks.length === 8) {
+                await Promise.all(runningTasks);
+                try {
+                    await this.repository.upsertEodPrices(eodPrices);
+                } catch (e) {
+                    console.error(e)
+                    console.error("eod price")
+                }
+
+                eodPrices = [];
+            }
+        }
+
+        if (runningTasks.length > 0) await Promise.all(runningTasks)
+
+        try {
+            await this.repository.upsertEodPrices(eodPrices);
+        } catch (e) {
+            console.error(e);
+            console.error("eod price");
+        }
     }
 
     private processEndOfDayPricing = async (response: Record<string, any>, securityGroup: getSecurityWithLatestPrice[], newEodPrices: addSecurityPrice[], oldEodPrices: updateSecurityPrice[]): Promise<[addSecurityPrice[], updateSecurityPrice[]]> => {

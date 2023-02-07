@@ -23,7 +23,6 @@ custom:
     exclude:
       - pg-native
   brokerage-queue:
-    dev: arn:aws:sqs:us-east-1:670171407375:brokerage-task-dev-queue
     production: arn:aws:sqs:us-east-1:670171407375:brokerage-task-queue
 
 provider:
@@ -56,13 +55,13 @@ functions:
     timeout: 900
     memorySize: 1024
     reservedConcurrency: 1
-  #    events:
-  #      - schedule:
-  #          rate: cron(0 11 ? * MON-FRI *) # 7:00 AM EDT
-  #          enabled: true
-  #      - schedule:
-  #          rate: cron(0 10 ? * MON-FRI *) # 7:00 AM EST
-  #          enabled: true
+#      events:
+#        - schedule:
+#            rate: cron(0 11 ? * MON-FRI *) # 7:00 AM EDT
+#            enabled: true
+#        - schedule:
+#            rate: cron(0 10 ? * MON-FRI *) # 7:00 AM EST
+#            enabled: true
 
   ###### Brokerage Task Runner
   brokerage-task-runner:
