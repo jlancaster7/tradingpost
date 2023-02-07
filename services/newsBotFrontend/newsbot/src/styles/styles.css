@@ -1,0 +1,56 @@
+
+.HomePage {
+    display: block;
+    margin: 0 10vw 0;
+}
+
+.articleForm {
+
+    
+}
+.articleDataContainer {
+    
+    margin-bottom: 20px;
+}
+.articleDataContainer .articleData {
+    
+    padding: 1vw;
+    width: 40%;
+    
+    font-size: 14px;
+    text-align: left;
+    height: 4vh;
+    
+    background-color: rgba(255,255,255,0.9);
+    border-radius: 10px;
+
+}
+.textInputContainer {
+    display: block;
+
+}
+.articleTextInput {
+    padding: 1vw;
+    border-radius: 10px;
+    width: 90%;
+    font-size: 14px;
+    text-align: left;
+    height: 4vh;
+    margin-bottom: 20px;
+    background-color: rgba(255,255,255,0.9);
+}
+.articleInputButton {
+    padding: 1vw;
+    width: 20%;
+
+
+}
+.articleSummary {
+    padding: 1vw;
+    
+    margin: 0 20vw 0;
+    
+    font-size: 14px;
+    text-align: left;
+    height: auto;
+}

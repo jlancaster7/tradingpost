@@ -11,6 +11,7 @@ import { SearchAndRespond } from './src/searchAndRespond';
 import { healthCheck } from './healthcheck'
 //import { GPU } from "gpu.js";
 import { GPTAccount } from './src/gptAccount';
+import { NewsBotClass } from './src/newsBot';
 
 
 const run = async () => {
@@ -24,12 +25,13 @@ const run = async () => {
 
     app.get("/", healthCheck);
 
-    const Init = await init();
+    const [Init, newsBotInit] = await init();
     //const gpu = new GPU({ mode: 'cpu' });
     const Respond = new SearchAndRespond(Init
         //, gpu
-        )    
-    await setupRoutes(app, Respond, Init.gptAccount);
+        ) 
+    const NewsBot = new NewsBotClass(newsBotInit)
+    await setupRoutes(app, Respond, Init.gptAccount, NewsBot);
 
     const runningMessage = `Server running at http://localhost:${port}`;
     app.listen(port, () => {
@@ -37,7 +39,7 @@ const run = async () => {
     })
 }
 
-const setupRoutes = async (app: Express.Application, respond: SearchAndRespond, account: GPTAccount) => {
+const setupRoutes = async (app: Express.Application, respond: SearchAndRespond, account: GPTAccount, newsBot: NewsBotClass) => {
     app.post('/login', async (req: Express.Request, res: Express.Response) => {
         try {
             if (!req.body.pass) throw new PublicError("Unauthorized...", 401)
@@ -120,6 +122,40 @@ const setupRoutes = async (app: Express.Application, respond: SearchAndRespond, 
         } 
         catch (err: any) {
             return res.json({verified: false, msg: err.message})
+        }
+    })
+    app.post('/newsBot/summary', async (req: Express.Request, res: Express.Response) => {
+        try {
+            console.log('hitting openai')
+            const summary = await newsBot.createSummary(req.body.articleText);
+            console.log('returning from openai')
+            return res.json({summary})
+        } catch (err: any) {
+            return res.json({summary: '', msg: err.message})
+        }
+    })
+    app.post('/newsBot/createPost', async (req: Express.Request, res: Express.Response) => {
+        try {
+            await newsBot.addDBandElastic(req.body.articleSummary, req.body.articleUrl, req.body.articleSource)
+            return res.json({msg: 'success!'})
+        } catch (err: any) {
+            return res.json({msg: err.message})
+        }
+    })
+    app.post('/newsBot/createAudio', async (req: Express.Request, res: Express.Response) => {
+        try {
+            const audioUri = await newsBot.createAudioFile(req.body.articleSummary)
+            return res.json({uri: audioUri, msg: 'success!'})
+        } catch (err: any) {
+            return res.json({msg: err.message})
+        }
+    })
+    app.post('/newsBot/mergeAV', async (req: Express.Request, res: Express.Response) => {
+        try {
+            await newsBot.createAndUploadAV(req.body.audioFileUri)
+            return res.json({msg: 'success!'})
+        } catch (err: any) {
+            return res.json({msg: err.message})
         }
     })
 }

@@ -2,7 +2,7 @@ import { init, initOutput, availableTickers } from "./init"
 
 (async () => {
 
-    const Init = await init();
+    const Init = (await init())[0];
     for (let t of availableTickers) {
 
         const trainingSet = await Init.finnhubService.repo.getTrainingSet([t]);

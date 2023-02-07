@@ -28,7 +28,7 @@ const run = async () => {
         apiKey: elasticConfiguration.apiKey as string
     },
     maxRetries: 5,
-    })
+    }) 
     const indexName = "tradingpost-search";
     const elastic = new ElasticService(elasticClient, indexName);
     console.log('elastic service started')
