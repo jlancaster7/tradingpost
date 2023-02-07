@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+        while (_) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -39,9 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-//import { SSM } from '@aws-sdk/client-ssm'
 require("dotenv/config");
-console.log("WTF");
 var express_1 = __importDefault(require("express"));
 var body_parser_1 = __importDefault(require("body-parser"));
 var routes_api_alpha_1 = __importDefault(require("./routes-api-alpha"));
@@ -52,9 +50,8 @@ var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApi
 var waitlist_1 = require("@tradingpost/common/api/waitlist");
 var routes_api_beta_1 = __importDefault(require("./routes-api-beta"));
 globalThis["fetch"] = node_fetch_1.default;
-//fromWebToken()
 var app = (0, express_1.default)();
-var port = process.env.PORT || 8080; // default port to listen
+var port = process.env.PORT || 8082; // default port to listen
 app.get("/", healthcheck_1.healthCheck);
 app.use((0, cors_1.default)());
 //TODO: chage this to something reasonable 
@@ -62,9 +59,6 @@ app.use(body_parser_1.default.json({ limit: "10mb" }));
 app.use(function (req, res, next) {
     next();
 });
-//app.use("/api", api);
-// define a route handler for the default home page
-//app.use("/alpha", api);
 app.post('/waitlist/add', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {

@@ -7,7 +7,7 @@ import { elevated, flex, fonts, paddView, row, sizes } from "../style";
 import { ElevatedSection } from "../components/Section";
 import { Tab, TabBar } from "@ui-kitten/components";
 import { FavButton } from "../components/AddButton";
-import { toDollarsAndCents, toPercent2 } from "../utils/misc";
+import { toDollarsAndCents, toPercent2, toFormatedDateTime } from "../utils/misc";
 import InteractiveChart from "../components/InteractiveGraph";
 import { ButtonGroup } from "../components/ButtonGroup";
 import { FeedPart } from "./FeedScreen";
@@ -114,6 +114,10 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                                 <View style={{flexDirection: 'row'}}>
                                     <Text style={[pxChange ? pxChange >= 0 ? { color: 'green'} : {color: 'red'} : {} ,{marginRight: sizes.rem0_5}]}>{toPercent2(pxChange)}</Text>
                                     <Text>{toDollarsAndCents(security?.price?.price)}</Text>
+                                    
+                                </View>
+                                <View style={{alignSelf: 'center'}}>
+                                    {security?.price?.time && <Text style={{fontSize: 10}}>{`As of ${toFormatedDateTime(security?.price?.time)}`}</Text>}
                                 </View>
                                 </View>
                             </View>
