@@ -23,7 +23,7 @@ import {
 import {DateTime} from "luxon";
 import TransformerBase, {BaseRepository} from "../base-transformer";
 
-interface Repository extends BaseRepository {
+export interface Repository extends BaseRepository {
     getRobinhoodInstrumentBySymbol(symbol: string): Promise<RobinhoodInstrumentTable | null>
 
     getCashSecurityId(): Promise<GetSecurityBySymbol>

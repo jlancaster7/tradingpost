@@ -1,7 +1,7 @@
 import IbkrTransformer, {TransformerRepository} from "./transformer";
 import {
     BrokerageTaskStatusType,
-    BrokerageTaskTable, BrokerageTaskType, DirectBrokeragesType,
+    BrokerageTaskType, DirectBrokeragesType,
     IbkrAccount,
     IbkrAccountCsv,
     IbkrAccountTable,
@@ -36,14 +36,15 @@ type RepositoryInterface = {
     upsertIbkrPositions(positions: IbkrPosition[]): Promise<void>
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
     getTradingPostBrokerageAccountByUser(tpUserId: string, brokerageName: string, accountNumber: string): Promise<TradingPostBrokerageAccountsTable | null>
+    execTx(fn: (r: RepositoryInterface) => Promise<void>): Promise<void>
 } & TransformerRepository
 
 export class Service {
     private _transformer: IbkrTransformer;
     private _repo: RepositoryInterface;
-    private _s3Client: S3Client;
-    private _portfolioSummaryService: PortfolioSummaryService;
-    private _sqsClient: SQSClient;
+    private readonly _s3Client: S3Client;
+    private readonly _portfolioSummaryService: PortfolioSummaryService;
+    private readonly _sqsClient: SQSClient;
 
     constructor(repo: RepositoryInterface, s3Client: S3Client, portfolioSummaryService: PortfolioSummaryService, sqsClient: SQSClient) {
         this._repo = repo;
@@ -81,48 +82,52 @@ export class Service {
     }
 
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
-        // Accounts
-        const ibkrAccounts = await this._importAccount(brokerageUserId, date);
-        const newAccountIds = await this._transformer.accounts(date, userId, ibkrAccounts);
+        await this._repo.execTx(async (r) => {
+            const ibkrService = new Service(r, this._s3Client, this._portfolioSummaryService, this._sqsClient);
 
-        await this._repo.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117)
+            // Accounts
+            const ibkrAccounts = await ibkrService._importAccount(brokerageUserId, date);
+            const newAccountIds = await ibkrService._transformer.accounts(date, userId, ibkrAccounts);
 
-        // Securities
-        const securities = await this._importSecurity(brokerageUserId, date);
-        await this._transformer.securities(date, userId, securities);
+            await ibkrService._repo.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117)
 
-        // Activity
-        const activity = await this._importActivity(brokerageUserId, date);
-        await this._transformer.transactions(date, userId, activity);
+            // Securities
+            const securities = await ibkrService._importSecurity(brokerageUserId, date);
+            await ibkrService._transformer.securities(date, userId, securities);
 
-        // Pull Positions & Insert
-        const positions = await this._importPosition(brokerageUserId, date);
-        await this._transformer.holdings(date, userId, positions);
+            // Activity
+            const activity = await ibkrService._importActivity(brokerageUserId, date);
+            await ibkrService._transformer.transactions(date, userId, activity);
 
-        await this._importCashReport(brokerageUserId, date);
-        await this._importNav(brokerageUserId, date);
-        await this._importPl(brokerageUserId, date);
+            // Pull Positions & Insert
+            const positions = await ibkrService._importPosition(brokerageUserId, date);
+            await ibkrService._transformer.holdings(date, userId, positions);
 
-        const brokerageAcc = await this._repo.getTradingPostBrokerageAccountByUser(userId, DirectBrokeragesType.Ibkr, brokerageUserId);
-        if (!brokerageAcc) throw new Error("could not find brokerage");
+            await ibkrService._importCashReport(brokerageUserId, date);
+            await ibkrService._importNav(brokerageUserId, date);
+            await ibkrService._importPl(brokerageUserId, date);
 
-        await this._sqsClient.send(new SendMessageCommand({
-            MessageBody: JSON.stringify({
-                type: BrokerageTaskType.UpdatePortfolioStatistics,
-                userId: userId,
-                status: BrokerageTaskStatusType.Pending,
-                data: {lastUpdated: brokerageAcc.updatedAt},
-                started: null,
-                finished: null,
-                brokerage: DirectBrokeragesType.Ibkr,
-                date: DateTime.now().setZone("America/New_York"),
-                brokerageUserId: brokerageUserId,
-                error: null,
-                messageId: null
-            }),
-            DelaySeconds: 0,
-            QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
-        }));
+            const brokerageAcc = await ibkrService._repo.getTradingPostBrokerageAccountByUser(userId, DirectBrokeragesType.Ibkr, brokerageUserId);
+            if (!brokerageAcc) throw new Error("could not find brokerage");
+
+            await ibkrService._sqsClient.send(new SendMessageCommand({
+                MessageBody: JSON.stringify({
+                    type: BrokerageTaskType.UpdatePortfolioStatistics,
+                    userId: userId,
+                    status: BrokerageTaskStatusType.Pending,
+                    data: {lastUpdated: brokerageAcc.updatedAt},
+                    started: null,
+                    finished: null,
+                    brokerage: DirectBrokeragesType.Ibkr,
+                    date: DateTime.now().setZone("America/New_York"),
+                    brokerageUserId: brokerageUserId,
+                    error: null,
+                    messageId: null
+                }),
+                DelaySeconds: 0,
+                QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+            }));
+        });
     }
 
     _getFileFromS3 = async <T>(key: string, userId: string, mapFn?: (data: T) => T): Promise<T[]> => {
