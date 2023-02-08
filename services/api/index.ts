@@ -13,7 +13,7 @@ import createRouterForApi from './routes-api-beta';
 (globalThis as any)["fetch" as any] = fetch;
 
 const app = express();
-const port = process.env.PORT || 8080; // default port to listen
+const port = process.env.PORT || 8082; // default port to listen
 
 app.get("/", healthCheck);
 

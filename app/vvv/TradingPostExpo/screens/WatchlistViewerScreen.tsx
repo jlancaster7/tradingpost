@@ -18,11 +18,11 @@ import { AppColors } from "../constants/Colors"
 import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../style"
 import { useSecuritiesList } from '../SecurityList'
 import { toDollarsAndCents, toNumber1, toPercent, toPercent1, toPercent2 } from "../utils/misc"
-import { MultiTermFeedPart } from "../components/MultiTermFeed"
 import { List } from "../components/List"
 import { WatchlistItemRenderItem } from "../components/WatchlistItemRenderItem"
 import { PrimaryChip } from "../components/PrimaryChip"
 import { sleep } from "@tradingpost/common/utils/sleep"
+import {FeedPart} from './FeedScreen'
 
 
 export const useNoteField = (hideEmptyNote?: boolean) => {
@@ -228,6 +228,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
 
     const { securities: { bySymbol, byId } } = useSecuritiesList();
     const [shownMap, setShownMap] = useState<Record<string, boolean>>({})
+    console.log('on watchlist viewer')
     return <View style={[flex]}>
         <Animated.FlatList
             data={[
@@ -322,7 +323,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                 </View>,
                 <View style={[{ paddingHorizontal: 0 }]}
                 >
-                    {watchlistTickers && <MultiTermFeedPart key={watchlistTickers ? watchlistTickers.join() : "___"} searchText={watchlistTickers} />}
+                    {watchlistTickers && <FeedPart key={watchlistTickers ? watchlistTickers.join() : "___"} searchTerms={watchlistTickers} />}
                 </View>
             ]}
             renderItem={(info) => {

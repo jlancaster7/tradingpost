@@ -13,16 +13,21 @@ import {
     PromptResponse,
     CreateUserInfo
 } from './interfaces';
-import { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsCommand, _Object } from "@aws-sdk/client-s3";
+import { S3, S3Client, GetObjectCommand,  PutObjectCommand, ListObjectsCommand, _Object } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Upload } from '@aws-sdk/lib-storage';
+import stream, { Writable } from 'stream';
 
 export default class Repository {
     private db: IDatabase<any>;
     private readonly pgp: IMain;
-    private readonly s3: S3Client;
+    private readonly s3Client: S3Client;
+    private readonly s3: S3
 
-    constructor(db: IDatabase<any>, pgp: IMain, s3: S3Client) {
+    constructor(db: IDatabase<any>, pgp: IMain, s3Client: S3Client, s3: S3) {
         this.db = db;
         this.pgp = pgp;
+        this.s3Client = s3Client;
         this.s3 = s3;
     }
     upsertTranscriptList = async (data: TranscriptList[]): Promise<number> => {
@@ -140,6 +145,69 @@ export default class Repository {
             console.error(err)
             return 0;
         }
+    }
+    insertPost = async (data: any) => {
+        try {
+            const cs = new this.pgp.helpers.ColumnSet([
+                {name: 'user_id', prop: 'user_id'},
+                {name: 'title', prop: 'title'},
+                {name: 'body', prop: 'body'},
+                {name: 'subscription_level', prop: 'subscription_level'},
+                {name: 'max_width', prop: 'max_width'},
+                {name: 'aspect_ratio', prop: 'aspect_ratio'},
+            ], {table: 'data_post'})
+            const query = this.pgp.helpers.insert(data, cs) + ' RETURNING id'
+            const result = await this.db.result(query);
+            return result.rows[0];
+        } catch (err) {
+            console.error(err)
+            return 0;
+        }    
+    }
+    uploadVideoStream = async(bucketName: string, fileName: string, data: stream.PassThrough) => {
+        if (!data) return;
+        try {
+            const awsUpload = new Upload({
+                client: this.s3Client,
+                params: {Bucket: bucketName, Key: `${fileName}.mp4`, Body: data}
+            })
+            awsUpload.on("httpUploadProgress", (progress) => {
+                console.log(progress)
+            })
+            await awsUpload.done()
+            /*
+            const command = new PutObjectCommand({
+                Bucket: bucketName,
+                Body: data,
+                Key: `${fileName}.mp4`,
+                //ContentType: 'mp4'
+    
+            })
+            await this.s3Client.send(command)
+            */
+        } catch (err: any) {
+            console.log(err);
+        }
+
+    }
+    getVideoUrl = async (bucketName: string, file: string) => {
+        const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: `${file}.mp4`
+            
+        })
+        return await getSignedUrl(this.s3Client, command, {
+            expiresIn: 3600,
+          });
+    }
+    getAudioFile = async (bucketName: string, file: string) => {
+        const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: `${file}.mp3`
+        })
+        return await getSignedUrl(this.s3Client, command, {
+            expiresIn: 3600,
+          });
     }
     getSymbolMostRecent = async (symbol: string): Promise<string> => {
         let query = `SELECT quarter, year FROM transcript_list where symbol = $1 ORDER BY year DESC, quarter DESC LIMIT 1`;
@@ -394,7 +462,7 @@ export default class Repository {
                 stream.on("error", reject);
                 stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
             });
-        const bucketList = await this.s3.send(new ListObjectsCommand({
+        const bucketList = await this.s3Client.send(new ListObjectsCommand({
             Bucket: `tradingpost-embedding`,
             Prefix: key
         }))
@@ -409,7 +477,7 @@ export default class Repository {
         
         const data = (async () => JSON.parse(
             await streamToString((
-              await this.s3.send(new GetObjectCommand({
+              await this.s3Client.send(new GetObjectCommand({
                 Bucket: 'tradingpost-embedding',
                 Key: mostRecentEmbeddings.Key,
               }))).Body)))()
