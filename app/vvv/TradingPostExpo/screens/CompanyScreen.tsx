@@ -166,7 +166,7 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                     </View>
                 </View>,
                 <View style={[{ paddingHorizontal: 0 }]}>
-                    {security && <FeedPart searchText={`$${security?.symbol}`} />}
+                    {security && <FeedPart searchTerms={`$${security?.symbol}`} />}
                 </View>
             ]}
             renderItem={(info) => {

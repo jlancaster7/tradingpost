@@ -150,7 +150,7 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                     </View>
                     </View>,
                     <View>
-                        {(searchText !== "") ? <FeedPart searchText={searchText} /> : <NoDataPanel message={'Search for Analysts, Posts, or Companies!'} />}
+                        {(searchText !== "") ? <FeedPart searchTerms={searchText} /> : <NoDataPanel message={'Search for Analysts, Posts, or Companies!'} />}
                     </View>
                 
                 ]}

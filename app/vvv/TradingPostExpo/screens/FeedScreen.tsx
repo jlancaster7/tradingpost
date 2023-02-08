@@ -18,8 +18,7 @@ import { social as socialStyle } from '../style'
 import { SvgExpo } from "../components/SvgExpo";
 
 export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
-    const [searchText, setSearchText] = useState(""),
-          [platforms, setPlatforms] = useState<string[]>([]),
+    const [platforms, setPlatforms] = useState<string[]>([]),
           [platformClicked, setPlatformClicked] = useState('');
     const nav = useNavigation();
     useEffect(() => {
@@ -42,7 +41,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     </View>
                     ,
                     <View key={`feed_${platforms.length}`}>
-                        <FeedPart platforms={platforms} bookmarkedOnly={props.route.params.bookmarkedOnly === "true"} searchText={searchText} />
+                        <FeedPart platforms={platforms} bookmarkedOnly={props.route.params.bookmarkedOnly === "true"} searchTerms={props.route.params.searchTerms } />
                     </View>
                 ]}
                 renderItem={(info) => {
@@ -108,13 +107,13 @@ export const PlatformSelector = (props: {platforms: string[], setPlatformClicked
 
 export const FeedPart = (props: {
     bookmarkedOnly?: boolean,
-    searchText?: string,
+    searchTerms?: string | string[],
     userId?: string,
     platforms?: string[]
 }) => {
     const { width: windowWidth } = useWindowDimensions();
-    const { bookmarkedOnly, searchText, userId, platforms } = props
-
+    let { bookmarkedOnly, searchTerms, userId, platforms } = props
+    searchTerms = searchTerms !== undefined ? searchTerms instanceof Array ? searchTerms : [searchTerms] : searchTerms
     const [postsKey, setPostsKey] = useState(Date.now());
     console.log(platforms)
     return <PostList
@@ -122,14 +121,18 @@ export const FeedPart = (props: {
             setPostsKey(Date.now());
         }}
         key={bookmarkedOnly ? String(Date.now()) : postsKey}
-        datasetKey={searchText ? searchText : "____________"}
+        datasetKey={searchTerms ? searchTerms.join('') : "____________"}
         posts={async (allItems, page, sizeCache) => {
             console.log("PAGE: ", page)
             let reqData: any = {};
-            if (searchText) {
+            if (searchTerms) {
                 reqData.terms = (() => {
-                    if (searchText[0] === '$') return searchText.toLowerCase() 
-                    else return searchText
+                    let result: string[] = []
+                    searchTerms.forEach((el: string) => {
+                        if (el[0] === '$') result.push(el.toLowerCase()) 
+                        else result.push(el)
+                    })
+                    return result
                 })()
             }
             if (platforms?.length) reqData.platforms = (() => platforms)()
