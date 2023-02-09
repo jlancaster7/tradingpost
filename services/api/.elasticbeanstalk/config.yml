@@ -1,6 +1,9 @@
 branch-defaults:
-  default:
+  prod:
     environment: TradingpostApi-Docker-Env
+    group_suffix: null
+  test:
+    environment: UAT-Tradingpost-Api-Docker-Env
     group_suffix: null
 global:
   application_name: Tradingpost-Api-Docker

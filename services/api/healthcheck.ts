@@ -6,7 +6,7 @@ export const healthCheck = async (req: Request, res: Response) => {
         const hive = await getHivePool;
         const result = await hive.query<{ Result: string }>(`SELECT 'SUCCESS' as "Result"`);
 
-        res.send(`<h2>Derpy Derp Derp. DARP. Healthcheck says:${result.rows[0].Result} -- Docker</h2>`);
+        res.send(`<h2>Derpy Derp Derp. DARP. Healthcheck says:${result.rows[0].Result} -- Docker UAT</h2>`);
     }
     catch (ex: any) {
         res.send(`<h2 color="red">Failure ${ex.message}</h2>`);
