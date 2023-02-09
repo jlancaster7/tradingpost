@@ -12,7 +12,8 @@ import {
 } from "./interfaces";
 import * as RHApi from "./api";
 import {DateTime} from "luxon";
-import {DirectBrokeragesType, TradingPostInstitutionTable} from "../interfaces";
+import {DirectBrokeragesType, ISummaryRepository, TradingPostInstitutionTable} from "../interfaces";
+import {Repository as TransformerRepository} from "./transformer";
 
 interface Repository {
     getInstitutionByName(name: string): Promise<TradingPostInstitutionTable | null>
@@ -42,6 +43,8 @@ interface Repository {
     getRobinhoodOptionsByExternalIds(externalIds: string[]): Promise<RobinhoodOptionTable[]>
 
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
+
+    execTx(fn: (r: Repository & TransformerRepository & ISummaryRepository) => Promise<void>): Promise<void>
 }
 
 export class Service {
@@ -74,26 +77,38 @@ export class Service {
         if (!institution) throw new Error("Robinhood institution is not defined");
 
         const newAccountIds = await this.accounts(userId, institution.id);
-        await this.positions(userId);
-        await this.transactions(userId);
+        await this._repo.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117);
 
-        await this._repo.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117)
+        await this._repo.execTx(async (r) => {
+            const robinhoodTransformer = new RobinhoodTransformer(r);
+            const portSummaryService = new PortfolioSummaryService(r);
+            const robinhoodSrv = new Service(this._clientId, this._scope, this._expiresIn, r, robinhoodTransformer, portSummaryService);
 
-        for (let i = 0; i < newAccountIds.length; i++) {
-            await this._transformer.computeHoldingsHistory(newAccountIds[i]);
-        }
+            await robinhoodSrv.positions(userId);
+            await robinhoodSrv.transactions(userId);
 
-        await this._portfolioSummaryService.computeAccountGroupSummary(userId);
+            for (let i = 0; i < newAccountIds.length; i++) {
+                await robinhoodSrv._transformer.computeHoldingsHistory(newAccountIds[i]);
+            }
+
+            await robinhoodSrv._portfolioSummaryService.computeAccountGroupSummary(userId);
+        });
     }
 
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         const institution = await this._repo.getInstitutionByName(DirectBrokeragesType.Robinhood);
         if (!institution) throw new Error("Robinhood institution is not defined");
 
-        await this.accounts(userId, institution.id);
-        await this.positions(userId);
-        await this.transactions(userId);
-        await this._portfolioSummaryService.computeAccountGroupSummary(userId);
+        await this._repo.execTx(async (r) => {
+            const robinhoodTransformer = new RobinhoodTransformer(r);
+            const portSummaryService = new PortfolioSummaryService(r);
+            const robinhoodSrv = new Service(this._clientId, this._scope, this._expiresIn, r, robinhoodTransformer, portSummaryService);
+
+            await robinhoodSrv.accounts(userId, institution.id);
+            await robinhoodSrv.positions(userId);
+            await robinhoodSrv.transactions(userId);
+            await robinhoodSrv._portfolioSummaryService.computeAccountGroupSummary(userId);
+        });
     }
 
     private _apiAndUpdate = async <T>(user: RobinhoodUser, fnCall: any, params: any, nextUrl?: string, authUpdate?: boolean): Promise<T> => {

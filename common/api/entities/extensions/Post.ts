@@ -10,9 +10,11 @@ export default class extends Extension {
     feed = this._makeFetch<{ page: number, postId?: string, userId?: string, bookmarkedOnly?: boolean, data?: Record<string, number | string | (number | string)[]> }, IElasticPostExt[]>("feed", (s) => ({
         body: JSON.stringify(s)
     }));
+    /*
     multitermfeed = this._makeFetch<{ page: number, data?: Record<string, number | string | (number | string)[]> }, IElasticPostExt[]>("multitermfeed", (s) => ({
         body: JSON.stringify(s)
     }));
+    */
     getUpvotes = this._makeFetch<{ id: string, count: number }>("getUpvotes", this._defaultPostRequest)
     setBookmarked = this._makeFetch<{ id: string, is_bookmarked: boolean }>("setBookmarked", this._defaultPostRequest)
     setUpvoted = this._makeFetch<{ id: string, is_upvoted: boolean, count: number }>("setUpvoted", this._defaultPostRequest)

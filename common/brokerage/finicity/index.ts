@@ -45,6 +45,7 @@ export class Service {
 
         let tpAccountIds: number[] = [];
         tpAccounts.forEach(tp => tpAccountIds.push(tp.id));
+
         // Remove TP first since user should be reflected right away, though we have that deletion status
         await this.repository.deleteTradingPostBrokerageAccounts(tpAccountIds);
 
@@ -55,29 +56,38 @@ export class Service {
     }
 
     public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
-        await this.importHoldings(userId, brokerageUserId, []);
-        await this.importTransactions(userId, brokerageUserId, []);
+        await this.repository.execTx(async (r) => {
+            const finTransformer = new FinicityTransformer(r);
+            const portStats = new PortfolioSummaryService(r);
+            const finService = new Service(this.finicity, r, finTransformer, portStats);
 
-        if (!this.portSummarySrv) return
-        await this.portSummarySrv.computeAccountGroupSummary(userId);
+            await finService.importHoldings(userId, brokerageUserId, []);
+            await finService.importTransactions(userId, brokerageUserId, []);
+
+            if (!finService.portSummarySrv) return
+            await finService.portSummarySrv.computeAccountGroupSummary(userId);
+        });
     }
 
     public add = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
         const newFinicityAccounts = await this.importAccounts(brokerageUserId);
         const newTransformedAccountIds = await this.transformer.accounts(userId, newFinicityAccounts);
-
         await this.repository.addTradingPostAccountGroup(userId, 'default', newTransformedAccountIds, 10117);
 
-        await this.importHoldings(userId, brokerageUserId, newFinicityAccounts.map(f => f.accountId));
-        await this.importTransactions(userId, brokerageUserId, newFinicityAccounts.map(f => f.accountId));
+        await this.repository.execTx(async (r) => {
+            const finTransformer = new FinicityTransformer(r);
+            const portStats = new PortfolioSummaryService(r);
+            const finService = new Service(this.finicity, r, finTransformer, portStats);
+            await finService.importHoldings(userId, brokerageUserId, newFinicityAccounts.map(f => f.accountId));
+            await finService.importTransactions(userId, brokerageUserId, newFinicityAccounts.map(f => f.accountId));
+            for (let i = 0; i < newTransformedAccountIds.length; i++) {
+                const id = newTransformedAccountIds[i];
+                await finService.transformer.computeHoldingsHistory(id);
+            }
 
-        for (let i = 0; i < newTransformedAccountIds.length; i++) {
-            const id = newTransformedAccountIds[i];
-            await this.transformer.computeHoldingsHistory(id);
-        }
-
-        if (!this.portSummarySrv) return
-        await this.portSummarySrv.computeAccountGroupSummary(userId);
+            if (!finService.portSummarySrv) return
+            await finService.portSummarySrv.computeAccountGroupSummary(userId);
+        });
     }
 
     getTradingPostUserAssociatedWithBrokerageUser = async (brokerageUserId: string): Promise<TradingPostUser> => {
@@ -556,4 +566,3 @@ export class Service {
         return tpAccountIds
     }
 }
-

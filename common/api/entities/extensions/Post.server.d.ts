@@ -14,17 +14,6 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<IElasticPostExt[]>;
-    multitermfeed: (req: {
-        body: {
-            page: number;
-            data?: Record<string, string | number | (string | number)[]> | undefined;
-        };
-        extra: {
-            userId: string;
-            page?: number | undefined;
-            limit?: number | undefined;
-        };
-    }) => Promise<IElasticPostExt[]>;
     getUpvotes: (req: {
         body: {
             id: string;
@@ -103,5 +92,3 @@ declare const _default: {
     }) => Promise<void>) | undefined;
 };
 export default _default;
-export declare const createNewFeedQuery: (subscriptions: string[], blocks: string[], selectedPlatforms?: string[]) => Promise<any>;
-export declare const CreateMultiTermQuery: (searchTerms: Record<string, string | number | (string | number)[]>, subscriptions: string[], blocks: string[]) => Promise<any>;

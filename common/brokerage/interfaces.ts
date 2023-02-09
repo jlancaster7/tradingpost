@@ -1,5 +1,6 @@
 import {DateTime} from "luxon";
 import {getUSExchangeHoliday} from "../market-data/interfaces";
+import {TransformerRepository} from "./finicity/transformer";
 
 export interface IBrokerageRepository {
     addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
@@ -77,6 +78,8 @@ export interface IFinicityRepository {
     deleteFinicityTransactions(accountIds: number[]): Promise<void>
 
     deleteFinicityAccounts(accountIds: number[]): Promise<void>
+
+    execTx(fn: (r: IFinicityRepository & ISummaryRepository & TransformerRepository) => Promise<void>): Promise<void>
 }
 
 export interface ISummaryRepository {

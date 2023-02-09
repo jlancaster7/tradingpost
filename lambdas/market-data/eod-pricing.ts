@@ -41,13 +41,10 @@ const runLambda = async () => {
         })
 
         await pgClient.connect();
-    }
-
-    if (!iex) {
         const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
         iex = new IEX(iexConfiguration.key);
     }
-    
+
     const repository = new Repository(pgClient, pgp);
     const marketData = new MarketData(repository, iex);
     const marketHolidays = new Holidays(repository);
