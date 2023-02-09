@@ -2,8 +2,8 @@ branch-defaults:
   prod:
     environment: TradingpostApi-Docker-Env
     group_suffix: null
-  uat:
-    environment: UAT2-TradingpostApi-Docker-Env
+  test:
+    environment: UAT-TradingpostApi-Docker-Env
 global:
   application_name: Tradingpost-Api-Docker
   branch: null
@@ -17,4 +17,4 @@ global:
   profile: null
   repository: null
   sc: null
-  workspace_type: Application
+  workspace_type: Application 
