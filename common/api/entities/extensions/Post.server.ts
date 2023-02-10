@@ -129,6 +129,8 @@ const createQueryByType = async (type: string, data: any) => {
     
     
     const selectedPlatforms = data.selectedPlatforms || []
+    const beginDateTime = data.beginDateTime || new Date('1/1/2000')
+    const endDateTime = data.beginDateTime || new Date()
     const subscriptions = data.subscriptions || []
     const blocks = data.blocks || []
     const templateData = {
@@ -140,7 +142,7 @@ const createQueryByType = async (type: string, data: any) => {
     }
     else if (type === 'user') {       
         const platformQueries = await createPlatformQueryByType(await typeUserQueryTemplate, {user_id: data.user_id, ...templateData}, selectedPlatforms)
-        return insertParamsIntoTemplate(await feedQueryTemplate, {platformQueries, subscriptions: data.subscriptions})
+        return insertParamsIntoTemplate(await feedQueryTemplate, {platformQueries, subscriptions: data.subscriptions, beginDateTime, endDateTime})
     }
     else if (type === 'search') {
         const searchSubQuery: string[] = []
@@ -148,11 +150,11 @@ const createQueryByType = async (type: string, data: any) => {
             searchSubQuery.push(insertParamsIntoTemplate(await typeSearchSubQueryTemplate, {searchTerm: el}))
         })
         const platformQueries = await createPlatformQueryByType(await typeSearchQueryTemplate, {typeSearchSubQuery: searchSubQuery, ...templateData}, selectedPlatforms)
-        return insertParamsIntoTemplate(await feedQueryTemplate, {platformQueries, subscriptions: data.subscriptions})
+        return insertParamsIntoTemplate(await feedQueryTemplate, {platformQueries, subscriptions: data.subscriptions, beginDateTime, endDateTime})
     }
     else {
         const platformQueries = await createPlatformQueryByType(await typeMainFeedQueryTemplate, {...templateData}, selectedPlatforms)
-        return insertParamsIntoTemplate(await feedQueryTemplate, {platformQueries, subscriptions: data.subscriptions})
+        return insertParamsIntoTemplate(await feedQueryTemplate, {platformQueries, subscriptions: data.subscriptions, beginDateTime, endDateTime})
     }   
 }
 let postsPerPage = 10;
@@ -199,8 +201,14 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
         },
         maxRetries: 5,
         });
-
-        
+        const generalFeedData = {
+          subscriptions,
+          blocks: curUserData.blocked,
+          selectedPlatforms: req.body.data?.platforms as string[],
+          beginDateTime: req.body.data?.beginDateTime,
+          endDateTime: req.body.data?.endDateTime
+        }
+        console.log('using right feed')
         const response = await elasticClient.search<IElasticPost["_source"]>({
         index: indexName,
         size: postsPerPage,
@@ -209,13 +217,13 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             if (req.body.postId || req.body.bookmarkedOnly) {
               return await createQueryByType('postIds', {postIds: (req.body.postId ? [req.body.postId] : bookmarkItems)});
             } else if (req.body.userId) {
-              return await createQueryByType('user', { user_id: req.body.userId, subscriptions: subscriptions, blocks: curUserData.blocked })
+              return await createQueryByType('user', { ...generalFeedData, user_id: req.body.userId })
             } else if (req.body.bookmarkedOnly) {
               return await createQueryByType('postIds', {bookmarkItems});
             } else if (req.body.data?.terms) {
-              return await createQueryByType('search', { searchTerms: req.body.data.terms instanceof Array ? req.body.data.terms : [req.body.data.terms], subscriptions: subscriptions, blocks: curUserData.blocked });
+              return await createQueryByType('search', { ...generalFeedData, searchTerms: req.body.data.terms instanceof Array ? req.body.data.terms : [req.body.data.terms] });
             } else {
-              return await createQueryByType('feed', {subscriptions, blocks: curUserData.blocked, selectedPlatforms: req.body.data?.platforms as string[]})
+              return await createQueryByType('feed', {...generalFeedData,})
             }
         })()
         });
