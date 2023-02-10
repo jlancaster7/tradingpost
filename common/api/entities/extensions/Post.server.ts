@@ -129,8 +129,8 @@ const createQueryByType = async (type: string, data: any) => {
     
     
     const selectedPlatforms = data.selectedPlatforms || []
-    const beginDateTime = data.beginDateTime || new Date('1/1/2000')
-    const endDateTime = data.beginDateTime || new Date()
+    const beginDateTime = (new Date(data.beginDateTime) || new Date('1/1/2000')).toISOString();
+    const endDateTime = (new Date(data.beginDateTime) || new Date()).toISOString();
     const subscriptions = data.subscriptions || []
     const blocks = data.blocks || []
     const templateData = {
@@ -218,9 +218,8 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
               return await createQueryByType('postIds', {postIds: (req.body.postId ? [req.body.postId] : bookmarkItems)});
             } else if (req.body.userId) {
               return await createQueryByType('user', { ...generalFeedData, user_id: req.body.userId })
-            } else if (req.body.bookmarkedOnly) {
-              return await createQueryByType('postIds', {bookmarkItems});
-            } else if (req.body.data?.terms) {
+            } 
+            else if (req.body.data?.terms) {
               return await createQueryByType('search', { ...generalFeedData, searchTerms: req.body.data.terms instanceof Array ? req.body.data.terms : [req.body.data.terms] });
             } else {
               return await createQueryByType('feed', {...generalFeedData,})
