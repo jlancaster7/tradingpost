@@ -113,9 +113,9 @@ export const FeedPart = (props: {
 }) => {
     const { width: windowWidth } = useWindowDimensions();
     let { bookmarkedOnly, searchTerms, userId, platforms } = props
-    searchTerms = searchTerms !== undefined ? searchTerms instanceof Array ? searchTerms : [searchTerms] : searchTerms
+    searchTerms = searchTerms === undefined ? searchTerms : (searchTerms instanceof Array ? searchTerms : [searchTerms])
     const [postsKey, setPostsKey] = useState(Date.now());
-    console.log(platforms)
+    
     return <PostList
         onReloadNeeded={() => {
             setPostsKey(Date.now());
