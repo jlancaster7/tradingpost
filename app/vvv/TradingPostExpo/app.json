@@ -65,7 +65,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/logo/android/logo_96.jpg",
+          "icon": "./assets/logo/android/notification_logo_96.png",
           "color": "#282869"
         }
       ],
