@@ -1,17 +1,18 @@
 import { Icon, Input } from "@ui-kitten/components";
 import React, { useRef } from "react";
-import { ImageProps, ViewStyle, TextInputProps, Image, ViewProps, Pressable } from "react-native";
+import { ImageProps, ViewStyle, TextInputProps, Image, ViewProps, Pressable, TextInputKeyPressEventData, NativeSyntheticEvent } from "react-native";
 import { ITextField, TextField } from "../components/TextField";
 import { navIcons } from "../images";
 
-export const SearchBar = (props: { onTextChange: (text: string) => void, placeholder?: string } & Pick<ViewProps, "onLayout">) => {
+export const SearchBar = (props: { text: string, onTextChange: (text: string) => void, onEditingSubmit?: (e: string) => void, placeholder?: string } & Pick<ViewProps, "onLayout">) => {
     const tfRef = useRef<ITextField>(null)
 
     return <TextField
         textInputRef={tfRef}
         onLayout={props.onLayout}
-        //enableErrors={false}
-        //hideUnderline
+        onSubmitEditing={(e) => {
+            if (props.onEditingSubmit) props.onEditingSubmit(e.nativeEvent.text)
+        }}
         accessoryLeft={
             () => {
                 return <Image source={navIcons.Search.inactive} style={{
@@ -25,6 +26,7 @@ export const SearchBar = (props: { onTextChange: (text: string) => void, placeho
                 }} />
             }
         }
+        value={props.text}
         accessoryRight={
             () => {
                 return <Pressable onPress={() => {
@@ -41,14 +43,6 @@ export const SearchBar = (props: { onTextChange: (text: string) => void, placeho
                 }} /></Pressable>
             }
         }
-        // style={{
-
-        // } as ViewStyle} containerStyle={{
-        //     marginBottom: 0,
-        //     borderBottomColor: "#d5d5d5",
-        //     borderBottomWidth: 1,
-        //     paddingVertical: 16
-        // } as ViewStyle}
         {
         ...{
             placeholder: props.placeholder || "Search...",

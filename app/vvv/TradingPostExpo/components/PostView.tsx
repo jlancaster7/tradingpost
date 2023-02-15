@@ -119,7 +119,7 @@ export const resolvePostContent = (itm: Interface.IElasticPost | undefined, wind
 }
 
 
-export function PostView(props: { post: Interface.IElasticPostExt, onReloadNeeded?: () => void }) {
+export function PostView(props: { post: Interface.IElasticPostExt, onReloadNeeded?: () => void, inPostView?: boolean }) {
     const {post} = props
     const nav = useNavigation<NavigationProp<RootStackParamList>>();
 
@@ -196,18 +196,18 @@ export function PostView(props: { post: Interface.IElasticPostExt, onReloadNeede
                     </AsyncPressable>
                 </Pressable>
                 {
-                    ["substack", "tradingpost"].includes(post._source.postType) ?
+                    ["substack", "tradingpost", "youtube"].includes(post._source.postType) ?
                         <Pressable onPress={() => {
                             nav.navigate("PostScreen", {
                                 post,
                                 id: post._id
                             })
 
-                        }} style={{paddingHorizontal: postSidePad / 2}}>
-                            <PostContentView post={post}/>
+                        }} style={{paddingHorizontal: postSidePad / 2, zIndex: 1}}>
+                            <PostContentView post={post} inPostView={props.inPostView || post._source.postType === 'tweet'}/>
                         </Pressable> :
                         <View style={{paddingHorizontal: postSidePad / 2}}>
-                            <PostContentView post={post}/>
+                            <PostContentView post={post} inPostView={props.inPostView || post._source.postType === 'tweet'}/>
                         </View>
                 }
 
@@ -398,7 +398,7 @@ const parseHtmlEnteties = (str: string) => {
     });
 }
 
-const PostContentView = (props: { post: Interface.IElasticPost }) => {
+const PostContentView = (props: { post: Interface.IElasticPost, inPostView?: boolean }) => {
     const {width: windowWidth, scale} = useWindowDimensions(),
         availWidth = Math.min(windowWidth, 680) - spaceOnSide
 
@@ -427,11 +427,11 @@ const PostContentView = (props: { post: Interface.IElasticPost }) => {
             {props.post._source.subscription_level === 'premium' &&
                 <PremiumStar style={{height: 24, width: 24, marginBottom: 5, marginTop: 10}}/>}
         </View>
-        <View style={{
-            height: postInnerHeight(props.post, availWidth),
-            paddingVertical: ['spotify', 'youtube'].includes(props.post._source.postType) ? sizes.rem0_5 : 0
-            //height: postInnerHeight(props.post, availWidth),
-            //justifyContent: ['spotify', 'youtube'].includes(props.post._source.postType) ? 'center' : undefined
+        <View pointerEvents={props.inPostView ? 'auto' : 'none'}
+            style={{
+                height: postInnerHeight(props.post, availWidth),
+                paddingVertical: ['spotify', 'youtube'].includes(props.post._source.postType) ? sizes.rem0_5 : 0,
+            
         }}>
             <HtmlView style={{
                 height: ['spotify', 'youtube'].includes(props.post._source.postType) ? postInnerHeight(props.post, availWidth) : postInnerHeight(props.post, availWidth),

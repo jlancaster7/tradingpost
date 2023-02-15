@@ -3,7 +3,7 @@ import { Api, Interface } from "@tradingpost/common/api";
 import { Avatar, Text } from "@ui-kitten/components";
 import { SecPressable } from './WatchlistViewerScreen'
 import React, { useEffect, useRef, useState } from "react";
-import { View } from "react-native";
+import { View, ScrollView, Pressable } from "react-native";
 import { ButtonGroup } from "../components/ButtonGroup";
 import { Header, Subheader } from "../components/Headers";
 import { List } from "../components/List";
@@ -12,25 +12,30 @@ import { ProfileBar } from "../components/ProfileBar";
 import { SearchBar } from "../components/SearchBar";
 import { ElevatedSection } from "../components/Section";
 import { useSecuritiesList } from "../SecurityList";
-import { flex, fonts, sizes } from "../style";
+import { flex, fonts, sizes, row } from "../style";
 import { FeedPart } from "./FeedScreen";
 import { FlatList } from "react-native-gesture-handler";
+import {PrimaryChip} from '../components/PrimaryChip'
+import {isNotUndefinedOrNull} from "../utils/validators";
 
 
 export const SearchScreen = (props: { navigation: NavigationProp<any> } & { route: { params: {} } }) => {
-    const [searchText, setSearchText] = useState(""),
+    const [tempSearchText, setTempSearchText] = useState(''),
+        [searchText, setSearchText] = useState<string[]>([]),
         [searchType, setSearchType] = useState<"posts" | "people">("posts"),
         [people, setPeople] = useState<Interface.IUserList[]>(),
         [searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
         debounceRef = useRef<any>(),
+        scrollRef = useRef<FlatList>(null),
         { securities: { list: securities } } = useSecuritiesList();
     useEffect(() => {
         clearTimeout(debounceRef.current);
-            if (searchText.length >= 3) {
+            if (searchText.length === 1 && searchText[0].length > 3) {
                 debounceRef.current = setTimeout(async () => {
                     try {
+                        
                         setPeople(await Api.User.extensions.search({
-                            term: searchText
+                            term: searchText[0]
                         }));
                     }
                     catch (ex) {
@@ -38,33 +43,31 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                     }
                     try {
                         const output: Interface.ISecurityList[] = []
-                        
-                        const modSearch = searchText.slice(0,1) === '$' ? searchText.slice(1) : searchText;
-                        const regex = new RegExp(`^${modSearch}`, "i");
-                        securities.forEach((item) => {
-                            if ((regex.test(item.company_name) || regex.test(item.symbol ))) {
-                                output.push(item)
-                            }
-                                
+                        searchText.forEach((el, i) => {
+                            const modSearch = el.slice(0,1) === '$' ? el.slice(1) : el;
+                            const regex = new RegExp(`^${modSearch}`, "i");
+                            securities.forEach((item) => {
+                                if ((regex.test(item.company_name) || regex.test(item.symbol ))) output.push(item)
+                            })
                         })
                         setSearchSecurities(output)
                     } catch (ex) {
                         console.error(ex)
                     }
-                }, 500)
+                }, 0)
             }
             else if (searchText.length > 0) {
                 try {
                     setPeople(undefined);
                     const output: Interface.ISecurityList[] = []
-                    const modSearch = searchText.slice(0,1) === '$' ? searchText.slice(1) : searchText;
-                    const regex = new RegExp(`^${modSearch}`, "i");
-                    securities.forEach((item) => {
-                        if ((regex.test(item.symbol ))) {
-                            output.push(item)
-                        }
+                    searchText.forEach((el, i) => {
+                        const modSearch = el.slice(0,1) === '$' ? el.slice(1) : el;
+                        const regex = new RegExp(`^${modSearch}`, "i");
+                        securities.forEach((item) => {
+                            if ((regex.test(item.symbol ))) output.push(item)
+                        })
                     })
-                    setSearchSecurities(output)
+                        setSearchSecurities(output)
                 } catch (ex) {
                     console.error(ex)
                 }
@@ -80,11 +83,38 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
         <View style={[flex, { backgroundColor: "#F7f8f8" }]}>
             <View style={{width: '90%', alignSelf: 'center', marginBottom: sizes.rem0_5}}>
                 <SearchBar 
+                    text={tempSearchText}
                     placeholder="Search... ($AAPL, Tim, Tesla, etc.)"
                     onTextChange={(v) => {
-                        setSearchText(v);
-                    }} 
+                        setTempSearchText(v);
+                    }}
+                    onEditingSubmit={(e) => {
+                        setSearchText([...searchText, e])
+                        setTempSearchText('')
+                    }}
                 />
+                <ScrollView style={{marginTop: sizes.rem0_5, marginBottom: sizes.rem0_5}}
+                            nestedScrollEnabled 
+                            horizontal
+                            showsHorizontalScrollIndicator={false}>
+                    <View style={[row, searchText.length ? {display: 'flex'} : {display: 'none'}]}>
+                        {
+                            isNotUndefinedOrNull(searchText) && Array.isArray(searchText) && searchText.map((chip, i) => {
+                                return (
+                                    <PrimaryChip isAlt
+                                                includeX={true}
+                                                pressEvent={() => {
+                                                    setSearchText(searchText.filter(a => a !== chip))
+                                                    setTempSearchText('')
+                                                }}
+                                                key={i} 
+                                                label={chip}
+                                                style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
+                                )
+                            })                   
+                        }    
+                    </View>
+                </ScrollView>
             </View>
             <FlatList
                 data={[
@@ -109,7 +139,8 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                     <View style={[searchSecurities?.length ? {display: 'flex'} : {display: 'none'}]}>
                         <Header text="Companies"/>
                         <List
-                            listKey="companies"
+                            key={`objKey_${searchSecurities?.length}`}
+                            listKey={`companies_${searchSecurities?.length}`}
                             datasetKey={`company_id_${searchSecurities?.length}`}
                             horizontal
                             data={searchSecurities}
@@ -145,19 +176,20 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                             }}
                         />
                     </View>
-                    <View style={[searchText !== "" ? {display: 'flex'} : {display: 'none'}]}>
+                    <View style={[searchText.length ? {display: 'flex'} : {display: 'none'}]}>
                         <Header text="Posts" />
                     </View>
                     </View>,
                     <View>
-                        {(searchText !== "") ? <FeedPart searchTerms={searchText} /> : <NoDataPanel message={'Search for Analysts, Posts, or Companies!'} />}
+                        {(searchText.length) ? <FeedPart searchTerms={searchText} /> : <NoDataPanel message={'Search for Analysts, Posts, or Companies!'} />}
                     </View>
                 
                 ]}
                 renderItem={(info) => {
                     return info.item
                 }}
-                contentContainerStyle={[{ paddingTop: 10 }]} 
+                ref={scrollRef}
+                contentContainerStyle={[{ paddingTop: 0 }]} 
                 nestedScrollEnabled
                 >
             </FlatList>
