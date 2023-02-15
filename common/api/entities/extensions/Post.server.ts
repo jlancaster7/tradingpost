@@ -127,8 +127,8 @@ const createPlatformQueryByType = async (template: string, templateData: any, se
 }
 export const createQueryByType = async (type: string, data: any) => {
     const selectedPlatforms = data.selectedPlatforms || []
-    const beginDateTime = (new Date(data.beginDateTime) || new Date('1/1/2000')).toISOString();
-    const endDateTime = (new Date(data.endDateTime) || new Date(Date.now())).toISOString();
+    const beginDateTime = (data.beginDateTime ? new Date(data.beginDateTime) : new Date('1/1/2000')).toISOString();
+    const endDateTime = (data.endDateTime ? new Date(data.endDateTime) : new Date(Date.now())).toISOString();
     const subscriptions = data.subscriptions || []
     const blocks = data.blocks || []
     const templateData = {

@@ -11,6 +11,9 @@ export type RobinhoodUser = {
     usesMfa: boolean,
     accessToken: string | null
     refreshToken: string | null
+    mfaType: string | null
+
+    challengeResponseId: string | null
 }
 
 export type RobinhoodUserTable = {

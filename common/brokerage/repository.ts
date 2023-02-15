@@ -2588,20 +2588,28 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         await this.db.none(query);
     }
 
-    getRobinhoodUser = async (userId: string): Promise<RobinhoodUserTable | null> => {
-        const query = `SELECT id,
-                              user_id,
-                              username,
-                              device_token,
-                              status,
-                              uses_mfa,
-                              access_token,
-                              refresh_token,
-                              updated_at,
-                              created_at
-                       FROM robinhood_user
-                       WHERE user_id = $1;`
-        const results = await this.db.query<[{ id: number, user_id: string, username: string, device_token: string, status: string, uses_mfa: boolean, access_token: string, refresh_token: string, updated_at: Date, created_at: Date }]>(query, [userId]);
+    getRobinhoodUser = async (userId: string, username?: string): Promise<RobinhoodUserTable | null> => {
+        let query = `SELECT id,
+                            user_id,
+                            username,
+                            device_token,
+                            status,
+                            uses_mfa,
+                            access_token,
+                            refresh_token,
+                            updated_at,
+                            created_at,
+                            mfa_type,
+                            challenge_response_id
+                     FROM robinhood_user
+                     WHERE user_id = $1`
+        let params = [userId];
+        if (username) {
+            params.push(username);
+            query += ` AND username = $2`
+        }
+
+        const results = await this.db.query<[{ id: number, user_id: string, username: string, device_token: string, status: string, uses_mfa: boolean, access_token: string, refresh_token: string, updated_at: Date, created_at: Date, mfa_type: string | null, challenge_response_id: string | null }]>(query, params);
         if (results.length <= 0) return null;
         return {
             id: results[0].id,
@@ -2613,7 +2621,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             accessToken: results[0].access_token,
             refreshToken: results[0].refresh_token,
             updatedAt: DateTime.fromJSDate(results[0].updated_at),
-            createdAt: DateTime.fromJSDate(results[0].created_at)
+            createdAt: DateTime.fromJSDate(results[0].created_at),
+            mfaType: results[0].mfa_type,
+            challengeResponseId: results[0].challenge_response_id
         };
     }
 
@@ -2625,17 +2635,19 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                            uses_mfa=$4,
                            access_token=$5,
                            refresh_token=$6,
-                           updated_at=NOW()
+                           updated_at=NOW(),
+                           mfa_type=$8,
+                           challenge_response_id=$9
                        WHERE username = $7
                          AND user_id = $1;`
-        await this.db.query(query, [user.userId, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken, user.username])
+        await this.db.query(query, [user.userId, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken, user.username, user.mfaType, user.challengeResponseId])
     }
 
     insertRobinhoodUser = async (user: RobinhoodUser) => {
         const query = `INSERT INTO robinhood_user(user_id, username, device_token, status, uses_mfa, access_token,
-                                                  refresh_token)
-                       VALUES ($1, $2, $3, $4, $5, $6, $7);`
-        await this.db.query(query, [user.userId, user.username, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken]);
+                                                  refresh_token, mfa_type, challenge_response_id)
+                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`
+        await this.db.query(query, [user.userId, user.username, user.deviceToken, user.status, user.usesMfa, user.accessToken, user.refreshToken, user.mfaType, user.challengeResponseId]);
     }
 
     deleteRobinhoodAccountsPositions = async (accountIds: number[]): Promise<void> => {

@@ -22,6 +22,12 @@ export class AuthError extends Error {
     }
 }
 
+const apiHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'x-robinhood-api-version': '1.431.4'
+}
+
 const _do = async <T>(url: string, request: RequestInit): Promise<T> => {
     // @ts-ignore
     const res = await fetch(url, request)
@@ -55,6 +61,7 @@ export const refreshToken = async (clientId: string, deviceToken: string, _refre
 
     return await _do<RefreshResponse>("https://api.robinhood.com/oauth2/token/", {
         method: "POST",
+        headers: apiHeaders,
         body: JSON.stringify(payload)
     })
 }
@@ -64,6 +71,7 @@ export const sweeps = async (_accessToken: string, params: {}, pageUrl?: string)
     const response = await _do<Record<string, any>>(pageUrl ? pageUrl : url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             Authorization: `Bearer ${_accessToken}`
         }
     });
@@ -92,6 +100,7 @@ export const accounts = async (_accessToken: string, params: {}, pageUrl?: strin
     const response = await _do<Record<string, any>>(pageUrl ? pageUrl : url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             Authorization: `Bearer ${_accessToken}`
         }
     });
@@ -106,6 +115,7 @@ export const orders = async (_accessToken: string, params: {}, pageUrl?: string)
     const response = await _do<Record<string, any>>(pageUrl ? pageUrl : url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             Authorization: `Bearer ${_accessToken}`
         }
     })
@@ -120,6 +130,7 @@ export const optionPositions = async (_accessToken: string, params: {}, pageUrl?
     const response = await _do<Record<string, any>>(pageUrl ? pageUrl : url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             'Authorization': `Bearer ${_accessToken}`
         }
     });
@@ -134,6 +145,7 @@ export const optionOrders = async (_accessToken: string, params: {}, pageUrl?: s
     const response = await _do<Record<string, any>>(pageUrl ? pageUrl : url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             'Authorization': `Bearer ${_accessToken}`
         }
     });
@@ -148,6 +160,7 @@ export const optionEvents = async (_accessToken: string, params: {}, pageUrl?: s
     const response = await _do<Record<string, any>>(pageUrl ? pageUrl : url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             'Authorization': `Bearer ${_accessToken}`
         }
     });
@@ -162,6 +175,7 @@ export const dividends = async (_accessToken: string, params: {}, pageUrl?: stri
     const response = await _do<Record<string, any>>(pageUrl ? pageUrl : url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             Authorization: `Bearer ${_accessToken}`
         }
     });
@@ -179,6 +193,7 @@ export const positions = async (_accessToken: string, params: {
     const response = await _do<Record<string, any>>(pageUrl ? pageUrl : url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             "Authorization": `Bearer ${_accessToken}`
         },
     });
@@ -204,6 +219,7 @@ export const portfolios = async (_accessToken: string): Promise<Portfolio[]> => 
     const res = await _do<Record<string, any>>(url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             Authorization: `Bearer ${_accessToken}`
         },
     })
@@ -217,6 +233,7 @@ export const instrument = async (_accessToken: string, params: { instrumentId: s
     return await _do<Instrument>(url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             Authorization: `Bearer ${_accessToken}`
         },
     })
@@ -230,6 +247,7 @@ export const instruments = async (_accessToken: string, params: {
     const response = await _do<Record<string, any>>(url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             Authorization: `Bearer ${_accessToken}`
         },
     })
@@ -245,6 +263,7 @@ export const option = async (_accessToken: string, params: { optionId: string },
     return await _do<Option>(url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
             Authorization: `Bearer ${_accessToken}`
         },
     })
@@ -255,6 +274,45 @@ export const dayTrades = async (_accessToken: string, accountNumber: string): Pr
     return await _do<RecentDayTrade>(url.toString(), {
         method: "GET",
         headers: {
+            ...apiHeaders,
+            "Authorization": `Bearer ${_accessToken}`
+        }
+    })
+}
+
+export const login = async (body: Record<string, any>, headers: Record<string, string>) => {
+    const url = new URL("https://api.robinhood.com/oauth2/token/")
+
+    return await _do<any>(url.toString(), {
+        method: "POST",
+        headers: {
+            ...apiHeaders,
+            ...headers
+        },
+        body: JSON.stringify(body)
+    })
+}
+
+export const challengeRequest = async (challengeId: string, passCode: string, headers: Record<string, string>) => {
+    const url = new URL(`https://api.robinhood.com/challenge/${challengeId}/respond/`);
+    return await _do<any>(url.toString(), {
+        method: "POST",
+        headers: {
+            ...apiHeaders,
+            ...headers
+        },
+        body: JSON.stringify({
+            response: passCode
+        })
+    });
+}
+
+export const user = async (_accessToken: string) => {
+    const url = new URL(`https://api.robinhood.com/user/`)
+    return await _do<RecentDayTrade>(url.toString(), {
+        method: "GET",
+        headers: {
+            ...apiHeaders,
             "Authorization": `Bearer ${_accessToken}`
         }
     })
