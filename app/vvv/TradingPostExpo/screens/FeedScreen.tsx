@@ -108,11 +108,12 @@ export const PlatformSelector = (props: {platforms: string[], setPlatformClicked
 export const FeedPart = (props: {
     bookmarkedOnly?: boolean,
     searchTerms?: string | string[],
+    dateRange?: {beginDateTime?: string, endDateTime?: string}
     userId?: string,
     platforms?: string[]
 }) => {
     const { width: windowWidth } = useWindowDimensions();
-    let { bookmarkedOnly, searchTerms, userId, platforms } = props
+    let { bookmarkedOnly, searchTerms, userId, platforms, dateRange } = props
     const [postsKey, setPostsKey] = useState(Date.now());
     
     return <PostList
@@ -136,6 +137,10 @@ export const FeedPart = (props: {
                 })()
             }
             if (platforms?.length) reqData.platforms = (() => platforms)()
+            if (dateRange) {
+                reqData.beginDateTime = dateRange.beginDateTime;
+                reqData.endDateTime = dateRange.endDateTime;
+            }
             const posts = (await Api.Post.extensions.feed({
                 page,
                 bookmarkedOnly: bookmarkedOnly,

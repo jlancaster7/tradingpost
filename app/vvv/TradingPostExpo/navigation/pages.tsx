@@ -73,7 +73,7 @@ export type RootStackScreenProps<Screen extends keyof RootStackParamList> =
     >;
 
 export type DashTabParamList = {
-    [P in NavIconKeys]: P extends "Feed" ? { bookmarkedOnly?: "true" | "false", searchTerms?: string[] } : undefined
+    [P in NavIconKeys]: P extends "Feed" ? { bookmarkedOnly?: "true" | "false", searchTerms?: string[] } :  P extends "Search" ? {beginDateTime?: string, endDateTime?: string, searchTerms?: string[], watchlistId?: string}: undefined
 }
 
 export type DashTabScreenProps<Screen extends keyof DashTabParamList> = CompositeScreenProps<

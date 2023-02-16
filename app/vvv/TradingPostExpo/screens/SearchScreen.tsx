@@ -17,23 +17,22 @@ import { FeedPart } from "./FeedScreen";
 import { FlatList } from "react-native-gesture-handler";
 import {PrimaryChip} from '../components/PrimaryChip'
 import {isNotUndefinedOrNull} from "../utils/validators";
+import { DashTabScreenProps } from "../navigation/pages";
 
 
-export const SearchScreen = (props: { navigation: NavigationProp<any> } & { route: { params: {} } }) => {
+export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
     const [tempSearchText, setTempSearchText] = useState(''),
         [searchText, setSearchText] = useState<string[]>([]),
-        [searchType, setSearchType] = useState<"posts" | "people">("posts"),
+        [watchlistId, setWatchlistId] = useState(''),
+        [dateRange, setDateRange] = useState<{beginDateTime?: string, endDateTime?: string}>({beginDateTime: '2023-02-16T15:16:14Z'}),
         [people, setPeople] = useState<Interface.IUserList[]>(),
         [searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
-        debounceRef = useRef<any>(),
         scrollRef = useRef<FlatList>(null),
         { securities: { list: securities } } = useSecuritiesList();
     useEffect(() => {
-        clearTimeout(debounceRef.current);
             if (searchText.length === 1 && searchText[0].length > 3) {
-                debounceRef.current = setTimeout(async () => {
+                (async () => {
                     try {
-                        
                         setPeople(await Api.User.extensions.search({
                             term: searchText[0]
                         }));
@@ -54,7 +53,7 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                     } catch (ex) {
                         console.error(ex)
                     }
-                }, 0)
+                })()
             }
             else if (searchText.length > 0) {
                 try {
@@ -76,9 +75,21 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                 setPeople(undefined);
                 setSearchSecurities(undefined)
             }
-        
-    }, [searchText, searchType])
-
+    }, [searchText])
+    useEffect(() => {
+        (async () => {
+            if (watchlistId) {
+                const watchlist = await Api.Watchlist.get(watchlistId);
+                setSearchText(watchlist.items.map(a => `$${a}`))
+            }
+        })()
+    }, [watchlistId])
+    useEffect(() => {
+        if (props.route.params.beginDateTime) setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: dateRange.endDateTime})
+        if (props.route.params.endDateTime) setDateRange({beginDateTime: dateRange.beginDateTime, endDateTime: props.route.params.endDateTime})
+        if (props.route.params.searchTerms) setSearchText(props.route.params.searchTerms)
+        if (props.route.params.watchlistId) setWatchlistId(props.route.params.watchlistId)
+    }, [props.route.params.beginDateTime, props.route.params.endDateTime, props.route.params.searchTerms, props.route.params.watchlistId])
     return (
         <View style={[flex, { backgroundColor: "#F7f8f8" }]}>
             <View style={{width: '90%', alignSelf: 'center', marginBottom: sizes.rem0_5}}>
@@ -97,6 +108,19 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                             nestedScrollEnabled 
                             horizontal
                             showsHorizontalScrollIndicator={false}>
+                    <View style={[row, Object.keys(dateRange).length ? {display: 'flex'} : {display: 'none'}]}>
+                        {
+                            dateRange.beginDateTime &&
+                                    <PrimaryChip isAlt
+                                                includeX={true}
+                                                pressEvent={() => {
+                                                    setDateRange({})
+                                                }}
+                                                key={'dateRangeChip'} 
+                                                label={`Last ${Math.floor(((new Date()).valueOf() - (new Date(dateRange.beginDateTime)).valueOf()) / 3600000)} Hours`}
+                                                style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
+                        }    
+                    </View>
                     <View style={[row, searchText.length ? {display: 'flex'} : {display: 'none'}]}>
                         {
                             isNotUndefinedOrNull(searchText) && Array.isArray(searchText) && searchText.map((chip, i) => {
@@ -181,9 +205,8 @@ export const SearchScreen = (props: { navigation: NavigationProp<any> } & { rout
                     </View>
                     </View>,
                     <View>
-                        {(searchText.length) ? <FeedPart searchTerms={searchText} /> : <NoDataPanel message={'Search for Analysts, Posts, or Companies!'} />}
+                        {(searchText.length) ? <FeedPart dateRange={dateRange} searchTerms={searchText} /> : <NoDataPanel message={'Search for Analysts, Posts, or Companies!'} />}
                     </View>
-                
                 ]}
                 renderItem={(info) => {
                     return info.item

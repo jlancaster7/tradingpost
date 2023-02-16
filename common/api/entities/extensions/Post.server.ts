@@ -127,7 +127,7 @@ const createPlatformQueryByType = async (template: string, templateData: any, se
 }
 export const createQueryByType = async (type: string, data: any) => {
     const selectedPlatforms = data.selectedPlatforms || []
-    const beginDateTime = (data.endDateTime ? new Date(data.beginDateTime) : new Date('1/1/2000')).toISOString();
+    const beginDateTime = (data.beginDateTime ? new Date(data.beginDateTime) : new Date('1/1/2000')).toISOString();
     const endDateTime = (data.endDateTime ? new Date(data.endDateTime) : new Date(Date.now())).toISOString();
     const subscriptions = data.subscriptions || []
     const blocks = data.blocks || []
@@ -219,7 +219,6 @@ export default ensureServerExtensions<Omit<Post, "setPostsPerPage">>({
             beginDateTime: req.body.data?.beginDateTime,
             endDateTime: req.body.data?.endDateTime
         }
-        console.log('using right feed')
         const response = await elasticClient.search<IElasticPost["_source"]>({
             index: indexName,
             size: postsPerPage,
