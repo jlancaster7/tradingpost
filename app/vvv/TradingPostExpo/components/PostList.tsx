@@ -1,12 +1,24 @@
 import { Interface } from "@tradingpost/common/api";
 import React from "react";
-import { Text } from "react-native";
+import { FlatListProps, Text } from "react-native";
 import { fonts } from "../style";
-import { DataOrQuery, List } from "./List";
+import { AnimatedList, DataOrQuery, HasU, List, ListProps } from "./List";
 import { PostView } from "./PostView";
 
-export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>, datasetKey?: string, onReloadNeeded?: () => void }) {
-    return <List
+export type PostListOnScroll = FlatListProps<HasU<Interface.IElasticPostExt, string>>["onScroll"]
+export type ContentStyle = FlatListProps<HasU<Interface.IElasticPostExt, string>>["contentContainerStyle"]
+export type PostScrollEnd = FlatListProps<HasU<Interface.IElasticPostExt, string>>["onMomentumScrollEnd"]
+export type PostScrollBegin = FlatListProps<HasU<Interface.IElasticPostExt, string>>["onMomentumScrollBegin"]
+export type PostScrollDragBegin = FlatListProps<HasU<Interface.IElasticPostExt, string>>["onScrollBeginDrag"]
+export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>, datasetKey?: string, onRefresh?: () => void, onReloadNeeded?: () => void, onScroll?: PostListOnScroll, contentContainerStyle?: ContentStyle, onMomentumScrollEnd?: PostScrollEnd, onMomentumScrollBegin?: PostScrollBegin, onScrollBeginDrag?:PostScrollDragBegin }) {
+    return <AnimatedList
+        contentContainerStyle={props.contentContainerStyle}
+        onMomentumScrollEnd={props.onMomentumScrollEnd}
+        onMomentumScrollBegin={props.onMomentumScrollBegin}
+        onScrollBeginDrag={props.onScrollBeginDrag}
+        onScroll={props.onScroll}
+        onRefresh={props.onRefresh}
+
         listKey={props.datasetKey || 'STATIC'}
         getItemLayout={(items, index, sizeCache) => {
             const curItem = items?.[index];

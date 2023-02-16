@@ -3,7 +3,7 @@ import { View, KeyboardAvoidingView, Platform } from "react-native";
 import { Input } from "@ui-kitten/components";
 import { Button, Icon } from '@ui-kitten/components'
 import { sizes } from "../style";
-
+//TODO: clean this up ... this should be typed
 export function KeyboardAvoidingInput(props: any) {
     return (
     <KeyboardAvoidingView
@@ -38,7 +38,7 @@ export function KeyboardAvoidingInput(props: any) {
             //onPress={props.onClick(props.value, props.setValue, props.item_id)}
             accessoryRight={props.rightIcon}
                         />
-        
+
         </View>
     </KeyboardAvoidingView>);
 }
