@@ -14,6 +14,7 @@ import { ElevatedSection } from "../components/Section";
 import { flex, sizes } from "../style";
 import { social as socialStyle } from '../style'
 import { SvgExpo } from "../components/SvgExpo";
+import { diff } from "react-native-reanimated";
 
 const platformsAll = ["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"];
 
@@ -26,91 +27,22 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const [platforms, setPlatforms] = useState<string[]>([]),
         [platformClicked, setPlatformClicked] = useState('');
     const nav = useNavigation();
+    const clampAmount = (width - width * platformsMarginH * platformsAll.length * 2) / platformsAll.length + platformsMarginTop;
     const translateHeaderY = useRef(new Animated.Value(0)).current;
     const lastOffsetY = useRef(new Animated.Value(0)).current;
     //const lastOffset = useRef<number>();
     //  const [collapsed, setCollapsed] = useState(false);
 
-    const clampAmount = (width - width * platformsMarginH * platformsAll.length * 2) / platformsAll.length + platformsMarginTop;
-    const [clampRange, setClampRange] = useState<[number, number]>([0, clampAmount])
+
+    //const [clampRange, setClampRange] = useState<[number, number]>([0, clampAmount])
     const diffValue = Animated.subtract(translateHeaderY, lastOffsetY);
-    const translation = diffValue.interpolate({
+
+    const tester = Animated.diffClamp(translateHeaderY, 0, clampAmount)
+    const currentClamp = tester.interpolate({
         inputRange: [0, clampAmount],
         outputRange: [0, -clampAmount],
         extrapolate: 'clamp',
     });
-
-    useEffect(() => {
-        lastOffsetY.addListener((v: { value: any }) => {
-            console.log("LAST VALUE " + v.value);
-        })
-        return () => lastOffsetY.removeAllListeners();
-    }, [lastOffsetY])
-
-
-    // useEffect(() => {
-    //     diffValue.addListener((v: { value: any }) => {
-    //         console.log("DIFF VALUE " + v.value);
-    //     })
-    //     return () => diffValue.removeAllListeners();
-    // }, [diffValue])
-
-    // Animated.timing(
-    //     opacityAnim,
-    //     {
-    //         delay: 0.75,
-    //         toValue: 1,
-    //         duration: 2000,
-    //         useNativeDriver: true
-    //     }).start();
-
-    // const margin = translateHeaderY.interpolate({
-    //     inputRange: [0, clampAmount],
-    //     outputRange: [clampAmount + sizes.rem1, 0],
-    //     extrapolate: 'clamp',
-    // });
-
-    console.log(translateHeaderY);
-    // const margin = translateHeaderY.interpolate({
-    //     inputRange: [0, clampMax],
-    //     outputRange: [0, -clampMax],
-    //     extrapolate: 'clamp',
-    // });
-    //   const [clampState, setClampState] = useState<"min" | "max" | undefined>("min");
-
-    // useEffect(() => {
-    //     translateHeaderY.addListener((v: { value: number }) => {
-    //         console.log("Offest" + v.value)
-    //         console.log("Last Offest" + v.value)
-    //         if (clampState === "max" && lastOffset.current && v.value < lastOffset.current) {
-    //             //              console.log("#############################################################################RESERVSE")
-    //             setClampRange([v.value - clampAmount, v.value])
-    //             setClampState(undefined);
-    //         }
-    //         else if (clampState === "min" && lastOffset.current && v.value > lastOffset.current) {
-    //             //                console.log("#############################################################################RESERVSE")
-    //             setClampRange([v.value, v.value + clampAmount])
-    //             setClampState(undefined);
-    //         }
-    //         lastOffset.current = v.value;
-    //     });
-    //     return () => translateHeaderY.removeAllListeners();
-    // }, [translateHeaderY, clampState])
-
-    // useEffect(() => {
-    //     translation.addListener((v: { value: number }) => {
-    //         console.log("Value is " + v.value);
-    //         console.log("Clamp is " + clampAmount);
-    //         //const c = Math.abs(v.value + clampMax) < profileImageSize - profileImageSmall + 8;
-    //         if (-v.value === clampAmount)
-    //             setClampState("max");
-    //         else if (v.value === 0)
-    //             setClampState("min");
-    //         else
-    //             setClampState(undefined);
-    //     });
-    //     return () => translation.removeAllListeners();
-    // }, [translation, clampAmount]);
 
     useEffect(() => {
         setPlatforms((prior) => {
@@ -164,7 +96,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 style={{
                     position: "absolute",
                     top: 0,
-                    transform: [{ translateY: translation }],
+                    transform: [{ translateY: currentClamp }],
                     alignItems: "stretch",
                     width: "100%",
                     backgroundColor: "white",
