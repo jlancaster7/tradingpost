@@ -22,6 +22,7 @@ import { google } from 'googleapis'
 import { PublicError } from "../static/EntityApiBase";
 import Repository from "../../../social-media/repository";
 import { userInfo } from "os";
+import { ICommentBasic } from "../interfaces";
 
 export interface ITokenResponse {
     "token_type": "bearer",
@@ -103,6 +104,17 @@ export default ensureServerExtensions<User>({
             }
         });
         return {};
+    },
+    getComments: async (r) => {
+        const userId = r.body.userId || r.extra.userId
+        const pool = await getHivePool;
+        const comments: ICommentBasic[] = (await pool.query("SELECT * FROM public.data_comment where related_id = $1 and related_type ='user' order by created_at desc", [userId])).rows;
+        const userCache = await getUserCache();
+        comments.forEach((c) =>
+            c.profile = userCache[c.user_id].profile
+        )
+        //get user data
+        return comments
     },
     getBrokerageAccounts: async (r) => {
         const accs = await execProc("public.api_brokerage_account", {

@@ -1,4 +1,4 @@
-import { IUserGet, IUserList, IWatchlistList } from "../interfaces";
+import { ICommentBasic, IUserList, IWatchlistList } from "../interfaces";
 import { ensureServerExtensions, Extension } from "./index"
 import { AccountGroupHPRsTable, TradingPostAccountGroupStats } from '../../../brokerage/interfaces'
 
@@ -10,6 +10,7 @@ export default class User extends Extension {
     getBrokerageAccounts = this._makeFetch<undefined, { id: number, broker_name: string, account_number: string, user_id: string, hidden_for_deletion: boolean }[]>("getBrokerageAccounts", this._defaultPostRequest)
     initBrokerageAccounts = this._makeFetch<undefined, {}[]>("initBrokerageAccounts", this._defaultPostRequest)
     linkSocialAccount = this._makeFetch<{ callbackUrl: string, platform: string, code?: string, challenge?: string, platform_idenifier?: string }, string>("linkSocialAccount", this._defaultPostRequest)
+    getComments = this._makeFetch<{ userId?: string }, ICommentBasic[]>("getComments", this._defaultPostRequest)
     getTrades = this._makePagedFetch<{ userId?: string }, { date: Date, type: string, quantity: number, price: number, fees: number, currency: string, security_id: number, option_id: number, option_info: any }[]>("getTrades", this._defaultPostRequest)
     getHoldings = this._makeFetch<{ userId?: string }, { security_id: number, option_id: number, option_info: any, price: number, quantity: number, value: number, cost_basis: number, pnl: number, date: Date }[]>("getHoldings", this._defaultPostRequest)
     getWatchlists = this._makeFetch<{ userId: string }, IWatchlistList[]>("getWatchlists", this._defaultPostRequest)

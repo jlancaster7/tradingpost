@@ -19,7 +19,17 @@ module.exports = (() => {
         resolver: {
             ...resolver,
             assetExts: resolver.assetExts.filter((ext) => ext !== "svg"),
-            sourceExts: [...resolver.sourceExts, "svg"]
+            sourceExts: [...resolver.sourceExts, "svg"],
+            resolveRequest: (context, moduleName, platform) => {
+              
+                if (moduleName === "react-native-webview") {
+                    console.log("NAME" + moduleName);
+                    console.log("FOUND A REQUEST FOR WEB VIEW!!!!!")
+                    return context.resolveRequest(context, "@tradingpost/react-native-webview", platform);
+                }
+                // Optionally, chain to the standard Metro resolver.
+                return context.resolveRequest(context, moduleName, platform);
+            }
         }
     })
 })();
