@@ -56,7 +56,7 @@ const ButtonMargin = 8;
 const ButtonBarsize = 43;
 const titles = 27 + 17;
 const tabBarMargin = sizes.rem1;
-const clampBuffer = 4;
+//const clampBuffer = 4;
 
 const collapseShift = 2 * ButtonMargin;
 
@@ -401,7 +401,6 @@ export function ProfileScreen(props: RootStackScreenProps<'Profile'>) {
                 bannerPic={""}
                 extraMarginTop={collapseShift}
                 platforms={user?.claims ? user?.claims.map(c => c.platform) : []}
-
             />
             <View style={[collapsed ? row : undefined, { width: "100%", alignItems: "center" }]}>
                 <View style={{ marginHorizontal: collapsed ? sizes.rem1 : 0 }}>

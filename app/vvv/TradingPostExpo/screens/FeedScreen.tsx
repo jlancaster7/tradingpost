@@ -1,26 +1,116 @@
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { Api, Interface } from "@tradingpost/common/api";
-import React, { useEffect, useState } from "react";
-import { Alert, Pressable, RefreshControl, ScrollView, useWindowDimensions } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Alert, Animated, FlatListProps, NativeScrollEvent, NativeSyntheticEvent, Pressable, RefreshControl, ScrollView, useWindowDimensions } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
 import { View, Text } from "react-native";
 import { PlusContentButton } from "../components/PlusContentButton";
-import { PostList } from "../components/PostList";
+import { ContentStyle, PostList, PostListOnScroll, PostScrollBegin, PostScrollDragBegin, PostScrollEnd } from "../components/PostList";
 import { spaceOnSide, postInnerHeight } from "../components/PostView";
 import { DashTabScreenProps } from "../navigation/pages";
 import { Logo, LogoNoBg, social } from "../images";
 import { IconifyIcon } from "../components/IconfiyIcon";
 import { ElevatedSection } from "../components/Section";
 import { flex, sizes } from "../style";
-import { List } from "../components/List";
-import { Avatar } from "@ui-kitten/components";
 import { social as socialStyle } from '../style'
 import { SvgExpo } from "../components/SvgExpo";
 
+const platformsAll = ["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"];
+
+const platformsMarginH = 0.02;
+const platformsMarginTop = sizes.rem1;
+
 export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
+
+    const { width } = useWindowDimensions();
     const [platforms, setPlatforms] = useState<string[]>([]),
         [platformClicked, setPlatformClicked] = useState('');
     const nav = useNavigation();
+    const translateHeaderY = useRef(new Animated.Value(0)).current;
+    const lastOffsetY = useRef(new Animated.Value(0)).current;
+    //const lastOffset = useRef<number>();
+    //  const [collapsed, setCollapsed] = useState(false);
+
+    const clampAmount = (width - width * platformsMarginH * platformsAll.length * 2) / platformsAll.length + platformsMarginTop;
+    const [clampRange, setClampRange] = useState<[number, number]>([0, clampAmount])
+    const diffValue = Animated.subtract(translateHeaderY, lastOffsetY);
+    const translation = diffValue.interpolate({
+        inputRange: [0, clampAmount],
+        outputRange: [0, -clampAmount],
+        extrapolate: 'clamp',
+    });
+
+    useEffect(() => {
+        lastOffsetY.addListener((v: { value: any }) => {
+            console.log("LAST VALUE " + v.value);
+        })
+        return () => lastOffsetY.removeAllListeners();
+    }, [lastOffsetY])
+
+
+    // useEffect(() => {
+    //     diffValue.addListener((v: { value: any }) => {
+    //         console.log("DIFF VALUE " + v.value);
+    //     })
+    //     return () => diffValue.removeAllListeners();
+    // }, [diffValue])
+
+    // Animated.timing(
+    //     opacityAnim,
+    //     {
+    //         delay: 0.75,
+    //         toValue: 1,
+    //         duration: 2000,
+    //         useNativeDriver: true
+    //     }).start();
+
+    // const margin = translateHeaderY.interpolate({
+    //     inputRange: [0, clampAmount],
+    //     outputRange: [clampAmount + sizes.rem1, 0],
+    //     extrapolate: 'clamp',
+    // });
+
+    console.log(translateHeaderY);
+    // const margin = translateHeaderY.interpolate({
+    //     inputRange: [0, clampMax],
+    //     outputRange: [0, -clampMax],
+    //     extrapolate: 'clamp',
+    // });
+    //   const [clampState, setClampState] = useState<"min" | "max" | undefined>("min");
+
+    // useEffect(() => {
+    //     translateHeaderY.addListener((v: { value: number }) => {
+    //         console.log("Offest" + v.value)
+    //         console.log("Last Offest" + v.value)
+    //         if (clampState === "max" && lastOffset.current && v.value < lastOffset.current) {
+    //             //              console.log("#############################################################################RESERVSE")
+    //             setClampRange([v.value - clampAmount, v.value])
+    //             setClampState(undefined);
+    //         }
+    //         else if (clampState === "min" && lastOffset.current && v.value > lastOffset.current) {
+    //             //                console.log("#############################################################################RESERVSE")
+    //             setClampRange([v.value, v.value + clampAmount])
+    //             setClampState(undefined);
+    //         }
+    //         lastOffset.current = v.value;
+    //     });
+    //     return () => translateHeaderY.removeAllListeners();
+    // }, [translateHeaderY, clampState])
+
+    // useEffect(() => {
+    //     translation.addListener((v: { value: number }) => {
+    //         console.log("Value is " + v.value);
+    //         console.log("Clamp is " + clampAmount);
+    //         //const c = Math.abs(v.value + clampMax) < profileImageSize - profileImageSmall + 8;
+    //         if (-v.value === clampAmount)
+    //             setClampState("max");
+    //         else if (v.value === 0)
+    //             setClampState("min");
+    //         else
+    //             setClampState(undefined);
+    //     });
+    //     return () => translation.removeAllListeners();
+    // }, [translation, clampAmount]);
 
     useEffect(() => {
         setPlatforms((prior) => {
@@ -35,23 +125,63 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     }, [platformClicked])
     return (
         <View style={{ flex: 1, backgroundColor: "#F7f8f8" }}>
-            <View key={`selector_${platforms.length}`}>
-                <PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked} />
-            </View>
-            <FeedPart />
+            <Animated.View
+                style={{
+                    flex: 1,
+                    // transform: [{ translateY: margin }]
+                    //    marginTop: margin
+                }}>
+                <FeedPart
+                    contentContainerStyle={{
+                        marginTop: clampAmount + sizes.rem1
+                    }}
+                    onScroll={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
+                        {
+                            nativeEvent:
+                            {
+                                //velocity: { y: translateHeaderY }
+                                contentOffset: { y: translateHeaderY }
+                            }
+
+                        }
+                    ], { useNativeDriver: true })}
+
+                    onScrollBeginDrag={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
+                        {
+                            nativeEvent:
+                            {
+                                contentOffset: { y: lastOffsetY }
+                            }
+
+                        }
+                    ], { useNativeDriver: true })}
+                />
+            </Animated.View>
             <PlusContentButton onPress={() => {
                 nav.navigate("PostEditor")
             }} />
-        </View>
+            <Animated.View
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    transform: [{ translateY: translation }],
+                    alignItems: "stretch",
+                    width: "100%",
+                    backgroundColor: "white",
+                    borderBottomColor: "#ccc",
+                    borderBottomWidth: 1
+                }}
+                key={`selector_${platforms.length}`}>
+                <PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked} />
+            </Animated.View>
+        </View >
     );
 }
 
 export const PlatformSelector = (props: { platforms: string[], setPlatformClicked: React.Dispatch<React.SetStateAction<string>> }) => {
-    let { width: windowWidth } = useWindowDimensions();
-    windowWidth = windowWidth > 680 ? 680 : windowWidth
     return (
         <View style={{ marginHorizontal: sizes.rem2 / 2, flexDirection: 'row', justifyContent: 'center' }}>
-            {["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"].map((item) => {
+            {platformsAll.map((item) => {
                 const logo = social[item + "Logo" as keyof typeof social];
                 return (
                     <ElevatedSection title=""
@@ -61,13 +191,10 @@ export const PlatformSelector = (props: { platforms: string[], setPlatformClicke
                             aspectRatio: 1,
                             alignItems: 'center',
                             justifyContent: 'center',
-                            marginTop: sizes.rem1,
-                            marginHorizontal: -0.25 * ((windowWidth - 320) ** (1 / 3)) + 0.0002 * ((windowWidth - 320) ** (1 / 2)) + 0.083 * ((windowWidth - 320) ** (1)) + 4,
-
+                            marginTop: platformsMarginTop,
+                            marginHorizontal: "2%"
                         }, props.platforms.includes(item) ? { borderStyle: 'solid', borderWidth: 2, borderColor: 'rgba(53, 162, 101, 1)', backgroundColor: '#F0F0F0' } : {}
-                        ]}
-
-                    >
+                        ]}>
                         <Pressable style={{ flex: 1 }} onPress={() => {
                             props.setPlatformClicked(item)
                         }}>
@@ -76,7 +203,6 @@ export const PlatformSelector = (props: { platforms: string[], setPlatformClicke
                                     <IconifyIcon key={`social_${item}`}
                                         icon={logo}
                                         svgProps={{}}
-
                                         style={{ aspectRatio: 1, backgroundColor: 'transparent', justifyContent: 'center' }}
                                         currentColor={item === 'Substack' ? socialStyle.substackColor : undefined} />
                                     : <SvgExpo style={{ height: "100%", aspectRatio: 1 }}>
@@ -99,17 +225,27 @@ export const FeedPart = (props: {
     searchTerms?: string | string[],
     userId?: string,
     platforms?: string[]
+    onScroll?: PostListOnScroll
+    onMomentumScrollEnd?: PostScrollEnd
+    onMomentumScrollBegin?: PostScrollBegin
+    onScrollBeginDrag?: PostScrollDragBegin
+    contentContainerStyle?: ContentStyle
 }) => {
     const { width: windowWidth } = useWindowDimensions();
     let { bookmarkedOnly, searchTerms, userId, platforms } = props
     searchTerms = searchTerms === undefined ? searchTerms : (searchTerms instanceof Array ? searchTerms : [searchTerms])
     const [postsKey, setPostsKey] = useState(Date.now());
     return <PostList
+        contentContainerStyle={props.contentContainerStyle}
+        onScroll={props.onScroll}
+        onScrollBeginDrag={props.onScrollBeginDrag}
+        onMomentumScrollBegin={props.onMomentumScrollBegin}
+        onMomentumScrollEnd={props.onMomentumScrollEnd}
         onRefresh={() => setPostsKey(Date.now())}
-
         onReloadNeeded={() => {
             setPostsKey(Date.now());
         }}
+
         key={bookmarkedOnly ? String(Date.now()) : postsKey}
         datasetKey={searchTerms ? searchTerms.join('') : "____________"}
         posts={async (allItems, page, sizeCache) => {
