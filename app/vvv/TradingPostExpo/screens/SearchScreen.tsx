@@ -24,7 +24,7 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
     const [tempSearchText, setTempSearchText] = useState(''),
         [searchText, setSearchText] = useState<string[]>([]),
         [watchlistId, setWatchlistId] = useState(''),
-        [dateRange, setDateRange] = useState<{beginDateTime?: string, endDateTime?: string}>({beginDateTime: '2023-02-16T15:16:14Z'}),
+        [dateRange, setDateRange] = useState<{beginDateTime?: string, endDateTime?: string}>({}),
         [people, setPeople] = useState<Interface.IUserList[]>(),
         [searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
         scrollRef = useRef<FlatList>(null),
@@ -80,7 +80,7 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
         (async () => {
             if (watchlistId) {
                 const watchlist = await Api.Watchlist.get(watchlistId);
-                setSearchText(watchlist.items.map(a => `$${a}`))
+                setSearchText(watchlist.items.map(a => `$${a.symbol}`))
             }
         })()
     }, [watchlistId])
@@ -117,7 +117,7 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
                                                     setDateRange({})
                                                 }}
                                                 key={'dateRangeChip'} 
-                                                label={`Last ${Math.floor(((new Date()).valueOf() - (new Date(dateRange.beginDateTime)).valueOf()) / 3600000)} Hours`}
+                                                label={`Last ${Math.round((((new Date()).valueOf() - (new Date(dateRange.beginDateTime)).valueOf()) / 3600000) * 10) / 10} Hours`}
                                                 style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
                         }    
                     </View>
