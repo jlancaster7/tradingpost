@@ -1,4 +1,4 @@
-import { IUserList, IWatchlistList } from "../interfaces";
+import { ICommentBasic, IUserList, IWatchlistList } from "../interfaces";
 import { Extension } from "./index";
 import { AccountGroupHPRsTable, TradingPostAccountGroupStats } from '../../../brokerage/interfaces';
 export type UploadProfilePicBody = {
@@ -24,6 +24,9 @@ export default class User extends Extension {
         challenge?: string | undefined;
         platform_idenifier?: string | undefined;
     }) => Promise<string>;
+    getComments: (settings: {
+        userId?: string | undefined;
+    }) => Promise<ICommentBasic[]>;
     getTrades: (req: {
         $page: number;
         $limit?: number | undefined;

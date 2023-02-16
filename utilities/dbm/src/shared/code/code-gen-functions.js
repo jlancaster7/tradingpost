@@ -75,7 +75,7 @@ var makeCalcParts = function (settings, fields, other, isInsert) {
             if (selectedView && ((_c = entity.definition) === null || _c === void 0 ? void 0 : _c.fields)) {
                 //Hack: Ignore matched id 
                 selectedFields = (_d = entity.definition) === null || _d === void 0 ? void 0 : _d.fields.filter(function (_f) {
-                    return (selectedView === null || selectedView === void 0 ? void 0 : selectedView.fieldNames.find(function (fn) { return fn === _f.name; })) && !_f.PK && _f.name !== key;
+                    return (selectedView === null || selectedView === void 0 ? void 0 : selectedView.fieldNames.find(function (fn) { return fn === _f.name; })) && !_f.PK && _f.name !== key && !_f.calcType;
                 });
                 break;
             }

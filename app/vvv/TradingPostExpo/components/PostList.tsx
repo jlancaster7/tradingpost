@@ -5,8 +5,9 @@ import { fonts } from "../style";
 import { DataOrQuery, List } from "./List";
 import { PostView } from "./PostView";
 
-export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>, datasetKey?: string, onReloadNeeded?: () => void }) {
+export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>, datasetKey?: string, onRefresh?: () => void, onReloadNeeded?: () => void }) {
     return <List
+        onRefresh={props.onRefresh}
         listKey={props.datasetKey || 'STATIC'}
         getItemLayout={(items, index, sizeCache) => {
             const curItem = items?.[index];

@@ -20,6 +20,7 @@ exports.functionNames = {
 exports.dtExchange = {
     "bigserial": "BIGINT",
     "timestamptz": "TIMESTAMP WITH TIME ZONE",
+    "date": "date",
     "MONEY": "decimal"
 };
 function dtExchanger(type) {

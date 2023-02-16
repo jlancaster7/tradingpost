@@ -1,7 +1,7 @@
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { Api, Interface } from "@tradingpost/common/api";
 import React, { useEffect, useState } from "react";
-import { Pressable, ScrollView, useWindowDimensions } from "react-native";
+import { Alert, Pressable, RefreshControl, ScrollView, useWindowDimensions } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
 import { View, Text } from "react-native";
 import { PlusContentButton } from "../components/PlusContentButton";
@@ -19,38 +19,26 @@ import { SvgExpo } from "../components/SvgExpo";
 
 export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const [platforms, setPlatforms] = useState<string[]>([]),
-          [platformClicked, setPlatformClicked] = useState('');
+        [platformClicked, setPlatformClicked] = useState('');
     const nav = useNavigation();
+
     useEffect(() => {
         setPlatforms((prior) => {
             if (prior.includes(platformClicked)) return prior.filter(a => a !== platformClicked)
             else if (platformClicked.length) {
-                prior.push(platformClicked); 
+                prior.push(platformClicked);
                 return prior;
             }
             else return prior;
         })
         setPlatformClicked('')
-    },[platformClicked])
+    }, [platformClicked])
     return (
         <View style={{ flex: 1, backgroundColor: "#F7f8f8" }}>
-            <FlatList
-                data={[
-                    <View key={`selector_${platforms.length}`}>
-                        <PlatformSelector  platforms={platforms} setPlatformClicked={setPlatformClicked}/>
-                    </View>
-                    ,
-                    <View key={`feed_${platforms.length}`}>
-                        <FeedPart platforms={platforms} bookmarkedOnly={props.route.params.bookmarkedOnly === "true"} searchTerms={props.route.params.searchTerms } />
-                    </View>
-                ]}
-                renderItem={(info) => {
-                    return info.item
-                }}
-                contentContainerStyle={[{ paddingTop: 10 }]} 
-                nestedScrollEnabled
-                />
-            
+            <View key={`selector_${platforms.length}`}>
+                <PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked} />
+            </View>
+            <FeedPart />
             <PlusContentButton onPress={() => {
                 nav.navigate("PostEditor")
             }} />
@@ -58,48 +46,49 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     );
 }
 
-export const PlatformSelector = (props: {platforms: string[], setPlatformClicked: React.Dispatch<React.SetStateAction<string>>}) => {
+export const PlatformSelector = (props: { platforms: string[], setPlatformClicked: React.Dispatch<React.SetStateAction<string>> }) => {
     let { width: windowWidth } = useWindowDimensions();
     windowWidth = windowWidth > 680 ? 680 : windowWidth
     return (
-        <View style={{marginHorizontal: sizes.rem2 / 2, flexDirection: 'row', justifyContent: 'center'}}>
+        <View style={{ marginHorizontal: sizes.rem2 / 2, flexDirection: 'row', justifyContent: 'center' }}>
             {["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"].map((item) => {
                 const logo = social[item + "Logo" as keyof typeof social];
-                    return (
-                        <ElevatedSection title="" 
-                                        key={`socialV_${item}`} 
-                                        style={[{ flex: 1,
-                                                    aspectRatio: 1,
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    marginTop: sizes.rem1,
-                                                    marginHorizontal: -0.25*((windowWidth-320)**(1/3)) + 0.0002*((windowWidth-320)**(1/2)) + 0.083*((windowWidth-320)**(1)) + 4,
-                                                    
-                                                }, props.platforms.includes(item) ? {borderStyle: 'solid', borderWidth: 2 ,borderColor: 'rgba(53, 162, 101, 1)',  backgroundColor: '#F0F0F0'} : {}
-                                                ]}
-                                        
-                                                >
-                            <Pressable style={{flex: 1}} onPress={() =>{
-                                props.setPlatformClicked(item)
-                            }}>
-                                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
-                                    { item !== 'TradingPost' ? 
-                                        <IconifyIcon key={`social_${item}`} 
-                                                    icon={logo} 
-                                                    svgProps={{  }}
-                                                    
-                                                    style={{  aspectRatio: 1, backgroundColor: 'transparent', justifyContent: 'center' }}
-                                                    currentColor={item === 'Substack' ? socialStyle.substackColor : undefined} />
-                                                    :  <SvgExpo style={{ height: "100%", aspectRatio: 1 }}>
-                                                            <Logo />
-                                                        </SvgExpo>
-                                                        }
-                                </View>
-                            </Pressable>
-                        </ElevatedSection>
-                        )
+                return (
+                    <ElevatedSection title=""
+                        key={`socialV_${item}`}
+                        style={[{
+                            flex: 1,
+                            aspectRatio: 1,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginTop: sizes.rem1,
+                            marginHorizontal: -0.25 * ((windowWidth - 320) ** (1 / 3)) + 0.0002 * ((windowWidth - 320) ** (1 / 2)) + 0.083 * ((windowWidth - 320) ** (1)) + 4,
+
+                        }, props.platforms.includes(item) ? { borderStyle: 'solid', borderWidth: 2, borderColor: 'rgba(53, 162, 101, 1)', backgroundColor: '#F0F0F0' } : {}
+                        ]}
+
+                    >
+                        <Pressable style={{ flex: 1 }} onPress={() => {
+                            props.setPlatformClicked(item)
+                        }}>
+                            <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center' }}>
+                                {item !== 'TradingPost' ?
+                                    <IconifyIcon key={`social_${item}`}
+                                        icon={logo}
+                                        svgProps={{}}
+
+                                        style={{ aspectRatio: 1, backgroundColor: 'transparent', justifyContent: 'center' }}
+                                        currentColor={item === 'Substack' ? socialStyle.substackColor : undefined} />
+                                    : <SvgExpo style={{ height: "100%", aspectRatio: 1 }}>
+                                        <Logo />
+                                    </SvgExpo>
+                                }
+                            </View>
+                        </Pressable>
+                    </ElevatedSection>
+                )
             })}
-            </View>
+        </View>
     )
 }
 
@@ -115,8 +104,9 @@ export const FeedPart = (props: {
     let { bookmarkedOnly, searchTerms, userId, platforms } = props
     searchTerms = searchTerms === undefined ? searchTerms : (searchTerms instanceof Array ? searchTerms : [searchTerms])
     const [postsKey, setPostsKey] = useState(Date.now());
-    
     return <PostList
+        onRefresh={() => setPostsKey(Date.now())}
+
         onReloadNeeded={() => {
             setPostsKey(Date.now());
         }}
@@ -129,7 +119,7 @@ export const FeedPart = (props: {
                 reqData.terms = (() => {
                     let result: string[] = []
                     searchTerms.forEach((el: string) => {
-                        if (el[0] === '$') result.push(el.toLowerCase()) 
+                        if (el[0] === '$') result.push(el.toLowerCase())
                         else result.push(el)
                     })
                     return result

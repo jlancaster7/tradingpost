@@ -1,5 +1,6 @@
 import { IUserList } from '../apis/UserApi';
 import { TradingPostAccountGroupStats } from "../../../brokerage/interfaces";
+import { ICommentBasic } from "../interfaces";
 export interface ITokenResponse {
     "token_type": "bearer";
     "expires_in": number;
@@ -62,6 +63,16 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<string>;
+    getComments: (req: {
+        body: {
+            userId?: string | undefined;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<ICommentBasic[]>;
     getTrades: (req: {
         body: {
             userId?: string | undefined;

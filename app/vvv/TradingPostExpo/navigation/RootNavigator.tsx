@@ -145,15 +145,17 @@ export function RootNavigator() {
         </Stack.Group>
         <Stack.Group screenOptions={{
             headerStyle: {
-                backgroundColor: "transparent"
+                backgroundColor: 'transparent',
             },
             headerBackVisible: true,
             headerTintColor: "white",
             headerBackground: () => <View></View>,
+            headerTransparent:true,
             headerTitle: "",
             contentStyle: {
-                marginTop: -64
-            }
+              //  marginTop: -64
+            },
+       
         }}>
             <Stack.Screen options={{
                 headerRight: () => {

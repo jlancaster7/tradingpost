@@ -1,9 +1,9 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Text, FlatList, FlatListProps, ListRenderItem, ScrollView, View, ViewToken} from "react-native";
-import {flex} from "../style";
-import {TBI} from "../utils/misc";
-import {Link} from "./Link";
-import {NoDataPanel} from "./NoDataPanel";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Text, FlatList, FlatListProps, ListRenderItem, ScrollView, View, ViewToken } from "react-native";
+import { flex } from "../style";
+import { TBI } from "../utils/misc";
+import { Link } from "./Link";
+import { NoDataPanel } from "./NoDataPanel";
 
 
 export type DataOrQuery<T> = T[] | ((data: T[] | undefined, page: number, sizeCache: SizeParts[]) => Promise<T[]>);
@@ -32,10 +32,10 @@ export function List<T, U>(props: {
         index: number,
         sizeCache: SizeParts[]
     ) => { length: number; offset: number; index: number }) | undefined;
-} & ListProps<T> & Pick<FlatListProps<HasU<T, U>>, "style" | "contentContainerStyle" | "numColumns" | "ListHeaderComponent" | "StickyHeaderComponent" | "keyExtractor" | "horizontal">) {
+} & ListProps<T> & Pick<FlatListProps<HasU<T, U>>, "onRefresh" | "style" | "contentContainerStyle" | "numColumns" | "ListHeaderComponent" | "StickyHeaderComponent" | "keyExtractor" | "horizontal">) {
 
     const [internalData, setInternalData] = useState<T[]>(),
-        {data, preloadOffset, datasetKey} = props,
+        { data, preloadOffset, datasetKey } = props,
         [currentPage, setCurrentPage] = useState(0),
         [pagesDone, setPagesDone] = useState(false),
         isLoadingRef = useRef(true),
@@ -119,10 +119,13 @@ export function List<T, U>(props: {
         },
     ], []);
     const needsSplice = internalData && props.maxDisaplyCount && internalData.length > props.maxDisaplyCount;
+    const [refreshing, setRefreshing] = useState(false);
 
     return !internalData?.length ?
-        <NoDataPanel message={internalData ? props.noDataMessage : (props.loadingMessage || "Loading...")}/> :
+        <NoDataPanel message={internalData ? props.noDataMessage : (props.loadingMessage || "Loading...")} /> :
         <FlatList
+            refreshing={props.onRefresh ? refreshing : undefined}
+            onRefresh={props.onRefresh}
             listKey={props.listKey}
             horizontal={props.horizontal}
             style={[{}, props.style]}
@@ -130,7 +133,7 @@ export function List<T, U>(props: {
             numColumns={props.numColumns}
             ListHeaderComponent={props.ListHeaderComponent}
             ListFooterComponent={needsSplice ? () => {
-                return <Link onPress={TBI} style={{marginLeft: "auto"}}>{props.maxDisaplyText || "View All"}</Link>
+                return <Link onPress={TBI} style={{ marginLeft: "auto" }}>{props.maxDisaplyText || "View All"}</Link>
             } : undefined}
             stickyHeaderIndices={props.ListHeaderComponent ? [0] : undefined}
             data={(isLoadingRef.current ? [...internalData, props.loadingItem] : (needsSplice ? internalData.slice(0, props.maxDisaplyCount) : internalData)) as HasU<T, U>[]}

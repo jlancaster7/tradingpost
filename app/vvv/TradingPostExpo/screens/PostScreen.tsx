@@ -10,6 +10,7 @@ import { CommentsList } from "../components/CommentList";
 import { KeyboardAvoidingInput } from "../components/KeyboardAvoidingInput";
 import { AwaitedReturn } from "../utils/misc";
 import { RootStackScreenProps } from "../navigation/pages";
+import { useAppUser } from "../Authentication";
 
 export function PostScreen(props: RootStackScreenProps<"PostScreen">) {
     //https://m.tradingpostapp.com/post?
@@ -38,6 +39,7 @@ export function PostScreen(props: RootStackScreenProps<"PostScreen">) {
     const [postCommments, setPostComments] = useState<AwaitedReturn<typeof Api.Comment.extensions.postList>>([]);
     const [newComment, setNewComment] = useState('');
     const [commentAdded, setCommentAdded] = useState(0);
+    const { loginState } = useAppUser()
     useEffect(() => {
         if (post) {
             Api.Comment.extensions.postList({ type: "post", id: post._source.id })
@@ -82,8 +84,8 @@ export function PostScreen(props: RootStackScreenProps<"PostScreen">) {
             clicked={[commentAdded, setCommentAdded]}
             onClick={(r: any, s: any, t: any) => {
 
-                if (r.length && post)
-                    Api.Comment.insert({ user_id: post._source.user.id, related_type: 'post', comment: r, related_id: t })
+                if (r.length && post && loginState?.appUser?.id)
+                    Api.Comment.insert({ user_id: loginState?.appUser?.id, related_type: 'post', comment: r, related_id: t })
                 Keyboard.dismiss()
                 s('')
             }}
