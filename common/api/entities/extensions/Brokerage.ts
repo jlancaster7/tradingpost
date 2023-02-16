@@ -19,6 +19,7 @@ export type RobinhoodLoginResponse = {
     status: RobinhoodLoginStatus
     body: string
     challengeResponseId?: string
+    challengeType: string | null
 }
 
 export enum RobinhoodChallengeStatus {

@@ -233,7 +233,6 @@ export const FeedPart = (props: {
 }) => {
     const { width: windowWidth } = useWindowDimensions();
     let { bookmarkedOnly, searchTerms, userId, platforms } = props
-    searchTerms = searchTerms === undefined ? searchTerms : (searchTerms instanceof Array ? searchTerms : [searchTerms])
     const [postsKey, setPostsKey] = useState(Date.now());
     return <PostList
         contentContainerStyle={props.contentContainerStyle}
@@ -247,11 +246,12 @@ export const FeedPart = (props: {
         }}
 
         key={bookmarkedOnly ? String(Date.now()) : postsKey}
-        datasetKey={searchTerms ? searchTerms.join('') : "____________"}
+        datasetKey={searchTerms ? searchTerms instanceof Array ? searchTerms.join('') : searchTerms : "____________"}
         posts={async (allItems, page, sizeCache) => {
             console.log("PAGE: ", page)
             let reqData: any = {};
             if (searchTerms) {
+                searchTerms = searchTerms instanceof Array ? searchTerms : [searchTerms];
                 reqData.terms = (() => {
                     let result: string[] = []
                     searchTerms.forEach((el: string) => {

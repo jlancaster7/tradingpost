@@ -1,14 +1,13 @@
 import {ensureServerExtensions} from ".";
-import Brokerage from "./Brokerage";
-import brokerage, {RobinhoodChallengeStatus, RobinhoodLoginResponse, RobinhoodLoginStatus} from "./Brokerage";
+import Brokerage, {RobinhoodChallengeStatus, RobinhoodLoginResponse, RobinhoodLoginStatus} from "./Brokerage";
 import {v4 as uuidv4} from 'uuid';
 import fetch from 'node-fetch';
 import {
     BrokerageTaskStatusType,
-    BrokerageTaskType, DirectBrokeragesType,
+    BrokerageTaskType,
+    DirectBrokeragesType,
     IbkrAccount,
     TradingPostBrokerageAccounts,
-    TradingPostBrokerageAccountsTable,
     TradingPostBrokerageAccountStatus
 } from "../../../brokerage/interfaces";
 import {init} from "../../../db";
@@ -17,8 +16,9 @@ import {DefaultConfig} from "../../../configuration";
 import {DateTime} from "luxon";
 import {SendMessageCommand} from '@aws-sdk/client-sqs';
 import {PortfolioSummaryService} from "../../../brokerage/portfolio-summary";
+import {challengeRequest, login} from "../../../brokerage/robinhood/api";
+import {RobinhoodUser} from "../../../brokerage/robinhood/interfaces";
 
-const loginUrl = 'https://api.robinhood.com/oauth2/token/';
 const pingUrl = (id: string) => `https://api.robinhood.com/push/${id}/get_prompts_status`;
 const pingMap: Record<string, string> = {
     "redeemed": RobinhoodChallengeStatus.Redeemed,
@@ -26,7 +26,7 @@ const pingMap: Record<string, string> = {
     "validated": RobinhoodChallengeStatus.Validated
 }
 
-const generatePayloadRequest = (clientId: string, expiresIn: number, scope: string, username: string, password: string, fauxDeviceToken: string, headers: Record<string, string>, mfaCode: string | null, challengeResponseId: string | null): [Record<string, string>, Record<any, any>] => {
+const generatePayloadRequest = (clientId: string, expiresIn: number, scope: string, username: string, password: string, fauxDeviceToken: string, mfaCode: string | null, challengeResponseId: string | null): [Record<string, string>, Record<any, any>] => {
     let challengeType = "sms";
     let payload: Record<string, any> = {
         "username": username,
@@ -39,9 +39,13 @@ const generatePayloadRequest = (clientId: string, expiresIn: number, scope: stri
         "device_token": fauxDeviceToken
     };
 
+    let headers: Record<string, string> = {};
+
     // MFA Login
     if (mfaCode) {
         payload["mfa_code"] = mfaCode
+        payload["try_passkeys"] = false;
+        if (challengeResponseId) headers['x-robinhood-challenge-response-id'] = challengeResponseId
         return [headers, payload];
     }
 
@@ -59,86 +63,240 @@ const generatePayloadRequest = (clientId: string, expiresIn: number, scope: stri
 export default ensureServerExtensions<Brokerage>({
     robinhoodLogin: async (req): Promise<RobinhoodLoginResponse> => {
         const robinhoodCredentials = await DefaultConfig.fromCacheOrSSM("robinhood");
-        const {username, password, mfaCode, challengeResponseId} = req.body;
+        let {username, password, mfaCode} = req.body;
         const {pgp, pgClient, sqsClient} = await init;
         const brokerageRepo = new Repository(pgClient, pgp);
 
-        let tpBrokerageAccount: TradingPostBrokerageAccountsTable | null = null;
-        const tpBrokerageAccounts = await brokerageRepo.getTradingPostBrokerageAccountsByBrokerageAndIds(req.extra.userId, "Robinhood", [username]);
-        if (tpBrokerageAccounts.length > 1) throw new Error("cant have more than one brokerage account for robinhood user");
-        if (tpBrokerageAccounts.length > 0) tpBrokerageAccount = tpBrokerageAccounts[0];
+        let robinhoodUser = await brokerageRepo.getRobinhoodUser(req.extra.userId, req.body.username);
+        if (!robinhoodUser) {
+            const newDeviceToken = uuidv4();
+            const [requestHeaders, requestPayload] = generatePayloadRequest(robinhoodCredentials.clientId,
+                robinhoodCredentials.expiresIn, robinhoodCredentials.scope, username, password, newDeviceToken, mfaCode, null);
 
-        if (tpBrokerageAccount && tpBrokerageAccount.status === 'active') return {
-            status: RobinhoodLoginStatus.SUCCESS,
-            body: "Robinhood account already exists and is active"
-        }
+            try {
+                const loginBody = await login(requestPayload, requestHeaders);
+                // Credentials Provided Incorrectly
+                if (loginBody.detail && loginBody.detail === 'Unable to log in with provided credentials.') return {
+                    status: RobinhoodLoginStatus.ERROR,
+                    body: "Credentials provided incorrectly",
+                    challengeType: null
+                }
 
-        let headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'x-robinhood-api-version': '1.431.4'
-        }
-
-        const robinhoodUser = await brokerageRepo.getRobinhoodUser(req.extra.userId);
-        let fauxDeviceToken = uuidv4();
-        if (robinhoodUser) fauxDeviceToken = robinhoodUser.deviceToken
-
-        const [requestHeaders, requestPayload] = generatePayloadRequest(robinhoodCredentials.clientId,
-            robinhoodCredentials.expiresIn, robinhoodCredentials.scope, username, password, fauxDeviceToken,
-            headers, mfaCode, challengeResponseId);
-
-        try {
-            const response = await fetch(loginUrl, {
-                method: "POST",
-                headers: requestHeaders,
-                body: JSON.stringify(requestPayload)
-            });
-
-            const body = await response.json();
-
-            // Credentials Provided Incorrectly
-            if (body['detail'] === 'Unable to log in with provided credentials.') return {
-                status: RobinhoodLoginStatus.ERROR,
-                body: "Credentials provided incorrectly"
-            }
-
-            if (!robinhoodUser)
-                await brokerageRepo.insertRobinhoodUser({
+                let rhUser: RobinhoodUser = {
                     username: username,
-                    deviceToken: fauxDeviceToken,
-                    usesMfa: mfaCode !== null && !body['mfa_required'] && !body['challenge'],
+                    deviceToken: newDeviceToken,
+                    usesMfa: false,
                     status: RobinhoodLoginStatus.SUCCESS,
-                    accessToken: body.access_token ? body.access_token : null,
-                    refreshToken: body.refresh_token ? body.refresh_token : null,
-                    userId: req.extra.userId
-                })
-
-            // Basic MFA
-            // Have them type in a passcode
-            if ('mfa_required' in body) return {
-                status: RobinhoodLoginStatus.MFA,
-                body: "MFA required to proceed"
-            }
-
-            if ('challenge' in body) {
-                // this is the challenge where you constantly ping
-                if (body['challenge']['status'] === 'issued') return {
-                    status: RobinhoodLoginStatus.DEVICE_APPROVAL,
-                    body: "Please, approve the login on your device.",
-                    challengeResponseId: body['challenge']['id'],
+                    accessToken: loginBody.access_token ? loginBody.access_token : null,
+                    refreshToken: loginBody.refresh_token ? loginBody.refresh_token : null,
+                    userId: req.extra.userId,
+                    mfaType: null,
+                    challengeResponseId: null,
                 };
 
+                let response: RobinhoodLoginResponse = {
+                    status: RobinhoodLoginStatus.SUCCESS,
+                    body: "Robinhood account successfully updated in TradingPost",
+                    challengeType: null,
+                    challengeResponseId: ''
+                };
+
+                if ('mfa_required' in loginBody) {
+                    const {mfa_required, mfa_type} = loginBody;
+                    response = {
+                        status: RobinhoodLoginStatus.MFA,
+                        body: "MFA required to proceed",
+                        challengeResponseId: '',
+                        challengeType: "app"
+                    }
+
+                    // Authenticator App
+                    rhUser.mfaType = "app";
+                    rhUser.status = RobinhoodLoginStatus.MFA;
+                    rhUser.usesMfa = true;
+                }
+
+                if ('challenge' in loginBody) {
+                    if (loginBody.challenge.type === 'sms') {
+                        response = {
+                            status: RobinhoodLoginStatus.MFA,
+                            body: "MFA required to proceed",
+                            challengeResponseId: loginBody.challenge.id,
+                            challengeType: "sms"
+                        }
+
+                        rhUser.mfaType = "sms";
+                        rhUser.status = RobinhoodLoginStatus.MFA;
+                        rhUser.usesMfa = true;
+                        rhUser.challengeResponseId = loginBody.challenge.id
+                    }
+
+                    if (loginBody.challenge.type === 'prompt') {
+                        response = {
+                            status: RobinhoodLoginStatus.DEVICE_APPROVAL,
+                            body: "Please, approve the login on your device.",
+                            challengeResponseId: loginBody.challenge.id,
+                            challengeType: RobinhoodLoginStatus.DEVICE_APPROVAL
+                        };
+
+                        rhUser.mfaType = "prompt";
+                        rhUser.status = RobinhoodLoginStatus.DEVICE_APPROVAL;
+                        rhUser.usesMfa = true;
+                        rhUser.challengeResponseId = loginBody.challenge.id
+                    }
+                }
+
+                await brokerageRepo.insertRobinhoodUser(rhUser);
+                if (response.status === RobinhoodLoginStatus.SUCCESS) await sqsClient.send(new SendMessageCommand({
+                    MessageBody: JSON.stringify({
+                        type: BrokerageTaskType.NewAccount,
+                        userId: req.extra.userId,
+                        status: BrokerageTaskStatusType.Pending,
+                        data: null,
+                        started: null,
+                        finished: null,
+                        brokerage: DirectBrokeragesType.Robinhood,
+                        date: DateTime.now().setZone("America/New_York"),
+                        brokerageUserId: username,
+                        error: null,
+                        messageId: null
+                    }),
+                    DelaySeconds: 0,
+                    QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
+                }));
+
+                return response
+            } catch (e) {
+                console.error(e)
+                return {
+                    status: RobinhoodLoginStatus.ERROR,
+                    body: e instanceof Error ? e.toString() : "Something went wrong trying to add your Robinhood account to TradingPost.",
+                    challengeResponseId: '',
+                    challengeType: null,
+                }
+            }
+        }
+
+        let [requestHeaders, requestPayload] = generatePayloadRequest(robinhoodCredentials.clientId,
+            robinhoodCredentials.expiresIn, robinhoodCredentials.scope, username, password, robinhoodUser.deviceToken, mfaCode, robinhoodUser.challengeResponseId);
+
+        if (mfaCode && robinhoodUser.mfaType === 'sms') {
+            if (!robinhoodUser.challengeResponseId) {
+                console.error("we did not set the challenge response id on request, validate!");
+                return {
+                    status: RobinhoodLoginStatus.ERROR,
+                    body: "internal error, please contact TradingPost @ contact@tradingpostapp.com",
+                    challengeResponseId: '',
+                    challengeType: null
+                }
             }
 
-            // Made it through authentication and we have an access token
+            // If request successful we do not need to do anything else, just make a normal login call
+            const authResponse = await challengeRequest(robinhoodUser.challengeResponseId, mfaCode, requestHeaders);
+            if (authResponse.detail) {
+                await brokerageRepo.updateRobinhoodUser({
+                    userId: robinhoodUser.userId,
+                    mfaType: robinhoodUser.mfaType,
+                    usesMfa: robinhoodUser.usesMfa,
+                    status: robinhoodUser.status,
+                    accessToken: robinhoodUser.accessToken,
+                    username: robinhoodUser.username,
+                    deviceToken: robinhoodUser.deviceToken,
+                    refreshToken: robinhoodUser.refreshToken,
+                    challengeResponseId: authResponse.challenge.id
+                });
+
+                return {
+                    status: RobinhoodLoginStatus.ERROR,
+                    body: "Could not authenticate Robinhood account with that passcode, try again",
+                    challengeType: 'sms',
+                    challengeResponseId: authResponse.challenge.id,
+                }
+            }
+
+            // Remove mfa_code from payload! Breaks....
+            delete requestPayload["mfa_code"]
+        }
+
+        try {
+            const loginBody = await login(requestPayload, requestHeaders);
+
+            if ('mfa_required' in loginBody) {
+                const {mfa_required, mfa_type} = loginBody;
+                await brokerageRepo.updateRobinhoodUser({
+                    userId: robinhoodUser.userId,
+                    mfaType: robinhoodUser.mfaType,
+                    usesMfa: robinhoodUser.usesMfa,
+                    status: robinhoodUser.status,
+                    accessToken: loginBody.access_token,
+                    username: robinhoodUser.username,
+                    deviceToken: robinhoodUser.deviceToken,
+                    refreshToken: loginBody.refresh_token,
+                    challengeResponseId: null
+                });
+
+                return {
+                    status: RobinhoodLoginStatus.MFA,
+                    body: "MFA required to proceed",
+                    challengeResponseId: '',
+                    challengeType: "app"
+                }
+            }
+
+            if ('challenge' in loginBody) {
+                if (loginBody.challenge.type === 'sms') {
+                    await brokerageRepo.updateRobinhoodUser({
+                        userId: robinhoodUser.userId,
+                        mfaType: 'sms',
+                        usesMfa: true,
+                        status: RobinhoodLoginStatus.MFA,
+                        accessToken: loginBody.access_token,
+                        username: robinhoodUser.username,
+                        deviceToken: robinhoodUser.deviceToken,
+                        refreshToken: loginBody.refresh_token,
+                        challengeResponseId: loginBody.challenge.id
+                    });
+
+                    return {
+                        status: RobinhoodLoginStatus.MFA,
+                        body: "MFA required to proceed",
+                        challengeResponseId: loginBody.challenge.id,
+                        challengeType: "sms"
+                    }
+                }
+
+                if (loginBody.challenge.type === 'prompt') {
+                    await brokerageRepo.updateRobinhoodUser({
+                        userId: robinhoodUser.userId,
+                        mfaType: 'prompt',
+                        usesMfa: true,
+                        status: RobinhoodLoginStatus.DEVICE_APPROVAL,
+                        accessToken: loginBody.access_token,
+                        username: robinhoodUser.username,
+                        deviceToken: robinhoodUser.deviceToken,
+                        refreshToken: loginBody.refresh_token,
+                        challengeResponseId: loginBody.challenge.id
+                    });
+
+                    return {
+                        status: RobinhoodLoginStatus.DEVICE_APPROVAL,
+                        body: "Please, approve the login on your device.",
+                        challengeResponseId: loginBody.challenge.id,
+                        challengeType: RobinhoodLoginStatus.DEVICE_APPROVAL
+                    };
+                }
+            }
+
             await brokerageRepo.updateRobinhoodUser({
-                username: username,
-                refreshToken: body.refresh_token,
-                userId: req.extra.userId,
-                accessToken: body.access_token,
+                userId: robinhoodUser.userId,
+                mfaType: robinhoodUser.mfaType,
+                usesMfa: robinhoodUser.usesMfa,
                 status: RobinhoodLoginStatus.SUCCESS,
-                usesMfa: mfaCode !== null,
-                deviceToken: fauxDeviceToken,
+                accessToken: loginBody.access_token,
+                username: robinhoodUser.username,
+                deviceToken: robinhoodUser.deviceToken,
+                refreshToken: loginBody.refresh_token,
+                challengeResponseId: null
             });
 
             await sqsClient.send(new SendMessageCommand({
@@ -157,17 +315,21 @@ export default ensureServerExtensions<Brokerage>({
                 }),
                 DelaySeconds: 0,
                 QueueUrl: "https://sqs.us-east-1.amazonaws.com/670171407375/brokerage-task-queue",
-            }))
+            }));
 
             return {
                 status: RobinhoodLoginStatus.SUCCESS,
-                body: "Robinhood account successfully updated in TradingPost"
-            }
+                body: "Robinhood account successfully updated in TradingPost",
+                challengeType: null,
+                challengeResponseId: ''
+            };
         } catch (e) {
             console.error(e)
             return {
                 status: RobinhoodLoginStatus.ERROR,
-                body: e instanceof Error ? e.toString() : "Something went wrong trying to add your Robinhood account to TradingPost."
+                body: e instanceof Error ? e.toString() : "Something went wrong trying to add your Robinhood account to TradingPost.",
+                challengeResponseId: '',
+                challengeType: null,
             }
         }
     },
