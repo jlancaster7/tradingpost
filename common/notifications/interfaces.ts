@@ -1,5 +1,10 @@
 import {DateTime} from "luxon";
 
+export enum NotificationSubscriptionTypes {
+    WATCHLIST_NOTIFICATION = 'WATCHLIST_NOTIFICATION',
+    HOLDINGS_NOTIFICATION = 'HOLDINGS_NOTIFICATION'
+}
+
 export interface BulkMessage {
     token: string
     title: string
@@ -10,18 +15,28 @@ export interface BulkMessage {
 }
 
 export type Message = {
-    data: Record<string, any>
-    title?: string
-    body?: string
+    title: string
+    body: string
+    data?: Record<string, any>
     imageUrl?: string
+}
+
+export interface BulkMessage {
+    token: string
+    title: string
+    body: string
+    imageUrl?: string
+    provider?: "Android" | "Apple"
+    data: Record<string, any>
 }
 
 export type UserDevice = {
     userId: string
     deviceId: string
-    provider: "Apple" | "Android" | "Web"
+    provider: "ios" | "android" | "web"
     updatedAt: DateTime
     createdAt: DateTime
+    active: boolean
 }
 
 export type MessageOptions = {
@@ -34,6 +49,8 @@ export interface INotificationsRepository {
     getUsersDevices(userIds: string[]): Promise<UserDevice[]>
 
     getUserDeviceByDeviceId(deviceId: string): Promise<UserDevice>
+
+    disableUserDevices(deviceIds: string[]): Promise<void>
 }
 
 export type MessageResponse = {

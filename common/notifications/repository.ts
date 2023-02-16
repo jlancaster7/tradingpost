@@ -21,16 +21,19 @@ export default class Repository {
                    device_id,
                    provider,
                    updated_at,
-                   created_at
+                   created_at,
+                   active
             FROM user_device
-            WHERE user_id = ANY ($1::UUID)`, [userIds]);
+            WHERE user_id IN ($1:list)
+              AND active = TRUE;`, [userIds]);
         return response.map((row: any) => {
             return {
-                userId: row[0],
-                deviceId: row[1],
-                provider: row[2],
-                updatedAt: DateTime.fromJSDate(row[3]),
-                createdAt: DateTime.fromJSDate(row[4])
+                userId: row.user_id,
+                deviceId: row.device_id,
+                provider: row.provider,
+                updatedAt: DateTime.fromJSDate(row.updated_at),
+                createdAt: DateTime.fromJSDate(row.created_at),
+                active: row.active
             }
         });
     }
@@ -41,7 +44,8 @@ export default class Repository {
                    device_id,
                    provider,
                    updated_at,
-                   created_at
+                   created_at,
+                   active
             FROM user_device
             WHERE device_id = $1`, [deviceId]);
 
@@ -52,7 +56,8 @@ export default class Repository {
             deviceId: response[1],
             provider: response[2],
             updatedAt: DateTime.fromJSDate(response[3]),
-            createdAt: DateTime.fromJSDate(response[4])
+            createdAt: DateTime.fromJSDate(response[4]),
+            active: response[5]
         }
     }
 
@@ -97,5 +102,86 @@ export default class Repository {
             }
             return o
         });
+    }
+
+    getUsersAndWatchlists = async (): Promise<[Record<string, Record<number, string[]>>, Record<number, string>]> => {
+        const query = `SELECT dw.id       AS watchlist_id,
+                              dw.name     AS watchlist_name,
+                              dwi.symbol  AS symbol,
+                              dns.user_id AS user_id
+                       FROM data_notification_subscription dns
+                                INNER JOIN data_watchlist dw ON dw.id = dns.type_id
+                                INNER JOIN data_watchlist_item dwi ON dwi.watchlist_id = dw.id
+                       WHERE disabled = FALSE
+                         AND dns.type = 'WATCHLIST_NOTIFICATION';`;
+        const response = await this.db.query<{ watchlist_id: number, watchlist_name: string, symbol: string, user_id: string }[]>(query);
+        if (response.length <= 0) return [{}, {}];
+
+        let idToName: Record<number, string> = {};
+        let usersAndWatchlists: Record<string, Record<number, string[]>> = {};
+        response.forEach(r => {
+            let uh = usersAndWatchlists[r.user_id];
+            if (!uh) uh = {};
+
+            let wi = uh[r.watchlist_id];
+            if (!wi) {
+                wi = [];
+                idToName[r.watchlist_id] = r.watchlist_name
+            }
+
+            wi.push("$" + r.symbol.toLowerCase())
+            uh[r.watchlist_id] = wi;
+
+            usersAndWatchlists[r.user_id] = uh
+        });
+
+        return [usersAndWatchlists, idToName];
+    }
+
+    getUsersCurrentHoldings = async () => {
+        let usersAndHoldings: Record<string, string[]> = {};
+
+        const query = `
+            SELECT s.symbol,
+                   user_id
+            FROM data_user du
+                     INNER JOIN tradingpost_brokerage_account tba ON du.id = tba.user_id
+                     INNER JOIN tradingpost_current_holding tch ON tch.account_id = tba.id
+                     INNER JOIN
+                 SECURITY s ON s.id = tch.security_id
+            GROUP BY s.symbol,
+                     user_id;
+        `;
+        const response = await this.db.query<{ symbol: string, user_id: string }[]>(query);
+        if (response.length <= 0) return {};
+        response.forEach(r => {
+            let uh = usersAndHoldings[r.user_id];
+            if (!uh) uh = [];
+            uh.push("$" + r.symbol.toLowerCase());
+            usersAndHoldings[r.user_id] = uh;
+        });
+        return usersAndHoldings;
+    }
+
+    getUserBlockedList = async (userId: string): Promise<string[]> => {
+        const blocks = await this.db.query<{ blocked_user_id: string }[]>(`select blocked_user_id
+                                                                           from data_block_list dbl
+                                                                           where blocked_by_id = $1;`, [userId]);
+        return blocks.map(b => b.blocked_user_id);
+    }
+
+    getUserSubscriberList = async (userId: string): Promise<string[]> => {
+        const subscriptions = await this.db.query<{ analyst_user_id: string }[]>(`SELECT dsp.user_id AS "analyst_user_id"
+                                                                                  FROM data_subscriber dsr
+                                                                                           LEFT JOIN data_subscription dsp
+                                                                                                     ON dsp.id = dsr.subscription_id
+                                                                                  WHERE dsr.user_id = $1`, [userId]);
+        return subscriptions.map(s => s.analyst_user_id);
+    }
+
+    disableUserDevices = async (deviceIds: string[]): Promise<void> => {
+        await this.db.none(`UPDATE user_device
+                            SET active = FALSE
+                            WHERE device_id IN ($1:list);`, [deviceIds]);
     }
 }

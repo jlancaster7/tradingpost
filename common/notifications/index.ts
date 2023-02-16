@@ -1,177 +1,99 @@
-import {messaging} from 'firebase-admin';
 import {
     Message,
     MessageOptions,
     INotificationsRepository,
     MulticastMessageResponse,
-    MessageResponse
+    MessageResponse, BulkMessage
 } from "./interfaces";
-import {Message as FirebaseMessage} from 'firebase-admin/lib/messaging'
+import apn from "apn";
+import AndroidNotifications from "./android";
+import {DateTime} from "luxon";
 
-export interface BulkMessage {
-    token: string
-    title: string
-    body: string
-    imageUrl?: string
-    provider?: "Android" | "Apple"
-    data: Record<string, any>
+
+class BadDeviceError extends Error {
+    constructor() {
+        super();
+    }
 }
 
 export default class Notifications {
-    private iOSMessenger: messaging.Messaging;
-    private androidMessenger: messaging.Messaging;
+    private iOSMessenger: apn.Provider;
+    private androidMessenger: AndroidNotifications;
     private repository: INotificationsRepository
 
-    constructor(iosMessenger: messaging.Messaging, androidMessenger: messaging.Messaging, repository: INotificationsRepository) {
+    constructor(iosMessenger: apn.Provider, androidMessenger: AndroidNotifications, repository: INotificationsRepository) {
         this.iOSMessenger = iosMessenger
         this.androidMessenger = androidMessenger
         this.repository = repository
     }
 
-    sendBatchMessages = async (msgs: BulkMessage[]): Promise<void> => {
-        const bulkMessages: FirebaseMessage[] = [];
-        const appleMessages: FirebaseMessage[] = [];
-        const androidMessages: FirebaseMessage[] = [];
-        msgs.forEach(msg => {
-            let fbMsg = {
-                notification: {
-                    title: msg.title,
-                    body: msg.body,
-                    imageUrl: msg.imageUrl
-                },
-                token: msg.token,
-                data: msg.data
-            };
+    public sendMessageToUserAndDevice = async (userId: string, deviceIds: string[], deviceType: "ios" | "android" | "web", msg: Message, expDateTime: DateTime = DateTime.now().plus({hour: 5})) => {
+        await this._sendToDevice(deviceType, deviceIds, msg, expDateTime);
+    }
 
-            if (msg.provider === 'Android') androidMessages.push(fbMsg)
-            if (msg.provider === 'Apple') appleMessages.push(fbMsg)
-            if (!msg.provider) bulkMessages.push(fbMsg)
+    public sendMessageToUser = async (userId: string, msg: Message, expDateTime: DateTime = DateTime.now().plus({hour: 5})): Promise<void> => {
+        const userDevices = await this.repository.getUserDevices(userId)
+        let androidDeviceIds: string[] = [];
+        let iosDeviceIds: string[] = [];
+        userDevices.forEach(u => {
+            if (u.provider === 'ios') iosDeviceIds.push(u.deviceId);
+            if (u.provider === 'android') androidDeviceIds.push(u.deviceId);
         });
 
-        if (bulkMessages.length > 500) throw new Error("bulk messages must be less than 500");
-        if (appleMessages.length > 500) throw new Error("iOs bulk messages must be less than 500");
-        if (androidMessages.length > 500) throw new Error("android bulk messages must be less than 500");
-
-        try {
-            if (appleMessages.length > 0) await this.iOSMessenger.sendAll(appleMessages)
-            if (androidMessages.length > 0) await this.androidMessenger.sendAll(androidMessages);
-            if (bulkMessages.length > 0) await this.iOSMessenger.sendAll(bulkMessages);
-        } catch (e) {
-            throw e;
+        let badDevices: string[] = [];
+        if (androidDeviceIds.length > 0) {
+            const {failed} = await this._sendToDevice('android', androidDeviceIds, msg, expDateTime);
+            badDevices = [...badDevices, ...failed];
         }
+
+        if (iosDeviceIds.length > 0) {
+            const {failed} = await this._sendToDevice('ios', iosDeviceIds, msg, expDateTime);
+            badDevices = [...badDevices, ...failed];
+        }
+
+        if (badDevices.length > 0) await this.repository.disableUserDevices(badDevices);
     }
 
-    sendMessageToUser = async (userId: string, msg: Message, msgOpts?: MessageOptions): Promise<MessageResponse> => {
-        const userDevices = await this.repository.getUserDevices(userId)
-        const errors: MessageResponse = {errors: []};
-
-        for (let i = 0; i < userDevices.length; i++) {
-            const userDevice = userDevices[i];
-            try {
-                let sendMsg: messaging.Message = {
-                    token: userDevice.deviceId, data: msg.data, notification: {
+    private _sendToDevice = async (userDeviceType: "ios" | "android" | "web", deviceIds: string[], msg: Message, expDateTime: DateTime): Promise<{ failed: string[], successful: string[] }> => {
+        let successRes: { failed: string[], successful: string[] } = {failed: [], successful: []}
+        switch (userDeviceType) {
+            case "ios":
+                const note = new apn.Notification({
+                    alert: {
                         title: msg.title,
                         body: msg.body,
-                        imageUrl: msg.imageUrl
-                    }
-                };
-                switch (userDevice.provider) {
-                    case "Apple":
-                        sendMsg.apns = {
-                            ...sendMsg.apns,
-                            fcmOptions: {
-                                imageUrl: msg.imageUrl,
-                                analyticsLabel: msgOpts?.analyticsLabel
-                            }
-                        }
-                        await this.iOSMessenger.send(sendMsg)
-                        break;
-                    case "Android":
-                        sendMsg.android = {
-                            ...sendMsg.android,
-                            fcmOptions: {
-                                analyticsLabel: msgOpts?.analyticsLabel
-                            }
-                        }
-                        await this.androidMessenger.send(sendMsg);
-                        break;
-                    case "Web":
-                        // TODO: Implement later
-                        break;
-                    default:
-                        errors.errors.push({
-                            userId: userDevice.userId,
-                            deviceId: userDevice.deviceId,
-                            reason: `Unknown notification provider registered: Provider:[${userDevice.provider}] for sending notification`
-                        })
+                    },
+                    payload: msg.data,
+                    sound: 'ping.aiff',
+                    badge: 3,
+                    expiry: expDateTime.millisecond,  // Expires 1 hour from now.
+                    topic: 'com.tradingpostapp'
+                });
+
+                if (msg.imageUrl) note.alert = {
+                    "launch-image": msg.imageUrl,
+                    body: msg.body
                 }
-            } catch (e: any) {
-                errors.errors.push({
-                    userId: userDevice.userId,
-                    deviceId: userDevice.deviceId,
-                    reason: e.toString()
-                })
-            }
-        }
 
-        return errors;
-    }
-
-    // sendMessageToUserDevices all tokens passed should be for a single provider(e.g., Apple, v. Android)
-    sendMessageToUserDevices = async (userId: string, deviceIds: string[], provider: string, msg: Message, msgOpts?: MessageOptions): Promise<MulticastMessageResponse> => {
-        if (deviceIds.length > 500) throw new Error("device ids limited to 500 per request")
-        try {
-            let sendMsg: messaging.MulticastMessage = {
-                data: msg.data,
-                tokens: deviceIds,
-                notification: {
+                console.log("SENDING!!")
+                const appleRes = await this.iOSMessenger.send(note, deviceIds);
+                console.log(appleRes)
+                appleRes.failed.forEach(f => successRes.failed.push(f.device))
+                appleRes.sent.forEach(f => successRes.successful.push(f.device));
+                return successRes
+            case "android":
+                const {success, failed} = await this.androidMessenger.send({
                     title: msg.title,
                     body: msg.body,
-                    imageUrl: msg.imageUrl
-                }
-            };
+                    imageUrl: msg.imageUrl,
+                    data: msg.data
+                }, deviceIds);
 
-            switch (provider) {
-                case "Apple":
-                    sendMsg.apns = {
-                        ...sendMsg.apns,
-                        fcmOptions: {
-                            imageUrl: msg.imageUrl,
-                            analyticsLabel: msgOpts?.analyticsLabel
-                        }
-                    }
-                    await this.iOSMessenger.sendMulticast(sendMsg)
-                    break;
-                case "Android":
-                    sendMsg.android = {
-                        ...sendMsg.android,
-                        fcmOptions: {
-                            analyticsLabel: msgOpts?.analyticsLabel
-                        }
-                    }
-                    await this.androidMessenger.sendMulticast(sendMsg);
-                    break;
-                case "Web": // TODO: Implement Web Notifications
-                    break;
-                default:
-                    return {
-                        errors: [{
-                            userId: userId,
-                            deviceIds: deviceIds,
-                            reason: `Unknown notification provider registered: Provider:[${provider}] for sending notification`
-                        }]
-                    }
-            }
-        } catch (e: any) {
-            return {
-                errors: [{
-                    userId: userId,
-                    deviceIds: deviceIds,
-                    reason: e.toString()
-                }]
-            }
+                success.forEach(s => successRes.successful.push(s));
+                failed.forEach(f => successRes.failed.push(f))
+                return successRes
+            default:
+                throw new Error(`Unknown notification provider registered: Provider:[${userDeviceType}] for sending notification`);
         }
-
-        return {errors: []}
     }
 }

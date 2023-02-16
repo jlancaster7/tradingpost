@@ -85,7 +85,7 @@ const getAllEntities = async () => {
 
     const reads: Promise<Entity>[] = [];
     if (r.Contents)
-        for (const c of r.Contents) {
+        for (const c of r.Contents) {[]
 
             reads.push(client.send(new GetObjectCommand({
                 Bucket: "entity-manager",
