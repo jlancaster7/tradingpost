@@ -64,6 +64,9 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     //    marginTop: margin
                 }}>
                 <FeedPart
+                    onRefresh={() => {
+                        translateHeaderY.setValue(0);
+                    }}
                     contentContainerStyle={{
                         marginTop: clampAmount + sizes.rem1
                     }}
@@ -155,7 +158,7 @@ export const PlatformSelector = (props: { platforms: string[], setPlatformClicke
 export const FeedPart = (props: {
     bookmarkedOnly?: boolean,
     searchTerms?: string | string[],
-    dateRange?: {beginDateTime?: string, endDateTime?: string}
+    dateRange?: { beginDateTime?: string, endDateTime?: string }
     userId?: string,
     platforms?: string[]
     onScroll?: PostListOnScroll
@@ -163,6 +166,7 @@ export const FeedPart = (props: {
     onMomentumScrollBegin?: PostScrollBegin
     onScrollBeginDrag?: PostScrollDragBegin
     contentContainerStyle?: ContentStyle
+    onRefresh?: () => void
 }) => {
     const { width: windowWidth } = useWindowDimensions();
     let { bookmarkedOnly, searchTerms, userId, platforms, dateRange } = props
@@ -173,7 +177,14 @@ export const FeedPart = (props: {
         onScrollBeginDrag={props.onScrollBeginDrag}
         onMomentumScrollBegin={props.onMomentumScrollBegin}
         onMomentumScrollEnd={props.onMomentumScrollEnd}
-        onRefresh={() => setPostsKey(Date.now())}
+        onRefresh={() => {
+            setPostsKey(Date.now())
+            if (props.onRefresh) {
+                props.onRefresh();
+            }
+        }
+
+        }
         onReloadNeeded={() => {
             setPostsKey(Date.now());
         }}
