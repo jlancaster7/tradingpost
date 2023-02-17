@@ -151,10 +151,7 @@ interface Aggregations {
 }
 
 
-export const queryDatastore = async (elasticClient: ElasticClient, userSubscriptions: string[], userBlockedList: string[], searchTerms: string[], startDateTime: DateTime, endDateTime: DateTime) => {
-    console.log(searchTerms)
-    console.log("Start Time: ", startDateTime.toString());
-    console.log("End Time: ", endDateTime.toString());
+export const queryDatastore = async (elasticClient: ElasticClient, userSubscriptions: string[], userBlockedList: string[], searchTerms: string[], endDateTime: DateTime, startDateTime: DateTime) => {
     const res = await elasticClient.search<{}, Aggregations>({
         index: indexName,
         _source: [""],
@@ -162,8 +159,8 @@ export const queryDatastore = async (elasticClient: ElasticClient, userSubscript
             subscriptions: userSubscriptions,
             blocks: userBlockedList,
             searchTerms: searchTerms,
-            beginDateTime: endDateTime.toJSDate(),
-            endDateTime: startDateTime.toJSDate()
+            beginDateTime: startDateTime.toJSDate(),
+            endDateTime: endDateTime.toJSDate()
         }),
         aggs: {
             postTypeAgg: {

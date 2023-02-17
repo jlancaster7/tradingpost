@@ -66,6 +66,10 @@ export interface INotificationList {
 }
 export interface INotificationGet {
 }
+export interface INotificationSubscriptionList {
+}
+export interface INotificationSubscriptionGet {
+}
 export interface IPlatformClaimList {
     platform: string;
     claims?: any;

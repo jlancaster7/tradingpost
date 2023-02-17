@@ -85,6 +85,8 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
         })()
     }, [watchlistId])
     useEffect(() => {
+        console.log(props.route.params);
+
         if (props.route.params.beginDateTime) setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: dateRange.endDateTime})
         if (props.route.params.endDateTime) setDateRange({beginDateTime: dateRange.beginDateTime, endDateTime: props.route.params.endDateTime})
         if (props.route.params.searchTerms) setSearchText(props.route.params.searchTerms)

@@ -4,10 +4,11 @@
  * https://reactnavigation.org/docs/configuring-links
  */
 
-import { getActionFromState, getStateFromPath, LinkingOptions } from '@react-navigation/native';
+import {getActionFromState, getStateFromPath, LinkingOptions} from '@react-navigation/native';
 import * as Linking from 'expo-linking';
-import { NavIconKeys, navIcons } from '../images';
-import { screens } from '../screens/CreateAccountScreen';
+import {NavIconKeys, navIcons} from '../images';
+import {screens} from '../screens/CreateAccountScreen';
+import * as Notifications from 'expo-notifications';
 
 const ConfigOverride: Partial<Record<NavIconKeys, any>> = {
     Notification: {
@@ -46,7 +47,7 @@ const linking: LinkingOptions<any> = {
                     }
                 }
             },
-            BlockedUsers:"blocked",
+            BlockedUsers: "blocked",
             Profile: "profile",
             PostScreen: "post",
             AccountInformation: "account",
@@ -76,7 +77,43 @@ const linking: LinkingOptions<any> = {
     getActionFromState: (state, options) => {
         const action = getActionFromState(state, options);
         return action;
-    }
+    },
+    async getInitialURL() {
+        const response = await Notifications.getLastNotificationResponseAsync();
+        if (response && response.notification) {
+            // @ts-ignore
+            const url = response.notification?.request?.trigger?.payload?.url as string;
+            if (url != null) {
+                return url;
+            }
+        }
+
+        const u = await Linking.getInitialURL();
+        console.log(u)
+        return u;
+    },
+    subscribe(listener) {
+        const onReceiveURL = ({url}: { url: string }) => listener(url);
+
+        // Listen to incoming links from deep linking
+        Linking.addEventListener('url', onReceiveURL);
+
+        // Listen to expo push notifications
+        const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+            // @ts-ignore
+            const url = response.notification?.request?.trigger?.payload?.url as string;
+            if (!url) return
+
+            // Let React Navigation handle the URL
+            listener(url);
+        });
+
+        return () => {
+            // Clean up the event listeners
+            Linking.removeEventListener('url', onReceiveURL);
+            subscription.remove();
+        };
+    },
 };
 
 export default linking;

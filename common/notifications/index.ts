@@ -32,10 +32,15 @@ export default class Notifications {
     }
 
     public sendMessageToUser = async (userId: string, msg: Message, expDateTime: DateTime = DateTime.now().plus({hour: 5})): Promise<void> => {
+        console.log(userId)
         const userDevices = await this.repository.getUserDevices(userId)
         let androidDeviceIds: string[] = [];
         let iosDeviceIds: string[] = [];
+
+        console.log("Devices...!", userDevices)
         userDevices.forEach(u => {
+            console.log(u.deviceId);
+            console.log(u.provider)
             if (u.provider === 'ios') iosDeviceIds.push(u.deviceId);
             if (u.provider === 'android') androidDeviceIds.push(u.deviceId);
         });
@@ -47,6 +52,7 @@ export default class Notifications {
         }
 
         if (iosDeviceIds.length > 0) {
+            console.log(iosDeviceIds)
             const {failed} = await this._sendToDevice('ios', iosDeviceIds, msg, expDateTime);
             badDevices = [...badDevices, ...failed];
         }

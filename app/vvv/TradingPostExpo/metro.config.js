@@ -21,8 +21,9 @@ module.exports = (() => {
             assetExts: resolver.assetExts.filter((ext) => ext !== "svg"),
             sourceExts: [...resolver.sourceExts, "svg"],
             resolveRequest: (context, moduleName, platform) => {
-              
-                if (moduleName === "react-native-webview") {
+
+                // platform: ['ios', 'android', 'windows', 'web'].
+                if (moduleName === "react-native-webview" && platform === 'android') {
                     console.log("NAME" + moduleName);
                     console.log("FOUND A REQUEST FOR WEB VIEW!!!!!")
                     return context.resolveRequest(context, "@tradingpost/react-native-webview", platform);

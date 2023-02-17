@@ -6,7 +6,7 @@ import {parse} from 'url'
 const hackyGetLocalIp = (logUrl?: string): string => {
     if (!logUrl) throw new Error("could not find log url for ios device");
     const [protocol, url, portWithPath] = logUrl.split(":");
-    const newUrl = `http:${url}:8082`;
+    const newUrl = `http:${url}:8080`;
     console.log("NEW URL: ", newUrl)
     return newUrl;
 }
