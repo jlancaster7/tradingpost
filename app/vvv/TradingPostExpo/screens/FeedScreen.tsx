@@ -38,6 +38,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const diffValue = Animated.subtract(translateHeaderY, lastOffsetY);
 
     const tester = Animated.diffClamp(translateHeaderY, 0, clampAmount)
+
     const currentClamp = tester.interpolate({
         inputRange: [0, clampAmount],
         outputRange: [0, -clampAmount],

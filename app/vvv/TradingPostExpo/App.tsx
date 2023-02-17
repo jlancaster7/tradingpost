@@ -6,7 +6,7 @@ import {parse} from 'url'
 const hackyGetLocalIp = (logUrl?: string): string => {
     if (!logUrl) throw new Error("could not find log url for ios device");
     const [protocol, url, portWithPath] = logUrl.split(":");
-    const newUrl = `http:${url}:8082`;
+    const newUrl = `http:${url}:8080`;
     console.log("NEW URL: ", newUrl)
     return newUrl;
 }
@@ -76,7 +76,7 @@ export default function App() {
         //com.tradingpostapp://expo-development-client/?url=http%3A%2F%2F10.0.0.94%3A8081 need to parse and set the api url the first run through
         if (urlParsed.hostname === "expo-development-client") {
             configApi({
-                apiBaseUrl: "http://" + (urlParsed.query["url"] as string)?.split(":")[1] + ":8082"
+                apiBaseUrl: "http://" + (urlParsed.query["url"] as string)?.split(":")[1] + ":8080"
             });
         }
 
