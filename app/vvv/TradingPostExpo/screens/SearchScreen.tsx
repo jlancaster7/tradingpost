@@ -85,10 +85,7 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
         })()
     }, [watchlistId])
     useEffect(() => {
-        console.log(props.route.params);
-
-        if (props.route.params.beginDateTime) setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: dateRange.endDateTime})
-        if (props.route.params.endDateTime) setDateRange({beginDateTime: dateRange.beginDateTime, endDateTime: props.route.params.endDateTime})
+        setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: props.route.params.endDateTime})
         if (props.route.params.searchTerms) setSearchText(props.route.params.searchTerms)
         if (props.route.params.watchlistId) setWatchlistId(props.route.params.watchlistId)
     }, [props.route.params.beginDateTime, props.route.params.endDateTime, props.route.params.searchTerms, props.route.params.watchlistId])
@@ -119,7 +116,7 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
                                                     setDateRange({})
                                                 }}
                                                 key={'dateRangeChip'} 
-                                                label={`Last ${Math.round((((new Date()).valueOf() - (new Date(dateRange.beginDateTime)).valueOf()) / 3600000) * 10) / 10} Hours`}
+                                                label={`Last ${Math.round((((new Date()).valueOf() - (new Date(dateRange.beginDateTime)).valueOf()) / 3600000))} Hours`}
                                                 style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
                         }    
                     </View>
