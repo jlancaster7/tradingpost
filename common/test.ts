@@ -43,21 +43,25 @@ const run = async (tokenFile?: string) => {
         database: postgresConfiguration.database
     });
 
-    const sqsClient = new SQSClient({
-        region: "us-east-1"
-    });
+    const dtNow = DateTime.now().setZone("America/New_York")
+    console.log(dtNow.toISO());
+    console.log(new Date(Date.now()).toISOString());
 
-    const s3Client = new S3Client({
-        region: "us-east-1"
-    });
-
-    const repository = new Repository(pgClient, pgp);
-    const portSummaryStats = new PortfolioSummaryService(repository);
-    const ibkrService = new Service(repository, s3Client, portSummaryStats, sqsClient);
-    const dt = DateTime.now().set({day: 25, month: 1, year: 2023});
-    console.log("Started")
-    await ibkrService.update("e96aea04-9a60-4832-9793-f790e60df8eb", "F6017651", dt)
-    console.log("Fin")
+    // const sqsClient = new SQSClient({
+    //     region: "us-east-1"
+    // });
+    //
+    // const s3Client = new S3Client({
+    //     region: "us-east-1"
+    // });
+    //
+    // const repository = new Repository(pgClient, pgp);
+    // const portSummaryStats = new PortfolioSummaryService(repository);
+    // const ibkrService = new Service(repository, s3Client, portSummaryStats, sqsClient);
+    // const dt = DateTime.now().set({day: 25, month: 1, year: 2023});
+    // console.log("Started")
+    // await ibkrService.update("e96aea04-9a60-4832-9793-f790e60df8eb", "F6017651", dt)
+    // console.log("Fin")
     // Generate Ibkr Tasks
     // const sqsClient = new SQSClient({
     //     region: "us-east-1"

@@ -1,10 +1,15 @@
 {
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.198.0",
     "@aws-sdk/client-sqs": "^3.259.0",
     "@elastic/elasticsearch": "^8.2.1",
     "@sparticuz/chromium": "^107.0.0",
     "@tradingpost/common": "file:../common",
+    "apn": "^2.2.0",
     "aws-lambda": "^1.0.7",
     "aws-lambda-ric": "^2.0.0",
     "aws-sdk": "^2.1153.0",
@@ -12,6 +17,7 @@
     "dotenv": "^10.0.0",
     "firebase-admin": "^11.0.1",
     "luxon": "^2.4.0",
+    "node-fetch": "^3.3.0",
     "pg": "^8.7.3",
     "pg-promise": "^10.11.1",
     "puppeteer": "^18.1.0",
@@ -22,6 +28,7 @@
     "@types/aws-lambda": "^8.10.102",
     "@types/aws-sdk": "^2.7.0",
     "@types/luxon": "^2.3.2",
+    "@types/node-fetch": "^2.6.2",
     "@types/pg": "^8.6.5",
     "esbuild": "^0.14.54",
     "serverless": "^3.21.0",

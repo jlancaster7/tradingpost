@@ -3,25 +3,27 @@
 // Should be done in Settings / Login / Sign Up(After a user creates their email / password) & its accepted
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { Platform } from 'react-native';
-import { Api } from "@tradingpost/common/api";
+import {Platform} from 'react-native';
+import {Api} from "@tradingpost/common/api";
 import * as Localization from 'expo-localization';
-import { Log } from './logger';
+import {Log} from './logger';
 
 export const registerDeviceForNotifications = async () => {
     return await Log.tryCatch(async () => {
         let token;
+
         if (Device.isDevice) {
-            const { status: existingStatus } = await Notifications.getPermissionsAsync();
+            const {status: existingStatus} = await Notifications.getPermissionsAsync();
             let finalStatus = existingStatus;
             if (existingStatus === 'undetermined') {
-                const { status } = await Notifications.requestPermissionsAsync();
+                const {status} = await Notifications.requestPermissionsAsync();
                 finalStatus = status;
             }
 
             if (finalStatus !== 'granted') {
                 return;
             }
+
             token = await (await Notifications.getDevicePushTokenAsync()).data;
             await Api.Notification.extensions.registerUserDevice({
                 provider: Platform.OS,
@@ -38,6 +40,8 @@ export const registerDeviceForNotifications = async () => {
                 lightColor: '#282869',
             });
         }
+
+        console.log("TOKENENENEEN: ", token)
         return token;
     })
 }

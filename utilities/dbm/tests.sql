@@ -1,15 +1,38 @@
 DROP TABLE IF EXISTS errors;CREATE TEMP TABLE errors (type TEXT,entityName TEXT, name TEXT,columnname text, message TEXT, context TEXT, detail TEXT);
 /* No changes to data_alert [alert]*/
+ALTER TABLE data_block_list
+ALTER COLUMN blocked_user_id  SET NOT NULL,
+ALTER COLUMN blocked_by_id  SET NOT NULL;
 /* No changes to data_bookmark [bookmark]*/
 /* No changes to data_brokerage [brokerage]*/
 /* No changes to data_comment [comment]*/
 /* No changes to ibkr_account [ibkr]*/
 /* No changes to data_notification [notification]*/
+CREATE TEMP TABLE pg_temp.data_notification_subscription(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    type TEXT,
+    disabled TEXT,
+    data JSON,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 /* No changes to data_platform_claim [platform_claim]*/
 /* No changes to data_post [post]*/
 /* No changes to data_subscriber [subscriber]*/
 /* No changes to data_subscription [subscription]*/
-/* No changes to tradingpost_transactio [trade]*/
+CREATE TEMP TABLE pg_temp.tradingpost_transactio(
+    id BIGSERIAL PRIMARY KEY NOT NULL,
+    account_id BIGINT,
+    security_id TEXT,
+    security_type TEXT,
+    date TEXT,
+    quantity MONEY,
+    price MONEY,
+    amount MONEY,
+    fees MONEY,
+    type TEXT,
+    currency TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
 /* No changes to data_upvote [upvote]*/
 /* No changes to data_user [user]*/
 /* No changes to data_watchlist [watchlist]*/
@@ -26,6 +49,32 @@ DROP TABLE IF EXISTS errors;CREATE TEMP TABLE errors (type TEXT,entityName TEXT,
     
     BEGIN
   RETURN QUERY SELECT d."id", d."data", d."type", d."user_id" FROM pg_temp.data_alert as d;
+    END;
+    $BODY$;
+
+    DROP FUNCTION IF EXISTS pg_temp.view_user_list(jsonb);
+  
+    CREATE OR REPLACE FUNCTION pg_temp.view_user_list(
+        request jsonb)
+        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json,"is_deleted" boolean)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."id", d."handle", d."tags", (concat(d."first_name",' ',d."last_name")) as "display_name", d."profile_url", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", "sub"."settings", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = true ) as "is_subscribed", exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = false ) as "is_pending" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."social_analytics", d."is_deleted" FROM pg_temp.data_user as d;
+    END;
+    $BODY$;
+
+    DROP FUNCTION IF EXISTS pg_temp.view_block_list_insert(jsonb);
+  
+    CREATE OR REPLACE FUNCTION pg_temp.view_block_list_insert(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"id" BIGINT)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."blocked_by_id", d."blocked_user_id", d."id" FROM pg_temp.data_block_list as d;
     END;
     $BODY$;
 
@@ -133,19 +182,6 @@ DROP TABLE IF EXISTS errors;CREATE TEMP TABLE errors (type TEXT,entityName TEXT,
     END;
     $BODY$;
 
-    DROP FUNCTION IF EXISTS pg_temp.view_user_list(jsonb);
-  
-    CREATE OR REPLACE FUNCTION pg_temp.view_user_list(
-        request jsonb)
-        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json)
-        LANGUAGE 'plpgsql'
-    AS $BODY$
-    
-    BEGIN
-  RETURN QUERY SELECT d."id", d."handle", d."tags", (concat(d."first_name",' ',d."last_name")) as "display_name", d."profile_url", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", "sub"."settings", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = true ) as "is_subscribed", exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = false ) as "is_pending" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."social_analytics" FROM pg_temp.data_user as d;
-    END;
-    $BODY$;
-
     DROP FUNCTION IF EXISTS pg_temp.view_subscriber_insert(jsonb);
   
     CREATE OR REPLACE FUNCTION pg_temp.view_subscriber_insert(
@@ -215,12 +251,12 @@ DROP TABLE IF EXISTS errors;CREATE TEMP TABLE errors (type TEXT,entityName TEXT,
   
     CREATE OR REPLACE FUNCTION pg_temp.view_user_update(
         request jsonb)
-        RETURNS TABLE("id" UUID,"first_name" text,"last_name" text,"analyst_profile" json,"has_profile_pic" boolean,"profile_url" text,"settings" json,"banner_url" text,"bio" text,"social_analytics" json)
+        RETURNS TABLE("id" UUID,"first_name" text,"last_name" text,"analyst_profile" json,"has_profile_pic" boolean,"profile_url" text,"settings" json,"banner_url" text,"bio" text,"social_analytics" json,"is_deleted" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url", d."settings", d."banner_url", d."bio", d."social_analytics" FROM pg_temp.data_user as d;
+  RETURN QUERY SELECT d."id", d."first_name", d."last_name", d."analyst_profile", d."has_profile_pic", d."profile_url", d."settings", d."banner_url", d."bio", d."social_analytics", d."is_deleted" FROM pg_temp.data_user as d;
     END;
     $BODY$;
 
@@ -273,6 +309,32 @@ DROP TABLE IF EXISTS errors;CREATE TEMP TABLE errors (type TEXT,entityName TEXT,
     
     BEGIN
   RETURN QUERY SELECT d."id", d."symbol", d."watchlist_id", d."note", (d."created_at") as "date_added" FROM pg_temp.data_watchlist_item as d;
+    END;
+    $BODY$;
+
+    DROP FUNCTION IF EXISTS pg_temp.view_block_list_list(jsonb);
+  
+    CREATE OR REPLACE FUNCTION pg_temp.view_block_list_list(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."blocked_by_id", d."blocked_user_id", (SELECT json_agg(t) FROM pg_temp.view_user_list(request) as t WHERE t.id=d."blocked_by_id") as "blocked_user", d."id" FROM pg_temp.data_block_list as d;
+    END;
+    $BODY$;
+
+    DROP FUNCTION IF EXISTS pg_temp.view_block_list_get(jsonb);
+  
+    CREATE OR REPLACE FUNCTION pg_temp.view_block_list_get(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."blocked_by_id", d."blocked_user_id", (SELECT json_agg(t) FROM pg_temp.view_user_list(request) as t WHERE t.id=d."blocked_by_id") as "blocked_user", d."id" FROM pg_temp.data_block_list as d;
     END;
     $BODY$;
 
@@ -358,12 +420,12 @@ DROP TABLE IF EXISTS errors;CREATE TEMP TABLE errors (type TEXT,entityName TEXT,
   
     CREATE OR REPLACE FUNCTION pg_temp.view_user_get(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json,"is_deleted" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT d."handle", CASE WHEN d.id = (request->>'user_id')::UUID THEN d."email" END as "email", (SELECT json_agg(t) FROM pg_temp.view_platform_claim_list(request) as t WHERE t.user_id=d."id") as "claims", d."bio", d."tags", d."id", (concat(d."first_name",' ',d."last_name")) as "display_name", d."first_name", d."last_name", d."profile_url", d."banner_url", d."analyst_profile", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", "sub"."settings", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = true ) as "is_subscribed", exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = false ) as "is_pending" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."settings", d."social_analytics" FROM pg_temp.data_user as d;
+  RETURN QUERY SELECT d."handle", CASE WHEN d.id = (request->>'user_id')::UUID THEN d."email" END as "email", (SELECT json_agg(t) FROM pg_temp.view_platform_claim_list(request) as t WHERE t.user_id=d."id") as "claims", d."bio", d."tags", d."id", (concat(d."first_name",' ',d."last_name")) as "display_name", d."first_name", d."last_name", d."profile_url", d."banner_url", d."analyst_profile", (SELECT json_agg(a)->0 FROM  	(SELECT  "sub"."id", sub."cost", "sub"."settings", 		 (SELECT  count(*) FROM data_subscriber r where r."subscription_id" = "sub"."id" ) as "count",          exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = true ) as "is_subscribed", exists(SELECT  * FROM data_subscriber r where r."subscription_id" = "sub"."id" and  r."user_id" = (request->>'user_id')::UUID and r."approved" = false ) as "is_pending" 		 FROM data_subscription as "sub" where "sub"."user_id" = d."id" 		 group by sub."id", sub."cost" 	) as a) as "subscription", d."settings", d."social_analytics", d."is_deleted" FROM pg_temp.data_user as d;
     END;
     $BODY$;
 
@@ -435,6 +497,56 @@ DROP TABLE IF EXISTS errors;CREATE TEMP TABLE errors (type TEXT,entityName TEXT,
     
     BEGIN
   return query SELECT * FROM pg_temp.view_alert_list(request) as v WHERE CASE WHEN  request->'data' ? 'ids' THEN  v.id in (SELECT value::BIGINT from jsonb_array_elements_text(request->'data'->'ids')) ELSE true end;
+    END;
+    $BODY$;
+
+    DROP FUNCTION IF EXISTS pg_temp.api_block_list_insert(jsonb);
+  
+    CREATE OR REPLACE FUNCTION pg_temp.api_block_list_insert(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    DECLARE
+_idField BIGINT;
+    BEGIN
+  INSERT INTO pg_temp.data_block_list(
+  blocked_user_id,
+blocked_by_id)
+VALUES ((request->'data'->>'blocked_user_id')::UUID,
+(request->'data'->>'blocked_by_id')::UUID)
+returning pg_temp.data_block_list.id INTO _idField;
+return query SELECT * FROM pg_temp.view_block_list_get(request) as v WHERE v.id = _idField;
+    END;
+    $BODY$;
+
+
+
+
+    DROP FUNCTION IF EXISTS pg_temp.api_block_list_get(jsonb);
+  
+    CREATE OR REPLACE FUNCTION pg_temp.api_block_list_get(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  return query SELECT * FROM pg_temp.view_block_list_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
+    END;
+    $BODY$;
+
+
+    DROP FUNCTION IF EXISTS pg_temp.api_block_list_list(jsonb);
+  
+    CREATE OR REPLACE FUNCTION pg_temp.api_block_list_list(
+        request jsonb)
+        RETURNS TABLE("blocked_by_id" UUID,"blocked_user_id" UUID,"blocked_user" json,"id" BIGINT)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  return query SELECT * FROM pg_temp.view_block_list_list(request) as v WHERE CASE WHEN  request->'data' ? 'ids' THEN  v.id in (SELECT value::BIGINT from jsonb_array_elements_text(request->'data'->'ids')) ELSE true end;
     END;
     $BODY$;
 
@@ -529,6 +641,13 @@ return query SELECT * FROM pg_temp.view_comment_get(request) as v WHERE v.id = _
   return query SELECT * FROM pg_temp.view_comment_list(request) as v WHERE CASE WHEN  request->'data' ? 'ids' THEN  v.id in (SELECT value::BIGINT from jsonb_array_elements_text(request->'data'->'ids')) ELSE true end;
     END;
     $BODY$;
+
+
+
+
+
+
+
 
 
 
@@ -788,7 +907,7 @@ return query SELECT * FROM pg_temp.view_subscription_get(request) as v WHERE v."
   
     CREATE OR REPLACE FUNCTION pg_temp.api_user_update(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json,"is_deleted" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -801,7 +920,8 @@ bio =  tp.prop_or_default(request->'data' ,'bio',v.bio),
 banner_url =  tp.prop_or_default(request->'data' ,'banner_url',v.banner_url), 
 analyst_profile =  tp.prop_or_default(request->'data' ,'analyst_profile',v.analyst_profile), 
 has_profile_pic =  tp.prop_or_default(request->'data' ,'has_profile_pic',v.has_profile_pic), 
-social_analytics =  tp.prop_or_default(request->'data' ,'social_analytics',v.social_analytics) WHERE v."id" = (request->'data'->>'id')::UUID;
+social_analytics =  tp.prop_or_default(request->'data' ,'social_analytics',v.social_analytics), 
+is_deleted =  tp.prop_or_default(request->'data' ,'is_deleted',v.is_deleted) WHERE v."id" = (request->'data'->>'id')::UUID;
 return query SELECT * FROM pg_temp.view_user_get(request) as v WHERE v."id" = (request->'data'->>'id')::UUID;
     END;
     $BODY$;
@@ -811,7 +931,7 @@ return query SELECT * FROM pg_temp.view_user_get(request) as v WHERE v."id" = (r
   
     CREATE OR REPLACE FUNCTION pg_temp.api_user_get(
         request jsonb)
-        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json)
+        RETURNS TABLE("handle" text,"email" text,"claims" json,"bio" text,"tags" json,"id" UUID,"display_name" text,"first_name" text,"last_name" text,"profile_url" text,"banner_url" text,"analyst_profile" json,"subscription" json,"settings" json,"social_analytics" json,"is_deleted" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -825,7 +945,7 @@ return query SELECT * FROM pg_temp.view_user_get(request) as v WHERE v."id" = (r
   
     CREATE OR REPLACE FUNCTION pg_temp.api_user_list(
         request jsonb)
-        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json)
+        RETURNS TABLE("id" UUID,"handle" text,"tags" json,"display_name" text,"profile_url" text,"subscription" json,"social_analytics" json,"is_deleted" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -997,6 +1117,51 @@ EXCEPTION WHEN OTHERS THEN
      GET STACKED DIAGNOSTICS err = MESSAGE_TEXT, ctx = PG_EXCEPTION_CONTEXT, col_name =COLUMN_NAME, det = PG_EXCEPTION_DETAIL;
      INSERT INTO errors(type,entityName, name,columnname, message,context,detail)
      SELECT 'view' ,'alert','alert_list' ,col_name,err, ctx, det ;
+END;
+$$;
+DO
+$$
+DECLARE
+err text;
+ctx text;
+col_name text;
+det text;
+BEGIN
+    PERFORM pg_temp.view_block_list_list('{"userId":"00000000-0000-0000-0000-000000000000"}');
+EXCEPTION WHEN OTHERS THEN
+     GET STACKED DIAGNOSTICS err = MESSAGE_TEXT, ctx = PG_EXCEPTION_CONTEXT, col_name =COLUMN_NAME, det = PG_EXCEPTION_DETAIL;
+     INSERT INTO errors(type,entityName, name,columnname, message,context,detail)
+     SELECT 'view' ,'block_list','block_list_list' ,col_name,err, ctx, det ;
+END;
+$$;
+DO
+$$
+DECLARE
+err text;
+ctx text;
+col_name text;
+det text;
+BEGIN
+    PERFORM pg_temp.view_block_list_get('{"userId":"00000000-0000-0000-0000-000000000000"}');
+EXCEPTION WHEN OTHERS THEN
+     GET STACKED DIAGNOSTICS err = MESSAGE_TEXT, ctx = PG_EXCEPTION_CONTEXT, col_name =COLUMN_NAME, det = PG_EXCEPTION_DETAIL;
+     INSERT INTO errors(type,entityName, name,columnname, message,context,detail)
+     SELECT 'view' ,'block_list','block_list_get' ,col_name,err, ctx, det ;
+END;
+$$;
+DO
+$$
+DECLARE
+err text;
+ctx text;
+col_name text;
+det text;
+BEGIN
+    PERFORM pg_temp.view_block_list_insert('{"userId":"00000000-0000-0000-0000-000000000000"}');
+EXCEPTION WHEN OTHERS THEN
+     GET STACKED DIAGNOSTICS err = MESSAGE_TEXT, ctx = PG_EXCEPTION_CONTEXT, col_name =COLUMN_NAME, det = PG_EXCEPTION_DETAIL;
+     INSERT INTO errors(type,entityName, name,columnname, message,context,detail)
+     SELECT 'view' ,'block_list','block_list_insert' ,col_name,err, ctx, det ;
 END;
 $$;
 DO

@@ -56,7 +56,7 @@ export function PickWatchlistSection(props: CreateAccountProps) {
                                 })),
                                 name: "Primary Watchlist",
                                 type: "primary" //primary | private | public 
-                            })
+                            });
                             linkTo('/create/analyststart');
                         }
                         catch (ex: any) {

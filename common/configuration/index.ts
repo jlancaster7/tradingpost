@@ -1,4 +1,4 @@
-import { SSM } from '@aws-sdk/client-ssm';
+import {SSM} from '@aws-sdk/client-ssm';
 //We can add this in the future if we want
 // declare global {
 //     namespace NodeJS {
@@ -47,16 +47,7 @@ export interface ConfigPaths extends Record<ConfigKeys, unknown> {
         port: number
     }
     fcm: {
-        type: string
-        project_id: string
-        private_key_id: string
-        private_key: string
-        client_email: string
-        client_id: string
-        auth_uri: string
-        token_uri: string
-        auth_provider_x509_cert_url: string
-        client_x509_cert_url: string
+        authKey: string
     }
     ios: {
         key: string
@@ -150,9 +141,8 @@ export class Configuration<K extends Record<string, any>> {
         if ((process.env as any)[path]) {
             console.log(`${fullPath} as been loaded from the local environment`);
             output = process.env[path] as any
-        }
-        else
-            output = (await this.ssmClient.getParameter({ Name: fullPath, WithDecryption: true })).Parameter?.Value;
+        } else
+            output = (await this.ssmClient.getParameter({Name: fullPath, WithDecryption: true})).Parameter?.Value;
 
         if (output === undefined)
             throw new Error(`Could not find value for parameter path '${fullPath}' please make sure the path exists and the value is populated`);
@@ -182,12 +172,12 @@ const API_VERSION = '2014-11-06';
 export const DefaultConfig = new Configuration<ConfigPaths>(new SSM({
     apiVersion: API_VERSION,
     region: BASE_REGION,
-}), { authkey: { raw: true } });
+}), {authkey: {raw: true}});
 
 
 export const AutomationConfig = new Configuration<{ npm_key: string }>(new SSM({
     apiVersion: API_VERSION,
     region: BASE_REGION,
-}), { npm_key: { raw: true } }, "automation");
+}), {npm_key: {raw: true}}, "automation");
 
 
