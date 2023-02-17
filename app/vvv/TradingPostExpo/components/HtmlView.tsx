@@ -1,7 +1,7 @@
 import React, { useMemo } from "react"
 import { View, Text } from "react-native"
 import { HtmlViewProps } from "./HtmlView.interface"
-import { WebView as TPWebView } from '@tradingpost/react-native-webview'
+import { WebView as TPWebView } from 'react-native-webview'
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
 const customCss = '* { -webkit-user-select: none !important;  } input, textarea { -webkit-user-select: initial; } body { user-select: none !important; overflow-x: hidden !important; }';
 const customJs = `

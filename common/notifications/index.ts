@@ -35,7 +35,10 @@ export default class Notifications {
         const userDevices = await this.repository.getUserDevices(userId)
         let androidDeviceIds: string[] = [];
         let iosDeviceIds: string[] = [];
+
         userDevices.forEach(u => {
+            console.log(u.deviceId);
+            console.log(u.provider)
             if (u.provider === 'ios') iosDeviceIds.push(u.deviceId);
             if (u.provider === 'android') androidDeviceIds.push(u.deviceId);
         });
@@ -47,6 +50,7 @@ export default class Notifications {
         }
 
         if (iosDeviceIds.length > 0) {
+            console.log(iosDeviceIds)
             const {failed} = await this._sendToDevice('ios', iosDeviceIds, msg, expDateTime);
             badDevices = [...badDevices, ...failed];
         }

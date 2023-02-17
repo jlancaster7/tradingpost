@@ -9,6 +9,7 @@ import apn from 'apn'
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import AndroidNotifications from "@tradingpost/common/notifications/android";
 import {holdingsPostNotifications, watchlistsPostNotifications} from "@tradingpost/common/notifications/bll";
+import {DateTime} from "luxon";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -78,7 +79,7 @@ const run = async () => {
             keyId: '6WPUHTZ3LU',
             teamId: '25L2ZZWUPA',
         },
-        production: true
+        production: false
     }
     const apnProvider = new apn.Provider(iosOptions);
 
@@ -87,7 +88,20 @@ const run = async () => {
     const notificationsRepo = new Repository(pgClient, pgp);
     notificationsSrv = new Notifications(apnProvider, androidNotif, notificationsRepo);
     // await holdingsPostNotifications(notificationsSrv, notificationsRepo, elasticClient);
-    await watchlistsPostNotifications(notificationsSrv, notificationsRepo, elasticClient);
+    // await watchlistsPostNotifications(notificationsSrv, notificationsRepo, elasticClient);
+    const end = DateTime.now();
+    const begin = end.minus({hour: 12});
+    const x = begin.toUTC().toISO();
+    const y = end.toUTC().toISO();
+    const u = `https://m.tradingpostapp.com/dash/search?watchlistId=120&beginDateTime=${x}&endDateTime=${y}`;
+
+    await notificationsSrv.sendMessageToUser("e96aea04-9a60-4832-9793-f790e60df8eb", {
+        title: "Test",
+        data: {
+            url: u
+        },
+        body: "Testing..."
+    })
 }
 
 (async () => {
