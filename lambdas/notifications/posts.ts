@@ -94,7 +94,10 @@ const run = async () => {
     const x = begin.toUTC().toISO();
     const y = end.toUTC().toISO();
     const u = `https://m.tradingpostapp.com/dash/search?watchlistId=120&beginDateTime=${x}&endDateTime=${y}`;
+    console.log(u);
 
+    // Mine: 4a6f0899-dc6d-40cc-aa6a-1febb579d65a
+    // Josh: e96aea04-9a60-4832-9793-f790e60df8eb
     await notificationsSrv.sendMessageToUser("e96aea04-9a60-4832-9793-f790e60df8eb", {
         title: "Test",
         data: {

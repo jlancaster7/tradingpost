@@ -81,11 +81,14 @@ const linking: LinkingOptions<any> = {
     async getInitialURL() {
         const response = await Notifications.getLastNotificationResponseAsync();
         if (response && response.notification) {
-            // @ts-ignore
-            const url = response.notification?.request?.trigger?.payload?.url as string;
-            if (url != null) {
-                return url;
+            let url = null;
+            if ('remoteMessage' in response.notification.request.trigger) {
+                url = response.notification?.request?.trigger?.remoteMessage?.data?.url as string;
+            } else if ('payload' in response.notification.request.trigger) {
+                url = response.notification?.request?.trigger?.payload?.url as string;
             }
+
+            if (url) return url;
         }
 
         const u = await Linking.getInitialURL();
@@ -100,10 +103,14 @@ const linking: LinkingOptions<any> = {
 
         // Listen to expo push notifications
         const subscription = Notifications.addNotificationResponseReceivedListener(response => {
-            // @ts-ignore
-            const url = response.notification?.request?.trigger?.payload?.url as string;
-            if (!url) return
+            let url = null;
+            if ('remoteMessage' in response.notification.request.trigger) {
+                url = response.notification?.request?.trigger?.remoteMessage?.data?.url as string;
+            } else if ('payload' in response.notification.request.trigger) {
+                url = response.notification?.request?.trigger?.payload?.url as string;
+            }
 
+            if (!url) return;
             // Let React Navigation handle the URL
             listener(url);
         });
