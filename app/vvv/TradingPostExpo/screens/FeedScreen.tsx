@@ -5,7 +5,7 @@ import { Alert, Animated, FlatListProps, NativeScrollEvent, NativeSyntheticEvent
 import { FlatList } from "react-native-gesture-handler";
 import { View, Text } from "react-native";
 import { PlusContentButton } from "../components/PlusContentButton";
-import { ContentStyle, PostList, PostListOnScroll, PostScrollBegin, PostScrollDragBegin, PostScrollEnd } from "../components/PostList";
+import { ContentStyle, PostList, PostListOnScroll, PostScrollAnimEnd, PostScrollBegin, PostScrollDragBegin, PostScrollEnd } from "../components/PostList";
 import { spaceOnSide, postInnerHeight } from "../components/PostView";
 import { DashTabScreenProps } from "../navigation/pages";
 import { Logo, LogoNoBg, social } from "../images";
@@ -65,8 +65,12 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     //    marginTop: margin
                 }}>
                 <FeedPart
+                    onScrollAnimationEnd={()=>{
+                        translateHeaderY.setValue(-2000);
+                        console.log("Scroll Anim Has Ended")
+                    }}
                     onRefresh={() => {
-                        translateHeaderY.setValue(-10000);
+                        translateHeaderY.setValue(-1000);
                     }}
                     contentContainerStyle={{
                         marginTop: clampAmount + sizes.rem1
@@ -78,7 +82,6 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                                 //velocity: { y: translateHeaderY }
                                 contentOffset: { y: translateHeaderY }
                             }
-
                         }
                     ], { useNativeDriver: true })}
 
@@ -166,6 +169,7 @@ export const FeedPart = (props: {
     onMomentumScrollEnd?: PostScrollEnd
     onMomentumScrollBegin?: PostScrollBegin
     onScrollBeginDrag?: PostScrollDragBegin
+    onScrollAnimationEnd?: PostScrollAnimEnd
     contentContainerStyle?: ContentStyle
     onRefresh?: () => void
 }) => {
@@ -178,6 +182,7 @@ export const FeedPart = (props: {
         onScrollBeginDrag={props.onScrollBeginDrag}
         onMomentumScrollBegin={props.onMomentumScrollBegin}
         onMomentumScrollEnd={props.onMomentumScrollEnd}
+        onScrollAnimationEnd={props.onScrollAnimationEnd}
         onRefresh={() => {
             setPostsKey(Date.now())
             if (props.onRefresh) {

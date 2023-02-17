@@ -161,7 +161,7 @@ export function AnimatedList<T, U>(props: {
         index: number,
         sizeCache: SizeParts[]
     ) => { length: number; offset: number; index: number }) | undefined;
-} & ListProps<T> & Pick<Animated.AnimatedProps<FlatListProps<HasU<T, U>>>, "onScrollBeginDrag"|"onMomentumScrollEnd"|"onMomentumScrollBegin" | "onScroll" | "onRefresh" | "style" | "contentContainerStyle" | "numColumns" | "ListHeaderComponent" | "StickyHeaderComponent" | "keyExtractor" | "horizontal">) {
+} & ListProps<T> & Pick<Animated.AnimatedProps<FlatListProps<HasU<T, U>>>, "onScrollAnimationEnd" | "onScrollBeginDrag" | "onMomentumScrollEnd" | "onMomentumScrollBegin" | "onScroll" | "onRefresh" | "style" | "contentContainerStyle" | "numColumns" | "ListHeaderComponent" | "StickyHeaderComponent" | "keyExtractor" | "horizontal">) {
 
     const [internalData, setInternalData] = useState<T[]>(),
         { data, preloadOffset, datasetKey } = props,
@@ -253,6 +253,7 @@ export function AnimatedList<T, U>(props: {
     return !internalData?.length ?
         <NoDataPanel message={internalData ? props.noDataMessage : (props.loadingMessage || "Loading...")} /> :
         <Animated.FlatList
+            onScrollAnimationEnd={props.onScrollAnimationEnd}
             onScrollBeginDrag={props.onScrollBeginDrag}
             onMomentumScrollEnd={props.onMomentumScrollEnd}
             onMomentumScrollBegin={props.onMomentumScrollBegin}

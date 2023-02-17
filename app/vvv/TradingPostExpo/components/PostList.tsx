@@ -10,7 +10,8 @@ export type ContentStyle = FlatListProps<HasU<Interface.IElasticPostExt, string>
 export type PostScrollEnd = FlatListProps<HasU<Interface.IElasticPostExt, string>>["onMomentumScrollEnd"]
 export type PostScrollBegin = FlatListProps<HasU<Interface.IElasticPostExt, string>>["onMomentumScrollBegin"]
 export type PostScrollDragBegin = FlatListProps<HasU<Interface.IElasticPostExt, string>>["onScrollBeginDrag"]
-export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>, datasetKey?: string, onRefresh?: () => void, onReloadNeeded?: () => void, onScroll?: PostListOnScroll, contentContainerStyle?: ContentStyle, onMomentumScrollEnd?: PostScrollEnd, onMomentumScrollBegin?: PostScrollBegin, onScrollBeginDrag?:PostScrollDragBegin }) {
+export type PostScrollAnimEnd = FlatListProps<HasU<Interface.IElasticPostExt, string>>["onScrollAnimationEnd"]
+export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>, datasetKey?: string, onRefresh?: () => void, onReloadNeeded?: () => void, onScroll?: PostListOnScroll, contentContainerStyle?: ContentStyle, onMomentumScrollEnd?: PostScrollEnd, onMomentumScrollBegin?: PostScrollBegin, onScrollBeginDrag?: PostScrollDragBegin, onScrollAnimationEnd?: PostScrollAnimEnd }) {
     return <AnimatedList
         contentContainerStyle={props.contentContainerStyle}
         onMomentumScrollEnd={props.onMomentumScrollEnd}
