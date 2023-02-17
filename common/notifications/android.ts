@@ -24,6 +24,7 @@ export default class AndroidNotifications {
                     notification: {
                         title: message.title,
                         body: message.body,
+                        data: message.data
                     },
                 }),
             });
@@ -32,6 +33,7 @@ export default class AndroidNotifications {
             if (!contentType || contentType.indexOf("application/json") === -1) throw new Error(await res.text())
 
             const body = await res.json();
+            console.log(body);
             if ('error' in body.results[0]) prototypeRes.failed.push(deviceId)
             else prototypeRes.success.push(deviceId)
         }

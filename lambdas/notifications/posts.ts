@@ -95,7 +95,7 @@ const run = async () => {
     const y = end.toUTC().toISO();
     const u = `https://m.tradingpostapp.com/dash/search?watchlistId=120&beginDateTime=${x}&endDateTime=${y}`;
 
-    await notificationsSrv.sendMessageToUser("4a6f0899-dc6d-40cc-aa6a-1febb579d65a", {
+    await notificationsSrv.sendMessageToUser("e96aea04-9a60-4832-9793-f790e60df8eb", {
         title: "Test",
         data: {
             url: u

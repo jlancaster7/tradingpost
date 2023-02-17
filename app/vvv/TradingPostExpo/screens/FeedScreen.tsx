@@ -65,7 +65,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 }}>
                 <FeedPart
                     onRefresh={() => {
-                        translateHeaderY.setValue(0);
+                        translateHeaderY.setValue(-10000);
                     }}
                     contentContainerStyle={{
                         marginTop: clampAmount + sizes.rem1
