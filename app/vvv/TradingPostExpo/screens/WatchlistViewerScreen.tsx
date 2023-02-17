@@ -23,6 +23,7 @@ import { WatchlistItemRenderItem } from "../components/WatchlistItemRenderItem"
 import { PrimaryChip } from "../components/PrimaryChip"
 import { sleep } from "@tradingpost/common/utils/sleep"
 import {FeedPart} from './FeedScreen'
+import { SwitchField } from "../components/SwitchField"
 
 
 export const useNoteField = (hideEmptyNote?: boolean) => {
@@ -171,11 +172,12 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
 
 
 export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: number }>) => {
-    const [watchlist, setWatchlist] = useState<IWatchlistGetExt>()
-    const watchlistId = props.route?.params?.watchlistId;
-    const [isSaved, setIsFav] = useState(false)
-    const [watchlistTickers, setWatchlistTickers] = useState<string[]>();
+    const [watchlist, setWatchlist] = useState<IWatchlistGetExt>(),
+          [isSaved, setIsFav] = useState(false),
+          [watchlistTickers, setWatchlistTickers] = useState<string[]>(),
+          [notficationToggle, setNotificationToggle] = useState<boolean>(false);
     const { loginState } = useAppUser();
+    const watchlistId = props.route?.params?.watchlistId;
     const appUser = loginState?.appUser;
     const translateHeaderY = useRef(new Animated.Value(0)).current;
     const scrollRef = useRef<FlatList>(null);
@@ -232,26 +234,23 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
     return <View style={[flex]}>
         <Animated.FlatList
             data={[
-                <View
-                    style={{
-                        paddingTop: sizes.rem0_5, backgroundColor: AppColors.background,
-                        alignItems: "stretch", width: "100%"
-                    }}
-                >
-                    <View style={[
-                        //collapsed ? {display: 'none'} : {display: 'flex'},
-                        { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
-                        <Header text={watchlist?.name || ""} />
-                        <ElevatedSection title={""}>
-                            <View style={{flex: 1, flexDirection: 'row', alignContent: 'center'}}>
-                                <ProfileBar style={{flex: 1}} user={watchlist?.user[0]} />
-                                <View style={{flex: 1, alignContent: 'center', justifyContent: 'center'}}>
-                                    <PrimaryChip style={{width: '50%'}} isAlt key={watchlist?.id} label={watchlist?.type ? watchlist.type.slice(0,1).toUpperCase() + watchlist.type.slice(1) : ''} />
-                                </View>
+                <View style={{
+                        paddingTop: sizes.rem0_5, 
+                        paddingHorizontal: sizes.rem1,
+                        backgroundColor: AppColors.background,
+                    }}>
+                    <Header text={watchlist?.name || ""} />
+                    <ElevatedSection title={""}>
+                        <View style={[row, flex]}>
+                            <ProfileBar style={flex} user={watchlist?.user[0]} />
+                            <View style={{width: '30%', alignItems: 'center', justifyContent: 'center'}}>
+                                <PrimaryChip style={{width: '80%'}} isAlt key={watchlist?.id} label={watchlist?.type ? watchlist.type.slice(0,1).toUpperCase() + watchlist.type.slice(1) : ''} />
+                            </View>
+                            <View style={{width: '10%', alignItems: 'center', justifyContent: 'center'}}>
                                 {watchlist?.user[0].id === appUser?.id ? 
                                     <EditButton
                                         height={24}
-                                        width={24} 
+                                        width={24}
                                         onPress={() => {
                                             props.navigation.navigate("WatchlistEditor", {
                                                 watchlistId: watchlistId
@@ -277,52 +276,57 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                                         }}
                                     />}
                             </View>
-                            
-                            <Text style={[{ marginVertical: sizes.rem0_5 }, !watchlist?.note ? { color: "#ccc", fontStyle: "italic" } : undefined]}>
-                                {watchlist?.note || "No Notes"}
-                            </Text>
-                            
-                        </ElevatedSection>
-                    </View>
-                    <View style={[
-                        //collapsed ? {display: 'none'} : {display: 'flex'},
-                        { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
-                        <Section title="Stocks"
-                                 style={{backgroundColor: AppColors.background}}>
-                                 
-                            <List   
-                                listKey={`watchlist_id}`}
-                                datasetKey={`watchlist_id_${watchlist?.items.length}`}
-                                data={watchlist?.items}
-                                loadingMessage={" "}
-                                noDataMessage={" "}
-                                loadingItem={undefined}
-                                numColumns={2}
-                                renderItem={(item)=> {
-                                    const symbol = item.item.symbol;
-                                    const secId = bySymbol[symbol] ? bySymbol[symbol].id : 0;
-                                    const intradayChange = item.item.price ? item.item.price.price - item.item.price.open : 0
-                                    const hideEmptyNote = watchlist?.user[0].id !== appUser?.id
-                                    return (
-                                        <WatchlistItemRenderItem 
-                                            item={item}
-                                            bySymbol={bySymbol}
-                                            byId={byId}
-                                            hideEmptyNote={hideEmptyNote}
-                                            setShownMap={setShownMap}
-                                            shownMap={shownMap}
-                                            watchlist={watchlist}/>
-                                    )
-                                }}
-                                />
-                        </Section>
-                    </View>
-                    <View style={[{ paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
-                        <Header text="Watchlist Posts" />
-                    </View>
+                        </View>
+                        <Text style={[{ marginVertical: sizes.rem0_5 }, !watchlist?.note ? { color: "#ccc", fontStyle: "italic" } : undefined]}>
+                            {watchlist?.note || "No Notes"}
+                        </Text>
+                    </ElevatedSection>
+                </View>,                
+                <SwitchField label='Enable Notifications'
+                                checked={notficationToggle}
+                                onChange={setNotificationToggle}
+                                viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', paddingHorizontal: sizes.rem1_5, paddingBottom: sizes.rem0_5, backgroundColor: AppColors.background }}
+                                toggleStyle={{}}
+                                textStyle={{alignSelf: 'center'}}>
+                </SwitchField>,
+                <View style={[
+                    //collapsed ? {display: 'none'} : {display: 'flex'},
+                    { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                    <Section title="Companies"
+                                style={{backgroundColor: AppColors.background}}>
+                                
+                        <List   
+                            listKey={`watchlist_id}`}
+                            datasetKey={`watchlist_id_${watchlist?.items.length}`}
+                            data={watchlist?.items}
+                            loadingMessage={" "}
+                            noDataMessage={" "}
+                            loadingItem={undefined}
+                            numColumns={2}
+                            renderItem={(item)=> {
+                                const symbol = item.item.symbol;
+                                const secId = bySymbol[symbol] ? bySymbol[symbol].id : 0;
+                                const intradayChange = item.item.price ? item.item.price.price - item.item.price.open : 0
+                                const hideEmptyNote = watchlist?.user[0].id !== appUser?.id
+                                return (
+                                    <WatchlistItemRenderItem 
+                                        item={item}
+                                        bySymbol={bySymbol}
+                                        byId={byId}
+                                        hideEmptyNote={hideEmptyNote}
+                                        setShownMap={setShownMap}
+                                        shownMap={shownMap}
+                                        watchlist={watchlist}/>
+                                )
+                            }}
+                            />
+                    </Section>
+                </View>
+                ,
+                <View style={[{ paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                    <Header text="Posts" />
                 </View>,
-                <View style={[{ paddingHorizontal: 0 }]}
-                >
+                <View style={[{ paddingHorizontal: 0 }]}>
                     {watchlistTickers && <FeedPart key={watchlistTickers ? watchlistTickers.join() : "___"} searchTerms={watchlistTickers} />}
                 </View>
             ]}

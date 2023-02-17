@@ -15,14 +15,15 @@ export function PrimaryChip(props: { label: string, isAlt?: boolean, style?: Vie
                 fill={"#708090"}
                 height={20}
                 width={20}
-                name="close-outline" style={{
+                name="close-outline" 
+                style={{
                     height: 16,
                     width: 16
                 }} /> : undefined}
-            style={[{ borderRadius: 16, backgroundColor: color, borderColor: color, marginRight: sizes.rem1 / 4, height: sizes.rem2, minHeight: sizes.rem2 }, props.style]}
+            style={[{ borderRadius: 16, backgroundColor: color, borderColor: color, marginRight: sizes.rem1 / 4, height: sizes.rem1_5+2, minHeight: sizes.rem1_5+2, paddingVertical: 0 }, props.style, props.includeX ? { paddingRight: 6} : {paddingHorizontal: 6}]}
             >
-                <View style={{flexDirection: 'column'}}>
-                    <Text numberOfLines={1} style={{ color: "white" }}>{props.label}</Text>
+                <View style={{}}>
+                    <Text numberOfLines={1} style={[props.includeX ? {marginLeft: -4} : {}, { color: "white" }]}>{props.label}</Text>
                 </View>
             </Button>)
 }
