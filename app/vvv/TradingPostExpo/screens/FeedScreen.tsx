@@ -37,8 +37,10 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     //const [clampRange, setClampRange] = useState<[number, number]>([0, clampAmount])
     const diffValue = Animated.subtract(translateHeaderY, lastOffsetY);
 
-    const tester = Animated.diffClamp(translateHeaderY, 0, clampAmount)
+    //if content is negative  
 
+    const tester = Animated.diffClamp(translateHeaderY, 0, clampAmount)
+    const [translate, setTranslate] = useState(true);
     const currentClamp = tester.interpolate({
         inputRange: [0, clampAmount],
         outputRange: [0, -clampAmount],
@@ -48,10 +50,13 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     useEffect(() => {
         translateHeaderY.addListener((v: { value: number }) => {
             console.log("Offset:" + v.value)
+            if (v.value < 0 && translate)
+                setTranslate(false);
+            else if (!translate)
+                setTranslate(true)
         })
-
         return () => translateHeaderY.removeAllListeners();
-    }, [translateHeaderY])
+    }, [translateHeaderY, translate])
     useEffect(() => {
         currentClamp.addListener((v: { value: number }) => {
             console.log("Clamp:" + v.value)
@@ -81,11 +86,11 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 }}>
                 <FeedPart
                     onScrollAnimationEnd={() => {
-                        translateHeaderY.setValue(-2000);
+                        //translateHeaderY.setValue(-2000);
                         console.log("Scroll Anim Has Ended")
                     }}
                     onRefresh={() => {
-                        translateHeaderY.setValue(-1000);
+                        //translateHeaderY.setValue(-1000);
                     }}
                     contentContainerStyle={{
                         marginTop: clampAmount + sizes.rem1
@@ -118,7 +123,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 style={{
                     position: "absolute",
                     top: 0,
-                    transform: [{ translateY: currentClamp }],
+                    transform: translate ? [{ translateY: currentClamp }] : undefined,
                     alignItems: "stretch",
                     width: "100%",
                     backgroundColor: "white",
