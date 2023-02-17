@@ -46,6 +46,21 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     });
 
     useEffect(() => {
+        translateHeaderY.addListener((v: { value: number }) => {
+            console.log("Offset:" + v.value)
+        })
+
+        return () => translateHeaderY.removeAllListeners();
+    }, [translateHeaderY])
+    useEffect(() => {
+        currentClamp.addListener((v: { value: number }) => {
+            console.log("Clamp:" + v.value)
+        })
+        return () => currentClamp.removeAllListeners();
+    }, [currentClamp])
+
+
+    useEffect(() => {
         setPlatforms((prior) => {
             if (prior.includes(platformClicked)) return prior.filter(a => a !== platformClicked)
             else if (platformClicked.length) {
@@ -65,7 +80,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     //    marginTop: margin
                 }}>
                 <FeedPart
-                    onScrollAnimationEnd={()=>{
+                    onScrollAnimationEnd={() => {
                         translateHeaderY.setValue(-2000);
                         console.log("Scroll Anim Has Ended")
                     }}
