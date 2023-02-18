@@ -26,25 +26,35 @@ export default ensureServerExtensions<Security>({
     },
     list: () => SecurityApi.internal.list(),
     getPrices: async (req) => {
-        const {securityId} = req.body;
+        const {securityId,includeIntraday, includeHistorical, sinceDateTime} = req.body;
         const db = await getHivePool;
         const pricingPromises: any[2] = [null, null];
-        if (req.body.includeIntraday) {
-            pricingPromises[1] = db.query<{ high: number, low: number, open: number, price: number, time: Date }>
-            (`SELECT high, low, open, price, time
-              FROM security_price
-              WHERE is_intraday = true
-                AND security_id = $1
-              ORDER BY time DESC`, [securityId]);
+        if (includeIntraday) {
+            let intradayQuery = `SELECT high, low, open, price, time
+                                 FROM security_price
+                                 WHERE is_intraday = true
+                                 AND security_id = $1`
+            let queryParams: any[] = [securityId]
+            if (sinceDateTime) {
+                intradayQuery += ' AND time >= $2'
+                queryParams.push((new Date(sinceDateTime)).toISOString())
+            }
+            intradayQuery += ' ORDER BY time DESC'
+            pricingPromises[1] = db.query<{ high: number, low: number, open: number, price: number, time: Date }>(intradayQuery, queryParams);
         }
 
-        if (req.body.includeHistorical) {
-            pricingPromises[0] = db.query<{ high: number, low: number, open: number, price: number, time: Date }>
-            (`SELECT high, low, open, price, time
-              FROM security_price
-              WHERE is_eod = true
-                AND security_id = $1
-              ORDER BY time asc`, [securityId]);
+        if (includeHistorical) {
+            let historicalQuery = `SELECT high, low, open, price, time
+                                   FROM security_price
+                                   WHERE is_eod = true
+                                   AND security_id = $1`
+            let queryParams: any[] = [securityId]
+            if (sinceDateTime) {
+                historicalQuery += ' AND time >= $2'
+                queryParams.push((new Date(sinceDateTime)).toISOString())
+            }
+            historicalQuery += ' ORDER BY time asc'
+            pricingPromises[0] = db.query<{ high: number, low: number, open: number, price: number, time: Date }>(historicalQuery, queryParams);
         }
 
         const [historical, intraday] = await Promise.all(pricingPromises);
@@ -53,7 +63,7 @@ export default ensureServerExtensions<Security>({
             intraday: [],
         }
 
-        if (req.body.includeIntraday) {
+        if (includeIntraday) {
             intraday && intraday.rows.forEach((r: { high: any; low: any; open: any; price: any; time: Date }) => {
                 return res.intraday.push({
                     high: parseFloat(r.high),
@@ -65,7 +75,7 @@ export default ensureServerExtensions<Security>({
             })
         }
 
-        if (req.body.includeHistorical) {
+        if (includeHistorical) {
             historical && historical.rows.forEach((r: { high: any; low: any; open: any; price: any; time: Date }) => {
                 return res.historical.push({
                     high: parseFloat(r.high),

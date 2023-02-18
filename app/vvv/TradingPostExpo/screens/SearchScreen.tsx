@@ -1,10 +1,7 @@
-import {NavigationProp} from "@react-navigation/native";
+
 import { Api, Interface } from "@tradingpost/common/api";
-import { Avatar, Text } from "@ui-kitten/components";
-import { SecPressable } from './WatchlistViewerScreen'
 import React, { useEffect, useRef, useState } from "react";
-import { View, ScrollView, Pressable } from "react-native";
-import { ButtonGroup } from "../components/ButtonGroup";
+import { View, ScrollView, Pressable, useWindowDimensions } from "react-native";
 import { Header, Subheader } from "../components/Headers";
 import { List } from "../components/List";
 import { NoDataPanel } from "../components/NoDataPanel";
@@ -18,6 +15,7 @@ import { FlatList } from "react-native-gesture-handler";
 import {PrimaryChip} from '../components/PrimaryChip'
 import {isNotUndefinedOrNull} from "../utils/validators";
 import { DashTabScreenProps } from "../navigation/pages";
+import { CompanyProfileBar } from "../components/CompanyProfileBar";
 
 
 export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
@@ -28,7 +26,8 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
         [people, setPeople] = useState<Interface.IUserList[]>(),
         [searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
         scrollRef = useRef<FlatList>(null),
-        { securities: { list: securities } } = useSecuritiesList();
+        { securities: { list: securities } } = useSecuritiesList(),
+        {width: windowWidth, scale} = useWindowDimensions();
     useEffect(() => {
             if (searchText.length === 1 && searchText[0].length > 3) {
                 (async () => {
@@ -63,7 +62,7 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
                         const modSearch = el.slice(0,1) === '$' ? el.slice(1) : el;
                         const regex = new RegExp(`^${modSearch}`, "i");
                         securities.forEach((item) => {
-                            if ((regex.test(item.symbol ))) output.push(item)
+                            if ((item.symbol === modSearch.toUpperCase())) output.push(item)
                         })
                     })
                         setSearchSecurities(output)
@@ -170,32 +169,17 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
                             loadingMessage={" "}
                             noDataMessage={" "}
                             loadingItem={undefined}
-                            //numColumns={2}
                             renderItem={(item) => {
-                                const regex = new RegExp('placeholder.png', "i");
-                                if (regex.test(item.item.logo_url)) {
-                                    return (
-                                        <ElevatedSection title="" style={{flexShrink: 1, marginBottom: 6, paddingHorizontal: 2, paddingVertical: 2, justifyContent: 'center'}}>
-                                            <Text style={{textAlign: 'center', fontSize: 12}}>
-                                                {item.item.company_name}
-                                            </Text>
-                                        </ElevatedSection>
-                                    )
-                                }
-                                else {
-                                    return (
-                                    <ElevatedSection title="" style={{flex: 1, marginBottom: 6, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}}>
-                                        <SecPressable securityId={item.item.id}>                            
-                                                <Avatar
-                                                    style={{ borderRadius: 5 }}
-                                                    shape={'square'}
-                                                    resizeMode={'cover'}
-                                                    source={ {uri: item.item.logo_url} }
-                                                    size="giant"
-                                                />
-                                        </SecPressable>
-                                </ElevatedSection>)
-                                }
+                                console.log(item.item)
+                                return (
+                                    <ElevatedSection title="" style={[{flex: 1, marginBottom: sizes.rem1 / 2, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}]}>
+                                        <CompanyProfileBar symbol={item.item.symbol}
+                                                           companyName={item.item.company_name} 
+                                                           imageUri={item.item.logo_url}
+                                                           secId={item.item.id}
+                                                           />
+                                    </ElevatedSection>
+                                )
                             }}
                         />
                     </View>

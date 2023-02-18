@@ -10,7 +10,8 @@ import _Bank from './assets/bank.svg'
 import _IBKR from './assets/IBKR.svg'
 import _RobinhoodLogo from './assets/robinhood_logo.svg'
 import _RobinhoodLogoLong from './assets/robinhood_logo_long.svg'
-
+import _DownTriangle from './assets/downTriangle.svg'
+import _UpTriangle from './assets/upTriangle.svg'
 
 import Logo from './assets/logo.svg'
 import LogoNoBg from './assets/logo-no-bg.svg'
@@ -26,6 +27,7 @@ import _PremiumStar from './assets/post-feed/PremiumStar.svg'
 import _SendIcon from './assets/post-feed/SendIcon.svg'
 import _ErrorIcon from './assets/post-feed/material-symbols_error-circle-rounded-outline.svg'
 import _EllipsesIcon from './assets/post-feed/ph_dots-three-bold.svg'
+
 
 // /** Side Menu Icons */
 import Account from './assets/side-menu/Account.svg'
@@ -83,6 +85,8 @@ export const Bank = makeExpoSvg(_Bank);
 export const IBKR = makeExpoSvg(_IBKR);
 export const RobinhoodLogo = makeExpoSvg(_RobinhoodLogo);
 export const RobinhoodLogoLong = makeExpoSvg(_RobinhoodLogoLong);
+export const UpTriangle = makeExpoSvg(_UpTriangle);
+export const DownTriangle = makeExpoSvg(_DownTriangle);
 //export const Bank_Link = makeExpoSvg(_Bank_Link);
 
 export const IconBg = makeExpoSvg(_IconBg)
