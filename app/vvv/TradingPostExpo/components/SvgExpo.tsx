@@ -1,4 +1,4 @@
-import React, { Children, cloneElement, PropsWithChildren } from "react";
+import React, { Children, cloneElement } from "react";
 import { createElement, Text } from 'react-native'
 import { SvgProps } from "react-native-svg";
 

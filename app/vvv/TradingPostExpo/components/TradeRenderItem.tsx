@@ -11,16 +11,13 @@ import { toDollars, toDollarsAndCents, toFormatedDateTime, toNumber1 } from "../
 export const TradeRenderItem = (props: {item: any, byId: any, isOwner: boolean}) => {
     const { item, byId } = props
     const secId = item.item.security_id || item.item.securityId;
-    //const intradayChange = item.item.price ? item.item.price.price - item.item.price.open : 0
-    //const hideEmptyNote = watchlist?.user[0].id !== appUser?.id
     return (
         <ElevatedSection title="" style={{flex: 1, marginBottom: sizes.rem1_5 / 2, marginHorizontal: sizes.rem1_5 / 4, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}}>
             <View style={{flexDirection: 'row', justifyContent: 'center'}}>
                 <SecPressable securityId={secId}>                                        
                     <Avatar
-                        style={{borderWidth: 1, borderColor: '#ccc'}}
-                        resizeMode={'contain'}
-                        size="large"
+                        style={{borderWidth: 1}}
+                        size="medium"
                         shape="rounded"
                         source={
                             (() => {

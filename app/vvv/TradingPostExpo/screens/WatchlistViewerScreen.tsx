@@ -305,8 +305,6 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                             numColumns={2}
                             renderItem={(item)=> {
                                 const symbol = item.item.symbol;
-                                const secId = bySymbol[symbol] ? bySymbol[symbol].id : 0;
-                                const intradayChange = item.item.price ? item.item.price.price - item.item.price.open : 0
                                 const hideEmptyNote = watchlist?.user[0].id !== appUser?.id
                                 return (
                                     <WatchlistItemRenderItem 

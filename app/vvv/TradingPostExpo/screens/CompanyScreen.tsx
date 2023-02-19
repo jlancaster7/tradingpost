@@ -13,6 +13,7 @@ import { ButtonGroup } from "../components/ButtonGroup";
 import { FeedPart } from "./FeedScreen";
 import { RootStackScreenProps } from "../navigation/pages";
 import { AppColors } from "../constants/Colors";
+import { CompanyProfileBar } from "../components/CompanyProfileBar";
 
 const periods: { [key: string]: number } = {
     "1D": 1,
@@ -38,33 +39,6 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
     const [tab, setTab] = useState(0);
     const scrollRef = useRef<FlatList>(null);
     const translateHeaderY = useRef(new Animated.Value(0)).current;
-    /*
-    
-    let headerHeight =  sizes.rem0_5 * 3 +  fonts.small * 2 + 
-                        sizes.rem0_5 * 3 + sizes.rem1 * 2 + fonts.small * 2 + ((9 / 16) * windowWidth) + sizes.rem0_5 + sizes.rem1 + 42 +
-                        ( Number(elevated.paddingVertical) + Number(elevated.marginBottom) + sizes.rem1 + fonts.large ) + (description ? 100 : 0) + sizes.rem1 + sizes.rem0_5
-    //const headerHeight = 680;
-    const minViewHeight = windowHeight - headerHeight;
-    const [collapsed, setCollapsed] = useState(false);
-    const [isMaxed, setIsMaxed] = useState(false);
-    const clampMax = headerHeight //- ( Number(elevated.paddingVertical) + Number(elevated.marginBottom) + sizes.rem1 + fonts.large ) ; 
-    //console.log(clampMax);
-    const translation = translateHeaderY.interpolate({
-        inputRange: [0, clampMax],
-        outputRange: [0, -clampMax],
-        extrapolate: 'clamp',
-    });
-    
-    useEffect(() => {
-        translation.addListener((v: { value: number }) => {
-            const c = Math.abs(v.value + clampMax) < 40;
-            const isMaxed = -v.value === clampMax;
-            setCollapsed(c);
-            setIsMaxed(isMaxed);
-        });
-        return () => translation.removeAllListeners();
-    }, [translation, clampMax]);
-    */
     useEffect(() => {
         Api.Security.get(securityId)
             .then((s) => {
@@ -95,14 +69,16 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                         //collapsed ? {display: 'none'} : {display: 'flex'}, 
                         { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
                         <ElevatedSection key={"Company"} title="">
-                            <View style={[row, { marginVertical: sizes.rem0_5 }]}>
-                                <Avatar source={{ uri: security?.logo_url }} style={{ marginRight: sizes.rem0_5, overflow: 'visible', borderRadius: 5 }} shape={'square'} resizeMode={'cover'}  />
-                                <View style={flex}>
-                                    <Text>{security?.symbol}</Text>
-                                    <Text>{security?.company_name}</Text>
+                            <View style={{flexDirection: 'row'}}>
+                                <View style={{flex: 1}}>
+                                    <CompanyProfileBar symbol={security?.symbol}
+                                                       companyName={security?.company_name} 
+                                                       imageUri={security?.logo_url}
+                                                       secId={securityId || -1}
+                                                       contentSize='large'
+                                                       />
                                 </View>
-                                <View>
-                                    <FavButton height={24} width={24} isSelected={isFav}  onPress={() => {
+                                <FavButton height={24} width={24} isSelected={isFav}  onPress={() => {
                                     if (security) {
                                         Api.Security.extensions.quickadd({
                                             add: !isFav,
@@ -111,16 +87,7 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                                         setIsFav(!isFav);
                                     }
                                 }} />
-                                <View style={{flexDirection: 'row'}}>
-                                    <Text style={[pxChange ? pxChange >= 0 ? { color: 'green'} : {color: 'red'} : {} ,{marginRight: sizes.rem0_5}]}>{toPercent2(pxChange)}</Text>
-                                    <Text>{toDollarsAndCents(security?.price?.price)}</Text>
-                                    
-                                </View>
-                                <View style={{alignSelf: 'center'}}>
-                                    {security?.price?.time && <Text style={{fontSize: 10}}>{`As of ${toFormatedDateTime(security?.price?.time)}`}</Text>}
-                                </View>
-                                </View>
-                            </View>
+                           </View>
                             <View style={[row, { marginVertical: sizes.rem0_5 }]}>
                                 <Text style={flex} category={"label"}>Open</Text>
                                 <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.price?.open)}</Text>
@@ -136,7 +103,6 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                             <View style={{ marginBottom: sizes.rem1 }} >
                                 <InteractiveChart data={securityPrices} performance={false} />
                             </View>
-
                             <ButtonGroup key={"period"} 
                                 items={["1D", "1W", "1M", "3M", "1Y", "5Y", "Max"].map(v => ({ label: v, value: v }))} 
                                 onValueChange={(v) => setPortPeriod(v)} 

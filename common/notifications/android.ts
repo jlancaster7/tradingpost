@@ -24,8 +24,8 @@ export default class AndroidNotifications {
                     notification: {
                         title: message.title,
                         body: message.body,
-                        data: message.data
                     },
+                    data: message.data
                 }),
             });
 

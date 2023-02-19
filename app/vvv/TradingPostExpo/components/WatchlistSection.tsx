@@ -40,7 +40,7 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
             numColumns={1}
             data={props.watchlists}
             ListHeaderComponent={() => {
-                return <View key={"table_header"} style={{marginHorizontal: sizes.rem1_5 / 4, paddingHorizontal: sizes.rem0_5, marginBottom: sizes.rem1 / 2}}>
+                return <View key={"table_header"} style={{marginHorizontal: (sizes.rem1_5 / 4) + 7, paddingHorizontal: sizes.rem0_5, marginBottom: sizes.rem1 / 2}}>
                 <View style={[row]}>
                     {fields.map((c, i) => {
                         return <Text key={`header_${i}`} numberOfLines={1} style={{flex: 1, textAlign: 'center', fontSize: fonts.small, color: '#9D9D9D'}} >{c.alias}</Text>
@@ -50,7 +50,7 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
             }}
             renderItem={(item)=> {
                 return (
-                    <ElevatedSection title="" style={{flex: 1, marginBottom: sizes.rem1_5 / 2, marginHorizontal: sizes.rem1_5 / 4, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}}>
+                    <ElevatedSection title="" style={{flex: 1, marginBottom: sizes.rem1_5 / 2, paddingVertical: sizes.rem0_5}}>
                         <Pressable
                             onPress={() => {
                                 nav.navigate("WatchlistViewer", {
