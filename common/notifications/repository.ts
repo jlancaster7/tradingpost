@@ -61,47 +61,52 @@ export default class Repository {
         }
     }
 
-    getTradeNotificationsWithSubscribers = async (tz: string, tradeDate: DateTime): Promise<TradeNotificationWithSubscriber[]> => {
-        const query = `WITH txs_with_subscription AS (SELECT tt.security_id,
-                                                             tt.account_id,
-                                                             tt.date,
-                                                             ds.user_id,
-                                                             ds.ID AS subscription_id
-                                                      FROM TRADINGPOST_TRANSACTION TT
-                                                               INNER JOIN TRADINGPOST_BROKERAGE_ACCOUNT TBA ON
-                                                          TBA.id = TT.ACCOUNT_ID
-                                                               INNER JOIN data_subscription ds ON ds.user_id = TBA.USER_ID)
-                       SELECT tx.security_id,
-                              tx.account_id,
-                              tx.date,
-                              ds.user_id   AS subscriber_user_id,
-                              tx.user_id   AS trader_user_id,
-                              ud.device_id AS subscriber_device_id,
-                              ud.provider  AS subscriber_provider,
-                              ud.timezone  AS subscriber_device_timezone
-                       FROM data_subscriber AS ds
-                                INNER JOIN USER_DEVICE UD ON ud.user_id = ds.USER_ID
-                                LEFT JOIN txs_with_subscription tx ON tx.subscription_id = ds.subscription_id
-                       WHERE ud.timezone = $1
-                         AND date >= $2
-                         AND date <= $3;`
-        const startTradeDate = tradeDate.set({hour: 0, minute: 0, second: 0, millisecond: 0});
-        const endTradeDate = tradeDate.set({hour: 23, minute: 59, second: 59, millisecond: 59});
-        const response = await this.db.query(query, [tz, startTradeDate, endTradeDate])
+    addNewTradeNotification = async (userId: string, msg: string) => {
+        const query = `INSERT INTO notification (user_id, type, date_time, data)
+                       VALUES ($1, 'NEW_TRADES', NOW(), $2);`
+        await this.db.none(query, [userId, {message: msg}]);
+    }
+
+    getUsersWithTrades = async (startDate: DateTime, endDate: DateTime): Promise<{ date: DateTime, userId: string, securityId: number }[]> => {
+        const query = `
+            SELECT tt.date,
+                   tba.user_id,
+                   tt.security_id
+            FROM tradingpost_transaction tt
+                     INNER JOIN tradingpost_brokerage_account tba ON tba.id = tt.account_id
+            WHERE tt.date >= $1
+              AND tt.date <= $2
+              AND tt.SECURITY_TYPE NOT IN ('cashEquivalent');
+        `;
+        const st = startDate.setZone("America/New_York").set({hour: 0, second: 0, minute: 0, millisecond: 0});
+        const et = endDate.setZone("America/New_York").set({hour: 23, minute: 59, second: 59, millisecond: 999});
+        const response = await this.db.query<{ date: Date, user_id: string, security_id: number }[]>(query, [st, et])
         if (response.length <= 0) return [];
-        return response.map((r: any) => {
-            let o: TradeNotificationWithSubscriber = {
-                accountId: r.account_id,
-                securityId: r.security_id,
+        return response.map(r => {
+            return {
                 date: DateTime.fromJSDate(r.date),
-                subscriberUserId: r.subscriber_user_id,
-                traderUserId: r.trader_user_id,
-                subscriberProvider: r.subscriber_provider,
-                subscriberDeviceId: r.subscriber_device_id,
-                subscriberDeviceTimezone: r.subscriber_device_timezone
+                userId: r.user_id,
+                securityId: r.security_id
             }
-            return o
         });
+    }
+
+    getSubscribers = async (userIds: string[]) => {
+        const query = `
+            SELECT ds.user_id  as subscriber_user_id,
+                   ds2.user_id as service_user_id
+            FROM data_subscriber ds
+                     INNER JOIN data_subscription ds2 on ds.subscription_id = ds2.id
+            where ds2.user_id in ($1:list);
+        `;
+        const response = await this.db.query<{ subscriber_user_id: string, service_user_id: string }[]>(query, [userIds]);
+        if (response.length <= 0) return [];
+        return response.map(r => {
+            return {
+                subscriberUserId: r.subscriber_user_id,
+                serviceUserId: r.service_user_id
+            }
+        })
     }
 
     getUsersAndWatchlists = async (): Promise<[Record<string, Record<number, string[]>>, Record<number, string>]> => {

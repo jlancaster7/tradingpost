@@ -1,11 +1,11 @@
-import { FlexStyle, TextStyle, ViewStyle } from "react-native";
-import { AppColors } from "./constants/Colors";
+import {FlexStyle, TextStyle, ViewStyle} from "react-native";
+import {AppColors} from "./constants/Colors";
 
-export const flex = { flex: 1 } as ViewStyle
-export const row: ViewStyle = { flexDirection: "row" }
+export const flex = {flex: 1} as ViewStyle
+export const row: ViewStyle = {flexDirection: "row"}
 export const shadow: ViewStyle = {
     elevation: 4,
-    shadowOffset: { height: 2, width: 2 },
+    shadowOffset: {height: 2, width: 2},
     shadowColor: "black",
     shadowOpacity: 0.125,
     shadowRadius: 0.25,
@@ -44,6 +44,7 @@ export function font(size: keyof typeof fonts, color: string = "black", isBold: 
 
 
 export const sizes = {
+    rem0_25: 4,
     rem0_5: 8,
     rem1: 16,
     rem1_5: 24,
@@ -60,21 +61,20 @@ export const sizes = {
 }
 
 
-
-export const paddView = [flex, { padding: sizes.rem1, backgroundColor: AppColors.background }]
-export const paddViewWhite = [...paddView, { backgroundColor: "white" }]
+export const paddView = [flex, {padding: sizes.rem1, backgroundColor: AppColors.background}]
+export const paddViewWhite = [...paddView, {backgroundColor: "white"}]
 
 export const elevated =
-{
-    marginHorizontal: 2,
-    paddingVertical: 8,
-    backgroundColor: "white",
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 4,
-    marginBottom: 16,
-    ...shadow
-}
+    {
+        marginHorizontal: 2,
+        paddingVertical: 8,
+        backgroundColor: "white",
+        borderColor: "#ccc",
+        borderWidth: 1,
+        borderRadius: 4,
+        marginBottom: 16,
+        ...shadow
+    }
 
 
 export const chartColors = [
@@ -98,7 +98,6 @@ export const bannerText = {
 export const thinBannerText = [bannerText, {
     marginHorizontal: 0, marginVertical: sizes.rem0_5
 } as TextStyle]
-
 
 
 export const textInputWiz = {
