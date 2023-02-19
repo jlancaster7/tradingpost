@@ -7,10 +7,63 @@ import * as T from '@elastic/elasticsearch/lib/api/types'
 
 const indexName = "tradingpost-search";
 
+export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Repository) => {
+    const u = `https://m.tradingpostapp.com/dash/notification/trade`;
+    const dt = DateTime.now().minus({day: 1}).setZone("America/New_York");
+
+    const serviceUsersWithTrades = await repo.getUsersWithTrades(dt, dt);
+    if (serviceUsersWithTrades.length <= 0) return;
+
+    const serviceUsersMap = new Map();
+    for (let i = 0; i < serviceUsersWithTrades.length; i++) {
+        const userWithTrade = serviceUsersWithTrades[i];
+        let us = serviceUsersMap.get(userWithTrade.userId);
+        if (!us) us = 0
+        serviceUsersMap.set(userWithTrade.userId, us += 1);
+    }
+
+    // Subscribers are whom get the notification
+    const subscribersForServiceUsers = await repo.getSubscribers(Array.from(serviceUsersMap.keys()));
+    let subscribersMap: Map<string, Set<string>> = new Map();
+    subscribersForServiceUsers.forEach(s => {
+        const sid = subscribersMap.get(s.subscriberUserId)
+        if (!sid) {
+            const serviceSet = new Set<string>();
+            serviceSet.add(s.serviceUserId)
+            subscribersMap.set(s.subscriberUserId, serviceSet);
+            return
+        }
+        sid.add(s.serviceUserId)
+        subscribersMap.set(s.subscriberUserId, sid);
+    })
+
+    for (const [subscriber, serviceUserIds] of subscribersMap) {
+        let tradeCount = 0;
+        serviceUserIds.forEach(s => tradeCount += serviceUsersMap.get(s));
+        if (tradeCount === 0) continue;
+
+        let msg = '';
+        if (serviceUserIds.size > 1) {
+            msg = `${serviceUserIds.size} analysts you follow have made a total of ${tradeCount} trades.`
+        } else {
+            msg = `1 analyst you follow has made a total of ${tradeCount} trade${tradeCount > 1 ? 's' : null}.`;
+        }
+
+        await repo.addNewTradeNotification(subscriber, msg);
+        await notifSrv.sendMessageToUser(subscriber, {
+            data: {url: u},
+            body: msg,
+            title: "New Subscriber Trades"
+        });
+    }
+}
+
 export const holdingsPostNotifications = async (notifSrv: Notifications, repo: Repository, elasticClient: ElasticClient) => {
     let usersAndHoldings = await repo.getUsersCurrentHoldings();
     const currentTime = DateTime.now();
     const twelveHoursAgo = currentTime.minus({hour: 12});
+    const curFormat = currentTime.toUTC().toISO();
+    const twelveFormat = twelveHoursAgo.toUTC().toISO();
     const usersAndHoldingsKeys = Object.keys(usersAndHoldings);
     for (let i = 0; i < usersAndHoldingsKeys.length; i++) {
         const userId = usersAndHoldingsKeys[i];
@@ -19,11 +72,12 @@ export const holdingsPostNotifications = async (notifSrv: Notifications, repo: R
         const usersSubscriptionList = await repo.getUserSubscriberList(userId);
         const postTypeAggregations = await queryDatastore(elasticClient, usersSubscriptionList, usersBlockList, userHoldings, currentTime, twelveHoursAgo);
         const message = buildMessage(postTypeAggregations);
+        const u = `https://m.tradingpostapp.com/dash/search?isHoldings=true&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
         await notifSrv.sendMessageToUser(userId, {
             title: "New Current Holdings Posts",
             body: message,
             data: {
-                link: 'https://m.tradingpostapp.com/dash/Search'
+                link: u
             }
         });
     }
@@ -32,7 +86,10 @@ export const holdingsPostNotifications = async (notifSrv: Notifications, repo: R
 export const watchlistsPostNotifications = async (notifSrv: Notifications, repo: Repository, elasticClient: ElasticClient) => {
     let [usersAndWatchlists, watchlistIdToName] = await repo.getUsersAndWatchlists();
     const currentTime = DateTime.now();
-    const twelveHoursAgo = currentTime.minus({hour: 36});
+    const twelveHoursAgo = currentTime.minus({hour: 12});
+
+    const curFormat = currentTime.toUTC().toISO();
+    const twelveFormat = twelveHoursAgo.toUTC().toISO();
     const userWatchlistsKeys = Object.keys(usersAndWatchlists);
     for (let i = 0; i < userWatchlistsKeys.length; i++) {
         const userId = userWatchlistsKeys[i];
@@ -49,14 +106,14 @@ export const watchlistsPostNotifications = async (notifSrv: Notifications, repo:
             const postTypeAggregations = await queryDatastore(elasticClient, usersSubscriptionList, usersBlockList, watchlistSymbols, currentTime, twelveHoursAgo);
             if (postTypeAggregations.length <= 0) continue;
             const message = buildWatchlistMessage(postTypeAggregations, watchlistName);
+            const u = `https://m.tradingpostapp.com/dash/search?watchlistId=${watchlistId}&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
             await notifSrv.sendMessageToUser(userId, {
                 title: "New Watchlist Posts",
                 body: message,
                 data: {
-                    link: 'https://m.tradingpostapp.com/dash/Search'
+                    url: u
                 }
             });
-            console.log("Sent")
         }
     }
 }
@@ -150,7 +207,6 @@ interface Aggregations {
     postTypeAgg: T.AggregationsTermsAggregateBase<{ key: string, doc_count: number }>
 }
 
-
 export const queryDatastore = async (elasticClient: ElasticClient, userSubscriptions: string[], userBlockedList: string[], searchTerms: string[], endDateTime: DateTime, startDateTime: DateTime) => {
     const res = await elasticClient.search<{}, Aggregations>({
         index: indexName,
@@ -170,9 +226,7 @@ export const queryDatastore = async (elasticClient: ElasticClient, userSubscript
             }
         }
     });
-
-    console.log(res.aggregations)
-
+    
     if (!res.aggregations || !res.aggregations.postTypeAgg) return [];
     if (!(res.aggregations.postTypeAgg.buckets instanceof Array)) return [];
 

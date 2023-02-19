@@ -1,29 +1,39 @@
-import { NavigationProp, useFocusEffect, useNavigation } from "@react-navigation/native"
-import { Api, Interface } from "@tradingpost/common/api"
+import {NavigationProp, useFocusEffect, useNavigation} from "@react-navigation/native"
+import {Api, Interface} from "@tradingpost/common/api"
 import WatchlistApi from "@tradingpost/common/api/entities/apis/WatchlistApi"
-import { IWatchlistGetExt } from "@tradingpost/common/api/entities/extensions/Watchlist"
-import { ISecurityList } from "@tradingpost/common/api/entities/interfaces"
-import { Avatar, Icon } from "@ui-kitten/components"
-import React, { PropsWithChildren, useEffect, useRef, useState, Component, useCallback } from "react"
-import { Header, Subheader } from "../components/Headers";
-import { View, Text, Pressable, ScrollView, useWindowDimensions, Animated, FlatList, NativeSyntheticEvent, NativeScrollEvent } from "react-native"
-import { useToast } from "react-native-toast-notifications"
-import { useAppUser } from "../Authentication"
-import { DeleteButton, EditButton, FavButton } from "../components/AddButton"
-import { ProfileBar } from "../components/ProfileBar"
-import { ElevatedSection, Section, Subsection } from "../components/Section"
-import { ITableColumn, Table } from "../components/Table"
-import { TextField } from "../components/TextField"
-import { AppColors } from "../constants/Colors"
-import { elevated, flex, fonts, paddView, paddViewWhite, row, sizes } from "../style"
-import { useSecuritiesList } from '../SecurityList'
-import { toDollarsAndCents, toNumber1, toPercent, toPercent1, toPercent2 } from "../utils/misc"
-import { List } from "../components/List"
-import { WatchlistItemRenderItem } from "../components/WatchlistItemRenderItem"
-import { PrimaryChip } from "../components/PrimaryChip"
-import { sleep } from "@tradingpost/common/utils/sleep"
+import {IWatchlistGetExt} from "@tradingpost/common/api/entities/extensions/Watchlist"
+import {ISecurityList} from "@tradingpost/common/api/entities/interfaces"
+import {Avatar, Icon} from "@ui-kitten/components"
+import React, {PropsWithChildren, useEffect, useRef, useState, Component, useCallback} from "react"
+import {Header, Subheader} from "../components/Headers";
+import {
+    View,
+    Text,
+    Pressable,
+    ScrollView,
+    useWindowDimensions,
+    Animated,
+    FlatList,
+    NativeSyntheticEvent,
+    NativeScrollEvent
+} from "react-native"
+import {useToast} from "react-native-toast-notifications"
+import {useAppUser} from "../Authentication"
+import {DeleteButton, EditButton, FavButton} from "../components/AddButton"
+import {ProfileBar} from "../components/ProfileBar"
+import {ElevatedSection, Section, Subsection} from "../components/Section"
+import {ITableColumn, Table} from "../components/Table"
+import {TextField} from "../components/TextField"
+import {AppColors} from "../constants/Colors"
+import {elevated, flex, fonts, paddView, paddViewWhite, row, sizes} from "../style"
+import {useSecuritiesList} from '../SecurityList'
+import {toDollarsAndCents, toNumber1, toPercent, toPercent1, toPercent2} from "../utils/misc"
+import {List} from "../components/List"
+import {WatchlistItemRenderItem} from "../components/WatchlistItemRenderItem"
+import {PrimaryChip} from "../components/PrimaryChip"
+import {sleep} from "@tradingpost/common/utils/sleep"
 import {FeedPart} from './FeedScreen'
-import { SwitchField } from "../components/SwitchField"
+import {SwitchField} from "../components/SwitchField"
 
 
 export const useNoteField = (hideEmptyNote?: boolean) => {
@@ -40,8 +50,12 @@ export const useNoteField = (hideEmptyNote?: boolean) => {
                         })
                     }
                 }}>
-                    <Icon style={{ opacity: (info.item.note || !hideEmptyNote) ? (info.item.note ? 1 : 0.25) : 0, height: 16, width: 22 }} name={!shownMap[info.index] ? "file-text-outline" : "close-outline"}
-                        fill={AppColors.primary}
+                    <Icon style={{
+                        opacity: (info.item.note || !hideEmptyNote) ? (info.item.note ? 1 : 0.25) : 0,
+                        height: 16,
+                        width: 22
+                    }} name={!shownMap[info.index] ? "file-text-outline" : "close-outline"}
+                          fill={AppColors.primary}
                     /></Pressable>
             }, alias: " ", width: 32
         }
@@ -53,20 +67,20 @@ export const SecPressable = (props: PropsWithChildren<{ securityId: number }>) =
     const nav = useNavigation<NavigationProp<AllPages>>();
     return <Pressable onPress={() => {
         if (props.securityId !== -1) {
-        nav.navigate("Company", {
-            securityId: props.securityId
-        })
+            nav.navigate("Company", {
+                securityId: props.securityId
+            })
         }
     }}>{props.children}</Pressable>
 }
 
 export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number) => {
-    const { securities: { bySymbol, byId } } = useSecuritiesList();
+    const {securities: {bySymbol, byId}} = useSecuritiesList();
     return [{
         field: (a: any) => {
             const value = getIdValue(a.item);
             return (
-                <View style={{ overflow: 'visible' }}>
+                <View style={{overflow: 'visible'}}>
                     <SecPressable securityId={
                         (() => {
                             if (typeof value === "string")
@@ -75,15 +89,15 @@ export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number)
                                 return byId[value]?.id || -1
                         })()
                     }>
-                        <Avatar style={{ marginRight: sizes.rem0_5 }}
+                        <Avatar style={{marginRight: sizes.rem0_5}}
                                 resizeMode={'contain'}
                                 source={
                                     (() => {
                                         let output: { uri: string } | undefined;
                                         if (typeof value === "string")
-                                            output = bySymbol[value] ? { uri: bySymbol[value].logo_url } : undefined
+                                            output = bySymbol[value] ? {uri: bySymbol[value].logo_url} : undefined
                                         else
-                                            output = byId[value] ? { uri: byId[value].logo_url  } : undefined
+                                            output = byId[value] ? {uri: byId[value].logo_url} : undefined
                                         return output;
                                     })()}
                                 size="tiny"
@@ -102,29 +116,29 @@ export const useMakeSecurityFields = (getIdValue: (itm: any) => string | number)
         align: "left" as "left",
         width: sizes.rem2
     },
-    {
-        alias: "",
-        width: sizes.rem6 / 2,
-        align: "left" as "left",
-        style: { lineHeight: sizes.rem1_5 },
-        headerStyle: {
-            width: 0,
-        },
-        stringify: (value: any, key: any, item: any) => {
-            const v = getIdValue(item);
-            if (typeof v === "string")
-                return bySymbol[v]?.symbol === 'USD:CUR' ? 'Cash' : bySymbol[v]?.symbol || ""
-            else
-                return byId[v]?.symbol === 'USD:CUR' ? 'Cash' : byId[v]?.symbol || ""
+        {
+            alias: "",
+            width: sizes.rem6 / 2,
+            align: "left" as "left",
+            style: {lineHeight: sizes.rem1_5},
+            headerStyle: {
+                width: 0,
+            },
+            stringify: (value: any, key: any, item: any) => {
+                const v = getIdValue(item);
+                if (typeof v === "string")
+                    return bySymbol[v]?.symbol === 'USD:CUR' ? 'Cash' : bySymbol[v]?.symbol || ""
+                else
+                    return byId[v]?.symbol === 'USD:CUR' ? 'Cash' : byId[v]?.symbol || ""
+            }
         }
-    }
     ]
 }
 
 export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
 
     const [iconField, secField] = useMakeSecurityFields((item) => item.symbol);
-    const { column, shownMap } = useNoteField(hideEmptyNote);
+    const {column, shownMap} = useNoteField(hideEmptyNote);
     return {
         shownMap,
         columns: [
@@ -135,8 +149,9 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
                 field: (a) => {
                     const change = a.item.price?.price || a.item.price?.open ? (a.item.price?.price - a.item.price?.open) / a.item.price?.open : 0
                     return (
-                        <View style={{ justifyContent: 'center', flexDirection: 'row', flex: 1 }}>
-                            <Text style={[change ? change >= 0 ? { color: 'green' } : { color: 'red' } : {}, { marginRight: sizes.rem0_5 }]}>{`(${toPercent2(change)})`}</Text>
+                        <View style={{justifyContent: 'center', flexDirection: 'row', flex: 1}}>
+                            <Text
+                                style={[change ? change >= 0 ? {color: 'green'} : {color: 'red'} : {}, {marginRight: sizes.rem0_5}]}>{`(${toPercent2(change)})`}</Text>
                             <Text>{toDollarsAndCents(a.item.price?.price)}</Text>
                         </View>
                     )
@@ -173,10 +188,10 @@ export const useWatchlistItemColumns = (hideEmptyNote?: boolean) => {
 
 export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: number }>) => {
     const [watchlist, setWatchlist] = useState<IWatchlistGetExt>(),
-          [isSaved, setIsFav] = useState(false),
-          [watchlistTickers, setWatchlistTickers] = useState<string[]>(),
-          [notficationToggle, setNotificationToggle] = useState<boolean>(false);
-    const { loginState } = useAppUser();
+        [isSaved, setIsFav] = useState(false),
+        [watchlistTickers, setWatchlistTickers] = useState<string[]>(),
+        [notficationToggle, setNotificationToggle] = useState<boolean>(false);
+    const {loginState} = useAppUser();
     const watchlistId = props.route?.params?.watchlistId;
     const appUser = loginState?.appUser;
     const translateHeaderY = useRef(new Animated.Value(0)).current;
@@ -228,26 +243,27 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
         })()
     }, [watchlistId]))
 
-    const { securities: { bySymbol, byId } } = useSecuritiesList();
+    const {securities: {bySymbol, byId}} = useSecuritiesList();
     const [shownMap, setShownMap] = useState<Record<string, boolean>>({})
     console.log('on watchlist viewer')
     return <View style={[flex]}>
         <Animated.FlatList
             data={[
                 <View style={{
-                        paddingTop: sizes.rem0_5, 
-                        paddingHorizontal: sizes.rem1,
-                        backgroundColor: AppColors.background,
-                    }}>
-                    <Header text={watchlist?.name || ""} />
+                    paddingTop: sizes.rem0_5,
+                    paddingHorizontal: sizes.rem1,
+                    backgroundColor: AppColors.background,
+                }}>
+                    <Header text={watchlist?.name || ""}/>
                     <ElevatedSection title={""}>
                         <View style={[row, flex]}>
-                            <ProfileBar style={flex} user={watchlist?.user[0]} />
+                            <ProfileBar style={flex} user={watchlist?.user[0]}/>
                             <View style={{width: '30%', alignItems: 'center', justifyContent: 'center'}}>
-                                <PrimaryChip style={{width: '80%'}} isAlt key={watchlist?.id} label={watchlist?.type ? watchlist.type.slice(0,1).toUpperCase() + watchlist.type.slice(1) : ''} />
+                                <PrimaryChip style={{width: '80%'}} isAlt key={watchlist?.id}
+                                             label={watchlist?.type ? watchlist.type.slice(0, 1).toUpperCase() + watchlist.type.slice(1) : ''}/>
                             </View>
                             <View style={{width: '10%', alignItems: 'center', justifyContent: 'center'}}>
-                                {watchlist?.user[0].id === appUser?.id ? 
+                                {watchlist?.user[0].id === appUser?.id ?
                                     <EditButton
                                         height={24}
                                         width={24}
@@ -255,20 +271,22 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                                             props.navigation.navigate("WatchlistEditor", {
                                                 watchlistId: watchlistId
                                             })
-                                        }} /> : 
+                                        }}/> :
                                     <FavButton
                                         height={24}
                                         width={24}
                                         isSelected={isSaved}
-                                        onPress={() => {
+                                        onPress={async () => {
                                             try {
                                                 if (watchlistId) {
-                                                    Api.Watchlist.extensions.saveWatchlist({
+                                                    await Api.Watchlist.extensions.saveWatchlist({
                                                         id: watchlistId,
-                                                        is_saved: !isSaved
-                                                    })
+                                                        is_saved: !isSaved,
+                                                        disableNotification: !isSaved
+                                                    });
+
+                                                    !isSaved ? toast.show("Unfollowed Watchlist") : toast.show("Followed Watchlist")
                                                     setIsFav(f => !f);
-                                                    toast.show("Watchlist Added")
                                                 }
                                             } catch (err) {
                                                 console.error(err);
@@ -277,25 +295,34 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                                     />}
                             </View>
                         </View>
-                        <Text style={[{ marginVertical: sizes.rem0_5 }, !watchlist?.note ? { color: "#ccc", fontStyle: "italic" } : undefined]}>
+                        <Text style={[{marginVertical: sizes.rem0_5}, !watchlist?.note ? {
+                            color: "#ccc",
+                            fontStyle: "italic"
+                        } : undefined]}>
                             {watchlist?.note || "No Notes"}
                         </Text>
                     </ElevatedSection>
-                </View>,                
+                </View>,
                 <SwitchField label='Enable Notifications'
-                                checked={notficationToggle}
-                                onChange={setNotificationToggle}
-                                viewStyle={{ flexDirection: 'row-reverse', justifyContent: 'space-between', paddingHorizontal: sizes.rem1_5, paddingBottom: sizes.rem0_5, backgroundColor: AppColors.background }}
-                                toggleStyle={{}}
-                                textStyle={{alignSelf: 'center'}}>
+                             checked={notficationToggle}
+                             onChange={setNotificationToggle}
+                             viewStyle={{
+                                 flexDirection: 'row-reverse',
+                                 justifyContent: 'space-between',
+                                 paddingHorizontal: sizes.rem1_5,
+                                 paddingBottom: sizes.rem0_5,
+                                 backgroundColor: AppColors.background
+                             }}
+                             toggleStyle={{}}
+                             textStyle={{alignSelf: 'center'}}>
                 </SwitchField>,
                 <View style={[
                     //collapsed ? {display: 'none'} : {display: 'flex'},
-                    { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
+                    {paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background}]}>
                     <Section title="Companies"
-                                style={{backgroundColor: AppColors.background}}>
-                                
-                        <List   
+                             style={{backgroundColor: AppColors.background}}>
+
+                        <List
                             listKey={`watchlist_id}`}
                             datasetKey={`watchlist_id_${watchlist?.items.length}`}
                             data={watchlist?.items}
@@ -303,11 +330,11 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                             noDataMessage={" "}
                             loadingItem={undefined}
                             numColumns={2}
-                            renderItem={(item)=> {
+                            renderItem={(item) => {
                                 const symbol = item.item.symbol;
                                 const hideEmptyNote = watchlist?.user[0].id !== appUser?.id
                                 return (
-                                    <WatchlistItemRenderItem 
+                                    <WatchlistItemRenderItem
                                         item={item}
                                         bySymbol={bySymbol}
                                         byId={byId}
@@ -317,24 +344,25 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                                         watchlist={watchlist}/>
                                 )
                             }}
-                            />
+                        />
                     </Section>
                 </View>
                 ,
-                <View style={[{ paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
-                    <Header text="Posts" />
+                <View style={[{paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background}]}>
+                    <Header text="Posts"/>
                 </View>,
-                <View style={[{ paddingHorizontal: 0 }]}>
-                    {watchlistTickers && <FeedPart key={watchlistTickers ? watchlistTickers.join() : "___"} searchTerms={watchlistTickers} />}
+                <View style={[{paddingHorizontal: 0}]}>
+                    {watchlistTickers && <FeedPart key={watchlistTickers ? watchlistTickers.join() : "___"}
+                                                   searchTerms={watchlistTickers}/>}
                 </View>
             ]}
             renderItem={(info) => {
                 return info.item;
             }}
-            ref={scrollRef} contentContainerStyle={[{ paddingTop: 0 }]} nestedScrollEnabled
+            ref={scrollRef} contentContainerStyle={[{paddingTop: 0}]} nestedScrollEnabled
             onScroll={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
-                { nativeEvent: { contentOffset: { y: translateHeaderY } } }
-            ], { useNativeDriver: true })}>
+                {nativeEvent: {contentOffset: {y: translateHeaderY}}}
+            ], {useNativeDriver: true})}>
         </Animated.FlatList>
     </View>
 }
@@ -344,26 +372,28 @@ export const NoteEditor = (props: { canEdit: boolean, note: string | undefined, 
     const [note, setNote] = useState(props.note)
 
     return (!props.canEdit || (!isEdit && note)) ?
-        <View style={{ flexDirection: "row", alignItems: "center" }}><Text><Text style={{ fontWeight: "bold" }}>Note:</Text>{note}</Text>
+        <View style={{flexDirection: "row", alignItems: "center"}}><Text><Text
+            style={{fontWeight: "bold"}}>Note:</Text>{note}</Text>
             {props.canEdit && <EditButton
-                style={{ marginLeft: "auto" }}
+                style={{marginLeft: "auto"}}
                 height={24} width={24} onPress={() => {
-                    setIsEdit(true);
-                }}
+                setIsEdit(true);
+            }}
             />}
 
         </View> :
-        <View style={[row, { alignItems: "center" }]}><TextField placeholder="Add a note" style={flex} value={note} onChangeText={(t) => {
-            setNote(t);
-        }} /><Pressable onPress={() => {
+        <View style={[row, {alignItems: "center"}]}><TextField placeholder="Add a note" style={flex} value={note}
+                                                               onChangeText={(t) => {
+                                                                   setNote(t);
+                                                               }}/><Pressable onPress={() => {
             props.onChangeNote(note || "");
             setIsEdit(false)
         }
         }><Icon name="checkmark-outline" fill={AppColors.primary} style={{
             height: 24,
             width: 24
-        }} />
-            </Pressable>
+        }}/>
+        </Pressable>
         </View>
 
 }

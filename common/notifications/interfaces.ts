@@ -76,6 +76,5 @@ export type TradeNotificationWithSubscriber = {
     subscriberUserId: string
     subscriberDeviceId: string
     subscriberProvider: string
-    subscriberDeviceTimezone: string
     traderUserId: string
 }

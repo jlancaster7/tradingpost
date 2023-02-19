@@ -1,20 +1,38 @@
-import { NavigationProp, useNavigation } from "@react-navigation/native";
-import { Api, Interface } from "@tradingpost/common/api";
-import React, { useEffect, useRef, useState } from "react";
-import { Alert, Animated, FlatListProps, NativeScrollEvent, NativeSyntheticEvent, Pressable, RefreshControl, ScrollView, useWindowDimensions } from "react-native";
-import { FlatList } from "react-native-gesture-handler";
-import { View, Text } from "react-native";
-import { PlusContentButton } from "../components/PlusContentButton";
-import { ContentStyle, PostList, PostListOnScroll, PostScrollAnimEnd, PostScrollBegin, PostScrollDragBegin, PostScrollEnd } from "../components/PostList";
-import { spaceOnSide, postInnerHeight } from "../components/PostView";
-import { DashTabScreenProps } from "../navigation/pages";
-import { Logo, LogoNoBg, social } from "../images";
-import { IconifyIcon } from "../components/IconfiyIcon";
-import { ElevatedSection } from "../components/Section";
-import { flex, sizes } from "../style";
-import { social as socialStyle } from '../style'
-import { SvgExpo } from "../components/SvgExpo";
-import { diff } from "react-native-reanimated";
+import {NavigationProp, useNavigation} from "@react-navigation/native";
+import {Api, Interface} from "@tradingpost/common/api";
+import React, {useEffect, useRef, useState} from "react";
+import {
+    Alert,
+    Animated,
+    FlatListProps,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    useWindowDimensions
+} from "react-native";
+import {FlatList} from "react-native-gesture-handler";
+import {View, Text} from "react-native";
+import {PlusContentButton} from "../components/PlusContentButton";
+import {
+    ContentStyle,
+    PostList,
+    PostListOnScroll,
+    PostScrollAnimEnd,
+    PostScrollBegin,
+    PostScrollDragBegin,
+    PostScrollEnd
+} from "../components/PostList";
+import {spaceOnSide, postInnerHeight} from "../components/PostView";
+import {DashTabScreenProps} from "../navigation/pages";
+import {Logo, LogoNoBg, social} from "../images";
+import {IconifyIcon} from "../components/IconfiyIcon";
+import {ElevatedSection} from "../components/Section";
+import {flex, sizes} from "../style";
+import {social as socialStyle} from '../style'
+import {SvgExpo} from "../components/SvgExpo";
+import {diff} from "react-native-reanimated";
 
 const platformsAll = ["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"];
 
@@ -22,16 +40,14 @@ const platformsMarginH = 0.02;
 const platformsMarginTop = sizes.rem1;
 
 export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
-
-    const { width } = useWindowDimensions();
+    const {width} = useWindowDimensions();
     const [platforms, setPlatforms] = useState<string[]>([]),
         [platformClicked, setPlatformClicked] = useState('');
     const nav = useNavigation();
     const clampAmount = (width - width * platformsMarginH * platformsAll.length * 2) / platformsAll.length + platformsMarginTop;
     const translateHeaderY = useRef(new Animated.Value(0)).current;
     const lastOffsetY = useRef(new Animated.Value(0)).current;
-    //const lastOffset = useRef<number>();
-    //  const [collapsed, setCollapsed] = useState(false);
+    const translateMultipler = useRef(new Animated.Value(1)).current;
 
 
     //const [clampRange, setClampRange] = useState<[number, number]>([0, clampAmount])
@@ -40,7 +56,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     //if content is negative  
 
     const tester = Animated.diffClamp(translateHeaderY, 0, clampAmount)
-    const [translate, setTranslate] = useState(true);
+
     const currentClamp = tester.interpolate({
         inputRange: [0, clampAmount],
         outputRange: [0, -clampAmount],
@@ -49,21 +65,13 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
 
     useEffect(() => {
         translateHeaderY.addListener((v: { value: number }) => {
-            console.log("Offset:" + v.value)
-            if (v.value < 0 && translate)
-                setTranslate(false);
-            else if (!translate)
-                setTranslate(true)
+            if (v.value < clampAmount)
+                translateMultipler.setValue(0)
+            else
+                translateMultipler.setValue(1)
         })
         return () => translateHeaderY.removeAllListeners();
-    }, [translateHeaderY, translate])
-    useEffect(() => {
-        currentClamp.addListener((v: { value: number }) => {
-            console.log("Clamp:" + v.value)
-        })
-        return () => currentClamp.removeAllListeners();
-    }, [currentClamp])
-
+    }, [translateHeaderY, translateMultipler])
 
     useEffect(() => {
         setPlatforms((prior) => {
@@ -71,13 +79,12 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
             else if (platformClicked.length) {
                 prior.push(platformClicked);
                 return prior;
-            }
-            else return prior;
+            } else return prior;
         })
         setPlatformClicked('')
     }, [platformClicked])
     return (
-        <View style={{ flex: 1, backgroundColor: "#F7f8f8" }}>
+        <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
             <Animated.View
                 style={{
                     flex: 1,
@@ -98,32 +105,32 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     onScroll={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
                         {
                             nativeEvent:
-                            {
-                                //velocity: { y: translateHeaderY }
-                                contentOffset: { y: translateHeaderY }
-                            }
+                                {
+                                    //velocity: { y: translateHeaderY }
+                                    contentOffset: {y: translateHeaderY}
+                                }
                         }
-                    ], { useNativeDriver: true })}
+                    ], {useNativeDriver: true})}
 
                     onScrollBeginDrag={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
                         {
                             nativeEvent:
-                            {
-                                contentOffset: { y: lastOffsetY }
-                            }
+                                {
+                                    contentOffset: {y: lastOffsetY}
+                                }
 
                         }
-                    ], { useNativeDriver: true })}
+                    ], {useNativeDriver: true})}
                 />
             </Animated.View>
             <PlusContentButton onPress={() => {
                 nav.navigate("PostEditor")
-            }} />
+            }}/>
             <Animated.View
                 style={{
                     position: "absolute",
                     top: 0,
-                    transform: translate ? [{ translateY: currentClamp }] : undefined,
+                    transform: [{translateY: Animated.multiply(currentClamp, translateMultipler)}],
                     alignItems: "stretch",
                     width: "100%",
                     backgroundColor: "white",
@@ -131,41 +138,50 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     borderBottomWidth: 1
                 }}
                 key={`selector_${platforms.length}`}>
-                <PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked} />
+                <PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked}/>
             </Animated.View>
-        </View >
+        </View>
     );
 }
 
 export const PlatformSelector = (props: { platforms: string[], setPlatformClicked: React.Dispatch<React.SetStateAction<string>> }) => {
     return (
-        <View style={{ marginHorizontal: sizes.rem2 / 2, flexDirection: 'row', justifyContent: 'center' }}>
+        <View style={{marginHorizontal: sizes.rem2 / 2, flexDirection: 'row', justifyContent: 'center'}}>
             {platformsAll.map((item) => {
                 const logo = social[item + "Logo" as keyof typeof social];
                 return (
                     <ElevatedSection title=""
-                        key={`socialV_${item}`}
-                        style={[{
-                            flex: 1,
-                            aspectRatio: 1,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginTop: platformsMarginTop,
-                            marginHorizontal: "2%"
-                        }, props.platforms.includes(item) ? { borderStyle: 'solid', borderWidth: 2, borderColor: 'rgba(53, 162, 101, 1)', backgroundColor: '#F0F0F0' } : {}
-                        ]}>
-                        <Pressable style={{ flex: 1 }} onPress={() => {
+                                     key={`socialV_${item}`}
+                                     style={[{
+                                         flex: 1,
+                                         aspectRatio: 1,
+                                         alignItems: 'center',
+                                         justifyContent: 'center',
+                                         marginTop: platformsMarginTop,
+                                         marginHorizontal: "2%"
+                                     }, props.platforms.includes(item) ? {
+                                         borderStyle: 'solid',
+                                         borderWidth: 2,
+                                         borderColor: 'rgba(53, 162, 101, 1)',
+                                         backgroundColor: '#F0F0F0'
+                                     } : {}
+                                     ]}>
+                        <Pressable style={{flex: 1}} onPress={() => {
                             props.setPlatformClicked(item)
                         }}>
-                            <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center' }}>
+                            <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center'}}>
                                 {item !== 'TradingPost' ?
                                     <IconifyIcon key={`social_${item}`}
-                                        icon={logo}
-                                        svgProps={{}}
-                                        style={{ aspectRatio: 1, backgroundColor: 'transparent', justifyContent: 'center' }}
-                                        currentColor={item === 'Substack' ? socialStyle.substackColor : undefined} />
-                                    : <SvgExpo style={{ height: "100%", aspectRatio: 1 }}>
-                                        <Logo />
+                                                 icon={logo}
+                                                 svgProps={{}}
+                                                 style={{
+                                                     aspectRatio: 1,
+                                                     backgroundColor: 'transparent',
+                                                     justifyContent: 'center'
+                                                 }}
+                                                 currentColor={item === 'Substack' ? socialStyle.substackColor : undefined}/>
+                                    : <SvgExpo style={{height: "100%", aspectRatio: 1}}>
+                                        <Logo/>
                                     </SvgExpo>
                                 }
                             </View>
@@ -176,7 +192,6 @@ export const PlatformSelector = (props: { platforms: string[], setPlatformClicke
         </View>
     )
 }
-
 
 
 export const FeedPart = (props: {
@@ -193,8 +208,8 @@ export const FeedPart = (props: {
     contentContainerStyle?: ContentStyle
     onRefresh?: () => void
 }) => {
-    const { width: windowWidth } = useWindowDimensions();
-    let { bookmarkedOnly, searchTerms, userId, platforms, dateRange } = props
+    const {width: windowWidth} = useWindowDimensions();
+    let {bookmarkedOnly, searchTerms, userId, platforms, dateRange} = props
     const [postsKey, setPostsKey] = useState(Date.now());
     return <PostList
         contentContainerStyle={props.contentContainerStyle}

@@ -1,5 +1,5 @@
 import { EntityApiBase } from './EntityApiBase';
-export declare type RequestSettings<T = any> = {
+export type RequestSettings<T = any> = {
     user_id?: string;
     data: T;
     limit?: number;

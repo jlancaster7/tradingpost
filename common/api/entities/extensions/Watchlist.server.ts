@@ -63,11 +63,17 @@ export default ensureServerExtensions<Watchlist>({
                         UPDATE SET type = EXCLUDED.type, data = EXCLUDED.data, type_id = EXCLUDED.type_id, disabled = EXCLUDED.disabled;`,
                 [NotificationSubscriptionTypes.WATCHLIST_NOTIFICATION, watchlistSavedId, req.extra.userId,
                     req.body.disableNotification])
-        } else
+        } else {
             await pool.query(`DELETE
                               FROM data_watchlist_saved
                               WHERE watchlist_id = $1
-                                and user_id = $2`, [req.body.id, req.extra.userId])
+                                and user_id = $2`, [req.body.id, req.extra.userId]);
+            await pool.query(`DELETE
+                              FROM data_notification_subscription
+                              WHERE user_id = $1
+                                and type_id = $2
+                                and type = $3`, [req.extra.userId, req.body.id, NotificationSubscriptionTypes.WATCHLIST_NOTIFICATION]);
+        }
 
         return req.body;
     }

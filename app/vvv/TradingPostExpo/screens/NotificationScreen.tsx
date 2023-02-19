@@ -121,7 +121,7 @@ const NotificationTab: React.FC<any> = (props: any) => {
 
 const NewTradeNotification = (props: { response: ListAlertsResponse }): JSX.Element => {
     const dt = new Date(props.response.dateTime);
-    const dtFmt = `${dt.getMonth()}/${dt.getDay()}/${dt.getFullYear() % 100}`
+    const dtFmt = `${dt.getMonth() + 1}/${dt.getDate()}/${dt.getFullYear() % 100}`;
 
     const nav = useNavigation<NavigationProp<any>>();
     const openTrades = () => {
@@ -232,7 +232,7 @@ const SubscriptionNotification = (props: { response: ListAlertsResponse }): JSX.
                             } catch (e) {
                                 console.error(e)
                             }
-                            
+
                         }}
                     />
                 </View>
