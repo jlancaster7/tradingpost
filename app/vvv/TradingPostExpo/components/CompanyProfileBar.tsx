@@ -27,14 +27,25 @@ export const CompanyProfileBar = (props: { secId: number, symbol?: string, compa
         }
     }
     useEffect(() => {
-        (async () => {            
-            const yesterday = new Date((new Date(new Date().setDate((new Date()).getDate() - 1))).setHours(0))
-            const pricing = await Api.Security.extensions.getPrices({securityId: secId, includeIntraday: false, includeHistorical: true, sinceDateTime: yesterday.toISOString()})
-            if (pricing.historical.length){
-                const end = pricing.historical.length - 1;
-                setCurrentPrice(pricing.historical[end].close);
-                setIntraDayChange(pricing.historical[end].close - pricing.historical[0].close);
+        (async () => {
+            let pricingLength = 0
+            let yesterday = new Date()
+            let count = 0
+            while (pricingLength < 2 || count >= 5) {
+                count += 1
+                yesterday = new Date((new Date((new Date()).setDate((yesterday).getDate() - 1))).setHours(0))
+                const pricing = await Api.Security.extensions.getPrices({securityId: secId, includeIntraday: false, includeHistorical: true, sinceDateTime: yesterday.toISOString()})
+                if (pricing.historical.length){
+                    const end = pricing.historical.length - 1;
+                    pricingLength = pricing.historical.length
+                    setCurrentPrice(pricing.historical[end].close);
+                    setIntraDayChange(pricing.historical[end].close - pricing.historical[0].close);
+                }
+                else {
+                    break;
+                }
             }
+            
         })()
     } ,[])
 
@@ -42,7 +53,7 @@ export const CompanyProfileBar = (props: { secId: number, symbol?: string, compa
         <SecPressable securityId={symbol && secId ? (symbol === 'USD:CUR' ? -1 : secId) : -1}>
             <View style={{flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>               
                 <Avatar
-                    style={{borderWidth: 1}}
+                    style={{}}
                     resizeMode={'cover'}
                     size={contentSizes[chosenSize].avatarSize}
                     shape="rounded"

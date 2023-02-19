@@ -13,7 +13,7 @@ export const HoldingRenderItem = (props: {item: any, byId: any, isOwner: boolean
     const { item, byId } = props
     const secId = item.item.security_id;
     return (
-        <ElevatedSection title="" style={{flex: 1, marginBottom: sizes.rem1_5 / 2, marginHorizontal: sizes.rem1_5 / 4, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}}>        
+        <ElevatedSection key={secId} title="" style={{flex: 1, marginBottom: sizes.rem1_5 / 2, marginHorizontal: sizes.rem1_5 / 4, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}}>        
             <CompanyProfileBar symbol={byId[secId] ? byId[secId].symbol : ''}
                             companyName={byId[secId] ? byId[secId].company_name : ''} 
                             imageUri={byId[secId] ? byId[secId].logo_url  : undefined}

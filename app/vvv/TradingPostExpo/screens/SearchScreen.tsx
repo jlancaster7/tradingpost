@@ -25,8 +25,9 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
         [dateRange, setDateRange] = useState<{beginDateTime?: string, endDateTime?: string}>({}),
         [people, setPeople] = useState<Interface.IUserList[]>(),
         [searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
+        [isHoldings, setIsHoldings] = useState(true),
         scrollRef = useRef<FlatList>(null),
-        { securities: { list: securities } } = useSecuritiesList(),
+        { securities: { list: securities, byId } } = useSecuritiesList(),
         {width: windowWidth, scale} = useWindowDimensions();
     useEffect(() => {
             if (searchText.length === 1 && searchText[0].length > 3) {
@@ -79,15 +80,24 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
         (async () => {
             if (watchlistId) {
                 const watchlist = await Api.Watchlist.get(watchlistId);
-                setSearchText(watchlist.items.map(a => `$${a.symbol}`))
+                if (watchlist) setSearchText(watchlist.items.map(a => `$${a.symbol}`))
             }
         })()
     }, [watchlistId])
     useEffect(() => {
+        (async () => {
+            if (isHoldings) {
+                const holdings = (await Api.User.extensions.getHoldings({}))
+                if (holdings) setSearchText(holdings.filter((a) => byId[a.security_id] && byId[a.security_id].symbol !== 'USD:CUR').map(a => `$${byId[a.security_id].symbol}`))
+            }
+        })()
+    }, [isHoldings])
+    useEffect(() => {
         setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: props.route.params.endDateTime})
         if (props.route.params.searchTerms) setSearchText(props.route.params.searchTerms)
-        if (props.route.params.watchlistId) setWatchlistId(props.route.params.watchlistId)
-    }, [props.route.params.beginDateTime, props.route.params.endDateTime, props.route.params.searchTerms, props.route.params.watchlistId])
+        else if (props.route.params.isHoldings) setIsHoldings(props.route.params.isHoldings)
+        else if (props.route.params.watchlistId) setWatchlistId(props.route.params.watchlistId)
+    }, [props.route.params.beginDateTime, props.route.params.endDateTime, props.route.params.searchTerms, props.route.params.watchlistId, props.route.params.isHoldings])
     return (
         <View style={[flex, { backgroundColor: "#F7f8f8" }]}>
             <View style={{width: '90%', alignSelf: 'center', marginBottom: sizes.rem0_5}}>
@@ -170,7 +180,6 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
                             noDataMessage={" "}
                             loadingItem={undefined}
                             renderItem={(item) => {
-                                console.log(item.item)
                                 return (
                                     <ElevatedSection title="" style={[{flex: 1, marginBottom: sizes.rem1 / 2, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}]}>
                                         <CompanyProfileBar symbol={item.item.symbol}
