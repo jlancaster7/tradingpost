@@ -14,7 +14,6 @@ import { ElevatedSection } from "../components/Section";
 import { flex, sizes } from "../style";
 import { social as socialStyle } from '../style'
 import { SvgExpo } from "../components/SvgExpo";
-import { diff } from "react-native-reanimated";
 
 const platformsAll = ["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"];
 
@@ -86,7 +85,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 }}>
                 <FeedPart
                     onScrollAnimationEnd={() => {
-                        //translateHeaderY.setValue(-2000);
+                        //translateHeaderY.setValue(-2000);ns
                         console.log("Scroll Anim Has Ended")
                     }}
                     onRefresh={() => {
