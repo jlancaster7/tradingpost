@@ -20,6 +20,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@d3fc/d3fc-discontinuous-scale": "^4.1.0",
     "@eva-design/eva": "^2.1.1",
     "@expo/dev-server": "^0.1.120",
     "@expo/vector-icons": "^13.0.0",
@@ -39,9 +40,10 @@
     "@ui-kitten/eva-icons": "^5.1.2",
     "array.prototype.reduce": "^1.0.4",
     "buffer-alloc-unsafe": "^1.1.0",
+    "d3": "^7.8.2",
     "d3-array": "^3.2.0",
     "d3-interpolate-path": "^2.3.0",
-    "d3-scale": "^4.0.2",
+    "d3-scale": "github:d3/d3-scale",
     "d3-shape": "^3.1.0",
     "dotenv": "^16.0.3",
     "expo": "~46.0.19",
@@ -77,18 +79,20 @@
     "react-native-reanimated": "~2.9.1",
     "react-native-safe-area-context": "4.3.1",
     "react-native-screens": "~3.15.0",
-    "react-native-svg": "12.3.0",
+    "react-native-svg": "^12.3.0",
     "react-native-svg-transformer": "0.20.0",
     "react-native-toast-notifications": "^3.3.1",
     "react-native-uuid": "^2.0.1",
     "react-native-web": "~0.18.7",
     "recoil": "^0.7.5",
     "sharp": "^0.31.1",
-    "url": "^0.11.0"
+    "url": "^0.11.0",
+    "victory-native": "^36.6.8"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
     "@carimus/metro-symlinked-deps": "^1.1.0",
+    "@types/d3": "^7.4.0",
     "@types/react": "~18.0.14",
     "@types/react-native": "^0.69.18",
     "jest": "^26.6.3",
