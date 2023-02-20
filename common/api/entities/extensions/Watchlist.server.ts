@@ -58,7 +58,7 @@ export default ensureServerExtensions<Watchlist>({
     toggleNotification: async (req) => {
         const pool = await getHivePool;
         console.log('toggle api firing')
-        if (!req.body.is_notification){
+        if (req.body.is_notification){
             await pool.query(`
                     INSERT INTO data_notification_subscription (type, type_id, user_id, disabled)
                     VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, type, type_id)

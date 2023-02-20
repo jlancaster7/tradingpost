@@ -63,13 +63,10 @@ export function PickWatchlistSection(props: CreateAccountProps) {
                                 name: "Primary Watchlist",
                                 type: "primary" //primary | private | public 
                             });
-
-                            await NotificationSubscriptionApi.extensions.subscribe({
-                                type: NotificationSubscriptionTypes.WATCHLIST_NOTIFICATION,
-                                typeId: newWatchlistRes.id,
-                                disabled: false,
-                                data: {}
-                            });
+                            await WatchlistApi.extensions.toggleNotification({
+                                id: newWatchlistRes.id,
+                                is_notification: true
+                            })
 
                             linkTo('/create/analyststart');
                         } catch (ex: any) {

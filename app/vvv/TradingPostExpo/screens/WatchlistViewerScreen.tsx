@@ -222,7 +222,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
         (async () => {
             try {
                 if (watchlistId) {
-                    //const [toggle, w] = await Promise.all([NotificationSubscriptionApi.extensions.getStatus(watchlistId), WatchlistApi.get(watchlistId)])
+                    
                     const watchlist = await WatchlistApi.get(watchlistId);
                     setNotificationToggle(watchlist.is_notification);
                     setIsFav(watchlist.is_saved)
@@ -304,9 +304,9 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                     checked={notificationToggle}
                     onChange={async () => {
                         if (!watchlistId ) return;
-                        const result = Api.Watchlist.extensions.toggleNotification({
+                        Api.Watchlist.extensions.toggleNotification({
                             id: watchlistId,
-                            is_notification: notificationToggle
+                            is_notification: !notificationToggle
                         })
                         setNotificationToggle(!notificationToggle);
                     }}
