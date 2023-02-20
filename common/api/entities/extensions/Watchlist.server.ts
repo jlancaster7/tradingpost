@@ -53,8 +53,8 @@ export default ensureServerExtensions<Watchlist>({
         const pool = await getHivePool;
         if (req.body.is_saved) {
             const response = await pool.query<{ id: number }>(`INSERT INTO data_watchlist_saved(watchlist_id, user_id)
-                                                               VALUES ($1,
-                                                                       $2) RETURNING id;`, [req.body.id, req.extra.userId])
+                                                               VALUES ($1, $2) RETURNING id;`,
+                [req.body.id, req.extra.userId])
             const watchlistSavedId = response.rows[0].id;
             await pool.query(`
                         INSERT INTO data_notification_subscription (type, data, type_id, user_id, disabled)
