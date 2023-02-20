@@ -134,35 +134,34 @@ export default class Repository {
 
     getUSExchangeListedSecurities = async (): Promise<getSecurityBySymbol[]> => {
         const data = await this.db.query(`
-            SELECT id,
-                   symbol,
-                   company_name,
-                   exchange,
-                   industry,
-                   website,
-                   description,
-                   ceo,
-                   security_name,
-                   issue_type,
-                   sector,
-                   primary_sic_code,
-                   employees,
-                   tags,
-                   address,
-                   address2,
-                   state,
-                   zip,
-                   country,
-                   phone,
-                   logo_url,
-                   last_updated,
-                   created_at,
-                   enable_utp,
-                   price_source
-            FROM security
-            WHERE exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE', 'NASDAQ', 'New York Stock Exchange',
-                               'NEW YORK STOCK EXCHANGE INC.', 'NYSE Arca', 'NYSE ARCA', 'NYSE MKT LLC')
-              AND enable_utp = FALSE;`)
+            SELECT s.id,
+                   s.symbol,
+                   s.company_name,
+                   s.exchange,
+                   s.industry,
+                   s.website,
+                   s.description,
+                   s.ceo,
+                   s.security_name,
+                   s.issue_type,
+                   s.sector,
+                   s.primary_sic_code,
+                   s.employees,
+                   s.tags,
+                   s.address,
+                   s.address2,
+                   s.state,
+                   s.zip,
+                   s.country,
+                   s.phone,
+                   s.logo_url,
+                   s.last_updated,
+                   s.created_at,
+                   s.enable_utp,
+                   s.price_source
+            FROM SECURITY s
+                     INNER JOIN iex_security iexs ON iexs.symbol = s.symbol
+            WHERE enable_utp = FALSE;`)
         return data.map((row: any) => {
             let obj: getSecurityBySymbol = {
                 id: row.id,

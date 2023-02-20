@@ -519,61 +519,29 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     getTradingPostAccountsWithFinicityNumber = async (userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]> => {
         const query = `
-            SELECT tba.id,
-                   tba.user_id,
-                   tba.institution_id,
-                   tba.broker_name,
-                   tba.status,
-                   tba.account_number,
-                   tba.mask,
-                   tba.name,
-                   tba.official_name,
-                   tba.type,
-                   tba.subtype,
-                   tba.updated_at,
-                   tba.created_at,
-                   tba.error,
-                   tba.error_code,
+            SELECT tba.id as                  tp_brokerage_acc_id,
                    fa.finicity_user_id        internal_finicity_user_id,
                    fa.id                      internal_finicity_account_id,
                    fa.finicity_institution_id internal_finicity_institution_id,
                    fa.account_id              external_finicity_account_id,
-                   fa.number                  external_finicity_account_number,
-                   tba.hidden_for_deletion,
-                   tba.account_status,
-                   tba.authentication_service
+                   fa.number                  external_finicity_account_number
             FROM TRADINGPOST_BROKERAGE_ACCOUNT TBA
                      INNER JOIN
                  FINICITY_ACCOUNT FA
                  ON
-                     fa.number = tba.account_number
+                     fa.account_id = tba.account_number
             WHERE user_id = $1;`;
         const response = await this.db.query(query, [userId]);
         return response.map((r: any) => {
             let o: TradingPostBrokerageAccountWithFinicity = {
-                id: r.id,
-                accountNumber: r.account_number,
-                type: r.type,
-                subtype: r.subtype,
-                brokerName: r.broker_name,
+                tpBrokerageAccId: r.tp_brokerage_acc_id,
                 externalFinicityAccountId: r.external_finicity_account_id,
                 externalFinicityAccountNumber: r.external_finicity_account_id,
                 internalFinicityAccountId: r.internal_finicity_account_id,
-                status: r.status,
-                mask: r.mask,
-                institutionId: r.institution_id,
-                userId: r.user_id,
                 internalFinicityInstitutionId: r.internal_finicity_institution_id,
                 internalFinicityUserId: r.internal_finicity_user_id,
-                officialName: r.official_name,
                 name: r.name,
-                errorCode: r.error_code,
-                error: r.error,
-                updatedAt: DateTime.fromJSDate(r.updated_at),
-                createdAt: DateTime.fromJSDate(r.created_at),
-                hiddenForDeletion: r.hidden_for_deletion,
-                accountStatus: r.account_status,
-                authenticationService: r.authentication_service
+                type: r.type,
             }
             return o
         });

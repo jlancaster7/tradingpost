@@ -71,6 +71,27 @@
         }
       }
     },
+    "NotificationDashpostDashwatchlistsLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/tradingpost-job-production-notification-post-watchlists",
+        "RetentionInDays": 14
+      }
+    },
+    "NotificationDashpostDashholdingsLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/tradingpost-job-production-notification-post-holdings",
+        "RetentionInDays": 14
+      }
+    },
+    "NotificationDashnewDashtradesLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/tradingpost-job-production-notification-new-trades",
+        "RetentionInDays": 14
+      }
+    },
     "GenerateDashrobinhoodDashtasksLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -148,6 +169,147 @@
         "RetentionInDays": 14
       }
     },
+    "NotificationDashpostDashwatchlistsLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/notification-post-watchlists.zip"
+        },
+        "Handler": "notifications/post-watchlists.handler",
+        "Runtime": "nodejs16.x",
+        "FunctionName": "tradingpost-job-production-notification-post-watchlists",
+        "MemorySize": 2048,
+        "Timeout": 900,
+        "Architectures": [
+          "x86_64"
+        ],
+        "Description": "Pulls posts related to watchlist symbols and sends a notification",
+        "Tags": [
+          {
+            "Key": "service",
+            "Value": "tradingpost-background-job"
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "CONFIGURATION_ENV": "production",
+            "NODE_ENV": "production"
+          }
+        },
+        "Role": "arn:aws:iam::670171407375:role/Basic-Lambda-Role",
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-0f6d411d350ce59d4"
+          ],
+          "SubnetIds": [
+            "subnet-01fa64739811f141b",
+            "subnet-04943437a165d812b",
+            "subnet-0365b7b01827b2dfe"
+          ]
+        },
+        "ReservedConcurrentExecutions": 1
+      },
+      "DependsOn": [
+        "NotificationDashpostDashwatchlistsLogGroup"
+      ]
+    },
+    "NotificationDashpostDashholdingsLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/notification-post-holdings.zip"
+        },
+        "Handler": "notifications/post-holdings.handler",
+        "Runtime": "nodejs16.x",
+        "FunctionName": "tradingpost-job-production-notification-post-holdings",
+        "MemorySize": 2048,
+        "Timeout": 900,
+        "Architectures": [
+          "x86_64"
+        ],
+        "Description": "Pulls posts related to the holdings that users have when they've signed up with a brokerage account",
+        "Tags": [
+          {
+            "Key": "service",
+            "Value": "tradingpost-background-job"
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "CONFIGURATION_ENV": "production",
+            "NODE_ENV": "production"
+          }
+        },
+        "Role": "arn:aws:iam::670171407375:role/Basic-Lambda-Role",
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-0f6d411d350ce59d4"
+          ],
+          "SubnetIds": [
+            "subnet-01fa64739811f141b",
+            "subnet-04943437a165d812b",
+            "subnet-0365b7b01827b2dfe"
+          ]
+        },
+        "ReservedConcurrentExecutions": 1
+      },
+      "DependsOn": [
+        "NotificationDashpostDashholdingsLogGroup"
+      ]
+    },
+    "NotificationDashnewDashtradesLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/notification-new-trades.zip"
+        },
+        "Handler": "notifications/new-holdings.handler",
+        "Runtime": "nodejs16.x",
+        "FunctionName": "tradingpost-job-production-notification-new-trades",
+        "MemorySize": 2048,
+        "Timeout": 900,
+        "Architectures": [
+          "x86_64"
+        ],
+        "Description": "Send a notification to a user who follows someone, and that someone has new holds/has made trades",
+        "Tags": [
+          {
+            "Key": "service",
+            "Value": "tradingpost-background-job"
+          }
+        ],
+        "Environment": {
+          "Variables": {
+            "CONFIGURATION_ENV": "production",
+            "NODE_ENV": "production"
+          }
+        },
+        "Role": "arn:aws:iam::670171407375:role/Basic-Lambda-Role",
+        "VpcConfig": {
+          "SecurityGroupIds": [
+            "sg-0f6d411d350ce59d4"
+          ],
+          "SubnetIds": [
+            "subnet-01fa64739811f141b",
+            "subnet-04943437a165d812b",
+            "subnet-0365b7b01827b2dfe"
+          ]
+        },
+        "ReservedConcurrentExecutions": 1
+      },
+      "DependsOn": [
+        "NotificationDashnewDashtradesLogGroup"
+      ]
+    },
     "GenerateDashrobinhoodDashtasksLambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
@@ -155,7 +317,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/generate-robinhood-tasks.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/generate-robinhood-tasks.zip"
         },
         "Handler": "brokerage/generate-robinhood-tasks.run",
         "Runtime": "nodejs16.x",
@@ -202,7 +364,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/brokerage-task-runner.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/brokerage-task-runner.zip"
         },
         "Handler": "brokerage/task-runner.handler",
         "Runtime": "nodejs16.x",
@@ -249,7 +411,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/add-meta-data.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/add-meta-data.zip"
         },
         "Handler": "market-data/add-meta-data.run",
         "Runtime": "nodejs16.x",
@@ -296,7 +458,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/add-holidays.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/add-holidays.zip"
         },
         "Handler": "market-data/add-holidays.run",
         "Runtime": "nodejs16.x",
@@ -343,7 +505,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/intraday-pricing.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/intraday-pricing.zip"
         },
         "Handler": "market-data/intraday-pricing.run",
         "Runtime": "nodejs16.x",
@@ -390,7 +552,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/eod-pricing.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/eod-pricing.zip"
         },
         "Handler": "market-data/eod-pricing.run",
         "Runtime": "nodejs16.x",
@@ -437,7 +599,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/security-pruning.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/security-pruning.zip"
         },
         "Handler": "market-data/security-pruning.run",
         "Runtime": "nodejs16.x",
@@ -484,7 +646,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/spotify.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/spotify.zip"
         },
         "Handler": "social-media/spotify.run",
         "Runtime": "nodejs16.x",
@@ -531,7 +693,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/substack.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/substack.zip"
         },
         "Handler": "social-media/substack.run",
         "Runtime": "nodejs16.x",
@@ -578,7 +740,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/twitter.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/twitter.zip"
         },
         "Handler": "social-media/twitter.run",
         "Runtime": "nodejs16.x",
@@ -625,7 +787,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/tradingpost-job/production/1675821062648-2023-02-08T01:51:02.648Z/youtube.zip"
+          "S3Key": "serverless/tradingpost-job/production/1676912662600-2023-02-20T17:04:22.600Z/youtube.zip"
         },
         "Handler": "social-media/youtube.run",
         "Runtime": "nodejs16.x",
@@ -676,114 +838,406 @@
         "Description": "Generates tasks for brokerage to process"
       }
     },
-    "AddDashmetaDashdataLambdaVersion4jIQwwS8U2Ch3q1LF5MA3gtzfjDHPnIssunaY5GDy4": {
+    "AddDashmetaDashdataLambdaVersionB6AbOFd2E2nqOXPfIsaiAmEk9HshDpMIGTfaWnFhc": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AddDashmetaDashdataLambdaFunction"
         },
-        "CodeSha256": "Fw9ok4MOFpkEvG3l/f+EclcPujOhbEDOroGmWTCBuqo=",
+        "CodeSha256": "Q+IFc+daRTfNY0wSAtqrSWTCw3yr7b+MW5jRKv7Onnk=",
         "Description": "Ingests securities, exchanges, in the morning, in the evening it ingests stats, quotes, and closing pricing"
       }
     },
-    "AddDashholidaysLambdaVersionqCdlEAsjU0eLXoV7SAcFjLvU4Sn43UO4YUc36dzo": {
-      "Type": "AWS::Lambda::Version",
-      "DeletionPolicy": "Retain",
-      "Properties": {
-        "FunctionName": {
-          "Ref": "AddDashholidaysLambdaFunction"
-        },
-        "CodeSha256": "UToLPjY+uqMXo5eoeN/bbJbZyc9UGbvC2nPkSS+8CRE=",
-        "Description": "Ingests market holidays once a year"
-      }
-    },
-    "IntradayDashpricingLambdaVersionKJpzD59Vn4LcjRQz1UgTmMWH0jeOwTZN2E4CSISxNE": {
+    "IntradayDashpricingLambdaVersionk8DUGsLlUWgYw5HcQa1HrGJE8il2ltSt7hNb0desZUI": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "IntradayDashpricingLambdaFunction"
         },
-        "CodeSha256": "k6FC5doyhWsHNPcSLhOnCCrkpYPxPL+QnH+YOLFblwo=",
+        "CodeSha256": "3mD815OmUhexflyTNFkzKgit6u4ngWTyT/exqoS4KFM=",
         "Description": "Ingests intraday pricing"
       }
     },
-    "SecurityDashpruningLambdaVersion7ukIbvlyzd1wrgLRqzwvEnaIxaOPWB3u5HzCcQymICs": {
+    "SecurityDashpruningLambdaVersionjWyOsjvLPnKPwx6OnFtICqhtnES2skJ7TwBVF8vL8": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SecurityDashpruningLambdaFunction"
         },
-        "CodeSha256": "Fz7WzvKmCEA0bvSmq20gl/vOuvsw8YOi/EyPfrlcHGQ=",
+        "CodeSha256": "QN0mxwj38cPGH95haxT2Yybd9p7DYG/J1E8vF+6fSe0=",
         "Description": "Prunes security data"
       }
     },
-    "EodDashpricingLambdaVersionCkIT7hf6zBIuwdCMfzeRexMAfgikiG5YWxxHhElus": {
+    "EodDashpricingLambdaVersionQrCwTEf3PYAGgDHG8oJCpz8sRSuCGjYVx2Wl1Uw": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "EodDashpricingLambdaFunction"
         },
-        "CodeSha256": "wp/08g/WkqDBwA/+Asvof170qEMouUjLZdbIPeE23X4=",
+        "CodeSha256": "UYmn5xKZw8cz37mVismsx9vc9w+7KWgvqzQwz4wqqqE=",
         "Description": "Ingests pricing for securities after market close & allow for 15min delay to kick in"
       }
     },
-    "SpotifyLambdaVersionDOpqZvYNSveVZ1WFiuXPZfPPtv1KAzwRSRod8oSQc": {
+    "AddDashholidaysLambdaVersionH7DEs2m4bJvsARIOOSFeXK8yMnt8xEvwYDWCZhOgU": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "AddDashholidaysLambdaFunction"
+        },
+        "CodeSha256": "CEkvkQS5HVeioyc7OSLIvZ7HlfzH1VTt1NATaTNmq/Q=",
+        "Description": "Ingests market holidays once a year"
+      }
+    },
+    "SpotifyLambdaVersionZiZ21ilhITh38ASXjAerFYmuulL44Dz74GrhbbVXnT8": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SpotifyLambdaFunction"
         },
-        "CodeSha256": "fKgrYrySvj4mt2B0d3Z33Tmsuy/VFE4yi/TiO4jsp8g=",
+        "CodeSha256": "9J4zG1z/s7nsK8hiYLppUfIoDcdG7RDUpK0L6YH4QJc=",
         "Description": "Ingests Spotify User Data"
       }
     },
-    "YoutubeLambdaVersionByasRxWxVZMXkzyX6GDQBBRIvGja76NTRuWPrw4ev2s": {
+    "YoutubeLambdaVersion6o5NErYjaiP8rVV4fX1zEuNdtFJjnTVv80QxaKIfjg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "YoutubeLambdaFunction"
         },
-        "CodeSha256": "vvpmod42qcnnRItbjdEO8FPM/7CE/SYFlIjKW4tHS2o=",
+        "CodeSha256": "sVEwqzR+RRtY0a5PG1/J+nV9DDFGR43o4kQUnzpB9dU=",
         "Description": "Ingests YouTube User Data"
       }
     },
-    "BrokerageDashtaskDashrunnerLambdaVersioniTRs6vUY6s6DdwSqiGGwbYq4OxiBbfWIuCylOwDNe0Q": {
+    "BrokerageDashtaskDashrunnerLambdaVersionP5An2sktGJvKhSZ6GIcKhXQPw28ViCPuwMJTPZwo": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "BrokerageDashtaskDashrunnerLambdaFunction"
         },
-        "CodeSha256": "CC+NiHc5bPcCje7GHiGJgmoD6NE+DBKIQtZguqBeX6Y=",
+        "CodeSha256": "VH9p8S3sPmeLQlsrgbO7tw3yRKBX6yryj2qGdHiKsHc=",
         "Description": "Runs brokerage tasks that are pushed to SQS queue -- rather than on cadence"
       }
     },
-    "SubstackLambdaVersionlRANYp5idx9IWNudUKcDeimVz5ghBZEQ6VUmhZ2twY": {
+    "NotificationDashnewDashtradesLambdaVersion5otLm7CZ9jcJa2AKyjEgvaLTI8B2epsh638uHJR6o": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
-          "Ref": "SubstackLambdaFunction"
+          "Ref": "NotificationDashnewDashtradesLambdaFunction"
         },
-        "CodeSha256": "f9KdROStMQS5SpLJoZFcJ7TFhWk9ErKqB0DOTuZp3Tg=",
-        "Description": "Ingests Substack Data"
+        "CodeSha256": "y8WXV2dzPnRtmjySLuL3b2q3MlVH13iHif+9SNM18oI=",
+        "Description": "Send a notification to a user who follows someone, and that someone has new holds/has made trades"
       }
     },
-    "TwitterLambdaVersionLXqmYDUU3GuaHzYk94NpJd39qW16tzK3mTv8HSpsp4k": {
+    "NotificationDashpostDashwatchlistsLambdaVersionhLqILDDa2LzF5OKHyE5kURfJPVlsCvVDkwQzi5xBw0": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "NotificationDashpostDashwatchlistsLambdaFunction"
+        },
+        "CodeSha256": "IWCWfG1/+jw5D9CFow+AJz6PIPHt9QV2zKAdT9qa/Tg=",
+        "Description": "Pulls posts related to watchlist symbols and sends a notification"
+      }
+    },
+    "NotificationDashpostDashholdingsLambdaVersionnxnNdYhZzsBNdJcw1BIW9PaKynBvspO4G5vgXZhmso": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "NotificationDashpostDashholdingsLambdaFunction"
+        },
+        "CodeSha256": "1PYpgjcLPO1x3xh5yVlrjBvMAejR+bW8Dg2Nuu2iOCM=",
+        "Description": "Pulls posts related to the holdings that users have when they've signed up with a brokerage account"
+      }
+    },
+    "TwitterLambdaVersiono35lFeJUavDzWs2ky4TIAopmDdpqLG6UIpKJnVjwWFM": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "TwitterLambdaFunction"
         },
-        "CodeSha256": "oR9DcSzVjLwTt20/1l/AASkxxP1SxpFzcNMiKH3/Qi0=",
+        "CodeSha256": "qlxJlw2f9wrxP8ykdHDEr9Uw7IzuHOMwHE3IRM1x/jY=",
         "Description": "Ingests Twitter Data"
+      }
+    },
+    "SubstackLambdaVersionKcaNEre7ev6WHcvKpJ3HvAjIG9HrCuK7Rl8s1yds6M": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "SubstackLambdaFunction"
+        },
+        "CodeSha256": "Yk4b3VqkGh2oCdC4qhCpq90CKaNmjWCPp7qOhmhzv3o=",
+        "Description": "Ingests Substack Data"
+      }
+    },
+    "NotificationDashpostDashwatchlistsEventsRuleSchedule1": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 13 ? * MON-FRI *)",
+        "State": "DISABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "NotificationDashpostDashwatchlistsLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "notification-post-watchlistsSchedule"
+          }
+        ]
+      }
+    },
+    "NotificationDashpostDashwatchlistsLambdaPermissionEventsRuleSchedule1": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NotificationDashpostDashwatchlistsLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "NotificationDashpostDashwatchlistsEventsRuleSchedule1",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "NotificationDashpostDashwatchlistsEventsRuleSchedule2": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 1 ? * MON-FRI *)",
+        "State": "DISABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "NotificationDashpostDashwatchlistsLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "notification-post-watchlistsSchedule"
+          }
+        ]
+      }
+    },
+    "NotificationDashpostDashwatchlistsLambdaPermissionEventsRuleSchedule2": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NotificationDashpostDashwatchlistsLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "NotificationDashpostDashwatchlistsEventsRuleSchedule2",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "NotificationDashpostDashholdingsEventsRuleSchedule1": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 13 ? * MON-FRI *)",
+        "State": "DISABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "NotificationDashpostDashholdingsLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "notification-post-holdingsSchedule"
+          }
+        ]
+      }
+    },
+    "NotificationDashpostDashholdingsLambdaPermissionEventsRuleSchedule1": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NotificationDashpostDashholdingsLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "NotificationDashpostDashholdingsEventsRuleSchedule1",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "NotificationDashpostDashholdingsEventsRuleSchedule2": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 1 ? * MON-FRI *)",
+        "State": "DISABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "NotificationDashpostDashholdingsLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "notification-post-holdingsSchedule"
+          }
+        ]
+      }
+    },
+    "NotificationDashpostDashholdingsLambdaPermissionEventsRuleSchedule2": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NotificationDashpostDashholdingsLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "NotificationDashpostDashholdingsEventsRuleSchedule2",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "NotificationDashnewDashtradesEventsRuleSchedule1": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 13 ? * MON-FRI *)",
+        "State": "DISABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "NotificationDashnewDashtradesLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "notification-new-tradesSchedule"
+          }
+        ]
+      }
+    },
+    "NotificationDashnewDashtradesLambdaPermissionEventsRuleSchedule1": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "NotificationDashnewDashtradesLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "NotificationDashnewDashtradesEventsRuleSchedule1",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "GenerateDashrobinhoodDashtasksEventsRuleSchedule1": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 11 ? * MON-FRI *)",
+        "State": "DISABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "GenerateDashrobinhoodDashtasksLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "generate-robinhood-tasksSchedule"
+          }
+        ]
+      }
+    },
+    "GenerateDashrobinhoodDashtasksLambdaPermissionEventsRuleSchedule1": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GenerateDashrobinhoodDashtasksLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "GenerateDashrobinhoodDashtasksEventsRuleSchedule1",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "GenerateDashrobinhoodDashtasksEventsRuleSchedule2": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 10 ? * MON-FRI *)",
+        "State": "DISABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "GenerateDashrobinhoodDashtasksLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "generate-robinhood-tasksSchedule"
+          }
+        ]
+      }
+    },
+    "GenerateDashrobinhoodDashtasksLambdaPermissionEventsRuleSchedule2": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "GenerateDashrobinhoodDashtasksLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "GenerateDashrobinhoodDashtasksEventsRuleSchedule2",
+            "Arn"
+          ]
+        }
       }
     },
     "AddDashmetaDashdataEventsRuleSchedule1": {
@@ -1378,25 +1832,16 @@
     "AddDashmetaDashdataLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AddDashmetaDashdataLambdaVersion4jIQwwS8U2Ch3q1LF5MA3gtzfjDHPnIssunaY5GDy4"
+        "Ref": "AddDashmetaDashdataLambdaVersionB6AbOFd2E2nqOXPfIsaiAmEk9HshDpMIGTfaWnFhc"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-AddDashmetaDashdataLambdaFunctionQualifiedArn"
       }
     },
-    "AddDashholidaysLambdaFunctionQualifiedArn": {
-      "Description": "Current Lambda function version",
-      "Value": {
-        "Ref": "AddDashholidaysLambdaVersionqCdlEAsjU0eLXoV7SAcFjLvU4Sn43UO4YUc36dzo"
-      },
-      "Export": {
-        "Name": "sls-tradingpost-job-production-AddDashholidaysLambdaFunctionQualifiedArn"
-      }
-    },
     "IntradayDashpricingLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "IntradayDashpricingLambdaVersionKJpzD59Vn4LcjRQz1UgTmMWH0jeOwTZN2E4CSISxNE"
+        "Ref": "IntradayDashpricingLambdaVersionk8DUGsLlUWgYw5HcQa1HrGJE8il2ltSt7hNb0desZUI"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-IntradayDashpricingLambdaFunctionQualifiedArn"
@@ -1405,7 +1850,7 @@
     "SecurityDashpruningLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SecurityDashpruningLambdaVersion7ukIbvlyzd1wrgLRqzwvEnaIxaOPWB3u5HzCcQymICs"
+        "Ref": "SecurityDashpruningLambdaVersionjWyOsjvLPnKPwx6OnFtICqhtnES2skJ7TwBVF8vL8"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-SecurityDashpruningLambdaFunctionQualifiedArn"
@@ -1414,16 +1859,25 @@
     "EodDashpricingLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "EodDashpricingLambdaVersionCkIT7hf6zBIuwdCMfzeRexMAfgikiG5YWxxHhElus"
+        "Ref": "EodDashpricingLambdaVersionQrCwTEf3PYAGgDHG8oJCpz8sRSuCGjYVx2Wl1Uw"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-EodDashpricingLambdaFunctionQualifiedArn"
       }
     },
+    "AddDashholidaysLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "AddDashholidaysLambdaVersionH7DEs2m4bJvsARIOOSFeXK8yMnt8xEvwYDWCZhOgU"
+      },
+      "Export": {
+        "Name": "sls-tradingpost-job-production-AddDashholidaysLambdaFunctionQualifiedArn"
+      }
+    },
     "SpotifyLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SpotifyLambdaVersionDOpqZvYNSveVZ1WFiuXPZfPPtv1KAzwRSRod8oSQc"
+        "Ref": "SpotifyLambdaVersionZiZ21ilhITh38ASXjAerFYmuulL44Dz74GrhbbVXnT8"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-SpotifyLambdaFunctionQualifiedArn"
@@ -1432,7 +1886,7 @@
     "YoutubeLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "YoutubeLambdaVersionByasRxWxVZMXkzyX6GDQBBRIvGja76NTRuWPrw4ev2s"
+        "Ref": "YoutubeLambdaVersion6o5NErYjaiP8rVV4fX1zEuNdtFJjnTVv80QxaKIfjg"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-YoutubeLambdaFunctionQualifiedArn"
@@ -1441,28 +1895,55 @@
     "BrokerageDashtaskDashrunnerLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "BrokerageDashtaskDashrunnerLambdaVersioniTRs6vUY6s6DdwSqiGGwbYq4OxiBbfWIuCylOwDNe0Q"
+        "Ref": "BrokerageDashtaskDashrunnerLambdaVersionP5An2sktGJvKhSZ6GIcKhXQPw28ViCPuwMJTPZwo"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-BrokerageDashtaskDashrunnerLambdaFunctionQualifiedArn"
       }
     },
-    "SubstackLambdaFunctionQualifiedArn": {
+    "NotificationDashnewDashtradesLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SubstackLambdaVersionlRANYp5idx9IWNudUKcDeimVz5ghBZEQ6VUmhZ2twY"
+        "Ref": "NotificationDashnewDashtradesLambdaVersion5otLm7CZ9jcJa2AKyjEgvaLTI8B2epsh638uHJR6o"
       },
       "Export": {
-        "Name": "sls-tradingpost-job-production-SubstackLambdaFunctionQualifiedArn"
+        "Name": "sls-tradingpost-job-production-NotificationDashnewDashtradesLambdaFunctionQualifiedArn"
+      }
+    },
+    "NotificationDashpostDashwatchlistsLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "NotificationDashpostDashwatchlistsLambdaVersionhLqILDDa2LzF5OKHyE5kURfJPVlsCvVDkwQzi5xBw0"
+      },
+      "Export": {
+        "Name": "sls-tradingpost-job-production-NotificationDashpostDashwatchlistsLambdaFunctionQualifiedArn"
+      }
+    },
+    "NotificationDashpostDashholdingsLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "NotificationDashpostDashholdingsLambdaVersionnxnNdYhZzsBNdJcw1BIW9PaKynBvspO4G5vgXZhmso"
+      },
+      "Export": {
+        "Name": "sls-tradingpost-job-production-NotificationDashpostDashholdingsLambdaFunctionQualifiedArn"
       }
     },
     "TwitterLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "TwitterLambdaVersionLXqmYDUU3GuaHzYk94NpJd39qW16tzK3mTv8HSpsp4k"
+        "Ref": "TwitterLambdaVersiono35lFeJUavDzWs2ky4TIAopmDdpqLG6UIpKJnVjwWFM"
       },
       "Export": {
         "Name": "sls-tradingpost-job-production-TwitterLambdaFunctionQualifiedArn"
+      }
+    },
+    "SubstackLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "SubstackLambdaVersionKcaNEre7ev6WHcvKpJ3HvAjIG9HrCuK7Rl8s1yds6M"
+      },
+      "Export": {
+        "Name": "sls-tradingpost-job-production-SubstackLambdaFunctionQualifiedArn"
       }
     }
   }

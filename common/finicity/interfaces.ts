@@ -1,6 +1,3 @@
-import {bool} from "aws-sdk/clients/signer";
-import {DateTime} from "luxon";
-
 export interface PartnerAuthenticationResponse {
     token: string
 }

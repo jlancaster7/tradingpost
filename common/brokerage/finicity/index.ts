@@ -388,7 +388,7 @@ export class Service {
                 const acc = await this.transformer.getFinicityToTradingPostAccount(finicityUser.tpUserId, account.id);
                 if (acc === undefined || acc === null) continue;
                 tpAccountErrs.push({
-                    accountId: acc.id,
+                    accountId: acc.tpBrokerageAccId,
                     error: true,
                     errorCode: account.aggregationStatusCode
                 })
