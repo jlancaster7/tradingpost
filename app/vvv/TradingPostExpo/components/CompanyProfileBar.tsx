@@ -36,7 +36,6 @@ export const CompanyProfileBar = (props: { secId: number, symbol?: string, compa
                 yesterday = new Date((new Date((new Date()).setDate((yesterday).getDate() - 1))).setHours(0))
                 const pricing = await Api.Security.extensions.getPrices({securityId: secId, includeIntraday: false, includeHistorical: true, sinceDateTime: yesterday.toISOString()})
                 pricingLength = pricing.historical.length
-                console.log(yesterday)
                 if (pricingLength === 2){
                     const end = pricing.historical.length - 1;
                     setCurrentPrice(pricing.historical[end].close);

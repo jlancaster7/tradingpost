@@ -278,7 +278,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                                                         is_saved: !isSaved
                                                     });
 
-                                                    result ? toast.show("Followed Watchlist") : toast.show("Unfollowed Watchlist")
+                                                    result.is_saved ? toast.show("Followed Watchlist") : toast.show("Unfollowed Watchlist")
                                                     if (isSaved) setNotificationToggle(false);
                                                     setIsFav(!isSaved);
                                                     

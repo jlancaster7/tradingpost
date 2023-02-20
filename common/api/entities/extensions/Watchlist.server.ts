@@ -40,12 +40,10 @@ export default ensureServerExtensions<Watchlist>({
     },
     saveWatchlist: async (req) => {
         //TODO:  need to to add incorp into api build in the future 
-        const pool = await getHivePool;
-        console.log('save watchlist firing')
-        console.log(req.body)
+        const pool = await getHivePool;   
         if (req.body.is_saved) {
             await pool.query(`INSERT INTO data_watchlist_saved(watchlist_id,user_id) VALUES($1,$2)`, [req.body.id, req.extra.userId])
-            return true;
+            return {id: req.body.id, is_saved: true};
         }
         else {
             await pool.query(`DELETE FROM data_watchlist_saved WHERE watchlist_id= $1 and user_id = $2`, [req.body.id, req.extra.userId])
@@ -54,7 +52,7 @@ export default ensureServerExtensions<Watchlist>({
                     WHERE user_id = $1
                     and type_id = $2
                     and type = $3`, [req.extra.userId, req.body.id, NotificationSubscriptionTypes.WATCHLIST_NOTIFICATION]); 
-            return false
+            return {id: req.body.id, is_saved: false}
         }
     },
     toggleNotification: async (req) => {
