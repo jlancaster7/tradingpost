@@ -86,12 +86,14 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     return (
         <View style={{flex: 1, backgroundColor: "#F7f8f8"}}>
             <Animated.View
+                key={`num_platform_${platforms.length}`}
                 style={{
                     flex: 1,
                     // transform: [{ translateY: margin }]
                     //    marginTop: margin
                 }}>
                 <FeedPart
+                    platforms={platforms}
                     onScrollAnimationEnd={() => {
                         //translateHeaderY.setValue(-2000);
                         console.log("Scroll Anim Has Ended")
