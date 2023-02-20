@@ -39,7 +39,7 @@ import { ExtendedMenuModal } from './ExtendedMenuModal'
 import { isNotUndefinedOrNull } from "../utils/validators";
 
 /*** Enable this to see the calculated size of a post***/
- const VISUALIZE_POST_SIZE_CALC = false;
+const VISUALIZE_POST_SIZE_CALC = false;
 
 const postTotalVerticalMargin = sizes.rem1;
 const postTotalHorizontalMargin = sizes.rem2;
@@ -357,7 +357,7 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
                     svgProps={{ style: { margin: "auto" } }} icon={social.SubstackLogo}
                     currentColor={socialStyle.substackColor} />
                 {<Subheader text={post._source.content.title || ""}
-                   // numberOfLines={1}
+                    numberOfLines={2}
                     style={{
                         marginBottom: 0,
                         display: "flex",
@@ -369,7 +369,10 @@ const SubstackView = (props: { post: Interface.IElasticPost }) => {
                     }}></Subheader>}
             </Pressable>
         </View>
-        {<Text key="content" style={{ fontSize: fonts.small }}>
+        {<Text
+            numberOfLines={4}
+            key="content"
+            style={{ fontSize: fonts.small }}>
             {(() => {
                 const parsedText = parseHtmlEnteties(post._source.content.description);
                 return parsedText?.length > 300 ?

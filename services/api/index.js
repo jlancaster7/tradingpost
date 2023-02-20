@@ -89,6 +89,7 @@ var addAvailableApi = function (version) {
     }
 };
 addAvailableApi("1.9.1");
+addAvailableApi("1.9.1");
 addAvailableApi("1.9.0");
 addAvailableApi("1.8.0");
 // start the express server
