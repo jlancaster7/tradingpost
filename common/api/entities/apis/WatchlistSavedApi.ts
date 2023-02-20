@@ -1,8 +1,8 @@
 import { EntityApi } from '../static/EntityApi'
-import { IWatchlistSavedList } from '../interfaces'
+import { IWatchlistSavedGet,IWatchlistSavedList } from '../interfaces'
 import { WatchlistSaved as Extensions } from './extensions'
-class WatchlistSavedApi extends EntityApi<never,IWatchlistSavedList,never,never> {
-    protected getFunction = '';
+class WatchlistSavedApi extends EntityApi<IWatchlistSavedGet,IWatchlistSavedList,never,never> {
+    protected getFunction = "public.api_watchlist_saved_get";
     protected listFunction = "public.api_watchlist_saved_list";
     protected insertFunction = '';
     protected updateFunction = '';
@@ -10,4 +10,4 @@ class WatchlistSavedApi extends EntityApi<never,IWatchlistSavedList,never,never>
     extensions = new Extensions.default(this)
 }
 export default new WatchlistSavedApi();
-export type {IWatchlistSavedList}
+export type {IWatchlistSavedGet,IWatchlistSavedList}

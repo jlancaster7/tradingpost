@@ -202,7 +202,8 @@ export const cacheMonitor = async <A extends MotitoredType>(api: A, action: stri
         if (action === "insert")
             user.watchlists.push(responseData.id);
         else if (action === "saveWatchlist") {
-            user.watchlists.push(responseData.id);
+            if (responseData.is_saved) user.watchlists.push(responseData.id);
+            else user.watchlists = user.watchlists.filter(a => a !==responseData.id);
         }
     }
 }

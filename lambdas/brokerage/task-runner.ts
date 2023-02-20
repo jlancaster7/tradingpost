@@ -140,9 +140,9 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         });
         return false;
     }
-
     return true
 }
+
 
 export const handler = async (event: SQSEvent, context: Context) => {
     for (let i = 0; i < event.Records.length; i++) {

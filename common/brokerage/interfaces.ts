@@ -377,6 +377,7 @@ export type FinicityTransaction = {
 }
 
 export type TradingPostBrokerageAccountWithFinicity = {
+    tpBrokerageAccId: number
     internalFinicityAccountId: number
     internalFinicityUserId: number
     internalFinicityInstitutionId: number
@@ -384,7 +385,7 @@ export type TradingPostBrokerageAccountWithFinicity = {
     externalFinicityAccountNumber: string
     name: string
     type: string
-} & TradingPostBrokerageAccountsTable
+}
 
 export interface GetSecurityBySymbol {
     id: number
@@ -740,6 +741,11 @@ export type OptionContractTable = {
     id: number
     updatedAt: DateTime
     createdAt: DateTime
+} & OptionContract
+
+export type OptionContractWithSymbol = {
+    id: number
+    securitySymbol: string
 } & OptionContract
 
 export enum DirectBrokeragesType {

@@ -257,6 +257,7 @@ export interface IWatchlistGet {
     type: string;
     saved_by_count: number;
     is_saved: boolean;
+    is_notification: boolean;
 }
 export interface IWatchlistInsert {
     name: string;
@@ -299,5 +300,8 @@ export interface IWatchlistSavedList {
     watchlist_id: number;
 }
 export interface IWatchlistSavedGet {
+    id: number;
+    user_id: string;
+    watchlist_id: number;
 }
 export * from '../static/interfaces';

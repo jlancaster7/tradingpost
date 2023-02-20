@@ -4,7 +4,8 @@ import NotificationSubscription from "./NotificationSubscription";
 
 
 export default ensureServerExtensions<NotificationSubscription>({
-    subscribe: async (req) => {
+    /*
+    toggle: async (req) => {
         const pool = await getHivePool;
 
         await pool.query(`
@@ -13,6 +14,12 @@ export default ensureServerExtensions<NotificationSubscription>({
                               DO
                     UPDATE SET type = EXCLUDED.type, data = EXCLUDED.data, type_id = EXCLUDED.type_id, disabled = EXCLUDED.disabled;`,
             [req.body.type, req.body.typeId, req.extra.userId, req.body.disabled, !req.body.data ? null : req.body.data])
+        await pool.query(`DELETE
+            FROM data_notification_subscription
+            WHERE user_id = $1
+              and type_id = $2
+              and type = $3`, [req.extra.userId, req.body.id, NotificationSubscriptionTypes.WATCHLIST_NOTIFICATION]);
         return req.body;
     }
-})
+    */
+});

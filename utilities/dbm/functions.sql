@@ -491,7 +491,7 @@ return query SELECT * FROM public.view_user_get(request) as v WHERE v."id" = (re
   
     CREATE OR REPLACE FUNCTION public.api_watchlist_insert(
         request jsonb)
-        RETURNS TABLE("user" json,"items" json,"note" text,"name" text,"id" BIGINT,"type" text,"saved_by_count" bigint,"is_saved" boolean)
+        RETURNS TABLE("user" json,"items" json,"note" text,"name" text,"id" BIGINT,"type" text,"saved_by_count" bigint,"is_saved" boolean,"is_notification" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     DECLARE
@@ -521,7 +521,7 @@ return query SELECT * FROM public.view_watchlist_get(request) as v WHERE v.id = 
   
     CREATE OR REPLACE FUNCTION public.api_watchlist_update(
         request jsonb)
-        RETURNS TABLE("user" json,"items" json,"note" text,"name" text,"id" BIGINT,"type" text,"saved_by_count" bigint,"is_saved" boolean)
+        RETURNS TABLE("user" json,"items" json,"note" text,"name" text,"id" BIGINT,"type" text,"saved_by_count" bigint,"is_saved" boolean,"is_notification" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -544,7 +544,7 @@ return query SELECT * FROM public.view_watchlist_get(request) as v WHERE v."id" 
   
     CREATE OR REPLACE FUNCTION public.api_watchlist_get(
         request jsonb)
-        RETURNS TABLE("user" json,"items" json,"note" text,"name" text,"id" BIGINT,"type" text,"saved_by_count" bigint,"is_saved" boolean)
+        RETURNS TABLE("user" json,"items" json,"note" text,"name" text,"id" BIGINT,"type" text,"saved_by_count" bigint,"is_saved" boolean,"is_notification" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
@@ -625,6 +625,18 @@ return query SELECT * FROM public.view_watchlist_item_get(request) as v WHERE v.
 
 
 
+    DROP FUNCTION IF EXISTS public.api_watchlist_saved_get(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.api_watchlist_saved_get(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"user_id" UUID,"watchlist_id" bigint)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  return query SELECT * FROM public.view_watchlist_saved_get(request) as v WHERE v."id" = (request->'data'->>'id')::BIGINT;
+    END;
+    $BODY$;
 
 
     DROP FUNCTION IF EXISTS public.api_watchlist_saved_list(jsonb);

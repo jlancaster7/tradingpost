@@ -187,7 +187,7 @@ export class Transformer extends BaseTransformer {
                     // transactions first and an option will be created there...(since they have more meta-data
                     // then we do)
                     const optionExpireDateTime = DateTime.fromSeconds(holding.optionExpiredate);
-                    const optionId = await this.resolveHoldingOptionId(internalAccount.id, security.id,
+                    const optionId = await this.resolveHoldingOptionId(internalAccount.tpBrokerageAccId, security.id,
                         holding.optionStrikePrice, optionExpireDateTime, holding.optionType);
                     if (!optionId) {
                         console.error(`could not resolve option id for security=${security.symbol} strikePrice=${holding.optionStrikePrice} expirationDate=${holding.optionExpiredate}`)
@@ -195,7 +195,7 @@ export class Transformer extends BaseTransformer {
                     }
 
                     tpHoldings.push({
-                        accountId: internalAccount.id, // TradingPost Brokerage Account ID
+                        accountId: internalAccount.tpBrokerageAccId, // TradingPost Brokerage Account ID
                         securityId: security.id,
                         securityType: SecurityType.option,
                         price: holding.currentPrice,
@@ -212,7 +212,7 @@ export class Transformer extends BaseTransformer {
                 }
 
                 tpHoldings.push({
-                    accountId: internalAccount.id, // TradingPost Brokerage Account ID
+                    accountId: internalAccount.tpBrokerageAccId, // TradingPost Brokerage Account ID
                     securityId: security.id,
                     securityType: security.issueType === 'Cash' ? SecurityType.cashEquivalent : SecurityType.equity,
                     price: holding.currentPrice,
@@ -235,7 +235,7 @@ export class Transformer extends BaseTransformer {
             let cashSecurityId = cashSecurities.find(a => a.currency === 'USD')?.toSecurityId;
             if (!cashSecurityId) throw new Error("could not find cash security")
             tpHoldings.push({
-                accountId: internalAccount.id, // TradingPost Brokerage Account ID
+                accountId: internalAccount.tpBrokerageAccId, // TradingPost Brokerage Account ID
                 securityId: cashSecurityId,
                 securityType: SecurityType.cashEquivalent,
                 price: 1,
@@ -250,7 +250,7 @@ export class Transformer extends BaseTransformer {
             })
         }
 
-        await this.upsertPositions(tpHoldings, [internalAccount.id])
+        await this.upsertPositions(tpHoldings, [internalAccount.tpBrokerageAccId])
         await this.historicalHoldings(tpHoldings)
     }
 
@@ -265,7 +265,7 @@ export class Transformer extends BaseTransformer {
 
         const tpAccountsWithFinicityId = await this.repository.getTradingPostAccountsWithFinicityNumber(userId);
         const finicityIdToTpAccountMap: Record<string, number> = {};
-        tpAccountsWithFinicityId.forEach(tpa => finicityIdToTpAccountMap[tpa.externalFinicityAccountId] = tpa.id);
+        tpAccountsWithFinicityId.forEach(tpa => finicityIdToTpAccountMap[tpa.externalFinicityAccountId] = tpa.tpBrokerageAccId);
 
         let tpTransactions: TradingPostTransactions[] = [];
         for (let i = 0; i < finTransactions.length; i++) {
@@ -282,6 +282,7 @@ export class Transformer extends BaseTransformer {
                     case "transfer":
                     case "other":
                     case "contribution":
+                    case "dividend":
                         transaction.ticker = "USD:CUR"
                         break
                     default:

@@ -35,7 +35,6 @@ export const WatchlistScreen = (props: any) => {
         (async () => {
             try {
                 const lists = await Api.Watchlist.extensions.getAllWatchlists();
-
                 if (lists.quick.id) {
                     setQuickWatchlist(await Api.Watchlist.get(lists.quick.id));
                 }
@@ -47,7 +46,8 @@ export const WatchlistScreen = (props: any) => {
                         saved_by_count: 0,
                         type: "primary",
                         user: [],
-                        is_saved: false
+                        is_saved: false,
+                        is_notification: false
                     })
                 }
                 setFocus((f) => !f)

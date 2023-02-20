@@ -293,6 +293,20 @@
     $BODY$;
 
 
+    DROP FUNCTION IF EXISTS public.view_watchlist_saved_get(jsonb);
+  
+    CREATE OR REPLACE FUNCTION public.view_watchlist_saved_get(
+        request jsonb)
+        RETURNS TABLE("id" BIGINT,"user_id" UUID,"watchlist_id" bigint)
+        LANGUAGE 'plpgsql'
+    AS $BODY$
+    
+    BEGIN
+  RETURN QUERY SELECT d."id", d."user_id", d."watchlist_id" FROM public.data_watchlist_saved as d;
+    END;
+    $BODY$;
+
+
     DROP FUNCTION IF EXISTS public.view_block_list_list(jsonb);
   
     CREATE OR REPLACE FUNCTION public.view_block_list_list(
@@ -437,12 +451,12 @@
   
     CREATE OR REPLACE FUNCTION public.view_watchlist_get(
         request jsonb)
-        RETURNS TABLE("user" json,"items" json,"note" text,"name" text,"id" BIGINT,"type" text,"saved_by_count" bigint,"is_saved" boolean)
+        RETURNS TABLE("user" json,"items" json,"note" text,"name" text,"id" BIGINT,"type" text,"saved_by_count" bigint,"is_saved" boolean,"is_notification" boolean)
         LANGUAGE 'plpgsql'
     AS $BODY$
     
     BEGIN
-  RETURN QUERY SELECT (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user", (SELECT json_agg(t) FROM public.view_watchlist_item_insert(request) as t WHERE t.watchlist_id=d."id") as "items", d."note", d."name", d."id", d."type", (SELECT count(*) FROM public.view_watchlist_saved_list(request) as t WHERE t."watchlist_id"=d."id") as "saved_by_count", EXISTS(SELECT * FROM public.view_watchlist_saved_list(request) as t WHERE t.watchlist_id=d."id") as "is_saved" FROM public.data_watchlist as d;
+  RETURN QUERY SELECT (SELECT json_agg(t) FROM public.view_user_list(request) as t WHERE t.id=d."user_id") as "user", (SELECT json_agg(t) FROM public.view_watchlist_item_insert(request) as t WHERE t.watchlist_id=d."id") as "items", d."note", d."name", d."id", d."type", (SELECT count(*) FROM public.view_watchlist_saved_list(request) as t WHERE t."watchlist_id"=d."id") as "saved_by_count", (EXISTS(SELECT * FROM public.view_watchlist_saved_list(request) as t WHERE t.watchlist_id=d."id" AND t.user_id = (request->>'user_id')::UUID)) as "is_saved", (exists(Select * from data_notification_subscription dns where dns.type_id = d."id" and dns.type = 'WATCHLIST_NOTIFICATION' and dns.user_id = (request->>'user_id')::UUID)) as "is_notification" FROM public.data_watchlist as d;
     END;
     $BODY$;
 
