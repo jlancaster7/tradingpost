@@ -110,7 +110,7 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         taskDefinition.started = DateTime.now().setZone("America/New_York");
         taskDefinition.finished = null;
         taskId = await repository.getOrInsertBrokerageTaskByMessageId(messageId, taskDefinition);
-        // if (taskId === null) return true;
+        if (taskId === null) return true;
 
         if (taskDefinition.type === BrokerageTaskType.NewData) {
             await broker.update(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
@@ -120,10 +120,10 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
             await broker.calculatePortfolioStatistics(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else throw new Error("undefined type")
 
-        // await repository.updateTask(taskId, {
-        //     status: BrokerageTaskStatusType.Successful,
-        //     finished: DateTime.now().setZone("America/New_York")
-        // });
+        await repository.updateTask(taskId, {
+            status: BrokerageTaskStatusType.Successful,
+            finished: DateTime.now().setZone("America/New_York")
+        });
     } catch (e) {
         console.error(e)
         let error = {msg: '', stack: '', name: ''};
@@ -142,21 +142,7 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
     }
     return true
 }
-(async () => {
-    await run({
-        type: BrokerageTaskType.NewAccount,
-        userId: 'e2268937-157b-4a33-a970-a9ba88d10a46',
-        messageId: null,
-        brokerage: DirectBrokeragesType.Finicity,
-        status: BrokerageTaskStatusType.Pending,
-        data: {},
-        date: DateTime.now(),
-        brokerageUserId: '6020539284',
-        finished: null,
-        started: null,
-        error: null
-    }, '');
-})()
+
 
 export const handler = async (event: SQSEvent, context: Context) => {
     for (let i = 0; i < event.Records.length; i++) {

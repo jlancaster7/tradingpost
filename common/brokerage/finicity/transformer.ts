@@ -23,7 +23,6 @@ import {CustomerAccountsDetail, GetInstitution} from '../../finicity/interfaces'
 import {DateTime} from "luxon";
 import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer";
-import {user} from "../robinhood/api";
 
 export interface TransformerRepository extends BaseRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>
