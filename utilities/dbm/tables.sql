@@ -12,8 +12,7 @@
 
 /* No changes to data_notification [notification]*/
 
-ALTER TABLE data_notification_subscription
-ALTER COLUMN disabled  SET NOT NULL;
+/* No changes to data_notification_subscription [notification_subscription]*/
 
 /* No changes to data_platform_claim [platform_claim]*/
 
