@@ -1,39 +1,29 @@
 import {NavigationProp, useFocusEffect, useNavigation} from "@react-navigation/native"
-import {Api, Interface} from "@tradingpost/common/api"
+import {Api} from "@tradingpost/common/api"
 import WatchlistApi from "@tradingpost/common/api/entities/apis/WatchlistApi"
 import {IWatchlistGetExt} from "@tradingpost/common/api/entities/extensions/Watchlist"
-import {ISecurityList} from "@tradingpost/common/api/entities/interfaces"
 import {Avatar, Icon} from "@ui-kitten/components"
-import React, {PropsWithChildren, useEffect, useRef, useState, Component, useCallback} from "react"
-import {Header, Subheader} from "../components/Headers";
-import {
-    View,
-    Text,
-    Pressable,
-    ScrollView,
-    useWindowDimensions,
-    Animated,
-    FlatList,
-    NativeSyntheticEvent,
-    NativeScrollEvent
-} from "react-native"
+import React, {PropsWithChildren, useCallback, useRef, useState} from "react"
+import {Header} from "../components/Headers";
+import {Animated, FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View} from "react-native"
 import {useToast} from "react-native-toast-notifications"
 import {useAppUser} from "../Authentication"
-import {DeleteButton, EditButton, FavButton} from "../components/AddButton"
+import {EditButton, FavButton} from "../components/AddButton"
 import {ProfileBar} from "../components/ProfileBar"
-import {ElevatedSection, Section, Subsection} from "../components/Section"
-import {ITableColumn, Table} from "../components/Table"
+import {ElevatedSection, Section} from "../components/Section"
+import {ITableColumn} from "../components/Table"
 import {TextField} from "../components/TextField"
 import {AppColors} from "../constants/Colors"
-import {elevated, flex, fonts, paddView, paddViewWhite, row, sizes} from "../style"
+import {flex, row, sizes} from "../style"
 import {useSecuritiesList} from '../SecurityList'
-import {toDollarsAndCents, toNumber1, toPercent, toPercent1, toPercent2} from "../utils/misc"
+import {toDollarsAndCents, toPercent2} from "../utils/misc"
 import {List} from "../components/List"
 import {WatchlistItemRenderItem} from "../components/WatchlistItemRenderItem"
 import {PrimaryChip} from "../components/PrimaryChip"
-import {sleep} from "@tradingpost/common/utils/sleep"
 import {FeedPart} from './FeedScreen'
 import {SwitchField} from "../components/SwitchField"
+import NotificationSubscriptionApi from "@tradingpost/common/api/entities/apis/NotificationSubscriptionApi";
+import {NotificationSubscriptionTypes} from "@tradingpost/common/notifications/interfaces";
 
 
 export const useNoteField = (hideEmptyNote?: boolean) => {
@@ -190,7 +180,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
     const [watchlist, setWatchlist] = useState<IWatchlistGetExt>(),
         [isSaved, setIsFav] = useState(false),
         [watchlistTickers, setWatchlistTickers] = useState<string[]>(),
-        [notficationToggle, setNotificationToggle] = useState<boolean>(false);
+        [notificationToggle, setNotificationToggle] = useState<boolean>(false);
     const {loginState} = useAppUser();
     const watchlistId = props.route?.params?.watchlistId;
     const appUser = loginState?.appUser;
@@ -202,7 +192,8 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
         (async () => {
             try {
                 if (watchlistId) {
-                    const w = await WatchlistApi.get(watchlistId)
+                    const [toggle, w] = await Promise.all([NotificationSubscriptionApi.extensions.getStatus(watchlistId), WatchlistApi.get(watchlistId)])
+                    setNotificationToggle(toggle.disabled);
                     setIsFav(w.is_saved)
                     setWatchlist(w as IWatchlistGetExt);
                 }
@@ -214,6 +205,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
             }
         })()
     }, []))
+
     useFocusEffect(useCallback(() => {
         (async () => {
             try {
@@ -230,7 +222,8 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
         (async () => {
             try {
                 if (watchlistId) {
-                    const w = await WatchlistApi.get(watchlistId)
+                    const [toggle, w] = await Promise.all([NotificationSubscriptionApi.extensions.getStatus(watchlistId), WatchlistApi.get(watchlistId)])
+                    setNotificationToggle(toggle.disabled);
                     setIsFav(w.is_saved)
                     setWatchlist(w as IWatchlistGetExt);
                 }
@@ -245,7 +238,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
 
     const {securities: {bySymbol, byId}} = useSecuritiesList();
     const [shownMap, setShownMap] = useState<Record<string, boolean>>({})
-    console.log('on watchlist viewer')
+
     return <View style={[flex]}>
         <Animated.FlatList
             data={[
@@ -285,7 +278,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                                                         disableNotification: !isSaved
                                                     });
 
-                                                    !isSaved ? toast.show("Unfollowed Watchlist") : toast.show("Followed Watchlist")
+                                                    !isSaved ? toast.show("Followed Watchlist") : toast.show("Unfollowed Watchlist")
                                                     setIsFav(f => !f);
                                                 }
                                             } catch (err) {
@@ -303,18 +296,28 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                         </Text>
                     </ElevatedSection>
                 </View>,
-                <SwitchField label='Enable Notifications'
-                             checked={notficationToggle}
-                             onChange={setNotificationToggle}
-                             viewStyle={{
-                                 flexDirection: 'row-reverse',
-                                 justifyContent: 'space-between',
-                                 paddingHorizontal: sizes.rem1_5,
-                                 paddingBottom: sizes.rem0_5,
-                                 backgroundColor: AppColors.background
-                             }}
-                             toggleStyle={{}}
-                             textStyle={{alignSelf: 'center'}}>
+                <SwitchField
+                    label='Enable Notifications'
+                    checked={notificationToggle}
+                    onChange={async () => {
+                        if (!watchlistId || !isSaved) return;
+                        await NotificationSubscriptionApi.extensions.toggle({
+                            data: {},
+                            disabled: !notificationToggle,
+                            typeId: watchlistId,
+                            type: NotificationSubscriptionTypes.WATCHLIST_NOTIFICATION,
+                        });
+                        setNotificationToggle(!notificationToggle);
+                    }}
+                    viewStyle={{
+                        flexDirection: 'row-reverse',
+                        justifyContent: 'space-between',
+                        paddingHorizontal: sizes.rem1_5,
+                        paddingBottom: sizes.rem0_5,
+                        backgroundColor: AppColors.background
+                    }}
+                    toggleStyle={{}}
+                    textStyle={{alignSelf: 'center'}}>
                 </SwitchField>,
                 <View style={[
                     //collapsed ? {display: 'none'} : {display: 'flex'},
