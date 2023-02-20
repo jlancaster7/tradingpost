@@ -140,7 +140,6 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         });
         return false;
     }
-
     return true
 }
 

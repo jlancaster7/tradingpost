@@ -742,6 +742,11 @@ export type OptionContractTable = {
     createdAt: DateTime
 } & OptionContract
 
+export type OptionContractWithSymbol = {
+    id: number
+    securitySymbol: string
+} & OptionContract
+
 export enum DirectBrokeragesType {
     Robinhood = "Robinhood",
     Ibkr = "Ibkr",

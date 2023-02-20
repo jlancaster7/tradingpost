@@ -7,7 +7,7 @@ import {
     IbkrSecurity,
     InvestmentTransactionType,
     OptionContract,
-    OptionContractTable,
+    OptionContractTable, OptionContractWithSymbol,
     SecurityType,
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountsTable,
@@ -30,11 +30,13 @@ export interface TransformerRepository extends BaseRepository {
 
     addSecurities(securities: addSecurity[]): Promise<void>
 
+    addSecurity(security: addSecurity): Promise<number>
+
     upsertOptionContracts(optionContracts: OptionContract[]): Promise<void>
 
     getTradingPostBrokerageWithMostRecentHolding(tpUserId: string, brokerage: string): Promise<TradingPostCurrentHoldingsTableWithMostRecentHolding[]>
 
-    getOptionContractsByExternalIds(externalIds: string[]): Promise<OptionContractTable[]>
+    getOptionContractsByExternalIds(externalIds: string[]): Promise<OptionContractWithSymbol[]>
 
     updateTradingPostBrokerageAccountLastUpdated(userId: string, brokerageUserId: string, brokerageName: string): Promise<DateTime>
 }
@@ -213,6 +215,7 @@ export default class IbkrTransformer extends BaseTransformer {
             }
             return x;
         });
+
         const newAccountNumbers = await this.upsertAccounts(transformedAccounts);
         if (!accountIdToLastUpdate) throw new Error("could not get account id to last update");
         await this._repository.updateTradingPostBrokerageAccountLastUpdated(tpUserId, accountIdToLastUpdate, DirectBrokeragesType.Ibkr)
@@ -220,8 +223,9 @@ export default class IbkrTransformer extends BaseTransformer {
     }
 
     securities = async (processDate: DateTime, tpUserId: string, securitiesAndOptions: IbkrSecurity[]) => {
-        const options = securitiesAndOptions.filter(sec => sec.underlyingSymbol !== null);
-        const securities = securitiesAndOptions.filter(sec => sec.underlyingSymbol === null);
+        const options = securitiesAndOptions.filter(sec => sec.assetType === 'OPT');
+        const securities = securitiesAndOptions.filter(sec => sec.assetType !== 'OPT');
+
         const securitiesSymbols = securities.map(sec => sec.symbol);
         const tpSecurities = await this._repository.getSecuritiesBySymbol(securitiesSymbols);
 
@@ -259,7 +263,9 @@ export default class IbkrTransformer extends BaseTransformer {
         let tpOptionsMap: Record<string, number> = {};
         tpOptionsSecurities.forEach(tp => tpOptionsMap[tp.symbol] = tp.id);
 
-        const tpOptions = options.map(opt => {
+        let tpOptions: OptionContract[] = [];
+        for (let i = 0; i < options.length; i++) {
+            const opt = options[i];
             let optionType = "";
             if (opt.optionType === null || opt.optionType === '' || opt.optionType.toLowerCase() === "c") optionType = "Call";
             else if (opt.optionType.toLowerCase() === "p") optionType = "Put";
@@ -267,37 +273,82 @@ export default class IbkrTransformer extends BaseTransformer {
             if (opt.expirationDate === null) throw new Error("no expiration date set for option");
             if (opt.optionStrike === null) throw new Error("no option strike price");
 
-            let x: OptionContract = {
-                securityId: tpOptionsMap[opt.underlyingSymbol as string],
+            let securityId = tpOptionsMap[opt.underlyingSymbol as string];
+            if (!securityId) securityId = await this._repository.addSecurity({
+                address: null,
+                zip: null,
+                ceo: null,
+                address2: null,
+                tags: null,
+                country: null,
+                description: null,
+                symbol: opt.underlyingSymbol as string,
+                companyName: "",
+                employees: null,
+                exchange: null,
+                industry: null,
+                phone: null,
+                issueType: null,
+                securityName: null,
+                state: null,
+                sector: null,
+                enableUtp: false,
+                logoUrl: null,
+                priceSource: PriceSourceType.IBKR,
+                website: null,
+                primarySicCode: null
+            });
+
+            tpOptions.push({
+                securityId: securityId,
                 type: optionType,
                 expiration: opt.expirationDate,
                 strikePrice: opt.optionStrike,
                 externalId: opt.symbol
-            }
-            return x;
-        })
+            })
+        }
 
         await this._repository.upsertOptionContracts(tpOptions);
     }
 
     transactions = async (processDate: DateTime, tpUserId: string, transactions: IbkrActivity[]) => {
         const optionTransactions = transactions.filter(tx => {
-            if (tx.transactionType === null) throw new Error("transaction type is null");
-            const transactionType = transformTransactionType(tx.transactionType);
-            if (transactionType === InvestmentTransactionType.dividendOrInterest ||
-                transactionType === InvestmentTransactionType.cash ||
-                transactionType === InvestmentTransactionType.fee
-            ) {
-                return false;
-            }
-
-            if (tx.assetType === null) throw new Error("asset type is null")
+            if (tx.assetType === null) return false;
             const secType = transformSecurityType(tx.assetType);
             return secType === SecurityType.option;
         });
 
         const securitiesMap = await this._getSecurities(transactions);
         const optionsMap = await this._getOptions(optionTransactions);
+        for (const [key, val] of optionsMap) {
+            if (securitiesMap.has(key)) continue;
+            securitiesMap.set(val.securitySymbol, {
+                id: val.securityId,
+                address: "",
+                ceo: "",
+                address2: "",
+                employees: "",
+                companyName: "",
+                country: "",
+                zip: "",
+                createdAt: DateTime.now().toJSDate(),
+                state: "",
+                description: "",
+                exchange: "",
+                industry: "",
+                issueType: "",
+                logoUrl: "",
+                phone: "",
+                sector: "",
+                symbol: key,
+                tags: [],
+                lastUpdated: DateTime.now().toJSDate(),
+                website: "",
+                primarySicCode: "",
+                securityName: ""
+            })
+        }
+
         const tpAccountMap = await this._getAccounts(tpUserId, transactions);
 
         let tpTransactions: TradingPostTransactions[] = [];
@@ -308,7 +359,7 @@ export default class IbkrTransformer extends BaseTransformer {
             if (tx.unitPrice === null) throw new Error("unit price is null");
             if (tx.grossAmount === null) throw new Error("gross amount is null");
 
-            const internalAccount = tpAccountMap[tx.accountId];
+            const internalAccount = tpAccountMap.get(tx.accountId);
             if (!internalAccount) continue;
 
             const transactionType = transformTransactionType(tx.transactionType);
@@ -318,8 +369,10 @@ export default class IbkrTransformer extends BaseTransformer {
             let optionId = null;
             let symbol = tx.symbol as string;
             if (securityType === SecurityType.option) {
-                optionId = optionsMap[symbol].id
-                symbol = symbol.split(" ")[0].trim();
+                const v = optionsMap.get(symbol);
+                if (!v) throw new Error("could not get option symbol")
+                optionId = v.id
+                symbol = v.securitySymbol
             }
 
             let date = tx.orderTime
@@ -331,6 +384,8 @@ export default class IbkrTransformer extends BaseTransformer {
                 transactionType === InvestmentTransactionType.cash)
             ) symbol = 'USD:CUR'
 
+            const sec = securitiesMap.get(symbol);
+            if (!sec) throw new Error(`could not find symbol for security id ${symbol}`)
             const x: TradingPostTransactions = transformTransactionTypeAmount(transactionType, {
                 accountId: internalAccount.id,
                 currency: tx.currency,
@@ -341,9 +396,10 @@ export default class IbkrTransformer extends BaseTransformer {
                 fees: (tx.secFee ? tx.secFee : 0) + (tx.commission ? tx.commission : 0),
                 optionId: optionId,
                 quantity: tx.quantity,
-                securityId: securitiesMap[symbol].id,
+                securityId: sec.id,
                 securityType: securityType,
             });
+
             tpTransactions.push(x);
         }
 
@@ -354,6 +410,34 @@ export default class IbkrTransformer extends BaseTransformer {
         const tpAccountIdMap = await this._getAccounts(tpUserId, ibkrHoldings);
         const securitiesMapBySymbol = await this._getSecurities(ibkrHoldings);
         const optionsMapping = await this._getOptions(ibkrHoldings);
+        for (const [key, val] of optionsMapping) {
+            if (securitiesMapBySymbol.has(key)) continue;
+            securitiesMapBySymbol.set(val.securitySymbol, {
+                id: val.securityId,
+                address: "",
+                ceo: "",
+                address2: "",
+                employees: "",
+                companyName: "",
+                country: "",
+                zip: "",
+                createdAt: DateTime.now().toJSDate(),
+                state: "",
+                description: "",
+                exchange: "",
+                industry: "",
+                issueType: "",
+                logoUrl: "",
+                phone: "",
+                sector: "",
+                symbol: key,
+                tags: [],
+                lastUpdated: DateTime.now().toJSDate(),
+                website: "",
+                primarySicCode: "",
+                securityName: ""
+            })
+        }
 
         let historicalHoldings: TradingPostHistoricalHoldings[] = [];
         for (let i = 0; i < ibkrHoldings.length; i++) {
@@ -363,7 +447,7 @@ export default class IbkrTransformer extends BaseTransformer {
             if (h.marketValue === null) throw new Error("no market value for ibkr holding");
             if (h.quantity === null) throw new Error("no quantity for ibkr holding");
 
-            const internalAccount = tpAccountIdMap[h.accountId];
+            const internalAccount = tpAccountIdMap.get(h.accountId);
             if (!internalAccount) continue;
 
             const securityType = transformSecurityType(h.assetType);
@@ -373,8 +457,10 @@ export default class IbkrTransformer extends BaseTransformer {
 
             let optionId: number | null = null;
             if (securityType === SecurityType.option) {
-                optionId = optionsMapping[symbol].id
-                symbol = symbol.split(" ")[0];
+                const v = optionsMapping.get(symbol);
+                if (!v) throw new Error("no options mapping for symbol")
+                optionId = v.id;
+                symbol = v.securitySymbol
             }
 
             let marketPrice = h.marketPrice
@@ -384,6 +470,9 @@ export default class IbkrTransformer extends BaseTransformer {
                 value = h.quantity
             }
 
+            const sec = securitiesMapBySymbol.get(symbol);
+            if (!sec) throw new Error("could not find security in securities map by symbol");
+
             historicalHoldings.push({
                 accountId: internalAccount.id,
                 price: marketPrice,
@@ -391,7 +480,7 @@ export default class IbkrTransformer extends BaseTransformer {
                 date: h.reportDate,
                 currency: h.currency,
                 optionId: optionId,
-                securityId: securitiesMapBySymbol[symbol].id,
+                securityId: sec.id,
                 value: value,
                 priceAsOf: h.reportDate,
                 priceSource: DirectBrokeragesType.Ibkr,
@@ -418,7 +507,7 @@ export default class IbkrTransformer extends BaseTransformer {
             if (h.marketValue === null) throw new Error("no market value for ibkr holding");
             if (h.quantity === null) throw new Error("no quantity for ibkr holding");
 
-            const internalAccount = tpAccountIdMap[h.accountId];
+            const internalAccount = tpAccountIdMap.get(h.accountId);
             if (!internalAccount) continue;
 
             let symbol = h.symbol;
@@ -428,8 +517,10 @@ export default class IbkrTransformer extends BaseTransformer {
 
             let optionId: number | null = null;
             if (securityType === SecurityType.option) {
-                optionId = optionsMapping[symbol].id
-                symbol = symbol.split(" ")[0];
+                const v = optionsMapping.get(symbol);
+                if (!v) throw new Error("could not get options mapping")
+                optionId = v.id;
+                symbol = v.securitySymbol;
             }
 
             let marketPrice = h.marketPrice
@@ -438,6 +529,9 @@ export default class IbkrTransformer extends BaseTransformer {
                 marketPrice = 1
                 value = h.quantity
             }
+
+            const sec = securitiesMapBySymbol.get(symbol);
+            if (!sec) throw new Error("could not find securities map by symbol")
 
             currentHoldings.push({
                 accountId: internalAccount.id,
@@ -450,7 +544,7 @@ export default class IbkrTransformer extends BaseTransformer {
                 quantity: h.quantity,
                 costBasis: h.costBasis,
                 securityType: securityType,
-                securityId: securitiesMapBySymbol[symbol].id,
+                securityId: sec.id,
                 holdingDate: h.reportDate
             });
         }
@@ -459,17 +553,17 @@ export default class IbkrTransformer extends BaseTransformer {
         await this.upsertPositions(currentHoldings, tpAccountIds)
     }
 
-    _getAccounts = async <T extends { accountId: string }>(tpUserId: string, ibkrWithAccount: T[]): Promise<Record<string, TradingPostBrokerageAccountsTable>> => {
+    _getAccounts = async <T extends { accountId: string }>(tpUserId: string, ibkrWithAccount: T[]): Promise<Map<string, TradingPostBrokerageAccountsTable>> => {
         let ibkrAccountIdMap: Record<string, null> = {}
         ibkrWithAccount.forEach(acc => ibkrAccountIdMap[acc.accountId] = null);
         let accountIds = Object.keys(ibkrAccountIdMap);
         const accounts = await this._repository.getTradingPostBrokerageAccountsByBrokerageAndIds(tpUserId, DirectBrokeragesType.Ibkr, accountIds);
-        let tpAccountIdMap: Record<string, TradingPostBrokerageAccountsTable> = {};
-        accounts.forEach(acc => tpAccountIdMap[acc.accountNumber] = acc);
+        let tpAccountIdMap: Map<string, TradingPostBrokerageAccountsTable> = new Map();
+        accounts.forEach(acc => tpAccountIdMap.set(acc.accountNumber, acc));
         return tpAccountIdMap
     }
 
-    _getSecurities = async <T extends { symbol: string | null }>(ibkrWithSymbols: T[]): Promise<Record<string, GetSecurityBySymbol>> => {
+    _getSecurities = async <T extends { symbol: string | null }>(ibkrWithSymbols: T[]): Promise<Map<string, GetSecurityBySymbol>> => {
         let symbols = ibkrWithSymbols.filter(i => i.symbol !== null).map(i => i.symbol as string);
         symbols = [...symbols, "USD:CUR"];
         let optionsSymbols: Record<string, null> = {}
@@ -483,15 +577,16 @@ export default class IbkrTransformer extends BaseTransformer {
         symbols = [...symbols, ...Object.keys(optionsSymbols)]
         const securities = await this._repository.getSecuritiesBySymbol(symbols);
 
-        let securitiesMapBySymbol: Record<string, GetSecurityBySymbol> = {};
-        securities.forEach(sec => securitiesMapBySymbol[sec.symbol] = sec);
+        let securitiesMapBySymbol: Map<string, GetSecurityBySymbol> = new Map();
+        securities.forEach(sec => securitiesMapBySymbol.set(sec.symbol, sec));
         return securitiesMapBySymbol;
     }
 
-    _getOptions = async <T extends { symbol: string | null, securityDescription: string | null }>(ibkrOptions: T[]): Promise<Record<string, OptionContractTable>> => {
-        const options = await this._repository.getOptionContractsByExternalIds(ibkrOptions.map(s => s.symbol as string));
-        let optionsMap: Record<string, OptionContractTable> = {};
-        options.forEach(opt => optionsMap[opt.externalId as string] = opt);
+    _getOptions = async <T extends { symbol: string | null, securityDescription: string | null }>(ibkrOptions: T[]): Promise<Map<string, OptionContractWithSymbol>> => {
+        const externalSymbols = ibkrOptions.map(s => s.symbol as string);
+        const options = await this._repository.getOptionContractsByExternalIds(externalSymbols);
+        let optionsMap: Map<string, OptionContractWithSymbol> = new Map();
+        options.forEach(opt => optionsMap.set(opt.externalId as string, opt));
         return optionsMap;
     }
 }
