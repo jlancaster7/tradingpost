@@ -25,7 +25,7 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
         [dateRange, setDateRange] = useState<{beginDateTime?: string, endDateTime?: string}>({}),
         [people, setPeople] = useState<Interface.IUserList[]>(),
         [searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
-        [isHoldings, setIsHoldings] = useState(true),
+        [isHoldings, setIsHoldings] = useState(false),
         scrollRef = useRef<FlatList>(null),
         { securities: { list: securities, byId } } = useSecuritiesList(),
         {width: windowWidth, scale} = useWindowDimensions();

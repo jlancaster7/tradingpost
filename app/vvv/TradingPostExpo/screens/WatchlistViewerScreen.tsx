@@ -192,10 +192,10 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
         (async () => {
             try {
                 if (watchlistId) {
-                    const [toggle, w] = await Promise.all([NotificationSubscriptionApi.extensions.getStatus(watchlistId), WatchlistApi.get(watchlistId)])
-                    setNotificationToggle(toggle.disabled);
-                    setIsFav(w.is_saved)
-                    setWatchlist(w as IWatchlistGetExt);
+                    const watchlist = await WatchlistApi.get(watchlistId);
+                    setNotificationToggle(watchlist.is_notification);
+                    setIsFav(watchlist.is_saved)
+                    setWatchlist(watchlist as IWatchlistGetExt);
                 }
                 if (watchlist) {
                     setWatchlistTickers(watchlist.items.map(a => `$${a.symbol}`))
@@ -222,10 +222,11 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
         (async () => {
             try {
                 if (watchlistId) {
-                    const [toggle, w] = await Promise.all([NotificationSubscriptionApi.extensions.getStatus(watchlistId), WatchlistApi.get(watchlistId)])
-                    setNotificationToggle(toggle.disabled);
-                    setIsFav(w.is_saved)
-                    setWatchlist(w as IWatchlistGetExt);
+                    //const [toggle, w] = await Promise.all([NotificationSubscriptionApi.extensions.getStatus(watchlistId), WatchlistApi.get(watchlistId)])
+                    const watchlist = await WatchlistApi.get(watchlistId);
+                    setNotificationToggle(watchlist.is_notification);
+                    setIsFav(watchlist.is_saved)
+                    setWatchlist(watchlist as IWatchlistGetExt);
                 }
                 if (watchlist) {
                     setWatchlistTickers(watchlist.items.map(a => `$${a.symbol}`))
@@ -272,14 +273,16 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                                         onPress={async () => {
                                             try {
                                                 if (watchlistId) {
-                                                    await Api.Watchlist.extensions.saveWatchlist({
+                                                    const result = await Api.Watchlist.extensions.saveWatchlist({
                                                         id: watchlistId,
-                                                        is_saved: !isSaved,
-                                                        disableNotification: !isSaved
+                                                        is_saved: !isSaved
                                                     });
 
-                                                    !isSaved ? toast.show("Followed Watchlist") : toast.show("Unfollowed Watchlist")
-                                                    setIsFav(f => !f);
+                                                    result ? toast.show("Followed Watchlist") : toast.show("Unfollowed Watchlist")
+                                                    if (isSaved) setNotificationToggle(false);
+                                                    setIsFav(!isSaved);
+                                                    
+
                                                 }
                                             } catch (err) {
                                                 console.error(err);
@@ -300,13 +303,11 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                     label='Enable Notifications'
                     checked={notificationToggle}
                     onChange={async () => {
-                        if (!watchlistId || !isSaved) return;
-                        await NotificationSubscriptionApi.extensions.toggle({
-                            data: {},
-                            disabled: !notificationToggle,
-                            typeId: watchlistId,
-                            type: NotificationSubscriptionTypes.WATCHLIST_NOTIFICATION,
-                        });
+                        if (!watchlistId ) return;
+                        const result = Api.Watchlist.extensions.toggleNotification({
+                            id: watchlistId,
+                            is_notification: notificationToggle
+                        })
                         setNotificationToggle(!notificationToggle);
                     }}
                     viewStyle={{
