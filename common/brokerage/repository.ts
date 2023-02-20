@@ -43,7 +43,7 @@ import {
     TradingPostCurrentHoldingsTableWithMostRecentHolding,
     SecurityTableWithLatestPriceRobinhoodId,
     TradingPostTransactionsByAccountGroup,
-    BrokerageTask, BrokerageTaskType, BrokerageTaskStatusType
+    BrokerageTask, BrokerageTaskType, BrokerageTaskStatusType, OptionContractWithSymbol
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -836,7 +836,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
-    addSecurity = async (sec: addSecurity) => {
+    addSecurity = async (sec: addSecurity): Promise<number> => {
         const query = `INSERT INTO security(symbol, company_name, exchange, industry, website,
                                             description, ceo, security_name, issue_type, sector,
                                             primary_sic_code, employees, tags, address, address2, state,
@@ -2120,29 +2120,29 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
-    getOptionContractsByExternalIds = async (externalIds: string[]): Promise<OptionContractTable[]> => {
+    getOptionContractsByExternalIds = async (externalIds: string[]): Promise<OptionContractWithSymbol[]> => {
         if (externalIds.length <= 0) return [];
-        const s = `SELECT id,
+        const s = `SELECT so.id,
                           security_id,
+                          s.symbol as security_symbol,
                           type,
                           strike_price,
                           expiration,
-                          external_id,
-                          updated_at,
-                          created_at
-                   FROM security_option
+                          external_id
+                   FROM security_option so
+                            INNER JOIN
+                        SECURITY s ON s.id = so.security_id
                    WHERE external_id IN ($1:list);`
         const res = await this.db.query(s, [externalIds]);
         if (!res || res.length <= 0) return [];
         return res.map((r: any) => ({
             id: r.id,
             securityId: r.security_id,
+            securitySymbol: r.security_symbol,
             type: r.type,
             strikePrice: r.strike_price,
             expiration: r.expiration,
             externalId: r.external_id,
-            updatedAt: DateTime.fromJSDate(r.updated_at),
-            createdAt: DateTime.fromJSDate(r.created_at)
         }))
     }
 
