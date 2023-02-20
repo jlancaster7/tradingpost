@@ -75,8 +75,7 @@ const linking: LinkingOptions<any> = {
 
     },
     getActionFromState: (state, options) => {
-        const action = getActionFromState(state, options);
-        return action;
+        return getActionFromState(state, options);
     },
     async getInitialURL() {
         const response = await Notifications.getLastNotificationResponseAsync();
@@ -91,9 +90,7 @@ const linking: LinkingOptions<any> = {
             if (url) return url;
         }
 
-        const u = await Linking.getInitialURL();
-        console.log(u)
-        return u;
+        return await Linking.getInitialURL();
     },
     subscribe(listener) {
         const onReceiveURL = ({url}: { url: string }) => listener(url);

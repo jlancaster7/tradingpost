@@ -206,7 +206,7 @@ class PricingFix {
             const group = groupSecurities[i];
             const symbols = group.map(sec => sec.symbol);
             const response = await this.iex.bulk(symbols, ["chart"], {
-                range: '20230101'
+                range: '1m'
             });
 
             let securityPrices: addSecurityPrice[] = []

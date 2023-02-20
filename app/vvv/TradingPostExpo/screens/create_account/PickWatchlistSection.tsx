@@ -1,22 +1,24 @@
-import React, { useRef, useEffect, RefObject, useState } from "react";
-import { View, Animated, Pressable } from "react-native";
+import React, {RefObject, useEffect, useRef, useState} from "react";
+import {Animated, Pressable, View} from "react-native";
 //import { Navigation } from "react-native-navigation";
 //import { Nav } from '@react-navigation/native'
-import { Avatar, Icon, Input, Text, } from "@ui-kitten/components";
+import {Text,} from "@ui-kitten/components";
 //import { signOut, getStoredCreds, CreateAuth0User, UpdateUserProfile, signInStoredCreds } from "../../apis/Authentication";
-import { TextField, ITextField } from "../../components/TextField";
-import { bannerText, flex, noMargin, paddView, sizes, textInputWiz, thinBannerText } from "../../style";
-import { CreateAccountProps, sideMargin } from "./shared";
+import {ITextField} from "../../components/TextField";
+import {bannerText, flex, noMargin, paddView, sizes, thinBannerText} from "../../style";
+import {CreateAccountProps} from "./shared";
 
-import { ScrollWithButtons } from "../../components/ScrollWithButtons";
+import {ScrollWithButtons} from "../../components/ScrollWithButtons";
 
 import WatchlistApi from '@tradingpost/common/api/entities/apis/WatchlistApi'
-import { SvgExpo } from "../../components/SvgExpo";
+import NotificationSubscriptionApi from "@tradingpost/common/api/entities/apis/NotificationSubscriptionApi";
+import {SvgExpo} from "../../components/SvgExpo";
 import AnalyzeImage from '../../assets/analyze2.svg'
-import { useWatchlistPicker, WatchlistPicker } from "../../components/WatchlistPicker";
-import { ElevatedSection } from "../../components/Section";
-import { useLinkTo, useNavigation } from "@react-navigation/native";
-import { RootStackScreenProps } from "../../navigation/pages";
+import {useWatchlistPicker, WatchlistPicker} from "../../components/WatchlistPicker";
+import {ElevatedSection} from "../../components/Section";
+import {useLinkTo, useNavigation} from "@react-navigation/native";
+import {RootStackScreenProps} from "../../navigation/pages";
+import {NotificationSubscriptionTypes} from "@tradingpost/common/notifications/interfaces";
 
 type FieldRefs = {
     first: RefObject<ITextField>,
@@ -30,7 +32,12 @@ export function PickWatchlistSection(props: CreateAccountProps) {
     const
         [lockButtons, setLockButtons] = useState(false),
         opacityAnim = useRef(new Animated.Value(0)).current,
-        { selectionConverter: converterRef, selectedItems, onSelectedItemschanged: setSelectedItems, symbolConverter } = useWatchlistPicker(),
+        {
+            selectionConverter: converterRef,
+            selectedItems,
+            onSelectedItemschanged: setSelectedItems,
+            symbolConverter
+        } = useWatchlistPicker(),
         linkTo = useLinkTo<any>(),
         buttonConfig = {
             locked: lockButtons,
@@ -46,20 +53,26 @@ export function PickWatchlistSection(props: CreateAccountProps) {
                 onPress: async () => {
                     if (!Object.keys(selectedItems).length) {
                         props.toastMessage("Please select at least one security of interest");
-                    }
-                    else {
+                    } else {
                         setLockButtons(true);
                         try {
-                            await WatchlistApi.insert({
+                            const newWatchlistRes = await WatchlistApi.insert({
                                 items: (converterRef.current ? converterRef.current(selectedItems) : []).map((s) => ({
                                     symbol: s.symbol
                                 })),
                                 name: "Primary Watchlist",
                                 type: "primary" //primary | private | public 
                             });
+
+                            await NotificationSubscriptionApi.extensions.subscribe({
+                                type: NotificationSubscriptionTypes.WATCHLIST_NOTIFICATION,
+                                typeId: newWatchlistRes.id,
+                                disabled: false,
+                                data: {}
+                            });
+
                             linkTo('/create/analyststart');
-                        }
-                        catch (ex: any) {
+                        } catch (ex: any) {
                             props.toastMessage(ex.message);
                             setLockButtons(false);
                         }
@@ -67,7 +80,6 @@ export function PickWatchlistSection(props: CreateAccountProps) {
                 }
             }
         }
-
 
 
     useEffect(() => {
@@ -89,19 +101,19 @@ export function PickWatchlistSection(props: CreateAccountProps) {
     >
         <View style={paddView}>
             <ElevatedSection title="" style={[flex, noMargin]}>
-                <Animated.View style={{ opacity: opacityAnim }}>
+                <Animated.View style={{opacity: opacityAnim}}>
                     <Pressable onPress={() => {
                         nav.navigate("OverlayModal");
                     }}><Text
-                        style={[thinBannerText, { marginVertical: sizes.rem0_5 }]}>
-                            Help us get to know you.
-                        </Text>
+                        style={[thinBannerText, {marginVertical: sizes.rem0_5}]}>
+                        Help us get to know you.
+                    </Text>
                     </Pressable>
-                    <SvgExpo style={{ width: "100%", aspectRatio: 1.5 }}>
-                        <AnalyzeImage />
+                    <SvgExpo style={{width: "100%", aspectRatio: 1.5}}>
+                        <AnalyzeImage/>
                     </SvgExpo>
                     <Text
-                        style={[bannerText, { marginHorizontal: 0, marginVertical: sizes.rem0_5 }]}>
+                        style={[bannerText, {marginHorizontal: 0, marginVertical: sizes.rem0_5}]}>
                         Pick a few companies to help us tailor to your interests
                     </Text>
                 </Animated.View>
