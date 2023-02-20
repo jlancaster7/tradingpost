@@ -11,9 +11,10 @@ export function Header(props: { text: string, style?: TextStyle }) {
 }
 
 
-export function Subheader(props: { text: string, style?: TextStyle }) {
+export function Subheader(props: { numberOfLines?: number, text: string, style?: TextStyle }) {
     return <Text
+        numberOfLines={props.numberOfLines}
         //color={Colors.primary}
-        style={[{ color:AppColors.secondary, fontSize: fonts.small, marginBottom: sizes.rem0_5 }, props.style]}
+        style={[{ color: AppColors.secondary, fontSize: fonts.small, marginBottom: sizes.rem0_5 }, props.style]}
     >{props.text}{ }</Text>
 }
