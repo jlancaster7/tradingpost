@@ -41,7 +41,8 @@ app.use("/" + versionCode, api);
 const addAvailableApi = (version: string) => {
     try {
         const baseRoute = join(__dirname, "tradingpost-common-" + version)
-        const { versionCode: legacyVersionCode } = require(baseRoute + '/api/entities/static/EntityApi')
+        const { versionCode: legacyVersionCode } = require(baseRoute + '/api/entities/static/EntityApiBase')
+        
         //TODO: should probablu also check that a route was not already registered incase of adding the name major+minor version 
         if (legacyVersionCode !== versionCode) {
             app.use("/" + version, createRouterForApi(legacyVersionCode, baseRoute))
