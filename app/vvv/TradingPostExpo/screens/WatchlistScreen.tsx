@@ -21,12 +21,14 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSecuritiesList } from "../SecurityList";
 import { Header } from "../components/Headers";
 import { AppColors } from "../constants/Colors";
+import { SwitchField } from "../components/SwitchField";
 
 export const WatchlistScreen = (props: any) => {
     const nav = useNavigation();
     const [watchlists, setWatchlists] = useState<AllWatchlists>()
     const [shownMap, setShownMap] = useState<Record<string, boolean>>({})
     const [quickWatchlist, setQuickWatchlist] = useState<IWatchlistGet>()
+    const [notificationToggle, setNotificationToggle] = useState<boolean>(false);
     const toast = useToast();//const [trades, setTrades] = useState<AwaitedReturn<typeof Api.User.extensions.getTrades>>();
     const [focus, setFocus] = useState(false);
     const scrollRef = useRef<FlatList>(null);
@@ -36,7 +38,9 @@ export const WatchlistScreen = (props: any) => {
             try {
                 const lists = await Api.Watchlist.extensions.getAllWatchlists();
                 if (lists.quick.id) {
-                    setQuickWatchlist(await Api.Watchlist.get(lists.quick.id));
+                    const quickWatchlist = await Api.Watchlist.get(lists.quick.id) 
+                    setQuickWatchlist(quickWatchlist);
+                    setNotificationToggle(quickWatchlist.is_notification)
                 }
                 else {
                     setQuickWatchlist({
@@ -68,7 +72,7 @@ export const WatchlistScreen = (props: any) => {
         <FlatList
             listKey="top_level_watchlist"
             data={[
-                <View>
+                <View key={'quickwatchlist'}>
                     <View style={{flex: 1, flexDirection: 'row'}}>
                         <Header key={"quick_watch"} text="Quick Watch" style={{flex: 1}}/>
                         <View style={{marginHorizontal: 6}}> 
@@ -116,6 +120,23 @@ export const WatchlistScreen = (props: any) => {
                         )
                     }}
                 />
+                {quickWatchlist ? <SwitchField
+                    label='Enable Notifications'
+                    checked={notificationToggle}
+                    onChange={async () => {
+                        if (!quickWatchlist?.id ) return;
+                        Api.Watchlist.extensions.toggleNotification({
+                            id: quickWatchlist?.id,
+                            is_notification: !quickWatchlist?.is_notification
+                        })
+                        setNotificationToggle(!notificationToggle);
+                    }}
+                    viewStyle={{
+                        flexDirection: 'row-reverse', justifyContent: 'space-between', paddingHorizontal: sizes.rem1_5, paddingTop: sizes.rem0_5, paddingBottom: sizes.rem0_5, backgroundColor: AppColors.background
+                    }}
+                    toggleStyle={{}}
+                    textStyle={{alignSelf: 'center'}}>
+                </SwitchField> : undefined}
             </View>,
             <WatchlistSection
                 datasetKey={`my_watchlist_${focus}`}

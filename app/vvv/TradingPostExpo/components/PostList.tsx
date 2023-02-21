@@ -2,7 +2,7 @@ import { Interface } from "@tradingpost/common/api";
 import React from "react";
 import { FlatListProps, Text } from "react-native";
 import { fonts } from "../style";
-import { AnimatedList, DataOrQuery, HasU, List, ListProps } from "./List";
+import { AnimatedList, DataOrQuery, HasU, List, ListProps, SizeParts } from "./List";
 import { PostView } from "./PostView";
 
 export type PostListOnScroll = FlatListProps<HasU<Interface.IElasticPostExt, string>>["onScroll"]
@@ -19,14 +19,22 @@ export function PostList(props: { posts?: DataOrQuery<Interface.IElasticPostExt>
         onScrollBeginDrag={props.onScrollBeginDrag}
         onScroll={props.onScroll}
         onRefresh={props.onRefresh}
-
         listKey={props.datasetKey || 'STATIC'}
         getItemLayout={(items, index, sizeCache) => {
             const curItem = items?.[index];
-            const output = typeof curItem === "object" ? sizeCache[index] : {
+            const cache = sizeCache[index];
+            // if (cache)
+            //     cache.offset += 100
+
+            // if (curItem && typeof curItem !== "string")
+            //     console.log(`Laying out items ${index}  or type ${curItem._source.postType} with size ${JSON.stringify(cache)} with seed of ${JSON.stringify(curItem._source.size)}`);
+            // else {
+            //     console.log("last Item")
+            // }
+            const output = typeof curItem === "object" ? cache : {
                 index,
                 offset: sizeCache[index - 1].offset + sizeCache[index - 1].length,
-                length: 40
+                length: 50
             };
             return output;
         }}
