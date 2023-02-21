@@ -49,6 +49,7 @@ var node_fetch_1 = __importDefault(require("node-fetch"));
 var EntityApiBase_1 = require("@tradingpost/common/api/entities/static/EntityApiBase");
 var waitlist_1 = require("@tradingpost/common/api/waitlist");
 var routes_api_beta_1 = __importDefault(require("./routes-api-beta"));
+var path_1 = require("path");
 globalThis["fetch"] = node_fetch_1.default;
 var app = (0, express_1.default)();
 var port = process.env.PORT || 8080; // default port to listen
@@ -76,22 +77,22 @@ app.post('/waitlist/add', function (req, res) { return __awaiter(void 0, void 0,
 }); });
 //Current API Routes
 app.use("/" + EntityApiBase_1.versionCode, routes_api_alpha_1.default);
-//Legacy Api Routes... there is an issue with this.. I knwo the fix just need to implement it .
+//Legacy Api Routes... there is an issue with this.. I knwo the fix just need to implement it.
 var addAvailableApi = function (version) {
     try {
-        if (version !== EntityApiBase_1.versionCode) {
-            app.use("/" + version, (0, routes_api_beta_1.default)(version));
-            console.log("Adding api version " + version);
+        var baseRoute = (0, path_1.join)(__dirname, "tradingpost-common-" + version);
+        var legacyVersionCode = require(baseRoute + '/api/entities/static/EntityApi').versionCode;
+        //TODO: should probablu also check that a route was not already registered incase of adding the name major+minor version 
+        if (legacyVersionCode !== EntityApiBase_1.versionCode) {
+            app.use("/" + version, (0, routes_api_beta_1.default)(legacyVersionCode, baseRoute));
+            console.log("Adding api version " + version + " with route on " + legacyVersionCode);
         }
     }
     catch (ex) {
         console.error(ex);
     }
 };
-addAvailableApi("1.9.1");
-addAvailableApi("1.9.1");
-addAvailableApi("1.9.0");
-addAvailableApi("1.8.0");
+addAvailableApi("1.9.3");
 // start the express server
 app.listen(port, function () {
     // tslint:disable-next-line:no-console
