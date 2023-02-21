@@ -54,7 +54,7 @@ export const WatchlistScreen = (props: any) => {
                         is_notification: false
                     })
                 }
-                setFocus((f) => !f)
+                
                 setWatchlists(lists);
 
             }
@@ -75,20 +75,20 @@ export const WatchlistScreen = (props: any) => {
                 <View key={'quickwatchlist'}>
                     <View style={{flex: 1, flexDirection: 'row'}}>
                         <Header key={"quick_watch"} text="Quick Watch" style={{flex: 1}}/>
-                        <View style={{marginHorizontal: 6}}> 
+                        <View style={{marginHorizontal: 6, justifyContent: 'center'}}> 
                             {  
                                 watchlists?.quick.id ?
                                     <EditButton
-                                        height={24}
-                                        width={24} 
+                                        height={30}
+                                        width={30} 
                                         onPress={() => {
                                             nav.navigate("WatchlistEditor", {
                                                 watchlistId: watchlists?.quick.id
                                             })
                                     }} /> :
                                     <AddButton
-                                        height={24}
-                                        width={24} 
+                                        height={30}
+                                        width={30} 
                                         onPress={() => {
                                             nav.navigate("WatchlistEditor", {
                                                 watchlistId: -1
@@ -99,8 +99,8 @@ export const WatchlistScreen = (props: any) => {
                     </View>
                 
                 <List
-                    datasetKey={`${focus}`}
-                    listKey={`quick_watch_list${focus}`}
+                    datasetKey={`quickwatch_num_${quickWatchlist?.items.length}`}
+                    listKey={`quickwatch_list${quickWatchlist?.items.length}`}
                     loadingMessage={" "}
                     noDataMessage={" "}
                     loadingItem={undefined}
@@ -139,17 +139,17 @@ export const WatchlistScreen = (props: any) => {
                 </SwitchField> : undefined}
             </View>,
             <WatchlistSection
-                datasetKey={`my_watchlist_${focus}`}
+                datasetKey={`my_watchlist_${watchlists?.created.length}`}
                 title="My Watchlists"
-                key={`my_watchlist${focus}`}
+                key={`my_watchlist${watchlists?.created.length}`}
                 watchlists={watchlists?.created}
                 showAddButton
                 hideNoteOnEmpty
             />,
             <WatchlistSection
-                datasetKey={`shared_watchlist_${focus}`}
+                datasetKey={`shared_watchlist_${watchlists?.saved.length}`}
                 title="Shared Watchlists"
-                key={`shared_watchlist${focus}`}
+                key={`shared_watchlist${watchlists?.saved.length}`}
                 watchlists={watchlists?.saved}
                 shared
             />
