@@ -94,10 +94,10 @@ export function List<T, U>(props: {
                         });
                     }
                 } else {
-                    //console.log("NOPE");
+                    // console.log("NOPE");
                 }
             } else {
-                //console.log("WHAT UP");
+                // console.log("WHAT UP");
             }
         }
 
@@ -145,7 +145,6 @@ export function List<T, U>(props: {
             viewabilityConfigCallbackPairs={vp}
         />
 }
-
 
 
 export function AnimatedList<T, U>(props: {

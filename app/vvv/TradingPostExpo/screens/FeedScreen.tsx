@@ -59,7 +59,6 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const diffValue = Animated.subtract(translateHeaderY, lastOffsetY);
 
     //if content is negative  
-
     const tester = Animated.diffClamp(translateHeaderY, 0, clampAmount)
 
     const currentClamp = tester.interpolate({
@@ -88,14 +87,15 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
         })
         setPlatformClicked('')
     }, [platformClicked])
+
+
     return (
         <View style={{ flex: 1, backgroundColor: "#F7f8f8" }}>
             <Animated.View
-                key={`num_platform_${platforms.length}`}
                 style={{
                     flex: 1,
                     // transform: [{ translateY: margin }]
-                    //    marginTop: margin
+                    // marginTop: margin
                 }}>
                 <FeedPart
                     platforms={platforms}
@@ -118,7 +118,6 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                             }
                         }
                     ], { useNativeDriver: true })}
-
                     onScrollBeginDrag={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
                         {
                             nativeEvent:
@@ -240,7 +239,7 @@ export const FeedPart = (props: {
         }}
 
         key={bookmarkedOnly ? String(Date.now()) : postsKey}
-        datasetKey={searchTerms ? searchTerms instanceof Array ? searchTerms.join('') : searchTerms : "____________"}
+        datasetKey={(searchTerms ? searchTerms instanceof Array ? searchTerms.join('') : searchTerms : "____________") + platforms?.join()}
         posts={async (allItems, page, sizeCache) => {
             console.log("PAGE: ", page)
             let reqData: any = {};
