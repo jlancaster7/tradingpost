@@ -319,13 +319,11 @@ export default class MarketData {
                 millisecond: 0
             });
 
+            if (iexSecurityPricesSorted.length > 0) security.open = iexSecurityPricesSorted[0].open ? iexSecurityPricesSorted[0].open : iexSecurityPricesSorted[0].close
+
             iexSecurityPricesSorted.forEach(p => {
                 // @ts-ignore
                 if (security.time.toUnixInteger() > p.parsedTime.toUnixInteger()) return;
-
-                if (p.parsedTime.hour === 9 && p.parsedTime.minute === 30) {
-                    security.open = p.close ? p.close : p.open;
-                }
 
                 changed = true;
                 security.time = p.parsedTime
