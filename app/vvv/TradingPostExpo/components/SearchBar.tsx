@@ -1,4 +1,4 @@
-import { Icon, Input } from "@ui-kitten/components";
+import { Icon, Input, Button, Text } from "@ui-kitten/components";
 import React, { useRef } from "react";
 import { ImageProps, ViewStyle, TextInputProps, Image, ViewProps, Pressable, TextInputKeyPressEventData, NativeSyntheticEvent } from "react-native";
 import { ITextField, TextField } from "../components/TextField";
@@ -30,18 +30,16 @@ export const SearchBar = (props: { text: string, onTextChange: (text: string) =>
         accessoryRight={
             () => {
                 return <Pressable onPress={() => {
-                    tfRef.current?.field.current?.clear();
-                    props.onTextChange("");
-                }}><Icon name="close-outline" style={{
-                    height: 20,
-                    width: 20,
-                    padding: 8,
-                    marginHorizontal: 12,
-                    transform: [
-                        { scaleX: -1 }
-                    ]
-                }} /></Pressable>
-            }
+                        if (props.onEditingSubmit) props.onEditingSubmit(props.text)
+                    }}><Icon fill={"#35A265"}
+                             name="paper-plane-outline"
+                             height={24} width={24}
+                             style={[{height: 24, width: 24}, props.text.length ? {} : {display: 'none'}]}
+                        />
+                            
+                    
+                    </Pressable>
+                   }
         }
         {
         ...{

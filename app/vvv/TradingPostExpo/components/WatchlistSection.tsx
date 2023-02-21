@@ -21,16 +21,16 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
     },[]))
     const fields: ITableColumn<IWatchlistList>[] = !props.shared ?
         [{ field: "name", alias: "Name", align: "left" },
-        { field: "item_count", alias: "Items" },
-        { field: "saved_by_count", alias: "Saves" },
-        { field: "type", alias: "Type" }] :
+        { field: "item_count", alias: "# Stocks" },
+        { field: "saved_by_count", alias: "# Follows" },
+        { field: "type", alias: "Visability" }] :
 
         [{ field: "name", alias: "Name", align: "left" },
         {field: "user", align: "left", alias: "Analyst", stringify: (user: IWatchlistList["user"], key, item) => {return user[0].handle}}]
     const { column, shownMap } = useNoteField(props.hideNoteOnEmpty);
-    return <Section title={props.title} style={{backgroundColor: AppColors.background}} button={props.showAddButton ? (p) => <AddButton height={p.height} width={p.width} onPress={() => {
+    return <Section title={props.title} style={{backgroundColor: AppColors.background}} button={props.showAddButton ? (p) => <View style={{marginHorizontal: 6}}><AddButton height={30} width={30} onPress={() => {
         nav.navigate("WatchlistEditor")
-    }} /> : undefined}>
+    }} /></View> : undefined}>
         <List 
             datasetKey={`${props.datasetKey ? props.datasetKey : props.watchlists?.length}`}
             listKey={props.title}
