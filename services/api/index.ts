@@ -45,7 +45,7 @@ const addAvailableApi = (version: string) => {
         
         //TODO: should probablu also check that a route was not already registered incase of adding the name major+minor version 
         if (legacyVersionCode !== versionCode) {
-            app.use("/" + version, createRouterForApi(legacyVersionCode, baseRoute))
+            app.use("/" + legacyVersionCode, createRouterForApi( baseRoute))
             console.log("Adding api version " + version + " with route on " + legacyVersionCode);
         }
     } catch (ex) {

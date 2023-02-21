@@ -84,7 +84,7 @@ var addAvailableApi = function (version) {
         var legacyVersionCode = require(baseRoute + '/api/entities/static/EntityApiBase').versionCode;
         //TODO: should probablu also check that a route was not already registered incase of adding the name major+minor version 
         if (legacyVersionCode !== EntityApiBase_1.versionCode) {
-            app.use("/" + version, (0, routes_api_beta_1.default)(legacyVersionCode, baseRoute));
+            app.use("/" + legacyVersionCode, (0, routes_api_beta_1.default)(baseRoute));
             console.log("Adding api version " + version + " with route on " + legacyVersionCode);
         }
     }

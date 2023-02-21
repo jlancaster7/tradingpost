@@ -5,10 +5,10 @@ import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 
 
 
-export const createRouterForApi = (versionCode: string, baseRoute: string) => {
+export const createRouterForApi = (baseRoute: string) => {
 
     const { DefaultConfig } = require(baseRoute + "/configuration"),
-        { EntityApi, RequestSettings } = require(baseRoute + '/api/entities/static/EntityApi'),
+        //        { EntityApi, RequestSettings } = require(baseRoute + '/api/entities/static/EntityApi'),
         { createLogin, createUser, forgotPassword, loginPass, loginToken, resetPassword, } = require(baseRoute + '/api/auth'),
         { PublicError } = require(baseRoute + '/api/entities/static/EntityApiBase'),
         { cacheMonitor } = require(baseRoute + '/api/cache'),
