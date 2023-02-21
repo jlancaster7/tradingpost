@@ -5,9 +5,7 @@ import jwt, { JwtPayload, verify } from 'jsonwebtoken'
 
 
 
-export const createRouterForApi = (versionCode: string) => {
-
-    const baseRoute = join(__dirname, "tradingpost-common-" + versionCode)
+export const createRouterForApi = (versionCode: string, baseRoute: string) => {
 
     const { DefaultConfig } = require(baseRoute + "/configuration"),
         { EntityApi, RequestSettings } = require(baseRoute + '/api/entities/static/EntityApi'),

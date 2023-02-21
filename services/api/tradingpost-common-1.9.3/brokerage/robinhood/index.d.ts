@@ -1,0 +1,53 @@
+import { default as RobinhoodTransformer } from "./transformer";
+import { PortfolioSummaryService } from "../portfolio-summary";
+import { RobinhoodAccount, RobinhoodAccountTable, RobinhoodInstrument, RobinhoodInstrumentTable, RobinhoodOption, RobinhoodOptionTable, RobinhoodPosition, RobinhoodTransaction, RobinhoodUser, RobinhoodUserTable } from "./interfaces";
+import { DateTime } from "luxon";
+import { TradingPostInstitutionTable } from "../interfaces";
+interface Repository {
+    getInstitutionByName(name: string): Promise<TradingPostInstitutionTable | null>;
+    getRobinhoodUser(userId: string): Promise<RobinhoodUserTable | null>;
+    updateRobinhoodUser(user: RobinhoodUser): Promise<void>;
+    upsertRobinhoodAccounts(accs: RobinhoodAccount[]): Promise<void>;
+    upsertRobinhoodPositions(positions: RobinhoodPosition[]): void;
+    addRobinhoodInstrument(instrument: RobinhoodInstrument): Promise<number>;
+    getRobinhoodInstrumentsByExternalId(instrumentIds: string[]): Promise<RobinhoodInstrumentTable[]>;
+    getRobinhoodInstrumentBySymbol(symbol: string): Promise<RobinhoodInstrumentTable | null>;
+    getRobinhoodAccountsByRobinhoodUserId(userId: number): Promise<RobinhoodAccountTable[]>;
+    deleteRobinhoodAccountsPositions(accountIds: number[]): Promise<void>;
+    upsertRobinhoodTransactions(txs: RobinhoodTransaction[]): Promise<void>;
+    upsertRobinhoodOption(option: RobinhoodOption): Promise<number | null>;
+    getRobinhoodOptionsByExternalIds(externalIds: string[]): Promise<RobinhoodOptionTable[]>;
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>;
+}
+export declare class Service {
+    private _transformer;
+    private _repo;
+    private readonly _clientId;
+    private _scope;
+    private _expiresIn;
+    private _portfolioSummaryService;
+    constructor(clientId: string, scope: string, expiresIn: number, repo: Repository, transformer: RobinhoodTransformer, portfolioSummarySrv: PortfolioSummaryService);
+    remove: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
+    calculatePortfolioStatistics: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
+    add: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
+    update: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
+    private _apiAndUpdate;
+    accounts: (userId: string, institutionId: number) => Promise<number[]>;
+    positions: (userId: string) => Promise<void>;
+    transactions: (userId: string) => Promise<void>;
+    private _transformDividends;
+    private _transformSweeps;
+    private _transformAch;
+    private _addOption;
+    private _transformOption;
+    private _addInstrument;
+    private _transformAccounts;
+    private _transformInstrument;
+    private _transformCashPosition;
+    private _transformOptionPositions;
+    private _transformOptionEvents;
+    private _transformOptionOrders;
+    private _transformPositions;
+    private _transformTransactions;
+}
+export {};
