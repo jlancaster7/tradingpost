@@ -22,9 +22,13 @@ type ConfigKeys =
     | "robinhood"
     | "openai"
     | "finnhub"
+    | "teams"
 
 
 export interface ConfigPaths extends Record<ConfigKeys, unknown> {
+    teams: {
+        alertChannel: string
+    }
     robinhood: {
         clientId: string
         expiresIn: number

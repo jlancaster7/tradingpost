@@ -99,24 +99,18 @@ export default class Repository {
             SELECT s.id AS security_id,
                    s.symbol,
                    lp.time AS time,
-                lp.price AS price,
-                lp.high AS high,
-                lp.low AS low,
-                lp.open AS open,
-                s.price_source AS price_source
+    lp.price AS price,
+    lp.high AS high,
+    lp.low AS low,
+    lp.open AS open,
+    s.price_source AS price_source
             FROM
                 SECURITY s
-                LEFT JOIN latest_pricing lp
-            ON s.id = lp.security_id
-            WHERE
-                exchange IN ('CBOE BZX U.S. EQUITIES EXCHANGE'
-                , 'NASDAQ'
-                , 'New York Stock Exchange'
-                , 'NEW YORK STOCK EXCHANGE INC.'
-                , 'NYSE Arca'
-                , 'NYSE ARCA'
-                , 'NYSE MKT LLC')
-              AND enable_utp = FALSE;`)
+                INNER JOIN iex_security iexs
+            ON iexs.symbol = s.symbol
+                LEFT JOIN latest_pricing lp ON s.id = lp.security_id
+            where
+                enable_utp = FALSE;`)
         return data.map((row: any) => {
             let obj: getSecurityWithLatestPrice = {
                 securityId: row.security_id,

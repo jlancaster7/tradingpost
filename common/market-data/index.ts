@@ -261,7 +261,12 @@ export default class MarketData {
                     isEod: true,
                     isIntraday: false,
                     open: security.open,
-                    time: currentTime,
+                    time: DateTime.now().setZone("America/New_York").set({
+                        hour: 9,
+                        minute: 30,
+                        second: 0,
+                        millisecond: 0
+                    }),
                     securityId: security.securityId
                 })
 
@@ -282,7 +287,12 @@ export default class MarketData {
                     isEod: true,
                     isIntraday: false,
                     open: security.open,
-                    time: currentTime,
+                    time: DateTime.now().setZone("America/New_York").set({
+                        hour: 9,
+                        minute: 30,
+                        second: 0,
+                        millisecond: 0
+                    }),
                     securityId: security.securityId
                 })
                 continue;
@@ -302,17 +312,32 @@ export default class MarketData {
 
             let changed = false;
             let securityPrice = security.price;
+            if (!security.time) security.time = DateTime.now().setZone("America/New_York").set({
+                hour: 9,
+                minute: 30,
+                second: 0,
+                millisecond: 0
+            });
+
             iexSecurityPricesSorted.forEach(p => {
-                if (!security.time) {
-                    security.time = p.parsedTime;
-                } else if (security.time.toUnixInteger() > p.parsedTime.toUnixInteger()) return;
+                // @ts-ignore
+                if (security.time.toUnixInteger() > p.parsedTime.toUnixInteger()) return;
+
+                if (p.parsedTime.hour === 9 && p.parsedTime.minute === 30) {
+                    security.open = p.close ? p.close : p.open;
+                }
 
                 changed = true;
                 security.time = p.parsedTime
                 if (p.close) securityPrice = p.close
-                security.low = p.low
-                security.high = p.high
-                security.open = p.open
+
+                if (security.low) {
+                    if (p.low && p.low < security.low) security.low = p.low
+                } else if (p.low) security.low = p.low
+
+                if (security.high) {
+                    if (p.high && p.high > security.high) security.high = p.high
+                } else if (p.high) security.high = p.high
 
                 intradayPrices.push({
                     price: p.close as number,
