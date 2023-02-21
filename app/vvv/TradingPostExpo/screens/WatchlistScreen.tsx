@@ -33,7 +33,6 @@ export const WatchlistScreen = (props: any) => {
     const [focus, setFocus] = useState(false);
     const scrollRef = useRef<FlatList>(null);
     useFocusEffect(useCallback(()=> {
-        
         (async () => {
             try {
                 const lists = await Api.Watchlist.extensions.getAllWatchlists();
@@ -56,7 +55,6 @@ export const WatchlistScreen = (props: any) => {
                 }
                 
                 setWatchlists(lists);
-
             }
             catch (ex: any) {
                 toast.show(ex.message);
