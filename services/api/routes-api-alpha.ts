@@ -105,8 +105,10 @@ const sharedHandler = async (req: Express.Request, routeDetails: (entity: Entity
     return await routeDetails(entity);
 }
 makeRoute("/test", async (req) => {
+
     return {
         isMostRecent: true,
+        env: (DefaultConfig as any).environment
     }
 }, true);
 makeRoute("/authapi/forgotpassword", async (req) => {

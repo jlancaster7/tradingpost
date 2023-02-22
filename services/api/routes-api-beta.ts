@@ -130,6 +130,7 @@ export const createRouterForApi = (baseRoute: string) => {
     makeRoute("/test", async (req) => {
         return {
             isMostRecent: false,
+            env: (DefaultConfig as any).environment
         }
     }, true);
     //AUTH

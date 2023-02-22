@@ -162,6 +162,7 @@ makeRoute("/test", function (req) { return __awaiter(void 0, void 0, void 0, fun
     return __generator(this, function (_a) {
         return [2 /*return*/, {
                 isMostRecent: true,
+                env: configuration_1.DefaultConfig.environment
             }];
     });
 }); }, true);
