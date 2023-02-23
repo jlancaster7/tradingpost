@@ -1,5 +1,4 @@
 import { IElasticPostExt } from "../interfaces";
-export declare const createQueryByType: (type: string, data: any) => Promise<any>;
 declare const _default: {
     feed: (req: {
         body: {
