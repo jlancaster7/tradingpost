@@ -7,7 +7,7 @@ import {
 } from "./interfaces";
 import apn from "apn";
 import AndroidNotifications from "./android";
-import {DateTime} from "luxon";
+import { DateTime } from "luxon";
 
 
 class BadDeviceError extends Error {
@@ -27,11 +27,12 @@ export default class Notifications {
         this.repository = repository
     }
 
-    public sendMessageToUserAndDevice = async (userId: string, deviceIds: string[], deviceType: "ios" | "android" | "web", msg: Message, expDateTime: DateTime = DateTime.now().plus({hour: 5})) => {
+    public sendMessageToUserAndDevice = async (userId: string, deviceIds: string[], deviceType: "ios" | "android" | "web", msg: Message, expDateTime: DateTime = DateTime.now().plus({ hour: 5 })) => {
         await this._sendToDevice(deviceType, deviceIds, msg, expDateTime);
     }
 
-    public sendMessageToUser = async (userId: string, msg: Message, expDateTime: DateTime = DateTime.now().plus({hour: 5})): Promise<void> => {
+    public sendMessageToUser = async (userId: string, msg: Message, expDateTime: DateTime = DateTime.now().plus({ hour: 5 })): Promise<void> => {
+        console.log("My user Id is " + userId);
         const userDevices = await this.repository.getUserDevices(userId)
         let androidDeviceIds: string[] = [];
         let iosDeviceIds: string[] = [];
@@ -45,13 +46,13 @@ export default class Notifications {
 
         let badDevices: string[] = [];
         if (androidDeviceIds.length > 0) {
-            const {failed} = await this._sendToDevice('android', androidDeviceIds, msg, expDateTime);
+            const { failed } = await this._sendToDevice('android', androidDeviceIds, msg, expDateTime);
             badDevices = [...badDevices, ...failed];
         }
 
         if (iosDeviceIds.length > 0) {
             console.log(iosDeviceIds)
-            const {failed} = await this._sendToDevice('ios', iosDeviceIds, msg, expDateTime);
+            const { failed } = await this._sendToDevice('ios', iosDeviceIds, msg, expDateTime);
             badDevices = [...badDevices, ...failed];
         }
 
@@ -59,7 +60,7 @@ export default class Notifications {
     }
 
     private _sendToDevice = async (userDeviceType: "ios" | "android" | "web", deviceIds: string[], msg: Message, expDateTime: DateTime): Promise<{ failed: string[], successful: string[] }> => {
-        let successRes: { failed: string[], successful: string[] } = {failed: [], successful: []}
+        let successRes: { failed: string[], successful: string[] } = { failed: [], successful: [] }
         switch (userDeviceType) {
             case "ios":
                 const note = new apn.Notification({
@@ -86,7 +87,7 @@ export default class Notifications {
                 appleRes.sent.forEach(f => successRes.successful.push(f.device));
                 return successRes
             case "android":
-                const {success, failed} = await this.androidMessenger.send({
+                const { success, failed } = await this.androidMessenger.send({
                     title: msg.title,
                     body: msg.body,
                     imageUrl: msg.imageUrl,

@@ -20,17 +20,16 @@ module.exports = (() => {
             ...resolver,
             assetExts: resolver.assetExts.filter((ext) => ext !== "svg"),
             sourceExts: [...resolver.sourceExts, "svg"],
-            resolveRequest: (context, moduleName, platform) => {
-
-                // platform: ['ios', 'android', 'windows', 'web'].
-                if (moduleName === "react-native-webview" && platform === 'android') {
-                    console.log("NAME" + moduleName);
-                    console.log("FOUND A REQUEST FOR WEB VIEW!!!!!")
-                    return context.resolveRequest(context, "@tradingpost/react-native-webview", platform);
-                }
-                // Optionally, chain to the standard Metro resolver.
-                return context.resolveRequest(context, moduleName, platform);
-            }
+            // resolveRequest: (context, moduleName, platform) => {
+            //     // platform: ['ios', 'android', 'windows', 'web'].
+            //     if (moduleName === "react-native-webview" && platform === 'android') {
+            //         console.log("NAME" + moduleName);
+            //         console.log("FOUND A REQUEST FOR WEB VIEW!!!!!")
+            //         return context.resolveRequest(context, "@tradingpost/react-native-webview", platform);
+            //     }
+            //     // Optionally, chain to the standard Metro resolver.
+            //     return context.resolveRequest(context, moduleName, platform);
+            // }
         }
     })
 })();

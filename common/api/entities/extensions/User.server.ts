@@ -1,6 +1,6 @@
 import User from "./User"
 import { ensureServerExtensions } from "."
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import UserApi, { IUserGet, IUserList } from '../apis/UserApi'
 import BlockListApi, { IBlockListList, } from '../apis/BlockListApi'
 import { DefaultConfig } from "../../../configuration";
@@ -23,6 +23,12 @@ import { PublicError } from "../static/EntityApiBase";
 import Repository from "../../../social-media/repository";
 import { userInfo } from "os";
 import { ICommentBasic } from "../interfaces";
+import NotificationServer from '../../..//notifications'
+import apn from 'apn'
+import AndroidNotifications from "../../../notifications/android";
+import Notifications from "../../..//notifications";
+import NotifRepository from "../../..//notifications/repository";
+import { watchlistsPostNotifications } from "../../../notifications/bll";
 
 export interface ITokenResponse {
     "token_type": "bearer",
@@ -488,6 +494,60 @@ export default ensureServerExtensions<User>({
                 Weblink: (process.env.WEBLINK_BASE_URL || "https://m.tradingpostapp.com") + `/verifyaccount?token=${token}`
             }
         })
+
+        return {}
+    },
+    testNotifcation: async (r) => {
+        console.log("I'm testing notifications")
+        const streamToString = (stream: any) =>
+            new Promise<string>((resolve, reject) => {
+                const chunks: any[] = [];
+                stream.on("data", (chunk: any) => chunks.push(chunk));
+                stream.on("error", reject);
+                stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+            });
+
+        const { pgClient, pgp } = await init;
+
+        const s3Client = new S3Client({
+            region: "us-east-1"
+        });
+
+        const s3Res = await s3Client.send(new GetObjectCommand({
+            Bucket: "tradingpost-app-data",
+            Key: "ios/AuthKey_6WPUHTZ3LU.p8"
+        }));
+
+        const iosKeyBody = await streamToString(s3Res.Body);
+        console.log("I'm starting all the setup")
+        const iosOptions: apn.ProviderOptions = {
+            token: {
+                key: iosKeyBody,
+                keyId: '6WPUHTZ3LU',
+                teamId: '25L2ZZWUPA',
+            },
+            production: false
+        }
+        const apnProvider = new apn.Provider(iosOptions);
+        const fcmConfig = await DefaultConfig.fromCacheOrSSM("fcm");
+        const androidNotif = new AndroidNotifications(fcmConfig.authKey);
+        const repo = new NotifRepository(pgClient, pgp)
+        const notificationsSrv = new Notifications(apnProvider, androidNotif, repo);
+
+
+
+        console.log("I'm past all the setup")
+        const u = `https://m.tradingpostapp.com`;
+        await notificationsSrv.sendMessageToUser(
+            //'e96aea04-9a60-4832-9793-f790e60df8eb'
+            r.extra.userId
+            , {
+                title: "Test Notification",
+                body: "You have recieved a test notifcation from the api server! Click to open up the trading post app",
+                data: {
+                    url: u
+                }
+            });
 
         return {}
     }

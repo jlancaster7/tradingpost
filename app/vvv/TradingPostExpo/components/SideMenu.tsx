@@ -26,12 +26,13 @@ import { DrawerContentComponentProps, DrawerContentScrollView, DrawerItem } from
 import { ProfileButton } from "./ProfileButton";
 import { useLinkTo } from "@react-navigation/native";
 import { versionCode } from "@tradingpost/common/api/entities/static/EntityApiBase";
-
-
+import { Api } from "@tradingpost/common/api";
 
 const padSmall = { marginBottom: sizes.rem1 / 8 };
 
-export function SideMenu(props: DrawerContentComponentProps) {
+export function SideMenu(props: any
+    //DrawerContentComponentProps
+) {
     //const { value: currentUser } = useData("currentUser");
     //const { value: loginResult } = useData("loginResult");
     const [activeTabIndex, setActiveTab] = useState(2);
@@ -45,13 +46,15 @@ export function SideMenu(props: DrawerContentComponentProps) {
     //const { setValue: setHasAuthed } = useData("hasAuthed");
     const activeTabId = `BottomTabs_${activeTabIndex}`
     const { signOut, loginState } = useAppUser();
-    const linkTo = useLinkTo<any>();
+    //   const linkTo = useLinkTo<any>();
     //Not sure if the issue here but this seems to work for now.
     //const { EnsureUser, appUser, signOut } = useEnsureUser(props.navigation as any as NavigationProp<any>);
     const currentUser = loginState?.appUser;
     if (!currentUser) return;
 
-    return <DrawerContentScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ flexGrow: 1, backgroundColor: "white" }}>
+    return <View>
+        {/* <DrawerContentScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ flexGrow: 1, backgroundColor: "white" }}> */}
+
         <View style={{ alignSelf: "center", alignItems: "center", backgroundColor: "transparent" }}>
             <Pressable
                 style={{ alignItems: "center" }}>
@@ -115,6 +118,15 @@ export function SideMenu(props: DrawerContentComponentProps) {
             icon: sideMenu.Bank_Link,
         },
         {
+            label: "Test Notifcations",
+            //onPress: () => props.navigation.navigate("Create"),
+            onPress: () => {
+                Api.User.extensions.testNotifcation();
+            },
+            icon: sideMenu.Bank_Link,
+            isDev: true
+        },
+        {
             label: "Logout",
             onPress: () => {
                 signOut();
@@ -123,7 +135,7 @@ export function SideMenu(props: DrawerContentComponentProps) {
 
             },
             icon: sideMenu.LogOut
-        }] as { onPress?: () => void, label: string, icon: React.FC<SvgProps> }[]).map((item, index, array) => {
+        }] as { onPress?: () => void, label: string, icon: React.FC<SvgProps>, isDev?: boolean }[]).filter((i) => !i.isDev || __DEV__).map((item, index, array) => {
             return <MenuItem
                 key={"SM_" + index}
                 icon={item.icon}
@@ -134,7 +146,8 @@ export function SideMenu(props: DrawerContentComponentProps) {
             >{item.label}</MenuItem>
         })}
         <Text style={{ textAlign: "center" }}>Api Version: {versionCode}</Text>
-    </DrawerContentScrollView>
+        {/* </DrawerContentScrollView> */}
+    </View>
 }
 
 function MenuItem(props: { navigation: DrawerContentComponentProps["navigation"], children: string, icon: React.FC<SvgProps>, onPress?: () => void, isLast?: boolean, size?: string | number }) {
