@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Keyboard, Pressable, View } from "react-native";
 import { AppTitle } from "../images";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
@@ -40,6 +40,7 @@ import { ExtendedMenuModal } from "../components/ExtendedMenuModal";
 import { Icon } from "@ui-kitten/components";
 import { BlockScreen } from '../screens/BlockListScreen'
 import { useRoute } from "@react-navigation/native";
+import { registerDeviceForNotifications } from "../utils/notifications";
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -73,7 +74,13 @@ export const useInitialRoute = () => {
 }
 
 export function RootNavigator() {
-    console.log("Running Root Navigation");
+    const { loginState } = useAppUser();
+    useEffect(() => {
+        if (loginState?.appUser) {
+            registerDeviceForNotifications()
+        }
+    }, [loginState?.appUser]);
+
     return <Stack.Navigator
         initialRouteName={useInitialRoute()}
         screenOptions={{
@@ -150,12 +157,12 @@ export function RootNavigator() {
             headerBackVisible: true,
             headerTintColor: "white",
             headerBackground: () => <View></View>,
-            headerTransparent:true,
+            headerTransparent: true,
             headerTitle: "",
             contentStyle: {
-              //  marginTop: -64
+                //  marginTop: -64
             },
-       
+
         }}>
             <Stack.Screen options={{
                 headerRight: () => {

@@ -1,12 +1,12 @@
-import {DefaultConfig} from '../configuration'
+import { DefaultConfig } from '../configuration'
 import pg from 'pg'
 import pgPromise from "pg-promise";
 import Finicity from "../finicity";
-import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
+import { PortfolioSummaryService } from "../brokerage/portfolio-summary";
 import Repository from "../brokerage/repository";
-import {Service} from "../brokerage/finicity";
-import {Transformer} from "../brokerage/finicity/transformer";
-import {SQSClient} from "@aws-sdk/client-sqs";
+import { Service } from "../brokerage/finicity";
+import { Transformer } from "../brokerage/finicity/transformer";
+import { SQSClient } from "@aws-sdk/client-sqs";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -30,7 +30,7 @@ export const getHivePool = (async () => {
     let hive: pg.Pool
 
     const config = await DefaultConfig.fromCacheOrSSM("postgres");
-    hive = new pg.Pool({...config, max: 10});
+    hive = new pg.Pool({ ...config, max: 10 });
     return hive;
 })()
 
@@ -63,7 +63,7 @@ export const init = (async () => {
         portfolioSummarySrv,
         sqsClient,
         pgp,
-        pgClient
+        pgClient, repository
     }
 })()
 

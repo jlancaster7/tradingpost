@@ -14,7 +14,8 @@
     "build-scripts": "tsc -b tsconfig.scripts.json",
     "pre-publish": "npm uninstall @tradingpost/common && npm install @tradingpost/common",
     "build-web": "npx expo export:web",
-    "deploy": "npm uninstall @tradinpost/common && npm install @tradinpost/common && expo build:web && cd web-server && eb deploy"
+    "deploy": "npm uninstall @tradinpost/common && npm install @tradinpost/common && expo build:web && cd web-server && eb deploy",
+    "dev": "npm run link-common && npx expo start --web"
   },
   "jest": {
     "preset": "jest-expo"
@@ -30,10 +31,10 @@
     "@react-native-async-storage/async-storage": "~1.17.3",
     "@react-native-masked-view/masked-view": "0.2.7",
     "@react-navigation/bottom-tabs": "^6.0.5",
-    "@react-navigation/drawer": "^6.5.0",
+    "@react-navigation/drawer": "^6.6.1",
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
-    "@tradingpost/common": "^1.10.0",
+    "@tradingpost/common": "file:../../../common",
     "@tradingpost/react-native-webview": "^11.23.0",
     "@types/pell": "^1.0.1",
     "@ui-kitten/components": "^5.1.2",
@@ -84,11 +85,10 @@
     "react-native-toast-notifications": "^3.3.1",
     "react-native-uuid": "^2.0.1",
     "react-native-web": "~0.18.7",
-    
     "recoil": "^0.7.5",
     "sharp": "^0.31.1",
     "url": "^0.11.0",
-    "victory-native": "^36.6.8"
+    "watchman": "^1.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
