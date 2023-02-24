@@ -23,7 +23,7 @@ export default class AndroidNotifications {
                     priority: priority,
                     notification: {
                         title: message.title,
-                        body: message.body,
+                        body: message.body
                     },
                     data: message.data
                 }),

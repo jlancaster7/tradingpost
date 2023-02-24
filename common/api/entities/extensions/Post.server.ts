@@ -7,7 +7,6 @@ import {IElasticPost, IElasticPostExt, IUserGet} from "../interfaces";
 import {getPostCache, getUserCache} from "../../cache";
 import {execProc, getHivePool} from '../../../db'
 import {S3Client, GetObjectCommand} from "@aws-sdk/client-s3";
-import PostApi from "../apis/PostApi";
 import ElasticService from "../../../elastic"
 import TradingPostsService from "../../../social-media/tradingposts/service"
 import {TradingPostsAndUsersTable} from "../../../social-media/tradingposts/interfaces"

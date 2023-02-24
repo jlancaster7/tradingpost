@@ -1,20 +1,10 @@
 import {
     Message,
-    MessageOptions,
     INotificationsRepository,
-    MulticastMessageResponse,
-    MessageResponse, BulkMessage
 } from "./interfaces";
 import apn from "apn";
 import AndroidNotifications from "./android";
 import {DateTime} from "luxon";
-
-
-class BadDeviceError extends Error {
-    constructor() {
-        super();
-    }
-}
 
 export default class Notifications {
     private iOSMessenger: apn.Provider;
@@ -37,8 +27,6 @@ export default class Notifications {
         let iosDeviceIds: string[] = [];
 
         userDevices.forEach(u => {
-            console.log(u.deviceId);
-            console.log(u.provider)
             if (u.provider === 'ios') iosDeviceIds.push(u.deviceId);
             if (u.provider === 'android') androidDeviceIds.push(u.deviceId);
         });
@@ -50,7 +38,6 @@ export default class Notifications {
         }
 
         if (iosDeviceIds.length > 0) {
-            console.log(iosDeviceIds)
             const {failed} = await this._sendToDevice('ios', iosDeviceIds, msg, expDateTime);
             badDevices = [...badDevices, ...failed];
         }

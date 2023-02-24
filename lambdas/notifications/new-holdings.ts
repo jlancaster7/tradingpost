@@ -66,7 +66,7 @@ const run = async () => {
                 keyId: '6WPUHTZ3LU',
                 teamId: '25L2ZZWUPA',
             },
-            production: false
+            production: true
         }
         const apnProvider = new apn.Provider(iosOptions);
 

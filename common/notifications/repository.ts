@@ -1,4 +1,4 @@
-import {TradeNotificationWithSubscriber, UserDevice} from "./interfaces";
+import {UserDevice} from "./interfaces";
 import {IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
 

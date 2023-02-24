@@ -1,14 +1,14 @@
 import {Context} from "aws-lambda";
 import pg from "pg";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
-import {DefaultConfig} from "@tradingpost/common/configuration/index";
+import {DefaultConfig} from "@tradingpost/common/configuration";
 import {Client as ElasticClient} from '@elastic/elasticsearch';
 import Notifications from "@tradingpost/common/notifications";
 import Repository from "@tradingpost/common/notifications/repository";
 import apn from 'apn'
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import AndroidNotifications from "@tradingpost/common/notifications/android";
-import {holdingsPostNotifications, watchlistsPostNotifications} from "@tradingpost/common/notifications/bll";
+import {watchlistsPostNotifications} from "@tradingpost/common/notifications/bll";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -80,7 +80,7 @@ const run = async () => {
                 keyId: '6WPUHTZ3LU',
                 teamId: '25L2ZZWUPA',
             },
-            production: false
+            production: true
         }
         const apnProvider = new apn.Provider(iosOptions);
 
@@ -90,8 +90,23 @@ const run = async () => {
         notificationsSrv = new Notifications(apnProvider, androidNotif, notificationsRepo);
     }
 
-    await watchlistsPostNotifications(notificationsSrv, notificationsRepo, elasticClient);
+    console.log("SENDING!!")
+    const u = "https://m.tradingpostapp.com/dash/search";
+    await notificationsSrv.sendMessageToUser("e96aea04-9a60-4832-9793-f790e60df8eb", {
+        title: "2Test2",
+        body: "2Test2",
+        data: {
+            url: u
+        }
+    });
+
+    console.log("SEnt")
+    // await watchlistsPostNotifications(notificationsSrv, notificationsRepo, elasticClient);
 }
+
+(async () => {
+    await run()
+})()
 
 export const handler = async (event: any, context: Context) => {
     await run();

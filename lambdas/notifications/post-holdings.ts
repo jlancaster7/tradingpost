@@ -10,6 +10,7 @@ import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import AndroidNotifications from "@tradingpost/common/notifications/android";
 import {holdingsPostNotifications} from "@tradingpost/common/notifications/bll";
 
+
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
 });
@@ -79,7 +80,7 @@ const run = async () => {
                 keyId: '6WPUHTZ3LU',
                 teamId: '25L2ZZWUPA',
             },
-            production: false
+            production: true
         }
         const apnProvider = new apn.Provider(iosOptions);
 
