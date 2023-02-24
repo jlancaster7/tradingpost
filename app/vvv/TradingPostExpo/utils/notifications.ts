@@ -14,19 +14,18 @@ export const registerDeviceForNotifications = async () => {
         let token;
         Log.verbose("Checking for device")
         if (Device.isDevice) {
-            const { status: existingStatus } = await Notifications.getPermissionsAsync();
-            let finalStatus = existingStatus;
-            Log.verbose("Existing Status is:" + existingStatus);
-
-
             if (Platform.OS === 'android') {
-                await Notifications.setNotificationChannelAsync('default', {
-                    name: 'default',
+                console.log('setting the channel')
+                await Notifications.setNotificationChannelAsync('tp-default', {
+                    name: 'TradingPost Default',
                     importance: Notifications.AndroidImportance.MAX,
                     vibrationPattern: [0, 250, 250, 250],
                     lightColor: '#282869',
                 });
             }
+            const { status: existingStatus } = await Notifications.getPermissionsAsync();
+            let finalStatus = existingStatus;
+            Log.verbose("Existing Status is:" + existingStatus);
 
             if (existingStatus === 'undetermined') {
                 const { status } = await Notifications.requestPermissionsAsync();

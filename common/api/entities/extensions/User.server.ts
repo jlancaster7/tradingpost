@@ -537,7 +537,7 @@ export default ensureServerExtensions<User>({
 
 
         console.log("I'm past all the setup")
-        const u = `https://m.tradingpostapp.com`;
+        const u = `https://m.tradingpostapp.com/post?id=youtube_4Il00Mrkqnc`;
         await notificationsSrv.sendMessageToUser(
             //'e96aea04-9a60-4832-9793-f790e60df8eb'
             r.extra.userId
