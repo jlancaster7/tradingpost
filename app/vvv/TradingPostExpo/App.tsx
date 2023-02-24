@@ -1,7 +1,7 @@
-import {configApi} from '@tradingpost/common/api/entities/static/EntityApiBase'
-import Constants, {AppOwnership} from 'expo-constants'
-import {useURL} from 'expo-linking'
-import {parse} from 'url'
+import { configApi } from '@tradingpost/common/api/entities/static/EntityApiBase'
+import Constants, { AppOwnership } from 'expo-constants'
+import { useURL } from 'expo-linking'
+import { parse } from 'url'
 
 const hackyGetLocalIp = (logUrl?: string): string => {
     if (!logUrl) throw new Error("could not find log url for ios device");
@@ -41,26 +41,26 @@ if (__DEV__ && Platform.OS === "web")
     })
 
 
-import {StatusBar} from 'expo-status-bar';
+import { StatusBar } from 'expo-status-bar';
 import useCachedResources from './hooks/useCachedResources';
 import useColorScheme from './hooks/useColorScheme';
 import Navigation from './navigation';
 import * as eva from '@eva-design/eva';
-import {ApplicationProvider, Layout, Button, IconRegistry} from '@ui-kitten/components';
+import { ApplicationProvider, Layout, Button, IconRegistry } from '@ui-kitten/components';
 import theme from "./theme-light.json"; // <-- Import app theme
-import {ToastProvider} from 'react-native-toast-notifications';
-import React, {useEffect,} from 'react';
+import { ToastProvider } from 'react-native-toast-notifications';
+import React, { useEffect, } from 'react';
 
 
-import {EvaIconsPack} from '@ui-kitten/eva-icons';
+import { EvaIconsPack } from '@ui-kitten/eva-icons';
 
-import {getSecurityList} from './SecurityList'
-import {Platform} from 'react-native'
-import * as constants from "constants";
+import { getSecurityList } from './SecurityList'
+import { Platform } from 'react-native'
 
 export default function App() {
     console.log("Started")
-    const {isLoadingComplete} = useCachedResources();
+    const { isLoadingComplete } = useCachedResources();
+
     //const colorScheme = useColorScheme();
     const colorScheme = 'light';
     useEffect(() => {
@@ -69,6 +69,9 @@ export default function App() {
         }
     }, [isLoadingComplete])
     const url = useURL();
+
+
+
     if (__DEV__ && url) {
 
         const urlParsed = parse(url, true);
@@ -82,11 +85,11 @@ export default function App() {
 
     }
 
-    return !isLoadingComplete ? null : <ApplicationProvider {...eva} theme={{...eva.light, ...theme}}>
-        <IconRegistry icons={EvaIconsPack}/>
+    return !isLoadingComplete ? null : <ApplicationProvider {...eva} theme={{ ...eva.light, ...theme }}>
+        <IconRegistry icons={EvaIconsPack} />
         <ToastProvider>
-            <Navigation colorScheme={colorScheme}/>
-            <StatusBar/>
+            <Navigation colorScheme={colorScheme} />
+            <StatusBar />
         </ToastProvider>
     </ApplicationProvider>
 }

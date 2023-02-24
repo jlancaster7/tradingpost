@@ -82,4 +82,5 @@ export default class User extends Extension {
         userId: string;
     }>;
     getBlocked: (settings?: undefined) => Promise<IUserList[]>;
+    testNotifcation: (settings?: undefined) => Promise<{}>;
 }

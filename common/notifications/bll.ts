@@ -14,7 +14,7 @@ allowedNotifs.set("4a6f0899-dc6d-40cc-aa6a-1febb579d65a", true);
 
 export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Repository) => {
     const u = `https://m.tradingpostapp.com/dash/notification/trade`;
-    const dt = DateTime.now().minus({day: 1}).setZone("America/New_York");
+    const dt = DateTime.now().minus({ day: 1 }).setZone("America/New_York");
 
     const serviceUsersWithTrades = await repo.getUsersWithTrades(dt, dt);
     if (serviceUsersWithTrades.length <= 0) return;
@@ -44,7 +44,7 @@ export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Re
 
     for (const [subscriber, serviceUserIds] of subscribersMap) {
         let tradeCount = 0;
-        serviceUserIds.forEach(s => tradeCount += serviceUsersMap.get(s));
+        serviceUserIds.forEach((s: any) => tradeCount += serviceUsersMap.get(s));
         if (tradeCount === 0) continue;
 
         let msg = '';
@@ -58,7 +58,7 @@ export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Re
         if (!allowedNotifs.has(subscriber)) continue;
         await repo.addNewTradeNotification(subscriber, msg);
         await notifSrv.sendMessageToUser(subscriber, {
-            data: {url: u},
+            data: { url: u },
             body: msg,
             title: "New Subscriber Trades"
         });
@@ -68,7 +68,7 @@ export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Re
 export const holdingsPostNotifications = async (notifSrv: Notifications, repo: Repository, elasticClient: ElasticClient) => {
     let usersAndHoldings = await repo.getUsersCurrentHoldings();
     const currentTime = DateTime.now();
-    const twelveHoursAgo = currentTime.minus({hour: 12});
+    const twelveHoursAgo = currentTime.minus({ hour: 12 });
     const curFormat = currentTime.toUTC().toISO();
     const twelveFormat = twelveHoursAgo.toUTC().toISO();
     const usersAndHoldingsKeys = Object.keys(usersAndHoldings);
@@ -94,7 +94,7 @@ export const holdingsPostNotifications = async (notifSrv: Notifications, repo: R
 export const watchlistsPostNotifications = async (notifSrv: Notifications, repo: Repository, elasticClient: ElasticClient) => {
     let [usersAndWatchlists, watchlistIdToName] = await repo.getUsersAndWatchlists();
     const currentTime = DateTime.now();
-    const twelveHoursAgo = currentTime.minus({hour: 12});
+    const twelveHoursAgo = currentTime.minus({ hour: 12 });
 
     const curFormat = currentTime.toUTC().toISO();
     const twelveFormat = twelveHoursAgo.toUTC().toISO();
@@ -239,5 +239,5 @@ export const queryDatastore = async (elasticClient: ElasticClient, userSubscript
     if (!res.aggregations || !res.aggregations.postTypeAgg) return [];
     if (!(res.aggregations.postTypeAgg.buckets instanceof Array)) return [];
 
-    return res.aggregations.postTypeAgg.buckets.map(b => ({postType: b.key, count: b.doc_count}));
+    return res.aggregations.postTypeAgg.buckets.map(b => ({ postType: b.key, count: b.doc_count }));
 }

@@ -22,4 +22,6 @@ export default class User extends Extension {
     sendEmailValidation = this._makeFetch<undefined, {}>("sendEmailValidation", this._defaultPostRequest)
     setBlocked = this._makeFetch<{ userId: string, block: boolean }, { userId: string }>("setBlocked", this._defaultPostRequest)
     getBlocked = this._makeFetch<undefined, IUserList[]>("getBlocked", this._defaultPostRequest)
+    //We can lock this down to prevent abuse if we need to
+    testNotifcation = this._makeFetch<undefined, {}>("testNotifcation", this._defaultPostRequest)
 }

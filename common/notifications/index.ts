@@ -22,6 +22,7 @@ export default class Notifications {
     }
 
     public sendMessageToUser = async (userId: string, msg: Message, expDateTime: DateTime = DateTime.now().plus({hour: 5})): Promise<void> => {
+        console.log("My user Id is " + userId);
         const userDevices = await this.repository.getUserDevices(userId)
         let androidDeviceIds: string[] = [];
         let iosDeviceIds: string[] = [];
