@@ -14,26 +14,32 @@ export const registerDeviceForNotifications = async () => {
         let token;
         Log.verbose("Checking for device")
         if (Device.isDevice) {
-            const { status: existingStatus } = await Notifications.getPermissionsAsync();
-            let finalStatus = existingStatus;
-            Log.verbose("Existing Status is:" + existingStatus);
-
-
+            const { status: firstStatus } = await Notifications.getPermissionsAsync();
+            console.log("Status is orginally::" + firstStatus)
             if (Platform.OS === 'android') {
-                await Notifications.setNotificationChannelAsync('default', {
+                     await Notifications.setNotificationChannelAsync('default', {
                     name: 'default',
                     importance: Notifications.AndroidImportance.MAX,
                     vibrationPattern: [0, 250, 250, 250],
                     lightColor: '#282869',
                 });
+
+
+                console.log("Setting the status");
             }
 
+            const { status: existingStatus } = await Notifications.getPermissionsAsync();
+            let finalStatus = existingStatus;
+            Log.verbose("Existing Status is:" + existingStatus);
+
             if (existingStatus === 'undetermined') {
+                console.log("Im undetermined and requesting perms");
                 const { status } = await Notifications.requestPermissionsAsync();
                 finalStatus = status;
             }
 
             if (finalStatus !== 'granted') {
+                console.log("returned")
                 return;
             }
 

@@ -22,11 +22,13 @@ export default class AndroidNotifications {
                 body: JSON.stringify({
                     to: deviceId,
                     priority: priority,
-                    notification: {
+                    data: {
+                        channelId: 'post-notif',
                         title: message.title,
-                        body: message.body,
-                    },
-                    data: message.data
+                        message: message.body,
+                        icon: 'notification_icon',
+                        url: message.data?.url
+                    }
                 }),
             });
 
