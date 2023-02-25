@@ -4,17 +4,20 @@
  * https://reactnavigation.org/docs/configuring-links
  */
 
-import {getActionFromState, getStateFromPath, LinkingOptions} from '@react-navigation/native';
+import { getActionFromState, getStateFromPath, LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
-import {NavIconKeys, navIcons} from '../images';
-import {screens} from '../screens/CreateAccountScreen';
+import { NavIconKeys, navIcons } from '../images';
+import { screens } from '../screens/CreateAccountScreen';
 import * as Notifications from 'expo-notifications';
+import { Log } from '../utils/logger';
 
 const ConfigOverride: Partial<Record<NavIconKeys, any>> = {
     Notification: {
         path: "dash/notification",
     }
 };
+
+
 
 const linking: LinkingOptions<any> = {
     prefixes: [Linking.createURL('/'), "https://m.tradingpostapp.com"],
@@ -86,21 +89,24 @@ const linking: LinkingOptions<any> = {
             } else if ('payload' in response.notification.request.trigger) {
                 url = response.notification?.request?.trigger?.payload?.url as string;
             }
-
             if (url) return url;
         }
-
+ 
         return await Linking.getInitialURL();
     },
     subscribe(listener) {
-        const onReceiveURL = ({url}: { url: string }) => listener(url);
-
+        const onReceiveURL = ({ url }: { url: string }) => listener(url);
+        Log.verbose("Subscribe happening");
         // Listen to incoming links from deep linking
         Linking.addEventListener('url', onReceiveURL);
-
         // Listen to expo push notifications
+        //Notifications.setNotificationChannelAsync("default");
+
+
         const subscription = Notifications.addNotificationResponseReceivedListener(response => {
             let url = null;
+            console.log("I'm reading the notificaion")
+            console.log(JSON.stringify(response))
             if ('remoteMessage' in response.notification.request.trigger) {
                 url = response.notification?.request?.trigger?.remoteMessage?.data?.url as string;
             } else if ('payload' in response.notification.request.trigger) {

@@ -74,12 +74,6 @@ export const useInitialRoute = () => {
 }
 
 export function RootNavigator() {
-    const { loginState } = useAppUser();
-    useEffect(() => {
-        if (loginState?.appUser) {
-            registerDeviceForNotifications()
-        }
-    }, [loginState?.appUser]);
 
     return <Stack.Navigator
         initialRouteName={useInitialRoute()}

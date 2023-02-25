@@ -27,12 +27,11 @@ export default function useCachedResources() {
 
                 const lds = await initLds();
                 if (lds.authToken) {
-                    Log.verbose("There IS AN AUTH TOKEN");
                     try {
                         const results = await Authentication.signIn("", lds.authToken);
                         lds.loginResult = results.loginResult;
                         lds.currentUser = results.currentUser;
-                        Log.verbose(`CU: ${JSON.stringify(lds.currentUser)} LR: ${JSON.stringify(lds.loginResult)}`);
+                       // Log.verbose(`CU: ${JSON.stringify(lds.currentUser)} LR: ${JSON.stringify(lds.loginResult)}`);
                         setValue("loginResult", results.loginResult);
                         setValue("currentUser", results.currentUser);
 
