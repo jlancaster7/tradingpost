@@ -91,8 +91,9 @@ export class Service {
                 await finService.transformer.computeHoldingsHistory(id, true);
             }
 
-            if (!finService.portSummarySrv) return
-            await finService.portSummarySrv.computeAccountGroupSummary(userId);
+            throw new Error("Cause...")
+            // if (!finService.portSummarySrv) return
+            // await finService.portSummarySrv.computeAccountGroupSummary(userId);
         });
     }
 
@@ -402,7 +403,7 @@ export class Service {
                 })
                 continue;
             }
-            
+
             let finicityHoldings: FinicityHolding[] = [];
             if (account.position)
                 account.position.forEach(pos => {

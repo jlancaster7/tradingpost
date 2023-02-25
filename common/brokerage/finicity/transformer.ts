@@ -277,24 +277,25 @@ export class Transformer extends BaseTransformer {
         for (let i = 0; i < finTransactions.length; i++) {
             const transaction = finTransactions[i];
 
-            const internalTpAccountId = finicityIdToTpAccountMap.get(transaction.accountId);
-            if (!internalTpAccountId) throw new Error(`could not get internal account id for transaction with id ${transaction.id} for user ${userId}`);
+            const internalTpAccountId = finicityIdToTpAccountMap.get(transaction.accountId.toString());
+            if (!internalTpAccountId) throw new Error(`could not get tradingpost account for finicity account id: ${transaction.accountId} transaction id: ${transaction.id} user id: ${userId}`);
 
-            if (!transaction.ticker || cashSecuritiesMap.has(transaction.ticker)) {
-                switch (transaction.investmentTransactionType) {
-                    case "fee":
-                    case "interest":
-                    case "deposit":
-                    case "transfer":
-                    case "other":
-                    case "contribution":
-                    case "dividend":
-                        transaction.ticker = "USD:CUR"
-                        break
-                    default:
-                        throw new Error(`no symbol (${transaction.ticker}) available for transaction type ${transaction.investmentTransactionType}`)
-                }
+            switch (transaction.investmentTransactionType) {
+                case "fee":
+                case "interest":
+                case "deposit":
+                case "transfer":
+                case "other":
+                case "contribution":
+                case "dividend":
+                    transaction.ticker = "USD:CUR"
             }
+
+            if (transaction.ticker && cashSecuritiesMap.has(transaction.ticker)) { // @ts-ignore
+                transaction.ticker = cashSecuritiesMap.get(transaction.ticker)
+            }
+
+            if (!transaction.ticker) throw new Error(`no symbol (${transaction.id}) available for transaction type ${transaction.investmentTransactionType}`)
 
             let security = securitiesMap.get(transaction.ticker);
             if (!security) throw new Error(`could not find symbol(${transaction.ticker} for holding`);

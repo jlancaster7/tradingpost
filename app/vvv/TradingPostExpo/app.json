@@ -19,6 +19,11 @@
       "**/*"
     ],
     "ios": {
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      },
       "supportsTablet": true,
       "bundleIdentifier": "com.tradingpostapp",
       "associatedDomains": [

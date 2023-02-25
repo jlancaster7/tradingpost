@@ -110,21 +110,20 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         taskDefinition.started = DateTime.now().setZone("America/New_York");
         taskDefinition.finished = null;
         taskId = await repository.getOrInsertBrokerageTaskByMessageId(messageId, taskDefinition);
-        // if (taskId === null) return true;
+        if (taskId === null) return true;
 
         if (taskDefinition.type === BrokerageTaskType.NewData) {
             await broker.update(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else if (taskDefinition.type === BrokerageTaskType.NewAccount) {
-            console.log("ADDING!")
             await broker.add(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else if (taskDefinition.type === BrokerageTaskType.UpdatePortfolioStatistics) {
             await broker.calculatePortfolioStatistics(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else throw new Error("undefined type")
 
-        // await repository.updateTask(taskId, {
-        //     status: BrokerageTaskStatusType.Successful,
-        //     finished: DateTime.now().setZone("America/New_York")
-        // });
+        await repository.updateTask(taskId, {
+            status: BrokerageTaskStatusType.Successful,
+            finished: DateTime.now().setZone("America/New_York")
+        });
     } catch (e) {
         console.error(e)
         let error = {msg: '', stack: '', name: ''};
@@ -143,25 +142,6 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
     }
     return true
 }
-
-(async () => {
-    let tDef = {
-        error: null,
-        started: null,
-        type: BrokerageTaskType.NewAccount,
-        finished: null,
-        date: DateTime.now(),
-        data: {},
-        brokerageUserId: "6020539284",
-        status: BrokerageTaskStatusType.Pending,
-        brokerage: DirectBrokeragesType.Finicity,
-        messageId: '',
-        userId: "e2268937-157b-4a33-a970-a9ba88d10a46"
-    };
-
-    await run(tDef, '');
-    console.log("Fin")
-})()
 
 
 export const handler = async (event: SQSEvent, context: Context) => {

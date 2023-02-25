@@ -945,6 +945,29 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
+    getFinicityUsers = async (): Promise<FinicityUser[]> => {
+        const results = await this.db.query<{ id: number, tp_user_id: string, customer_id: string, type: string, updated_at: Date, created_at: Date }[]>(`
+            SELECT id,
+                   tp_user_id,
+                   customer_id,
+                   type,
+                   updated_at,
+                   created_at
+            FROM finicity_user;`);
+
+        if (results.length <= 0) return [];
+        return results.map(r => {
+            return {
+                id: r.id,
+                tpUserId: r.tp_user_id,
+                customerId: r.customer_id,
+                type: r.type,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                createdAt: DateTime.fromJSDate(r.created_at)
+            }
+        })
+    }
+
     getTradingPostUserByFinicityCustomerId = async (finicityCustomerId: string): Promise<TradingPostUser | null> => {
         const query = `
             SELECT du.id,
@@ -2593,6 +2616,41 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             mfaType: results[0].mfa_type,
             challengeResponseId: results[0].challenge_response_id
         };
+    }
+
+    getRobinhoodUsers = async (): Promise<RobinhoodUserTable[]> => {
+        let query = `SELECT id,
+                            user_id,
+                            username,
+                            device_token,
+                            status,
+                            uses_mfa,
+                            access_token,
+                            refresh_token,
+                            updated_at,
+                            created_at,
+                            mfa_type,
+                            challenge_response_id
+                     FROM robinhood_user;`
+
+        const results = await this.db.query<[{ id: number, user_id: string, username: string, device_token: string, status: string, uses_mfa: boolean, access_token: string, refresh_token: string, updated_at: Date, created_at: Date, mfa_type: string | null, challenge_response_id: string | null }]>(query);
+        if (results.length <= 0) return [];
+        return results.map(r => {
+            return {
+                id: r.id,
+                userId: r.user_id,
+                username: r.username,
+                deviceToken: r.device_token,
+                status: r.status,
+                usesMfa: r.uses_mfa,
+                accessToken: r.access_token,
+                refreshToken: r.refresh_token,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                createdAt: DateTime.fromJSDate(r.created_at),
+                mfaType: r.mfa_type,
+                challengeResponseId: r.challenge_response_id
+            }
+        });
     }
 
     updateRobinhoodUser = async (user: RobinhoodUser) => {

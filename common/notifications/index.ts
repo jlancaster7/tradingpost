@@ -62,14 +62,14 @@ export default class Notifications {
                     topic: 'com.tradingpostapp'
                 });
 
+                note.contentAvailable = true;
+
                 if (msg.imageUrl) note.alert = {
                     "launch-image": msg.imageUrl,
                     body: msg.body
                 }
 
-                console.log("SENDING!!")
                 const appleRes = await this.iOSMessenger.send(note, deviceIds);
-                console.log(appleRes)
                 appleRes.failed.forEach(f => successRes.failed.push(f.device))
                 appleRes.sent.forEach(f => successRes.successful.push(f.device));
                 return successRes
