@@ -73,16 +73,22 @@ export class Service {
         const newFinicityAccounts = await this.importAccounts(brokerageUserId);
         const newTransformedAccountIds = await this.transformer.accounts(userId, newFinicityAccounts);
         await this.repository.addTradingPostAccountGroup(userId, 'default', newTransformedAccountIds, 10117);
-
         await this.repository.execTx(async (r) => {
             const finTransformer = new FinicityTransformer(r);
             const portStats = new PortfolioSummaryService(r);
             const finService = new Service(this.finicity, r, finTransformer, portStats);
-            await finService.importHoldings(userId, brokerageUserId, newFinicityAccounts.map(f => f.accountId));
-            await finService.importTransactions(userId, brokerageUserId, newFinicityAccounts.map(f => f.accountId));
+
+            const finicityUser = await this.repository.getFinicityUser(userId);
+            if (!finicityUser) throw new Error("how do we not have a finicity user?")
+
+            const finicityAccounts = await this.repository.getFinicityAccounts(finicityUser.id)
+            await finService.importHoldings(userId, brokerageUserId, finicityAccounts.map(f => f.accountId));
+            await finService.importTransactions(userId, brokerageUserId, finicityAccounts.map(f => f.accountId));
+
             for (let i = 0; i < newTransformedAccountIds.length; i++) {
                 const id = newTransformedAccountIds[i];
-                await finService.transformer.computeHoldingsHistory(id);
+                // Don't compute some security types for historical holdings since we do not have pricing at the moment
+                await finService.transformer.computeHoldingsHistory(id, true);
             }
 
             if (!finService.portSummarySrv) return
@@ -372,6 +378,8 @@ export class Service {
         const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(brokerageUserId);
         if (finicityUser === null) throw new Error(`no user accounts exist for user id ${brokerageUserId} in holdings`);
 
+        console.log(brokerageUserId);
+        console.log()
         const finAccountsAndHoldings = await this.finicity.getCustomerAccounts(finicityUser.customerId);
         if (!finAccountsAndHoldings.accounts || finAccountsAndHoldings.accounts.length <= 0) return
 
@@ -394,47 +402,48 @@ export class Service {
                 })
                 continue;
             }
-
+            
             let finicityHoldings: FinicityHolding[] = [];
-            account.position.forEach(pos => {
-                finicityHoldings.push({
-                    id: 0,
-                    finicityAccountId: accountMap[account.id],
-                    holdingId: pos.id,
-                    securityIdType: pos.securityIdType,
-                    posType: pos.posType,
-                    subAccountType: pos.subAccountType,
-                    description: pos.description,
-                    symbol: pos.symbol,
-                    cusipNo: pos.cusipNo,
-                    currentPrice: pos.currentPrice,
-                    transactionType: pos.transactionType,
-                    marketValue: pos.marketValue,
-                    securityUnitPrice: pos.securityUnitPrice,
-                    units: pos.units,
-                    costBasis: pos.costBasis,
-                    status: pos.status,
-                    securityType: pos.securityType,
-                    securityName: pos.securityName,
-                    securityCurrency: pos.securityCurrency,
-                    currentPriceDate: pos.currentPriceDate,
-                    optionStrikePrice: pos.optionStrikePrice,
-                    optionType: pos.optionType,
-                    optionSharesPerContract: pos.optionSharesPerContract,
-                    optionExpiredate: pos.optionExpiredate,
-                    fiAssetClass: pos.fiAssetClass,
-                    assetClass: pos.assetClass,
-                    currencyRate: pos.currencyRate,
-                    costBasisPerShare: pos.costBasisPerShare,
-                    mfType: pos.mfType,
-                    totalGlDollar: pos.totalGLDollar,
-                    totalGlPercent: pos.totalGLPercent,
-                    todayGlDollar: pos.todayGLDollar,
-                    todayGlPercent: pos.todayGLPercent,
-                    updatedAt: DateTime.now(),
-                    createdAt: DateTime.now()
+            if (account.position)
+                account.position.forEach(pos => {
+                    finicityHoldings.push({
+                        id: 0,
+                        finicityAccountId: accountMap[account.id],
+                        holdingId: pos.id,
+                        securityIdType: pos.securityIdType,
+                        posType: pos.posType,
+                        subAccountType: pos.subAccountType,
+                        description: pos.description,
+                        symbol: pos.symbol,
+                        cusipNo: pos.cusipNo,
+                        currentPrice: pos.currentPrice,
+                        transactionType: pos.transactionType,
+                        marketValue: pos.marketValue,
+                        securityUnitPrice: pos.securityUnitPrice,
+                        units: pos.units,
+                        costBasis: pos.costBasis,
+                        status: pos.status,
+                        securityType: pos.securityType,
+                        securityName: pos.securityName,
+                        securityCurrency: pos.securityCurrency,
+                        currentPriceDate: pos.currentPriceDate,
+                        optionStrikePrice: pos.optionStrikePrice,
+                        optionType: pos.optionType,
+                        optionSharesPerContract: pos.optionSharesPerContract,
+                        optionExpiredate: pos.optionExpiredate,
+                        fiAssetClass: pos.fiAssetClass,
+                        assetClass: pos.assetClass,
+                        currencyRate: pos.currencyRate,
+                        costBasisPerShare: pos.costBasisPerShare,
+                        mfType: pos.mfType,
+                        totalGlDollar: pos.totalGLDollar,
+                        totalGlPercent: pos.totalGLPercent,
+                        todayGlDollar: pos.todayGLDollar,
+                        todayGlPercent: pos.todayGLPercent,
+                        updatedAt: DateTime.now(),
+                        createdAt: DateTime.now()
+                    });
                 });
-            });
 
             await this.repository.upsertFinicityHoldings(finicityHoldings);
             await this.transformer.holdings(finicityUser.tpUserId, account.id, finicityHoldings, account.currency, account.detail);

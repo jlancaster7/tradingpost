@@ -1,6 +1,7 @@
 import {
     GetSecurityBySymbol,
-    GetSecurityPrice, InvestmentTransactionType,
+    GetSecurityPrice,
+    InvestmentTransactionType,
     OptionContract,
     SecurityType,
     TradingPostBrokerageAccounts,
@@ -116,7 +117,7 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
         return holdings
     },
     [InvestmentTransactionType.cancel]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
-        if(tx.optionId === null) return holdings;
+        if (tx.optionId === null) return holdings;
 
         const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId && h.optionId === tx.optionId)
         if (hIdx === -1) {
@@ -235,7 +236,7 @@ export default class BaseTransformer {
         return DateTime.now()
     }
 
-    computeHoldingsHistory = async (tpAccountId: number) => {
+    computeHoldingsHistory = async (tpAccountId: number, excludeSecurityTypes: boolean = false) => {
         const oldestTx = await this._baseRepo.getOldestTransaction(tpAccountId);
         if (!oldestTx) throw new Error("no transactions for");
 
@@ -251,10 +252,20 @@ export default class BaseTransformer {
 
         // TODO: We could recomptue old holdings history...
         if (currentHoldings.length <= 0) throw new Error("no holdings available for account " + tpAccountId);
-        currentHoldings.forEach(h => allSecurityIds[h.securityId] = {});
+        currentHoldings.forEach(h => {
+            if (excludeSecurityTypes && h.securityType === SecurityType.mutualFund) return
+            if (excludeSecurityTypes && h.securityType === SecurityType.currency) return
+            allSecurityIds[h.securityId] = {}
+        });
 
         // Get Current Transactions Sorted in DESC order
-        const transactions = await this._baseRepo.getTradingPostBrokerageAccountTransactions(tpAccountId);
+        let transactions = await this._baseRepo.getTradingPostBrokerageAccountTransactions(tpAccountId);
+        transactions = transactions.filter(t => {
+            if (excludeSecurityTypes && t.securityType === SecurityType.mutualFund) return false
+            if (excludeSecurityTypes && t.securityType === SecurityType.currency) return false
+            return true;
+        })
+
         if (transactions.length <= 0) throw new Error("no transactions available for account " + tpAccountId);
 
         const transactionsPerDate: Record<number, TradingPostTransactionsTable[]> = {}

@@ -21,12 +21,15 @@ export default class AndroidNotifications {
                 },
                 body: JSON.stringify({
                     to: deviceId,
+                    token: deviceId,
                     priority: priority,
-                    notification: {
+                    data: {
+                        channelId: 'tp-default',
                         title: message.title,
-                        body: message.body
-                    },
-                    data: message.data
+                        message: message.body,
+                        icon: 'notification_icon',
+                        url: message.data?.url
+                    }
                 }),
             });
 

@@ -100,6 +100,28 @@ const transformTransactionType = (txType: string): InvestmentTransactionType => 
     }
 }
 
+const transformSecurityType = (secType: string): SecurityType => {
+    switch (secType) {
+        case "Fixed Income":
+            return SecurityType.fixedIncome;
+        case "Mutual Fund":
+            return SecurityType.mutualFund;
+        case "Option":
+            return SecurityType.option;
+        case "Core":
+            return SecurityType.cashEquivalent;
+        case "Exchange Traded":
+            return SecurityType.index;
+        case "Equity":
+            return SecurityType.equity;
+        case "currency":
+            return SecurityType.currency
+        default:
+            console.error(`unknown security type ${secType}`)
+            return SecurityType.unknown
+    }
+}
+
 export class Transformer extends BaseTransformer {
     private repository: TransformerRepository;
 
@@ -144,10 +166,10 @@ export class Transformer extends BaseTransformer {
         const securities = await this.repository.getSecuritiesWithIssue();
         const cashSecurities = await this.repository.getTradingpostCashSecurity();
 
-        const securitiesMap: Record<string, SecurityIssue> = {};
-        const cashSecuritiesMap: Record<string, number> = {};
-        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
-        cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
+        const securitiesMap: Map<string, SecurityIssue> = new Map();
+        const cashSecuritiesMap: Map<string, number> = new Map();
+        securities.forEach(sec => securitiesMap.set(sec.symbol, sec));
+        cashSecurities.forEach(sec => cashSecuritiesMap.set(sec.fromSymbol, sec.toSecurityId));
 
         let tpHoldings: TradingPostCurrentHoldings[] = [];
         let hasCashSecurity = false;
@@ -158,20 +180,15 @@ export class Transformer extends BaseTransformer {
             millisecond: 0
         }).minus({day: 1});
 
-        // TODO: revisit this ... do we want to completely botch the holdings / etc when a holding fails?
-        //  at the end of the day, how do we want to present the state of holdings itself to users? In an incomplete,
-        //  but correct form, -- meaning not all their holdings are added, but the ones that are, are valid. Or,
-        //  not at all until all holdings can be verified, or all holdings even if they are incorrect(assuming its
-        //  not the latter).
         for (let i = 0; i < finHoldings.length; i++) {
             try {
                 let holding = finHoldings[i];
 
                 const security = await this._resolveSecurity(holding, securitiesMap, cashSecuritiesMap);
+                if (!security) throw new Error("could not resolve security for holding")
+
                 if (security.issueType.toLowerCase() === 'cash') hasCashSecurity = true;
 
-                // TODO: ... Do we want to keep this... Finicity seems to be all over he map with pricing and
-                //  we might not be able to rely on them...?
                 let priceAsOf = holdingDate;
                 if (holding.currentPriceDate) priceAsOf = DateTime.fromSeconds(holding.currentPriceDate)
                 if (priceAsOf === undefined || priceAsOf === null) {
@@ -181,6 +198,21 @@ export class Transformer extends BaseTransformer {
 
                 let cur = currency
                 if (holding.securityCurrency) cur = holding.securityCurrency
+
+                let tpHolding: TradingPostCurrentHoldings = {
+                    accountId: internalAccount.tpBrokerageAccId, // TradingPost Brokerage Account ID
+                    securityId: security.id,
+                    securityType: security.issueType === 'Cash' ? SecurityType.cashEquivalent : SecurityType.equity,
+                    price: holding.currentPrice,
+                    priceAsOf: priceAsOf,
+                    priceSource: 'Finicity',
+                    value: parseFloat(holding.marketValue),
+                    costBasis: holding.costBasis,
+                    quantity: holding.units,
+                    currency: cur,
+                    optionId: null,
+                    holdingDate: holdingDate
+                }
 
                 if (holding.securityType.toLowerCase() === 'option') {
                     // We are making the assumption that the option already exists within our system since we run
@@ -194,37 +226,11 @@ export class Transformer extends BaseTransformer {
                         continue
                     }
 
-                    tpHoldings.push({
-                        accountId: internalAccount.tpBrokerageAccId, // TradingPost Brokerage Account ID
-                        securityId: security.id,
-                        securityType: SecurityType.option,
-                        price: holding.currentPrice,
-                        priceAsOf: priceAsOf,
-                        priceSource: '',
-                        value: parseFloat(holding.marketValue),
-                        costBasis: holding.costBasis,
-                        quantity: holding.units,
-                        currency: cur,
-                        optionId: optionId,
-                        holdingDate: holdingDate
-                    })
-                    continue
+                    tpHolding.securityType = SecurityType.option;
+                    tpHolding.optionId = optionId;
                 }
 
-                tpHoldings.push({
-                    accountId: internalAccount.tpBrokerageAccId, // TradingPost Brokerage Account ID
-                    securityId: security.id,
-                    securityType: security.issueType === 'Cash' ? SecurityType.cashEquivalent : SecurityType.equity,
-                    price: holding.currentPrice,
-                    priceAsOf: priceAsOf,
-                    priceSource: 'Finicity',
-                    value: parseFloat(holding.marketValue),
-                    costBasis: holding.costBasis,
-                    quantity: holding.units,
-                    currency: cur,
-                    optionId: null,
-                    holdingDate: holdingDate
-                })
+                tpHoldings.push(tpHolding)
             } catch (err) {
                 console.error(err)
             }
@@ -258,23 +264,23 @@ export class Transformer extends BaseTransformer {
         const securities = await this.repository.getSecuritiesWithIssue();
         const cashSecurities = await this.repository.getTradingpostCashSecurity();
 
-        const cashSecuritiesMap: Record<string, number> = {};
-        const securitiesMap: Record<string, SecurityIssue> = {};
-        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
-        cashSecurities.forEach(sec => cashSecuritiesMap[sec.fromSymbol] = sec.toSecurityId);
+        const cashSecuritiesMap: Map<string, number> = new Map();
+        const securitiesMap: Map<string, SecurityIssue> = new Map();
+        securities.forEach(sec => securitiesMap.set(sec.symbol, sec));
+        cashSecurities.forEach(sec => cashSecuritiesMap.set(sec.fromSymbol, sec.toSecurityId));
 
         const tpAccountsWithFinicityId = await this.repository.getTradingPostAccountsWithFinicityNumber(userId);
-        const finicityIdToTpAccountMap: Record<string, number> = {};
-        tpAccountsWithFinicityId.forEach(tpa => finicityIdToTpAccountMap[tpa.externalFinicityAccountId] = tpa.tpBrokerageAccId);
+        const finicityIdToTpAccountMap: Map<string, number> = new Map();
+        tpAccountsWithFinicityId.forEach(tpa => finicityIdToTpAccountMap.set(tpa.externalFinicityAccountId, tpa.tpBrokerageAccId));
 
         let tpTransactions: TradingPostTransactions[] = [];
         for (let i = 0; i < finTransactions.length; i++) {
             const transaction = finTransactions[i];
 
-            const internalTpAccountId = finicityIdToTpAccountMap[transaction.accountId];
+            const internalTpAccountId = finicityIdToTpAccountMap.get(transaction.accountId);
             if (!internalTpAccountId) throw new Error(`could not get internal account id for transaction with id ${transaction.id} for user ${userId}`);
 
-            if (!transaction.ticker || Object.keys(cashSecuritiesMap).includes(transaction.ticker)) {
+            if (!transaction.ticker || cashSecuritiesMap.has(transaction.ticker)) {
                 switch (transaction.investmentTransactionType) {
                     case "fee":
                     case "interest":
@@ -286,20 +292,17 @@ export class Transformer extends BaseTransformer {
                         transaction.ticker = "USD:CUR"
                         break
                     default:
-                        throw new Error(`no symbol available for transaction type ${transaction.investmentTransactionType}`)
+                        throw new Error(`no symbol (${transaction.ticker}) available for transaction type ${transaction.investmentTransactionType}`)
                 }
             }
 
-            let security = securitiesMap[transaction.ticker]
-            if (!security) throw new Error(`could not find symbol(${transaction.ticker} for holding`)
+            let security = securitiesMap.get(transaction.ticker);
+            if (!security) throw new Error(`could not find symbol(${transaction.ticker} for holding`);
 
             const optionId = await this.isTransactionAnOption(transaction, security.id);
 
             // TODO: We should check if its just a general "cash" security...
-            if (!transaction.unitQuantity && transaction.ticker !== "USD:CUR") {
-                console.error("not unit quantity for non-cash security")
-                continue
-            }
+            if (!transaction.unitQuantity && transaction.ticker !== "USD:CUR") throw new Error(`not unit quantity for non-cash security symbol: ${transaction.ticker} ${transaction.transactionId}`)
 
             if (!transaction.unitQuantity) transaction.unitQuantity = transaction.amount;
 
@@ -348,7 +351,12 @@ export class Transformer extends BaseTransformer {
                 accountId: h.accountId,
             }
             return x
+        }).filter(h => {
+            if (h.securityType === SecurityType.mutualFund) return false
+            if (h.securityType === SecurityType.currency) return false
+            return true
         });
+
         await this.upsertHistoricalHoldings(hh);
     }
 
@@ -363,15 +371,16 @@ export class Transformer extends BaseTransformer {
         return internalAccount;
     }
 
-    _resolveSecurity = async (holding: FinicityHolding, securitiesMap: Record<string, SecurityIssue>, cashSecuritiesMap: Record<string, number>) => {
-        let security = securitiesMap[holding.symbol]
-        let cashSecurity = cashSecuritiesMap[holding.symbol];
+    _resolveSecurity = async (holding: FinicityHolding, securitiesMap: Map<string, SecurityIssue>, cashSecuritiesMap: Map<string, number>) => {
+        let security = securitiesMap.get(holding.symbol);
+        let cashSecurity = cashSecuritiesMap.get(holding.symbol);
 
         if (!security && !cashSecurity) {
+            const secType = transformSecurityType(holding.securityType)
             const sec: addSecurity = {
                 companyName: holding.securityName,
                 securityName: holding.securityName,
-                issueType: holding.securityType,
+                issueType: secType,
                 description: holding.description,
                 symbol: holding.symbol,
                 logoUrl: null,
@@ -393,13 +402,15 @@ export class Transformer extends BaseTransformer {
                 priceSource: PriceSourceType.FINICITY
             };
 
+            console.log("ADDING SECURITY ", sec.symbol)
             const securityId = await this.repository.addSecurity(sec)
             security = {
                 id: securityId,
                 symbol: sec.symbol,
                 name: sec.securityName ? sec.securityName : '',
-                issueType: sec.issueType ? sec.issueType : ''
+                issueType: secType
             }
+            securitiesMap.set(holding.symbol, security);
         } else if (!security && cashSecurity) {
             security = {
                 id: cashSecurity,
