@@ -21,9 +21,10 @@ export default class AndroidNotifications {
                 },
                 body: JSON.stringify({
                     to: deviceId,
+                    token: deviceId,
                     priority: priority,
                     data: {
-                        channelId: 'post-notif',
+                        channelId: 'tp-default',
                         title: message.title,
                         message: message.body,
                         icon: 'notification_icon',
