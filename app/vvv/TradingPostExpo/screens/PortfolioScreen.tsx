@@ -1,7 +1,7 @@
 import {Api} from "@tradingpost/common/api";
 import {AllWatchlists, IWatchlistGet, IWatchlistList} from "@tradingpost/common/api/entities/interfaces";
 import React, {useCallback, useEffect, useState} from "react";
-import {Animated, ScrollView, TextStyle, View} from "react-native";
+import {Animated, Pressable, ScrollView, TextStyle, View} from "react-native";
 import {AddButton, EditButton} from "../components/AddButton";
 import {Avatar, Icon, Text} from '@ui-kitten/components'
 import {ElevatedSection, Section, Subsection} from "../components/Section";
@@ -33,12 +33,13 @@ import InteractiveChart from "../components/InteractiveGraph";
 import {DashTabScreenProps, RootStackScreenProps} from "../navigation/pages";
 import {TooltipComponent} from "../components/ToolTip";
 import {useSecuritiesList} from "../SecurityList";
-import {Header} from "../components/Headers";
+import {Header, Subheader} from "../components/Headers";
 import {WatchlistItemRenderItem} from "../components/WatchlistItemRenderItem";
 import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {HoldingRenderItem} from "../components/HoldingRenderItem";
 import {TradeRenderItem} from "../components/TradeRenderItem";
 import {LimitedBlockList} from "./BlockListModalScreen";
+import { TimePeriodButton } from "../components/TimePeriodButtons";
 
 const styles = {
     stateLabel: {
@@ -75,6 +76,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
     const [twReturns, settwReturns] = useState<{ x: string, y: number }[]>();
     const [portPeriod, setPortPeriod] = useState("1Y")
     const [focus, setFocus] = useState(false);
+    const [portfolioNotifications, setPortfolioNotifications] = useState(false)
 
     useFocusEffect(useCallback(() => {
         (async () => {
@@ -83,11 +85,17 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                     Api.Watchlist.extensions.getAllWatchlists(),
                     Api.User.extensions.getHoldings({})
                 ]);
-
+                for (let h of holdings ) {
+                    console.log(h)
+                }
                 //KEeping apart for now .. seems to have an error
                 try {
                     const portfolio = await Api.User.extensions.getPortfolio({});
                     setPortfolio(portfolio);
+                    if (portfolio.accountGroupId) {
+                        const notifs = await Api.User.extensions.getPortfolioNotifications({typeId: portfolio.accountGroupId});
+                        setPortfolioNotifications(notifs.is_notification);
+                    }
                 } catch (ex) {
                     console.error(ex);
                 }
@@ -186,10 +194,13 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                             {/*<LineHolder data={twReturns} />*/}
                             <InteractiveChart data={twReturns} period={portPeriod} performance={true}/>
                         </View>
-                        <ButtonGroup key={"period"} items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({
-                            label: v,
-                            value: v
-                        }))} onValueChange={(v) => setPortPeriod(v)} value={portPeriod}/>
+                        <View style={{width: '80%'}}>
+                            <TimePeriodButton key={"period"} 
+                                              items={["1D", "1W", "1M", "3M", "1Y", "2Y", "Max"].map(v => ({ label: v, value: v }))} 
+                                              onValueChange={(v) => setPortPeriod(v)} 
+                                              value={portPeriod}
+                                              />
+                        </View>     
                         <View key={'portfolio_stats'} style={[portfolio ? {display: 'flex'} : {display: 'none'}, {
                             borderColor: "#ccc",
                             borderWidth: 1,
@@ -229,6 +240,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                                     style={{fontSize: fonts.xSmall}}>{"Return calculations are in beta. The more feedback you can provide us, the better we can do!"}</Text>
                             </View>
                         </View>
+                        
                     </ElevatedSection>
                     <Section key="holdings" alt={true} title="Holdings"
                              style={[holdings && holdings.length > 0 ? {display: 'flex'} : {display: 'none'}, {backgroundColor: AppColors.background}]}>{
@@ -251,6 +263,42 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                             }}
                         />
                     }</Section>
+                    <View style={[{justifyContent:'center', alignItems: 'center'}, holdings && holdings.length > 0 ? {display: 'flex'} : {display: 'none'}]}>
+                                    <Subheader style={{color: '#ccc'}} text="Daily Portfolio Alerts" />
+                                    <View style={{flexDirection: 'row'}}>
+                                        <Pressable onPress={async () => {
+                                            
+                                            if ( !portfolio?.accountGroupId ) return 
+                                            setPortfolioNotifications(true)
+                                            await Api.User.extensions.togglePortfolioNotifications({typeId: portfolio?.accountGroupId ,is_notification: true})
+                                        }}
+                                            style={[ { borderWidth: 1,padding:5, borderRadius: 20, marginHorizontal: 5 }, portfolioNotifications ? { borderStyle: 'solid',  borderColor: 'rgba(53, 162, 101, 1)', backgroundColor: '#F0F0F0'  } : {borderColor: 'transparent'}]}>
+                                            <Icon 
+                                                fill={"red"}
+                                                height={28}
+                                                width={28}
+                                                name="bell-outline" style={{
+                                                    height: 28,
+                                                    width: 28
+                                                }}/> 
+                                        </Pressable>
+                                        <Pressable onPress={async () => {
+                                            if ( !portfolio?.accountGroupId ) return 
+                                            setPortfolioNotifications(false)
+                                            await Api.User.extensions.togglePortfolioNotifications({typeId: portfolio?.accountGroupId ,is_notification: false})
+                                            }}
+                                            style={[ { borderWidth: 1,padding:5, borderRadius: 20, marginHorizontal: 5 }, !portfolioNotifications  ? { borderStyle: 'solid',  borderColor: 'rgba(53, 162, 101, 1)', backgroundColor: '#F0F0F0'  } : {borderColor: 'transparent'}]}>
+                                            <Icon 
+                                                fill={"grey"}
+                                                height={28}
+                                                width={28}
+                                                name="bell-off-outline" style={{
+                                                    height: 28,
+                                                    width: 28
+                                                }}/>
+                                        </Pressable>
+                                    </View>
+                                </View>
                     <Section key="trades" alt={true} title="Trades"
                              style={[!(holdings && twReturns && portfolio) ? {display: 'none'} : {display: 'flex'}, {backgroundColor: AppColors.background}]}>
                         <LimitedBlockList

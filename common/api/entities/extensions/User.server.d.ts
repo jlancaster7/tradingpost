@@ -202,6 +202,29 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<{}>;
+    getPortfolioNotifications: (req: {
+        body: {
+            typeId: number;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<{
+        is_notification: boolean;
+    }>;
+    togglePortfolioNotifications: (req: {
+        body: {
+            typeId: number;
+            is_notification: boolean;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<{}>;
 } & {
     get?: ((i: any, extra: {
         userId: string;

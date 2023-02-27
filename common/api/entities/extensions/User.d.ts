@@ -83,4 +83,13 @@ export default class User extends Extension {
     }>;
     getBlocked: (settings?: undefined) => Promise<IUserList[]>;
     testNotifcation: (settings?: undefined) => Promise<{}>;
+    getPortfolioNotifications: (settings: {
+        typeId: number;
+    }) => Promise<{
+        is_notification: boolean;
+    }>;
+    togglePortfolioNotifications: (settings: {
+        typeId: number;
+        is_notification: boolean;
+    }) => Promise<{}>;
 }

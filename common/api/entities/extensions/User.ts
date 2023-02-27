@@ -24,4 +24,6 @@ export default class User extends Extension {
     getBlocked = this._makeFetch<undefined, IUserList[]>("getBlocked", this._defaultPostRequest)
     //We can lock this down to prevent abuse if we need to
     testNotifcation = this._makeFetch<undefined, {}>("testNotifcation", this._defaultPostRequest)
+    getPortfolioNotifications = this._makeFetch<{typeId: number}, {is_notification: boolean}>("getPortfolioNotifications", this._defaultPostRequest)
+    togglePortfolioNotifications = this._makeFetch<{typeId: number, is_notification: boolean}, {}>("togglePortfolioNotifications", this._defaultPostRequest)
 }
