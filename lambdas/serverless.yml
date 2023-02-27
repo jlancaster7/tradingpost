@@ -97,8 +97,8 @@ functions:
           enabled: true
 
   ###### Generate Robinhood Data Collection Tasks
-  generate-robinhood-tasks:
-    handler: brokerage/generate-robinhood-tasks.run
+  generate-brokerage-tasks:
+    handler: brokerage/generate-brokerage-tasks.run
     description: Generates tasks for brokerage to process
     logRetentionInDays: 14
     timeout: 900

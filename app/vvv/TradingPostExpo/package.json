@@ -35,7 +35,6 @@
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
     "@tradingpost/common": "^1.10.0",
-    "@tradingpost/react-native-webview": "^11.23.0",
     "@types/pell": "^1.0.1",
     "@ui-kitten/components": "^5.1.2",
     "@ui-kitten/eva-icons": "^5.1.2",
