@@ -105,9 +105,10 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
                 //                (selectedItems[a.id] ? -1 : -1)
             });
 
-            const gap = Array.from({ length: numItemsPerRow - (items.length % numItemsPerRow) }, () => empty);
-            if (gap.length !== 4)
-                items.push(...gap);
+            //const gap = Array.from({ length: numItemsPerRow - (items.length % numItemsPerRow) }, () => empty);
+            
+            //if (gap.length !== 4)
+            //    items.push(...gap);
             // @ts-ignore
             setData(items.filter(a => a.symbol !== 'GOOGL'))
             setDatasetKey(searchText);
@@ -132,6 +133,7 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
             <List
                 numColumns={numItemsPerRow}
                 data={data}
+                noDataMessage={'No Companies Found!'}
                 datasetKey={datasetKey ? datasetKey : data.filter(d => d !== empty).length}
                 renderItem={(i) => {
                     return <SecurityCell
