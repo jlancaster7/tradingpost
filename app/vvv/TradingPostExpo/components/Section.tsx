@@ -1,7 +1,7 @@
 import React, { ReactElement, ReactNode } from 'react'
 import { View, ViewProps, ViewStyle } from 'react-native';
 
-import { elevated, sizes } from '../style';
+import { elevated, sizes, shaded } from '../style';
 import { Header, Subheader } from './Headers'
 
 interface SecitonProps {
@@ -33,5 +33,9 @@ export function Subsection(props: Omit<SecitonProps, 'useSubHeading'>) {
 
 export const ElevatedSection = (props: Parameters<typeof Section>[0]) => {
     const style = [[elevated, { paddingHorizontal: sizes.rem1 }], props.style]
+    return <Section {...props} style={style} />
+}
+export const ShadedSection = (props: Parameters<typeof Section>[0]) => {
+    const style = [[shaded, { paddingHorizontal: sizes.rem1 }], props.style]
     return <Section {...props} style={style} />
 }

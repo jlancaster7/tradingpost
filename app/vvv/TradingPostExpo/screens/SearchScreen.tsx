@@ -16,6 +16,7 @@ import {PrimaryChip} from '../components/PrimaryChip'
 import {isNotUndefinedOrNull} from "../utils/validators";
 import { DashTabScreenProps } from "../navigation/pages";
 import { CompanyProfileBar } from "../components/CompanyProfileBar";
+import { AppColors } from "../constants/Colors";
 
 
 export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
@@ -99,8 +100,8 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
         else if (props.route.params.watchlistId) setWatchlistId(props.route.params.watchlistId)
     }, [props.route.params.beginDateTime, props.route.params.endDateTime, props.route.params.searchTerms, props.route.params.watchlistId, props.route.params.isHoldings])
     return (
-        <View style={[flex, { backgroundColor: "#F7f8f8" }]}>
-            <View style={{width: '90%', alignSelf: 'center', marginBottom: sizes.rem0_5}}>
+        <View style={[flex, { backgroundColor: AppColors.background }]}>
+            <View style={{width: '90%', alignSelf: 'center', marginVertical: sizes.rem1 }}>
                 <SearchBar 
                     text={tempSearchText}
                     placeholder="Search... ($AAPL, Tim, Tesla, etc.)"
@@ -151,50 +152,46 @@ export const SearchScreen = (props: DashTabScreenProps<'Search'>) => {
             <FlatList
                 data={[
                     <View key={`id_${(people?.length || 0) + (searchSecurities?.length || 0)}`} style={{ marginLeft: sizes.rem1}}>            
-                    <View style={[people?.length ? {display: 'flex'} : {display: 'none'}, ]}>
-                        <Header text="Analysts" />
-                        <List
-                            listKey="people"
-                            datasetKey={`people_id_${people?.length}`}
-                            horizontal
-                            data={people}
-                            loadingMessage={" "}
-                            noDataMessage={" "}
-                            loadingItem={undefined}
-                            renderItem={(item) => {
-                                return <ElevatedSection title="" style={{flex: 1}}>
-                                    <ProfileBar user={item.item} style={{marginBottom:-sizes.rem0_5}} />
-                                </ElevatedSection>
-                            }}
-                        />
-                    </View>
-                    <View style={[searchSecurities?.length ? {display: 'flex'} : {display: 'none'}]}>
-                        <Header text="Companies"/>
-                        <List
-                            key={`objKey_${searchSecurities?.length}`}
-                            listKey={`companies_${searchSecurities?.length}`}
-                            datasetKey={`company_id_${searchSecurities?.length}`}
-                            horizontal
-                            data={searchSecurities}
-                            loadingMessage={" "}
-                            noDataMessage={" "}
-                            loadingItem={undefined}
-                            renderItem={(item) => {
-                                return (
-                                    <ElevatedSection title="" style={[{flex: 1, marginBottom: sizes.rem1 / 2, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}]}>
-                                        <CompanyProfileBar symbol={item.item.symbol}
-                                                           companyName={item.item.company_name} 
-                                                           imageUri={item.item.logo_url}
-                                                           secId={item.item.id}
-                                                           />
+                        <View style={[people?.length ? {display: 'flex', marginBottom: sizes.rem0_5} : {display: 'none'}, ]}>
+                            <List
+                                listKey="people"
+                                datasetKey={`people_id_${people?.length}`}
+                                horizontal
+                                data={people}
+                                loadingMessage={" "}
+                                noDataMessage={" "}
+                                loadingItem={undefined}
+                                renderItem={(item) => {
+                                    return <ElevatedSection title="" style={{flex: 1}}>
+                                        <ProfileBar user={item.item} style={{marginBottom:-sizes.rem0_5}} />
                                     </ElevatedSection>
-                                )
-                            }}
-                        />
-                    </View>
-                    <View style={[searchText.length ? {display: 'flex'} : {display: 'none'}]}>
-                        <Header text="Posts" />
-                    </View>
+                                }}
+                            />
+                        </View>
+                        <View style={[searchSecurities?.length ? {display: 'flex', marginBottom: sizes.rem0_5} : {display: 'none'}]}>
+                            <List
+                                key={`objKey_${searchSecurities?.length}`}
+                                listKey={`companies_${searchSecurities?.length}`}
+                                datasetKey={`company_id_${searchSecurities?.length}`}
+                                horizontal
+                                data={searchSecurities}
+                                loadingMessage={" "}
+                                noDataMessage={" "}
+                                loadingItem={undefined}
+                                renderItem={(item) => {
+                                    return (
+                                        
+                                            <CompanyProfileBar symbol={item.item.symbol}
+                                                            companyName={item.item.company_name} 
+                                                            imageUri={item.item.logo_url}
+                                                            secId={item.item.id}
+                                                            makeShadedSec
+                                                            />
+                                        
+                                    )
+                                }}
+                            />
+                        </View>
                     </View>,
                     <View>
                         {(searchText.length) ? <FeedPart dateRange={dateRange} searchTerms={searchText} /> : <NoDataPanel message={'Search for Analysts, Posts, or Companies!'} />}

@@ -252,11 +252,87 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                     <ElevatedSection title={""}>
                         <View style={[row, flex]}>
                             <ProfileBar style={flex} user={watchlist?.user[0]}/>
-                            <View style={{width: '30%', alignItems: 'center', justifyContent: 'center'}}>
-                                <PrimaryChip style={{width: '80%'}} isAlt key={watchlist?.id}
-                                             label={watchlist?.type ? watchlist.type.slice(0, 1).toUpperCase() + watchlist.type.slice(1) : ''}/>
+                            {watchlist?.user[0].id === appUser?.id ?
+                            <View style={{width: '15%', alignItems: 'center', justifyContent: 'center'}}>
+                                {watchlist?.type === 'public' ?  
+                                            <Icon 
+                                                fill={"green"}
+                                                height={24}
+                                                width={24}
+                                                name="unlock-outline" style={{
+                                                    height: 24,
+                                                    width: 24
+                                                }}/> :
+                                            <Icon 
+                                                fill={"red"}
+                                                height={24}
+                                                width={24}
+                                                name="lock-outline" style={{
+                                                    height: 24,
+                                                    width: 24
+                                                }}/>}
                             </View>
-                            <View style={{width: '10%', alignItems: 'center', justifyContent: 'center'}}>
+                            : undefined}
+                            {watchlist?.user[0].id === appUser?.id ?
+                            <View style={{width: '15%', alignItems: 'center', justifyContent: 'center'}}>
+                                {watchlist?.is_notification  ?  
+                                            <Icon 
+                                                fill={"red"}
+                                                height={24}
+                                                width={24}
+                                                name="bell-outline" style={{
+                                                    height: 24,
+                                                    width: 24
+                                                }}/> :
+                                            <Icon 
+                                                fill={"grey"}
+                                                height={24}
+                                                width={24}
+                                                name="bell-off-outline" style={{
+                                                    height: 24,
+                                                    width: 24
+                                                }}/>}
+                            </View> : 
+                            
+                            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+                                <Pressable onPress={() => {
+                                    if (!watchlistId || notificationToggle ) return;
+                                    Api.Watchlist.extensions.toggleNotification({
+                                        id: watchlistId,
+                                        is_notification: true
+                                    })
+                                    setNotificationToggle(true);
+                                }}
+                                    style={[ { borderWidth: 1,padding:5, borderRadius: 20, marginHorizontal: 5 }, notificationToggle ? { borderStyle: 'solid',  borderColor: 'rgba(53, 162, 101, 1)', backgroundColor: '#F0F0F0'  } : {borderColor: 'transparent'}]}>
+                                    <Icon 
+                                        fill={"red"}
+                                        height={24}
+                                        width={24}
+                                        name="bell-outline" style={{
+                                            height: 24,
+                                            width: 24
+                                        }}/> 
+                                </Pressable>
+                                <Pressable onPress={() => {
+                                    if (!watchlistId || !notificationToggle ) return;
+                                    Api.Watchlist.extensions.toggleNotification({
+                                        id: watchlistId,
+                                        is_notification: false
+                                    })
+                                    setNotificationToggle(false);
+                                    }}
+                                    style={[ { borderWidth: 1,padding:5, borderRadius: 20, marginHorizontal: 5 }, !notificationToggle  ? { borderStyle: 'solid',  borderColor: 'rgba(53, 162, 101, 1)', backgroundColor: '#F0F0F0'  } : {borderColor: 'transparent'}]}>
+                                    <Icon 
+                                        fill={"grey"}
+                                        height={24}
+                                        width={24}
+                                        name="bell-off-outline" style={{
+                                            height: 24,
+                                            width: 24
+                                        }}/>
+                                </Pressable>
+                            </View>}
+                            <View style={{width: '15%', alignItems: 'flex-end', justifyContent: 'center'}}>
                                 {watchlist?.user[0].id === appUser?.id ?
                                     <EditButton
                                         height={24}
@@ -299,27 +375,6 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                         </Text>
                     </ElevatedSection>
                 </View>,
-                <SwitchField
-                    label='Enable Notifications'
-                    checked={notificationToggle}
-                    onChange={async () => {
-                        if (!watchlistId ) return;
-                        Api.Watchlist.extensions.toggleNotification({
-                            id: watchlistId,
-                            is_notification: !notificationToggle
-                        })
-                        setNotificationToggle(!notificationToggle);
-                    }}
-                    viewStyle={{
-                        flexDirection: 'row-reverse',
-                        justifyContent: 'space-between',
-                        paddingHorizontal: sizes.rem1_5,
-                        paddingBottom: sizes.rem0_5,
-                        backgroundColor: AppColors.background
-                    }}
-                    toggleStyle={{}}
-                    textStyle={{alignSelf: 'center'}}>
-                </SwitchField>,
                 <View style={[
                     //collapsed ? {display: 'none'} : {display: 'flex'},
                     {paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background}]}>
@@ -338,14 +393,14 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                                 const symbol = item.item.symbol;
                                 const hideEmptyNote = watchlist?.user[0].id !== appUser?.id
                                 return (
-                                    <WatchlistItemRenderItem
-                                        item={item}
-                                        bySymbol={bySymbol}
-                                        byId={byId}
-                                        hideEmptyNote={hideEmptyNote}
-                                        setShownMap={setShownMap}
-                                        shownMap={shownMap}
-                                        watchlist={watchlist}/>
+                                        <WatchlistItemRenderItem
+                                            item={item}
+                                            bySymbol={bySymbol}
+                                            byId={byId}
+                                            hideEmptyNote={hideEmptyNote}
+                                            setShownMap={setShownMap}
+                                            shownMap={shownMap}
+                                            watchlist={watchlist}/>
                                 )
                             }}
                         />
@@ -402,6 +457,27 @@ export const NoteEditor = (props: { canEdit: boolean, note: string | undefined, 
 
 }
 /*
+<SwitchField
+    label='Enable Notifications'
+    checked={notificationToggle}
+    onChange={async () => {
+        if (!watchlistId ) return;
+        Api.Watchlist.extensions.toggleNotification({
+            id: watchlistId,
+            is_notification: !notificationToggle
+        })
+        setNotificationToggle(!notificationToggle);
+    }}
+    viewStyle={{
+        flexDirection: 'row-reverse',
+        justifyContent: 'space-between',
+        paddingHorizontal: sizes.rem1_5,
+        paddingBottom: sizes.rem0_5,
+        backgroundColor: AppColors.background
+    }}
+    toggleStyle={{}}
+    textStyle={{alignSelf: 'center'}}>
+</SwitchField>,
 class WrappedView extends Component<finishedLoadingProp> {
     finishedLoading: boolean;
     constructor(props: finishedLoadingProp) {

@@ -75,8 +75,68 @@ export const elevated =
         marginBottom: 16,
         ...shadow
     }
-
-
+export const shaded =
+    {
+        marginHorizontal: 2,
+        paddingVertical: 8,
+        //backgroundColor: "white",
+        //borderColor: "#ccc",
+        //borderWidth: 1,
+        borderRadius: 8,
+        marginBottom: 16,
+        //...shadow
+    }
+export const companyProfileStyle = {
+    upColor: '#1AA457',
+    downColor: '#D81222',
+    upBackgroundColor: 'rgba(53,162,101, 0.2)',
+    downBackgroundColor: 'rgba(216,18,34, 0.2)',
+    ticker: {
+        fontWeight: '500',
+        color: '#969696'
+    },
+    name: {
+        fontWeight: '400',
+        color: 'black'
+    },
+    pctChg: {
+        fontWeight: '500',
+    },
+    price: {
+        fontWeight: '400'
+    }
+}
+export const companyProfileStyle1 = {
+    upColor: '#1AA457',
+    downColor: '#D81222',
+    ticker: {
+        fontWeight: '500',
+        color: '#9D9D9D'
+    },
+    name: {
+        fontWeight: '400'
+    },
+    pctChg: {
+        fontWeight: '500',
+    },
+    price: {
+        fontWeight: '400'
+    }
+}
+export const companyProfileContentSizes = {
+        medium: {
+            avatarSize: 'medium',
+            symbolSize: fonts.xSmall,
+            nameSize: fonts.xSmall + 2,
+            pxSize: fonts.xSmall + 2
+        },
+        large: {
+            avatarSize: 'giant',
+            symbolSize: fonts.small,
+            nameSize: fonts.small + 2,
+            pxSize: fonts.small + 2
+        }
+    }
 export const chartColors = [
     '#2dadf4',
     '#f5523b',

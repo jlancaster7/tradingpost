@@ -6,7 +6,7 @@ import { AppColors } from '../constants/Colors';
 
 export function Header(props: { text: string, style?: TextStyle }) {
     return <Text
-        style={[{ color: AppColors.primary, fontSize: fonts.large, marginBottom: sizes.rem0_5 }, props.style]}
+        style={[{ color: AppColors.primary, fontSize: fonts.medium, marginBottom: sizes.rem0_5 }, props.style]}
     >{props.text}{ }</Text>
 }
 

@@ -1,17 +1,19 @@
 import React, { MutableRefObject, useEffect, useRef, useState } from "react";
-import { Pressable, View, ViewStyle, Text } from "react-native";
+import { Pressable, View, ViewStyle, Text, TextStyle } from "react-native";
 import { useSecuritiesList } from '../SecurityList'
 import { SearchBar } from "./SearchBar";
 import { Interface } from "@tradingpost/common/api"
 import { ISecurityList } from "@tradingpost/common/api/entities/interfaces";
 import { Avatar, Icon } from "@ui-kitten/components";
 import { List } from "./List";
-import { flex } from "../style";
+import { companyProfileContentSizes, companyProfileStyle, flex, sizes } from "../style";
 import { KeyboardAvoidingInput } from "./KeyboardAvoidingInput";
 import { useIsKeyboardVisible } from "../utils/hooks";
+import { ElevatedSection } from "./Section";
+import { FontWeight } from "react-native-svg";
 
-const cellStyle = { flexGrow: 1, aspectRatio: 1, justifyContent: "center", marginVertical: 4, alignItems: "center", flexBasis: 20 } as ViewStyle;
-const numItemsPerRow = 4;
+
+const numItemsPerRow = 3;
 //TODO: Need to optimize security load
 const empty = {};
 type SecOrEmpty = ISecurityList | {};
@@ -69,7 +71,7 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
         delayRef.current = setTimeout(() => {
 
             const items: (ISecurityList | {})[] = securities.filter((s, i) =>
-                (!searchText && (i < 25 || selectedItems[s.id])) ||
+                (!searchText && (i < 15 || selectedItems[s.id])) ||
                 ((searchText.length >= 3 && new RegExp(searchText, "gi").test(s.security_name))) ||
                 (searchText.length && (new RegExp(searchText, "gi")).test(s.symbol))
             ).sort((a, b) => {
@@ -91,7 +93,6 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
                                     return 1
                                 else
                                     return a.symbol.localeCompare(b.symbol)
-
                             }
                             else
                                 return a.symbol.localeCompare(b.symbol)
@@ -99,12 +100,7 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
                         else
                             return 0
                     })()
-
-
-
                 }
-
-
                 //? a.symbol.localeCompare(b.symbol) : 
                 //                (selectedItems[a.id] ? -1 : -1)
             });
@@ -121,9 +117,9 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
 
 
     return <View
-        style={flex}
+        style={[flex]}
     >
-        <View style={{ padding: 8 }}>
+        <View style={{ marginBottom: sizes.rem1 }}>
             <KeyboardAvoidingInput
                 value={searchText}
                 displayButton={false}
@@ -148,8 +144,6 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
                                     selectedClone[i.item.id] = true;
                                 else
                                     delete selectedClone[i.item.id];
-
-
                                 props.onSelectedItemschanged(selectedClone)
                                 //setSelectedItems(selectedClone);
                                 return true
@@ -167,26 +161,44 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
 const isSec = (item: SecOrEmpty): item is ISecurityList => {
     return item !== empty;
 }
-
+//padding: 0, borderRadius: 30, flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center'
+const cellStyle = { flexGrow: 1, zjustifyContent: "center", marginVertical: 0, alignItems: "center", flexBasis: 20 } as ViewStyle;
 const SecurityCell = (props: { item: ISecurityList | {}, isSelected: boolean, onPressed: (isSelected: boolean) => boolean }) => {
     const { item, onPressed, isSelected } = props;
     const [innerSelected, setInnerSelected] = useState(isSelected)
 
     return <Pressable
-        onPress={() => {
-            if (onPressed(!innerSelected)) {
-                setInnerSelected(!innerSelected);
-            }
-        }}
-        style={cellStyle}>
-        {isSec(item) ? <><View>
-            <Avatar shape='square' source={{ uri: item.logo_url }} size="large" style={{ }} resizeMode={'contain'} />
-            {innerSelected && <View style={{ position: "absolute", width: "40%", aspectRatio: 1, zIndex: 50000, right: "-10%", bottom: "-10%" } as ViewStyle}>
+                onPress={() => {
+                    if (onPressed(!innerSelected)) {
+                        setInnerSelected(!innerSelected);
+                    }
+                }}
+                style={cellStyle}
+                >
+        {isSec(item) ? <><ElevatedSection title="" style={{ borderRadius: 8, flexDirection: 'row', paddingHorizontal: 8 }}>               
+                    <Avatar
+                        style={{}}
+                        resizeMode={'cover'}
+                        size={'small'}
+                        shape="rounded"
+                        source={{uri: item.logo_url}}
+                        />
+                    <View style={{flex: 1, marginLeft: 6,alignItems: 'center', justifyContent: 'center'}}>
+                        <View style={{width: '100%', flexDirection: 'column-reverse',alignItems: 'flex-start', justifyContent: 'center'}}>
+                            <Text style={{  fontWeight: companyProfileStyle.ticker.fontWeight, fontSize: companyProfileContentSizes['medium'].symbolSize, color:  companyProfileStyle.ticker.color}}>
+                                {item.symbol ? (item.symbol === 'USD:CUR' ? '' : item.symbol) : ''}
+                            </Text>
+                            {<Text style={{width: '100%', marginLeft: 0, overflow: 'hidden', fontSize: companyProfileContentSizes['medium'].nameSize, fontWeight: companyProfileStyle.name.fontWeight, color: companyProfileStyle.name.color}} numberOfLines={1}>
+                                {item.symbol ? (item.symbol === 'USD:CUR' ? 'Cash' : item.company_name || '') : ''}
+                            </Text>}
+                        </View>
+                        {innerSelected && <View style={{ position: "absolute", width: "40%", aspectRatio: 1, zIndex: 50000, right: "-10%", bottom: "-10%" } as ViewStyle}>
                 <View style={{ backgroundColor: "white", position: "absolute", left: "25%", top: "25%", height: "50%", width: "50%" }} />
                 <Icon name="checkmark-circle-2" fill="green" style={{ height: "100%", width: "100%" }} />
             </View>}
-        </View>
-            <Text>{item.symbol}</Text>
+                        
+                    </View>
+                </ElevatedSection>
         </> : null
         }
     </Pressable>

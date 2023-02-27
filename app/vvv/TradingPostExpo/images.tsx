@@ -107,6 +107,7 @@ export const BookmarkActive = makeExpoSvg(_BookmarkActive);
 export const BookmarkActiveBlue = makeExpoSvg(_BookmarkActiveBlue);
 export const PremiumStar = makeExpoSvg(_PremiumStar);
 export const ErrorIcon = makeExpoSvg(_ErrorIcon);
+export const WatchlistIcon = makeExpoSvg(Watchlist);
 
 export const EllipsesIcon = makeExpoSvg(_EllipsesIcon);
 

@@ -21,7 +21,6 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useSecuritiesList } from "../SecurityList";
 import { Header } from "../components/Headers";
 import { AppColors } from "../constants/Colors";
-import { SwitchField } from "../components/SwitchField";
 
 export const WatchlistScreen = (props: any) => {
     const nav = useNavigation();
@@ -70,7 +69,7 @@ export const WatchlistScreen = (props: any) => {
         <FlatList
             listKey="top_level_watchlist"
             data={[
-                <View key={'quickwatchlist'}>
+                <View key={'quickwatchlist'} style={{marginBottom: sizes.rem1}}>
                     <View style={{flex: 1, flexDirection: 'row'}}>
                         <Header key={"quick_watch"} text="Quick Watch" style={{flex: 1}}/>
                         <View style={{marginHorizontal: 6, justifyContent: 'center'}}> 
@@ -104,7 +103,7 @@ export const WatchlistScreen = (props: any) => {
                     loadingItem={undefined}
                     numColumns={2}
                     data={quickWatchlist?.items}
-                    renderItem={(item) => {                        
+                    renderItem={(item) => {
                         return (
                             <WatchlistItemRenderItem
                                 item={item}
@@ -118,26 +117,9 @@ export const WatchlistScreen = (props: any) => {
                         )
                     }}
                 />
-                {quickWatchlist ? <SwitchField
-                    label='Enable Notifications'
-                    checked={notificationToggle}
-                    onChange={async () => {
-                        if (!quickWatchlist?.id ) return;
-                        Api.Watchlist.extensions.toggleNotification({
-                            id: quickWatchlist?.id,
-                            is_notification: !quickWatchlist?.is_notification
-                        })
-                        setNotificationToggle(!notificationToggle);
-                    }}
-                    viewStyle={{
-                        flexDirection: 'row-reverse', justifyContent: 'space-between', paddingHorizontal: sizes.rem1_5, paddingTop: sizes.rem0_5, paddingBottom: sizes.rem0_5, backgroundColor: AppColors.background
-                    }}
-                    toggleStyle={{}}
-                    textStyle={{alignSelf: 'center'}}>
-                </SwitchField> : undefined}
             </View>,
             <WatchlistSection
-                datasetKey={`my_watchlist_${watchlists?.created.length}`}
+                //datasetKey={`my_watchlist_${watchlists?.created.length}`}
                 title="My Watchlists"
                 key={`my_watchlist${watchlists?.created.length}`}
                 watchlists={watchlists?.created}
@@ -145,12 +127,12 @@ export const WatchlistScreen = (props: any) => {
                 hideNoteOnEmpty
             />,
             <WatchlistSection
-                datasetKey={`shared_watchlist_${watchlists?.saved.length}`}
-                title="Shared Watchlists"
+                //datasetKey={`shared_watchlist_${watchlists?.saved.length}`}
+                title="Followed Watchlists"
                 key={`shared_watchlist${watchlists?.saved.length}`}
                 watchlists={watchlists?.saved}
                 shared
-            />
+            />,
             ]}
             renderItem={(info) => {
                 return info.item;

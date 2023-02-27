@@ -74,7 +74,7 @@ export function TextField(props: {
                 {
                     color: "red"
                 }]}  >{props.markRequired ? "*" : ""}</Text>}</Text> :
-                <Text></Text>
+                <Text style={{height: 0}}></Text>
         }}
         onChangeText={(t) => {
             setValueTracker(t);

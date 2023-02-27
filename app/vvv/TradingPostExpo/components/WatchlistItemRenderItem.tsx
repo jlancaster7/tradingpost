@@ -16,24 +16,14 @@ export const WatchlistItemRenderItem = (props: {item: any, bySymbol: any, byId: 
     const symbol = item.item.symbol || '';
     const secId = bySymbol[symbol] ? bySymbol[symbol].id : 0;
     return (
-        <ElevatedSection title="" style={[{flex: 1, marginBottom: sizes.rem1 / 2, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}, props.item.index % 2 === 0 ? {marginRight: sizes.rem1 / 4} : {marginLeft: sizes.rem1 / 4}]}>
+        
             <CompanyProfileBar symbol={symbol}
                             companyName={byId[secId] ? byId[secId].company_name : ''} 
                             imageUri={byId[secId] ? byId[secId].logo_url  : undefined}
                             secId={secId}
+                            makeShadedSec
                             />
-            <View>
-                {shownMap && watchlist && shownMap[item.index]  ?
-                    <NoteEditor note={item.item.note} 
-                                onChangeNote={(note) => {
-                                    item.item.note = note;
-                                }} 
-                                canEdit={!hideEmptyNote} 
-                                ticker={symbol} 
-                                watchlistId={watchlist.id} /> 
-                                : null
-                                }
-            </View>
-        </ElevatedSection>
+            
+        
     )
 }

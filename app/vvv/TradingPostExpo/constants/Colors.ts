@@ -19,7 +19,8 @@ export default {
 };
 
 export const AppColors  = {
-  primary : "#11146F",
+  primaryShaded : "#11146F",
+  primary : "rgba(17, 20, 111, 0.6)",
   secondary:"#35A265",
   background :"#F7f8f8"
 }

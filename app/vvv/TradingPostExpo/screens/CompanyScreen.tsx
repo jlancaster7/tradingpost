@@ -14,6 +14,8 @@ import { FeedPart } from "./FeedScreen";
 import { RootStackScreenProps } from "../navigation/pages";
 import { AppColors } from "../constants/Colors";
 import { CompanyProfileBar } from "../components/CompanyProfileBar";
+import { TimePeriodButton } from "../components/TimePeriodButtons";
+import { VictoryStockChart } from "../components/VictoryStockChart";
 
 const periods: { [key: string]: number } = {
     "1D": 1,
@@ -30,7 +32,8 @@ const tabBarMargin = sizes.rem1;
 export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
 
     const [security, setSecurity] = useState<Interface.ISecurityGet>();
-    const [securityPrices, setSecurityPrices] = useState<{ x: string, y: number }[]>();
+    const [securityPrices, setSecurityPrices] = useState<{open: number, high: number, low: number, close: number, x: Date}[]>([]);
+    const [chartPrices, setChartPrices] = useState<{open: number, high: number, low: number, close: number, x: Date}[]>([]);
     const { securityId } = props.route.params
     const toast = useToast();
     const [isFav, setIsFav] = useState(false);
@@ -49,16 +52,22 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
             .catch((ex) => toast.show(ex.message))
         Api.Security.extensions.getPrices({ securityId: securityId, includeIntraday: false, includeHistorical: true })
             .then((p) => {
-                const prices = p.historical.slice(p.historical.length - periods[portPeriod]).map((a: any) => {
-                    return { x: a.date, y: a.close }
+                //const prices = p.historical.slice(p.historical.length - periods[portPeriod]).map((a: any) => {
+                //    return { x: a.date, y: a.close }
+                //})
+                const prices = p.historical.map((a: any) => {
+                    return { x: new Date(a.date), open: a.open, high: a.high, low: a.low, close: a.close }
                 })
-                setSecurityPrices(prices);
-
+                setSecurityPrices(prices)
+                setChartPrices(prices.slice(prices.length - periods[portPeriod]))
             })
             .catch((ex) => toast.show(ex.message))
 
-    }, [securityId, portPeriod])
-    const pxChange =  security?.price?.price || security?.price?.open ? (security?.price?.price - security?.price?.open) / security?.price?.open : 0
+    }, [securityId])
+    useEffect(() => {
+        setChartPrices(securityPrices.slice(securityPrices.length - (periods[portPeriod])))
+    }, [portPeriod])
+    //const pxChange =  security?.price?.price || security?.price?.open ? (security?.price?.price - security?.price?.open) / security?.price?.open : 0
     return <View style={flex}>
         <Animated.FlatList
             data={[
@@ -70,7 +79,7 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                         { paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background }]}>
                         <ElevatedSection key={"Company"} title="">
                             <View style={{flexDirection: 'row'}}>
-                                <View style={{flex: 1}}>
+                                <View style={{flex: 1, marginBottom: sizes.rem1}}>
                                     <CompanyProfileBar symbol={security?.symbol}
                                                        companyName={security?.company_name} 
                                                        imageUri={security?.logo_url}
@@ -88,7 +97,18 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                                     }
                                 }} />
                            </View>
-                            <View style={[row, { marginVertical: sizes.rem0_5 }]}>
+                           
+                            <View style={{ marginBottom: sizes.rem1 }} >
+                                <InteractiveChart data={chartPrices.map(a => {return {x: a.x, y: a.close}})} performance={false} />
+                                {/*chartPrices.length ? <VictoryStockChart data={chartPrices}/> : undefined*/}
+                            </View>
+                            <TimePeriodButton key={"period"} 
+                                items={["1D", "1W", "1M", "3M", "1Y", "5Y", "Max"].map(v => ({ label: v, value: v }))} 
+                                onValueChange={(v) => setPortPeriod(v)} 
+                                value={portPeriod} 
+                                style={{width: '70%'}}
+                            />
+                             <View style={[row, { marginVertical: sizes.rem0_5 }]}>
                                 <Text style={flex} category={"label"}>Open</Text>
                                 <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.price?.open)}</Text>
                                 <Text style={flex} category={"label"}>52 Wk High</Text>
@@ -100,15 +120,6 @@ export const CompanyScreen = (props: RootStackScreenProps<"Company">) => {
                                 <Text style={flex} category={"label"}>52 Wk Low</Text>
                                 <Text style={flex} category={"c1"}>{toDollarsAndCents(security?.week_52_low)}</Text>
                             </View>
-                            <View style={{ marginBottom: sizes.rem1 }} >
-                                <InteractiveChart data={securityPrices} performance={false} />
-                            </View>
-                            <ButtonGroup key={"period"} 
-                                items={["1D", "1W", "1M", "3M", "1Y", "5Y", "Max"].map(v => ({ label: v, value: v }))} 
-                                onValueChange={(v) => setPortPeriod(v)} 
-                                value={portPeriod} 
-                            />
-                            <Text numberOfLines={5} style={{}}>{description}</Text>
                         </ElevatedSection >
                     </View>
                     <View style={[

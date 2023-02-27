@@ -1,3 +1,4 @@
+import { Api } from "@tradingpost/common/api";
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { Interface } from "@tradingpost/common/api"
 import { IWatchlistList } from "@tradingpost/common/api/entities/interfaces"
@@ -11,43 +12,56 @@ import { AddButton } from "./AddButton"
 import { List } from "./List"
 import { ElevatedSection, Section } from "./Section"
 import { ITableColumn, Table } from "./Table"
+import { useSecuritiesList } from "../SecurityList";
+import { OverlappingIconList } from "./OverlappingIconList";
+import { Avatar, Icon } from "@ui-kitten/components";
+
 
 
 export function WatchlistSection(props: { title: string, watchlists: Interface.IWatchlistList[] | undefined, showAddButton?: boolean, shared?: boolean, hideNoteOnEmpty?: boolean, datasetKey?: string }) {
     const nav = useNavigation<any>();
-    const [focus, setFocus] = useState(false);
-    useFocusEffect(useCallback(()=> {
-        setFocus((f) => !f)
-    },[]))
-    const fields: ITableColumn<IWatchlistList>[] = !props.shared ?
-        [{ field: "name", alias: "Name", align: "left" },
-        { field: "item_count", alias: "# Stocks" },
-        { field: "saved_by_count", alias: "# Follows" },
-        { field: "type", alias: "Visability" }] :
+    const {title, watchlists, shared} = props
+    const [watchlistListData, setWatchlistListData] = useState<{id: number,name: string,  logoUriList: string[], type: string, isNotification: boolean, userHandle: string, userImageUri: string}[]>([])
+    const { securities: { bySymbol, byId } } = useSecuritiesList();
 
-        [{ field: "name", alias: "Name", align: "left" },
-        {field: "user", align: "left", alias: "Analyst", stringify: (user: IWatchlistList["user"], key, item) => {return user[0].handle}}]
+    useEffect(() => {
+        (async () => {
+            if (watchlists && watchlists.length) {
+                const tempList: any[] = [];
+                for (let w of watchlists) {
+                    const watchlist = await Api.Watchlist.get(w.id)
+                    const itemList = watchlist.items.filter(a => bySymbol[a.symbol] !== undefined)
+                    
+                    tempList.push({
+                        id: w.id,
+                        name: w.name,
+                        logoUriList: itemList.map(a => bySymbol[a.symbol].logo_url),
+                        type: w.type,
+                        isNotification: watchlist.is_notification,
+                        userHandle: w.user[0].handle,
+                        userImageUri: w.user[0].profile_url
+                    })
+                }
+                setWatchlistListData(tempList)
+            }
+            
+        })()
+    }, [])
+
+
+
     const { column, shownMap } = useNoteField(props.hideNoteOnEmpty);
     return <Section title={props.title} style={{backgroundColor: AppColors.background}} button={props.showAddButton ? (p) => <View style={{marginHorizontal: 6}}><AddButton height={30} width={30} onPress={() => {
         nav.navigate("WatchlistEditor")
     }} /></View> : undefined}>
         <List 
-            datasetKey={`${props.datasetKey ? props.datasetKey : props.watchlists?.length}`}
+            datasetKey={`${props.datasetKey ? props.datasetKey : watchlistListData.length}`}
             listKey={props.title}
             loadingMessage={" "}
             noDataMessage={" "}
             loadingItem={undefined}
             numColumns={1}
-            data={props.watchlists}
-            ListHeaderComponent={() => {
-                return <View key={"table_header"} style={{marginHorizontal: (sizes.rem1_5 / 4) + 7, paddingHorizontal: sizes.rem0_5, marginBottom: sizes.rem1 / 2}}>
-                <View style={[row]}>
-                    {fields.map((c, i) => {
-                        return <Text key={`header_${i}`} numberOfLines={1} style={{flex: 1, textAlign: 'center', fontSize: fonts.small, color: '#9D9D9D'}} >{c.alias}</Text>
-                    })}
-                </View>
-            </View>
-            }}
+            data={watchlistListData}
             renderItem={(item)=> {
                 return (
                     <ElevatedSection title="" style={{flex: 1, marginBottom: sizes.rem1_5 / 2, paddingVertical: sizes.rem0_5}}>
@@ -57,21 +71,47 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
                                     watchlistId: item.item.id
                                 })
                         }}>
-                            <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-around'}}>
-                                {
-                                fields.map((c, i) => { 
-                                    return (
-                                        <Text style={{flex: 1, textAlign: 'center'}}> 
-                                            {c.field ? 
-                                                (c.field === 'user' ? item.item[c.field][0].handle : 
-                                                    (c.field === 'type' ? item.item[c.field].slice(0,1).toUpperCase() + item.item[c.field].slice(1) : item.item[c.field])) : 
-                                                ''} 
-                                        </Text>
-                                        )
-                                        }
-                                    )
-                                }
-                            </View>
+                            {shared ? 
+                                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                    
+                                    <Text style={{width: '33%', textAlign: 'center'}}>{item.item.name}</Text>
+                                    <OverlappingIconList viewStyle={{width: '33%', justifyContent: 'center'}} maxIcons={5} iconUriList={item.item.logoUriList} />
+                                    <View style={{width: '33%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+                                        <Avatar
+                                            style={ {borderWidth: 1, borderColor: '#ccc'}}
+                                            resizeMode={'cover'}
+                                            size={'tiny'}
+                                            shape="round"
+                                            source={{uri: item.item.userImageUri}}
+                                            />
+                                        <Text style={{marginLeft: sizes.rem0_5,textAlign: 'center'}}>{item.item.userHandle}</Text>
+                                    </View>
+                                </View> : 
+                                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
+                                    <Text style={{width: '33.33%', textAlign: 'center'}}>{item.item.name}</Text>
+                                    <OverlappingIconList viewStyle={{width: '33.33%', justifyContent: 'center'}} maxIcons={5} iconUriList={item.item.logoUriList} />
+                                    <View style={{width: `${33.33}%`, alignItems: 'center'}}>
+                                        {item.item.type === 'public' ?  
+                                            <Icon 
+                                                fill={"green"}
+                                                height={24}
+                                                width={24}
+                                                name="unlock-outline" style={{
+                                                    height: 24,
+                                                    width: 24
+                                                }}/> :
+                                            <Icon 
+                                                fill={"red"}
+                                                height={24}
+                                                width={24}
+                                                name="lock-outline" style={{
+                                                    height: 24,
+                                                    width: 24
+                                                }}/>
+                                            }
+                                    </View>
+                                    
+                                </View>}
                         </Pressable>
                     </ElevatedSection>
 
