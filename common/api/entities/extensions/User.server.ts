@@ -29,6 +29,7 @@ import AndroidNotifications from "../../../notifications/android";
 import Notifications from "../../..//notifications";
 import NotifRepository from "../../..//notifications/repository";
 import { watchlistsPostNotifications } from "../../../notifications/bll";
+import { NotificationSubscriptionTypes } from "../../../notifications/interfaces";
 
 export interface ITokenResponse {
     "token_type": "bearer",
@@ -550,5 +551,31 @@ export default ensureServerExtensions<User>({
             });
 
         return {}
+    },
+    getPortfolioNotifications: async (r) => {
+        const pool = await getHivePool;
+        const result = await pool.query(`SELECT * FROM data_notification_subscription WHERE user_id = $1 AND type_id = $2`, [r.extra.userId, r.body.typeId])
+        return {is_notification: result.rowCount ? true : false}
+    },
+    togglePortfolioNotifications: async (r) => {
+        const pool = await getHivePool;
+        console.log('portfolio toggle api firing')
+        if (r.body?.is_notification){
+            await pool.query(`
+                    INSERT INTO data_notification_subscription (type, type_id, user_id, disabled)
+                    VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, type, type_id)
+                              DO
+                    UPDATE SET type = EXCLUDED.type, type_id = EXCLUDED.type_id, disabled = EXCLUDED.disabled;`,
+            [NotificationSubscriptionTypes.HOLDINGS_NOTIFICATION, r.body.typeId, r.extra.userId, false])
+            return true
+        }
+        else {
+            await pool.query(`DELETE
+                    FROM data_notification_subscription
+                    WHERE user_id = $1
+                    and type_id = $2
+                    and type = $3`, [r.extra.userId, r.body.typeId, NotificationSubscriptionTypes.HOLDINGS_NOTIFICATION]);
+            return false
+        }
     }
 })
