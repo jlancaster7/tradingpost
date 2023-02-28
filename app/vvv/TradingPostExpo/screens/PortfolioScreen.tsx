@@ -85,9 +85,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                     Api.Watchlist.extensions.getAllWatchlists(),
                     Api.User.extensions.getHoldings({})
                 ]);
-                for (let h of holdings ) {
-                    console.log(h)
-                }
+
                 //KEeping apart for now .. seems to have an error
                 try {
                     const portfolio = await Api.User.extensions.getPortfolio({});
@@ -393,7 +391,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                 </View>
                 ,
                 <WatchlistSection
-                    datasetKey={`my_watchlist_${watchlists?.created.length}`}
+                    //datasetKey={`my_watchlist_${watchlists?.created.length}`}
                     title="My Watchlists"
                     key={`my_watchlist${watchlists?.created.length}`}
                     watchlists={watchlists?.created}
@@ -401,7 +399,7 @@ export const PortfolioScreen = (props: DashTabScreenProps<"Portfolio">) => {
                     hideNoteOnEmpty
                 />,
                 <WatchlistSection
-                    datasetKey={`shared_watchlist_${watchlists?.saved.length}`}
+                    //datasetKey={`shared_watchlist_${watchlists?.saved.length}`}
                     title="Shared Watchlists"
                     key={`shared_watchlist${watchlists?.saved.length}`}
                     watchlists={watchlists?.saved}
