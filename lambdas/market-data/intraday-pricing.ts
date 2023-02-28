@@ -51,7 +51,6 @@ const runLambda = async () => {
         repository = new Repository(pgClient, pgp);
         marketData = new MarketData(repository, iex);
         marketHolidays = new Holidays(repository);
-
     }
 
     const currentTime = DateTime.now().setZone("America/New_York")
