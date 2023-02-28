@@ -295,7 +295,10 @@ export class Transformer extends BaseTransformer {
                 transaction.ticker = cashSecuritiesMap.get(transaction.ticker)
             }
 
-            if (!transaction.ticker) throw new Error(`no symbol (${transaction.id}) available for transaction type ${transaction.investmentTransactionType}`)
+            if (!transaction.ticker) {
+                console.log(transaction)
+                throw new Error(`no symbol (${transaction.transactionId}) available for transaction type ${transaction.investmentTransactionType}`)
+            }
 
             let security = securitiesMap.get(transaction.ticker);
             if (!security) throw new Error(`could not find symbol(${transaction.ticker} for holding`);
@@ -303,7 +306,7 @@ export class Transformer extends BaseTransformer {
             const optionId = await this.isTransactionAnOption(transaction, security.id);
 
             // TODO: We should check if its just a general "cash" security...
-            if (!transaction.unitQuantity && transaction.ticker !== "USD:CUR") throw new Error(`not unit quantity for non-cash security symbol: ${transaction.ticker} ${transaction.transactionId}`)
+            if ((transaction.unitQuantity === null || transaction.unitQuantity === undefined) && transaction.ticker !== "USD:CUR") throw new Error(`no unit quantity attribute for non-cash security symbol: ${transaction.ticker} ${transaction.transactionId}`)
 
             if (!transaction.unitQuantity) transaction.unitQuantity = transaction.amount;
 

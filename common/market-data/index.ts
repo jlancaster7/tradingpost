@@ -171,7 +171,6 @@ export default class MarketData {
                     const [intraday, eod] = await this._process(securityGroup, response);
                     intradayPrices = [...intradayPrices, ...intraday]
                     eodPrices = [...eodPrices, ...eod];
-
                 } catch (err) {
                     if (err instanceof PermissionRequiredError) {
                         for (let i = 0; i < securityGroup.length; i++) {
@@ -237,7 +236,7 @@ export default class MarketData {
         }
     }
 
-    private _process = async (securityGroup: getSecurityWithLatestPrice[], response: Record<string, any>) => {
+    _process = async (securityGroup: getSecurityWithLatestPrice[], response: Record<string, any>) => {
         const currentTime = DateTime.now().setZone("America/New_York").set({second: 0, millisecond: 0});
 
         let eodPrices: addSecurityPrice[] = [];
@@ -256,11 +255,11 @@ export default class MarketData {
                 // Rolling Yesterday Forward
                 eodPrices.push({
                     price: security.price,
-                    high: security.high,
-                    low: security.low,
+                    high: security.price,
+                    low: security.price,
+                    open: security.price,
                     isEod: true,
                     isIntraday: false,
-                    open: security.open,
                     time: DateTime.now().setZone("America/New_York").set({
                         hour: 9,
                         minute: 30,
@@ -269,7 +268,6 @@ export default class MarketData {
                     }),
                     securityId: security.securityId
                 })
-
                 continue;
             }
 
@@ -282,11 +280,11 @@ export default class MarketData {
                 // Rolling Yesterday Forward
                 eodPrices.push({
                     price: security.price,
-                    high: security.high,
-                    low: security.low,
+                    high: security.price,
+                    low: security.price,
+                    open: security.price,
                     isEod: true,
                     isIntraday: false,
-                    open: security.open,
                     time: DateTime.now().setZone("America/New_York").set({
                         hour: 9,
                         minute: 30,
@@ -310,7 +308,29 @@ export default class MarketData {
                 .filter(p => p.parsedTime.isValid && p.close !== null)
                 .sort((a, b) => a.parsedTime.toUnixInteger() - b.parsedTime.toUnixInteger());
 
-            let changed = false;
+            if (iexSecurityPricesSorted.length === 0) {
+                if (!security.price) continue
+
+                eodPrices.push({
+                    price: security.price,
+                    high: security.price,
+                    low: security.price,
+                    open: security.price,
+                    isEod: true,
+                    isIntraday: false,
+                    time: DateTime.now().setZone("America/New_York").set({
+                        hour: 9,
+                        minute: 30,
+                        second: 0,
+                        millisecond: 0
+                    }),
+                    securityId: security.securityId
+                })
+                continue
+            }
+
+            if (security.time && iexSecurityPricesSorted[iexSecurityPricesSorted.length - 1].parsedTime.toUnixInteger() === security.time.toUnixInteger()) continue
+
             let securityPrice = security.price;
             if (!security.time) security.time = DateTime.now().setZone("America/New_York").set({
                 hour: 9,
@@ -319,15 +339,14 @@ export default class MarketData {
                 millisecond: 0
             });
 
-            if (iexSecurityPricesSorted.length > 0) security.open = iexSecurityPricesSorted[0].open ? iexSecurityPricesSorted[0].open : iexSecurityPricesSorted[0].close
+            security.open = iexSecurityPricesSorted[0].open ? iexSecurityPricesSorted[0].open : iexSecurityPricesSorted[0].close
+            security.low = iexSecurityPricesSorted[0].close
+            security.open = iexSecurityPricesSorted[0].close
+            security.price = iexSecurityPricesSorted[0].close
 
             iexSecurityPricesSorted.forEach(p => {
-                // @ts-ignore
-                if (security.time.toUnixInteger() > p.parsedTime.toUnixInteger()) return;
-
-                changed = true;
                 security.time = p.parsedTime
-                if (p.close) securityPrice = p.close
+                securityPrice = p.close
 
                 if (security.low) {
                     if (p.low && p.low < security.low) security.low = p.low
@@ -349,7 +368,7 @@ export default class MarketData {
                 })
             });
 
-            if (!changed || !security.time || !securityPrice) continue;
+            if (!securityPrice) continue
 
             eodPrices.push({
                 price: securityPrice,

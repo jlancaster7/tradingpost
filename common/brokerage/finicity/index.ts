@@ -82,9 +82,14 @@ export class Service {
             if (!finicityUser) throw new Error("how do we not have a finicity user?")
 
             const finicityAccounts = await this.repository.getFinicityAccounts(finicityUser.id)
+
+            console.log("Holdings")
             await finService.importHoldings(userId, brokerageUserId, finicityAccounts.map(f => f.accountId));
+
+            console.log("Transactions")
             await finService.importTransactions(userId, brokerageUserId, finicityAccounts.map(f => f.accountId));
 
+            console.log("Holding History")
             for (let i = 0; i < newTransformedAccountIds.length; i++) {
                 const id = newTransformedAccountIds[i];
                 // Don't compute some security types for historical holdings since we do not have pricing at the moment

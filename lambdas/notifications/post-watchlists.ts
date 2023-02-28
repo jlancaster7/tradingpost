@@ -90,23 +90,8 @@ const run = async () => {
         notificationsSrv = new Notifications(apnProvider, androidNotif, notificationsRepo);
     }
 
-    console.log("SENDING!!")
-    const u = "https://m.tradingpostapp.com/dash/search";
-    await notificationsSrv.sendMessageToUser("e96aea04-9a60-4832-9793-f790e60df8eb", {
-        title: "2Test2",
-        body: "2Test2",
-        data: {
-            url: u
-        }
-    });
-
-    console.log("SEnt")
-    // await watchlistsPostNotifications(notificationsSrv, notificationsRepo, elasticClient);
+    await watchlistsPostNotifications(notificationsSrv, notificationsRepo, elasticClient);
 }
-
-(async () => {
-    await run()
-})()
 
 export const handler = async (event: any, context: Context) => {
     await run();
