@@ -32,7 +32,6 @@ let elasticClient: ElasticClient;
 let notificationsSrv: Notifications;
 let notificationsRepo: Repository;
 
-
 const streamToString = (stream: any) =>
     new Promise<string>((resolve, reject) => {
         const chunks: any[] = [];
