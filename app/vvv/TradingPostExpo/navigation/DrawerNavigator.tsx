@@ -33,7 +33,7 @@ export function DrawerPart() {
             headerRight: (() => {
                 const routeName = getFocusedRouteNameFromRoute(route);
                 const state = useNavigationState((state) => {
-                    return (((state.routes[0]?.state?.routes as any[])?.find(r => r.name === "Feed").params as any)?.bookmarkedOnly || "false") as "true" | "false"
+                    return (((state.routes[0]?.state?.routes as any[])?.find(r => r.name === "Feed")?.params as any)?.bookmarkedOnly || "false") as "true" | "false"
                 });
 
                 const { isKeyboardVisible } = useIsKeyboardVisible();

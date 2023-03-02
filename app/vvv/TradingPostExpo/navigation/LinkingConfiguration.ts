@@ -64,23 +64,28 @@ const linking: LinkingOptions<any> = {
         },
     },
     getStateFromPath: (path, options) => {
+        console.log("Getting state from path");
         const state = getStateFromPath(path, options);
         // Replaces the current screen if $replace is in the parameter
         // ...not sure if this will work properly in all navigation situations
         // maybe need to make this only work if the navigator is a dash? or look for the last dash navigator
+
         if (state && (state.routes?.[state.routes.length - 1]?.params as any)?.$replace && state.routes.length > 1) {
             console.log("Running a replace ....");
             delete (state.routes?.[state.routes.length - 1]?.params as any).$replace;
             state.routes.splice(state.routes.length - 2, 1);
         }
-
+        console.log("DONE state from path");
         return state;
 
     },
     getActionFromState: (state, options) => {
+        console.log("Action from state is here :::::::::::::::::::::::")
         return getActionFromState(state, options);
     },
     async getInitialURL() {
+
+        console.log("IM TRYING TO GET INIT URL");
         const response = await Notifications.getLastNotificationResponseAsync();
         if (response && response.notification) {
             let url = null;
@@ -91,11 +96,16 @@ const linking: LinkingOptions<any> = {
             }
             if (url) return url;
         }
- 
-        return await Linking.getInitialURL();
+
+        const outputUrl = await Linking.getInitialURL();;
+        console.log(outputUrl)
+        return outputUrl
     },
     subscribe(listener) {
-        const onReceiveURL = ({ url }: { url: string }) => listener(url);
+        const onReceiveURL = ({ url }: { url: string }) => {
+            console.log("URL IS :::::::::::::::::::::::" + url)
+            listener(url)
+        };
         Log.verbose("Subscribe happening");
         // Listen to incoming links from deep linking
         Linking.addEventListener('url', onReceiveURL);
