@@ -45,27 +45,31 @@ const deepCopy = (obj: any): any => {
     return JSON.parse(JSON.stringify(obj))
 }
 
-type RuleSetFunction = (holdings: historicalAccount, tx: TradingPostTransactionsTable) => historicalAccount
+type RuleSetFunction = (holdings: historicalAccount, tx: TradingPostTransactionsTable) => Promise<historicalAccount>
 
 // We do not recompute value in the rulesets since we are using the latest EOD price avail for a security to calculate
 // value at the end of each day
 let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
-    [InvestmentTransactionType.buy]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.split]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
+        return holdings;
+    },
+    [InvestmentTransactionType.buy]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
         holdings.cash = holdings.cash + tx.amount;
         // Roll back buy,
         // get transaction from holding
-        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
+        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId && h.optionId == tx.optionId)
         if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for buy transaction`)
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
-        h.value = h.quantity * h.price;
+        h.value = h.quantity * tx.price;
+        h.price = tx.price
         holdings.holdings[hIdx] = h;
         return holdings
     },
-    [InvestmentTransactionType.sell]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.sell]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
         // sell amount is going to be negative, hence why we can "add" it back
         holdings.cash = holdings.cash + tx.amount
-        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
+        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId && h.optionId == tx.optionId)
         if (hIdx === -1) {
             holdings.holdings.push({
                 optionId: tx.optionId,
@@ -86,40 +90,58 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
 
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity);
-        h.value = h.quantity * h.price;
+        h.value = h.quantity * tx.price;
+        h.price = tx.price
         holdings.holdings[hIdx] = h;
         return holdings
     },
-    [InvestmentTransactionType.short]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.short]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
         holdings.cash = holdings.cash + tx.amount;
-        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
+        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId && h.optionId == tx.optionId)
 
         // TODO: .... this is possible for a short?
         // TODO: Discuss pricing with short/cover
         if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for short transaction`)
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
-        h.value = h.quantity * h.price;
+        h.value = h.quantity * tx.price;
+        h.price = tx.price
         holdings.holdings[hIdx] = h
         return holdings
     },
-    [InvestmentTransactionType.cover]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.cover]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
         holdings.cash = holdings.cash + tx.amount;
-        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
+        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId && h.optionId == tx.optionId)
 
-        // TODO:.... I think this is possible in a cover...?
-        // TODO: Discuss pricing with short/cover
-        if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for cover transaction`)
+        if (hIdx === -1) {
+            holdings.holdings.push({
+                optionId: tx.optionId,
+                priceAsOf: tx.date,
+                price: tx.price,
+                securityId: tx.securityId,
+                quantity: (-1 * tx.quantity),
+                accountId: tx.accountId || 0,
+                date: tx.date,
+                costBasis: 0,
+                priceSource: '',
+                securityType: tx.securityType,
+                value: tx.price * (-1 * tx.quantity),
+                currency: 'USD'
+            })
+            return holdings;
+        }
+
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
-        h.value = h.quantity * h.price;
+        h.value = h.quantity * tx.price;
+        h.price = tx.price
         holdings.holdings[hIdx] = h
         return holdings
     },
-    [InvestmentTransactionType.cancel]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.cancel]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
         if (tx.optionId === null) return holdings;
 
-        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId && h.optionId === tx.optionId)
+        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId && h.optionId == tx.optionId)
         if (hIdx === -1) {
             holdings.holdings.push({
                 optionId: tx.optionId,
@@ -140,36 +162,37 @@ let ruleSet: Record<InvestmentTransactionType, RuleSetFunction> = {
 
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity);
-        h.value = h.quantity * h.price;
+        h.value = h.quantity * tx.price;
+        h.price = tx.price
         holdings.holdings[hIdx] = h;
         return holdings
-
-        return holdings;
     },
-    [InvestmentTransactionType.fee]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.fee]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
         holdings.cash = holdings.cash + tx.amount;
         return holdings
     },
-    [InvestmentTransactionType.cash]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.cash]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
         holdings.cash = holdings.cash - tx.amount;
         return holdings
     },
-    [InvestmentTransactionType.transfer]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.transfer]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
         // TODO: Assuming this is a transfer from another brokerage... we should just allocate holding in history...
         //  or de-allocate if it was transferred to another institution
         if (tx.securityType === 'cashEquivalent') {
             holdings.cash = holdings.cash - tx.amount;
             return holdings;
         }
-        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId)
+
+        const hIdx = holdings.holdings.findIndex(h => h.securityId === tx.securityId && h.optionId == tx.optionId);
         if (hIdx === -1) throw new Error(`no prior holding found for security id ${tx.securityId} for buy transaction`)
         const h = holdings.holdings[hIdx];
         h.quantity = h.quantity + (-1 * tx.quantity)
-        h.value = h.quantity * h.price;
+        h.value = h.quantity * tx.price;
+        h.price = tx.price
         holdings.holdings[hIdx] = h;
         return holdings
     },
-    [InvestmentTransactionType.dividendOrInterest]: (holdings: historicalAccount, tx: TradingPostTransactionsTable): historicalAccount => {
+    [InvestmentTransactionType.dividendOrInterest]: async (holdings: historicalAccount, tx: TradingPostTransactionsTable): Promise<historicalAccount> => {
         holdings.cash = holdings.cash - tx.amount;
         return holdings
     },
@@ -199,6 +222,19 @@ export interface BaseRepository {
     getMarketHolidays(start: DateTime, end: DateTime): Promise<getUSExchangeHoliday[]>
 
     getSecurityPricesWithEndDateBySecurityIds(startDate: DateTime, endDate: DateTime, securityIds: number[]): Promise<GetSecurityPrice[]>
+}
+
+const transactionExecutionOrder = {
+    [InvestmentTransactionType.cancel]: 1,
+    [InvestmentTransactionType.sell]: 2,
+    [InvestmentTransactionType.cover]: 3,
+    [InvestmentTransactionType.split]: 4,
+    [InvestmentTransactionType.fee]: 5,
+    [InvestmentTransactionType.cash]: 6,
+    [InvestmentTransactionType.transfer]: 7,
+    [InvestmentTransactionType.dividendOrInterest]: 8,
+    [InvestmentTransactionType.short]: 9,
+    [InvestmentTransactionType.buy]: 10
 }
 
 export default class BaseTransformer {
@@ -238,7 +274,7 @@ export default class BaseTransformer {
 
     computeHoldingsHistory = async (tpAccountId: number, excludeSecurityTypes: boolean = false) => {
         const oldestTx = await this._baseRepo.getOldestTransaction(tpAccountId);
-        if (!oldestTx) throw new Error("no transactions for");
+        if (!oldestTx) return
 
         const endDate = oldestTx.date;
 
@@ -252,19 +288,19 @@ export default class BaseTransformer {
 
         // TODO: We could recomptue old holdings history...
         if (currentHoldings.length <= 0) throw new Error("no holdings available for account " + tpAccountId);
-        currentHoldings.forEach(h => {
-            if (excludeSecurityTypes && h.securityType === SecurityType.mutualFund) return
-            if (excludeSecurityTypes && h.securityType === SecurityType.currency) return
-            allSecurityIds[h.securityId] = {}
-        });
+        // currentHoldings.forEach(h => {
+        //     if (excludeSecurityTypes && h.securityType === SecurityType.mutualFund) return
+        //     if (excludeSecurityTypes && h.securityType === SecurityType.currency) return
+        //     allSecurityIds[h.securityId] = {}
+        // });
 
         // Get Current Transactions Sorted in DESC order
         let transactions = await this._baseRepo.getTradingPostBrokerageAccountTransactions(tpAccountId);
-        transactions = transactions.filter(t => {
-            if (excludeSecurityTypes && t.securityType === SecurityType.mutualFund) return false
-            if (excludeSecurityTypes && t.securityType === SecurityType.currency) return false
-            return true;
-        })
+        // transactions = transactions.filter(t => {
+        //     if (excludeSecurityTypes && t.securityType === SecurityType.mutualFund) return false
+        //     if (excludeSecurityTypes && t.securityType === SecurityType.currency) return false
+        //     return true;
+        // })
 
         if (transactions.length <= 0) throw new Error("no transactions available for account " + tpAccountId);
 
@@ -278,8 +314,8 @@ export default class BaseTransformer {
             transactionsPerDate[txDateUnix] = txs
         });
 
-        // Get Trading Days we will compute history for
-        // In our db we will have a single row for each security on each day, so with 2 securities we'll have two rows for today
+        // const startDate = DateTime.now().minus({day: 2});
+        // const endDate = DateTime.now().minus({day: 2, month: 1});
 
         const initialHistoricalHolding: historicalAccount = {
             date: startDate,
@@ -295,6 +331,7 @@ export default class BaseTransformer {
                     second: 0,
                     millisecond: 0
                 });
+
                 initialHistoricalHolding.cash = holding.quantity;
                 continue;
             }
@@ -328,11 +365,15 @@ export default class BaseTransformer {
                 priceSource: holding.priceSource,
                 securityId: holding.securityId,
                 value: holding.value,
-                securityType: SecurityType.equity
+                securityType: holding.securityType
             })
         }
 
         const allSecurityPricesMap: Record<number, GetSecurityPrice[]> = await this.getSecurityPrices(Object.keys(allSecurityIds).map(id => parseInt(id)), startDate, endDate);
+
+        console.log("Start Date: ", startDate.toString())
+        console.log("End Date: ", endDate.toString())
+
         let tradingDays = await this.getTradingDays(startDate, endDate)
         let historicalHoldingCollection = [initialHistoricalHolding]
 
@@ -344,7 +385,11 @@ export default class BaseTransformer {
 
             if (tradingDay.startOf('day').toUnixInteger() in transactionsPerDate) {
                 let txs = transactionsPerDate[tradingDay.startOf('day').toUnixInteger()];
-                holdingsToday = this.undoTransactions(holdingsToday, txs)
+                txs = txs.sort((a, b) => {
+                    return a.date.toUnixInteger() - b.date.toUnixInteger() ||
+                        transactionExecutionOrder[a.type] - transactionExecutionOrder[b.type]
+                });
+                holdingsToday = await this.undoTransactions(holdingsToday, txs)
             }
 
             let priorMarketDay = tradingDays[i + 1]
@@ -415,9 +460,9 @@ export default class BaseTransformer {
         await this.upsertHistoricalHoldings(historicalHoldings);
     }
 
-    undoTransactions = (historicalAccount: historicalAccount, transactions: TradingPostTransactionsTable[]): historicalAccount => {
+    undoTransactions = async (historicalAccount: historicalAccount, transactions: TradingPostTransactionsTable[]): Promise<historicalAccount> => {
         // TODO: ... should not be imputing data like this... fix it up.
-        for (const tx of transactions) historicalAccount = ruleSet[tx.type](historicalAccount, tx)
+        for (const tx of transactions) historicalAccount = await ruleSet[tx.type](historicalAccount, tx)
         return historicalAccount
     }
 

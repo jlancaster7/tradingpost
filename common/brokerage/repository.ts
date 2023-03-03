@@ -43,7 +43,7 @@ import {
     TradingPostCurrentHoldingsTableWithMostRecentHolding,
     SecurityTableWithLatestPriceRobinhoodId,
     TradingPostTransactionsByAccountGroup,
-    BrokerageTask, BrokerageTaskType, BrokerageTaskStatusType, OptionContractWithSymbol
+    BrokerageTask, BrokerageTaskType, BrokerageTaskStatusType, OptionContractWithSymbol, TradingPostSecurityTranslation
 } from "./interfaces";
 import {ColumnSet, IDatabase, IMain} from "pg-promise";
 import {DateTime} from "luxon";
@@ -519,29 +519,27 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
 
     getTradingPostAccountsWithFinicityNumber = async (userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]> => {
         const query = `
-            SELECT tba.id as                  tp_brokerage_acc_id,
-                   fa.finicity_user_id        internal_finicity_user_id,
-                   fa.id                      internal_finicity_account_id,
-                   fa.finicity_institution_id internal_finicity_institution_id,
-                   fa.account_id              external_finicity_account_id,
-                   fa.number                  external_finicity_account_number
+            SELECT tba.id                     AS tp_brokerage_acc_id,
+                   fa.finicity_user_id        AS internal_finicity_user_id,
+                   fa.id                      AS internal_finicity_account_id,
+                   fa.finicity_institution_id AS internal_finicity_institution_id,
+                   fa.account_id              AS external_finicity_account_id,
+                   tba.institution_id         as tp_institution_id
             FROM TRADINGPOST_BROKERAGE_ACCOUNT TBA
-                     INNER JOIN
-                 FINICITY_ACCOUNT FA
-                 ON
-                     fa.account_id = tba.account_number
+                     INNER JOIN FINICITY_ACCOUNT FA ON fa.account_id = tba.account_number
             WHERE user_id = $1;`;
-        const response = await this.db.query(query, [userId]);
-        return response.map((r: any) => {
+        const response = await this.db.query<{
+            tp_brokerage_acc_id: number, internal_finicity_user_id: number, internal_finicity_account_id: number,
+            internal_finicity_institution_id: number, external_finicity_account_id: string, tp_institution_id: number
+        }[]>(query, [userId]);
+        return response.map(r => {
             let o: TradingPostBrokerageAccountWithFinicity = {
-                tpBrokerageAccId: r.tp_brokerage_acc_id,
+                tpBrokerageAccountId: r.tp_brokerage_acc_id,
                 externalFinicityAccountId: r.external_finicity_account_id,
-                externalFinicityAccountNumber: r.external_finicity_account_id,
                 internalFinicityAccountId: r.internal_finicity_account_id,
                 internalFinicityInstitutionId: r.internal_finicity_institution_id,
                 internalFinicityUserId: r.internal_finicity_user_id,
-                name: r.name,
-                type: r.type,
+                tpInstitutionId: r.tp_institution_id
             }
             return o
         });
@@ -562,6 +560,31 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                 symbol: r.symbol,
                 name: r.name,
                 issueType: r.issue_type
+            }
+            return o
+        })
+    }
+
+    getTradingPostTranslationTable = async (tpInstitutionId: number): Promise<TradingPostSecurityTranslation[]> => {
+        const query = `SELECT tst.from_symbol AS from_symbol,
+                              tst.to_symbol   AS to_symbol,
+                              s.id            AS to_security_id,
+                              tst.currency,
+                              tst.institution_id
+                       FROM tradingpost_institution_security_translation tst
+                                INNER JOIN
+                            SECURITY s ON s.symbol = tst.to_symbol
+                       WHERE institution_id IS NULL
+                          OR institution_id = $1;`;
+        const response = await this.db.query<{ from_symbol: string, to_symbol: string, to_security_id: number, currency: string, institution_id: number | null }[]>(query, [tpInstitutionId]);
+        if (response.length <= 0) return [];
+        return response.map(r => {
+            let o: TradingPostSecurityTranslation = {
+                fromSymbol: r.from_symbol,
+                toSymbol: r.to_symbol,
+                toSecurityId: r.to_security_id,
+                currency: r.currency,
+                institutionId: r.institution_id,
             }
             return o
         })
@@ -747,27 +770,10 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         const query = `
             SELECT ti.id,
                    ti.external_id,
-                   ti.name,
                    ti.account_type_description,
-                   ti.phone,
-                   ti.url_home_app,
-                   ti.url_logon_app,
-                   ti.oauth_enabled,
-                   ti.url_forgot_password,
-                   ti.url_online_registration,
-                   ti.class,
-                   ti.address_city,
-                   ti.address_state,
-                   ti.address_country,
-                   ti.address_postal_code,
-                   ti.address_address_line_1,
-                   ti.address_address_line_2,
-                   ti.email,
-                   ti.status,
-                   ti.updated_at,
-                   ti.created_at,
                    fi.id             internal_finicity_institution_id,
-                   fi.institution_id external_finicity_institution_id
+                   fi.institution_id external_finicity_institution_id,
+                   ti.name
             FROM tradingpost_institution ti
                      INNER JOIN
                  finicity_institution fi
@@ -778,29 +784,11 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         const r = await this.db.oneOrNone(query, [finicityInstitutionId]);
         if (!r) return null
         return {
-            externalId: r.external_id,
-            externalFinicityId: r.external_finicity_institution_id,
-            internalFinicityId: r.internal_finicity_institution_id,
             id: r.id,
-            name: r.name,
-            accountTypeDescription: r.account_type_description,
-            phone: r.phone,
-            urlHomeApp: r.url_home_app,
-            urlLogonApp: r.url_logon_app,
-            oauthEnabled: r.oauth_enabled,
-            urlForgotPassword: r.url_forgot_password,
-            urlOnlineRegistration: r.url_online_registration,
-            class: r.class,
-            addressCity: r.address_city,
-            addressState: r.address_state,
-            addressCountry: r.address_country,
-            addressPostalCode: r.address_postal_code,
-            addressAddressLine1: r.address_address_line_1,
-            addressAddressLine2: r.address_address_line_2,
-            email: r.email,
-            status: r.status,
-            updatedAt: DateTime.fromJSDate(r.updated_at),
-            createdAt: DateTime.fromJSDate(r.created_at)
+            externalId: r.external_id,
+            internalFinicityId: r.internal_finicity_institution_id,
+            externalFinicityId: r.external_finicity_institution_id,
+            name: r.name
         }
     }
 
@@ -1051,6 +1039,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     }
 
     upsertFinicityAccounts = async (accounts: FinicityAccount[]): Promise<void> => {
+        if (accounts.length <= 0) return
         const cs = new this.pgp.helpers.ColumnSet([
             {name: 'finicity_user_id', prop: 'finicityUserId'},
             {name: 'finicity_institution_id', prop: 'finicityInstitutionId'},
@@ -1449,7 +1438,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'quantity', prop: 'quantity'},
             {name: 'currency', prop: 'currency'},
             {name: 'date', prop: 'date'},
-        ], {table: 'tradingpost_historical_holding'})
+        ], {table: 'temp_tradingpost_historical_holding'})
         const query = upsertReplaceQuery(historicalHoldings, cs, this.pgp, 'account_id, security_id, coalesce(option_id,-1), date, price')
         await this.db.none(query);
     }

@@ -43,10 +43,6 @@ export interface IFinicityRepository {
 
     deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
 
-    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
-
-    updateErrorStatusOfAccount(accountId: number, error: boolean, errorCode: number): Promise<void>
-
     getTradingPostUserByFinicityCustomerId(finicityCustomerId: string): Promise<TradingPostUser | null>
 
     getFinicityAccountByTradingpostBrokerageAccountId(tpBrokerageAccountId: number): Promise<FinicityAndTradingpostBrokerageAccount | null>
@@ -377,14 +373,12 @@ export type FinicityTransaction = {
 }
 
 export type TradingPostBrokerageAccountWithFinicity = {
-    tpBrokerageAccId: number
-    internalFinicityAccountId: number
+    tpBrokerageAccountId: number
     internalFinicityUserId: number
+    internalFinicityAccountId: number
     internalFinicityInstitutionId: number
     externalFinicityAccountId: string
-    externalFinicityAccountNumber: string
-    name: string
-    type: string
+    tpInstitutionId: number
 }
 
 export interface GetSecurityBySymbol {
@@ -597,7 +591,8 @@ export enum InvestmentTransactionType {
     fee = "fee",
     cash = "cash",
     transfer = "transfer", // Transfers of security between brokerages
-    dividendOrInterest = "dividendOrInterest"
+    dividendOrInterest = "dividendOrInterest",
+    split = "split"
 }
 
 export type TradingPostInstitution = {
@@ -628,9 +623,12 @@ export type TradingPostInstitutionTable = {
 } & TradingPostInstitution
 
 export type TradingPostInstitutionWithFinicityInstitutionId = {
+    id: number
+    name: string
+    externalId: number
     internalFinicityId: number
     externalFinicityId: string
-} & TradingPostInstitutionTable
+}
 
 export enum TradingPostBrokerageAccountStatus {
     ACTIVE = "ACTIVE",
@@ -719,6 +717,14 @@ export type SecurityIssue = {
     symbol: string
     name: string
     issueType: string
+}
+
+export type TradingPostSecurityTranslation = {
+    fromSymbol: string
+    toSymbol: string
+    toSecurityId: number
+    currency: string
+    institutionId: number | null
 }
 
 export type TradingPostCashSecurity = {

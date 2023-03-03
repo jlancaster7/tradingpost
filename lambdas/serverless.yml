@@ -183,10 +183,10 @@ functions:
     memorySize: 1024
     events:
       - schedule:
-          rate: cron(20 20 ? * MON-FRI *)
+          rate: cron(20 21 ? * MON-FRI *)
           enabled: true
       - schedule:
-          rate: cron(20 19 ? * MON-FRI *)
+          rate: cron(20 22 ? * MON-FRI *)
           enabled: true
 
   ###### Remove old securities

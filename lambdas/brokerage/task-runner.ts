@@ -115,6 +115,7 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         if (taskDefinition.type === BrokerageTaskType.NewData) {
             await broker.update(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else if (taskDefinition.type === BrokerageTaskType.NewAccount) {
+            console.log("Running")
             await broker.add(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else if (taskDefinition.type === BrokerageTaskType.UpdatePortfolioStatistics) {
             await broker.calculatePortfolioStatistics(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
@@ -142,7 +143,6 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
     }
     return true
 }
-
 
 export const handler = async (event: SQSEvent, context: Context) => {
     for (let i = 0; i < event.Records.length; i++) {
