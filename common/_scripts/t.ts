@@ -45,14 +45,14 @@ const run = async () => {
     const finicityTransformer = new FinicityTransformer(repository);
     const finicitySrv = new FinicityService(finicityApi, repository, finicityTransformer, portfolioSummaryService);
 
-    // await finicityTransformer.computeHoldingsHistory(498, false);
-    // console.log("FIN!")
-    try {
-        console.log("Adding...")
-        await finicitySrv.add("e2268937-157b-4a33-a970-a9ba88d10a46", "6020539284", DateTime.now(), null, true);
-    } catch (e) {
-        console.error(e)
-    }
+    await finicityTransformer.computeHoldingsHistory(498, false);
+    console.log("FIN!")
+    // try {
+    //     console.log("Adding...")
+    //     await finicitySrv.add("e2268937-157b-4a33-a970-a9ba88d10a46", "6020539284", DateTime.now(), null, true);
+    // } catch (e) {
+    //     console.error(e)
+    // }
 
 }
 
