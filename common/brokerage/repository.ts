@@ -344,6 +344,22 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
+    getNewestFinicityTransaction = async (accountId: string): Promise<{ transactionId: string, accountId: string, transactionDate: DateTime } | null> => {
+        const query = `SELECT transaction_id,
+                              account_id,
+                              transaction_date
+                       FROM finicity_transaction ft
+                       WHERE account_id = $1
+                       ORDER BY transaction_date DESC LIMIT 1;`
+        const result = await this.db.oneOrNone<{ transaction_id: string, account_id: string, transaction_date: number }>(query, [accountId]);
+        if (!result) return null;
+        return {
+            accountId: result.account_id,
+            transactionDate: DateTime.fromSeconds(result.transaction_date),
+            transactionId: result.transaction_id
+        }
+    }
+
     getTradingPostBrokerageAccountsByBrokerageNumbersAndAuthService = async (tpUserId: string, brokerageNumbers: string[], authenticationService: string): Promise<TradingPostBrokerageAccountsTable[]> => {
         const query = `SELECT id,
                               user_id,
@@ -1438,34 +1454,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             {name: 'quantity', prop: 'quantity'},
             {name: 'currency', prop: 'currency'},
             {name: 'date', prop: 'date'},
-        ], {table: 'temp_tradingpost_historical_holding'})
+        ], {table: 'tradingpost_historical_holding'})
         const query = upsertReplaceQuery(historicalHoldings, cs, this.pgp, 'account_id, security_id, coalesce(option_id,-1), date, price')
         await this.db.none(query);
-    }
-
-    getOldestTransaction = async (accountId: number): Promise<TradingPostTransactions | null> => {
-        const r = await this.db.oneOrNone(`SELECT id,
-                                                  account_id,
-                                                  security_id,
-                                                  security_type, date, quantity, price, amount, fees, type, currency, updated_at, created_at, option_id
-                                           FROM tradingpost_transaction
-                                           WHERE account_id = $1
-                                           ORDER BY date ASC
-                                               LIMIT 1;`, accountId)
-        if (!r) return null
-        return {
-            optionId: r.option_id,
-            accountId: r.account_id,
-            amount: r.amount,
-            fees: r.fees,
-            type: r.type,
-            currency: r.currency,
-            date: DateTime.fromJSDate(r.date),
-            quantity: r.quantity,
-            price: r.price,
-            securityId: r.security_id,
-            securityType: r.security_type,
-        }
     }
 
     upsertTradingPostTransactions = async (transactions: TradingPostTransactions[]) => {

@@ -41,7 +41,7 @@ export class PortfolioSummaryService implements ISummaryService {
 
         let returns: AccountGroupHPRs[] = [];
 
-        const cashTransactions = trades.filter(a => a.type === 'cash'); 
+        const cashTransactions = trades.filter(a => a.type === 'cash');
         for (let i = 1; i < dailyAmounts.length; i++) {
             const date = dailyAmounts[i].date;
             const cashTransaction = cashTransactions.find((a) => a.date.valueOf() === date.valueOf())?.amount || 0;
@@ -104,8 +104,10 @@ export class PortfolioSummaryService implements ISummaryService {
             for (let i = 0; i < arr1.length; i++) {
                 if (arr1[i].date.toISODate() !== arr2[i].date.toISODate()) {
                     console.log('date mismatch, see the below:')
-                    console.log(arr1[i]);
-                    console.log(arr2[i]);
+                    const sec1 = arr1[i];
+                    const sec2 = arr2[i];
+                    console.log(`security 1 id: ${sec1.securityId} return: ${sec1.return} date: ${sec1.date.toString()}`)
+                    console.log(`security 2 id: ${sec2.securityId} return: ${sec2.return} date: ${sec2.date.toString()}`)
                     return 1;
                 }
             }
@@ -113,7 +115,6 @@ export class PortfolioSummaryService implements ISummaryService {
         }
 
         if (securityReturns.length > benchmarkReturns.length) {
-
             securityReturns = securityReturns.slice(securityReturns.length - benchmarkReturns.length);
             const dateCheck = checkDates(securityReturns, benchmarkReturns);
             if (dateCheck === 1) {
@@ -157,8 +158,8 @@ export class PortfolioSummaryService implements ISummaryService {
             if (d.securityType && ['equity', 'cashEquivalent'].includes(d.securityType)) {
                 sum += d.value;
             }
-            
-            
+
+
             if (d.securityType && d.securityType !== 'equity') {
                 continue;
             }

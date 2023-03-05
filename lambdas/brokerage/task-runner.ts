@@ -20,6 +20,8 @@ import {
 } from "@tradingpost/common/brokerage/interfaces";
 import {DateTime} from "luxon";
 import {SQSClient} from "@aws-sdk/client-sqs";
+import Holidays from "@tradingpost/common/market-data/holidays";
+import MarketDataRepository from "@tradingpost/common/market-data/repository";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -90,8 +92,10 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         const finicity = new FinicityApi(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey, tokenFile);
         await finicity.init();
 
+        const marketDataRepo = new MarketDataRepository(pgClient, pgp);
+        const marketHolidays = new Holidays(marketDataRepo);
         const robinhoodTransformer = new RobinhoodTransformer(repository);
-        const finicityTransformer = new FinicityTransformer(repository);
+        const finicityTransformer = new FinicityTransformer(repository, marketHolidays);
 
         sqsClient = new SQSClient({region: 'us-east-1'});
 
@@ -115,7 +119,6 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         if (taskDefinition.type === BrokerageTaskType.NewData) {
             await broker.update(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else if (taskDefinition.type === BrokerageTaskType.NewAccount) {
-            console.log("Running")
             await broker.add(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else if (taskDefinition.type === BrokerageTaskType.UpdatePortfolioStatistics) {
             await broker.calculatePortfolioStatistics(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);

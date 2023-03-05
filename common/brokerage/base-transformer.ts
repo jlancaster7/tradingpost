@@ -253,8 +253,6 @@ export interface BaseRepository {
 
     upsertTradingPostHistoricalHoldings(historicalHoldings: TradingPostHistoricalHoldings[]): Promise<void>
 
-    getOldestTransaction(accountId: number): Promise<TradingPostTransactions | null>
-
     getCashSecurityId(): Promise<GetSecurityBySymbol>
 
     getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(accountId: number): Promise<TradingPostCurrentHoldingsTableWithSecurity[]>
@@ -350,7 +348,7 @@ export default class BaseTransformer {
                 costBasis: holding.costBasis,
                 date: startDate,
                 currency: "USD",
-                priceAsOf: holding.priceAsOf,
+                priceAsOf: startDate,
                 quantity: holding.quantity,
                 priceSource: holding.priceSource,
                 securityId: holding.securityId,
@@ -367,7 +365,6 @@ export default class BaseTransformer {
         const currentHoldings = await this._baseRepo.getTradingPostBrokerageAccountCurrentHoldingsWithSecurity(tpAccountId);
 
         let transactions = await this._baseRepo.getTradingPostBrokerageAccountTransactions(tpAccountId);
-        if (transactions.length === 0) return
 
         const filteredHoldings = this._filterHoldings(currentHoldings, excludeSecurityTypes);
         const filteredTransactions = this._filterTransactions(transactions, excludeSecurityTypes)
@@ -377,20 +374,20 @@ export default class BaseTransformer {
         filteredHoldings.forEach(h => securityIds.add(h.securityId))
         filteredTransactions.forEach(h => securityIds.add(h.securityId));
 
-        const oldestTx = await this._baseRepo.getOldestTransaction(tpAccountId);
-        if (!oldestTx) return
-
         // StartDate = NOW, EndDate = Date going back towards
         let tradingDays = await this.getTradingDaysLast36Months()
 
         const startDate = await this.getStartDate(currentHoldings, tradingDays[0]);
-        const endDate = end ? end : oldestTx.date;
+        const oldestTxDate = transactions.length === 0 ? startDate.minus({month: 12}) : transactions[transactions.length - 1].date
+        const endDate = end ? end : oldestTxDate;
+        tradingDays = tradingDays.filter(t => t.toUnixInteger() <= startDate.toUnixInteger())
 
         const allSecurityPricesMap = await this.getSecurityPrices(Array.from(securityIds), startDate, endDate);
 
         let historicalHoldingsCollection: historicalAccount[] = [this._getInitialHistoricalHolding(tpAccountId, startDate, currentHoldings)];
         for (let i = 0; i < tradingDays.length; i++) {
             const tradingDay = tradingDays[i];
+            if (tradingDay.toUnixInteger() < endDate.toUnixInteger()) break;
             let holdingsToday: historicalAccount = deepCopy(historicalHoldingsCollection[historicalHoldingsCollection.length - 1]);
 
             const transactions = groupedTransactions.get(tradingDay.toUnixInteger());
@@ -432,7 +429,6 @@ export default class BaseTransformer {
                 costBasis: 0,
                 accountId: tpAccountId,
             });
-
             hc.holdings.forEach(h => {
                 historicalHoldingsInsert.push({
                     optionId: h.optionId,
@@ -461,6 +457,7 @@ export default class BaseTransformer {
     }
 
     getSecurityPrices = async (securityIds: number[], startDate: DateTime, endDate: DateTime): Promise<Map<number, GetSecurityPrice[]>> => {
+        if (securityIds.length <= 0) return new Map();
         const securityPrices = await this._baseRepo.getSecurityPricesWithEndDateBySecurityIds(
             endDate.set({
                 minute: 0,

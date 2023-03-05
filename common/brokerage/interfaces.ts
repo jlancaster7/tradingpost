@@ -32,11 +32,11 @@ export interface IBrokerageRepository {
     deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
 
     deleteTradingPostAccountCurrentHoldings(accountIds: number[]): Promise<void>
-
-    getOldestTransaction(accountId: number): Promise<TradingPostTransactions | null>
 }
 
 export interface IFinicityRepository {
+    getNewestFinicityTransaction(accountId: string): Promise<{ transactionId: string, accountId: string, transactionDate: DateTime } | null>
+
     getTradingPostBrokerageAccountsByBrokerageNumbersAndAuthService(tpUserId: string, brokerageNumbers: string[], authenticationService: string): Promise<TradingPostBrokerageAccountsTable[]>
 
     getTradingPostBrokerageAccountByUser(tpUserId: string, authenticationService: string, accountNumber: string): Promise<TradingPostBrokerageAccountsTable | null>

@@ -24,7 +24,7 @@ import {DateTime} from "luxon";
 import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
 import BaseTransformer, {BaseRepository} from "../base-transformer";
 import {BrokerageAccountDataError, BrokerageAccountError} from "../errors";
-import asyncMemoizer from "lru-memoizer";
+import Holidays from "../../market-data/holidays";
 
 const isNullOrUndefined = (t: any): boolean => {
     if (t === null) return true;
@@ -167,10 +167,16 @@ const transformIexSecurityType = (secType: string): SecurityType => {
 
 export class Transformer extends BaseTransformer {
     private repository: TransformerRepository;
+    private marketHolidays: Holidays;
 
-    constructor(repository: TransformerRepository) {
+    constructor(repository: TransformerRepository, marketHolidays: Holidays) {
         super(repository);
         this.repository = repository
+        this.marketHolidays = marketHolidays;
+    }
+
+    getMarketHolidays = (): Holidays => {
+        return this.marketHolidays
     }
 
     accounts = async (userId: string, finAccounts: FinicityAccount[]): Promise<number[]> => {
@@ -220,7 +226,7 @@ export class Transformer extends BaseTransformer {
         return securitiesTranslationMap
     }
 
-    holdings = async (userId: string, customerId: string, finicityExternalAccountId: string, finHoldings: FinicityHolding[], currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<void> => {
+    holdings = async (userId: string, customerId: string, finicityExternalAccountId: string, finHoldings: FinicityHolding[], currency: string | null, accountDetails: CustomerAccountsDetail | null, aggregationSuccessDate: DateTime): Promise<void> => {
         let internalAccount = await this.getFinicityToTradingPostAccount(userId, finicityExternalAccountId);
         if (internalAccount === undefined || internalAccount === null) throw new BrokerageAccountError(userId, customerId, undefined, finicityExternalAccountId, "could not find finicity account in tradingpost brokerage accounts");
 
@@ -228,12 +234,14 @@ export class Transformer extends BaseTransformer {
         const securitiesTranslationMap = await this._getSecuritiesTranslationMap(internalAccount.tpInstitutionId);
         const cashSecurity = await this.repository.getCashSecurityId();
 
-        const holdingDate = DateTime.now().setZone("America/New_York").set({
+        let holdingDate = aggregationSuccessDate.setZone("America/New_York").set({
             hour: 16,
             minute: 0,
             second: 0,
             millisecond: 0
-        }).minus({day: 1});
+        });
+
+        while (!await this.marketHolidays.isTradingDay(holdingDate)) holdingDate = holdingDate.minus({day: 1})
 
         let tpHoldings: TradingPostCurrentHoldings[] = [];
         for (let i = 0; i < finHoldings.length; i++) {
@@ -262,7 +270,7 @@ export class Transformer extends BaseTransformer {
                 currency: holding.securityCurrency ? holding.securityCurrency : currency,
                 optionId: null,
                 price: holding.currentPrice,
-                priceAsOf: holding.currentPriceDate ? DateTime.fromSeconds(holding.currentPriceDate) : holdingDate,
+                priceAsOf: holdingDate,
                 value: parseFloat(holding.marketValue),
                 priceSource: PriceSourceType.FINICITY,
             }
@@ -286,7 +294,7 @@ export class Transformer extends BaseTransformer {
                 securityId: cashSecurity.id,
                 securityType: SecurityType.cashEquivalent,
                 price: 1,
-                priceAsOf: DateTime.fromSeconds(accountDetails.dateAsOf),
+                priceAsOf: holdingDate,
                 priceSource: PriceSourceType.FINICITY,
                 value: accountDetails.availableCashBalance,
                 costBasis: null,
@@ -383,13 +391,18 @@ export class Transformer extends BaseTransformer {
                 accountId: internalAccount.tpBrokerageAccountId,
                 securityId: security.id,
                 securityType: securityType,
-                date: DateTime.fromSeconds(finTransaction.postedDate),
+                date: DateTime.fromSeconds(finTransaction.postedDate).setZone("America/New_York").set({
+                    hour: 16,
+                    minute: 0,
+                    second: 0,
+                    millisecond: 0
+                }),
                 quantity: quantity,
                 price: price,
                 amount: amount,
-                fees: finTransaction.feeAmount, // TODO: Should feeAmount always be negative?(out-flow, would assume so)
+                fees: finTransaction.feeAmount,
                 type: transactionType,
-                currency: null,
+                currency: 'USD',
             };
 
             tpTransactions.push(newTpTx)

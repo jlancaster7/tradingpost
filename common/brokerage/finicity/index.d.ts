@@ -12,7 +12,7 @@ export declare class Service {
     constructor(finicityApi: Finicity, repository: IFinicityRepository, transformer: FinicityTransformer, portfolioSummaryStats?: PortfolioSummaryService);
     calculatePortfolioStatistics: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
     remove: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
-    update: (userId: string, brokerageUserId: string, date: DateTime, data?: any) => Promise<void>;
+    update: (userId: string, brokerageUserId: string, date: DateTime, data?: any, isDev?: boolean) => Promise<void>;
     add: (userId: string, brokerageUserId: string, date: DateTime, data?: any, isDev?: boolean) => Promise<void>;
     getTradingPostUserAssociatedWithBrokerageUser: (brokerageUserId: string) => Promise<TradingPostUser>;
     generateBrokerageAuthenticationLink: (userId: string, brokerageAccount?: string, brokerageAccountId?: string) => Promise<string>;

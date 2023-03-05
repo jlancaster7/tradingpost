@@ -66,9 +66,9 @@ export class Service {
         await this.repository.deleteFinicityAccounts(finAccountIds);
     }
 
-    public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any) => {
+    public update = async (userId: string, brokerageUserId: string, date: DateTime, data?: any, isDev: boolean = false) => {
         await this.repository.execTx(async (r) => {
-            const finTransformer = new FinicityTransformer(r);
+            const finTransformer = new FinicityTransformer(r, this.transformer.getMarketHolidays());
             const portStats = new PortfolioSummaryService(r);
             const finService = new Service(this.finicityApi, r, finTransformer, portStats);
             const finicityUser = await r.getFinicityUser(userId);
@@ -93,7 +93,7 @@ export class Service {
 
         try {
             await this.repository.execTx(async (r) => {
-                const finTransformer = new FinicityTransformer(r);
+                const finTransformer = new FinicityTransformer(r, this.transformer.getMarketHolidays());
                 const portStats = new PortfolioSummaryService(r);
                 const finService = new Service(this.finicityApi, r, finTransformer, portStats);
 
@@ -103,18 +103,13 @@ export class Service {
                 console.log("Transactions")
                 await finService.importTransactions(userId, finicityUser);
 
-                console.log("COMPUTING !!!!")
-                // let hardCoded = [666, 667, 668]
-                // for (let i = 0; i < hardCoded.length; i++) {
-                //     const newAccountId = hardCoded[i];
-                //     // Don't compute some security types for historical holdings since we do not have pricing at the moment
-                //     console.log(newAccountId);
-                //     await finService.transformer.computeHoldingsHistory(newAccountId, true);
-                // }
-                console.log("FIN!")
-                //
-                // if (!finService.portSummarySrv) return
-                // await finService.portSummarySrv.computeAccountGroupSummary(userId);
+                for (let i = 0; i < newAccountIds.length; i++) {
+                    const newAccountId = newAccountIds[i];
+                    await finService.transformer.computeHoldingsHistory(newAccountId, true);
+                }
+
+                if (!finService.portSummarySrv) return
+                await finService.portSummarySrv.computeAccountGroupSummary(userId);
             });
         } catch (e) {
             throw e
@@ -511,7 +506,7 @@ export class Service {
 
             const finicityHoldings = externalFinAccount.position.map(p => this._mapFinicityHolding(p, internalFinAccount.id));
             await this.repository.upsertFinicityHoldings(finicityHoldings);
-            await this.transformer.holdings(finicityUser.tpUserId, finicityUser.customerId, externalFinAccount.id, finicityHoldings, externalFinAccount.currency, externalFinAccount.detail);
+            await this.transformer.holdings(finicityUser.tpUserId, finicityUser.customerId, externalFinAccount.id, finicityHoldings, externalFinAccount.currency, externalFinAccount.detail, DateTime.fromSeconds(externalFinAccount.aggregationSuccessDate));
         }
     }
 
@@ -519,19 +514,35 @@ export class Service {
         const externalFinAccToInternalAccMap = await this._createExternalFinAccountToInternalFinAccountMap(finicityUser.id);
 
         const finicityTransactions = await this._iterateTransactions(tpUserId, finicityUser, externalFinAccToInternalAccMap);
-
-        await this.repository.upsertFinicityTransactions(finicityTransactions);
-
         let txByAccountId: Map<string, FinicityTransaction[]> = new Map();
-        finicityTransactions.forEach(tx => {
+        const sortedFinicityTransactions = finicityTransactions.sort((a, b) => a.transactionDate - b.transactionDate);
+
+        sortedFinicityTransactions.forEach(tx => {
             let accs = txByAccountId.get(tx.accountId.toString())
             if (!accs) accs = [];
             accs.push(tx);
             txByAccountId.set(tx.accountId.toString(), accs);
-        })
+        });
 
+        const accountIdToNewestTxMap: Map<string, DateTime | null> = new Map();
         for (const [accountId, txs] of txByAccountId) {
-            await this.transformer.transactions(finicityUser.tpUserId, finicityUser.customerId, txs, accountId);
+            const newestTransaction = await this.repository.getNewestFinicityTransaction(accountId);
+            if (!newestTransaction) accountIdToNewestTxMap.set(accountId, null)
+            else accountIdToNewestTxMap.set(accountId, newestTransaction.transactionDate)
+        }
+
+        await this.repository.upsertFinicityTransactions(finicityTransactions);
+        for (const [accountId, txs] of txByAccountId) {
+            const txDateTime = accountIdToNewestTxMap.get(accountId)
+            let filteredTxs = txs.filter(t => {
+                if (!txDateTime) return true;
+                const tDateTime = DateTime.fromSeconds(t.transactionDate);
+                if (tDateTime.toUnixInteger() > txDateTime.toUnixInteger()) return true;
+                return false;
+            });
+
+            if (filteredTxs.length <= 0) continue;
+            await this.transformer.transactions(finicityUser.tpUserId, finicityUser.customerId, filteredTxs, accountId);
         }
     }
 
