@@ -7,7 +7,6 @@ import {Service as FinicityService} from "../brokerage/finicity";
 import {Transformer as FinicityTransformer} from "../brokerage/finicity/transformer";
 import {default as FinicityApi} from "../finicity";
 import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
-import {DateTime} from "luxon";
 import Holidays from "../market-data/holidays";
 import MarketDataRepository from "../market-data/repository";
 

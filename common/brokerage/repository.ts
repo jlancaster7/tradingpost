@@ -1730,8 +1730,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                             price, time, created_at
                      FROM security_price
                      WHERE security_id = $1
-                       AND time BETWEEN $2
-                       AND $3
+                       AND time <= $2
+                       AND time >= $3
                        AND is_eod = true;
         `;
         const response = await this.db.any(query, [securityId, startDate, endDate]);

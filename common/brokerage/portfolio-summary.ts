@@ -12,6 +12,7 @@ import {
     TradingPostTransactionsTable,
     TradingPostTransactions, TradingPostTransactionsByAccountGroup
 } from './interfaces';
+import {start} from "repl";
 
 export class PortfolioSummaryService implements ISummaryService {
     private repository: ISummaryRepository
@@ -85,8 +86,11 @@ export class PortfolioSummaryService implements ISummaryService {
     }
 
     computeSecurityBeta = async (securityId: number, benchmarkId: number, daysPrior: number = 365 * 5): Promise<number> => {
-        let securityReturns = (await this.computeSecurityHPRs(securityId, DateTime.now().minus(daysPrior * 8.64e+7)));
-        let benchmarkReturns = (await this.computeSecurityHPRs(benchmarkId, DateTime.now().minus(daysPrior * 8.64e+7)));
+        const start = DateTime.now().setZone("America/New_York").set({hour: 0, minute: 0, second: 0, millisecond: 0});
+        const end = start.set({year: 2021, month: 1, day: 1});
+
+        let securityReturns = await this.computeSecurityHPRs(securityId, start, end);
+        let benchmarkReturns = await this.computeSecurityHPRs(benchmarkId, start, end);
 
         function computeCovariance(arr1: number[], arr2: number[], n: number): number {
             let sum = 0;
@@ -237,7 +241,7 @@ export class PortfolioSummaryService implements ISummaryService {
         return {long: long / total, short: short / total, gross: gross / total, net: net / total};
     }
 
-    computeAccountGroupSummary = async (userId: string, startDate: DateTime = DateTime.fromJSDate(new Date('1/1/2010')), endDate: DateTime = DateTime.now()): Promise<TradingPostAccountGroupStats> => {
+    computeAccountGroupSummary = async (userId: string, startDate: DateTime = DateTime.fromJSDate(new Date('1/1/2020')), endDate: DateTime = DateTime.now()): Promise<TradingPostAccountGroupStats> => {
         const account_group = await this.getAccountGroupByName(userId, 'default');
         const currentHoldings = await this.repository.getTradingPostCurrentHoldingsByAccountGroup(account_group.accountGroupId);
         const historicalHoldings = await this.repository.getTradingPostHoldingsByAccountGroup(userId, account_group.accountGroupId, startDate, endDate);

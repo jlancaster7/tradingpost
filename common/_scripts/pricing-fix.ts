@@ -203,34 +203,34 @@ class PricingFix {
     }
 
     iexHistorical = async () => {
-        // const securities = await this.repository.getUSExchangeListedSecurities();
-        const securities: getSecurityBySymbol[] = [{
-            id: 17757,
-            symbol: 'GTBIF',
-            zip: '',
-            primarySicCode: '',
-            website: '',
-            tags: [],
-            state: '',
-            securityName: '',
-            sector: '',
-            phone: '',
-            logoUrl: '',
-            lastUpdated: DateTime.now().toJSDate(),
-            priceSource: PriceSourceType.FINICITY,
-            issueType: '',
-            industry: '',
-            exchange: '',
-            enableUtp: true,
-            employees: '',
-            description: '',
-            createdAt: DateTime.now().toJSDate(),
-            country: '',
-            ceo: '',
-            companyName: '',
-            address2: '',
-            address: '',
-        }];
+        const securities = await this.repository.getUSExchangeListedSecurities();
+        // const securities: getSecurityBySymbol[] = [{
+        //     id: 17757,
+        //     symbol: 'GTBIF',
+        //     zip: '',
+        //     primarySicCode: '',
+        //     website: '',
+        //     tags: [],
+        //     state: '',
+        //     securityName: '',
+        //     sector: '',
+        //     phone: '',
+        //     logoUrl: '',
+        //     lastUpdated: DateTime.now().toJSDate(),
+        //     priceSource: PriceSourceType.FINICITY,
+        //     issueType: '',
+        //     industry: '',
+        //     exchange: '',
+        //     enableUtp: true,
+        //     employees: '',
+        //     description: '',
+        //     createdAt: DateTime.now().toJSDate(),
+        //     country: '',
+        //     ceo: '',
+        //     companyName: '',
+        //     address2: '',
+        //     address: '',
+        // }];
 
         const securitiesMap: Record<string, getSecurityBySymbol> = {};
         securities.filter(sec => sec.priceSource === 'IEX').forEach(sec => securitiesMap[sec.symbol] = sec);
@@ -241,7 +241,7 @@ class PricingFix {
             const group = groupSecurities[i];
             const symbols = group.map(sec => sec.symbol);
             const response = await this.iex.bulk(symbols, ["chart"], {
-                range: 'max'
+                range: '20230101'
             });
 
             let securityPrices: addSecurityPrice[] = []
@@ -422,6 +422,6 @@ class PricingFix {
     const iexCfg = await DefaultConfig.fromCacheOrSSM("iex");
 
     const pricingFix = new PricingFix(pgClient, pgp, iexCfg.key);
-    await pricingFix.historicalFix();
+    await pricingFix.iexHistorical();
     console.log("Finished")
 })()
