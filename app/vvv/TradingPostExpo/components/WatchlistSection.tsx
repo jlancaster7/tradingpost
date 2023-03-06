@@ -15,6 +15,7 @@ import { ITableColumn, Table } from "./Table"
 import { useSecuritiesList } from "../SecurityList";
 import { OverlappingIconList } from "./OverlappingIconList";
 import { Avatar, Icon } from "@ui-kitten/components";
+import { WatchlistSectionListItem } from "./WatchlistSectionListItem";
 
 
 
@@ -64,56 +65,14 @@ export function WatchlistSection(props: { title: string, watchlists: Interface.I
             data={watchlistListData}
             renderItem={(item)=> {
                 return (
-                    <ElevatedSection title="" style={{flex: 1, marginBottom: sizes.rem1_5 / 2, paddingVertical: sizes.rem0_5}}>
-                        <Pressable
-                            onPress={() => {
-                                nav.navigate("WatchlistViewer", {
-                                    watchlistId: item.item.id
-                                })
-                        }}>
-                            {shared ? 
-                                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
-                                    
-                                    <Text style={{width: '33%', textAlign: 'center'}}>{item.item.name}</Text>
-                                    <OverlappingIconList viewStyle={{width: '33%', justifyContent: 'center'}} maxIcons={5} iconUriList={item.item.logoUriList} />
-                                    <View style={{width: '33%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
-                                        <Avatar
-                                            style={ {borderWidth: 1, borderColor: '#ccc'}}
-                                            resizeMode={'cover'}
-                                            size={'tiny'}
-                                            shape="round"
-                                            source={{uri: item.item.userImageUri}}
-                                            />
-                                        <Text style={{marginLeft: sizes.rem0_5,textAlign: 'center'}}>{item.item.userHandle}</Text>
-                                    </View>
-                                </View> : 
-                                <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center'}}>
-                                    <Text style={{width: '33.33%', textAlign: 'center'}}>{item.item.name}</Text>
-                                    <OverlappingIconList viewStyle={{width: '33.33%', justifyContent: 'center'}} maxIcons={5} iconUriList={item.item.logoUriList} />
-                                    <View style={{width: `${33.33}%`, alignItems: 'center'}}>
-                                        {item.item.type === 'public' ?  
-                                            <Icon 
-                                                fill={"green"}
-                                                height={24}
-                                                width={24}
-                                                name="unlock-outline" style={{
-                                                    height: 24,
-                                                    width: 24
-                                                }}/> :
-                                            <Icon 
-                                                fill={"red"}
-                                                height={24}
-                                                width={24}
-                                                name="lock-outline" style={{
-                                                    height: 24,
-                                                    width: 24
-                                                }}/>
-                                            }
-                                    </View>
-                                    
-                                </View>}
-                        </Pressable>
-                    </ElevatedSection>
+                    <WatchlistSectionListItem id={item.item.id} 
+                                              shared={shared || false}
+                                              name={item.item.name} 
+                                              logoUriList={item.item.logoUriList} 
+                                              type={item.item.type} 
+                                              userHandle={item.item.userHandle} 
+                                              userImageUri={item.item.userImageUri}
+                                              />
 
                 )
             }}

@@ -1,6 +1,6 @@
 import { version } from '../../../package.json'
 
-let apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8082";
+let apiBaseUrl = process.env.API_BASE_URL || "http://localhost:8080";
 
 const versionParts = version.split(".")
 export let versionCode =

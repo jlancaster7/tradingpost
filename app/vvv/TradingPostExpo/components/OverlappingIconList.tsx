@@ -14,6 +14,7 @@ export const OverlappingIconList = (props: { iconUriList: string[], maxIcons?: n
     return (
         <View style={[{flexDirection: 'row', alignItems: 'center'}, viewStyle]}>
             {iconUriList && iconUriList.slice(0, maxIcons).map((a, i) => <Avatar
+                key={`${a}_${i}`}
                 style={[i === 0 ? {} : {marginLeft: -13}, { zIndex: iconUriList.length - i, backgroundColor: 'white', borderWidth: 1, borderColor: '#ccc'}]}
                 resizeMode={'cover'}
                 size={iconSize ? iconSize : 'tiny'}

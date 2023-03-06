@@ -14,44 +14,48 @@ import {Avatar, Icon, Text} from '@ui-kitten/components';
 import { useSecuritiesList } from "../SecurityList";
 import { List } from "../components/List";
 import { ProfileBar } from "../components/ProfileBar";
-import { IUserList } from "@tradingpost/common/api/entities/interfaces";
+import { IUserList, IWatchlistList } from "@tradingpost/common/api/entities/interfaces";
 import { ProfileButton } from "../components/ProfileButton";
 import { OverlappingIconCollage } from "../components/OverlappingIconCollage";
 import { OverlappingIconList } from "../components/OverlappingIconList";
 //import { SquaredAudioPlayer } from "../components/SquaredAudioPlayer";
 //import TrackPlayer from 'react-native-track-player';
 import { useNavigation } from "@react-navigation/core";
+import { WatchlistSection } from "../components/WatchlistSection";
+import { WatchlistLimitedPublicSection } from "../components/WatchlistLimitedPublicSection";
 
 export const DiscoveryScreen = () => {
     const {securities: {bySymbol, byId}} = useSecuritiesList();
     const nav = useNavigation()
-    const [watchlistSecIdList, setWatchlistSecIdList] = useState<{symbol: string, companyName: string, imageUri: string, secId: number}[]>([])
+    const [watchlists, setWatchlists] = useState<IWatchlistList[]>([])
 
+
+/*
     useEffect(() => {
         (async () => {
+            const publicWatchlists = await Api.Watchlist.extensions.getPublicWatchlists();
             
-            
-            const featuredWatchlist = await Api.Watchlist.get(120)
-            const featuredWatchlistItems = featuredWatchlist.items.filter(a => bySymbol[a.symbol] !== undefined)
-            setWatchlistSecIdList(featuredWatchlistItems.map(a => {
-                return {
-                    symbol: a.symbol,
-                    companyName: bySymbol[a.symbol].company_name,
-                    imageUri: bySymbol[a.symbol].logo_url,
-                    secId: bySymbol[a.symbol].id,
-                }
-            }))
+            if (publicWatchlists.length) setWatchlists(publicWatchlists)
             
         })()
     }, [])
-    
+    */
     return (
         <View style={[ flex, { backgroundColor: AppColors.background }]}>
             <Animated.FlatList key={'discovery list'}
                 data={[
-                
-                    
-                <Section key="writers" alt={true} title="Writers" style={{paddingTop: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0}}>
+                <Section key="watchlists" alt={true} title="" style={{paddingTop: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0, backgroundColor: AppColors.background }}>
+                    <WatchlistLimitedPublicSection
+                        //datasetKey={`public${watchlists.length}`}
+                        title="Public Watchlists"
+                        shared
+                        key={`public${watchlists.length}`}
+                        watchlists={watchlists}
+                        showAddButton={false}
+                        hideNoteOnEmpty
+                    />
+                </Section>,
+                <Section key="writers" alt={true} title="Writers" style={{paddingTop: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0, backgroundColor: AppColors.background }}>
                     <LimitedBlockList
                         listKey="writers_table"
                         key={'writers_table'}
@@ -95,7 +99,7 @@ export const DiscoveryScreen = () => {
                         }
                     />
                 </Section>,
-                <Section key="podcasts" alt={true} title="Podcasters" style={{paddingVertical: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0}}>
+                <Section key="podcasts" alt={true} title="Podcasters" style={{paddingVertical: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0, backgroundColor: AppColors.background }}>
                     <LimitedBlockList
                         listKey="podacast_table"
                         key={'podcast_table'}
