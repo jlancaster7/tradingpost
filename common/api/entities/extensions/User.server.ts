@@ -586,6 +586,8 @@ export default ensureServerExtensions<User>({
     },
     discoveryOne: async (r) => {
         const pool = await getHivePool;
+        const limit = (r.body?.limit || 6)
+        const offset = (r.body?.page || 0) * limit 
         const results = await pool.query(`SELECT  sudpc.title, 
                                                     sudpc.description,
                                                     sudpc.most_recent_article_date,
@@ -612,16 +614,14 @@ export default ensureServerExtensions<User>({
                                             ORDER BY sudpc.most_recent_article_date DESC
                                         OFFSET $1
                                         LIMIT $2
-                                        `, [r.body.page, r.body.limit])
+                                        `, [offset, limit])
         
         return results.rows as (IUserList & {title: string, most_recent_article_date: string, description: string})[]
     },
     discoveryTwo: async (r) => {
         const pool = await getHivePool;
-        //sudpc.title, 
-        //sudpc.description, 
-        //sudpc.link,
-        //spotify
+        const limit = (r.body?.limit || 6)
+        const offset = (r.body?.page || 0) * limit 
         const results = await pool.query(`SELECT  sudpc.name as "title", 
                                                     sudpc.description,
                                                     sudpc.most_recent_show_date,
@@ -648,16 +648,14 @@ export default ensureServerExtensions<User>({
                                             ORDER BY sudpc.most_recent_show_date DESC
                                         OFFSET $1
                                         LIMIT $2
-                                        `, [r.body.page, r.body.limit])
+                                        `, [offset, limit])
         
         return results.rows as (IUserList & {title: string, description: string})[]
     },
     discoveryThree: async (r) => {
         const pool = await getHivePool;
-        //sudpc.title, 
-        //sudpc.description, 
-        //sudpc.link,
-        //Youtube
+        const limit = (r.body?.limit || 6)
+        const offset = (r.body?.page || 0) * limit 
         const results = await pool.query(`SELECT  
                                                 du.id,
                                                 du.handle,
@@ -677,7 +675,7 @@ export default ensureServerExtensions<User>({
                                         ORDER BY id DESC
                                         OFFSET $1
                                         LIMIT $2
-                                        `, [r.body.page, r.body.limit])
+                                        `, [offset, limit])
         
         return results.rows as IUserList[]
     }

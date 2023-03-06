@@ -25,21 +25,9 @@ import { WatchlistSection } from "../components/WatchlistSection";
 import { WatchlistLimitedPublicSection } from "../components/WatchlistLimitedPublicSection";
 
 export const DiscoveryScreen = () => {
-    const {securities: {bySymbol, byId}} = useSecuritiesList();
     const nav = useNavigation()
-    const [watchlists, setWatchlists] = useState<IWatchlistList[]>([])
 
 
-/*
-    useEffect(() => {
-        (async () => {
-            const publicWatchlists = await Api.Watchlist.extensions.getPublicWatchlists();
-            
-            if (publicWatchlists.length) setWatchlists(publicWatchlists)
-            
-        })()
-    }, [])
-    */
     return (
         <View style={[ flex, { backgroundColor: AppColors.background }]}>
             <Animated.FlatList key={'discovery list'}
@@ -49,8 +37,7 @@ export const DiscoveryScreen = () => {
                         //datasetKey={`public${watchlists.length}`}
                         title="Public Watchlists"
                         shared
-                        key={`public${watchlists.length}`}
-                        watchlists={watchlists}
+                        key={`public_watchlists`}
                         showAddButton={false}
                         hideNoteOnEmpty
                     />
@@ -84,11 +71,11 @@ export const DiscoveryScreen = () => {
                                         });
                                     }}>
                                         <ElevatedSection title="" style={{flex: 1, flexDirection: 'row'}}>
-                                            <ProfileButton userId={item.item.id || ""} profileUrl={item.item.profile_url || ""} size={sizes.rem6 / 2.1}/>
+                                            <ProfileButton userId={item.item?.id || ""} profileUrl={item.item?.profile_url || ""} size={sizes.rem6 / 2.1}/>
                                             <View style={{flex: 1, marginLeft: sizes.rem0_5, justifyContent: 'center'}}>
         
-                                                <Text style={{ fontWeight: '700', fontSize: fonts.small}}>{item.item.title}</Text>
-                                                <Text numberOfLines={2} style={{fontSize: fonts.xSmall}}>{item.item.description}</Text>
+                                                <Text style={{ fontWeight: '700', fontSize: fonts.small}}>{item.item?.title || ""}</Text>
+                                                <Text numberOfLines={2} style={{fontSize: fonts.xSmall}}>{item.item?.description || ""}</Text>
                                             </View>
                                         </ElevatedSection>
                                     </Pressable>
@@ -128,11 +115,11 @@ export const DiscoveryScreen = () => {
                                         });
                                     }}>
                                         <ElevatedSection title="" style={{flex: 1, flexDirection: 'row'}}>
-                                            <ProfileButton userId={item.item.id || ""} profileUrl={item.item.profile_url || ""} size={sizes.rem6 / 2.1}/>
+                                            <ProfileButton userId={item.item?.id || ""} profileUrl={item.item?.profile_url || ""} size={sizes.rem6 / 2.1}/>
                                             <View style={{flex: 1, marginLeft: sizes.rem0_5, justifyContent: 'center'}}>
         
-                                                <Text style={{ fontWeight: '700', fontSize: fonts.small}}>{item.item.title}</Text>
-                                                <Text numberOfLines={2} style={{fontSize: fonts.xSmall}}>{item.item.description}</Text>
+                                                <Text style={{ fontWeight: '700', fontSize: fonts.small}}>{item.item?.title || ""}</Text>
+                                                <Text numberOfLines={2} style={{fontSize: fonts.xSmall}}>{item.item?.description || ""}</Text>
                                             </View>
                                         </ElevatedSection>
                                     </Pressable>

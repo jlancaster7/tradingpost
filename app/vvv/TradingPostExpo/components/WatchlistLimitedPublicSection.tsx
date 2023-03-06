@@ -20,9 +20,9 @@ import { LimitedBlockList } from "../screens/BlockListModalScreen";
 
 
 
-export function WatchlistLimitedPublicSection(props: { title: string, watchlists: Interface.IWatchlistList[] | undefined, showAddButton?: boolean, shared?: boolean, hideNoteOnEmpty?: boolean, datasetKey?: string }) {
+export function WatchlistLimitedPublicSection(props: { title: string,  showAddButton?: boolean, shared?: boolean, hideNoteOnEmpty?: boolean, datasetKey?: string }) {
     const nav = useNavigation<any>();
-    const {title, watchlists, shared, showAddButton, datasetKey, hideNoteOnEmpty} = props
+    const {title, shared, showAddButton, datasetKey, hideNoteOnEmpty} = props
     //const [watchlistListData, setWatchlistListData] = useState<{id: number,name: string,  logoUriList: string[], type: string, isNotification: boolean, userHandle: string, userImageUri: string}[]>([])
     const { securities: { bySymbol, byId } } = useSecuritiesList();
 /*
