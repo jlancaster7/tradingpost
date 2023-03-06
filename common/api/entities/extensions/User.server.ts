@@ -580,33 +580,35 @@ export default ensureServerExtensions<User>({
     },
     discoveryOne: async (r) => {
         const pool = await getHivePool;
-        //sudpc.title, 
-        //sudpc.description, 
-        //sudpc.link,
-        //substack
-        const results = await pool.query(`SELECT sudpc.title, 
-                                                sudpc.description,   
-                                                du.id,
-                                                du.handle,
-                                                du.tags,
-                                                (concat(du.first_name,' ',du.last_name)) as "display_name",
-                                                '{}' as "subscription",
-                                                du.profile_url,
-                                                du.social_analytics,
-                                                du.is_deleted 
-                                        FROM data_user du 
-                                        INNER JOIN 
-                                            (SELECT dpc.user_id, su.title, su.description, su.link 
-                                            FROM substack_users su 
-                                            INNER JOIN data_platform_claim dpc 
-                                                ON su.substack_user_id = dpc.platform_user_id) sudpc 
+        const results = await pool.query(`SELECT  sudpc.title, 
+                                                    sudpc.description,
+                                                    sudpc.most_recent_article_date,
+                                                    du.id,
+                                                    du.handle,
+                                                    du.tags,
+                                                    (concat(du.first_name,' ',du.last_name)) as "display_name",
+                                                    '{}' as "subscription",
+                                                    du.profile_url,
+                                                    du.social_analytics,
+                                                    du.is_deleted 
+                                            FROM data_user du 
+                                            INNER JOIN 
+                                                (select dpc.user_id, ss.title, ss.description, ss.link, ss.most_recent_article_date 
+                                                from (select su.substack_user_id, su.title, su.description, su.link, max(sa.created_at) as "most_recent_article_date" 
+                                                    from substack_users su 
+                                                        inner join substack_articles sa 
+                                                            on su.substack_user_id = sa.substack_user_id 
+                                                        group by (su.substack_user_id, su.title, su.description, su.link)
+                                                        ) ss
+                                                inner join data_platform_claim dpc 
+                                                    on ss.substack_user_id = dpc.platform_user_id ) sudpc 
                                             ON du.id = sudpc.user_id
-                                        ORDER BY id DESC
+                                            ORDER BY sudpc.most_recent_article_date DESC
                                         OFFSET $1
                                         LIMIT $2
                                         `, [r.body.page, r.body.limit])
         
-        return results.rows as (IUserList & {title: string, description: string})[]
+        return results.rows as (IUserList & {title: string, most_recent_article_date: string, description: string})[]
     },
     discoveryTwo: async (r) => {
         const pool = await getHivePool;
@@ -614,24 +616,30 @@ export default ensureServerExtensions<User>({
         //sudpc.description, 
         //sudpc.link,
         //spotify
-        const results = await pool.query(`SELECT sudpc.name as "title",
-                                                sudpc.description,
-                                                du.id,
-                                                du.handle,
-                                                du.tags,
-                                                (concat(du.first_name,' ',du.last_name)) as "display_name",
-                                                '{}' as "subscription",
-                                                du.profile_url,
-                                                du.social_analytics,
-                                                du.is_deleted 
-                                        FROM data_user du 
-                                        INNER JOIN 
-                                            (SELECT dpc.user_id, su.name, su.description
-                                            FROM spotify_users su  
-                                            INNER JOIN data_platform_claim dpc 
-                                                ON su.spotify_show_id = dpc.platform_user_id) sudpc 
+        const results = await pool.query(`SELECT  sudpc.name as "title", 
+                                                    sudpc.description,
+                                                    sudpc.most_recent_show_date,
+                                                    du.id,
+                                                    du.handle,
+                                                    du.tags,
+                                                    (concat(du.first_name,' ',du.last_name)) as "display_name",
+                                                    '{}' as "subscription",
+                                                    du.profile_url,
+                                                    du.social_analytics,
+                                                    du.is_deleted 
+                                            FROM data_user du 
+                                            INNER JOIN 
+                                                (select dpc.user_id, ss.name, ss.description, ss.most_recent_show_date 
+                                                from (select su.spotify_show_id, su.name, su.description, max(se.created_at) as "most_recent_show_date" 
+                                                    from spotify_users su 
+                                                        inner join spotify_episodes se 
+                                                            on su.spotify_show_id = se.spotify_show_id
+                                                        group by (su.spotify_show_id, su.name, su.description)
+                                                        ) ss
+                                                inner join data_platform_claim dpc 
+                                                    on ss.spotify_show_id = dpc.platform_user_id ) sudpc 
                                             ON du.id = sudpc.user_id
-                                        ORDER BY id DESC
+                                            ORDER BY sudpc.most_recent_show_date DESC
                                         OFFSET $1
                                         LIMIT $2
                                         `, [r.body.page, r.body.limit])
