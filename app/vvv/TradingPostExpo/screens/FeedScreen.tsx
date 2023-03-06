@@ -64,7 +64,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
         [dateRange, setDateRange] = useState<{beginDateTime?: string, endDateTime?: string}>({}),
         [people, setPeople] = useState<Interface.IUserList[]>(),
         [searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
-        { securities: { list: securities, byId } } = useSecuritiesList(),
+        { securities: { list: securities, byId, bySymbol } } = useSecuritiesList(),
         [filterType, setFilterType] = useState<'none' | 'portfolio' | 'watchlist' | 'search'>('none'),
         [selectedWatchlist, setSelectedWatchlist] = useState<{id?: number, name?: string}>({}),
         [usersWatchlists, setUsersWatchlist] = useState<{id: number, name: string}[]>([]),
@@ -255,11 +255,74 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     //borderBottomWidth: 1
                 }}
                 key={`selector_${platforms.length}`}>
-                <PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked} />
-           
+                {/*<PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked} />*/}
+                <View style={{flex: 1, marginHorizontal: sizes.rem1 }}>
+                        <View style={{flexDirection: 'row'}}>
+                            
+                            <View style={{flex: 1}}>  
+                                <SearchBar 
+                                        text={tempSearchText}
+                                        placeholder="Search... ($AAPL, Tim, Tesla, etc.)"
+                                        onTextChange={(v) => {
+                                            setTempSearchText(v);
+                                        }}
+                                        onEditingSubmit={(e) => {
+                                            setSearchText([...searchText, e])
+                                            setTempSearchText('')
+                                        }}
+                                    />
+                                <ScrollView style={{marginTop: sizes.rem0_5, marginBottom: sizes.rem0_5}}
+                                            nestedScrollEnabled 
+                                            horizontal
+                                            showsHorizontalScrollIndicator={false}>
+                                    <View style={[row, Object.keys(dateRange).length ? {display: 'flex'} : {display: 'none'}]}>
+                                        {
+                                            dateRange.beginDateTime &&
+                                                    <PrimaryChip isAlt
+                                                                includeX={true}
+                                                                pressEvent={() => {
+                                                                    setDateRange({})
+                                                                }}
+                                                                key={'dateRangeChip'} 
+                                                                label={`Last ${Math.round((((new Date()).valueOf() - (new Date(dateRange.beginDateTime)).valueOf()) / 3600000))} Hours`}
+                                                                style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
+                                        }    
+                                    </View>
+                                    <View style={[row, searchText.length ? {display: 'flex'} : {display: 'none'}]}>
+                                        {
+                                            isNotUndefinedOrNull(searchText) && Array.isArray(searchText) && searchText.map((chip, i) => {
+                                                if (chip.startsWith('$') && bySymbol[chip.slice(1)]) return (
+
+                                                    <CompanyProfileBar symbol={bySymbol[chip.slice(1)].symbol}
+                                                            companyName={bySymbol[chip.slice(1)].company_name} 
+                                                            imageUri={bySymbol[chip.slice(1)].logo_url}
+                                                            secId={bySymbol[chip.slice(1)].id}
+                                                            makeShadedSec
+                                                            />
+                                                )
+                                                return (
+                                                    
+                                                    <PrimaryChip isAlt
+                                                                includeX={true}
+                                                                pressEvent={() => {
+                                                                    setSearchText(searchText.filter(a => a !== chip))
+                                                                    setTempSearchText('')
+                                                                }}
+                                                                key={`search_term_${i}`} 
+                                                                label={chip}
+                                                                style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
+                                                )
+                                            })                   
+                                        }    
+                                    </View>
+                                </ScrollView>
+                            </View>  
+                        </View>
+                        
+                    </View>
                 {filterType === 'none' ? 
-                    <View style={{marginHorizontal: sizes.rem2 / 2,  flexDirection: 'row', justifyContent: 'center' }}>
-                        <Pressable onPress={() => {
+                    <View style={{flex: 1, marginHorizontal: sizes.rem2 / 2,  flexDirection: 'row', justifyContent: 'center' }}>
+                        <Pressable style={{flex: 1}} onPress={() => {
                             setFilterType('portfolio')
                         }}>
                             <ElevatedSection style={{flex: 1, flexDirection: 'row', justifyContent: 'center', height: 40}} title="">
@@ -269,23 +332,13 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                                 </Text>
                             </ElevatedSection>
                         </Pressable>
-                        <Pressable onPress={() => {
+                        <Pressable style={{flex: 1}} onPress={() => {
                             setFilterType('watchlist')
                         }}>
                             <ElevatedSection style={{flex: 1, flexDirection: 'row', justifyContent: 'center', height: 40}} title="">
                                 <WatchlistIcon height={24} width={38} style={{height: 24, width: 38 }} />
                                 <Text style={{alignSelf: 'center'}}>
                                     Watchlists
-                                </Text>
-                            </ElevatedSection>
-                        </Pressable>
-                        <Pressable onPress={() => {
-                            setFilterType('search')
-                        }}>
-                            <ElevatedSection style={{flex: 1, flexDirection: 'row', justifyContent: 'center', height: 40}} title="">
-                                <IconButton iconSource={ SearchInactive }/>
-                                <Text style={{alignSelf: 'center'}}>
-                                    Search
                                 </Text>
                             </ElevatedSection>
                         </Pressable>
@@ -369,93 +422,8 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                             </ScrollView>
                     </View> :
                 filterType === 'search' ?
-                    <View style={{flex: 1, marginRight: sizes.rem2 / 2}}>
-                        <View style={{flexDirection: 'row'}}>
-                            <Pressable style={{marginLeft: sizes.rem0_25}}
-                                onPress={() => {
-                                    setFilterType('none')
-                                }}>
-                                    <Icon 
-                                        fill={"#708090"}
-                                        height={30}
-                                        width={38}
-                                        name="arrow-ios-back-outline" style={{
-                                            marginTop: 6,
-                                            height: 30,
-                                            width: 38
-                                        }}/>
-                                </Pressable>
-                            <View style={{flex: 1}}>  
-                                <SearchBar 
-                                        text={tempSearchText}
-                                        placeholder="Search... ($AAPL, Tim, Tesla, etc.)"
-                                        onTextChange={(v) => {
-                                            setTempSearchText(v);
-                                        }}
-                                        onEditingSubmit={(e) => {
-                                            setSearchText([...searchText, e])
-                                            setTempSearchText('')
-                                        }}
-                                    />
-                                <ScrollView style={{marginTop: sizes.rem0_5, marginBottom: sizes.rem0_5}}
-                                            nestedScrollEnabled 
-                                            horizontal
-                                            showsHorizontalScrollIndicator={false}>
-                                    <View style={[row, Object.keys(dateRange).length ? {display: 'flex'} : {display: 'none'}]}>
-                                        {
-                                            dateRange.beginDateTime &&
-                                                    <PrimaryChip isAlt
-                                                                includeX={true}
-                                                                pressEvent={() => {
-                                                                    setDateRange({})
-                                                                }}
-                                                                key={'dateRangeChip'} 
-                                                                label={`Last ${Math.round((((new Date()).valueOf() - (new Date(dateRange.beginDateTime)).valueOf()) / 3600000))} Hours`}
-                                                                style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
-                                        }    
-                                    </View>
-                                    <View style={[row, searchText.length ? {display: 'flex'} : {display: 'none'}]}>
-                                        {
-                                            isNotUndefinedOrNull(searchText) && Array.isArray(searchText) && searchText.map((chip, i) => {
-                                                return (
-                                                    <PrimaryChip isAlt
-                                                                includeX={true}
-                                                                pressEvent={() => {
-                                                                    setSearchText(searchText.filter(a => a !== chip))
-                                                                    setTempSearchText('')
-                                                                }}
-                                                                key={`search_term_${i}`} 
-                                                                label={chip}
-                                                                style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
-                                                )
-                                            })                   
-                                        }    
-                                    </View>
-                                </ScrollView>
-                            </View>  
-                        </View>
-                        <View style={[searchSecurities?.length ? {display: 'flex', backgroundColor: AppColors.background, paddingHorizontal: sizes.rem1} : {display: 'none'}]}>
-                            <List
-                                key={`objKey_${searchSecurities?.length}`}
-                                listKey={`companies_${searchSecurities?.length}`}
-                                datasetKey={`company_id_${searchSecurities?.length}`}
-                                horizontal
-                                data={searchSecurities}
-                                loadingMessage={" "}
-                                noDataMessage={" "}
-                                loadingItem={undefined}
-                                renderItem={(item) => {
-                                    return (
-                                        <CompanyProfileBar symbol={item.item.symbol}
-                                                        companyName={item.item.company_name} 
-                                                        imageUri={item.item.logo_url}
-                                                        secId={item.item.id}
-                                                        makeShadedSec
-                                                        />
-                                    )
-                                }}
-                            />
-                        </View>
+                    <View>
+                        
                     </View> : undefined}
             </Animated.View>
         </View>

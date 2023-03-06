@@ -1,3 +1,4 @@
+/*
 import React, { PropsWithChildren, useEffect, useRef, useState, Component } from "react"
 import { Avatar, Icon } from "@ui-kitten/components";
 import { View, Text, ViewStyle, Pressable } from "react-native";
@@ -28,3 +29,4 @@ export const SquaredAudioPlayer = (props: { iconUriList: string[], description: 
         </View>
     )
 }
+*/

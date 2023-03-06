@@ -1,3 +1,4 @@
+/*
 import TrackPlayer, { 
     Event, 
     Capability,
@@ -27,3 +28,4 @@ export const SetupService = async (): Promise<boolean> => {
         return isSetup;
     }
 }
+*/

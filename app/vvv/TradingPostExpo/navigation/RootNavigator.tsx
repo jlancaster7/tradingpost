@@ -42,8 +42,8 @@ import {BlockScreen} from '../screens/BlockListScreen'
 import {useRoute} from "@react-navigation/native";
 import {registerDeviceForNotifications} from "../utils/notifications";
 import { DiscoveryScreen } from "../screens/DiscoveryScreen";
-import TrackPlayer from 'react-native-track-player';
-import { SetupService } from "../utils/PlaybackService";
+//import TrackPlayer from 'react-native-track-player';
+//import { SetupService } from "../utils/PlaybackService";
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -81,7 +81,7 @@ export function RootNavigator() {
     useEffect(() => {
         if (loginState?.appUser) {
             registerDeviceForNotifications()
-            SetupService()
+            //SetupService()
         }
     }, [loginState?.appUser]);
 

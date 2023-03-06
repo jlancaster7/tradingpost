@@ -1,7 +1,7 @@
 import { registerRootComponent } from 'expo';
 import App from './App';
-import { PlaybackService } from './utils/PlaybackService';
-import TrackPlayer from 'react-native-track-player';
+//import { PlaybackService } from './utils/PlaybackService';
+//import TrackPlayer from 'react-native-track-player';
 
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
@@ -9,4 +9,4 @@ import TrackPlayer from 'react-native-track-player';
 // the environment is set up appropriately
 registerRootComponent(App);
 
-TrackPlayer.registerPlaybackService(() => PlaybackService);
+//TrackPlayer.registerPlaybackService(() => PlaybackService);
