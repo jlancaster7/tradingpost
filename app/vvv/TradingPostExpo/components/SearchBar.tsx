@@ -2,7 +2,7 @@ import { Icon, Input, Button, Text } from "@ui-kitten/components";
 import React, { useRef } from "react";
 import { ImageProps, ViewStyle, TextInputProps, Image, ViewProps, Pressable, TextInputKeyPressEventData, NativeSyntheticEvent } from "react-native";
 import { ITextField, TextField } from "../components/TextField";
-import { navIcons } from "../images";
+import { navIcons, SearchInactive } from "../images";
 
 export const SearchBar = (props: { text: string, onTextChange: (text: string) => void, onEditingSubmit?: (e: string) => void, placeholder?: string } & Pick<ViewProps, "onLayout">) => {
     const tfRef = useRef<ITextField>(null)
@@ -15,7 +15,7 @@ export const SearchBar = (props: { text: string, onTextChange: (text: string) =>
         }}
         accessoryLeft={
             () => {
-                return <Image source={navIcons.Search.inactive} style={{
+                return <Image source={SearchInactive} style={{
                     height: 20,
                     width: 20,
                     padding: 8,

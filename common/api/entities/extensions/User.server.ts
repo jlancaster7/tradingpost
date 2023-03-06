@@ -577,5 +577,94 @@ export default ensureServerExtensions<User>({
                     and type = $3`, [r.extra.userId, r.body.typeId, NotificationSubscriptionTypes.HOLDINGS_NOTIFICATION]);
             return false
         }
+    },
+    discoveryOne: async (r) => {
+        const pool = await getHivePool;
+        //sudpc.title, 
+        //sudpc.description, 
+        //sudpc.link,
+        //substack
+        const results = await pool.query(`SELECT sudpc.title, 
+                                                sudpc.description,   
+                                                du.id,
+                                                du.handle,
+                                                du.tags,
+                                                (concat(du.first_name,' ',du.last_name)) as "display_name",
+                                                '{}' as "subscription",
+                                                du.profile_url,
+                                                du.social_analytics,
+                                                du.is_deleted 
+                                        FROM data_user du 
+                                        INNER JOIN 
+                                            (SELECT dpc.user_id, su.title, su.description, su.link 
+                                            FROM substack_users su 
+                                            INNER JOIN data_platform_claim dpc 
+                                                ON su.substack_user_id = dpc.platform_user_id) sudpc 
+                                            ON du.id = sudpc.user_id
+                                        ORDER BY id DESC
+                                        OFFSET $1
+                                        LIMIT $2
+                                        `, [r.body.page, r.body.limit])
+        
+        return results.rows as (IUserList & {title: string, description: string})[]
+    },
+    discoveryTwo: async (r) => {
+        const pool = await getHivePool;
+        //sudpc.title, 
+        //sudpc.description, 
+        //sudpc.link,
+        //spotify
+        const results = await pool.query(`SELECT sudpc.name as "title",
+                                                sudpc.description,
+                                                du.id,
+                                                du.handle,
+                                                du.tags,
+                                                (concat(du.first_name,' ',du.last_name)) as "display_name",
+                                                '{}' as "subscription",
+                                                du.profile_url,
+                                                du.social_analytics,
+                                                du.is_deleted 
+                                        FROM data_user du 
+                                        INNER JOIN 
+                                            (SELECT dpc.user_id, su.name, su.description
+                                            FROM spotify_users su  
+                                            INNER JOIN data_platform_claim dpc 
+                                                ON su.spotify_show_id = dpc.platform_user_id) sudpc 
+                                            ON du.id = sudpc.user_id
+                                        ORDER BY id DESC
+                                        OFFSET $1
+                                        LIMIT $2
+                                        `, [r.body.page, r.body.limit])
+        
+        return results.rows as (IUserList & {title: string, description: string})[]
+    },
+    discoveryThree: async (r) => {
+        const pool = await getHivePool;
+        //sudpc.title, 
+        //sudpc.description, 
+        //sudpc.link,
+        //Youtube
+        const results = await pool.query(`SELECT  
+                                                du.id,
+                                                du.handle,
+                                                du.tags,
+                                                (concat(du.first_name,' ',du.last_name)) as "display_name",
+                                                '{}' as "subscription",
+                                                du.profile_url,
+                                                du.social_analytics,
+                                                du.is_deleted 
+                                        FROM data_user du 
+                                        INNER JOIN 
+                                            (SELECT dpc.user_id, yu.title, yu.description
+                                            FROM youtube_users yu 
+                                            INNER JOIN data_platform_claim dpc 
+                                                ON yu.youtube_channel_id = dpc.platform_user_id) sudpc 
+                                            ON du.id = sudpc.user_id
+                                        ORDER BY id DESC
+                                        OFFSET $1
+                                        LIMIT $2
+                                        `, [r.body.page, r.body.limit])
+        
+        return results.rows as IUserList[]
     }
 })

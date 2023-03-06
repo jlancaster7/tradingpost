@@ -52,15 +52,13 @@ export function SideMenu(props: any
     const currentUser = loginState?.appUser;
     if (!currentUser) return;
 
-    return <View>
+    return <View style={{flex: 1, paddingTop: sizes.rem2, paddingBottom: sizes.rem1}}>
         {/* <DrawerContentScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ flexGrow: 1, backgroundColor: "white" }}> */}
 
         <View style={{ alignSelf: "center", alignItems: "center", backgroundColor: "transparent" }}>
             <Pressable
                 style={{ alignItems: "center" }}>
-                <View
-                    style={[{ marginTop: sizes.rem1 }, padSmall]}
-                >
+                <View style={[{ marginTop: sizes.rem1 }, padSmall]}>
                     <ProfileButton size={80} profileUrl={currentUser?.profile_url || ""} userId={currentUser?.id} />
                 </View>
                 <Text style={[font("xSmall", "black", true), padSmall]} >@{currentUser.handle}</Text>
@@ -68,16 +66,12 @@ export function SideMenu(props: any
             </Pressable>
             <Text style={[font("xSmall", "darkgray", true), padSmall]} >Subscribers: {currentUser.subscription?.count}</Text>
             <Link onPress={() => {
-
-                props.navigation.navigate("Subscription");
-
-            }} style={{ fontSize: fonts.xSmall, fontWeight: "bold" }}
-            // onPress={() =>
-            //      screens.push(activeTabId, "ManageSubscriptions", {
-            //     options: fullDashOptions,
-            //     passProps: { isFullscreen: true } as DashProps
-            // })}
-            >Manage Subscriptions</Link>
+                    props.navigation.navigate("Subscription");
+                }} 
+                  style={{ fontSize: fonts.xSmall, fontWeight: "bold" }}
+                  >
+                Manage Subscriptions
+            </Link>
         </View>
         {([{
             label: "Profile",
@@ -115,6 +109,12 @@ export function SideMenu(props: any
             label: "Link Brokerage!",
             //onPress: () => props.navigation.navigate("Create"),
             onPress: () => props.navigation.navigate("BrokeragePicker"),
+            icon: sideMenu.Bank_Link,
+        },
+        {
+            label: "Discovery",
+            //onPress: () => props.navigation.navigate("Create"),
+            onPress: () => props.navigation.navigate("Discovery"),
             icon: sideMenu.Bank_Link,
         },
         {

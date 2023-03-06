@@ -111,6 +111,9 @@ export const WatchlistIcon = makeExpoSvg(Watchlist);
 
 export const EllipsesIcon = makeExpoSvg(_EllipsesIcon);
 
+export const SearchActive = require("./assets/nav-bar/search-active.png")
+export const SearchInactive = require("./assets/nav-bar/search.png")
+
 export {Logo, LogoNoBg};
 
 
@@ -119,7 +122,7 @@ export const rnui = {
     add: require('./assets/rnui/add.png'),
     plus: require('./assets/rnui/plus.png')
 }
-export type NavIconKeys = "Portfolio" | "Search" | "Feed" | "Notification"; //| "Bookmark";
+export type NavIconKeys = "Portfolio" | "Feed" | "Notification" | "Discovery"; //| "Search"; //| "Bookmark";
 
 export const NavIconTypeOverride: Partial<Record<NavIconKeys, any>> = {
     Notification: {
@@ -143,9 +146,10 @@ export const navIcons: Record<NavIconKeys, { active: number, inactive: number }>
         active: require("./assets/nav-bar/feed-active.png"),
         inactive: require("./assets/nav-bar/feed.png")
     },
-    "Search": {
-        active: require("./assets/nav-bar/search-active.png"),
-        inactive: require("./assets/nav-bar/search.png")
+    
+    "Discovery": {
+        active: require("./assets/nav-bar/discovery-active.png"),
+        inactive: require("./assets/nav-bar/discovery.png")
     },
     // "Bookmark": {
     //     active: require("./assets/nav-bar/bookmark-active.png"),

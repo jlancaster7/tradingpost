@@ -14,7 +14,7 @@ import {ElevatedSection, Section} from "../components/Section"
 import {ITableColumn} from "../components/Table"
 import {TextField} from "../components/TextField"
 import {AppColors} from "../constants/Colors"
-import {flex, row, sizes} from "../style"
+import {companyProfileStyle, flex, row, shaded, sizes} from "../style"
 import {useSecuritiesList} from '../SecurityList'
 import {toDollarsAndCents, toPercent2} from "../utils/misc"
 import {List} from "../components/List"
@@ -375,8 +375,48 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                         </Text>
                     </ElevatedSection>
                 </View>,
+                <View style={{
+                    paddingTop: sizes.rem0_5,
+                    paddingHorizontal: sizes.rem1,
+                    backgroundColor: AppColors.background,
+                }}>
+                    <View style={[shaded, {flex: 1, backgroundColor: companyProfileStyle.upBackgroundColor, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly'}]}>
+                        <View style={{flexDirection: 'row'}}>
+                            <Icon 
+                                fill={"grey"}
+                                height={36}
+                                width={42}
+                                name="rewind-left-outline" 
+                                style={{
+                                    height: 36,
+                                    width: 42
+                                }}/>
+                            <Icon 
+                                fill={"green"}
+                                height={36}
+                                width={42}
+                                name="play-circle-outline" 
+                                style={{
+                                    height: 36,
+                                    width: 42
+                                }}/>
+                            <Icon 
+                                fill={"grey"}
+                                height={36}
+                                width={42}
+                                name="rewind-right-outline" 
+                                style={{
+                                    height: 36,
+                                    width: 42
+                                }}/>
+                        </View>
+                        <Text style={{ color: 'grey', textAlign: 'center', marginVertical: sizes.rem0_25}}>
+                            {'Updated 1 hour ago'}
+                        </Text>
+                    </View>
+                </View>,
                 <View style={[
-                    //collapsed ? {display: 'none'} : {display: 'flex'},
+                    
                     {paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background}]}>
                     <Section title="Companies"
                              style={{backgroundColor: AppColors.background}}>

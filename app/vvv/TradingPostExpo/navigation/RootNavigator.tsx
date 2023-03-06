@@ -41,6 +41,9 @@ import {Icon} from "@ui-kitten/components";
 import {BlockScreen} from '../screens/BlockListScreen'
 import {useRoute} from "@react-navigation/native";
 import {registerDeviceForNotifications} from "../utils/notifications";
+import { DiscoveryScreen } from "../screens/DiscoveryScreen";
+import TrackPlayer from 'react-native-track-player';
+import { SetupService } from "../utils/PlaybackService";
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -78,6 +81,7 @@ export function RootNavigator() {
     useEffect(() => {
         if (loginState?.appUser) {
             registerDeviceForNotifications()
+            SetupService()
         }
     }, [loginState?.appUser]);
 
@@ -148,6 +152,7 @@ export function RootNavigator() {
             <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen}/>
             <Stack.Screen name="RobinhoodLogin" component={RobhinhoodLoginScreen}/>
             <Stack.Screen name="BlockedUsers" component={BlockScreen}/>
+            <Stack.Screen name="Discovery" component={DiscoveryScreen}/>
             <Stack.Screen name="TwitterAuthWebView" component={TwitterAuthWebViewScreen}
                           options={{headerShown: false}}/>
         </Stack.Group>

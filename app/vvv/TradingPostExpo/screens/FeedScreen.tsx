@@ -1,6 +1,6 @@
-import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { NavigationProp, useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Api, Interface } from "@tradingpost/common/api";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
     Alert,
     Animated,
@@ -26,18 +26,30 @@ import {
 } from "../components/PostList";
 import { spaceOnSide, postInnerHeight, postExtraVerticalSpace } from "../components/PostView";
 import { DashTabScreenProps } from "../navigation/pages";
-import { Logo, LogoNoBg, social } from "../images";
+import { Logo, LogoNoBg, SearchInactive, social } from "../images";
 import { IconifyIcon } from "../components/IconfiyIcon";
 import { ElevatedSection } from "../components/Section";
-import { flex, sizes } from "../style";
+import { flex, row, sizes } from "../style";
 import { social as socialStyle } from '../style'
 import { SvgExpo } from "../components/SvgExpo";
 import { diff } from "react-native-reanimated";
-
+import { navIcons, WatchlistIcon } from "../images";
+import { IconButton } from "../components/IconButton";
+import { SearchBar } from "../components/SearchBar";
+import { isNotUndefinedOrNull } from "../utils/validators";
+import { PrimaryChip } from "../components/PrimaryChip";
+import { Icon } from "@ui-kitten/components";
+import { AppColors } from "../constants/Colors";
+import { NoDataPanel } from "../components/NoDataPanel";
+import { useSecuritiesList } from "../SecurityList";
+import { Header } from "../components/Headers";
+import { List } from "../components/List";
+import { ProfileBar } from "../components/ProfileBar";
+import { CompanyProfileBar } from "../components/CompanyProfileBar";
 const platformsAll = ["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"];
 
 const platformsMarginH = 0.02;
-const platformsMarginTop = sizes.rem1;
+const platformsMarginTop = sizes.rem4-4;
 
 const useClampAmount = () => {
     const { width } = useWindowDimensions();
@@ -46,16 +58,93 @@ const useClampAmount = () => {
 
 export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const [platforms, setPlatforms] = useState<string[]>([]),
-        [platformClicked, setPlatformClicked] = useState('');
+        [platformClicked, setPlatformClicked] = useState(''),
+        [tempSearchText, setTempSearchText] = useState(''),
+        [searchText, setSearchText] = useState<string[]>([]),
+        [dateRange, setDateRange] = useState<{beginDateTime?: string, endDateTime?: string}>({}),
+        [people, setPeople] = useState<Interface.IUserList[]>(),
+        [searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
+        { securities: { list: securities, byId } } = useSecuritiesList(),
+        [filterType, setFilterType] = useState<'none' | 'portfolio' | 'watchlist' | 'search'>('none'),
+        [selectedWatchlist, setSelectedWatchlist] = useState<{id?: number, name?: string}>({}),
+        [usersWatchlists, setUsersWatchlist] = useState<{id: number, name: string}[]>([]),
+        [userPortfolio, setUserPortfolio] = useState<string[]>([])
+    
     const nav = useNavigation();
-    const clampAmount = useClampAmount();
+    let clampAmount = useClampAmount();
 
     const translateHeaderY = useRef(new Animated.Value(0)).current;
     const lastOffsetY = useRef(new Animated.Value(0)).current;
     const translateMultipler = useRef(new Animated.Value(1)).current;
-
-
+    useFocusEffect(useCallback(()=> {
+        (async () => {
+            try {
+                //watchilst data
+                const watchlists = await Api.Watchlist.extensions.getAllWatchlists()
+                setUsersWatchlist([
+                    {id: watchlists.quick.id, name: 'Quick List'},
+                    ...watchlists.created.map(a => {
+                        return {id: a.id, name: a.name}
+                    })])
+                //portfolio data
+                const portfolio = (await Api.User.extensions.getHoldings({})).filter(a => byId[a.security_id] !== undefined && byId[a.security_id].symbol !== 'USD:CUR')
+                
+                setUserPortfolio(portfolio.map(a => `$${byId[a.security_id].symbol}`))
+            
+            } catch (ex) {
+                console.error(ex);
+            }
+        })()
+    },[]))
+    useEffect(() => {
+        if (searchText.length === 1 && searchText[0].length > 3) {
+            (async () => {
+                try {
+                    setPeople(await Api.User.extensions.search({
+                        term: searchText[0]
+                    }));
+                }
+                catch (ex) {
+                    console.error(ex);
+                }
+                try {
+                    const output: Interface.ISecurityList[] = []
+                    searchText.forEach((el, i) => {
+                        const modSearch = el.slice(0,1) === '$' ? el.slice(1) : el;
+                        const regex = new RegExp(`^${modSearch}`, "i");
+                        securities.forEach((item) => {
+                            if ((regex.test(item.company_name) || regex.test(item.symbol ))) output.push(item)
+                        })
+                    })
+                    setSearchSecurities(output)
+                } catch (ex) {
+                    console.error(ex)
+                }
+            })()
+        }
+        else if (searchText.length > 0) {
+            try {
+                setPeople(undefined);
+                const output: Interface.ISecurityList[] = []
+                searchText.forEach((el, i) => {
+                    const modSearch = el.slice(0,1) === '$' ? el.slice(1) : el;
+                    const regex = new RegExp(`^${modSearch}`, "i");
+                    securities.forEach((item) => {
+                        if ((item.symbol === modSearch.toUpperCase())) output.push(item)
+                    })
+                })
+                setSearchSecurities(output)
+            } catch (ex) {
+                console.error(ex)
+            }
+        }
+        else {
+            setPeople(undefined);
+            setSearchSecurities(undefined)
+        }
+    }, [searchText])
     //const [clampRange, setClampRange] = useState<[number, number]>([0, clampAmount])
+    
     const diffValue = Animated.subtract(translateHeaderY, lastOffsetY);
 
     //if content is negative  
@@ -87,7 +176,25 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
         })
         setPlatformClicked('')
     }, [platformClicked])
-
+    useEffect(() => {
+        (async () => {
+            if (filterType === 'portfolio') {
+                setSearchText(userPortfolio)
+            }
+            else if (filterType === 'watchlist') {
+                if (selectedWatchlist.id) {
+                    const watchlist = await Api.Watchlist.get(selectedWatchlist.id);
+                    setSearchText(watchlist.items.map(a => `$${a.symbol}`))
+                } else {
+                    setSearchText([])
+                }
+            }
+            else if (filterType === 'none') {
+                setSearchText([])
+                if (Object.keys(selectedWatchlist).length) setSelectedWatchlist({})
+            }
+        })()
+    }, [filterType, selectedWatchlist])
 
     return (
         <View style={{ flex: 1, backgroundColor: "#F7f8f8" }}>
@@ -97,37 +204,41 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     // transform: [{ translateY: margin }]
                     // marginTop: margin
                 }}>
-                <FeedPart
-                    platforms={platforms}
-                    onScrollAnimationEnd={() => {
-                        //translateHeaderY.setValue(-2000);ns
-                        console.log("Scroll Anim Has Ended")
-                    }}
-                    onRefresh={() => {
-                        //translateHeaderY.setValue(-1000);
-                    }}
-                    contentContainerStyle={{
-                        paddingTop: clampAmount + sizes.rem1
-                    }}
-                    onScroll={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
-                        {
-                            nativeEvent:
-                            {
-                                //velocity: { y: translateHeaderY }
-                                contentOffset: { y: translateHeaderY }
-                            }
-                        }
-                    ], { useNativeDriver: true })}
-                    onScrollBeginDrag={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
-                        {
-                            nativeEvent:
-                            {
-                                contentOffset: { y: lastOffsetY }
-                            }
+                {filterType === 'search' && searchText.length === 0 ? 
+                        <NoDataPanel message={'Search for Analysts, Posts, or Companies!'} /> 
+                        : <FeedPart
+                            platforms={platforms}
+                            dateRange={dateRange} 
+                            searchTerms={searchText} 
+                            onScrollAnimationEnd={() => {
+                                //translateHeaderY.setValue(-2000);ns
+                                console.log("Scroll Anim Has Ended")
+                            }}
+                            onRefresh={() => {
+                                //translateHeaderY.setValue(-1000);
+                            }}
+                            contentContainerStyle={{
+                                paddingTop: clampAmount + sizes.rem1
+                            }}
+                            onScroll={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
+                                {
+                                    nativeEvent:
+                                    {
+                                        //velocity: { y: translateHeaderY }
+                                        contentOffset: { y: translateHeaderY }
+                                    }
+                                }
+                            ], { useNativeDriver: true })}
+                            onScrollBeginDrag={Animated.event<NativeSyntheticEvent<NativeScrollEvent>>([
+                                {
+                                    nativeEvent:
+                                    {
+                                        contentOffset: { y: lastOffsetY }
+                                    }
 
-                        }
-                    ], { useNativeDriver: true })}
-                />
+                                }
+                            ], { useNativeDriver: true })}
+                        />}
             </Animated.View>
             <PlusContentButton onPress={() => {
                 nav.navigate("PostEditor")
@@ -140,11 +251,212 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     alignItems: "stretch",
                     width: "100%",
                     backgroundColor: "white",
-                    borderBottomColor: "#ccc",
-                    borderBottomWidth: 1
+                    //borderBottomColor: "#ccc",
+                    //borderBottomWidth: 1
                 }}
                 key={`selector_${platforms.length}`}>
                 <PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked} />
+           
+                {filterType === 'none' ? 
+                    <View style={{marginHorizontal: sizes.rem2 / 2,  flexDirection: 'row', justifyContent: 'center' }}>
+                        <Pressable onPress={() => {
+                            setFilterType('portfolio')
+                        }}>
+                            <ElevatedSection style={{flex: 1, flexDirection: 'row', justifyContent: 'center', height: 40}} title="">
+                                <IconButton iconSource={ navIcons.Portfolio.inactive}/>
+                                <Text style={{alignSelf: 'center'}}>
+                                    Portfolio
+                                </Text>
+                            </ElevatedSection>
+                        </Pressable>
+                        <Pressable onPress={() => {
+                            setFilterType('watchlist')
+                        }}>
+                            <ElevatedSection style={{flex: 1, flexDirection: 'row', justifyContent: 'center', height: 40}} title="">
+                                <WatchlistIcon height={24} width={38} style={{height: 24, width: 38 }} />
+                                <Text style={{alignSelf: 'center'}}>
+                                    Watchlists
+                                </Text>
+                            </ElevatedSection>
+                        </Pressable>
+                        <Pressable onPress={() => {
+                            setFilterType('search')
+                        }}>
+                            <ElevatedSection style={{flex: 1, flexDirection: 'row', justifyContent: 'center', height: 40}} title="">
+                                <IconButton iconSource={ SearchInactive }/>
+                                <Text style={{alignSelf: 'center'}}>
+                                    Search
+                                </Text>
+                            </ElevatedSection>
+                        </Pressable>
+                    </View> : 
+                filterType === 'portfolio' ? 
+                    <View style={{marginRight: sizes.rem2 / 2,  flexDirection: 'row', justifyContent: 'center' }}>
+                        <Pressable style={{flex: 1, flexDirection: 'row', marginLeft: sizes.rem0_25}}
+                            onPress={() => {
+                                setFilterType('none')
+                            }}>
+                            <Icon 
+                                fill={"#708090"}
+                                height={30}
+                                width={38}
+                                name="arrow-ios-back-outline" style={{
+                                    marginTop: 6,
+                                    height: 30,
+                                    width: 38
+                                }}/>
+                            <ElevatedSection style={{flex: 1, flexDirection: 'row', justifyContent: 'center', height: 40,borderStyle: 'solid', borderWidth: 1, borderColor: 'rgba(53, 162, 101, 1)', backgroundColor: '#F0F0F0'}} title="">
+                                <IconButton iconSource={ navIcons.Portfolio.active}/>
+                                <Text style={{alignSelf: 'center', color: '#FA6334'}}>
+                                    Portfolio
+                                </Text>
+                            </ElevatedSection>
+                        </Pressable>
+                    </View> : 
+                filterType === 'watchlist' ? 
+                    <View style={{marginRight: sizes.rem2 / 2,  flexDirection: 'row'}}>
+                        <Pressable style={{marginLeft: sizes.rem0_25}}
+                                    onPress={() => {
+                                        setFilterType('none')
+                            }}>
+                            <Icon 
+                                fill={"#708090"}
+                                height={30}
+                                width={38}
+                                name="arrow-ios-back-outline" style={{
+                                    marginTop: 6,
+                                    height: 30,
+                                    width: 30
+                                }}/>
+                        </Pressable>
+                            <ScrollView style={{}}
+                                        nestedScrollEnabled 
+                                        horizontal
+                                        showsHorizontalScrollIndicator={false}>
+                                <Pressable 
+                                    onPress={() => {
+                                        nav.navigate("WatchlistEditor", {})
+                                        }}>
+                                    <ElevatedSection style={{height: 40,flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}} title="">
+                                        <Icon 
+                                            fill={AppColors.secondary}
+                                            height={24}
+                                            width={24}
+                                            name="plus-square" style={{
+                                                //marginTop: 7,
+                                                height: 24,
+                                                width: 24
+                                            }}/>
+                                            <Text style={{ marginLeft: 10}}>
+                                                Create
+                                            </Text>
+                                    </ElevatedSection>
+                                </Pressable>
+                                {usersWatchlists.map((a, i) => {
+                                    return (
+                                        <Pressable key={`watchlists_${i}`} onPress={() => {
+                                            if (selectedWatchlist.id === a.id) setSelectedWatchlist({})
+                                            else setSelectedWatchlist(a)
+                                        }}>
+                                            <ElevatedSection style={[{height: 40, justifyContent: 'center'}, selectedWatchlist.id === a.id ? {borderStyle: 'solid', borderWidth: 1, borderColor: 'rgba(53, 162, 101, 1)', backgroundColor: '#F0F0F0'} : {}]} title="">
+                                                <Text style={selectedWatchlist.id === a.id ? {color:'#FA6334'} : {}}>
+                                                    {a.name}
+                                                </Text>
+                                            </ElevatedSection>
+                                        </Pressable>
+                                        )
+                                        })}
+                            </ScrollView>
+                    </View> :
+                filterType === 'search' ?
+                    <View style={{flex: 1, marginRight: sizes.rem2 / 2}}>
+                        <View style={{flexDirection: 'row'}}>
+                            <Pressable style={{marginLeft: sizes.rem0_25}}
+                                onPress={() => {
+                                    setFilterType('none')
+                                }}>
+                                    <Icon 
+                                        fill={"#708090"}
+                                        height={30}
+                                        width={38}
+                                        name="arrow-ios-back-outline" style={{
+                                            marginTop: 6,
+                                            height: 30,
+                                            width: 38
+                                        }}/>
+                                </Pressable>
+                            <View style={{flex: 1}}>  
+                                <SearchBar 
+                                        text={tempSearchText}
+                                        placeholder="Search... ($AAPL, Tim, Tesla, etc.)"
+                                        onTextChange={(v) => {
+                                            setTempSearchText(v);
+                                        }}
+                                        onEditingSubmit={(e) => {
+                                            setSearchText([...searchText, e])
+                                            setTempSearchText('')
+                                        }}
+                                    />
+                                <ScrollView style={{marginTop: sizes.rem0_5, marginBottom: sizes.rem0_5}}
+                                            nestedScrollEnabled 
+                                            horizontal
+                                            showsHorizontalScrollIndicator={false}>
+                                    <View style={[row, Object.keys(dateRange).length ? {display: 'flex'} : {display: 'none'}]}>
+                                        {
+                                            dateRange.beginDateTime &&
+                                                    <PrimaryChip isAlt
+                                                                includeX={true}
+                                                                pressEvent={() => {
+                                                                    setDateRange({})
+                                                                }}
+                                                                key={'dateRangeChip'} 
+                                                                label={`Last ${Math.round((((new Date()).valueOf() - (new Date(dateRange.beginDateTime)).valueOf()) / 3600000))} Hours`}
+                                                                style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
+                                        }    
+                                    </View>
+                                    <View style={[row, searchText.length ? {display: 'flex'} : {display: 'none'}]}>
+                                        {
+                                            isNotUndefinedOrNull(searchText) && Array.isArray(searchText) && searchText.map((chip, i) => {
+                                                return (
+                                                    <PrimaryChip isAlt
+                                                                includeX={true}
+                                                                pressEvent={() => {
+                                                                    setSearchText(searchText.filter(a => a !== chip))
+                                                                    setTempSearchText('')
+                                                                }}
+                                                                key={`search_term_${i}`} 
+                                                                label={chip}
+                                                                style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
+                                                )
+                                            })                   
+                                        }    
+                                    </View>
+                                </ScrollView>
+                            </View>  
+                        </View>
+                        <View style={[searchSecurities?.length ? {display: 'flex', backgroundColor: AppColors.background, paddingHorizontal: sizes.rem1} : {display: 'none'}]}>
+                            <List
+                                key={`objKey_${searchSecurities?.length}`}
+                                listKey={`companies_${searchSecurities?.length}`}
+                                datasetKey={`company_id_${searchSecurities?.length}`}
+                                horizontal
+                                data={searchSecurities}
+                                loadingMessage={" "}
+                                noDataMessage={" "}
+                                loadingItem={undefined}
+                                renderItem={(item) => {
+                                    return (
+                                        <CompanyProfileBar symbol={item.item.symbol}
+                                                        companyName={item.item.company_name} 
+                                                        imageUri={item.item.logo_url}
+                                                        secId={item.item.id}
+                                                        makeShadedSec
+                                                        />
+                                    )
+                                }}
+                            />
+                        </View>
+                    </View> : undefined}
             </Animated.View>
         </View>
     );
@@ -153,19 +465,22 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
 export const PlatformSelector = (props: { platforms: string[], setPlatformClicked: React.Dispatch<React.SetStateAction<string>> }) => {
 
     return (
-        <View style={{ marginHorizontal: sizes.rem2 / 2, flexDirection: 'row', justifyContent: 'center' }}>
+        <View style={{ 
+            //marginHorizontal: sizes.rem2 / 2, 
+            flexDirection: 'row', 
+            justifyContent: 'center' }}>
             {platformsAll.map((item) => {
                 const logo = social[item + "Logo" as keyof typeof social];
                 return (
                     <ElevatedSection title=""
                         key={`socialV_${item}`}
                         style={[{
-                            flex: 1,
+                            flex: .5,
                             aspectRatio: 1,
                             alignItems: 'center',
                             justifyContent: 'center',
-                            marginTop: platformsMarginTop,
-                            marginHorizontal: "2%"
+                            //marginTop: platformsMarginTop,
+                            marginHorizontal: "3%"
                         }, props.platforms.includes(item) ? {
                             borderStyle: 'solid',
                             borderWidth: 2,
@@ -199,6 +514,7 @@ export const PlatformSelector = (props: { platforms: string[], setPlatformClicke
         </View>
     )
 }
+
 
 
 export const FeedPart = (props: {

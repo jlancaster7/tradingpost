@@ -29,6 +29,7 @@ export type RootStackParamList =
         "Launch" |
         "Create" |
         "Login" |
+        "Discovery" | 
         "Dash" |
         "WatchlistViewer" |
         "BrokeragePicker" |
