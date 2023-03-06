@@ -375,46 +375,7 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                         </Text>
                     </ElevatedSection>
                 </View>,
-                <View style={{
-                    paddingTop: sizes.rem0_5,
-                    paddingHorizontal: sizes.rem1,
-                    backgroundColor: AppColors.background,
-                }}>
-                    <View style={[shaded, {flex: 1, backgroundColor: companyProfileStyle.upBackgroundColor, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly'}]}>
-                        <View style={{flexDirection: 'row'}}>
-                            <Icon 
-                                fill={"grey"}
-                                height={36}
-                                width={42}
-                                name="rewind-left-outline" 
-                                style={{
-                                    height: 36,
-                                    width: 42
-                                }}/>
-                            <Icon 
-                                fill={"green"}
-                                height={36}
-                                width={42}
-                                name="play-circle-outline" 
-                                style={{
-                                    height: 36,
-                                    width: 42
-                                }}/>
-                            <Icon 
-                                fill={"grey"}
-                                height={36}
-                                width={42}
-                                name="rewind-right-outline" 
-                                style={{
-                                    height: 36,
-                                    width: 42
-                                }}/>
-                        </View>
-                        <Text style={{ color: 'grey', textAlign: 'center', marginVertical: sizes.rem0_25}}>
-                            {'Updated 1 hour ago'}
-                        </Text>
-                    </View>
-                </View>,
+                
                 <View style={[
                     
                     {paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background}]}>
@@ -496,6 +457,47 @@ export const NoteEditor = (props: { canEdit: boolean, note: string | undefined, 
         </View>
 
 }
+
+/*<View style={{
+                    paddingTop: sizes.rem0_5,
+                    paddingHorizontal: sizes.rem1,
+                    backgroundColor: AppColors.background,
+                }}>
+                    <View style={[shaded, {flex: 1, backgroundColor: companyProfileStyle.upBackgroundColor, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly'}]}>
+                        <View style={{flexDirection: 'row'}}>
+                            <Icon 
+                                fill={"grey"}
+                                height={36}
+                                width={42}
+                                name="rewind-left-outline" 
+                                style={{
+                                    height: 36,
+                                    width: 42
+                                }}/>
+                            <Icon 
+                                fill={"green"}
+                                height={36}
+                                width={42}
+                                name="play-circle-outline" 
+                                style={{
+                                    height: 36,
+                                    width: 42
+                                }}/>
+                            <Icon 
+                                fill={"grey"}
+                                height={36}
+                                width={42}
+                                name="rewind-right-outline" 
+                                style={{
+                                    height: 36,
+                                    width: 42
+                                }}/>
+                        </View>
+                        <Text style={{ color: 'grey', textAlign: 'center', marginVertical: sizes.rem0_25}}>
+                            {'Updated 1 hour ago'}
+                        </Text>
+                    </View>
+                </View>, */
 /*
 <SwitchField
     label='Enable Notifications'
