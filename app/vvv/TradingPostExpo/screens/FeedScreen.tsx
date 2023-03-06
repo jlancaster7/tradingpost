@@ -90,12 +90,25 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 const portfolio = (await Api.User.extensions.getHoldings({})).filter(a => byId[a.security_id] !== undefined && byId[a.security_id].symbol !== 'USD:CUR')
                 
                 setUserPortfolio(portfolio.map(a => `$${byId[a.security_id].symbol}`))
+                
             
             } catch (ex) {
                 console.error(ex);
             }
         })()
     },[]))
+    useEffect(() => {
+        const watchlistId = props.route.params.watchlistId 
+        setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: props.route.params.endDateTime})
+        if (props.route.params.searchTerms) setSearchText(props.route.params.searchTerms)
+        else if (props.route.params.isHoldings) setFilterType('portfolio')
+        else if (watchlistId) {
+            (async () => {
+                const watchlist = await Api.Watchlist.get(watchlistId);
+                setSearchText(watchlist.items.map(a => `$${a.symbol}`))
+            })()
+        }
+    }, [props.route.params.beginDateTime, props.route.params.endDateTime, props.route.params.searchTerms, props.route.params.watchlistId, props.route.params.isHoldings])
     useEffect(() => {
         if (searchText.length === 1 && searchText[0].length > 3) {
             (async () => {
@@ -275,7 +288,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                                             nestedScrollEnabled 
                                             horizontal
                                             showsHorizontalScrollIndicator={false}>
-                                    <View style={[row, Object.keys(dateRange).length ? {display: 'flex'} : {display: 'none'}]}>
+                                    <View style={[row, Object.keys(dateRange).length ? {display: 'flex', alignItems: 'center'} : {display: 'none'}]}>
                                         {
                                             dateRange.beginDateTime &&
                                                     <PrimaryChip isAlt
@@ -288,11 +301,10 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                                                                 style={{zIndex: 1,backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
                                         }    
                                     </View>
-                                    <View style={[row, searchText.length ? {display: 'flex'} : {display: 'none'}]}>
+                                    <View style={[row, searchText.length ? {display: 'flex', marginVertical: sizes.rem0_5} : {display: 'none'}]}>
                                         {
                                             isNotUndefinedOrNull(searchText) && Array.isArray(searchText) && searchText.map((chip, i) => {
-                                                if (chip.startsWith('$') && bySymbol[chip.slice(1)]) return (
-
+                                                /*if (chip.startsWith('$') && bySymbol[chip.slice(1)]) return (    
                                                     <CompanyProfileBar symbol={bySymbol[chip.slice(1)].symbol}
                                                             companyName={bySymbol[chip.slice(1)].company_name} 
                                                             imageUri={bySymbol[chip.slice(1)].logo_url}
@@ -300,7 +312,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                                                             makeShadedSec
                                                             />
                                                 )
-                                                return (
+                                                else*/ return (
                                                     
                                                     <PrimaryChip isAlt
                                                                 includeX={true}

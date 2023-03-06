@@ -538,7 +538,13 @@ export default ensureServerExtensions<User>({
 
 
         console.log("I'm past all the setup")
-        const u = `https://m.tradingpostapp.com/post?id=youtube_4Il00Mrkqnc`;
+        const watchlistId = 120;
+        const currentTime = DateTime.now();
+        const twelveHoursAgo = currentTime.minus({ hour: 12 });
+
+        const curFormat = currentTime.toUTC().toISO();
+        const twelveFormat = twelveHoursAgo.toUTC().toISO();
+        const u = `https://m.tradingpostapp.com/dash/feed?watchlistId=${watchlistId}&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
         await notificationsSrv.sendMessageToUser(
             //'e96aea04-9a60-4832-9793-f790e60df8eb'
             r.extra.userId
