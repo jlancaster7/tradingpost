@@ -544,7 +544,7 @@ export default ensureServerExtensions<User>({
 
         const curFormat = currentTime.toUTC().toISO();
         const twelveFormat = twelveHoursAgo.toUTC().toISO();
-        const u = `https://m.tradingpostapp.com/dash/feed?watchlistId=${watchlistId}&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
+        const u = `https://m.tradingpostapp.com/dash/feed?isHoldings=true&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
         await notificationsSrv.sendMessageToUser(
             //'e96aea04-9a60-4832-9793-f790e60df8eb'
             r.extra.userId

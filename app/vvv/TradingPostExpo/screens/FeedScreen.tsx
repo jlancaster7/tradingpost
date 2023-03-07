@@ -76,7 +76,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const translateHeaderY = useRef(new Animated.Value(0)).current;
     const lastOffsetY = useRef(new Animated.Value(0)).current;
     const translateMultipler = useRef(new Animated.Value(1)).current;
-    useFocusEffect(useCallback(()=> {
+    useEffect(() => {
         (async () => {
             try {
                 //watchilst data
@@ -88,15 +88,12 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     })])
                 //portfolio data
                 const portfolio = (await Api.User.extensions.getHoldings({})).filter(a => byId[a.security_id] !== undefined && byId[a.security_id].symbol !== 'USD:CUR')
-                
                 setUserPortfolio(portfolio.map(a => `$${byId[a.security_id].symbol}`))
-                
-            
             } catch (ex) {
                 console.error(ex);
             }
         })()
-    },[]))
+    },[])
     useEffect(() => {
         const watchlistId = props.route.params.watchlistId 
         setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: props.route.params.endDateTime})
@@ -192,7 +189,11 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     useEffect(() => {
         (async () => {
             if (filterType === 'portfolio') {
-                setSearchText(userPortfolio)
+                if (!userPortfolio.length) {
+                    const portfolio = (await Api.User.extensions.getHoldings({})).filter(a => byId[a.security_id] !== undefined && byId[a.security_id].symbol !== 'USD:CUR')
+                    setSearchText(portfolio.map(a => `$${byId[a.security_id].symbol}`))
+                }
+                else setSearchText(userPortfolio)
             }
             else if (filterType === 'watchlist') {
                 if (selectedWatchlist.id) {
