@@ -8,6 +8,8 @@ import apn from 'apn'
 import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import AndroidNotifications from "@tradingpost/common/notifications/android";
 import {subscriptionsNewHoldings} from "@tradingpost/common/notifications/bll";
+import Holidays from "@tradingpost/common/market-data/holidays";
+import MarketDataRepo from "@tradingpost/common/market-data/repository";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -29,6 +31,7 @@ let pgClient: IDatabase<any>;
 let pgp: IMain;
 let notificationsSrv: Notifications;
 let notificationsRepo: Repository;
+let holidays: Holidays;
 
 const streamToString = (stream: any) =>
     new Promise<string>((resolve, reject) => {
@@ -74,9 +77,11 @@ const run = async () => {
         const androidNotif = new AndroidNotifications(fcmConfig.authKey);
         notificationsRepo = new Repository(pgClient, pgp);
         notificationsSrv = new Notifications(apnProvider, androidNotif, notificationsRepo);
+        const marketDataRepo = new MarketDataRepo(pgClient, pgp);
+        holidays = new Holidays(marketDataRepo);
     }
 
-    await subscriptionsNewHoldings(notificationsSrv, notificationsRepo);
+    await subscriptionsNewHoldings(notificationsSrv, notificationsRepo, holidays);
 }
 
 export const handler = async (event: any, context: Context) => {

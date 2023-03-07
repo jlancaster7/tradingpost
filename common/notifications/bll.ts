@@ -4,14 +4,19 @@ import {Client as ElasticClient} from '@elastic/elasticsearch';
 import {DateTime} from "luxon";
 import {createQueryByType} from "../elastic/queryCreation";
 import * as T from '@elastic/elasticsearch/lib/api/types'
+import Holidays from "../market-data/holidays";
 
 const indexName = "tradingpost-search";
 
-export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Repository) => {
+export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Repository, marketHolidays: Holidays) => {
     const u = `https://m.tradingpostapp.com/dash/notification/trade`;
-    const dt = DateTime.now().minus({day: 1}).setZone("America/New_York");
 
-    const serviceUsersWithTrades = await repo.getUsersWithTrades(dt, dt);
+    let lastTradeDay = DateTime.now().setZone("America/New_York").minus({day: 1})
+    while (!await marketHolidays.isTradingDay(lastTradeDay)) {
+        lastTradeDay = lastTradeDay.minus({day: 1})
+    }
+
+    const serviceUsersWithTrades = await repo.getUsersWithTrades(lastTradeDay, lastTradeDay);
     if (serviceUsersWithTrades.length <= 0) return;
 
     const serviceUsersMap = new Map();

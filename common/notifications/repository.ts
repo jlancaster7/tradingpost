@@ -78,8 +78,8 @@ export default class Repository {
               AND tt.date <= $2
               AND tt.SECURITY_TYPE NOT IN ('cashEquivalent');
         `;
-        const st = startDate.setZone("America/New_York").set({hour: 0, second: 0, minute: 0, millisecond: 0});
-        const et = endDate.setZone("America/New_York").set({hour: 23, minute: 59, second: 59, millisecond: 999});
+        const st = startDate.set({hour: 0, second: 0, minute: 0, millisecond: 0});
+        const et = endDate.set({hour: 23, minute: 59, second: 59, millisecond: 999});
         const response = await this.db.query<{ date: Date, user_id: string, security_id: number }[]>(query, [st, et])
         if (response.length <= 0) return [];
         return response.map(r => {
