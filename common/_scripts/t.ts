@@ -57,9 +57,32 @@ const run = async () => {
     //     await finicityTransformer.computeHoldingsHistory(newAccountId, true);
     // }
 
-    console.log("Computing")
-    await portfolioSummaryService.computeAccountGroupSummary('806e4c98-20e1-4c20-b633-0ae3a8703190');
-    console.log("Fin Computing")
+    const accounts = [
+        {
+            internalId: 289,
+            externalId: '6036155893'
+        },
+        {
+            internalId: 324,
+            externalId: '6036155894'
+        },
+        {
+            internalId: 291,
+            externalId: '6036155895'
+        }
+    ];
+
+    for (let i = 0; i < accounts.length; i++) {
+        const account = accounts[i];
+        const transactions = await repository.getFinicityTransactions([account.internalId])
+        if (transactions.length <= 0) throw new Error("no transactions")
+        await finicityTransformer.transactions('806e4c98-20e1-4c20-b633-0ae3a8703190', '6020539284',
+            transactions, account.externalId)
+    }
+
+    // console.log("Computing")
+    // await portfolioSummaryService.computeAccountGroupSummary('806e4c98-20e1-4c20-b633-0ae3a8703190');
+    // console.log("Fin Computing")
     // try {
     //     console.log("Adding...")
     //     await finicitySrv.add("806e4c98-20e1-4c20-b633-0ae3a8703190", "6020539284", DateTime.now(), null, true);

@@ -344,6 +344,69 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
+    getFinicityTransactions = async (accountIds: number[]): Promise<FinicityTransaction[]> => {
+        const query = `SELECT id,
+                              internal_finicity_account_id,
+                              transaction_id,
+                              amount,
+                              account_id,
+                              customer_id,
+                              status,
+                              description,
+                              memo,
+                              type,
+                              unit_quantity,
+                              fee_amount cusip_no,
+                              transaction_date,
+                              created_date,
+                              categorization_normalized_payee_name,
+                              categorization_category,
+                              categorization_best_representation,
+                              commission_amount,
+                              ticker,
+                              unit_price,
+                              investment_transaction_type,
+                              updated_at,
+                              created_at
+                       FROM finicity_transaction ft
+                       WHERE internal_finicity_account_id IN ($1:list);
+
+        `;
+
+        const results = await this.db.query(query, [accountIds]);
+        if (results.length <= 0) return [];
+        return results.map((r: any) => {
+            let x: FinicityTransaction = {
+                transactionId: r.transaction_id,
+                transactionDate: r.transaction_date,
+                type: r.type,
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                createdAt: DateTime.fromJSDate(r.created_at),
+                amount: r.amount,
+                status: r.status,
+                id: r.id,
+                createdDate: r.created_date,
+                unitQuantity: r.unit_quantity,
+                feeAmount: r.fee_amount,
+                ticker: r.ticker,
+                accountId: r.account_id,
+                investmentTransactionType: r.investment_transaction_type,
+                categorizationBestRepresentation: r.categorization_best_representation,
+                categorizationCategory: r.categorization_category,
+                categorizationCountry: r.categorization_country,
+                categorizationNormalizedPayeeName: r.categorization_normalized_payee_name,
+                commissionAmount: r.commission_amount,
+                cusipNo: r.cusip_no,
+                customerId: r.customer_id,
+                internalFinicityAccountId: r.internal_finicity_account_id,
+                description: r.description,
+                memo: r.memo,
+                postedDate: r.posted_date,
+                unitPrice: r.unit_price,
+            }
+            return x;
+        })
+    }
     getNewestFinicityTransaction = async (accountId: string): Promise<{ transactionId: string, accountId: string, transactionDate: DateTime } | null> => {
         const query = `SELECT transaction_id,
                               account_id,

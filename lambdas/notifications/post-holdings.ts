@@ -92,7 +92,6 @@ const run = async () => {
 
     await holdingsPostNotifications(notificationsSrv, notificationsRepo, elasticClient);
 }
-
 export const handler = async (event: any, context: Context) => {
     await run();
 }
