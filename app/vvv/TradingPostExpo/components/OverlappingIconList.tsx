@@ -8,8 +8,8 @@ import { NoteEditor, SecPressable } from "../screens/WatchlistViewerScreen"
 import { Api } from "@tradingpost/common/api"
 import { AppColors } from "../constants/Colors";
 
-export const OverlappingIconList = (props: { iconUriList: string[], maxIcons?: number, viewStyle?: ViewStyle, iconSize?: string}) => {
-    const {iconUriList, maxIcons, viewStyle, iconSize} = props
+export const OverlappingIconList = (props: { iconUriList: string[], maxIcons?: number, viewStyle?: ViewStyle, iconSize?: string, textColor?: string}) => {
+    const {iconUriList, maxIcons, viewStyle, iconSize, textColor} = props
     
     return (
         <View style={[{flexDirection: 'row', alignItems: 'center'}, viewStyle]}>
@@ -21,7 +21,7 @@ export const OverlappingIconList = (props: { iconUriList: string[], maxIcons?: n
                 shape="round"
                 source={{uri: a}}
                 />)}
-            {maxIcons && iconUriList.length > maxIcons  ? <Text style={{color: AppColors.primary, fontSize: fonts.xSmall}}>{`+${iconUriList.length - maxIcons}`}</Text> : undefined}
+            {maxIcons && iconUriList.length > maxIcons  ? <Text style={[{ fontSize: fonts.xSmall}, textColor ? {color: textColor}: {color: AppColors.primary}]}>{`+${iconUriList.length - maxIcons}`}</Text> : undefined}
         </View>
     )
 }

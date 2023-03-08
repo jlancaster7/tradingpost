@@ -17,8 +17,8 @@ export const SquaredAudioPlayer = (props: { iconUriList: string[], description: 
     
 
     return (
-        <View style={[shaded, {flex: 1, backgroundColor: AppColors.primaryShaded, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, marginHorizontal: 8}]}>
-            <OverlappingIconList iconSize={iconSize} iconUriList={iconUriList} maxIcons={maxIcons} viewStyle={viewStyle}/>
+        <View style={[shaded, {flex: 1, backgroundColor: 'rgba(116,125,156, 0.5)', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, marginHorizontal: 8}]}>
+            <OverlappingIconList iconSize={iconSize} iconUriList={iconUriList} maxIcons={maxIcons} viewStyle={viewStyle} textColor={'white'}/>
             <Text style={{ color: 'white', textAlign: 'center', marginVertical: sizes.rem0_25}}>
                 {description}
             </Text>

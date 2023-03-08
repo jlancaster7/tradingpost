@@ -11,6 +11,24 @@ export interface IAlertGet {
     
     };
 
+export interface IAudioList {
+        id: number,
+    related_type: string,
+    user_id: string,
+    transcript: string,
+    audio_url: string,
+    related_id: string
+    };
+
+export interface IAudioGet {
+        id: number,
+    related_type: string,
+    related_id: string,
+    audio_url: string,
+    transcript: string,
+    user_id: string
+    };
+
 export interface IBlockListList {
         blocked_by_id: string,
     blocked_user_id: string,

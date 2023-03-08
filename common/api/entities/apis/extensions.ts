@@ -1,5 +1,5 @@
 import * as Dummy from "../extensions"
-
+import * as Audio from '../extensions/Audio'
 export const Alert = Dummy
 export const BlockList = Dummy
 export const Bookmark = Dummy
@@ -23,6 +23,7 @@ import * as Watchlist from '../extensions/Watchlist'
 export const WatchlistItem = Dummy
 export const WatchlistSaved = Dummy
 export {
+    Audio,
     Brokerage,
     Comment,
     Ibkr,
