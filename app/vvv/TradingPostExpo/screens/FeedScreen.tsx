@@ -29,7 +29,7 @@ import { DashTabScreenProps } from "../navigation/pages";
 import { Logo, LogoNoBg, SearchInactive, social } from "../images";
 import { IconifyIcon } from "../components/IconfiyIcon";
 import { ElevatedSection } from "../components/Section";
-import { flex, row, sizes } from "../style";
+import { flex, fonts, row, sizes } from "../style";
 import { social as socialStyle } from '../style'
 import { SvgExpo } from "../components/SvgExpo";
 import { diff } from "react-native-reanimated";
@@ -48,13 +48,8 @@ import { ProfileBar } from "../components/ProfileBar";
 import { CompanyProfileBar } from "../components/CompanyProfileBar";
 const platformsAll = ["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"];
 
-const platformsMarginH = 0.02;
-const platformsMarginTop = sizes.rem4-4;
 
-const useClampAmount = () => {
-    const { width } = useWindowDimensions();
-    return useMemo(() => (width - width * platformsMarginH * platformsAll.length * 2) / platformsAll.length + platformsMarginTop, [width]);
-}
+
 
 export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const [platforms, setPlatforms] = useState<string[]>([]),
@@ -68,12 +63,14 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
         [filterType, setFilterType] = useState<'none' | 'portfolio' | 'watchlist' | 'search'>('none'),
         [selectedWatchlist, setSelectedWatchlist] = useState<{id?: number, name?: string}>({}),
         [usersWatchlists, setUsersWatchlist] = useState<{id: number, name: string}[]>([]),
-        [userPortfolio, setUserPortfolio] = useState<string[]>([])
-    
-    const nav = useNavigation();
-    let clampAmount = useClampAmount();
+        [userPortfolio, setUserPortfolio] = useState<string[]>([]),
+        nav = useNavigation(),
+        [chipHeight, setChipHeight] = useState(0),
+        [peopleHeight, setPeopleHeight] = useState(0);
+        
+    let clampAmount = useMemo(() => (sizes.rem0_5 + fonts.small + 20 * 2 +  40  + chipHeight  + peopleHeight +12), [chipHeight, peopleHeight]);
 
-    const translateHeaderY = useRef(new Animated.Value(0)).current;
+    const translateHeaderY = useRef(new Animated.Value(1)).current;
     const lastOffsetY = useRef(new Animated.Value(0)).current;
     const translateMultipler = useRef(new Animated.Value(1)).current;
     useEffect(() => {
@@ -110,9 +107,10 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
         if (searchText.length === 1 && searchText[0].length > 3) {
             (async () => {
                 try {
-                    setPeople(await Api.User.extensions.search({
+                    const searchPeople =await Api.User.extensions.search({
                         term: searchText[0]
-                    }));
+                    }) 
+                    setPeople(searchPeople);
                 }
                 catch (ex) {
                     console.error(ex);
@@ -134,6 +132,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
         }
         else if (searchText.length > 0) {
             try {
+                setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6 )
                 setPeople(undefined);
                 const output: Interface.ISecurityList[] = []
                 searchText.forEach((el, i) => {
@@ -153,10 +152,16 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
             setSearchSecurities(undefined)
         }
     }, [searchText])
-    //const [clampRange, setClampRange] = useState<[number, number]>([0, clampAmount])
-    
-    const diffValue = Animated.subtract(translateHeaderY, lastOffsetY);
-
+    useEffect(() => {
+        if (people?.length) {
+            setPeopleHeight(sizes.rem6-10)
+            setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6 )
+        }
+        else {
+            setPeopleHeight(0)
+            setChipHeight(0)
+        }
+    }, [people])
     //if content is negative  
     const tester = Animated.diffClamp(translateHeaderY, 0, clampAmount)
 
@@ -168,24 +173,15 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
 
     useEffect(() => {
         translateHeaderY.addListener((v: { value: number }) => {
-            if (v.value < clampAmount)
-                translateMultipler.setValue(0)
-            else
-                translateMultipler.setValue(1)
+            
+            //if (v.value < clampAmount)
+            //    translateMultipler.setValue(0)
+            //else
+                //translateMultipler.setValue(1)
         })
         return () => translateHeaderY.removeAllListeners();
     }, [translateHeaderY, translateMultipler])
 
-    useEffect(() => {
-        setPlatforms((prior) => {
-            if (prior.includes(platformClicked)) return prior.filter(a => a !== platformClicked)
-            else if (platformClicked.length) {
-                prior.push(platformClicked);
-                return prior;
-            } else return prior;
-        })
-        setPlatformClicked('')
-    }, [platformClicked])
     useEffect(() => {
         (async () => {
             if (filterType === 'portfolio') {
@@ -204,6 +200,8 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 }
             }
             else if (filterType === 'none') {
+                setChipHeight(0)
+                setPeopleHeight(0)
                 setSearchText([])
                 if (Object.keys(selectedWatchlist).length) setSelectedWatchlist({})
             }
@@ -271,7 +269,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 key={`selector_${platforms.length}`}>
                 {/*<PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked} />*/}
                 <View style={{flex: 1, marginHorizontal: sizes.rem1 }}>
-                        <View style={{flexDirection: 'row'}}>
+                        <View style={{flexDirection: 'row', marginTop: 10}}>
                             
                             <View style={{flex: 1}}>  
                                 <SearchBar 
@@ -285,7 +283,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                                             setTempSearchText('')
                                         }}
                                     />
-                                <ScrollView style={{marginTop: sizes.rem0_5, marginBottom: sizes.rem0_5}}
+                                <ScrollView style={{marginVertical: sizes.rem0_5}}
                                             nestedScrollEnabled 
                                             horizontal
                                             showsHorizontalScrollIndicator={false}>
@@ -434,10 +432,23 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                                         })}
                             </ScrollView>
                     </View> :
-                filterType === 'search' ?
-                    <View>
-                        
-                    </View> : undefined}
+                     undefined}
+                    <View style={[people?.length ? {display: 'flex',  paddingHorizontal: sizes.rem2 / 2} : {display: 'none'}, ]}>
+                            <List
+                                listKey="people"
+                                datasetKey={`people_id_${people?.length}`}
+                                horizontal
+                                data={people}
+                                loadingMessage={" "}
+                                noDataMessage={" "}
+                                loadingItem={undefined}
+                                renderItem={(item) => {
+                                    return <ElevatedSection title="" style={{flex: 1}}>
+                                        <ProfileBar user={item.item} style={{marginBottom:-sizes.rem0_5}} />
+                                    </ElevatedSection>
+                                }}
+                            />
+                        </View>
             </Animated.View>
         </View>
     );
@@ -512,7 +523,6 @@ export const FeedPart = (props: {
     contentContainerStyle?: ContentStyle
     onRefresh?: () => void
 }) => {
-    const clampAmount = useClampAmount();
     const { width: windowWidth } = useWindowDimensions();
     let { bookmarkedOnly, searchTerms, userId, platforms, dateRange } = props
     const [postsKey, setPostsKey] = useState(Date.now());
