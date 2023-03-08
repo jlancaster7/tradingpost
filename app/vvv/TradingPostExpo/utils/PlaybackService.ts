@@ -1,4 +1,4 @@
-/*
+
 import TrackPlayer, { 
     Event, 
     Capability,
@@ -18,14 +18,17 @@ export const SetupService = async (): Promise<boolean> => {
     let isSetup = false;
     try {
         await TrackPlayer.getCurrentTrack()
+        await TrackPlayer.reset()
         isSetup = true;
     } catch {
         await TrackPlayer.setupPlayer({});
-        await TrackPlayer.updateOptions({progressUpdateEventInterval: 2})
+        await TrackPlayer.updateOptions({
+            progressUpdateEventInterval: 0.1, 
+            stoppingAppPausesPlayback: true
+        })
         await TrackPlayer.setRepeatMode(RepeatMode.Queue)
         isSetup = true
     } finally {
         return isSetup;
     }
 }
-*/

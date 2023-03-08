@@ -1,20 +1,23 @@
-/*
+
 import React, { PropsWithChildren, useEffect, useRef, useState, Component, useCallback } from "react";
 import { View, Text, ViewStyle, Pressable, ActivityIndicator } from "react-native";
 import { Icon } from "@ui-kitten/components";
 import { fonts, sizes, companyProfileContentSizes, companyProfileStyle, shaded } from "../style";
 import TrackPlayer, { State, useTrackPlayerEvents, Event, useProgress, usePlaybackState } from 'react-native-track-player';
 
-export const AudioPlayerButtons = (props: {trackNumber: number, horizontal?: boolean}) => {
-    const { trackNumber, horizontal } = props;
-    const [currentTrack, setCurrentTrack] = useState<number>()
-    const state = usePlaybackState();
-    const isPlaying = state === State.Playing;
+export const AudioPlayerButtons = (props: {trackNumber?: number, horizontal?: boolean, showProgress?: boolean}) => {
+    const { trackNumber, horizontal, showProgress } = props,
+          [currentTrack, setCurrentTrack] = useState<number>(),
+          state = usePlaybackState(),
+          onTogglePlayback = useOnTogglePlayback(),
+          isPlaying = state === State.Playing,
+          progress = useProgress();
+
     const isLoading = useDebouncedValue(
         state === State.Connecting || state === State.Buffering,
         250
       );
-    const onTogglePlayback = useOnTogglePlayback();
+
     useEffect(() => {
         (async () => {
             setCurrentTrack(await TrackPlayer.getState())
@@ -34,68 +37,73 @@ export const AudioPlayerButtons = (props: {trackNumber: number, horizontal?: boo
       }
 
     return (
-        <View style={horizontal ? {flex: 1, flexDirection: 'row'} : {flex: 1,flexDirection: 'column'}}>
-            <View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-around', marginVertical: sizes.rem0_25 }}>
-                    <Pressable onPress={() => {
-                        console.log('pressing rewind')
-                    }}> 
-                        <Icon 
-                            fill={"grey"}
-                            height={36}
-                            width={42}
-                            name="rewind-left-outline" 
-                            style={{
-                                height: 36,
-                                width: 42
-                            }}/>
-                    </Pressable>
-                    {currentTrack === trackNumber && isPlaying ? 
-                        <Pressable onPress={async () => {
-                            onTogglePlayback()
-                            console.log('pressing pause')
-                        }}>
-                            <Icon 
-                                fill={"red"}
-                                height={36}
-                                width={42}
-                                name="pause-circle-outline" 
-                                style={{
-                                    height: 36,
-                                    width: 42
-                                }}/>
-                        </Pressable> :
-                        <Pressable onPress={async () => {
-                            if (currentTrack !== trackNumber) await TrackPlayer.skip(trackNumber);
-                            console.log('current track', currentTrack)
-                            console.log('track number', trackNumber)
-                            onTogglePlayback()
-                        }}>
-                            <Icon 
-                                fill={"green"}
-                                height={36}
-                                width={42}
-                                name="play-circle-outline" 
-                                style={{
-                                    height: 36,
-                                    width: 42
-                                }}/>
-                        </Pressable> 
-                        }
-                    <Pressable onPress={() => {
-                        console.log('pressing fastforward')
+        <View style={horizontal ? {flex: 1, flexDirection: 'row'} : {flexDirection: 'column'}}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: sizes.rem0_25, alignItems: 'center' }}>
+                <Pressable onPress={async () => {
+                    await TrackPlayer.seekTo(progress.position - 10)
+                    console.log('pressing rewind')
+                }}> 
+                    <Icon 
+                        fill={"grey"}
+                        height={32}
+                        width={42}
+                        name="rewind-left-outline" 
+                        style={{
+                            height: 32,
+                            width: 42
+                        }}/>
+                </Pressable>
+                {(!trackNumber && isPlaying) || (currentTrack === trackNumber && isPlaying) ? 
+                    <Pressable onPress={async () => {
+                        onTogglePlayback()
+                        console.log('pressing pause')
                     }}>
                         <Icon 
-                            fill={"grey"}
+                            fill={"red"}
                             height={36}
                             width={42}
-                            name="rewind-right-outline" 
+                            name="pause-circle" 
                             style={{
                                 height: 36,
                                 width: 42
                             }}/>
-                    </Pressable>
-                </View>
+                    </Pressable> :
+                    <Pressable onPress={async () => {
+                        if (trackNumber && currentTrack !== trackNumber) await TrackPlayer.skip(trackNumber);
+                        onTogglePlayback()
+                    }}>
+                        <Icon 
+                            fill={ "green" }
+                            height={36}
+                            width={42}
+                            name="arrow-right" 
+                            style={{
+                                height: 36,
+                                width: 42
+                            }}/>
+                    </Pressable> 
+                    }
+                <Pressable onPress={async () => {
+                  await TrackPlayer.seekTo(progress.position + 10)
+                    console.log('pressing fastforward')
+                }}>
+                    <Icon 
+                        fill={"grey"}
+                        height={32}
+                        width={42}
+                        name="rewind-right-outline" 
+                        style={{
+                            height: 32,
+                            width: 42
+                        }}/>
+                </Pressable>
             </View>
+            <View style={[showProgress ? {} : {display: 'none'}, { alignItems: 'center'}]}>
+              <Text>
+                {`${progress.position} / ${progress.duration}`}
+              </Text>
+            </View>
+          </View>
     )
 }
 
@@ -125,4 +133,4 @@ export const useDebouncedValue = (value: any, delay: number) => {
   
     return debouncedValue;
   };
-  */
+  

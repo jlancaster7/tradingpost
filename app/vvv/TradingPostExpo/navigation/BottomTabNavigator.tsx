@@ -11,6 +11,7 @@ import { Api } from "@tradingpost/common/api";
 import { useAppUser } from "../Authentication";
 import { registerDeviceForNotifications } from "../utils/notifications";
 import { DiscoveryScreen } from "../screens/DiscoveryScreen";
+import { AudioScreen } from "../screens/AudioScreen";
 
 const BottomTab = createBottomTabNavigator<any>();
 const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any>, p?: any, headerRight?: (props: { navigation: NavigationProp<any>, route: any }) => React.ReactNode }> = {
@@ -25,6 +26,9 @@ const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any
     //},
     Discovery: {
         c: DiscoveryScreen,
+    },
+    Audio: {
+        c: AudioScreen
     },
     Notification: {
         c: NotificationScreen,

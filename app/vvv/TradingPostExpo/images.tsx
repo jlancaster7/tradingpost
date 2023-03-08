@@ -122,7 +122,7 @@ export const rnui = {
     add: require('./assets/rnui/add.png'),
     plus: require('./assets/rnui/plus.png')
 }
-export type NavIconKeys = "Portfolio" | "Feed" | "Notification" | "Discovery"; //| "Search"; //| "Bookmark";
+export type NavIconKeys = "Portfolio" | "Feed"  | "Discovery" | "Audio" | "Notification"; //| "Search"; //| "Bookmark";
 
 export const NavIconTypeOverride: Partial<Record<NavIconKeys, any>> = {
     Notification: {
@@ -155,6 +155,10 @@ export const navIcons: Record<NavIconKeys, { active: number, inactive: number }>
     //     active: require("./assets/nav-bar/bookmark-active.png"),
     //     inactive: require("./assets/nav-bar/bookmark.png")
     // },
+    "Audio": {
+        active: require("./assets/nav-bar/audio-active.png"),
+        inactive: require("./assets/nav-bar/audio.png")
+    },
     "Notification": {
         active: require("./assets/nav-bar/notification-active.png"),
         inactive: require("./assets/nav-bar/notification.png")
