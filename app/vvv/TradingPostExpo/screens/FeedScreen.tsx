@@ -53,12 +53,12 @@ const platformsAll = ["TradingPost", "Twitter", "Substack", "Spotify", "YouTube"
 
 export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     const [platforms, setPlatforms] = useState<string[]>([]),
-        [platformClicked, setPlatformClicked] = useState(''),
+        //[platformClicked, setPlatformClicked] = useState(''),
         [tempSearchText, setTempSearchText] = useState(''),
         [searchText, setSearchText] = useState<string[]>([]),
         [dateRange, setDateRange] = useState<{beginDateTime?: string, endDateTime?: string}>({}),
         [people, setPeople] = useState<Interface.IUserList[]>(),
-        [searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
+        //[searchSecurities, setSearchSecurities] = useState<Interface.ISecurityList[]>(),
         { securities: { list: securities, byId, bySymbol } } = useSecuritiesList(),
         [filterType, setFilterType] = useState<'none' | 'portfolio' | 'watchlist' | 'search'>('none'),
         [selectedWatchlist, setSelectedWatchlist] = useState<{id?: number, name?: string}>({}),
@@ -104,64 +104,9 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
         }
     }, [props.route.params.beginDateTime, props.route.params.endDateTime, props.route.params.searchTerms, props.route.params.watchlistId, props.route.params.isHoldings])
     useEffect(() => {
-        if (searchText.length === 1 && searchText[0].length > 3) {
-            (async () => {
-                try {
-                    const searchPeople =await Api.User.extensions.search({
-                        term: searchText[0]
-                    }) 
-                    setPeople(searchPeople);
-                }
-                catch (ex) {
-                    console.error(ex);
-                }
-                try {
-                    const output: Interface.ISecurityList[] = []
-                    searchText.forEach((el, i) => {
-                        const modSearch = el.slice(0,1) === '$' ? el.slice(1) : el;
-                        const regex = new RegExp(`^${modSearch}`, "i");
-                        securities.forEach((item) => {
-                            if ((regex.test(item.company_name) || regex.test(item.symbol ))) output.push(item)
-                        })
-                    })
-                    setSearchSecurities(output)
-                } catch (ex) {
-                    console.error(ex)
-                }
-            })()
-        }
-        else if (searchText.length > 0) {
-            try {
-                setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6 )
-                setPeople(undefined);
-                const output: Interface.ISecurityList[] = []
-                searchText.forEach((el, i) => {
-                    const modSearch = el.slice(0,1) === '$' ? el.slice(1) : el;
-                    const regex = new RegExp(`^${modSearch}`, "i");
-                    securities.forEach((item) => {
-                        if ((item.symbol === modSearch.toUpperCase())) output.push(item)
-                    })
-                })
-                setSearchSecurities(output)
-            } catch (ex) {
-                console.error(ex)
-            }
-        }
-        else {
-            setPeople(undefined);
-            setSearchSecurities(undefined)
-        }
+        if (!searchText.length && filterType !== 'watchlist') setFilterType('none');
     }, [searchText])
-    useEffect(() => {
-        if (people?.length) {
-            setPeopleHeight(sizes.rem6-10)
-            setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6 )
-        }
-        else {
-            setPeopleHeight(0)
-            setChipHeight(0)
-        }
-    }, [people])
+    
     //if content is negative  
     const tester = Animated.diffClamp(translateHeaderY, 0, clampAmount)
 
@@ -183,26 +128,59 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     }, [translateHeaderY, translateMultipler])
 
     useEffect(() => {
+        
         (async () => {
+            console.log(filterType)
             if (filterType === 'portfolio') {
                 if (!userPortfolio.length) {
                     const portfolio = (await Api.User.extensions.getHoldings({})).filter(a => byId[a.security_id] !== undefined && byId[a.security_id].symbol !== 'USD:CUR')
                     setSearchText(portfolio.map(a => `$${byId[a.security_id].symbol}`))
                 }
                 else setSearchText(userPortfolio)
+                setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6 )
             }
             else if (filterType === 'watchlist') {
                 if (selectedWatchlist.id) {
                     const watchlist = await Api.Watchlist.get(selectedWatchlist.id);
                     setSearchText(watchlist.items.map(a => `$${a.symbol}`))
+                    setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6 )
                 } else {
+                    setChipHeight(0)
                     setSearchText([])
+                }
+            }
+            else if (filterType === 'search') {
+                if (searchText.length === 1 && searchText[0].length >= 3 ) {
+                    (async () => {
+                        try {
+                            const searchPeople =await Api.User.extensions.search({
+                                term: searchText[0]
+                            }) 
+                            if (searchPeople.length) {
+                                setPeople(searchPeople);
+                                setPeopleHeight(sizes.rem6-10)
+                            }
+                            setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6 )
+                        }
+                        catch (ex) {
+                            console.error(ex);
+                        }
+                    })()
+                }
+                else if (searchText.length > 1) {
+                    setPeople(undefined);
+                    setPeopleHeight(0)
+                    setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6 )
+                } 
+                else {
+                    setFilterType('none')
                 }
             }
             else if (filterType === 'none') {
                 setChipHeight(0)
                 setPeopleHeight(0)
                 setSearchText([])
+                setPeople(undefined)
                 if (Object.keys(selectedWatchlist).length) setSelectedWatchlist({})
             }
         })()
@@ -279,7 +257,11 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                                             setTempSearchText(v);
                                         }}
                                         onEditingSubmit={(e) => {
-                                            setSearchText([...searchText, e])
+                                            let newTerm: string;
+                                            if (e.startsWith('$')) newTerm = `${e.toUpperCase()}`;
+                                            else newTerm = e; 
+                                            setSearchText([...searchText, newTerm])
+                                            setFilterType('search')
                                             setTempSearchText('')
                                         }}
                                     />
@@ -331,7 +313,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                         </View>
                         
                     </View>
-                {filterType === 'none' ? 
+                {filterType === 'none' || filterType === 'search' ? 
                     <View style={{flex: 1, marginHorizontal: sizes.rem2 / 2,  flexDirection: 'row', justifyContent: 'center' }}>
                         <Pressable style={{flex: 1}} onPress={() => {
                             setFilterType('portfolio')
@@ -344,6 +326,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                             </ElevatedSection>
                         </Pressable>
                         <Pressable style={{flex: 1}} onPress={() => {
+                            console.log('watchlist press')
                             setFilterType('watchlist')
                         }}>
                             <ElevatedSection style={{flex: 1, flexDirection: 'row', justifyContent: 'center', height: 40}} title="">
