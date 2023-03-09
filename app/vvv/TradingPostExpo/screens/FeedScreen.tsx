@@ -143,6 +143,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 } else {
                     setChipHeight(0)
                     setSearchText([])
+                    setDateRange({})
                 }
             } else if (filterType === 'search') {
                 if (searchText.length === 1 && searchText[0].length >= 3) {
@@ -171,6 +172,7 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                 setChipHeight(0)
                 setPeopleHeight(0)
                 setSearchText([])
+                setDateRange({})
                 setPeople(undefined)
                 if (Object.keys(selectedWatchlist).length) setSelectedWatchlist({})
             }
