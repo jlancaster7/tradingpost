@@ -9,6 +9,8 @@ import {default as FinicityApi} from "../finicity";
 import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
 import Holidays from "../market-data/holidays";
 import MarketDataRepository from "../market-data/repository";
+import {DateTime} from "luxon";
+import {accounts} from "../brokerage/robinhood/api";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -49,46 +51,56 @@ const run = async () => {
     const finicityTransformer = new FinicityTransformer(repository, marketHolidays);
     const finicitySrv = new FinicityService(finicityApi, repository, finicityTransformer, portfolioSummaryService);
 
-    // let hardCoded = [663, 664, 665]
-    // for (let i = 0; i < hardCoded.length; i++) {
-    //     const newAccountId = hardCoded[i];
-    //     // Don't compute some security types for historical holdings since we do not have pricing at the moment
-    //     console.log(newAccountId);
-    //     await finicityTransformer.computeHoldingsHistory(newAccountId, true);
-    // }
+    // await finicitySrv.add("e2268937-157b-4a33-a970-a9ba88d10a46", "6020539284", DateTime.now(), {}, true);
 
-    const accounts = [
+    console.log("Start")
+    await portfolioSummaryService.computeAccountGroupSummary('e2268937-157b-4a33-a970-a9ba88d10a46')
+    console.log("Fin")
+    const accountIds = [
         {
-            internalId: 289,
-            externalId: '6036155893'
+            tpAccountId: 689,
+            internalId: 347,
+            externalId: '6036155893',
+            detail: {
+                description: "ROLLOVER IRA",
+                dateAsOf: 1678258800
+            },
+            aggregationSuccessDate: 1678379879
         },
         {
-            internalId: 324,
-            externalId: '6036155894'
+            tpAccountId: 690,
+            internalId: 348,
+            externalId: '6036155894',
+            detail: {
+                description: "ROTH IRA",
+                dateAsOf: 1678258800
+            },
+            aggregationSuccessDate: 1678379884
         },
         {
-            internalId: 291,
-            externalId: '6036155895'
+            tpAccountId: 691,
+            internalId: 349,
+            externalId: '6036155895',
+            detail: {
+                description: "INDIVIDUAL",
+                dateAsOf: 1678258800
+            },
+            aggregationSuccessDate: 1678379884
         }
     ];
 
-    for (let i = 0; i < accounts.length; i++) {
-        const account = accounts[i];
-        const transactions = await repository.getFinicityTransactions([account.internalId])
-        if (transactions.length <= 0) throw new Error("no transactions")
-        await finicityTransformer.transactions('806e4c98-20e1-4c20-b633-0ae3a8703190', '6020539284',
-            transactions, account.externalId)
-    }
-
-    // console.log("Computing")
-    // await portfolioSummaryService.computeAccountGroupSummary('806e4c98-20e1-4c20-b633-0ae3a8703190');
-    // console.log("Fin Computing")
-    // try {
-    //     console.log("Adding...")
-    //     await finicitySrv.add("806e4c98-20e1-4c20-b633-0ae3a8703190", "6020539284", DateTime.now(), null, true);
-    // } catch (e) {
-    //     console.error(e)
+    console.log("Starting")
+    // for (let i = 0; i < accountIds.length; i++) {
+    //     const account = accountIds[i];
+    //     // const holdings = await repository.getFinicityHoldings([account.internalId]);
+    //     // await finicityTransformer.holdings('e2268937-157b-4a33-a970-a9ba88d10a46', '6020539284', account.externalId, holdings, 'USD', account.detail, DateTime.fromSeconds(account.aggregationSuccessDate));
+    //     await finicityTransformer.computeHoldingsHistory(account.tpAccountId)
+    //     // const transactions = await repository.getFinicityTransactions([account.internalId])
+    //     // console.log("Account: ", account.internalId, "Transaction length: ", transactions.length)
+    //     // await finicityTransformer.transactions('e2268937-157b-4a33-a970-a9ba88d10a46', '6020539284',
+    //     //     transactions, account.externalId)
     // }
+    // console.log("fin")
 
 }
 

@@ -347,7 +347,7 @@ export class Transformer extends BaseTransformer {
             if (securitiesTranslationMap.has(finTransaction.ticker)) finTransaction.ticker = securitiesTranslationMap.get(finTransaction.ticker).toSymbol
 
             let security = securitiesMap.get(finTransaction.ticker);
-            if (!security) throw new BrokerageAccountDataError(userId, customerId, undefined, finicityExternalAccountId, `could not find trading post security for transaction`);
+            if (!security) throw new BrokerageAccountDataError(userId, customerId, undefined, finicityExternalAccountId, `could not find trading post security for transaction ${finTransaction.ticker}`);
 
             let securityType = isCashTransaction ? SecurityType.cashEquivalent : transformIexSecurityType(security.issueType);
 
@@ -391,7 +391,7 @@ export class Transformer extends BaseTransformer {
                 accountId: internalAccount.tpBrokerageAccountId,
                 securityId: security.id,
                 securityType: securityType,
-                date: DateTime.fromSeconds(finTransaction.postedDate).setZone("America/New_York").set({
+                date: DateTime.fromSeconds(finTransaction.transactionDate).setZone("America/New_York").set({
                     hour: 16,
                     minute: 0,
                     second: 0,

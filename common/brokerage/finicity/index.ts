@@ -87,7 +87,10 @@ export class Service {
         if (!finicityUser) throw new Error("how do we not have a finicity user?")
 
         // TODO: Swap this out with the institution id if it exists within the data object
-        if (!isDev) await this.finicityApi.refreshCustomerAccounts(finicityUser.customerId);
+        if (!isDev) {
+            console.log("Refreshing!")
+            await this.finicityApi.refreshCustomerAccounts(finicityUser.customerId);
+        }
 
         const newAccountIds = await this.importAccounts(finicityUser);
 
@@ -103,13 +106,13 @@ export class Service {
                 console.log("Transactions")
                 await finService.importTransactions(userId, finicityUser);
 
-                for (let i = 0; i < newAccountIds.length; i++) {
-                    const newAccountId = newAccountIds[i];
-                    await finService.transformer.computeHoldingsHistory(newAccountId, true);
-                }
-
-                if (!finService.portSummarySrv) return
-                await finService.portSummarySrv.computeAccountGroupSummary(userId);
+                // for (let i = 0; i < newAccountIds.length; i++) {
+                //     const newAccountId = newAccountIds[i];
+                //     await finService.transformer.computeHoldingsHistory(newAccountId, true);
+                // }
+                //
+                // if (!finService.portSummarySrv) return
+                // await finService.portSummarySrv.computeAccountGroupSummary(userId);
             });
         } catch (e) {
             throw e
@@ -327,7 +330,10 @@ export class Service {
     }
 
     _getNewFinicityAccounts = async (finicityUserId: number, currentFinicityAccounts: FinicityAccount[], finicityAccounts: GetCustomerAccountsResponse) => {
-        const newFinicityAccounts = finicityAccounts.accounts.filter(acc => !currentFinicityAccounts.find(cfa => cfa.accountId === acc.id && cfa.institutionId == acc.institutionId))
+        const newFinicityAccounts = finicityAccounts.accounts.filter(acc => {
+            return currentFinicityAccounts.find(cfa => cfa.accountId === acc.id && cfa.institutionId == acc.institutionId) === undefined;
+        });
+
         let newAccs = [];
         for (let i = 0; i < newFinicityAccounts.length; i++) {
             const fa = newFinicityAccounts[i];
@@ -532,18 +538,18 @@ export class Service {
         }
 
         await this.repository.upsertFinicityTransactions(finicityTransactions);
-        for (const [accountId, txs] of txByAccountId) {
-            const txDateTime = accountIdToNewestTxMap.get(accountId)
-            let filteredTxs = txs.filter(t => {
-                if (!txDateTime) return true;
-                const tDateTime = DateTime.fromSeconds(t.transactionDate);
-                if (tDateTime.toUnixInteger() > txDateTime.toUnixInteger()) return true;
-                return false;
-            });
-
-            if (filteredTxs.length <= 0) continue;
-            await this.transformer.transactions(finicityUser.tpUserId, finicityUser.customerId, filteredTxs, accountId);
-        }
+        // for (const [accountId, txs] of txByAccountId) {
+        //     const txDateTime = accountIdToNewestTxMap.get(accountId)
+        //     let filteredTxs = txs.filter(t => {
+        //         if (!txDateTime) return true;
+        //         const tDateTime = DateTime.fromSeconds(t.transactionDate);
+        //         if (tDateTime.toUnixInteger() > txDateTime.toUnixInteger()) return true;
+        //         return false;
+        //     });
+        //
+        //     if (filteredTxs.length <= 0) continue;
+        //     await this.transformer.transactions(finicityUser.tpUserId, finicityUser.customerId, filteredTxs, accountId);
+        // }
     }
 
     _iterateTransactions = async (tpUserId: string, finicityUser: FinicityUser, externalFinAccToInternalAccMap: Map<string, FinicityAccount>) => {

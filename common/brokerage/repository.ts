@@ -344,6 +344,90 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         }
     }
 
+    getFinicityHoldings = async (accountIds: number[]): Promise<FinicityHolding[]> => {
+        const query = `
+            SELECT id,
+                   finicity_account_id,
+                   holding_id,
+                   security_id_type,
+                   pos_type,
+                   sub_account_type,
+                   description,
+                   symbol,
+                   cusip_no,
+                   current_price,
+                   transaction_type,
+                   market_value,
+                   security_unit_price,
+                   units,
+                   cost_basis,
+                   status,
+                   security_type,
+                   security_name,
+                   security_currency,
+                   current_price_date,
+                   option_strike_price,
+                   option_type,
+                   option_shares_per_contract,
+                   options_expire_date,
+                   fi_asset_class,
+                   asset_class,
+                   currency_rate,
+                   cost_basis_per_share,
+                   mf_type,
+                   total_gl_dollar,
+                   total_gl_percent,
+                   today_gl_dollar,
+                   today_gl_percent,
+                   updated_at,
+                   created_at
+            FROM finicity_holding
+            where finicity_account_id in ($1:list);`;
+
+        const results = await this.db.query(query, [accountIds]);
+        if (results.length <= 0) return [];
+        return results.map((r: any) => {
+            let x: FinicityHolding = {
+                id: r.id,
+                symbol: r.symbol,
+                marketValue: r.market_value,
+                status: r.status,
+                createdAt: DateTime.fromJSDate(r.created_at),
+                updatedAt: DateTime.fromJSDate(r.updated_at),
+                costBasis: r.cost_basis,
+                currentPrice: r.current_price,
+                holdingId: r.holding_id,
+                securityCurrency: r.security_currency,
+                units: r.units,
+                securityType: r.security_type,
+                currentPriceDate: r.current_price_date,
+                assetClass: r.asset_class,
+                cusipNo: r.cusip_no,
+                finicityAccountId: r.finicity_account_id,
+                costBasisPerShare: r.cost_basis_per_share,
+                currencyRate: r.currency_rate,
+                description: r.description,
+                fiAssetClass: r.fi_asset_class,
+                mfType: r.mf_type,
+                optionExpiredate: r.option_expire_date,
+                optionSharesPerContract: r.option_shares_per_contract,
+                optionStrikePrice: r.option_strike_price,
+                optionType: r.option_type,
+                posType: r.pos_type,
+                securityIdType: r.security_id_type,
+                securityName: r.security_name,
+                securityUnitPrice: r.security_unit_price,
+                subAccountType: r.sub_account_type,
+                todayGlDollar: r.today_gl_dollar,
+                todayGlPercent: r.today_gl_percent,
+                totalGlDollar: r.total_gl_dollar,
+                totalGlPercent: r.total_gl_percent,
+                transactionType: r.transaction_type,
+            }
+            return x;
+        })
+    }
+
     getFinicityTransactions = async (accountIds: number[]): Promise<FinicityTransaction[]> => {
         const query = `SELECT id,
                               internal_finicity_account_id,

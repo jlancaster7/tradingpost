@@ -234,14 +234,14 @@ export interface GetCustomerByAccountIdResponse {
 }
 
 export interface CustomerAccountsDetail {
-    margin: number
-    marginAllowed: boolean
-    cashAccountAllowed: boolean
+    margin?: number
+    marginAllowed?: boolean
+    cashAccountAllowed?: boolean
     description: string
-    marginBalance: number
-    shortBalance: number
-    availableCashBalance: number
-    currentBalance: number
+    marginBalance?: number
+    shortBalance?: number
+    availableCashBalance?: number
+    currentBalance?: number
     dateAsOf: number
 }
 
