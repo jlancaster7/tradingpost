@@ -27,9 +27,9 @@ const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any
     Discovery: {
         c: DiscoveryScreen,
     },
-    Audio: {
-        c: AudioScreen
-    },
+    //Audio: {
+    //    c: AudioScreen
+    //},
     Notification: {
         c: NotificationScreen,
     }

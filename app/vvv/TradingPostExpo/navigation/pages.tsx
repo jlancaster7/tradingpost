@@ -32,7 +32,6 @@ export type RootStackParamList =
         "Discovery" | 
         "Audio" |
         "Dash" |
-        "WatchlistViewer" |
         "BrokeragePicker" |
         "IbkrInfo" |
         "RobinhoodLogin" |
@@ -44,6 +43,9 @@ export type RootStackParamList =
     > &
     {
         "WatchlistEditor": {
+            watchlistId?: number
+        },
+        "WatchlistViewer": {
             watchlistId?: number
         },
         "Root": {

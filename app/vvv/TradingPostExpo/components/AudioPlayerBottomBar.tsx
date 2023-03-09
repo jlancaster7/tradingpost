@@ -28,7 +28,7 @@ export const AudioPlayerBottomBar = () => {
     })
 
     return (
-        <View style={{position: 'absolute', bottom: 0, backgroundColor: 'white', borderTopColor: 'grey', borderTopWidth: 0.2, borderBottomColor: 'grey', borderBottomWidth: 0.2, width: '100%'}}>
+        <View style={[{position: 'absolute', bottom: 0, backgroundColor: 'white', borderTopColor: 'grey', borderTopWidth: 0.2, borderBottomColor: 'grey', borderBottomWidth: 0.2, width: '100%'}, currentTrack ? {} : {display: 'none'}]}>
             <View style={{flexDirection: 'row', alignItems: 'center', padding: sizes.rem0_5}}>
                 <View style={{marginRight: sizes.rem0_5}}>
                     <Pressable onPress={async () => {

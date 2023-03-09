@@ -7,6 +7,7 @@ import {
     FlatListProps,
     NativeScrollEvent,
     NativeSyntheticEvent,
+    Platform,
     Pressable,
     RefreshControl,
     ScrollView,
@@ -119,10 +120,10 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     useEffect(() => {
         translateHeaderY.addListener((v: { value: number }) => {
             
-            //if (v.value < clampAmount)
-            //    translateMultipler.setValue(0)
-            //else
-                //translateMultipler.setValue(1)
+            if (v.value < clampAmount && Platform.OS === 'ios')
+                translateMultipler.setValue(0)
+            else
+                translateMultipler.setValue(1)
         })
         return () => translateHeaderY.removeAllListeners();
     }, [translateHeaderY, translateMultipler])

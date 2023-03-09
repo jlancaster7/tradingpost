@@ -32,46 +32,48 @@ export const AudioScreen = (props: any) => {
 
     useEffect(() => {
         (async () => {
-            
-            //await TrackPlayer.reset()
-            const audioTracks = await Api.Audio.extensions.getMostRecentWatchlists({})
-            setTracks(audioTracks.map(a => {
-                return {
-                    url: a.audio_url,
-                    title: `${a.watchlist_name}`,
-                    artist: a.handle,
-                    description: a.watchlist_note,
-                    artwork: a.profile_url,
-                    trackType: a.related_type,
-                    relatedId: a.related_id,
-                    lastUpdated: (new Date()).toLocaleTimeString('en-US'),
-                    iconUriList: a.symbols.filter(a => bySymbol[a]).map(a => bySymbol[a].logo_url)
-                } as Track
-            }))
-            
+            try {
+                const audioTracks = await Api.Audio.extensions.getMostRecentWatchlists({})
+                const now = (new Date())
+                setTracks(audioTracks.map(a => {
+                    const hoursAgo = `${Math.round((now.valueOf() - (new Date(a.created_at)).valueOf()) / (3600 * 1000))}`
+                    return {
+                        url: a.audio_url,
+                        title: `${a.watchlist_name}`,
+                        artist: a.handle,
+                        description: a.watchlist_note,
+                        artwork: a.profile_url,
+                        trackType: a.related_type,
+                        relatedId: a.related_id,
+                        createdAt: hoursAgo,
+                        iconUriList: a.symbols.filter(a => bySymbol[a]).map(a => bySymbol[a].logo_url),
+                    } as Track
+                }))
+            } catch (err) {
+                console.error(err)
+            }
+
         })()
     }, [])
     
     return (
         <View style={[ flex, { backgroundColor: AppColors.background }]}>
-            <Section title="Your Bites" key='audio' style={{paddingVertical: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0}}>
+            <Section title="Sound Bites" key='audio' style={{paddingVertical: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0}}>
                 <List 
                     datasetKey={`tracks_${tracks.length}`}
                     data={tracks}
-
                     loadingItem={""}
                     horizontal
                     renderItem={(item) => {
                         return typeof item.item === "string" ? 
-                                    <Text>Loading</Text> : 
-                                    <SquaredAudioPlayer key={`squred_player_${item.index}`} 
-                                                        description={item.item.title || ''} 
-                                                        track={item.item}  
-                                                        iconUriList={item.item.iconUriList} 
-                                                        width={windowWidth * 0.4}
-                                                        maxIcons={6}
-                                                        iconSize={'medium'} 
-                                                />
+                            <Text>Loading</Text> : 
+                            <SquaredAudioPlayer key={`squred_player_${item.index}`} 
+                                                track={item.item}  
+                                                iconUriList={item.item.iconUriList} 
+                                                width={windowWidth * 0.4}
+                                                maxIcons={6}
+                                                iconSize={'medium'} 
+                                        />
                     }}
                     />
             </Section>

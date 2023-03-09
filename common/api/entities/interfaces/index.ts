@@ -19,6 +19,14 @@ export interface IAudioList {
     audio_url: string,
     related_id: string
     };
+export interface IAudioListExpanded extends IAudioList {
+    handle: string, 
+    profile_url: string, 
+    watchlist_name: string, 
+    watchlist_note: string, 
+    symbols: string[], 
+    created_at: string
+}
 
 export interface IAudioGet {
         id: number,

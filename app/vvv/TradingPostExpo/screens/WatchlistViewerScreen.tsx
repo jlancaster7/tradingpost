@@ -24,7 +24,9 @@ import {FeedPart} from './FeedScreen'
 import {SwitchField} from "../components/SwitchField"
 import NotificationSubscriptionApi from "@tradingpost/common/api/entities/apis/NotificationSubscriptionApi";
 import {NotificationSubscriptionTypes} from "@tradingpost/common/notifications/interfaces";
-
+import TrackPlayer, {Track} from 'react-native-track-player';
+import { TranscriptAudioPlayer } from "../components/AudioTranscriptPlayer"
+import { AudioPlayerBottomBar } from "../components/AudioPlayerBottomBar"
 
 export const useNoteField = (hideEmptyNote?: boolean) => {
     const [shownMap, setShownMap] = useState<Record<string, boolean>>({})
@@ -180,13 +182,13 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
     const [watchlist, setWatchlist] = useState<IWatchlistGetExt>(),
         [isSaved, setIsFav] = useState(false),
         [watchlistTickers, setWatchlistTickers] = useState<string[]>(),
-        [notificationToggle, setNotificationToggle] = useState<boolean>(false);
+        [notificationToggle, setNotificationToggle] = useState<boolean>(false),
+        [tracks, setTracks] = useState<Track[]>([]);
     const {loginState} = useAppUser();
     const watchlistId = props.route?.params?.watchlistId;
     const appUser = loginState?.appUser;
     const translateHeaderY = useRef(new Animated.Value(0)).current;
     const scrollRef = useRef<FlatList>(null);
-
     const toast = useToast();
     useFocusEffect(useCallback(() => {
         (async () => {
@@ -202,6 +204,29 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                 }
             } catch (err) {
                 console.error(err);
+            }
+            try {
+                const audioTracks = await Api.Audio.extensions.getAudio({relatedType: 'watchlist', relatedId: watchlistId, limit: 1})
+                if (!audioTracks.length) return
+                const now = (new Date())
+                setTracks(audioTracks.map(a => {
+                    let hoursAgo = (now.valueOf() - (new Date(a.created_at)).valueOf()) / (3600 * 1000)
+                    hoursAgo = hoursAgo < 1 ? Math.round(hoursAgo * 100) / 100 : Math.round(hoursAgo)
+                    return {
+                        url: a.audio_url,
+                        title: `${a.watchlist_name}`,
+                        artist: a.handle,
+                        description: a.watchlist_note,
+                        artwork: a.profile_url,
+                        trackType: a.related_type,
+                        relatedId: a.related_id,
+                        createdAt: hoursAgo,
+                        transcript: a.transcript,
+                        iconUriList: a.symbols.filter(a => bySymbol[a]).map(a => bySymbol[a].logo_url),
+                    } as Track
+                }))
+            } catch (err) {
+                console.error(err)
             }
         })()
     }, []))
@@ -375,6 +400,20 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                         </Text>
                     </ElevatedSection>
                 </View>,
+                <View style={{flex: 1, paddingHorizontal: sizes.rem1, backgroundColor: AppColors.background}}>
+                    {tracks.length ? <Section title="Sound Bite"
+                                              style={{backgroundColor: AppColors.background}}>
+                                            <TranscriptAudioPlayer key={`squred_player_${0}`} 
+                                                                   track={tracks[0]}  
+                                                                   iconUriList={tracks[0].iconUriList} 
+                                                                   //width={windowWidth * 0.4}
+                                                                   maxIcons={6}
+                                                                   iconSize={'small'}
+                                                                   hideTitle={true}
+                                                />
+                                        </Section>
+                                    : undefined}
+                </View>,
                 
                 <View style={[
                     
@@ -424,6 +463,13 @@ export const WatchlistViewerScreen = (props: TabScreenProps<{ watchlistId: numbe
                 {nativeEvent: {contentOffset: {y: translateHeaderY}}}
             ], {useNativeDriver: true})}>
         </Animated.FlatList>
+        <View style={{position: "absolute",
+                bottom: 0,
+                alignItems: "stretch",
+                width: "100%",
+                backgroundColor: "white",}}>
+            <AudioPlayerBottomBar />
+        </View>
     </View>
 }
 

@@ -23,24 +23,64 @@ import { OverlappingIconList } from "../components/OverlappingIconList";
 import { useNavigation } from "@react-navigation/core";
 import { WatchlistSection } from "../components/WatchlistSection";
 import { WatchlistLimitedPublicSection } from "../components/WatchlistLimitedPublicSection";
+import { SquaredAudioPlayer } from "../components/AudioSquaredPlayer";
+import TrackPlayer, {Track} from 'react-native-track-player';
+import { AudioPlayerBottomBar } from "../components/AudioPlayerBottomBar";
 
 export const DiscoveryScreen = () => {
     const nav = useNavigation()
+    const [tracks, setTracks] = useState<Track[]>([]),
+    { securities: { list: securities, byId, bySymbol } } = useSecuritiesList(),
+    {width: windowWidth} = useWindowDimensions()
 
+    useEffect(() => {
+    (async () => {
+        try {
+            const audioTracks = await Api.Audio.extensions.getMostRecentWatchlists({})
+            const now = (new Date())
+            setTracks(audioTracks.map(a => {
+                let hoursAgo = (now.valueOf() - (new Date(a.created_at)).valueOf()) / (3600 * 1000)
+                hoursAgo = hoursAgo < 1 ? Math.round(hoursAgo * 100) / 100 : Math.round(hoursAgo)
+                return {
+                    url: a.audio_url,
+                    title: `${a.watchlist_name}`,
+                    artist: a.handle,
+                    description: a.watchlist_note,
+                    artwork: a.profile_url,
+                    trackType: a.related_type,
+                    relatedId: a.related_id,
+                    createdAt: hoursAgo,
+                    iconUriList: a.symbols.filter(a => bySymbol[a]).map(a => bySymbol[a].logo_url),
+                } as Track
+            }))
+        } catch (err) {
+            console.error(err)
+        }
+    })()
+    }, [])
 
     return (
         <View style={[ flex, { backgroundColor: AppColors.background }]}>
             <Animated.FlatList key={'discovery list'}
                 data={[
-                <Section key="watchlists" alt={true} title="" style={{paddingTop: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0, backgroundColor: AppColors.background }}>
-                    <WatchlistLimitedPublicSection
-                        //datasetKey={`public${watchlists.length}`}
-                        title="Public Watchlists"
-                        shared
-                        key={`public_watchlists`}
-                        showAddButton={false}
-                        hideNoteOnEmpty
-                    />
+                    <Section title="Sound Bites" key='audio' style={{paddingVertical: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0, backgroundColor: AppColors.background}}>
+                    <List 
+                        datasetKey={`tracks_${tracks.length}`}
+                        data={tracks}
+                        loadingItem={""}
+                        horizontal
+                        renderItem={(item) => {
+                            return typeof item.item === "string" ? 
+                                <Text>Loading</Text> : 
+                                <SquaredAudioPlayer key={`squred_player_${item.index}`} 
+                                                    track={item.item}  
+                                                    iconUriList={item.item.iconUriList} 
+                                                    width={windowWidth * 0.4}
+                                                    maxIcons={6}
+                                                    iconSize={'medium'} 
+                                            />
+                        }}
+                        />
                 </Section>,
                 <Section key="writers" alt={true} title="Writers" style={{paddingTop: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0, backgroundColor: AppColors.background }}>
                     <LimitedBlockList
@@ -133,12 +173,29 @@ export const DiscoveryScreen = () => {
                 renderItem={(info) => {
                     return info.item
                 }} />
-
+            <View style={{position: "absolute",
+                    bottom: 0,
+                    alignItems: "stretch",
+                    width: "100%",
+                    backgroundColor: "white",}}>
+                <AudioPlayerBottomBar />
+            </View>
 
            
         </View>
     )
 }
+
+{/*<Section key="watchlists" alt={true} title="" style={{paddingTop: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0, backgroundColor: AppColors.background }}>
+                    <WatchlistLimitedPublicSection
+                        //datasetKey={`public${watchlists.length}`}
+                        title="Public Watchlists"
+                        shared
+                        key={`public_watchlists`}
+                        showAddButton={false}
+                        hideNoteOnEmpty
+                    />
+                </Section>, */}
 
 /* //const [watchlistSecIdList, setWatchlistSecIdList] = useState<{symbol: string, companyName: string, imageUri: string, secId: number}[]>([])
 
