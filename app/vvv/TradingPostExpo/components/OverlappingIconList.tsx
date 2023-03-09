@@ -10,12 +10,12 @@ import { AppColors } from "../constants/Colors";
 
 export const OverlappingIconList = (props: { iconUriList: string[], maxIcons?: number, viewStyle?: ViewStyle, iconSize?: string, textColor?: string}) => {
     const {iconUriList, maxIcons, viewStyle, iconSize, textColor} = props
-    
+    const negMargin = {tiny: -13, small: -20, medium: -25, large: -30}
     return (
         <View style={[{flexDirection: 'row', alignItems: 'center'}, viewStyle]}>
             {iconUriList && iconUriList.slice(0, maxIcons).map((a, i) => <Avatar
                 key={`${a}_${i}`}
-                style={[i === 0 ? {} : {marginLeft: -13}, { zIndex: iconUriList.length - i, backgroundColor: 'white', borderWidth: 1, borderColor: '#ccc'}]}
+                style={[i === 0 ? {} : {marginLeft: negMargin[iconSize || 'tiny']}, { zIndex: iconUriList.length - i, backgroundColor: 'white', borderWidth: 1, borderColor: '#ccc'}]}
                 resizeMode={'cover'}
                 size={iconSize ? iconSize : 'tiny'}
                 shape="round"

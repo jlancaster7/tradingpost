@@ -6,10 +6,12 @@ import { flex, fonts, sizes, row, companyProfileStyle, shaded } from "../style";
 import {Avatar, Icon, Text} from '@ui-kitten/components';
 import TrackPlayer, {usePlaybackState, useProgress, useTrackPlayerEvents, Track, Event} from 'react-native-track-player';
 import { AudioPlayerButtons } from "./AudioPlayerButtons";
+import { useNavigation } from "@react-navigation/native";
 
 export const AudioPlayerBottomBar = () => {
     const progress = useProgress(),
-          [currentTrack, setCurrentTrack] = useState<Track>()
+          [currentTrack, setCurrentTrack] = useState<Track>(),
+          nav = useNavigation()
     useEffect(() => {
         (async () => {
             const currentTrackIndex = await TrackPlayer.getCurrentTrack()
@@ -26,8 +28,8 @@ export const AudioPlayerBottomBar = () => {
     })
 
     return (
-        <View style={{position: 'absolute', bottom: 0, backgroundColor: 'white'}}>
-            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', padding: sizes.rem0_5}}>
+        <View style={{position: 'absolute', bottom: 0, backgroundColor: 'white', borderTopColor: 'grey', borderTopWidth: 0.2, borderBottomColor: 'grey', borderBottomWidth: 0.2, width: '100%'}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', padding: sizes.rem0_5}}>
                 <View style={{marginRight: sizes.rem0_5}}>
                     <Pressable onPress={async () => {
                             await TrackPlayer.reset()
@@ -41,15 +43,23 @@ export const AudioPlayerBottomBar = () => {
                             />
                     </Pressable>
                 </View>
-                <View>
-                    <Avatar source={{uri: 'https://storage.googleapis.com/iexcloud-hl37opg/api/logos/MSFT.png'}} />
-                </View>
-                <View style={{width: "40%", justifyContent: 'center', marginLeft: sizes.rem1}}>
-                    <Text>
-                        {currentTrack?.title}
-                    </Text>
-                </View>
-                <View style={{width: "40%"}}>
+                <Pressable style={{flexDirection: 'row', width: "50%", marginHorizontal: 0, }}
+                           onPress={() => {
+                                if (!currentTrack?.relatedId) return
+                                nav.navigate("WatchlistViewer", {
+                                    watchlistId: Number(currentTrack?.relatedId) 
+                                })
+                           }}>
+                    <View>
+                        <Avatar source={{uri: currentTrack?.iconUriList[0] as string}} />
+                    </View>
+                    <View style={{ justifyContent: 'center', marginLeft: sizes.rem1, width: '80%'}}>
+                        <Text>
+                            {currentTrack?.title}
+                        </Text>
+                    </View>
+                </Pressable>
+                <View style={{width: "35%", alignItems: 'flex-end'}}>
                     <AudioPlayerButtons />
                 </View>
                 

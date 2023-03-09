@@ -26,17 +26,15 @@ import { WatchlistLimitedPublicSection } from "../components/WatchlistLimitedPub
 import { AudioPlayerBottomBar } from "../components/AudioPlayerBottomBar";
 
 export const AudioScreen = (props: any) => {
-    const [watchlist, setWatchlist] = useState<IWatchlistGet>(),
-          [tracks, setTracks] = useState<Track[]>([]),
-          [watchlistSecIdList, setWatchlistSecIdList] = useState<{symbol: string, companyName: string, imageUri: string, secId: number}[]>([]),
-          { securities: { list: securities, byId, bySymbol } } = useSecuritiesList()
+    const [tracks, setTracks] = useState<Track[]>([]),
+          { securities: { list: securities, byId, bySymbol } } = useSecuritiesList(),
+          {width: windowWidth} = useWindowDimensions()
 
     useEffect(() => {
         (async () => {
             
             //await TrackPlayer.reset()
             const audioTracks = await Api.Audio.extensions.getMostRecentWatchlists({})
-            console.log(audioTracks)
             setTracks(audioTracks.map(a => {
                 return {
                     url: a.audio_url,
@@ -44,31 +42,11 @@ export const AudioScreen = (props: any) => {
                     artist: a.handle,
                     description: a.watchlist_note,
                     artwork: a.profile_url,
+                    trackType: a.related_type,
+                    relatedId: a.related_id,
+                    lastUpdated: (new Date()).toLocaleTimeString('en-US'),
                     iconUriList: a.symbols.filter(a => bySymbol[a]).map(a => bySymbol[a].logo_url)
                 } as Track
-            }))
-            /*
-            setTracks([{
-                url: 'https://tradingpost-audio-files.s3.us-east-1.amazonaws.com/ArkInnovationFund-3-7-23_1230pmET.52b7f98d-0c13-4da7-ade2-15a5eb5156a0.mp3?response-content-disposition=inline&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJIMEYCIQCE2y2nfHmImyo%2Fb8TYnGeHMCgc%2BJidiVpF%2Bw9c44OBWAIhALntWUfM06X%2B1tpMkTXWaBKGp0Vo8pNNa4s0htnhMP9kKugCCEkQABoMNjcwMTcxNDA3Mzc1Igz6zF5WTZhU9fT2Rs0qxQK2ttsKvAwqFNZ6Qyw6OGyB6IZl5U56pVRTq7IzQd%2BGyhsMG3Y74seiWtc3zGiGAvWt7CxHwHANlcMa9aXojzVzxZPMSf0zgCmTCtHhR%2B5iT%2F0NoYa1Wb0GqW2QJ5UU0nqKr3EQqzCO0aYWCBDH22gW1UCHPzhb0uAw31JUKVf2mKXU4%2FJs%2BYQgtv1AawbFAHoDT5uwidKhfdTpcO8t%2B5%2Fma3%2FqPnOYx2rZ24dxV7zw%2F2pPd01xQ1XFmmsRXVOlj9aoGzazVOMafh%2B7kZ3SBPs7Hlln%2BgIsdqTrUFoC8E0arHy4DRd7zEqtc%2BxjqI%2BD6O3ohRDWMmUxaBQTpB9872u9aHP%2BKimWE2dtUqzPThJCz91dKk8et2ARxcVA%2BqyqeysXqsJ95bVQwL2cB5Hy3Nk29NpBK8vH7z0ohUMB%2FqGF4CCtqV5iMKrloqAGOrICQj2kmGua4oilZVsEXPlccU%2B%2FXHONJesqZIDX1GG9mainXp56%2FrUDrR7NjVxKtMez67ps6YYQjtRaMRVh0x9ASsIxJQu%2BIHx0D%2FnHUoR%2F7cOrLGHoIw8abKFwEv1NOToQPXvkPmO%2BPIQFXn2o%2BQ%2F9og0V9bH9LvmKEXJO1zlt9MI8PyV0vep1fHWdEOEsQjeOvpPGYp3wfjegtYjInNGevmmmcIA93r4ganyAeU%2FS%2F6UYGfNjnAQcft89WBFm8sZ09MXS%2BUirAE122X4M%2Fq74JM830okUjecdRshDuVIM4rW7kZ3Ni0BI9uTvFE8Eki45Z5M9ymKG%2BvuL%2Blh6qB2UsWGY4YMZrPuy95whmgCaiAgQOh4ulcOmDGfDRtHJVBchy6jh4Q6ZwRpGb%2BNPWYtokTy4&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20230308T160730Z&X-Amz-SignedHeaders=host&X-Amz-Expires=39600&X-Amz-Credential=ASIAZYCKUEQHSJ5PTNW7%2F20230308%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=cac499c598553cf28b3bfdcecbabb8af7db55fe84e131052bdbbe62c8e3f8fe7', 
-                title: 'Test', 
-                artist: 'TradingPost News'
-            }, 
-            {
-                url: 'https://tradingpost-audio-files.s3.us-east-1.amazonaws.com/CRWD-summary.beaf4764-2059-46f4-8b20-dd1d1f43df93.mp3?response-content-disposition=inline&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEJH%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJIMEYCIQCE2y2nfHmImyo%2Fb8TYnGeHMCgc%2BJidiVpF%2Bw9c44OBWAIhALntWUfM06X%2B1tpMkTXWaBKGp0Vo8pNNa4s0htnhMP9kKugCCEkQABoMNjcwMTcxNDA3Mzc1Igz6zF5WTZhU9fT2Rs0qxQK2ttsKvAwqFNZ6Qyw6OGyB6IZl5U56pVRTq7IzQd%2BGyhsMG3Y74seiWtc3zGiGAvWt7CxHwHANlcMa9aXojzVzxZPMSf0zgCmTCtHhR%2B5iT%2F0NoYa1Wb0GqW2QJ5UU0nqKr3EQqzCO0aYWCBDH22gW1UCHPzhb0uAw31JUKVf2mKXU4%2FJs%2BYQgtv1AawbFAHoDT5uwidKhfdTpcO8t%2B5%2Fma3%2FqPnOYx2rZ24dxV7zw%2F2pPd01xQ1XFmmsRXVOlj9aoGzazVOMafh%2B7kZ3SBPs7Hlln%2BgIsdqTrUFoC8E0arHy4DRd7zEqtc%2BxjqI%2BD6O3ohRDWMmUxaBQTpB9872u9aHP%2BKimWE2dtUqzPThJCz91dKk8et2ARxcVA%2BqyqeysXqsJ95bVQwL2cB5Hy3Nk29NpBK8vH7z0ohUMB%2FqGF4CCtqV5iMKrloqAGOrICQj2kmGua4oilZVsEXPlccU%2B%2FXHONJesqZIDX1GG9mainXp56%2FrUDrR7NjVxKtMez67ps6YYQjtRaMRVh0x9ASsIxJQu%2BIHx0D%2FnHUoR%2F7cOrLGHoIw8abKFwEv1NOToQPXvkPmO%2BPIQFXn2o%2BQ%2F9og0V9bH9LvmKEXJO1zlt9MI8PyV0vep1fHWdEOEsQjeOvpPGYp3wfjegtYjInNGevmmmcIA93r4ganyAeU%2FS%2F6UYGfNjnAQcft89WBFm8sZ09MXS%2BUirAE122X4M%2Fq74JM830okUjecdRshDuVIM4rW7kZ3Ni0BI9uTvFE8Eki45Z5M9ymKG%2BvuL%2Blh6qB2UsWGY4YMZrPuy95whmgCaiAgQOh4ulcOmDGfDRtHJVBchy6jh4Q6ZwRpGb%2BNPWYtokTy4&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20230308T192703Z&X-Amz-SignedHeaders=host&X-Amz-Expires=39600&X-Amz-Credential=ASIAZYCKUEQHSJ5PTNW7%2F20230308%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=6d6dfc3c1019c3527975bbda5d38393b1e46c095d9b2e968e2d0a88087c2a0c6', 
-                title: 'Test 2', 
-                artist: 'TradingPost News'
-            }])
-            */
-            const featuredWatchlist = await Api.Watchlist.get(120)
-            setWatchlist(featuredWatchlist)
-            const featuredWatchlistItems = featuredWatchlist.items.filter(a => bySymbol[a.symbol] !== undefined)
-            setWatchlistSecIdList(featuredWatchlistItems.map(a => {
-                return {
-                    symbol: a.symbol,
-                    companyName: bySymbol[a.symbol].company_name,
-                    imageUri: bySymbol[a.symbol].logo_url,
-                    secId: bySymbol[a.symbol].id,
-                }
             }))
             
         })()
@@ -76,13 +54,13 @@ export const AudioScreen = (props: any) => {
     
     return (
         <View style={[ flex, { backgroundColor: AppColors.background }]}>
-            <Section title="Your Bites" key='audio' style={{paddingTop: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0}}>
+            <Section title="Your Bites" key='audio' style={{paddingVertical: sizes.rem0_5,paddingHorizontal: sizes.rem1, marginBottom: 0}}>
                 <List 
                     datasetKey={`tracks_${tracks.length}`}
                     data={tracks}
-                    maxDisaplyCount={4}
+
                     loadingItem={""}
-                    numColumns={2}
+                    horizontal
                     renderItem={(item) => {
                         return typeof item.item === "string" ? 
                                     <Text>Loading</Text> : 
@@ -90,8 +68,10 @@ export const AudioScreen = (props: any) => {
                                                         description={item.item.title || ''} 
                                                         track={item.item}  
                                                         iconUriList={item.item.iconUriList} 
-                                                        maxIcons={7} 
-                                                        viewStyle={{paddingVertical: sizes.rem0_5}} />
+                                                        width={windowWidth * 0.4}
+                                                        maxIcons={6}
+                                                        iconSize={'medium'} 
+                                                />
                     }}
                     />
             </Section>
