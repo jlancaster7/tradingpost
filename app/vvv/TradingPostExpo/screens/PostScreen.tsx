@@ -66,7 +66,7 @@ export function PostScreen(props: RootStackScreenProps<"PostScreen">) {
 
     return (<View style={{ height: "100%" }}>
         {post && <PostView
-            post={post} />}
+            post={post} inPostView />}
         <CommentsList
             comments={postCommments ? postCommments : []} />
         <KeyboardAvoidingInput
