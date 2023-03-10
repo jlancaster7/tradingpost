@@ -7,14 +7,9 @@ import * as T from '@elastic/elasticsearch/lib/api/types'
 
 const indexName = "tradingpost-search";
 
-const allowedNotifs: Map<string, boolean> = new Map();
-allowedNotifs.set("8e787902-f0e9-42aa-a8d8-18e5d7a1a34d", true);
-allowedNotifs.set("e96aea04-9a60-4832-9793-f790e60df8eb", true);
-allowedNotifs.set("4a6f0899-dc6d-40cc-aa6a-1febb579d65a", true);
-
 export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Repository) => {
     const u = `https://m.tradingpostapp.com/dash/notification/trade`;
-    const dt = DateTime.now().minus({ day: 1 }).setZone("America/New_York");
+    const dt = DateTime.now().minus({day: 1}).setZone("America/New_York");
 
     const serviceUsersWithTrades = await repo.getUsersWithTrades(dt, dt);
     if (serviceUsersWithTrades.length <= 0) return;
@@ -54,11 +49,9 @@ export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Re
             msg = `1 analyst you follow has made a total of ${tradeCount} trade${tradeCount > 1 ? 's' : null}.`;
         }
 
-
-        if (!allowedNotifs.has(subscriber)) continue;
         await repo.addNewTradeNotification(subscriber, msg);
         await notifSrv.sendMessageToUser(subscriber, {
-            data: { url: u },
+            data: {url: u},
             body: msg,
             title: "New Subscriber Trades"
         });
@@ -68,7 +61,7 @@ export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Re
 export const holdingsPostNotifications = async (notifSrv: Notifications, repo: Repository, elasticClient: ElasticClient) => {
     let usersAndHoldings = await repo.getUsersCurrentHoldings();
     const currentTime = DateTime.now();
-    const twelveHoursAgo = currentTime.minus({ hour: 12 });
+    const twelveHoursAgo = currentTime.minus({hour: 12});
     const curFormat = currentTime.toUTC().toISO();
     const twelveFormat = twelveHoursAgo.toUTC().toISO();
     const usersAndHoldingsKeys = Object.keys(usersAndHoldings);
@@ -80,7 +73,7 @@ export const holdingsPostNotifications = async (notifSrv: Notifications, repo: R
         const postTypeAggregations = await queryDatastore(elasticClient, usersSubscriptionList, usersBlockList, userHoldings, currentTime, twelveHoursAgo);
         const message = buildMessage(postTypeAggregations);
         const u = `https://m.tradingpostapp.com/dash/search?isHoldings=true&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
-        if (!allowedNotifs.has(userId)) continue;
+
         await notifSrv.sendMessageToUser(userId, {
             title: "New Current Holdings Posts",
             body: message,
@@ -94,7 +87,7 @@ export const holdingsPostNotifications = async (notifSrv: Notifications, repo: R
 export const watchlistsPostNotifications = async (notifSrv: Notifications, repo: Repository, elasticClient: ElasticClient) => {
     let [usersAndWatchlists, watchlistIdToName] = await repo.getUsersAndWatchlists();
     const currentTime = DateTime.now();
-    const twelveHoursAgo = currentTime.minus({ hour: 12 });
+    const twelveHoursAgo = currentTime.minus({hour: 12});
 
     const curFormat = currentTime.toUTC().toISO();
     const twelveFormat = twelveHoursAgo.toUTC().toISO();
@@ -115,7 +108,7 @@ export const watchlistsPostNotifications = async (notifSrv: Notifications, repo:
             if (postTypeAggregations.length <= 0) continue;
             const message = buildWatchlistMessage(postTypeAggregations, watchlistName);
             const u = `https://m.tradingpostapp.com/dash/search?watchlistId=${watchlistId}&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
-            if (!allowedNotifs.has(userId)) continue;
+
             await notifSrv.sendMessageToUser(userId, {
                 title: "New Watchlist Posts",
                 body: message,
@@ -239,5 +232,5 @@ export const queryDatastore = async (elasticClient: ElasticClient, userSubscript
     if (!res.aggregations || !res.aggregations.postTypeAgg) return [];
     if (!(res.aggregations.postTypeAgg.buckets instanceof Array)) return [];
 
-    return res.aggregations.postTypeAgg.buckets.map(b => ({ postType: b.key, count: b.doc_count }));
+    return res.aggregations.postTypeAgg.buckets.map(b => ({postType: b.key, count: b.doc_count}));
 }

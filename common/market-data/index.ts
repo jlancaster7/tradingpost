@@ -1,6 +1,6 @@
 import Repository from "./repository"
 import {addSecurityPrice, getSecurityWithLatestPrice} from "./interfaces";
-import IEX, {GetIntraDayPrices, GetOHLC, PermissionRequiredError} from "../iex";
+import IEX, {GetIntraDayPrices, PermissionRequiredError} from "../iex";
 import {DateTime} from "luxon";
 import {buildGroups} from "../../lambdas/market-data/utils";
 
@@ -27,7 +27,11 @@ export default class MarketData {
             runningTasks.push((async () => {
                 const symbols = securityGroup.map(sec => sec.symbol);
                 try {
-                    const response = await this.iex.bulk(symbols, ["ohlc"]);
+                    const response = await this.iex.bulk(symbols, ["intraday-prices"], {
+                        sort: "desc",
+                        chartLast: 1
+                    });
+
                     const _eodPrices = await this._processEod(securityGroup, response);
                     eodPrices = [...eodPrices, ..._eodPrices];
                 } catch (err) {
@@ -35,9 +39,9 @@ export default class MarketData {
                         for (let i = 0; i < securityGroup.length; i++) {
                             const sec = securityGroup[i];
                             try {
-                                const response = await this.iex.bulk([sec.symbol], ["ohlc"], {
-                                    chartIEXOnly: true,
-                                    chartIEXWhenNull: true
+                                const response = await this.iex.bulk([sec.symbol], ["intraday-prices"], {
+                                    sort: "desc",
+                                    chartLast: 1
                                 });
 
                                 const _eodPrices = await this._processEod(securityGroup, response);
@@ -65,6 +69,7 @@ export default class MarketData {
                 }
 
                 eodPrices = [];
+                runningTasks = [];
             }
         }
 
@@ -97,49 +102,57 @@ export default class MarketData {
                 // We have a past item in there, so lets roll it forward
                 eodPrices.push({
                     price: security.price,
-                    high: security.high,
-                    low: security.low,
+                    high: security.price,
+                    low: security.price,
                     isEod: true,
                     isIntraday: false,
-                    open: security.open,
+                    open: security.price,
                     time: today4pm,
                     securityId: security.securityId
                 })
                 continue;
             }
 
-            const iexSecurityOhlc = iexSecurity['ohlc'] as GetOHLC;
-            if (!iexSecurityOhlc) {
+            const iexSecurityIntradayPrices = iexSecurity['intraday-prices'] as GetIntraDayPrices[];
+            if (!iexSecurityIntradayPrices || iexSecurityIntradayPrices.length === 0) {
                 if (!security.time) continue;
                 if (!security.price) continue;
                 eodPrices.push({
                     price: security.price,
-                    high: security.high,
-                    low: security.low,
+                    high: security.price,
+                    low: security.price,
                     isEod: true,
                     securityId: security.securityId,
                     time: today4pm,
                     isIntraday: false,
-                    open: security.open
+                    open: security.price
                 });
                 continue;
             }
 
-            let securityPrice = security.price;
-            if (securityPrice === null) {
-                if (iexSecurityOhlc.close === null || iexSecurityOhlc.close.price === null) continue;
-                securityPrice = iexSecurityOhlc.close.price
-            }
+            const p = iexSecurityIntradayPrices[0];
+            let marketClose: number | null = p.marketClose;
+            if (!marketClose) marketClose = p.close !== null ? p.close : security.price
+            if (!marketClose) continue
+
+            let marketOpen: number | null = p.marketOpen
+            if (!marketOpen) marketOpen = p.open !== null ? p.open : security.open
+
+            let marketHigh: number | null = p.marketHigh
+            if (!marketHigh) marketHigh = p.high !== null ? p.high : security.high
+
+            let marketLow: number | null = p.marketLow
+            if (!marketLow) marketLow = p.low !== null ? p.low : security.low
 
             eodPrices.push({
-                price: securityPrice,
-                open: iexSecurityOhlc.open && iexSecurityOhlc.open.price ? iexSecurityOhlc.open.price : security.open,
+                price: marketClose,
+                open: marketOpen,
                 time: today4pm,
+                low: marketLow,
+                high: marketHigh,
                 isIntraday: false,
-                low: iexSecurityOhlc.low ? iexSecurityOhlc.low : security.low,
                 isEod: true,
                 securityId: security.securityId,
-                high: iexSecurityOhlc.high ? iexSecurityOhlc.high : security.high
             })
         }
 
@@ -161,6 +174,7 @@ export default class MarketData {
             runningTasks.push((async () => {
                 const symbols = securityGroup.map(sec => sec.symbol);
                 try {
+
                     // Try/Catch for IEX Errors(Too many Requests/Permission/etc...) -- dealio hereio
                     // Add in retries and such...
                     const response = await this.iex.bulk(symbols, ["intraday-prices"], {

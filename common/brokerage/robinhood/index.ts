@@ -18,7 +18,7 @@ import {Repository as TransformerRepository} from "./transformer";
 interface Repository {
     getInstitutionByName(name: string): Promise<TradingPostInstitutionTable | null>
 
-    getRobinhoodUser(userId: string): Promise<RobinhoodUserTable | null>
+    getRobinhoodUser(userId: string, username?: string): Promise<RobinhoodUserTable | null>
 
     updateRobinhoodUser(user: RobinhoodUser): Promise<void>
 
@@ -76,7 +76,7 @@ export class Service {
         const institution = await this._repo.getInstitutionByName("Robinhood");
         if (!institution) throw new Error("Robinhood institution is not defined");
 
-        const newAccountIds = await this.accounts(userId, institution.id);
+        const newAccountIds = await this.accounts(userId, brokerageUserId, institution.id);
         await this._repo.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117);
 
         await this._repo.execTx(async (r) => {
@@ -84,8 +84,8 @@ export class Service {
             const portSummaryService = new PortfolioSummaryService(r);
             const robinhoodSrv = new Service(this._clientId, this._scope, this._expiresIn, r, robinhoodTransformer, portSummaryService);
 
-            await robinhoodSrv.positions(userId);
-            await robinhoodSrv.transactions(userId);
+            await robinhoodSrv.positions(userId, brokerageUserId);
+            await robinhoodSrv.transactions(userId, brokerageUserId);
 
             for (let i = 0; i < newAccountIds.length; i++) {
                 await robinhoodSrv._transformer.computeHoldingsHistory(newAccountIds[i]);
@@ -104,9 +104,9 @@ export class Service {
             const portSummaryService = new PortfolioSummaryService(r);
             const robinhoodSrv = new Service(this._clientId, this._scope, this._expiresIn, r, robinhoodTransformer, portSummaryService);
 
-            await robinhoodSrv.accounts(userId, institution.id);
-            await robinhoodSrv.positions(userId);
-            await robinhoodSrv.transactions(userId);
+            await robinhoodSrv.accounts(userId, brokerageUserId, institution.id);
+            await robinhoodSrv.positions(userId, brokerageUserId);
+            await robinhoodSrv.transactions(userId, brokerageUserId);
             await robinhoodSrv._portfolioSummaryService.computeAccountGroupSummary(userId);
         });
     }
@@ -128,8 +128,8 @@ export class Service {
         }
     }
 
-    public accounts = async (userId: string, institutionId: number): Promise<number[]> => {
-        const robinhoodUser = await this._repo.getRobinhoodUser(userId);
+    public accounts = async (userId: string, brokerageUserId: string, institutionId: number): Promise<number[]> => {
+        const robinhoodUser = await this._repo.getRobinhoodUser(userId, brokerageUserId);
         if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist");
 
         let [accounts, nextUrl] = await this._apiAndUpdate<[Account[], string | null]>(robinhoodUser, RHApi.accounts, {})
@@ -149,8 +149,8 @@ export class Service {
         return await this._transformer.accounts(userId, institutionId, robinhoodUser, transformedAccounts);
     }
 
-    public positions = async (userId: string) => {
-        const robinhoodUser = await this._repo.getRobinhoodUser(userId);
+    public positions = async (userId: string, brokerageUserId: string) => {
+        const robinhoodUser = await this._repo.getRobinhoodUser(userId, brokerageUserId);
         if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
 
         let instrumentsMap: Record<string, RobinhoodInstrumentTable> = {};
@@ -209,9 +209,9 @@ export class Service {
         await this._transformer.positions(userId, allPositions);
     }
 
-    public transactions = async (userId: string) => {
+    public transactions = async (userId: string, brokerageUserId: string) => {
         // TODO: Set a date and if used, then stop filtering transactions if exceeds this date
-        const robinhoodUser = await this._repo.getRobinhoodUser(userId);
+        const robinhoodUser = await this._repo.getRobinhoodUser(userId, brokerageUserId);
         if (robinhoodUser === null) throw new Error("Robinhood User Id Doesnt Exist")
 
         const cash = await this._repo.getRobinhoodInstrumentBySymbol("USD:CUR");
