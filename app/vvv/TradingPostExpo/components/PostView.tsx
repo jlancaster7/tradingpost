@@ -231,7 +231,7 @@ export function PostView(props: { post: Interface.IElasticPostExt, onReloadNeede
                             })
                         }}
                         style={{ paddingHorizontal: postSidePad / 2, zIndex: 1 }}>
-                        <PostContentView post={post} inPostView={props.inPostView || post._source.postType === 'tweet'} />
+                        <PostContentView post={post} inPostView={props.inPostView || post._source.postType === 'tweet' || post._source.postType === 'spotify'}  />
                     </Pressable>
                 }
                 {
