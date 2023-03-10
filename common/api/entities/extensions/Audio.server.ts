@@ -98,6 +98,7 @@ export default ensureServerExtensions<Audio>({
                                                         INNER JOIN data_watchlist_item dwi
                                                             ON dw.id = dwi.watchlist_id
                                                         WHERE related_type = 'watchlist'
+                                                        and (da.related_id, da.id) in (select related_id, max(id) as id from data_audio group by related_id)
                                                         AND CASE
                                                             WHEN da.user_id != $1 THEN dw.type = 'public'
                                                             else true
