@@ -517,42 +517,41 @@ export class Service {
     }
 
     importTransactions = async (tpUserId: string, finicityUser: FinicityUser): Promise<void> => {
-        const externalFinAccToInternalAccMap = await this._createExternalFinAccountToInternalFinAccountMap(finicityUser.id);
-
-        const finicityTransactions = await this._iterateTransactions(tpUserId, finicityUser, externalFinAccToInternalAccMap);
+        const finicityTransactions = await this._iterateTransactions(tpUserId, finicityUser);
         let txByAccountId: Map<string, FinicityTransaction[]> = new Map();
-        const sortedFinicityTransactions = finicityTransactions.sort((a, b) => a.transactionDate - b.transactionDate);
 
-        sortedFinicityTransactions.forEach(tx => {
+        finicityTransactions.forEach(tx => {
             let accs = txByAccountId.get(tx.accountId.toString())
             if (!accs) accs = [];
             accs.push(tx);
             txByAccountId.set(tx.accountId.toString(), accs);
         });
 
-        const accountIdToNewestTxMap: Map<string, DateTime | null> = new Map();
         for (const [accountId, txs] of txByAccountId) {
-            const newestTransaction = await this.repository.getNewestFinicityTransaction(accountId);
-            if (!newestTransaction) accountIdToNewestTxMap.set(accountId, null)
-            else accountIdToNewestTxMap.set(accountId, newestTransaction.transactionDate)
-        }
+            if (txs.length <= 0) continue;
 
-        await this.repository.upsertFinicityTransactions(finicityTransactions);
-        // for (const [accountId, txs] of txByAccountId) {
-        //     const txDateTime = accountIdToNewestTxMap.get(accountId)
-        //     let filteredTxs = txs.filter(t => {
-        //         if (!txDateTime) return true;
-        //         const tDateTime = DateTime.fromSeconds(t.transactionDate);
-        //         if (tDateTime.toUnixInteger() > txDateTime.toUnixInteger()) return true;
-        //         return false;
-        //     });
-        //
-        //     if (filteredTxs.length <= 0) continue;
-        //     await this.transformer.transactions(finicityUser.tpUserId, finicityUser.customerId, filteredTxs, accountId);
-        // }
+            const newestTransaction = await this.repository.getNewestFinicityTransaction(accountId);
+            if (!newestTransaction) {
+                // Add To Finicity Transactions
+                await this.repository.upsertFinicityTransactions(txs);
+
+                // Add To Transformer
+                await this.transformer.transactions(finicityUser.tpUserId, finicityUser.customerId, txs, accountId);
+                continue;
+            }
+
+            // Remove all the older ones and add the transactions
+            const filteredTransactions = txs.filter(f => f.transactionDate > newestTransaction.transactionDate.toUnixInteger());
+            if (filteredTransactions.length <= 0) continue;
+
+            await this.repository.upsertFinicityTransactions(filteredTransactions);
+            await this.transformer.transactions(finicityUser.tpUserId, finicityUser.customerId, filteredTransactions, accountId);
+        }
     }
 
-    _iterateTransactions = async (tpUserId: string, finicityUser: FinicityUser, externalFinAccToInternalAccMap: Map<string, FinicityAccount>) => {
+    _iterateTransactions = async (tpUserId: string, finicityUser: FinicityUser) => {
+        const externalFinAccToInternalAccMap = await this._createExternalFinAccountToInternalFinAccountMap(finicityUser.id);
+
         let finTxs: FinicityTransaction[] = []
         let start = DateTime.now().minus({month: 24});
         let end = DateTime.now();

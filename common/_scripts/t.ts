@@ -51,45 +51,45 @@ const run = async () => {
     const finicityTransformer = new FinicityTransformer(repository, marketHolidays);
     const finicitySrv = new FinicityService(finicityApi, repository, finicityTransformer, portfolioSummaryService);
 
-    // await finicitySrv.add("e2268937-157b-4a33-a970-a9ba88d10a46", "6020539284", DateTime.now(), {}, true);
+    await finicitySrv.update("e2268937-157b-4a33-a970-a9ba88d10a46", "6020539284", DateTime.now(), {}, false);
 
-    console.log("Start")
-    await portfolioSummaryService.computeAccountGroupSummary('e2268937-157b-4a33-a970-a9ba88d10a46')
-    console.log("Fin")
-    const accountIds = [
-        {
-            tpAccountId: 689,
-            internalId: 347,
-            externalId: '6036155893',
-            detail: {
-                description: "ROLLOVER IRA",
-                dateAsOf: 1678258800
-            },
-            aggregationSuccessDate: 1678379879
-        },
-        {
-            tpAccountId: 690,
-            internalId: 348,
-            externalId: '6036155894',
-            detail: {
-                description: "ROTH IRA",
-                dateAsOf: 1678258800
-            },
-            aggregationSuccessDate: 1678379884
-        },
-        {
-            tpAccountId: 691,
-            internalId: 349,
-            externalId: '6036155895',
-            detail: {
-                description: "INDIVIDUAL",
-                dateAsOf: 1678258800
-            },
-            aggregationSuccessDate: 1678379884
-        }
-    ];
-
-    console.log("Starting")
+    // console.log("Start")
+    // await portfolioSummaryService.computeAccountGroupSummary('e2268937-157b-4a33-a970-a9ba88d10a46')
+    // console.log("Fin")
+    // const accountIds = [
+    //     {
+    //         tpAccountId: 689,
+    //         internalId: 347,
+    //         externalId: '6036155893',
+    //         detail: {
+    //             description: "ROLLOVER IRA",
+    //             dateAsOf: 1678258800
+    //         },
+    //         aggregationSuccessDate: 1678379879
+    //     },
+    //     {
+    //         tpAccountId: 690,
+    //         internalId: 348,
+    //         externalId: '6036155894',
+    //         detail: {
+    //             description: "ROTH IRA",
+    //             dateAsOf: 1678258800
+    //         },
+    //         aggregationSuccessDate: 1678379884
+    //     },
+    //     {
+    //         tpAccountId: 691,
+    //         internalId: 349,
+    //         externalId: '6036155895',
+    //         detail: {
+    //             description: "INDIVIDUAL",
+    //             dateAsOf: 1678258800
+    //         },
+    //         aggregationSuccessDate: 1678379884
+    //     }
+    // ];
+    //
+    // console.log("Starting")
     // for (let i = 0; i < accountIds.length; i++) {
     //     const account = accountIds[i];
     //     // const holdings = await repository.getFinicityHoldings([account.internalId]);

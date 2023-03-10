@@ -50,15 +50,21 @@ const runLambda = async () => {
     const marketHolidays = new Holidays(repository);
 
     const currentTime = DateTime.now().setZone("America/New_York")
-    if (currentTime.hour !== 16) return;
-    if (!await marketHolidays.isTradingDay(currentTime)) return
+    // if (currentTime.hour !== 16) return;
+    // if (!await marketHolidays.isTradingDay(currentTime)) return
 
     try {
+        console.log("start")
         await marketData.ingestEodOfDayPricing();
+        console.log("End")
     } catch (e) {
         throw e;
     }
 }
+
+(async () => {
+    await runLambda();
+})()
 
 export const run = async (event: any, context: Context) => {
     await runLambda();
