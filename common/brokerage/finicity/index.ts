@@ -83,22 +83,18 @@ export class Service {
 
             const finicityAccounts = await this.repository.getFinicityAccounts(finicityUser.id)
 
-            console.log("Holdings")
             await finService.importHoldings(userId, brokerageUserId, finicityAccounts.map(f => f.accountId));
 
-            console.log("Transactions")
             await finService.importTransactions(userId, brokerageUserId, finicityAccounts.map(f => f.accountId));
 
-            console.log("Holding History")
             for (let i = 0; i < newTransformedAccountIds.length; i++) {
                 const id = newTransformedAccountIds[i];
                 // Don't compute some security types for historical holdings since we do not have pricing at the moment
                 await finService.transformer.computeHoldingsHistory(id, true);
             }
 
-            throw new Error("Cause...")
-            // if (!finService.portSummarySrv) return
-            // await finService.portSummarySrv.computeAccountGroupSummary(userId);
+            if (!finService.portSummarySrv) return
+            await finService.portSummarySrv.computeAccountGroupSummary(userId);
         });
     }
 
@@ -384,8 +380,6 @@ export class Service {
         const finicityUser = await this.repository.getFinicityUserByFinicityCustomerId(brokerageUserId);
         if (finicityUser === null) throw new Error(`no user accounts exist for user id ${brokerageUserId} in holdings`);
 
-        console.log(brokerageUserId);
-        console.log()
         const finAccountsAndHoldings = await this.finicity.getCustomerAccounts(finicityUser.customerId);
         if (!finAccountsAndHoldings.accounts || finAccountsAndHoldings.accounts.length <= 0) return
 
@@ -475,7 +469,6 @@ export class Service {
         for (let i = 0; i < accounts.length; i++) {
             const account = accounts[i];
             externalAccountIdToInternalMap[account.accountId] = account.id
-            await this.finicity.loadHistoricTransactionsForCustomerAccount(finicityUser.customerId, account.accountId);
         }
 
         let finTxs: FinicityTransaction[] = []
