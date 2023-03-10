@@ -12,6 +12,7 @@ import { sizes } from "../style";
 import { useIsKeyboardVisible } from "../utils/hooks";
 import { BottomTabNavigator } from "./BottomTabNavigator";
 import KeyboardClose from '../assets/@iconify/keyboard-close'
+import { setDashLoaded } from "./LinkingConfiguration";
 
 export const Drawer = createDrawerNavigator();
 
@@ -24,7 +25,7 @@ const HeaderTp = () => {
 
 export function DrawerPart() {
     const { loginState } = useAppUser();
-
+    setDashLoaded();
     console.log("Running Drawer Navigation")
     return loginState?.appUser ? <Drawer.Navigator useLegacyImplementation={true} drawerContent={(props) => <SideMenu  {...props} />}
         screenOptions={({ route, navigation }) => ({

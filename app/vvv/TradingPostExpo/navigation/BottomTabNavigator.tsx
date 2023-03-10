@@ -65,7 +65,7 @@ export function BottomTabNavigator() {
         initialRouteName="Feed"
         screenOptions={{
             //tabBarActiveTintColor: Colors[colorScheme].tint,
-            headerShown: false
+            headerShown: false,
         }}>
         {Object.keys(navIcons).map((n) =>
             <BottomTab.Screen

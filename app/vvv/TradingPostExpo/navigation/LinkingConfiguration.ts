@@ -4,12 +4,14 @@
  * https://reactnavigation.org/docs/configuring-links
  */
 
-import { getActionFromState, getStateFromPath, LinkingOptions } from '@react-navigation/native';
+import { getActionFromState, getStateFromPath, LinkingOptions, StackActions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { NavIconKeys, navIcons } from '../images';
 import { screens } from '../screens/CreateAccountScreen';
 import * as Notifications from 'expo-notifications';
 import { Log } from '../utils/logger';
+import { useAppUser } from '../Authentication';
+import { getValueWNoUpdates } from '../lds';
 
 const ConfigOverride: Partial<Record<NavIconKeys, any>> = {
     Notification: {
@@ -18,15 +20,25 @@ const ConfigOverride: Partial<Record<NavIconKeys, any>> = {
 };
 
 
+let linkLoaded = false
+let isDashLoaded = true;
+export const setDashLoaded = () => {
+    linkLoaded = false;
+}
+const needsDash = () => {
+    return !isDashLoaded && linkLoaded
+}
 
 const linking: LinkingOptions<any> = {
     prefixes: [Linking.createURL('/'), "https://m.tradingpostapp.com"],
     config: {
+        initialRouteName:"Dash",
         screens: {
             Root: "login",
             Create: {
                 screens: {
                     Root: {
+
                         screens: (() => {
                             const output: Record<string, string> = {}
                             Object.keys(screens).map((k) => {
@@ -51,8 +63,14 @@ const linking: LinkingOptions<any> = {
                 }
             },
             BlockedUsers: "blocked",
-            Profile: "profile",
-            PostScreen: "post",
+            Profile: {
+                path: "profile",
+            //    initialRouteName: "Dash" as any
+            },
+            PostScreen: {
+                path: "post",
+          //      initialRouteName: "Dash" as any
+            },
             AccountInformation: "account",
             VerifyAccount: "verifyaccount",
             ResetPassword: "resetpassword",
@@ -70,12 +88,27 @@ const linking: LinkingOptions<any> = {
         // ...not sure if this will work properly in all navigation situations
         // maybe need to make this only work if the navigator is a dash? or look for the last dash navigator
 
+        console.log(state);
+
         if (state && (state.routes?.[state.routes.length - 1]?.params as any)?.$replace && state.routes.length > 1) {
             console.log("Running a replace ....");
             delete (state.routes?.[state.routes.length - 1]?.params as any).$replace;
             state.routes.splice(state.routes.length - 2, 1);
         }
+        // if (getValueWNoUpdates("currentUser") && state?.routes.length === 1) {
+        //    // console.log("TRYING TO GET A FUCKING NEW STATE WITH POATH FQEHEWOFNWROFWEFRWOG");
+        //     //const baseState = getStateFromPath("/dash/feed");
+        
+        //     //console.log(baseState)
+        //     //if (baseState)
+        //       //  state.routes.unshift(...baseState.routes)
+        //       state.routes.unshift({
+        //         name:"Dash"
+        //       })
+        // }
+
         console.log("DONE state from path");
+        console.log(state);
         return state;
 
     },
@@ -83,9 +116,10 @@ const linking: LinkingOptions<any> = {
         console.log("Action from state is here :::::::::::::::::::::::")
         return getActionFromState(state, options);
     },
-    async getInitialURL() {
 
+    async getInitialURL() {
         console.log("IM TRYING TO GET INIT URL");
+
         const response = await Notifications.getLastNotificationResponseAsync();
         if (response && response.notification) {
             let url = null;
@@ -98,7 +132,7 @@ const linking: LinkingOptions<any> = {
         }
 
         const outputUrl = await Linking.getInitialURL();;
-        console.log(outputUrl)
+
         return outputUrl
     },
     subscribe(listener) {
