@@ -115,7 +115,6 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         if (taskDefinition.type === BrokerageTaskType.NewData) {
             await broker.update(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else if (taskDefinition.type === BrokerageTaskType.NewAccount) {
-            console.log("Running")
             await broker.add(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
         } else if (taskDefinition.type === BrokerageTaskType.UpdatePortfolioStatistics) {
             await broker.calculatePortfolioStatistics(taskDefinition.userId, taskDefinition.brokerageUserId as string, taskDefinition.date, taskDefinition.data);
@@ -143,22 +142,6 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
     }
     return true
 }
-
-// (async () => {
-//     await run({
-//         userId: 'e2268937-157b-4a33-a970-a9ba88d10a46',
-//         messageId: '',
-//         brokerage: DirectBrokeragesType.Finicity,
-//         status: BrokerageTaskStatusType.Pending,
-//         data: {},
-//         date: DateTime.now(),
-//         error: null,
-//         type: BrokerageTaskType.NewAccount,
-//         brokerageUserId: "6020539284",
-//         finished: null,
-//         started: null
-//     }, '');
-// })()
 
 
 export const handler = async (event: SQSEvent, context: Context) => {

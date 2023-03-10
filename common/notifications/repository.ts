@@ -148,23 +148,26 @@ export default class Repository {
 
         const query = `
             SELECT s.symbol,
-                   user_id
-            FROM data_user du
-                     INNER JOIN tradingpost_brokerage_account tba ON du.id = tba.user_id
-                     INNER JOIN tradingpost_current_holding tch ON tch.account_id = tba.id
+                   dns.user_id
+            FROM data_notification_subscription dns
+                     INNER JOIN _tradingpost_account_to_group tatg ON tatg.account_group_id = dns.type_id
+                     INNER JOIN tradingpost_current_holding tch ON tch.account_id = tatg.account_id
                      INNER JOIN
                  SECURITY s ON s.id = tch.security_id
-            GROUP BY s.symbol,
-                     user_id;
+            WHERE dns.type = 'HOLDINGS_NOTIFICATION'
+            group by s.symbol, dns.user_id;
         `;
+
         const response = await this.db.query<{ symbol: string, user_id: string }[]>(query);
         if (response.length <= 0) return {};
+
         response.forEach(r => {
             let uh = usersAndHoldings[r.user_id];
             if (!uh) uh = [];
             uh.push("$" + r.symbol.toLowerCase());
             usersAndHoldings[r.user_id] = uh;
         });
+
         return usersAndHoldings;
     }
 

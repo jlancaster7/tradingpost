@@ -22,7 +22,6 @@ export default class Notifications {
     }
 
     public sendMessageToUser = async (userId: string, msg: Message, expDateTime: DateTime = DateTime.now().plus({hour: 5})): Promise<void> => {
-        console.log("My user Id is " + userId);
         const userDevices = await this.repository.getUserDevices(userId)
         let androidDeviceIds: string[] = [];
         let iosDeviceIds: string[] = [];
@@ -72,6 +71,7 @@ export default class Notifications {
                 const appleRes = await this.iOSMessenger.send(note, deviceIds);
                 appleRes.failed.forEach(f => successRes.failed.push(f.device))
                 appleRes.sent.forEach(f => successRes.successful.push(f.device));
+
                 return successRes
             case "android":
                 const {success, failed} = await this.androidMessenger.send({

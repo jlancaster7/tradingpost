@@ -287,6 +287,7 @@ export class Transformer extends BaseTransformer {
                 case "transfer":
                 case "other":
                 case "contribution":
+                case "reinvestOfIncome":
                 case "dividend":
                     transaction.ticker = "USD:CUR"
             }
@@ -296,7 +297,6 @@ export class Transformer extends BaseTransformer {
             }
 
             if (!transaction.ticker) {
-                console.log(transaction)
                 throw new Error(`no symbol (${transaction.transactionId}) available for transaction type ${transaction.investmentTransactionType}`)
             }
 
