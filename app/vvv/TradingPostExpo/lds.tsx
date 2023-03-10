@@ -1,8 +1,8 @@
-import {useCallback, useEffect, useState} from 'react';
-import {EventRegister} from 'react-native-event-listeners'
-import {LoginResult} from "@tradingpost/common/api/entities/static/AuthApi";
-import {IUserGet, ISecurityList} from "@tradingpost/common/api/entities/interfaces";
-import AsyncStorage, {useAsyncStorage} from '@react-native-async-storage/async-storage'
+import { useCallback, useEffect, useState } from 'react';
+import { EventRegister } from 'react-native-event-listeners'
+import { LoginResult } from "@tradingpost/common/api/entities/static/AuthApi";
+import { IUserGet, ISecurityList } from "@tradingpost/common/api/entities/interfaces";
+import AsyncStorage, { useAsyncStorage } from '@react-native-async-storage/async-storage'
 
 //current_user
 //token 
@@ -64,11 +64,17 @@ export const useData = <T extends keyof LDS>(key: T) => {
     }
 
 }
+/**
+ * Will not update if the value changes. Be smark about how you use it
+ */
+export const getValueWNoUpdates = <T extends keyof LDS>(key: T) => {
+    return lds[key] as LDS[T];
+}
 
 export const setValue = async <T extends keyof LDS>(key: T, v: LDS[T]) => {
     lds[key] = v;
     if (isCachedMap[key]) {
-        const cachedLds: Partial<LDS> = {...lds}
+        const cachedLds: Partial<LDS> = { ...lds }
         Object.keys(lds).forEach((k) => {
             if (!isCachedMap[k as keyof LDS]) {
                 //console.log("DELETING KEY:" + k);
@@ -79,7 +85,7 @@ export const setValue = async <T extends keyof LDS>(key: T, v: LDS[T]) => {
         })
         await AsyncStorage.setItem(LDS_CACHE_KEY, JSON.stringify(cachedLds));
     }
-    EventRegister.emit(ldsChangedEvenName, {key})
+    EventRegister.emit(ldsChangedEvenName, { key })
 }
 
 export const initLds = async () => {
@@ -90,7 +96,7 @@ export const initLds = async () => {
         //console.log("Results" + result);
         lds = JSON.parse(result);
         Object.keys(lds).forEach((k) =>
-            EventRegister.emit(ldsChangedEvenName, {k}));
+            EventRegister.emit(ldsChangedEvenName, { k }));
     }
     return lds;
 };
