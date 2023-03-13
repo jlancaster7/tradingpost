@@ -112,12 +112,6 @@ export function SideMenu(props: any
             icon: sideMenu.Bank_Link,
         },
         {
-            label: "Discovery",
-            //onPress: () => props.navigation.navigate("Create"),
-            onPress: () => props.navigation.navigate("Discovery"),
-            icon: sideMenu.Bank_Link,
-        },
-        {
             label: "Test Notifcations",
             //onPress: () => props.navigation.navigate("Create"),
             onPress: () => {

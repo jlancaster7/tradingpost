@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     return {
         ...config,
         extra: {
-            localIp: "10.0.0.101"
+            localIp: localIp
         }
     }
 };
