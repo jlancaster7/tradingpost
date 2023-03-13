@@ -28,16 +28,14 @@ export const CompanyProfileBar = (props: { secId: number, symbol?: string, compa
                     
                     const end = pricing.historical.length - 1;
                     setCurrentPrice(pricing.historical[end].close);
-                    //console.log(pricing.historical[end].close)
                     setIntraDayChange(pricing.historical[end].close - pricing.historical[0].close);
-                    //console.log(pricing.historical[end].close - pricing.historical[0].close)
                 }
             }
         })()
     } ,[])
 
     return (
-        <View style={[makeShadedSec ? [intradayChange ? (intradayChange > 0 ? {backgroundColor: companyProfileStyle.upBackgroundColor} : {backgroundColor: companyProfileStyle.downBackgroundColor}) : {backgroundColor: 'white'}, {...shaded, flex: 1, marginBottom: sizes.rem1 / 2,marginHorizontal: 4, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}] : {}]}>
+        <View key={secId} style={[makeShadedSec ? [intradayChange ? (intradayChange > 0 ? {backgroundColor: companyProfileStyle.upBackgroundColor} : {backgroundColor: companyProfileStyle.downBackgroundColor}) : {backgroundColor: 'white', borderColor: '#CCCCCC', borderWidth: 1}, {...shaded, flex: 1, marginBottom: sizes.rem1 / 2,marginHorizontal: 4, paddingHorizontal: sizes.rem0_5, paddingVertical: sizes.rem0_5}] : {}]}>
             <SecPressable securityId={symbol && secId ? (symbol === 'USD:CUR' ? -1 : secId) : -1}>
                 <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>               
                     <Avatar

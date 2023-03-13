@@ -26,4 +26,7 @@ export default class User extends Extension {
     testNotifcation = this._makeFetch<undefined, {}>("testNotifcation", this._defaultPostRequest)
     getPortfolioNotifications = this._makeFetch<{typeId: number}, {is_notification: boolean}>("getPortfolioNotifications", this._defaultPostRequest)
     togglePortfolioNotifications = this._makeFetch<{typeId: number, is_notification: boolean}, {}>("togglePortfolioNotifications", this._defaultPostRequest)
+    discoveryOne = this._makeFetch<{page: number, limit: number}, (IUserList & {title: string, description: string})[]>("discoveryOne", this._defaultPostRequest)
+    discoveryTwo = this._makeFetch<{page: number, limit: number}, (IUserList & {title: string, description: string})[]>("discoveryTwo", this._defaultPostRequest)
+    discoveryThree = this._makeFetch<{page: number, limit: number}, IUserList[]>("discoveryThree", this._defaultPostRequest)
 }

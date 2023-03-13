@@ -225,6 +225,45 @@ declare const _default: {
             limit?: number | undefined;
         };
     }) => Promise<{}>;
+    discoveryOne: (req: {
+        body: {
+            page: number;
+            limit: number;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<(IUserList & {
+        title: string;
+        description: string;
+    })[]>;
+    discoveryTwo: (req: {
+        body: {
+            page: number;
+            limit: number;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<(IUserList & {
+        title: string;
+        description: string;
+    })[]>;
+    discoveryThree: (req: {
+        body: {
+            page: number;
+            limit: number;
+        };
+        extra: {
+            userId: string;
+            page?: number | undefined;
+            limit?: number | undefined;
+        };
+    }) => Promise<IUserList[]>;
 } & {
     get?: ((i: any, extra: {
         userId: string;

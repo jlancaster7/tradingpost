@@ -92,4 +92,22 @@ export default class User extends Extension {
         typeId: number;
         is_notification: boolean;
     }) => Promise<{}>;
+    discoveryOne: (settings: {
+        page: number;
+        limit: number;
+    }) => Promise<(IUserList & {
+        title: string;
+        description: string;
+    })[]>;
+    discoveryTwo: (settings: {
+        page: number;
+        limit: number;
+    }) => Promise<(IUserList & {
+        title: string;
+        description: string;
+    })[]>;
+    discoveryThree: (settings: {
+        page: number;
+        limit: number;
+    }) => Promise<IUserList[]>;
 }

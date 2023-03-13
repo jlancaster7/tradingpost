@@ -1,34 +1,34 @@
-import {createNativeStackNavigator} from "@react-navigation/native-stack";
-import {useEffect, useState} from "react";
-import {Keyboard, Pressable, View} from "react-native";
-import {AppTitle} from "../images";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useEffect, useState } from "react";
+import { Keyboard, Pressable, View } from "react-native";
+import { AppTitle } from "../images";
 import CreateAccountScreen from "../screens/CreateAccountScreen";
 import NotFoundScreen from "../screens/NotFoundScreen";
-import {ProfileScreen} from "../screens/ProfileScreen";
+import { ProfileScreen } from "../screens/ProfileScreen";
 import WelcomeScreen from "../screens/WelcomeScreen";
-import {sizes} from "../style";
-import {DrawerPart} from "./DrawerNavigator";
-import {RootStackParamList} from "./pages";
-import {AccountSettingsScreen} from "../screens/AccountSettingsScreen"
-import {AccountInfoScreen} from "../screens/AccountInfoScreen";
-import {AuthScreen} from "../screens/AuthScreen"
-import {ChangePasswordScreen} from "../screens/ChangePasswordScreen"
-import {CompanyScreen} from "../screens/CompanyScreen"
-import {ImagePickerScreen} from "../screens/ImagePicker"
-import {NotificationTradeScreen} from "../screens/NotificationTradeScreen"
-import {PostEditorScreen} from "../screens/PostEditorScreen"
-import {PostScreen} from "../screens/PostScreen"
-import {SubscriptionScreen, SubscriptionSettingsScreen} from "../screens/SubscriptionScreen"
-import {TableModalScreen} from "../screens/TableModalScreen"
-import {BlockListModalScreen} from "../screens/BlockListModalScreen";
-import {VerificationScreen} from "../screens/VerificationScreen"
-import {WatchlistEditorScreen} from "../screens/WatchlistEditorScreen"
-import {WatchlistScreen} from "../screens/WatchlistScreen"
-import {WatchlistViewerScreen} from "../screens/WatchlistViewerScreen"
-import {AppInformationScreen} from "../screens/AppInformationScreen";
+import { sizes } from "../style";
+import { DrawerPart } from "./DrawerNavigator";
+import { RootStackParamList } from "./pages";
+import { AccountSettingsScreen } from "../screens/AccountSettingsScreen"
+import { AccountInfoScreen } from "../screens/AccountInfoScreen";
+import { AuthScreen } from "../screens/AuthScreen"
+import { ChangePasswordScreen } from "../screens/ChangePasswordScreen"
+import { CompanyScreen } from "../screens/CompanyScreen"
+import { ImagePickerScreen } from "../screens/ImagePicker"
+import { NotificationTradeScreen } from "../screens/NotificationTradeScreen"
+import { PostEditorScreen } from "../screens/PostEditorScreen"
+import { PostScreen } from "../screens/PostScreen"
+import { SubscriptionScreen, SubscriptionSettingsScreen } from "../screens/SubscriptionScreen"
+import { TableModalScreen } from "../screens/TableModalScreen"
+import { BlockListModalScreen } from "../screens/BlockListModalScreen";
+import { VerificationScreen } from "../screens/VerificationScreen"
+import { WatchlistEditorScreen } from "../screens/WatchlistEditorScreen"
+import { WatchlistScreen } from "../screens/WatchlistScreen"
+import { WatchlistViewerScreen } from "../screens/WatchlistViewerScreen"
+import { AppInformationScreen } from "../screens/AppInformationScreen";
 import * as Notifications from 'expo-notifications';
-import {useIsKeyboardVisible} from "../utils/hooks";
-import {IconifyIcon} from "../components/IconfiyIcon";
+import { useIsKeyboardVisible } from "../utils/hooks";
+import { IconifyIcon } from "../components/IconfiyIcon";
 import KeyboardClose from '../assets/@iconify/keyboard-close'
 import {useAppUser} from "../Authentication";
 import {Log} from "../utils/logger";
@@ -41,6 +41,9 @@ import {Icon} from "@ui-kitten/components";
 import {BlockScreen} from '../screens/BlockListScreen'
 import {useRoute} from "@react-navigation/native";
 import {registerDeviceForNotifications} from "../utils/notifications";
+import { DiscoveryScreen } from "../screens/DiscoveryScreen";
+//import TrackPlayer from 'react-native-track-player';
+//import { SetupService } from "../utils/PlaybackService";
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -53,7 +56,7 @@ Notifications.setNotificationHandler({
 export const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const useInitialRoute = () => {
-    let {loginState} = useAppUser();
+    let { loginState } = useAppUser();
     let initialRoute: keyof RootStackParamList;
     if (loginState?.appUser)
         //TODO: Should refactor this so that it is more related... settings + settings.analyst + analyst_profile
@@ -70,14 +73,16 @@ export const useInitialRoute = () => {
         initialRoute = "Root"
 
     Log.verbose(`Initial Route Is : '${initialRoute}'`);
+
     return initialRoute;
 }
 
 export function RootNavigator() {
-    const {loginState} = useAppUser();
+    const { loginState } = useAppUser();
     useEffect(() => {
         if (loginState?.appUser) {
             registerDeviceForNotifications()
+            //SetupService()
         }
     }, [loginState?.appUser]);
 
@@ -85,46 +90,47 @@ export function RootNavigator() {
         initialRouteName={useInitialRoute()}
         screenOptions={{
             headerTitle: () => <AppTitle height={"100%"}
-                                         style={{marginTop: sizes.rem0_5, height: sizes.rem2, aspectRatio: 5.77}}
+                style={{ marginTop: sizes.rem0_5, height: sizes.rem2, aspectRatio: 5.77 }}
             />,
             headerTitleAlign: "center",
             headerBackVisible: false,
             headerRight: () => {
-                const {isKeyboardVisible} = useIsKeyboardVisible();
+                const { isKeyboardVisible } = useIsKeyboardVisible();
                 if (isKeyboardVisible) {
                     return <Pressable
                         onPress={() => {
                             Keyboard.dismiss();
                         }}
                     ><IconifyIcon
-                        currentColor="black"
-                        icon={KeyboardClose}
-                        svgProps={{
-                            height: 24,
-                            width: 24,
-                        }}
-                        style={{
-                            height: 24,
-                            width: 24,
-                            marginRight: sizes.rem1
-                        }}/>
+                            currentColor="black"
+                            icon={KeyboardClose}
+                            svgProps={{
+                                height: 24,
+                                width: 24,
+                            }}
+                            style={{
+                                height: 24,
+                                width: 24,
+                                marginRight: sizes.rem1
+                            }} />
                     </Pressable>
                 }
-                    // else if () {
+                // else if () {
 
                 // }
                 else return undefined;
             }
         }}>
-        <Stack.Screen name="Root" component={WelcomeScreen} options={{headerShown: false}}/>
+        <Stack.Screen name="Root" component={WelcomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Create" component={CreateAccountScreen}
-                      options={{headerShown: false, headerBackVisible: false}}/>
+            options={{ headerShown: false, headerBackVisible: false }} />
         <Stack.Screen name="Dash" component={DrawerPart} options={{
             headerShown: false,
-        }}/>
-        <Stack.Screen name="NotFound" component={NotFoundScreen} options={{title: 'Oops!'}}/>
+        }} />
+        <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
         <Stack.Group screenOptions={{
             headerBackVisible: true,
+
         }}>
             <Stack.Screen name="ResetPassword" component={ChangePasswordScreen}/>
             <Stack.Screen name="VerifyAccount" component={VerificationScreen}/>
@@ -148,8 +154,9 @@ export function RootNavigator() {
             <Stack.Screen name="IbkrInfo" component={IbkrInfoScreen}/>
             <Stack.Screen name="RobinhoodLogin" component={RobhinhoodLoginScreen}/>
             <Stack.Screen name="BlockedUsers" component={BlockScreen}/>
+            <Stack.Screen name="Discovery" component={DiscoveryScreen}/>
             <Stack.Screen name="TwitterAuthWebView" component={TwitterAuthWebViewScreen}
-                          options={{headerShown: false}}/>
+                options={{ headerShown: false }} />
         </Stack.Group>
         <Stack.Group screenOptions={{
             headerStyle: {
@@ -178,11 +185,11 @@ export function RootNavigator() {
                     >
                         <ExtendedMenuModal userId={(route.params as any)?.userId || ""} onShouldClose={(blocked) => {
                             setModalVisible(false);
-                        }} visible={modalVisible}/>
-                        <Icon style={{marginRight: 8, height: 32, width: 32,}} fill="white" name="more-horizontal"/>
+                        }} visible={modalVisible} />
+                        <Icon style={{ marginRight: 8, height: 32, width: 32, }} fill="white" name="more-horizontal" />
                     </Pressable>
                 }
-            }} name="Profile" component={ProfileScreen}/>
+            }} name="Profile" component={ProfileScreen} />
         </Stack.Group>
     </Stack.Navigator>
 }

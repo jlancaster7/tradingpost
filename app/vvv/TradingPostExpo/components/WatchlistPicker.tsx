@@ -71,7 +71,7 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
         delayRef.current = setTimeout(() => {
 
             const items: (ISecurityList | {})[] = securities.filter((s, i) =>
-                (!searchText && (i < 15 || selectedItems[s.id])) ||
+                (!searchText && ['META', 'GOOG', 'BRK.B', 'AAPL', 'MSFT', 'TSLA', 'ABNB', 'NVDA', 'V', 'SHOP', 'CMG', 'DIS'].includes(s.symbol)) ||
                 ((searchText.length >= 3 && new RegExp(searchText, "gi").test(s.security_name))) ||
                 (searchText.length && (new RegExp(searchText, "gi")).test(s.symbol))
             ).sort((a, b) => {

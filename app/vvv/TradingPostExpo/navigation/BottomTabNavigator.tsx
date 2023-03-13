@@ -10,6 +10,7 @@ import { SearchScreen } from "../screens/SearchScreen";
 import { Api } from "@tradingpost/common/api";
 import { useAppUser } from "../Authentication";
 import { registerDeviceForNotifications } from "../utils/notifications";
+import { DiscoveryScreen } from "../screens/DiscoveryScreen";
 
 const BottomTab = createBottomTabNavigator<any>();
 const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any>, p?: any, headerRight?: (props: { navigation: NavigationProp<any>, route: any }) => React.ReactNode }> = {
@@ -19,8 +20,11 @@ const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any
     Feed: {
         c: FeedScreen
     },
-    Search: {
-        c: SearchScreen,
+    //Search: {
+    //    c: SearchScreen,
+    //},
+    Discovery: {
+        c: DiscoveryScreen,
     },
     Notification: {
         c: NotificationScreen,
@@ -65,7 +69,7 @@ export function BottomTabNavigator() {
         initialRouteName="Feed"
         screenOptions={{
             //tabBarActiveTintColor: Colors[colorScheme].tint,
-            headerShown: false
+            headerShown: false,
         }}>
         {Object.keys(navIcons).map((n) =>
             <BottomTab.Screen

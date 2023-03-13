@@ -8,15 +8,16 @@ import { NoteEditor, SecPressable } from "../screens/WatchlistViewerScreen"
 import { Api } from "@tradingpost/common/api"
 import { AppColors } from "../constants/Colors";
 
-export const OverlappingIconList = (props: { iconUriList: string[], maxIcons?: number, viewStyle?: ViewStyle}) => {
-    const {iconUriList, maxIcons, viewStyle} = props
+export const OverlappingIconList = (props: { iconUriList: string[], maxIcons?: number, viewStyle?: ViewStyle, iconSize?: string}) => {
+    const {iconUriList, maxIcons, viewStyle, iconSize} = props
     
     return (
         <View style={[{flexDirection: 'row', alignItems: 'center'}, viewStyle]}>
             {iconUriList && iconUriList.slice(0, maxIcons).map((a, i) => <Avatar
+                key={`${a}_${i}`}
                 style={[i === 0 ? {} : {marginLeft: -13}, { zIndex: iconUriList.length - i, backgroundColor: 'white', borderWidth: 1, borderColor: '#ccc'}]}
                 resizeMode={'cover'}
-                size={'tiny'}
+                size={iconSize ? iconSize : 'tiny'}
                 shape="round"
                 source={{uri: a}}
                 />)}

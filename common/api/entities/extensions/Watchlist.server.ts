@@ -1,7 +1,7 @@
 import {ensureServerExtensions} from ".";
 import {getPriceCacheTask, getUserCache} from "../../cache";
 import WatchlistSavedApi from "../apis/WatchlistSavedApi";
-import WatchlistApi, {IWatchlistGet} from "../apis/WatchlistApi";
+import WatchlistApi, {IWatchlistGet, IWatchlistList} from "../apis/WatchlistApi";
 import {getHivePool} from '../../../db'
 
 import Watchlist, {IWatchlistGetExt} from "./Watchlist";
@@ -11,6 +11,37 @@ export default ensureServerExtensions<Watchlist>({
     get: async (watchlistId: number) => {
 
 
+    },
+    getPublicWatchlists: async (req) => {
+        const pool = await getHivePool;
+        const limit = (req.body?.limit || 6)
+        const offset = (req.body?.page || 0) * limit 
+                
+        const watchlists = await pool.query<IWatchlistList>(`SELECT * 
+                                                             FROM public.view_watchlist_list('{}') AS v 
+                                                             WHERE v.type = 'public' 
+                                                             ORDER BY v.id DESC
+                                                             OFFSET $1
+                                                             LIMIT $2`, [offset, limit]);
+        
+        let tempList: {id: number, name: string, symbolList: string[], type: string, isNotification: boolean, userHandle: string, userImageUri?: string}[] = [];
+        for (let w of watchlists.rows) {    
+            const watchlist = await pool.query<IWatchlistGet>(`SELECT * 
+                                                               FROM public.api_watchlist_get('{"data": {"id": ${w.id}}}')`);
+            if (watchlist.rowCount) {
+                tempList.push({
+                    id: w.id,
+                    name: w.name,
+                    symbolList: watchlist.rows[0].items.map(a => a.symbol),
+                    type: w.type,
+                    isNotification: watchlist.rows[0].is_notification,
+                    userHandle: w.user[0].handle,
+                    userImageUri: w.user[0].profile_url
+                })
+            }
+        
+        } 
+        return tempList
     },
     getAllWatchlists: async (req) => {
         const cache = await getUserCache();

@@ -538,7 +538,13 @@ export default ensureServerExtensions<User>({
 
 
         console.log("I'm past all the setup")
-        const u = `https://m.tradingpostapp.com/post?id=youtube_4Il00Mrkqnc`;
+        const watchlistId = 120;
+        const currentTime = DateTime.now();
+        const twelveHoursAgo = currentTime.minus({ hour: 12 });
+
+        const curFormat = currentTime.toUTC().toISO();
+        const twelveFormat = twelveHoursAgo.toUTC().toISO();
+        const u = `https://m.tradingpostapp.com/dash/feed?isHoldings=true&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
         await notificationsSrv.sendMessageToUser(
             //'e96aea04-9a60-4832-9793-f790e60df8eb'
             r.extra.userId
@@ -577,5 +583,100 @@ export default ensureServerExtensions<User>({
                     and type = $3`, [r.extra.userId, r.body.typeId, NotificationSubscriptionTypes.HOLDINGS_NOTIFICATION]);
             return false
         }
+    },
+    discoveryOne: async (r) => {
+        const pool = await getHivePool;
+        const limit = (r.body?.limit || 6)
+        const offset = (r.body?.page || 0) * limit 
+        const results = await pool.query(`SELECT  sudpc.title, 
+                                                    sudpc.description,
+                                                    sudpc.most_recent_article_date,
+                                                    du.id,
+                                                    du.handle,
+                                                    du.tags,
+                                                    (concat(du.first_name,' ',du.last_name)) as "display_name",
+                                                    '{}' as "subscription",
+                                                    du.profile_url,
+                                                    du.social_analytics,
+                                                    du.is_deleted 
+                                            FROM data_user du 
+                                            INNER JOIN 
+                                                (select dpc.user_id, ss.title, ss.description, ss.link, ss.most_recent_article_date 
+                                                from (select su.substack_user_id, su.title, su.description, su.link, max(sa.created_at) as "most_recent_article_date" 
+                                                    from substack_users su 
+                                                        inner join substack_articles sa 
+                                                            on su.substack_user_id = sa.substack_user_id 
+                                                        group by (su.substack_user_id, su.title, su.description, su.link)
+                                                        ) ss
+                                                inner join data_platform_claim dpc 
+                                                    on ss.substack_user_id = dpc.platform_user_id ) sudpc 
+                                            ON du.id = sudpc.user_id
+                                            ORDER BY sudpc.most_recent_article_date DESC
+                                        OFFSET $1
+                                        LIMIT $2
+                                        `, [offset, limit])
+        
+        return results.rows as (IUserList & {title: string, most_recent_article_date: string, description: string})[]
+    },
+    discoveryTwo: async (r) => {
+        const pool = await getHivePool;
+        const limit = (r.body?.limit || 6)
+        const offset = (r.body?.page || 0) * limit 
+        const results = await pool.query(`SELECT  sudpc.name as "title", 
+                                                    sudpc.description,
+                                                    sudpc.most_recent_show_date,
+                                                    du.id,
+                                                    du.handle,
+                                                    du.tags,
+                                                    (concat(du.first_name,' ',du.last_name)) as "display_name",
+                                                    '{}' as "subscription",
+                                                    du.profile_url,
+                                                    du.social_analytics,
+                                                    du.is_deleted 
+                                            FROM data_user du 
+                                            INNER JOIN 
+                                                (select dpc.user_id, ss.name, ss.description, ss.most_recent_show_date 
+                                                from (select su.spotify_show_id, su.name, su.description, max(se.created_at) as "most_recent_show_date" 
+                                                    from spotify_users su 
+                                                        inner join spotify_episodes se 
+                                                            on su.spotify_show_id = se.spotify_show_id
+                                                        group by (su.spotify_show_id, su.name, su.description)
+                                                        ) ss
+                                                inner join data_platform_claim dpc 
+                                                    on ss.spotify_show_id = dpc.platform_user_id ) sudpc 
+                                            ON du.id = sudpc.user_id
+                                            ORDER BY sudpc.most_recent_show_date DESC
+                                        OFFSET $1
+                                        LIMIT $2
+                                        `, [offset, limit])
+        
+        return results.rows as (IUserList & {title: string, description: string})[]
+    },
+    discoveryThree: async (r) => {
+        const pool = await getHivePool;
+        const limit = (r.body?.limit || 6)
+        const offset = (r.body?.page || 0) * limit 
+        const results = await pool.query(`SELECT  
+                                                du.id,
+                                                du.handle,
+                                                du.tags,
+                                                (concat(du.first_name,' ',du.last_name)) as "display_name",
+                                                '{}' as "subscription",
+                                                du.profile_url,
+                                                du.social_analytics,
+                                                du.is_deleted 
+                                        FROM data_user du 
+                                        INNER JOIN 
+                                            (SELECT dpc.user_id, yu.title, yu.description
+                                            FROM youtube_users yu 
+                                            INNER JOIN data_platform_claim dpc 
+                                                ON yu.youtube_channel_id = dpc.platform_user_id) sudpc 
+                                            ON du.id = sudpc.user_id
+                                        ORDER BY id DESC
+                                        OFFSET $1
+                                        LIMIT $2
+                                        `, [offset, limit])
+        
+        return results.rows as IUserList[]
     }
 })
