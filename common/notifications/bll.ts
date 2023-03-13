@@ -77,7 +77,7 @@ export const holdingsPostNotifications = async (notifSrv: Notifications, repo: R
         const usersSubscriptionList = await repo.getUserSubscriberList(userId);
         const postTypeAggregations = await queryDatastore(elasticClient, usersSubscriptionList, usersBlockList, userHoldings, currentTime, twelveHoursAgo);
         const message = buildMessage(postTypeAggregations);
-        const u = `https://m.tradingpostapp.com/dash/search?isHoldings=true&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
+        const u = `https://m.tradingpostapp.com/dash/feed?isHoldings=true&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
         await notifSrv.sendMessageToUser(userId, {
             title: "New Current Holdings Posts",
             body: message,
@@ -111,7 +111,7 @@ export const watchlistsPostNotifications = async (notifSrv: Notifications, repo:
             const postTypeAggregations = await queryDatastore(elasticClient, usersSubscriptionList, usersBlockList, watchlistSymbols, currentTime, twelveHoursAgo);
             if (postTypeAggregations.length <= 0) continue;
             const message = buildWatchlistMessage(postTypeAggregations, watchlistName);
-            const u = `https://m.tradingpostapp.com/dash/search?watchlistId=${watchlistId}&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
+            const u = `https://m.tradingpostapp.com/dash/feed?watchlistId=${watchlistId}&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
             await notifSrv.sendMessageToUser(userId, {
                 title: "New Watchlist Posts",
                 body: message,
