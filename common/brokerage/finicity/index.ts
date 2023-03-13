@@ -100,19 +100,17 @@ export class Service {
                 const portStats = new PortfolioSummaryService(r);
                 const finService = new Service(this.finicityApi, r, finTransformer, portStats);
 
-                console.log("Holdings")
                 await finService.importHoldings(userId, finicityUser);
 
-                console.log("Transactions")
                 await finService.importTransactions(userId, finicityUser);
 
-                // for (let i = 0; i < newAccountIds.length; i++) {
-                //     const newAccountId = newAccountIds[i];
-                //     await finService.transformer.computeHoldingsHistory(newAccountId, true);
-                // }
-                //
-                // if (!finService.portSummarySrv) return
-                // await finService.portSummarySrv.computeAccountGroupSummary(userId);
+                for (let i = 0; i < newAccountIds.length; i++) {
+                    const newAccountId = newAccountIds[i];
+                    await finService.transformer.computeHoldingsHistory(newAccountId, true);
+                }
+
+                if (!finService.portSummarySrv) return
+                await finService.portSummarySrv.computeAccountGroupSummary(userId);
             });
         } catch (e) {
             throw e
