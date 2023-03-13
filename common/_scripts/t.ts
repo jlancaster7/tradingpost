@@ -11,6 +11,8 @@ import Holidays from "../market-data/holidays";
 import MarketDataRepository from "../market-data/repository";
 import {DateTime} from "luxon";
 import {accounts} from "../brokerage/robinhood/api";
+import IEX from "../iex/index";
+import MarketData from "../market-data/index";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -48,10 +50,16 @@ const run = async () => {
 
     const marketDataRepo = new MarketDataRepository(pgClient, pgp);
     const marketHolidays = new Holidays(marketDataRepo);
-    const finicityTransformer = new FinicityTransformer(repository, marketHolidays);
-    const finicitySrv = new FinicityService(finicityApi, repository, finicityTransformer, portfolioSummaryService);
+    const iexConfiguration = await DefaultConfig.fromSSM("iex");
+    const iex = new IEX(iexConfiguration.key);
 
-    await finicitySrv.update("e2268937-157b-4a33-a970-a9ba88d10a46", "6020539284", DateTime.now(), {}, false);
+    const marketData = new MarketData(marketDataRepo, iex, marketHolidays);
+    await marketData.upsertSecurities();
+
+    // const finicityTransformer = new FinicityTransformer(repository, marketHolidays);
+    // const finicitySrv = new FinicityService(finicityApi, repository, finicityTransformer, portfolioSummaryService);
+
+    // await finicitySrv.update("e2268937-157b-4a33-a970-a9ba88d10a46", "6020539284", DateTime.now(), {}, false);
 
     // console.log("Start")
     // await portfolioSummaryService.computeAccountGroupSummary('e2268937-157b-4a33-a970-a9ba88d10a46')

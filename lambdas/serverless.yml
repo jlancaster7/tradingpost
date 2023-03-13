@@ -49,7 +49,7 @@ provider:
       - subnet-0365b7b01827b2dfe
 
 functions:
-  # Notifications
+  # ================================ Notifications ================================
 
   ###### Send Post Notifications for Watchlists Users Follow & Create
   notification-post-watchlists:
@@ -96,6 +96,8 @@ functions:
           rate: cron(0 13 ? * MON-FRI *) # 8:00 AM EST
           enabled: true
 
+  # ================================ Brokerage ================================
+
   ###### Generate Robinhood Data Collection Tasks
   generate-brokerage-tasks:
     handler: brokerage/generate-brokerage-tasks.run
@@ -125,27 +127,7 @@ functions:
           arn: ${self:custom.brokerage-queue.${opt:stage}}
           batchSize: 1
 
-  ###### Accumulate Securities Metadata
-  add-meta-data:
-    handler: market-data/add-meta-data.run
-    description: Ingests securities, exchanges, in the morning, in the evening it ingests stats, quotes, and closing pricing
-    logRetentionInDays: 14
-    timeout: 900
-    memorySize: 1024
-    reservedConcurrency: 1
-    events:
-      - schedule:
-          rate: cron(20 20 ? * MON-FRI *) # 4:20 PM EDT
-          enabled: true
-      - schedule:
-          rate: cron(20 19 ? * MON-FRI *) # 4:20 PM EST
-          enabled: true
-      - schedule:
-          rate: cron(0 12 ? * MON-FRI *) # 8:00 AM EDT
-          enabled: true
-      - schedule:
-          rate: cron(0 11 ? * MON-FRI *) # 8:00 AM EST
-          enabled: true
+  # ================================ Market Data ================================
 
   ###### Add Exchange Holidays
   add-holidays:
@@ -158,6 +140,22 @@ functions:
     events:
       - schedule:
           rate: cron(0 0 1 1 ? *)
+          enabled: true
+
+  ###### Collect End Of Day Pricing for Securities(Reconcile 4pm close price)
+  eod-pricing:
+    handler: market-data/eod-pricing.run
+    description: Ingests pricing for securities after market close & allow for 15min delay to kick in
+    logRetentionInDays: 14
+    timeout: 600
+    reservedConcurrency: 1
+    memorySize: 1024
+    events:
+      - schedule:
+          rate: cron(20 19 ? * MON-FRI *) # 4:20 EST
+          enabled: true
+      - schedule:
+          rate: cron(20 20 ? * MON-FRI *) # 4:20 EDT
           enabled: true
 
   ###### Collect Intraday-Pricing for Securities
@@ -173,20 +171,51 @@ functions:
           rate: cron(* 12-20 ? * MON-FRI *)
           enabled: true
 
-  ###### Collect End Of Day Pricing for Securities(Reconcile 4pm close price)
-  eod-pricing:
-    handler: market-data/eod-pricing.run
-    description: Ingests pricing for securities after market close & allow for 15min delay to kick in
+  ###### Roll-Forward Yesterday's Prices to Start The Day(if a trading day)
+  morning-pricing-forward:
+    handler: market-data/morning-pricing-rollover.run
+    description: Roll yesterdays is_eod pricing forward, then let our IEX pricing dictate the rest
     logRetentionInDays: 14
-    timeout: 600
+    timeout: 300
     reservedConcurrency: 1
-    memorySize: 1024
+    memorySize: 2048
     events:
       - schedule:
-          rate: cron(20 21 ? * MON-FRI *)
+          rate: cron(28 13 * * MON-FRI *)
           enabled: true
       - schedule:
-          rate: cron(20 22 ? * MON-FRI *)
+          rate: cron(28 12 * * MON-FRI *)
+          enabled: true
+
+  ###### Update Securities Information(statistics)
+  ### Update for stats is every-day at 5am -- which would update the prior day market
+  securities-information:
+    handler: market-data/securities-information.run
+    description: Runs every trading day at 5AM ET and updates securities information
+    logRetentionInDays: 14
+    timeout: 300
+    reservedConcurrency: 1
+    memorySize: 2048
+    events:
+      - schedule:
+          rate: cron(0 9 * * TUES-SAT *)
+          enabled: true
+      - schedule:
+          rate: cron(0 8 * * TUES-SAT *)
+          enabled: true
+
+  ###### Pulls in new securities & data from IEX and pushes new data over to our security table
+  ### Pulls every-day at 5am UTC
+  securities-update:
+    handler: market-data/securities-update.run
+    description: Pulls in new securities and data from IEX and pushes new data over ot our security table
+    logRetentionInDays: 14
+    timeout: 300
+    reservedConcurrency: 1
+    memorySize: 2048
+    events:
+      - schedule:
+          rate: cron(0 5 * * ? *)
           enabled: true
 
   ###### Remove old securities
@@ -199,10 +228,10 @@ functions:
     memorySize: 1024
     events:
       - schedule:
-          rate: cron(0 7 ? * MON-FRI *)
+          rate: cron(0 7 ? * MON-SAT *)
           enabled: true
 
-  # ============== Social Media Lambdas ==============
+  # ================================ Social Media ================================
 
   ###### Collect Spotify Content
   spotify:

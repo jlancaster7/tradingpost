@@ -574,9 +574,9 @@ export type TradingPostTransactionsTable = TradingPostTransactions & TableInfo;
 export enum SecurityType {
     equity = "equity",
     option = "option",
-    index = "index",
+    etf = "etf",
     mutualFund = "mutualFund",
-    cashEquivalent = "cashEquivalent", // A money market fund would be an example of a cash equivalent
+    cashEquivalent = "cashEquivalent",
     fixedIncome = "fixedIncome",
     currency = "currency",
     unknown = "unknown"

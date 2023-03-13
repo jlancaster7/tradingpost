@@ -2,10 +2,9 @@ import {View, Text, Pressable} from "react-native";
 import {Api} from "@tradingpost/common/api";
 import {ListTradesResponse} from "@tradingpost/common/api/entities/interfaces";
 import {ElevatedSection} from "../components/Section";
-import {Icon, Layout} from "@ui-kitten/components"
+import {Layout} from "@ui-kitten/components"
 import {List} from "../components/List";
 import {flex, fonts, sizes} from "../style";
-import {AppColors} from "../constants/Colors";
 import React from "react";
 
 const tradeType = (dt: string, handle: string, symbol: string, price: string, type: string = "Bought", color: string = "#22DDAA") => {
@@ -113,7 +112,7 @@ export const NotificationTradeScreen = (props: any) => {
                         }
 
                         const dt = new Date(item.item.dateTime);
-                        const dtFmt = `${dt.getMonth() + 1}/${dt.getDay()}/${dt.getFullYear() % 100}`
+                        const dtFmt = `${dt.getMonth() + 1}/${dt.getDate()}/${dt.getFullYear() % 100}`
 
                         switch (item.item.type) {
                             case "sell":

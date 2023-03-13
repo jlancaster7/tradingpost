@@ -51,7 +51,7 @@ export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Re
         if (serviceUserIds.size > 1) {
             msg = `${serviceUserIds.size} analysts you follow have made a total of ${tradeCount} trades.`
         } else {
-            msg = `1 analyst you follow has made a total of ${tradeCount} trade${tradeCount > 1 ? 's' : null}.`;
+            msg = `1 analyst you follow has made a total of ${tradeCount} trade${tradeCount > 1 ? 's' : ''}.`;
         }
 
         await repo.addNewTradeNotification(subscriber, msg);

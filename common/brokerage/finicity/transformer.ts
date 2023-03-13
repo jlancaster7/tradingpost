@@ -123,7 +123,7 @@ const transformSecurityType = (secType: string): SecurityType => {
         case "Core":
             return SecurityType.cashEquivalent;
         case "Exchange Traded":
-            return SecurityType.index;
+            return SecurityType.etf;
         case "Equity":
             return SecurityType.equity;
         case "Currency":
@@ -145,7 +145,7 @@ const transformIexSecurityType = (secType: string): SecurityType => {
         case "cef": // Closed End Fund
             return SecurityType.mutualFund
         case "et": // ETF
-            return SecurityType.index
+            return SecurityType.etf
         case "oef": // Open Ended Fund
             return SecurityType.mutualFund
         case "ps": // Preferred Stock
