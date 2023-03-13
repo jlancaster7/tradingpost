@@ -4,14 +4,19 @@ import {Client as ElasticClient} from '@elastic/elasticsearch';
 import {DateTime} from "luxon";
 import {createQueryByType} from "../elastic/queryCreation";
 import * as T from '@elastic/elasticsearch/lib/api/types'
+import Holidays from "../market-data/holidays";
 
 const indexName = "tradingpost-search";
 
-export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Repository) => {
+export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Repository, marketHolidays: Holidays) => {
     const u = `https://m.tradingpostapp.com/dash/notification/trade`;
-    const dt = DateTime.now().minus({day: 1}).setZone("America/New_York");
 
-    const serviceUsersWithTrades = await repo.getUsersWithTrades(dt, dt);
+    let lastTradeDay = DateTime.now().setZone("America/New_York").minus({day: 1})
+    while (!await marketHolidays.isTradingDay(lastTradeDay)) {
+        lastTradeDay = lastTradeDay.minus({day: 1})
+    }
+
+    const serviceUsersWithTrades = await repo.getUsersWithTrades(lastTradeDay, lastTradeDay);
     if (serviceUsersWithTrades.length <= 0) return;
 
     const serviceUsersMap = new Map();
@@ -46,7 +51,7 @@ export const subscriptionsNewHoldings = async (notifSrv: Notifications, repo: Re
         if (serviceUserIds.size > 1) {
             msg = `${serviceUserIds.size} analysts you follow have made a total of ${tradeCount} trades.`
         } else {
-            msg = `1 analyst you follow has made a total of ${tradeCount} trade${tradeCount > 1 ? 's' : null}.`;
+            msg = `1 analyst you follow has made a total of ${tradeCount} trade${tradeCount > 1 ? 's' : ''}.`;
         }
 
         await repo.addNewTradeNotification(subscriber, msg);
@@ -73,7 +78,6 @@ export const holdingsPostNotifications = async (notifSrv: Notifications, repo: R
         const postTypeAggregations = await queryDatastore(elasticClient, usersSubscriptionList, usersBlockList, userHoldings, currentTime, twelveHoursAgo);
         const message = buildMessage(postTypeAggregations);
         const u = `https://m.tradingpostapp.com/dash/search?isHoldings=true&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
-
         await notifSrv.sendMessageToUser(userId, {
             title: "New Current Holdings Posts",
             body: message,
@@ -108,7 +112,6 @@ export const watchlistsPostNotifications = async (notifSrv: Notifications, repo:
             if (postTypeAggregations.length <= 0) continue;
             const message = buildWatchlistMessage(postTypeAggregations, watchlistName);
             const u = `https://m.tradingpostapp.com/dash/search?watchlistId=${watchlistId}&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
-
             await notifSrv.sendMessageToUser(userId, {
                 title: "New Watchlist Posts",
                 body: message,

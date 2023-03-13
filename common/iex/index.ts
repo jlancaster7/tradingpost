@@ -47,24 +47,25 @@ export interface GetStatus {
 
 export interface GetCompany {
     symbol: string
-    companyName: string
-    exchange: string
-    industry: string
-    website: string
-    description: string
-    CEO: string
-    securityName: string
-    issueType: string
-    sector: string
-    primarySicCode: number
-    employees: number
-    tags: string[]
-    address: string
-    address2: string
-    state: string
-    zip: string
-    country: string
-    phone: string
+    companyName: string | null
+    exchange: string | null
+    industry: string | null
+    website: string | null
+    description: string | null
+    CEO: string | null
+    securityName: string | null
+    issueType: string | null
+    sector: string | null
+    primarySicCode: number | null
+    employees: number | null
+    tags: string[] | null
+    address: string | null
+    address2: string | null
+    state: string | null
+    city: string | null
+    zip: string | null
+    country: string | null
+    phone: string | null
 }
 
 export interface GetDelayedQuote {
@@ -785,7 +786,7 @@ export default class IEX {
                 types: typesJoined,
             });
             if (response.status == 429) throw new RetryError()
-            if(response.status == 451) throw new PermissionRequiredError();
+            if (response.status == 451) throw new PermissionRequiredError();
 
             const statusCodeShort = response.status / 100;
             if (statusCodeShort !== 2) throw new IEXError("getting data from iex", response.statusText, response.status)

@@ -32,20 +32,16 @@ export interface IBrokerageRepository {
     deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
 
     deleteTradingPostAccountCurrentHoldings(accountIds: number[]): Promise<void>
-
-    getOldestTransaction(accountId: number): Promise<TradingPostTransactions | null>
 }
 
 export interface IFinicityRepository {
+    getNewestFinicityTransaction(accountId: string): Promise<{ transactionId: string, accountId: string, transactionDate: DateTime } | null>
+
     getTradingPostBrokerageAccountsByBrokerageNumbersAndAuthService(tpUserId: string, brokerageNumbers: string[], authenticationService: string): Promise<TradingPostBrokerageAccountsTable[]>
 
     getTradingPostBrokerageAccountByUser(tpUserId: string, authenticationService: string, accountNumber: string): Promise<TradingPostBrokerageAccountsTable | null>
 
     deleteTradingPostBrokerageAccounts(accountIds: number[]): Promise<void>
-
-    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
-
-    updateErrorStatusOfAccount(accountId: number, error: boolean, errorCode: number): Promise<void>
 
     getTradingPostUserByFinicityCustomerId(finicityCustomerId: string): Promise<TradingPostUser | null>
 
@@ -377,14 +373,12 @@ export type FinicityTransaction = {
 }
 
 export type TradingPostBrokerageAccountWithFinicity = {
-    tpBrokerageAccId: number
-    internalFinicityAccountId: number
+    tpBrokerageAccountId: number
     internalFinicityUserId: number
+    internalFinicityAccountId: number
     internalFinicityInstitutionId: number
     externalFinicityAccountId: string
-    externalFinicityAccountNumber: string
-    name: string
-    type: string
+    tpInstitutionId: number
 }
 
 export interface GetSecurityBySymbol {
@@ -580,9 +574,9 @@ export type TradingPostTransactionsTable = TradingPostTransactions & TableInfo;
 export enum SecurityType {
     equity = "equity",
     option = "option",
-    index = "index",
+    etf = "etf",
     mutualFund = "mutualFund",
-    cashEquivalent = "cashEquivalent", // A money market fund would be an example of a cash equivalent
+    cashEquivalent = "cashEquivalent",
     fixedIncome = "fixedIncome",
     currency = "currency",
     unknown = "unknown"
@@ -597,7 +591,8 @@ export enum InvestmentTransactionType {
     fee = "fee",
     cash = "cash",
     transfer = "transfer", // Transfers of security between brokerages
-    dividendOrInterest = "dividendOrInterest"
+    dividendOrInterest = "dividendOrInterest",
+    split = "split"
 }
 
 export type TradingPostInstitution = {
@@ -628,9 +623,12 @@ export type TradingPostInstitutionTable = {
 } & TradingPostInstitution
 
 export type TradingPostInstitutionWithFinicityInstitutionId = {
+    id: number
+    name: string
+    externalId: number
     internalFinicityId: number
     externalFinicityId: string
-} & TradingPostInstitutionTable
+}
 
 export enum TradingPostBrokerageAccountStatus {
     ACTIVE = "ACTIVE",
@@ -719,6 +717,14 @@ export type SecurityIssue = {
     symbol: string
     name: string
     issueType: string
+}
+
+export type TradingPostSecurityTranslation = {
+    fromSymbol: string
+    toSymbol: string
+    toSecurityId: number
+    currency: string
+    institutionId: number | null
 }
 
 export type TradingPostCashSecurity = {

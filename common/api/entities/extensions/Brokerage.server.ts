@@ -177,12 +177,18 @@ export default ensureServerExtensions<Brokerage>({
             }
         }
 
+        if (robinhoodUser && robinhoodUser.status === RobinhoodLoginStatus.SUCCESS && robinhoodUser.accessToken !== null && robinhoodUser.accessToken !== '') return {
+            status: RobinhoodLoginStatus.SUCCESS,
+            body: "Robinhood Account Already Added",
+            challengeType: null,
+            challengeResponseId: ''
+        }
+
         let [requestHeaders, requestPayload] = generatePayloadRequest(robinhoodCredentials.clientId,
             robinhoodCredentials.expiresIn, robinhoodCredentials.scope, username, password, robinhoodUser.deviceToken, mfaCode, robinhoodUser.challengeResponseId);
 
         if (mfaCode && robinhoodUser.mfaType === 'sms') {
             if (!robinhoodUser.challengeResponseId) {
-                console.error("we did not set the challenge response id on request, validate!");
                 return {
                     status: RobinhoodLoginStatus.ERROR,
                     body: "internal error, please contact TradingPost @ contact@tradingpostapp.com",

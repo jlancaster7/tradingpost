@@ -52,7 +52,7 @@ const transformSecurityType = (type: string): SecurityType => {
         case "CFD": // Contracts for Differences
             return SecurityType.unknown;
         case "CMDTY": // Gold or Silver (Metals)
-            return SecurityType.index;
+            return SecurityType.etf;
         case "CRYPTO": // Cryptocurrency
             return SecurityType.currency;
         case "DIVACC": // Dividend Accrual Balance
@@ -129,7 +129,7 @@ const transformTransactionType = (transactionType: string): InvestmentTransactio
         case "DVPOUT": // Outgoing DVP
             throw new Error("no transaction type for outgoing dvp");
         case "EXE": // Exercise
-                    // TODO: Check if its a call or a put before
+            // TODO: Check if its a call or a put before
             return InvestmentTransactionType.buy
         case "EXP": // Expire
             return InvestmentTransactionType.cancel

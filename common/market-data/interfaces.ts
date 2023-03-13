@@ -122,8 +122,8 @@ export interface getExchange {
 }
 
 export interface addUSHoliday {
-    date: Date
-    settlementDate: Date | null
+    date: DateTime
+    settlementDate: DateTime | null
 }
 
 export interface getUSExchangeHoliday {
@@ -142,6 +142,7 @@ export interface getSecurityWithLatestPrice {
     low: number | null
     open: number | null
     priceSource: PriceSourceType
+    enableUtp: boolean
 }
 
 export enum PriceSourceType {
@@ -206,6 +207,38 @@ export interface getIexSecurityBySymbol {
     lastUpdated: Date
     createdAt: Date
     validated: boolean
+}
+
+export interface iexSecurityWithSecurityCompanyLogoAndName {
+    id: number
+    symbol: string
+    companyName: string
+    exchange: string
+    industry: string
+    website: string
+    description: string
+    ceo: string
+    securityName: string
+    issueType: string
+    sector: string
+    primarySicCode: string
+    employees: string
+    tags: string[]
+    address: string
+    address2: string
+    state: string
+    zip: string
+    country: string
+    phone: string
+    logoUrl: string
+    lastUpdated: DateTime
+    createdAt: DateTime
+    validated: boolean
+    securityCompanyName: string | null
+    securityLogoUrl: string | null
+
+    securityTags: string[]
+    securitySector: string | null
 }
 
 export interface addSecurity {

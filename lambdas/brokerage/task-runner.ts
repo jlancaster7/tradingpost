@@ -20,6 +20,8 @@ import {
 } from "@tradingpost/common/brokerage/interfaces";
 import {DateTime} from "luxon";
 import {SQSClient} from "@aws-sdk/client-sqs";
+import Holidays from "@tradingpost/common/market-data/holidays";
+import MarketDataRepository from "@tradingpost/common/market-data/repository";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -90,8 +92,10 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
         const finicity = new FinicityApi(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey, tokenFile);
         await finicity.init();
 
+        const marketDataRepo = new MarketDataRepository(pgClient, pgp);
+        const marketHolidays = new Holidays(marketDataRepo);
         const robinhoodTransformer = new RobinhoodTransformer(repository);
-        const finicityTransformer = new FinicityTransformer(repository);
+        const finicityTransformer = new FinicityTransformer(repository, marketHolidays);
 
         sqsClient = new SQSClient({region: 'us-east-1'});
 
@@ -142,7 +146,6 @@ const run = async (taskDefinition: BrokerageTask, messageId: string, tokenFile?:
     }
     return true
 }
-
 
 export const handler = async (event: SQSEvent, context: Context) => {
     for (let i = 0; i < event.Records.length; i++) {

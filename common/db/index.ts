@@ -1,12 +1,14 @@
-import { DefaultConfig } from '../configuration'
+import {DefaultConfig} from '../configuration'
 import pg from 'pg'
 import pgPromise from "pg-promise";
 import Finicity from "../finicity";
-import { PortfolioSummaryService } from "../brokerage/portfolio-summary";
+import {PortfolioSummaryService} from "../brokerage/portfolio-summary";
 import Repository from "../brokerage/repository";
-import { Service } from "../brokerage/finicity";
-import { Transformer } from "../brokerage/finicity/transformer";
-import { SQSClient } from "@aws-sdk/client-sqs";
+import {Service} from "../brokerage/finicity";
+import {Transformer} from "../brokerage/finicity/transformer";
+import {SQSClient} from "@aws-sdk/client-sqs";
+import Holidays from "../market-data/holidays";
+import MarketDataRepo from "../market-data/repository";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -30,7 +32,7 @@ export const getHivePool = (async () => {
     let hive: pg.Pool
 
     const config = await DefaultConfig.fromCacheOrSSM("postgres");
-    hive = new pg.Pool({ ...config, max: 10 });
+    hive = new pg.Pool({...config, max: 10});
     return hive;
 })()
 
@@ -45,12 +47,14 @@ export const init = (async () => {
         max: 10
     });
 
+    const marketRepo = new MarketDataRepo(pgClient, pgp);
+    const marketHolidays = new Holidays(marketRepo)
     const repository = new Repository(pgClient, pgp);
 
     const finicityCfg = await DefaultConfig.fromCacheOrSSM("finicity");
     const finicity = new Finicity(finicityCfg.partnerId, finicityCfg.partnerSecret, finicityCfg.appKey);
     await finicity.init();
-    const finicityTransformer = new Transformer(repository);
+    const finicityTransformer = new Transformer(repository, marketHolidays);
     const finicitySrv = new Service(finicity, repository, finicityTransformer);
 
     const portfolioSummarySrv = new PortfolioSummaryService(repository)

@@ -19,6 +19,7 @@
     "apn": "^2.2.0",
     "base64url": "^3.0.1",
     "csv-parser": "^3.0.0",
+    "deep-object-diff": "^1.1.9",
     "dotenv": "^16.0.1",
     "firebase-admin": "^11.0.1",
     "googleapis": "^109.0.1",

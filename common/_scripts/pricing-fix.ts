@@ -1,12 +1,14 @@
 import pg from "pg";
-import {addSecurityPrice, getSecurityBySymbol, getSecurityWithLatestPrice} from "../market-data/interfaces";
+import {addSecurityPrice, getSecurityBySymbol, PriceSourceType} from "../market-data/interfaces";
 import IEX, {GetHistoricalPrice, GetIntraDayPrices} from "../iex/index";
 import {DateTime} from "luxon";
 import Repository from "../market-data/repository";
-import {buildGroups} from "../../lambdas/market-data/utils";
+import MarketDataRepo from "../market-data/repository";
+import {buildGroups} from "../market-data";
 import pgPromise, {IDatabase, IMain} from "pg-promise";
 import {DefaultConfig} from "../configuration/index";
-import {PutObjectCommand, S3Client, S3, GetObjectCommand, ListObjectsCommand} from "@aws-sdk/client-s3";
+import {GetObjectCommand, ListObjectsCommand, PutObjectCommand, S3, S3Client} from "@aws-sdk/client-s3";
+import Holidays from "../market-data/holidays";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -30,11 +32,16 @@ class PricingFix {
     private s3Client: S3Client;
     private s3: S3;
 
+    private pgClient: IDatabase<any>;
+    private pgp: IMain;
+
     constructor(pgClient: IDatabase<any>, pgp: IMain, iexToken: string) {
         this.repository = new Repository(pgClient, pgp);
         this.iex = new IEX(iexToken)
         this.s3Client = new S3Client({});
         this.s3 = new S3({});
+        this.pgClient = pgClient;
+        this.pgp = pgp;
     }
 
     iexIntraday = async () => {
@@ -197,111 +204,219 @@ class PricingFix {
 
     iexHistorical = async () => {
         const securities = await this.repository.getUSExchangeListedSecurities();
+        // const securities: getSecurityBySymbol[] = [{
+        //     id: 17757,
+        //     symbol: 'GTBIF',
+        //     zip: '',
+        //     primarySicCode: '',
+        //     website: '',
+        //     tags: [],
+        //     state: '',
+        //     securityName: '',
+        //     sector: '',
+        //     phone: '',
+        //     logoUrl: '',
+        //     lastUpdated: DateTime.now().toJSDate(),
+        //     priceSource: PriceSourceType.FINICITY,
+        //     issueType: '',
+        //     industry: '',
+        //     exchange: '',
+        //     enableUtp: true,
+        //     employees: '',
+        //     description: '',
+        //     createdAt: DateTime.now().toJSDate(),
+        //     country: '',
+        //     ceo: '',
+        //     companyName: '',
+        //     address2: '',
+        //     address: '',
+        // }];
+
         const securitiesMap: Record<string, getSecurityBySymbol> = {};
-        securities.filter(sec => sec.priceSource === 'IEX').forEach(sec => securitiesMap[sec.symbol] = sec);
+        securities.forEach(sec => securitiesMap[sec.symbol] = sec);
         const groupSecurities = buildGroups(securities, 100);
 
         let finCnt = 0;
+        let runningTasks: Promise<any>[] = [];
+        let range = '20220101';
         for (let i = 0; i < groupSecurities.length; i++) {
             const group = groupSecurities[i];
-            const symbols = group.map(sec => sec.symbol);
-            const response = await this.iex.bulk(symbols, ["chart"], {
-                range: '20230101'
-            });
+            runningTasks.push((async () => {
+                const symbols = group.map(sec => sec.symbol);
+                const response = await this.iex.bulk(symbols, ["chart"], {
+                    range: range
+                });
 
-            let securityPrices: addSecurityPrice[] = []
-            for (let idx = 0; idx < group.length; idx++) {
-                finCnt = finCnt + 1
-                const {symbol, id} = group[idx];
-                if (response[symbol] === undefined || response[symbol] === null) {
-                    console.error(`could not find symbol ${symbol}`)
-                    continue
-                }
-
-                const historicPrices = (response[symbol]['chart']) as GetHistoricalPrice[];
-                if (historicPrices.length <= 0) {
-                    console.error(`no historical prices available for ${symbol}`);
-                    continue
-                }
-
-                let latestPrice = historicPrices[0]?.close || null
-                let earliestDate: DateTime | null = null,
-                    latestDate: DateTime | null = null;
-
-                for (let j = 0; j < historicPrices.length; j++) {
-                    const hp = historicPrices[j];
-                    const dt = DateTime.fromFormat(hp.date, 'yyyy-LL-dd', {
-                        zone: "America/New_York"
-                    }).set({minute: 0, hour: 16, second: 0, millisecond: 0});
-
-                    if (!dt.isValid) continue;
-                    if (earliestDate === null) earliestDate = dt;
-                    if (latestDate === null) latestDate = dt;
-                    if (dt.toUnixInteger() < earliestDate.toUnixInteger()) earliestDate = dt
-                    if (dt.toUnixInteger() > latestDate.toUnixInteger()) latestDate = dt
-                }
-
-                if (earliestDate !== null && earliestDate.isValid && latestDate !== null && latestDate.isValid) {
-                    const datefmt = `${earliestDate.year}-${earliestDate.month}-${earliestDate.day}-to-${latestDate.year}-${latestDate.month}-${latestDate.day}`
-                    const fmt = `${symbol}-${datefmt}.json`
-                    console.log("UPLOADING FILE:::: ", fmt)
-                    console.log(`\t PROCESSED:::: ${finCnt}/${securities.length}`);
-                    await this.s3Client.send(new PutObjectCommand({
-                        Bucket: "iex-pricing",
-                        Key: fmt,
-                        Body: JSON.stringify(historicPrices)
-                    }))
-                }
-
-                historicPrices.forEach(hp => {
-                    const dt = DateTime.fromFormat(hp.date, 'yyyy-LL-dd', {
-                        zone: "America/New_York"
-                    }).set({minute: 0, hour: 16, second: 0, millisecond: 0});
-
-                    if (!dt.isValid) return;
-
-                    let close = hp.close,
-                        open = hp.open,
-                        high = hp.high,
-                        low = hp.low;
-
-                    if (close === null && latestPrice === null) return
-                    if (close !== null && latestPrice === null) latestPrice = close;
-                    if (close === null && latestPrice !== null) {
-                        close = latestPrice;
-                        open = latestPrice;
-                        high = latestPrice;
-                        low = latestPrice;
+                let securityPrices: addSecurityPrice[] = []
+                for (let idx = 0; idx < group.length; idx++) {
+                    finCnt = finCnt + 1
+                    const {symbol, id} = group[idx];
+                    if (response[symbol] === undefined || response[symbol] === null) {
+                        console.error(`could not find symbol ${symbol}`)
+                        continue
                     }
 
-                    if (open === null) open = close
-                    if (high === null) high = close
-                    if (low === null) low = close
+                    const historicPrices = (response[symbol]['chart']) as GetHistoricalPrice[];
+                    if (historicPrices.length <= 0) {
+                        console.error(`no historical prices available for ${symbol}`);
+                        continue
+                    }
 
-                    securityPrices.push({
-                        securityId: id,
-                        price: close,
-                        low: low,
-                        high: high,
-                        open: open,
-                        time: dt,
-                        isEod: true,
-                        isIntraday: false
-                    });
-                })
+                    let latestPrice = historicPrices[0]?.close || null
+                    let earliestDate: DateTime | null = null,
+                        latestDate: DateTime | null = null;
+
+                    for (let j = 0; j < historicPrices.length; j++) {
+                        const hp = historicPrices[j];
+                        const dt = DateTime.fromFormat(hp.date, 'yyyy-LL-dd', {
+                            zone: "America/New_York"
+                        }).set({minute: 0, hour: 16, second: 0, millisecond: 0});
+
+                        if (!dt.isValid) continue;
+                        if (earliestDate === null) earliestDate = dt;
+                        if (latestDate === null) latestDate = dt;
+                        if (earliestDate.isValid && dt.toUnixInteger() < earliestDate.toUnixInteger()) earliestDate = dt
+                        if (latestDate.isValid && dt.toUnixInteger() > latestDate.toUnixInteger()) latestDate = dt
+                    }
+
+                    console.log(`\t PROCESSED:::: ${finCnt}/${securities.length}`);
+                    // if (earliestDate !== null && earliestDate.isValid && latestDate !== null && latestDate.isValid) {
+                    //     const datefmt = `${earliestDate.year}-${earliestDate.month}-${earliestDate.day}-to-${latestDate.year}-${latestDate.month}-${latestDate.day}`
+                    //     const fmt = `${symbol}-${datefmt}.json`
+                    //     console.log("UPLOADING FILE:::: ", fmt)
+                    //     console.log(`\t PROCESSED:::: ${finCnt}/${securities.length}`);
+                    //     // await this.s3Client.send(new PutObjectCommand({
+                    //     //     Bucket: "iex-pricing",
+                    //     //     Key: fmt,
+                    //     //     Body: JSON.stringify(historicPrices)
+                    //     // }))
+                    // }
+
+                    historicPrices.forEach(hp => {
+                        const dt = DateTime.fromFormat(hp.date, 'yyyy-LL-dd', {
+                            zone: "America/New_York"
+                        }).set({minute: 0, hour: 16, second: 0, millisecond: 0});
+
+                        if (!dt.isValid) return;
+
+                        let close = hp.close,
+                            open = hp.open,
+                            high = hp.high,
+                            low = hp.low;
+
+                        if (close === null && latestPrice === null) return
+                        if (close !== null && latestPrice === null) latestPrice = close;
+                        if (close === null && latestPrice !== null) {
+                            close = latestPrice;
+                            open = latestPrice;
+                            high = latestPrice;
+                            low = latestPrice;
+                        }
+
+                        if (open === null) open = close
+                        if (high === null) high = close
+                        if (low === null) low = close
+
+                        securityPrices.push({
+                            securityId: id,
+                            price: close,
+                            low: low,
+                            high: high,
+                            open: open,
+                            time: dt,
+                            isEod: true,
+                            isIntraday: false
+                        });
+                    })
+                }
+
+                await this.repository.upsertEodPrices(securityPrices)
+            })());
+
+            if (runningTasks.length === 8) {
+                await Promise.all(runningTasks);
+                runningTasks = [];
             }
-
-            await this.repository.upsertEodPrices(securityPrices)
         }
+
+        if (runningTasks.length > 0) await Promise.all(runningTasks);
     }
 
-    // localHistorical runs a job that pulls in the market days for the time range and
-    // runs through each security making sure that security trading day is up to date, as
-    // iex does not return all trading days(even null)
-    // We run the job once we are finished with importing all historical pricing and intraday pricing
-    // Caveat here is that we need to know when a security IPO'd vs was removed from listing
-    localHistorical = async () => {
+    // IEX doesnt always have a price for all days, find securities which dont have prices for trading day
+    historicalFix = async () => {
+        const symbol = 'SPY';
+        const response = await this.pgClient.query<{ id: number, security_id: number, price: number, time: Date, open: number | null, high: number | null, low: number | null, is_eod: boolean, is_intraday: boolean, is_fake: boolean }[]>(`
+            SELECT id, security_id, price, time, open, high, low, is_eod, is_intraday, is_fake
+            FROM security_price
+            WHERE security_id = (SELECT id from security WHERE symbol = $1)
+              AND is_eod = true
+            order by time asc;`, [symbol]);
+        if (response.length <= 0) return;
 
+        const securityPrices: { id: number, securityID: number, price: number, time: DateTime, open: number | null, high: number | null, low: number | null, isFake: boolean }[] = [];
+        for (let i = 0; i < response.length; i++) {
+            const sec = response[i];
+            const curDt = DateTime.fromJSDate(sec.time).setZone("America/New_York").set({
+                hour: 16,
+                second: 0,
+                millisecond: 0,
+                minute: 0
+            });
+
+            securityPrices.push({
+                time: curDt,
+                high: sec.high,
+                low: sec.low,
+                open: sec.open,
+                isFake: sec.is_fake,
+                price: sec.price,
+                securityID: sec.security_id,
+                id: sec.id
+            });
+        }
+
+        const marketDataRepo = new MarketDataRepo(this.pgClient, this.pgp);
+        const holidays = new Holidays(marketDataRepo);
+
+        let start = DateTime.now().setZone("America/New_York").set({
+            hour: 16,
+            minute: 0,
+            second: 0,
+            millisecond: 0,
+        });
+
+        let end = start.minus({year: 10});
+        const tradingDays = []; // sort in ASC order
+        const tdMap: Map<number, {}> = new Map();
+        while (end.toUnixInteger() <= start.toUnixInteger()) {
+            const tmp = end;
+            end = end.plus({day: 1});
+            const isTradingDay = await holidays.isTradingDay(tmp);
+            if (!isTradingDay) continue;
+            tradingDays.push(tmp)
+            tdMap.set(tmp.toUnixInteger(), {});
+        }
+
+        const earliestDate = tradingDays[0];
+        const filteredPrices = securityPrices.filter(s => {
+            if (s.time.toUnixInteger() < earliestDate.toUnixInteger()) return false
+            if (tdMap.get(s.time.toUnixInteger()) === undefined) {
+                console.log("REMOVING: ", s.time.toString())
+                return false;
+            }
+            return true;
+        });
+
+        for (let i = 0, j = 0; i < tradingDays.length || j < filteredPrices.length; i++) {
+            const tradingDay = tradingDays[i];
+            const filteredPrice = filteredPrices[j];
+            if (tradingDay.toUnixInteger() === filteredPrice.time.toUnixInteger()) {
+                j = j + 1
+                continue;
+            }
+
+            console.log("MISSING DATE: ", tradingDay.toString())
+        }
     }
 }
 

@@ -12,24 +12,32 @@ import {
     TradingPostBrokerageAccounts,
     TradingPostBrokerageAccountStatus,
     TradingPostBrokerageAccountWithFinicity,
-    TradingPostCashSecurity,
     TradingPostCurrentHoldings,
     TradingPostHistoricalHoldings,
     TradingPostInstitution,
     TradingPostInstitutionWithFinicityInstitutionId,
+    TradingPostSecurityTranslation,
     TradingPostTransactions,
 } from "../interfaces";
 import {CustomerAccountsDetail, GetInstitution} from '../../finicity/interfaces'
 import {DateTime} from "luxon";
 import {addSecurity, PriceSourceType} from "../../market-data/interfaces";
-import BaseTransformer, {BaseRepository, transformTransactionTypeAmount} from "../base-transformer";
+import BaseTransformer, {BaseRepository} from "../base-transformer";
+import {BrokerageAccountDataError, BrokerageAccountError} from "../errors";
+import Holidays from "../../market-data/holidays";
+
+const isNullOrUndefined = (t: any): boolean => {
+    if (t === null) return true;
+    if (t === undefined) return true;
+    return false;
+}
 
 export interface TransformerRepository extends BaseRepository {
     getTradingPostAccountsWithFinicityNumber(userId: string): Promise<TradingPostBrokerageAccountWithFinicity[]>
 
     getSecuritiesWithIssue(): Promise<SecurityIssue[]>
 
-    getTradingpostCashSecurity(): Promise<TradingPostCashSecurity[]>
+    getTradingPostTranslationTable(tpInstitutionId: number): Promise<TradingPostSecurityTranslation[]>
 
     getTradingPostInstitutionByFinicityId(finicityInstitutionId: number): Promise<TradingPostInstitutionWithFinicityInstitutionId | null>
 
@@ -44,6 +52,10 @@ export interface TransformerRepository extends BaseRepository {
     upsertInstitutions(institutions: TradingPostInstitution[]): Promise<void>
 
     upsertInstitution(institution: TradingPostInstitution): Promise<number>
+
+    updateErrorStatusOfAccount(tpAccountId: number, error: boolean, errorCode: number): Promise<void>
+
+    addTradingPostAccountGroup(userId: string, name: string, accountIds: number[], defaultBenchmarkId: number): Promise<number>
 }
 
 // Finicity Types Found Here: https://api-reference.finicity.com/#/rest/models/enumerations/investment-transaction-types
@@ -68,7 +80,7 @@ const transformTransactionType = (txType: string): InvestmentTransactionType => 
         case "soldToOpen":
             return InvestmentTransactionType.short
         case "split":
-            throw new Error("unknown investment transaction type 'split'")
+            return InvestmentTransactionType.split
         case "transfer":
             return InvestmentTransactionType.transfer
         case "returnOfCapital":
@@ -111,23 +123,60 @@ const transformSecurityType = (secType: string): SecurityType => {
         case "Core":
             return SecurityType.cashEquivalent;
         case "Exchange Traded":
-            return SecurityType.index;
+            return SecurityType.etf;
         case "Equity":
             return SecurityType.equity;
-        case "currency":
+        case "Currency":
             return SecurityType.currency
+        case "EQUITY":
+            return SecurityType.equity;
         default:
             console.error(`unknown security type ${secType}`)
             return SecurityType.unknown
     }
 }
 
+const transformIexSecurityType = (secType: string): SecurityType => {
+    switch (secType) {
+        case "ad": // ADR
+            return SecurityType.equity
+        case "cs": // Common Stock
+            return SecurityType.equity;
+        case "cef": // Closed End Fund
+            return SecurityType.mutualFund
+        case "et": // ETF
+            return SecurityType.etf
+        case "oef": // Open Ended Fund
+            return SecurityType.mutualFund
+        case "ps": // Preferred Stock
+            return SecurityType.equity
+        case "rt": // Right
+            return SecurityType.unknown
+        case "struct": // Structured Product
+            return SecurityType.unknown
+        case "ut": // Unit
+            return SecurityType.unknown
+        case "wi": // When Issued
+            return SecurityType.unknown
+        case "wt": // Warrant
+            return SecurityType.unknown
+        default:
+            return SecurityType.unknown
+    }
+}
+
 export class Transformer extends BaseTransformer {
     private repository: TransformerRepository;
+    private marketHolidays: Holidays;
 
-    constructor(repository: TransformerRepository) {
+    constructor(repository: TransformerRepository, marketHolidays: Holidays) {
         super(repository);
         this.repository = repository
+        this.marketHolidays = marketHolidays;
+    }
+
+    getMarketHolidays = (): Holidays => {
+        return this.marketHolidays
     }
 
     accounts = async (userId: string, finAccounts: FinicityAccount[]): Promise<number[]> => {
@@ -135,206 +184,229 @@ export class Transformer extends BaseTransformer {
         for (let i = 0; i < finAccounts.length; i++) {
             const account = finAccounts[i];
             const institution = await this.repository.getTradingPostInstitutionByFinicityId(parseInt(account.institutionId))
-            if (institution === undefined || institution === null) throw new Error(`no institution found for external finicity institution id: ${account.institutionId}`);
+            if (!institution) throw new BrokerageAccountDataError(userId, account.customerId, undefined, account.id.toString(), `no institution found for external finicity institution id: ${account.institutionId}`);
 
+            let hasError = account.aggregationStatusCode === 103 || account.aggregationStatusCode === 185;
             tpAccounts.push({
                 userId: userId,
                 institutionId: institution.id,
                 brokerName: institution.name,
-                status: account.status,
+                status: '',
                 accountNumber: account.accountId,
                 mask: account.accountNumberDisplay,
                 name: account.name,
-                officialName: account.number,
+                officialName: account.name ? account.name : account.number,
                 type: account.type,
                 subtype: null,
-                error: account.aggregationStatusCode === 103 || account.aggregationStatusCode === 185,
+                error: hasError,
                 errorCode: account.aggregationStatusCode,
                 hiddenForDeletion: false,
-                accountStatus: TradingPostBrokerageAccountStatus.PROCESSING,
+                accountStatus: hasError ? TradingPostBrokerageAccountStatus.ERROR : TradingPostBrokerageAccountStatus.PROCESSING,
                 authenticationService: DirectBrokeragesType.Finicity
             });
         }
 
-        return await this.upsertAccounts(tpAccounts);
+        const newAccountIds = await this.upsertAccounts(tpAccounts);
+        await this.repository.addTradingPostAccountGroup(userId, 'default', newAccountIds, 10117);
+
+        return newAccountIds;
     }
 
-    holdings = async (userId: string, accountId: string, finHoldings: FinicityHolding[], currency: string | null, accountDetails: CustomerAccountsDetail | null): Promise<void> => {
-        let internalAccount = await this.getFinicityToTradingPostAccount(userId, accountId);
-        if (internalAccount === undefined || internalAccount === null) throw new Error(`account id(${accountId}) does not exist for holding`)
-
+    _getSecuritiesMap = async () => {
         const securities = await this.repository.getSecuritiesWithIssue();
-        const cashSecurities = await this.repository.getTradingpostCashSecurity();
-
         const securitiesMap: Map<string, SecurityIssue> = new Map();
-        const cashSecuritiesMap: Map<string, number> = new Map();
         securities.forEach(sec => securitiesMap.set(sec.symbol, sec));
-        cashSecurities.forEach(sec => cashSecuritiesMap.set(sec.fromSymbol, sec.toSecurityId));
+        return securitiesMap;
+    }
 
-        let tpHoldings: TradingPostCurrentHoldings[] = [];
-        let hasCashSecurity = false;
-        const holdingDate = DateTime.now().setZone("America/New_York").set({
+    _getSecuritiesTranslationMap = async (tpInstitutionId: number) => {
+        const securitiesTranslation = await this.repository.getTradingPostTranslationTable(tpInstitutionId);
+        const securitiesTranslationMap: Map<string, TradingPostSecurityTranslation> = new Map();
+        securitiesTranslation.forEach(sec => securitiesTranslationMap.set(sec.fromSymbol, sec));
+        return securitiesTranslationMap
+    }
+
+    holdings = async (userId: string, customerId: string, finicityExternalAccountId: string, finHoldings: FinicityHolding[], currency: string | null, accountDetails: CustomerAccountsDetail | null, aggregationSuccessDate: DateTime): Promise<void> => {
+        let internalAccount = await this.getFinicityToTradingPostAccount(userId, finicityExternalAccountId);
+        if (internalAccount === undefined || internalAccount === null) throw new BrokerageAccountError(userId, customerId, undefined, finicityExternalAccountId, "could not find finicity account in tradingpost brokerage accounts");
+
+        const securitiesMap = await this._getSecuritiesMap();
+        const securitiesTranslationMap = await this._getSecuritiesTranslationMap(internalAccount.tpInstitutionId);
+        const cashSecurity = await this.repository.getCashSecurityId();
+
+        let holdingDate = aggregationSuccessDate.setZone("America/New_York").set({
             hour: 16,
             minute: 0,
             second: 0,
             millisecond: 0
-        }).minus({day: 1});
+        });
 
+        while (!await this.marketHolidays.isTradingDay(holdingDate)) holdingDate = holdingDate.minus({day: 1})
+
+        let tpHoldings: TradingPostCurrentHoldings[] = [];
         for (let i = 0; i < finHoldings.length; i++) {
-            try {
-                let holding = finHoldings[i];
+            let holding = finHoldings[i];
+            let symbol = holding.symbol;
+            if (!symbol) throw new BrokerageAccountDataError(userId, customerId, undefined, finicityExternalAccountId, `no symbol set for holding ${holding.id}`)
 
-                const security = await this._resolveSecurity(holding, securitiesMap, cashSecuritiesMap);
-                if (!security) throw new Error("could not resolve security for holding")
+            // @ts-ignore
+            if (securitiesTranslationMap.has(symbol)) symbol = securitiesTranslationMap.get(symbol).toSymbol
 
-                if (security.issueType.toLowerCase() === 'cash') hasCashSecurity = true;
+            const security = securitiesMap.get(symbol);
+            if (!security) throw new BrokerageAccountDataError(userId, customerId, undefined, finicityExternalAccountId, `no security available for symbol ${symbol}`);
 
-                let priceAsOf = holdingDate;
-                if (holding.currentPriceDate) priceAsOf = DateTime.fromSeconds(holding.currentPriceDate)
-                if (priceAsOf === undefined || priceAsOf === null) {
-                    console.error(`no price date set for holding=${holding.id}`)
-                    continue
-                }
-
-                let cur = currency
-                if (holding.securityCurrency) cur = holding.securityCurrency
-
-                let tpHolding: TradingPostCurrentHoldings = {
-                    accountId: internalAccount.tpBrokerageAccId, // TradingPost Brokerage Account ID
-                    securityId: security.id,
-                    securityType: security.issueType === 'Cash' ? SecurityType.cashEquivalent : SecurityType.equity,
-                    price: holding.currentPrice,
-                    priceAsOf: priceAsOf,
-                    priceSource: 'Finicity',
-                    value: parseFloat(holding.marketValue),
-                    costBasis: holding.costBasis,
-                    quantity: holding.units,
-                    currency: cur,
-                    optionId: null,
-                    holdingDate: holdingDate
-                }
-
-                if (holding.securityType.toLowerCase() === 'option') {
-                    // We are making the assumption that the option already exists within our system since we run
-                    // transactions first and an option will be created there...(since they have more meta-data
-                    // then we do)
-                    const optionExpireDateTime = DateTime.fromSeconds(holding.optionExpiredate);
-                    const optionId = await this.resolveHoldingOptionId(internalAccount.tpBrokerageAccId, security.id,
-                        holding.optionStrikePrice, optionExpireDateTime, holding.optionType);
-                    if (!optionId) {
-                        console.error(`could not resolve option id for security=${security.symbol} strikePrice=${holding.optionStrikePrice} expirationDate=${holding.optionExpiredate}`)
-                        continue
-                    }
-
-                    tpHolding.securityType = SecurityType.option;
-                    tpHolding.optionId = optionId;
-                }
-
-                tpHoldings.push(tpHolding)
-            } catch (err) {
-                console.error(err)
+            let securityType = transformSecurityType(holding.securityType);
+            if (securityType === SecurityType.unknown) {
+                securityType = transformIexSecurityType(security.issueType);
             }
+
+            let tpHolding: TradingPostCurrentHoldings = {
+                accountId: internalAccount.tpBrokerageAccountId,
+                securityId: security.id,
+                securityType: securityType,
+                holdingDate: holdingDate,
+                costBasis: holding.costBasis,
+                quantity: holding.units,
+                currency: holding.securityCurrency ? holding.securityCurrency : currency,
+                optionId: null,
+                price: holding.currentPrice,
+                priceAsOf: holdingDate,
+                value: parseFloat(holding.marketValue),
+                priceSource: PriceSourceType.FINICITY,
+            }
+
+            if (holding.securityType.toLowerCase() === 'option') {
+                const optionExpireDateTime = DateTime.fromSeconds(holding.optionExpiredate);
+                const optionId = await this.resolveHoldingOptionId(internalAccount.tpBrokerageAccountId, security.id,
+                    holding.optionStrikePrice, optionExpireDateTime, holding.optionType);
+                if (!optionId) throw new BrokerageAccountDataError(userId, customerId, undefined, finicityExternalAccountId, `could not resolve option id for security=${security.symbol} strikePrice=${holding.optionStrikePrice} expirationDate=${holding.optionExpiredate}`)
+
+                tpHolding.securityType = SecurityType.option;
+                tpHolding.optionId = optionId;
+            }
+
+            tpHoldings.push(tpHolding)
         }
 
-        // Add a cash security is the broker doesn't display it this way
-        if (accountDetails && accountDetails.availableCashBalance && !hasCashSecurity) {
-            let cashSecurityId = cashSecurities.find(a => a.currency === 'USD')?.toSecurityId;
-            if (!cashSecurityId) throw new Error("could not find cash security")
+        if (accountDetails && accountDetails.availableCashBalance && !tpHoldings.find(h => h.securityId === cashSecurity.id)) {
             tpHoldings.push({
-                accountId: internalAccount.tpBrokerageAccId, // TradingPost Brokerage Account ID
-                securityId: cashSecurityId,
+                accountId: internalAccount.tpBrokerageAccountId,
+                securityId: cashSecurity.id,
                 securityType: SecurityType.cashEquivalent,
                 price: 1,
-                priceAsOf: DateTime.fromSeconds(accountDetails.dateAsOf),
-                priceSource: "Finicity",
+                priceAsOf: holdingDate,
+                priceSource: PriceSourceType.FINICITY,
                 value: accountDetails.availableCashBalance,
                 costBasis: null,
                 quantity: accountDetails.availableCashBalance,
                 currency: 'USD',
                 optionId: null,
                 holdingDate: holdingDate
-            })
+            });
         }
 
-        await this.upsertPositions(tpHoldings, [internalAccount.tpBrokerageAccId])
+        await this.upsertPositions(tpHoldings, [internalAccount.tpBrokerageAccountId])
         await this.historicalHoldings(tpHoldings)
     }
 
-    transactions = async (userId: string, finTransactions: FinicityTransaction[]): Promise<void> => {
-        const securities = await this.repository.getSecuritiesWithIssue();
-        const cashSecurities = await this.repository.getTradingpostCashSecurity();
+    _isCashInvestmentType = (it: InvestmentTransactionType): boolean => {
+        switch (it) {
+            case InvestmentTransactionType.cash:
+                return true
+            case InvestmentTransactionType.dividendOrInterest:
+                return true
+            case InvestmentTransactionType.transfer:
+                return true
+            case InvestmentTransactionType.fee:
+                return true
+            default:
+                return false
+        }
+    }
 
-        const cashSecuritiesMap: Map<string, number> = new Map();
-        const securitiesMap: Map<string, SecurityIssue> = new Map();
-        securities.forEach(sec => securitiesMap.set(sec.symbol, sec));
-        cashSecurities.forEach(sec => cashSecuritiesMap.set(sec.fromSymbol, sec.toSecurityId));
+    transactions = async (userId: string, customerId: string, finTransactions: FinicityTransaction[], finicityExternalAccountId: string): Promise<void> => {
+        let internalAccount = await this.getFinicityToTradingPostAccount(userId, finicityExternalAccountId);
+        if (!internalAccount) throw new BrokerageAccountError(userId, customerId, undefined, finicityExternalAccountId, "could not find finicity account in in tradingpost brokerage accounts");
 
-        const tpAccountsWithFinicityId = await this.repository.getTradingPostAccountsWithFinicityNumber(userId);
-        const finicityIdToTpAccountMap: Map<string, number> = new Map();
-        tpAccountsWithFinicityId.forEach(tpa => finicityIdToTpAccountMap.set(tpa.externalFinicityAccountId, tpa.tpBrokerageAccId));
+        const securitiesMap = await this._getSecuritiesMap();
+        const securitiesTranslationMap = await this._getSecuritiesTranslationMap(internalAccount.tpInstitutionId);
 
         let tpTransactions: TradingPostTransactions[] = [];
         for (let i = 0; i < finTransactions.length; i++) {
-            const transaction = finTransactions[i];
+            const finTransaction = finTransactions[i];
 
-            const internalTpAccountId = finicityIdToTpAccountMap.get(transaction.accountId.toString());
-            if (!internalTpAccountId) throw new Error(`could not get tradingpost account for finicity account id: ${transaction.accountId} transaction id: ${transaction.id} user id: ${userId}`);
+            const transactionType = transformTransactionType(finTransaction.investmentTransactionType);
+            const isCashTransaction = this._isCashInvestmentType(transactionType);
+            if (isCashTransaction) finTransaction.ticker = "USD:CUR"
 
-            switch (transaction.investmentTransactionType) {
-                case "fee":
-                case "interest":
-                case "deposit":
-                case "transfer":
-                case "other":
-                case "contribution":
-                case "reinvestOfIncome":
-                case "dividend":
-                    transaction.ticker = "USD:CUR"
-            }
+            if (!finTransaction.ticker) throw new BrokerageAccountDataError(userId, customerId, undefined, finicityExternalAccountId, `no ticker attribute available for transaction id: ${finTransaction.transactionId}`);
+            if (isNullOrUndefined(finTransaction.unitQuantity) && !isCashTransaction) throw new BrokerageAccountDataError(userId, customerId, undefined, finicityExternalAccountId, `no unit quantity attribute for non-cash security symbol: ${finTransaction.ticker} transaction id: ${finTransaction.id}`)
+            else if (isCashTransaction && isNullOrUndefined(finTransaction.unitQuantity)) finTransaction.unitQuantity = finTransaction.amount;
 
-            if (transaction.ticker && cashSecuritiesMap.has(transaction.ticker)) { // @ts-ignore
-                transaction.ticker = cashSecuritiesMap.get(transaction.ticker)
-            }
+            // @ts-ignore
+            if (securitiesTranslationMap.has(finTransaction.ticker)) finTransaction.ticker = securitiesTranslationMap.get(finTransaction.ticker).toSymbol
 
-            if (!transaction.ticker) {
-                throw new Error(`no symbol (${transaction.transactionId}) available for transaction type ${transaction.investmentTransactionType}`)
-            }
+            let security = securitiesMap.get(finTransaction.ticker);
+            if (!security) throw new BrokerageAccountDataError(userId, customerId, undefined, finicityExternalAccountId, `could not find trading post security for transaction ${finTransaction.ticker}`);
 
-            let security = securitiesMap.get(transaction.ticker);
-            if (!security) throw new Error(`could not find symbol(${transaction.ticker} for holding`);
+            let securityType = isCashTransaction ? SecurityType.cashEquivalent : transformIexSecurityType(security.issueType);
 
-            const optionId = await this.isTransactionAnOption(transaction, security.id);
-
-            // TODO: We should check if its just a general "cash" security...
-            if ((transaction.unitQuantity === null || transaction.unitQuantity === undefined) && transaction.ticker !== "USD:CUR") throw new Error(`no unit quantity attribute for non-cash security symbol: ${transaction.ticker} ${transaction.transactionId}`)
-
-            if (!transaction.unitQuantity) transaction.unitQuantity = transaction.amount;
-
-            let price = transaction.unitPrice ? transaction.unitPrice : (transaction.amount / transaction.unitQuantity)
-
-            let securityType: SecurityType = SecurityType.equity;
-            if (transaction.ticker === 'USD:CUR') securityType = SecurityType.cashEquivalent
+            const optionId = await this.isTransactionAnOption(finTransaction, security.id);
             if (optionId) securityType = SecurityType.option
 
-            let transactionType = transformTransactionType(transaction.investmentTransactionType);
+            let quantity = (finTransaction.unitQuantity as number);
+            let amount = (finTransaction.amount as number);
+
+            if (transactionType === InvestmentTransactionType.short) {
+                quantity > 0 ? quantity = quantity * -1 : null
+                amount > 0 ? amount = amount * -1 : null
+            }
+
+            if (transactionType === InvestmentTransactionType.sell) {
+                quantity > 0 ? quantity = quantity * -1 : null
+                amount > 0 ? amount = amount * -1 : null
+            }
+
+            if (transactionType === InvestmentTransactionType.buy) {
+                quantity < 0 ? quantity = quantity * -1 : null
+                amount < 0 ? amount = amount * -1 : null
+            }
+
+            if (transactionType === InvestmentTransactionType.cover) {
+                quantity < 0 ? quantity = quantity * -1 : null
+                amount < 0 ? amount = amount * -1 : null
+            }
+
+            let price = finTransaction.unitPrice
+            if (!price) {
+                if (isCashTransaction) price = 1
+                else if (isNullOrUndefined(finTransaction.unitQuantity) || finTransaction.unitQuantity === 0) {
+                    price = finTransaction.amount
+                    finTransaction.unitQuantity = 1
+                } else price = finTransaction.amount / (finTransaction.unitQuantity as number)
+            }
+
             let newTpTx: TradingPostTransactions = {
                 optionId: optionId,
-                accountId: internalTpAccountId,
+                accountId: internalAccount.tpBrokerageAccountId,
                 securityId: security.id,
                 securityType: securityType,
-                date: DateTime.fromSeconds(transaction.postedDate),
-                quantity: transaction.unitQuantity,
+                date: DateTime.fromSeconds(finTransaction.transactionDate).setZone("America/New_York").set({
+                    hour: 16,
+                    minute: 0,
+                    second: 0,
+                    millisecond: 0
+                }),
+                quantity: quantity,
                 price: price,
-                amount: transaction.amount,
-                fees: transaction.feeAmount,
+                amount: amount,
+                fees: finTransaction.feeAmount,
                 type: transactionType,
-                currency: null,
+                currency: 'USD',
             };
 
-            newTpTx = transformTransactionTypeAmount(transactionType, newTpTx);
             tpTransactions.push(newTpTx)
         }
-
         await this.upsertTransactions(tpTransactions)
     }
 
@@ -364,67 +436,15 @@ export class Transformer extends BaseTransformer {
         await this.upsertHistoricalHoldings(hh);
     }
 
-    getFinicityToTradingPostAccount = async (userId: string, accountId: string) => {
-        const finicityAccounts = await this.repository.getTradingPostAccountsWithFinicityNumber(userId)
-        let internalAccount: TradingPostBrokerageAccountWithFinicity | null = null;
-        for (let i = 0; i < finicityAccounts.length; i++) {
-            const finAcc = finicityAccounts[i];
-            if (finAcc.externalFinicityAccountId === accountId) internalAccount = finAcc;
-        }
-
-        return internalAccount;
+    transitionTradingPostAccountToError = async (userId: string, finicityExternalAccountId: string, errorCode: number) => {
+        const tpAccount = await this.getFinicityToTradingPostAccount(userId, finicityExternalAccountId);
+        if (!tpAccount) throw new Error(`could not find a tradingpost account for finicity external account id: ${finicityExternalAccountId}`);
+        await this.repository.updateErrorStatusOfAccount(tpAccount.tpBrokerageAccountId, true, errorCode);
     }
 
-    _resolveSecurity = async (holding: FinicityHolding, securitiesMap: Map<string, SecurityIssue>, cashSecuritiesMap: Map<string, number>) => {
-        let security = securitiesMap.get(holding.symbol);
-        let cashSecurity = cashSecuritiesMap.get(holding.symbol);
-
-        if (!security && !cashSecurity) {
-            const secType = transformSecurityType(holding.securityType)
-            const sec: addSecurity = {
-                companyName: holding.securityName,
-                securityName: holding.securityName,
-                issueType: secType,
-                description: holding.description,
-                symbol: holding.symbol,
-                logoUrl: null,
-                phone: null,
-                country: null,
-                state: null,
-                address2: null,
-                tags: [],
-                employees: null,
-                industry: null,
-                exchange: null,
-                primarySicCode: null,
-                ceo: null,
-                zip: null,
-                address: null,
-                website: null,
-                sector: null,
-                enableUtp: false,
-                priceSource: PriceSourceType.FINICITY
-            };
-
-            console.log("ADDING SECURITY ", sec.symbol)
-            const securityId = await this.repository.addSecurity(sec)
-            security = {
-                id: securityId,
-                symbol: sec.symbol,
-                name: sec.securityName ? sec.securityName : '',
-                issueType: secType
-            }
-            securitiesMap.set(holding.symbol, security);
-        } else if (!security && cashSecurity) {
-            security = {
-                id: cashSecurity,
-                symbol: holding.symbol,
-                name: 'Cash',
-                issueType: 'Cash'
-            }
-        }
-
-        return security;
+    getFinicityToTradingPostAccount = async (userId: string, accountId: string) => {
+        const finicityAccounts = await this.repository.getTradingPostAccountsWithFinicityNumber(userId)
+        return finicityAccounts.find(fa => fa.externalFinicityAccountId === accountId);
     }
 
     resolveHoldingOptionId = async (accountId: number, securityId: number, strikePrice: number, expirationDate: DateTime,

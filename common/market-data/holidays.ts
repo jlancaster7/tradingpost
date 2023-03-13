@@ -4,7 +4,7 @@ import {getUSExchangeHoliday} from "./interfaces";
 
 export default class Holidays {
     private repository: Repository;
-    private holidayMap: Record<string, object> = {};
+    private holidayMap: Map<number, object> = new Map();
 
     constructor(repository: Repository) {
         this.repository = repository;
@@ -43,13 +43,16 @@ export default class Holidays {
 
     isTradingDay = async (t: DateTime): Promise<boolean> => {
         await this.setMarketHolidays();
-        return this.holidayMap[t.toUnixInteger()] === undefined;
+        if (t.weekday === 6 || t.weekday === 7) return false;
+
+        const entry = this.holidayMap.get(t.startOf('day').toUnixInteger());
+        return entry === undefined
     }
 
     setMarketHolidays = async () => {
-        if (Object.keys(this.holidayMap).length === 0) {
+        if (!this.holidayMap || this.holidayMap.size === 0) {
             let holidays = await this.repository.getCurrentAndFutureExchangeHolidays();
-            holidays.forEach((h: getUSExchangeHoliday) => this.holidayMap[h.date.toUnixInteger()] = {});
+            holidays.forEach((h: getUSExchangeHoliday) => this.holidayMap.set(h.date.startOf('day').toUnixInteger(), {}));
         }
     }
 }

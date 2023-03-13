@@ -14,8 +14,13 @@ const interfaces_1 = require("../interfaces");
 const luxon_1 = require("luxon");
 const transformer_1 = require("./transformer");
 const portfolio_summary_1 = require("../portfolio-summary");
+const errors_1 = require("../errors");
 class Service {
-    constructor(finicity, repository, transformer, portfolioSummaryStats) {
+    constructor(finicityApi, repository, transformer, portfolioSummaryStats) {
+        // addNewAccounts
+        // fixAccounts
+        // removeAccounts
+        // getNewData
         this.calculatePortfolioStatistics = (userId, brokerageUserId, date, data) => __awaiter(this, void 0, void 0, function* () {
             return;
         });
@@ -37,41 +42,58 @@ class Service {
             yield this.repository.deleteFinicityTransactions(finAccountIds);
             yield this.repository.deleteFinicityAccounts(finAccountIds);
         });
-        this.update = (userId, brokerageUserId, date, data) => __awaiter(this, void 0, void 0, function* () {
+        this.update = (userId, brokerageUserId, date, data, isDev = false) => __awaiter(this, void 0, void 0, function* () {
             yield this.repository.execTx((r) => __awaiter(this, void 0, void 0, function* () {
-                const finTransformer = new transformer_1.Transformer(r);
+                const finTransformer = new transformer_1.Transformer(r, this.transformer.getMarketHolidays());
                 const portStats = new portfolio_summary_1.PortfolioSummaryService(r);
-                const finService = new Service(this.finicity, r, finTransformer, portStats);
-                yield finService.importHoldings(userId, brokerageUserId, []);
-                yield finService.importTransactions(userId, brokerageUserId, []);
+                const finService = new Service(this.finicityApi, r, finTransformer, portStats);
+                const finicityUser = yield r.getFinicityUser(userId);
+                if (!finicityUser)
+                    throw new Error("how do we not have a finicity user?");
+                yield finService.importHoldings(userId, finicityUser);
+                yield finService.importTransactions(userId, finicityUser);
                 if (!finService.portSummarySrv)
                     return;
                 yield finService.portSummarySrv.computeAccountGroupSummary(userId);
             }));
         });
-        this.add = (userId, brokerageUserId, date, data) => __awaiter(this, void 0, void 0, function* () {
-            const newFinicityAccounts = yield this.importAccounts(brokerageUserId);
-            const newTransformedAccountIds = yield this.transformer.accounts(userId, newFinicityAccounts);
-            yield this.repository.addTradingPostAccountGroup(userId, 'default', newTransformedAccountIds, 10117);
-            yield this.repository.execTx((r) => __awaiter(this, void 0, void 0, function* () {
-                const finTransformer = new transformer_1.Transformer(r);
-                const portStats = new portfolio_summary_1.PortfolioSummaryService(r);
-                const finService = new Service(this.finicity, r, finTransformer, portStats);
-                const finicityUser = yield this.repository.getFinicityUser(userId);
-                if (!finicityUser)
-                    throw new Error("how do we not have a finicity user?");
-                const finicityAccounts = yield this.repository.getFinicityAccounts(finicityUser.id);
-                yield finService.importHoldings(userId, brokerageUserId, finicityAccounts.map(f => f.accountId));
-                yield finService.importTransactions(userId, brokerageUserId, finicityAccounts.map(f => f.accountId));
-                for (let i = 0; i < newTransformedAccountIds.length; i++) {
-                    const id = newTransformedAccountIds[i];
-                    // Don't compute some security types for historical holdings since we do not have pricing at the moment
-                    yield finService.transformer.computeHoldingsHistory(id, true);
-                }
-                if (!finService.portSummarySrv)
-                    return;
-                yield finService.portSummarySrv.computeAccountGroupSummary(userId);
-            }));
+        this.add = (userId, brokerageUserId, date, data, isDev = false) => __awaiter(this, void 0, void 0, function* () {
+            const finicityUser = yield this.repository.getFinicityUser(userId);
+            if (!finicityUser)
+                throw new Error("how do we not have a finicity user?");
+            // TODO: Swap this out with the institution id if it exists within the data object
+            if (!isDev) {
+                console.log("Refreshing!");
+                yield this.finicityApi.refreshCustomerAccounts(finicityUser.customerId);
+            }
+            const newAccountIds = yield this.importAccounts(finicityUser);
+            try {
+                yield this.repository.execTx((r) => __awaiter(this, void 0, void 0, function* () {
+                    const finTransformer = new transformer_1.Transformer(r, this.transformer.getMarketHolidays());
+                    const portStats = new portfolio_summary_1.PortfolioSummaryService(r);
+                    const finService = new Service(this.finicityApi, r, finTransformer, portStats);
+                    console.log("Holdings");
+                    yield finService.importHoldings(userId, finicityUser);
+                    console.log("Transactions");
+                    yield finService.importTransactions(userId, finicityUser);
+                    // for (let i = 0; i < newAccountIds.length; i++) {
+                    //     const newAccountId = newAccountIds[i];
+                    //     await finService.transformer.computeHoldingsHistory(newAccountId, true);
+                    // }
+                    //
+                    // if (!finService.portSummarySrv) return
+                    // await finService.portSummarySrv.computeAccountGroupSummary(userId);
+                }));
+            }
+            catch (e) {
+                throw e;
+                // if (e instanceof BrokerageAccountError) {
+                // }
+                //
+                // if (e instanceof RetryBrokerageAccountError) {
+                //
+                // }
+            }
         });
         this.getTradingPostUserAssociatedWithBrokerageUser = (brokerageUserId) => __awaiter(this, void 0, void 0, function* () {
             const tpUser = yield this.repository.getTradingPostUserByFinicityCustomerId(brokerageUserId);
@@ -88,7 +110,7 @@ class Service {
                 const acc = yield this.repository.getFinicityAccountByTradingpostBrokerageAccountId(parseInt(brokerageAccountId));
                 if (acc === null)
                     throw new Error(`could not fetch finicity trading post account for tradingpost brokerage account id ${brokerageAccountId}`);
-                const link = yield this.finicity.generateConnectFix({
+                const link = yield this.finicityApi.generateConnectFix({
                     customerId: finicityUser.customerId,
                     language: "en",
                     institutionLoginId: acc.finicityInstitutionLoginId,
@@ -101,15 +123,15 @@ class Service {
                 });
                 return link.link;
             }
-            const authPortal = yield this.finicity.generateConnectUrl(finicityUser.customerId, "https://worker.tradingpostapp.com/finicity/webhook");
+            const authPortal = yield this.finicityApi.generateConnectUrl(finicityUser.customerId, "https://worker.tradingpostapp.com/finicity/webhook");
             return authPortal.link;
         });
         this._createFinicityUser = (userId) => __awaiter(this, void 0, void 0, function* () {
-            let finCustomer = yield this.finicity.addCustomer("trading-post", userId);
+            let finCustomer = yield this.finicityApi.addCustomer("trading-post", userId);
             // TODO: Update to include additional customers...
             // TODO: Why do we do this? Why cant we always reconcile? Assuming something with generate connect fix
             if (finCustomer.code !== undefined) {
-                const customersResponse = yield this.finicity.getCustomers(0, 25, userId);
+                const customersResponse = yield this.finicityApi.getCustomers(0, 25, userId);
                 customersResponse.customers.forEach(customer => {
                     if (customer.username === userId) {
                         finCustomer = {
@@ -130,7 +152,7 @@ class Service {
             let limit = 100;
             let institutionIds = {};
             while (moreAvailable) {
-                const institutions = yield this.finicity.getInstitutions(start, limit);
+                const institutions = yield this.finicityApi.getInstitutions(start, limit);
                 start++;
                 moreAvailable = institutions.moreAvailable;
                 if (institutions.institutions.length <= 0)
@@ -207,12 +229,12 @@ class Service {
         this.getAddInstitution = (finicityInstitutionId) => __awaiter(this, void 0, void 0, function* () {
             var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
             const institution = yield this.repository.getTradingPostInstitutionByFinicityId(finicityInstitutionId);
-            if (institution !== null)
+            if (institution)
                 return {
                     tradingPostInstitutionId: institution.id,
                     finicityInstitutionId: institution.internalFinicityId
                 };
-            const ni = yield this.finicity.getInstitution(finicityInstitutionId);
+            const ni = yield this.finicityApi.getInstitution(finicityInstitutionId);
             if (!('institution' in ni))
                 throw new Error(`no institution exists for institution id ${finicityInstitutionId}`);
             const { institution: ins } = ni;
@@ -270,173 +292,220 @@ class Service {
             const tpInstitutionId = yield this.transformer.institution(ni);
             return { tradingPostInstitutionId: tpInstitutionId, finicityInstitutionId: finInternalInstitutionId };
         });
-        this.importAccounts = (finicityUserId) => __awaiter(this, void 0, void 0, function* () {
-            var _m, _o, _p, _q, _r, _s, _t, _u, _v;
-            const finicityUser = yield this.repository.getFinicityUserByFinicityCustomerId(finicityUserId);
-            if (finicityUser === null)
-                throw new Error(`no user accounts exist for user id ${finicityUserId}`);
-            yield this.finicity.refreshCustomerAccounts(finicityUserId);
-            const currentFinicityAccounts = yield this.repository.getFinicityAccounts(finicityUser.id);
-            const finicityAccounts = yield this.finicity.getCustomerAccounts(finicityUserId);
-            if (!finicityAccounts)
-                throw new Error(`no finicity accounts returned for tradingpost user id ${finicityUserId}`);
-            const newFinicityAccounts = [];
-            for (let i = 0; i < finicityAccounts.accounts.length; i++) {
-                const fa = finicityAccounts.accounts[i];
-                const { finicityInstitutionId, tradingPostInstitutionId } = yield this.getAddInstitution(parseInt(fa.institutionId));
-                let isIn = false;
-                currentFinicityAccounts.forEach(ca => {
-                    if (isIn)
-                        return;
-                    if (ca.finicityInstitutionId == tradingPostInstitutionId && ca.number == fa.number)
-                        isIn = true;
-                });
-                if (isIn)
-                    continue;
-                newFinicityAccounts.push({
-                    id: 0,
-                    finicityUserId: finicityUser.id,
-                    finicityInstitutionId: finicityInstitutionId,
-                    accountId: fa.id,
-                    number: fa.number,
-                    accountNickname: fa.accountNickname,
-                    detailMargin: (_m = fa.detail) === null || _m === void 0 ? void 0 : _m.margin,
-                    lastUpdatedDate: fa.lastUpdatedDate,
-                    marketSegment: fa.marketSegment,
-                    accountNumberDisplay: fa.accountNumberDisplay,
-                    realAccountNumberLast4: fa.realAccountNumberLast4,
-                    name: fa.name,
-                    balance: fa.balance,
-                    type: fa.type,
-                    aggregationStatusCode: fa.aggregationStatusCode,
-                    status: fa.status,
-                    customerId: fa.customerId,
-                    institutionId: fa.institutionId,
-                    balanceDate: fa.balanceDate,
-                    aggregationSuccessDate: fa.aggregationSuccessDate,
-                    aggregationAttemptDate: fa.aggregationAttemptDate,
-                    createdDate: fa.createdDate,
-                    currency: fa.currency,
-                    lastTransactionDate: fa.lastTransactionDate,
-                    oldestTransactionDate: fa.oldestTransactionDate,
-                    institutionLoginId: fa.institutionLoginId,
-                    detailMarginAllowed: (_o = fa.detail) === null || _o === void 0 ? void 0 : _o.marginAllowed,
-                    detailCashAccountAllowed: (_p = fa.detail) === null || _p === void 0 ? void 0 : _p.cashAccountAllowed,
-                    detailDescription: (_q = fa.detail) === null || _q === void 0 ? void 0 : _q.description,
-                    detailMarginBalance: (_r = fa.detail) === null || _r === void 0 ? void 0 : _r.marginBalance,
-                    detailShortBalance: (_s = fa.detail) === null || _s === void 0 ? void 0 : _s.shortBalance,
-                    detailAvailableCashBalance: (_t = fa.detail) === null || _t === void 0 ? void 0 : _t.availableCashBalance,
-                    detailCurrentBalance: (_u = fa.detail) === null || _u === void 0 ? void 0 : _u.currentBalance,
-                    detailDateAsOf: (_v = fa.detail) === null || _v === void 0 ? void 0 : _v.dateAsOf,
-                    displayPosition: fa.displayPosition,
-                    parentAccount: fa.parentAccount,
-                    updatedAt: luxon_1.DateTime.now(),
-                    createdAt: luxon_1.DateTime.now(),
-                    txPushId: "",
-                    txPushSigningKey: ""
-                });
+        this._getNewFinicityAccounts = (finicityUserId, currentFinicityAccounts, finicityAccounts) => __awaiter(this, void 0, void 0, function* () {
+            const newFinicityAccounts = finicityAccounts.accounts.filter(acc => {
+                return currentFinicityAccounts.find(cfa => cfa.accountId === acc.id && cfa.institutionId == acc.institutionId) === undefined;
+            });
+            let newAccs = [];
+            for (let i = 0; i < newFinicityAccounts.length; i++) {
+                const fa = newFinicityAccounts[i];
+                const { finicityInstitutionId } = yield this.getAddInstitution(parseInt(fa.institutionId));
+                newAccs.push(this._mapFinicityAccount(fa, finicityUserId, finicityInstitutionId));
             }
-            yield this.repository.upsertFinicityAccounts(newFinicityAccounts);
-            return newFinicityAccounts;
+            return newAccs;
         });
-        this.importHoldings = (tpUserId, brokerageUserId, accountIds) => __awaiter(this, void 0, void 0, function* () {
-            const finicityUser = yield this.repository.getFinicityUserByFinicityCustomerId(brokerageUserId);
-            if (finicityUser === null)
-                throw new Error(`no user accounts exist for user id ${brokerageUserId} in holdings`);
-            const finAccountsAndHoldings = yield this.finicity.getCustomerAccounts(finicityUser.customerId);
-            if (!finAccountsAndHoldings.accounts || finAccountsAndHoldings.accounts.length <= 0)
-                return;
-            const internalAccounts = yield this.repository.getFinicityAccounts(finicityUser.id);
-            let accountMap = {};
-            internalAccounts.forEach(acc => accountMap[acc.accountId] = acc.id);
-            let tpAccountErrs = [];
-            for (let i = 0; i < finAccountsAndHoldings.accounts.length; i++) {
-                let account = finAccountsAndHoldings.accounts[i];
-                if (accountIds.length > 0 && !accountIds.includes(account.id))
+        this.importAccounts = (finicityUser) => __awaiter(this, void 0, void 0, function* () {
+            const currentFinicityAccounts = yield this.repository.getFinicityAccounts(finicityUser.id);
+            const finicityAccounts = yield this.finicityApi.getCustomerAccounts(finicityUser.customerId);
+            if (!finicityAccounts || !finicityAccounts.accounts)
+                throw new errors_1.BrokerageAccountDataError(finicityUser.tpUserId, finicityUser.customerId, undefined, undefined, `no finicity accounts found`);
+            const newFinicityAccounts = yield this._getNewFinicityAccounts(finicityUser.id, currentFinicityAccounts, finicityAccounts);
+            yield this.repository.upsertFinicityAccounts(newFinicityAccounts);
+            const newAccountIds = yield this.transformer.accounts(finicityUser.tpUserId, newFinicityAccounts);
+            for (let i = 0; i < newFinicityAccounts.length; i++) {
+                const newAcc = newFinicityAccounts[i];
+                if (newAcc.aggregationStatusCode !== 0)
                     continue;
-                if (account.aggregationStatusCode === 103 || account.aggregationStatusCode === 185) {
-                    const acc = yield this.transformer.getFinicityToTradingPostAccount(finicityUser.tpUserId, account.id);
-                    if (acc === undefined || acc === null)
-                        continue;
-                    tpAccountErrs.push({
-                        accountId: acc.tpBrokerageAccId,
-                        error: true,
-                        errorCode: account.aggregationStatusCode
-                    });
+                yield this.finicityApi.loadHistoricTransactionsForCustomerAccount(finicityUser.customerId, newAcc.accountId);
+            }
+            return newAccountIds;
+        });
+        this._createExternalFinAccountToInternalFinAccountMap = (finUserInternalId) => __awaiter(this, void 0, void 0, function* () {
+            const internalFinicityAccts = yield this.repository.getFinicityAccounts(finUserInternalId);
+            let externalFinAccToInternalAccMap = new Map();
+            internalFinicityAccts.forEach(acc => externalFinAccToInternalAccMap.set(acc.accountId, acc));
+            return externalFinAccToInternalAccMap;
+        });
+        this._mapFinicityAccount = (fa, finicityUserId, finicityInstitutionId) => {
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+            return {
+                id: 0,
+                finicityUserId: finicityUserId,
+                finicityInstitutionId: finicityInstitutionId,
+                accountId: fa.id,
+                number: fa.number,
+                accountNickname: fa.accountNickname,
+                detailMargin: (_a = fa.detail) === null || _a === void 0 ? void 0 : _a.margin,
+                lastUpdatedDate: fa.lastUpdatedDate,
+                marketSegment: fa.marketSegment,
+                accountNumberDisplay: fa.accountNumberDisplay,
+                realAccountNumberLast4: fa.realAccountNumberLast4,
+                name: fa.name,
+                balance: fa.balance,
+                type: fa.type,
+                aggregationStatusCode: fa.aggregationStatusCode,
+                status: fa.status,
+                customerId: fa.customerId,
+                institutionId: fa.institutionId,
+                balanceDate: fa.balanceDate,
+                aggregationSuccessDate: fa.aggregationSuccessDate,
+                aggregationAttemptDate: fa.aggregationAttemptDate,
+                createdDate: fa.createdDate,
+                currency: fa.currency,
+                lastTransactionDate: fa.lastTransactionDate,
+                oldestTransactionDate: fa.oldestTransactionDate,
+                institutionLoginId: fa.institutionLoginId,
+                detailMarginAllowed: (_b = fa.detail) === null || _b === void 0 ? void 0 : _b.marginAllowed,
+                detailCashAccountAllowed: (_c = fa.detail) === null || _c === void 0 ? void 0 : _c.cashAccountAllowed,
+                detailDescription: (_d = fa.detail) === null || _d === void 0 ? void 0 : _d.description,
+                detailMarginBalance: (_e = fa.detail) === null || _e === void 0 ? void 0 : _e.marginBalance,
+                detailShortBalance: (_f = fa.detail) === null || _f === void 0 ? void 0 : _f.shortBalance,
+                detailAvailableCashBalance: (_g = fa.detail) === null || _g === void 0 ? void 0 : _g.availableCashBalance,
+                detailCurrentBalance: (_h = fa.detail) === null || _h === void 0 ? void 0 : _h.currentBalance,
+                detailDateAsOf: (_j = fa.detail) === null || _j === void 0 ? void 0 : _j.dateAsOf,
+                displayPosition: fa.displayPosition,
+                parentAccount: fa.parentAccount,
+                updatedAt: luxon_1.DateTime.now(),
+                createdAt: luxon_1.DateTime.now(),
+                txPushId: "",
+                txPushSigningKey: ""
+            };
+        };
+        this._mapFinicityHolding = (pos, internalFinAccountId) => {
+            return {
+                id: 0,
+                finicityAccountId: internalFinAccountId,
+                holdingId: pos.id,
+                securityIdType: pos.securityIdType,
+                posType: pos.posType,
+                subAccountType: pos.subAccountType,
+                description: pos.description,
+                symbol: pos.symbol,
+                cusipNo: pos.cusipNo,
+                currentPrice: pos.currentPrice,
+                transactionType: pos.transactionType,
+                marketValue: pos.marketValue,
+                securityUnitPrice: pos.securityUnitPrice,
+                units: pos.units,
+                costBasis: pos.costBasis,
+                status: pos.status,
+                securityType: pos.securityType,
+                securityName: pos.securityName,
+                securityCurrency: pos.securityCurrency,
+                currentPriceDate: pos.currentPriceDate,
+                optionStrikePrice: pos.optionStrikePrice,
+                optionType: pos.optionType,
+                optionSharesPerContract: pos.optionSharesPerContract,
+                optionExpiredate: pos.optionExpiredate,
+                fiAssetClass: pos.fiAssetClass,
+                assetClass: pos.assetClass,
+                currencyRate: pos.currencyRate,
+                costBasisPerShare: pos.costBasisPerShare,
+                mfType: pos.mfType,
+                totalGlDollar: pos.totalGLDollar,
+                totalGlPercent: pos.totalGLPercent,
+                todayGlDollar: pos.todayGLDollar,
+                todayGlPercent: pos.todayGLPercent,
+                updatedAt: luxon_1.DateTime.now(),
+                createdAt: luxon_1.DateTime.now()
+            };
+        };
+        this._mapFinicityTransaction = (tx, internalFinAccountId) => {
+            var _a, _b, _c, _d;
+            return {
+                id: 0,
+                internalFinicityAccountId: internalFinAccountId,
+                transactionId: tx.id,
+                ticker: tx.ticker,
+                type: tx.type,
+                investmentTransactionType: tx.investmentTransactionType,
+                unitPrice: tx.unitPrice,
+                transactionDate: tx.transactionDate,
+                categorizationNormalizedPayeeName: (_a = tx.categorization) === null || _a === void 0 ? void 0 : _a.normalizedPayeeName,
+                categorizationCountry: (_b = tx.categorization) === null || _b === void 0 ? void 0 : _b.country,
+                memo: tx.memo,
+                postedDate: tx.postedDate,
+                feeAmount: tx.feeAmount,
+                description: tx.description,
+                createdDate: tx.createdDate,
+                commissionAmount: tx.commissionAmount,
+                status: tx.status,
+                categorizationCategory: (_c = tx.categorization) === null || _c === void 0 ? void 0 : _c.category,
+                customerId: tx.customerId,
+                amount: tx.amount,
+                categorizationBestRepresentation: (_d = tx.categorization) === null || _d === void 0 ? void 0 : _d.bestRepresentation,
+                accountId: tx.accountId,
+                cusipNo: tx.cusipNo,
+                unitQuantity: tx.unitQuantity,
+                updatedAt: luxon_1.DateTime.now(),
+                createdAt: luxon_1.DateTime.now()
+            };
+        };
+        this.importHoldings = (tpUserId, finicityUser) => __awaiter(this, void 0, void 0, function* () {
+            const finicityBrokerageCustomer = yield this.finicityApi.getCustomerAccounts(finicityUser.customerId);
+            if (!finicityBrokerageCustomer.accounts || finicityBrokerageCustomer.accounts.length <= 0)
+                return;
+            const externalFinAccToInternalAccMap = yield this._createExternalFinAccountToInternalFinAccountMap(finicityUser.id);
+            for (let i = 0; i < finicityBrokerageCustomer.accounts.length; i++) {
+                const externalFinAccount = finicityBrokerageCustomer.accounts[i];
+                const internalFinAccount = externalFinAccToInternalAccMap.get(externalFinAccount.id);
+                if (!internalFinAccount)
+                    throw new Error(`could not find internal finicity brokerage account id for account id: ${externalFinAccount.id}`);
+                // Aggregation Status Code from Finicity indicates there was an issue aggregating data from institution
+                // TODO: Check that ALL accounts dont have errors and update all accounts
+                if (externalFinAccount.aggregationStatusCode !== 0) {
+                    if (externalFinAccount.aggregationStatusCode === 103 || externalFinAccount.aggregationStatusCode === 185)
+                        throw new errors_1.BrokerageAccountError(tpUserId, finicityUser.customerId, externalFinAccount.aggregationStatusCode, externalFinAccount.id);
+                    // If we need to keep retrying the account, should investigate behind the scenes
+                    throw new errors_1.RetryBrokerageAccountError(tpUserId, finicityUser.customerId, externalFinAccount.aggregationStatusCode, externalFinAccount.id);
+                }
+                if (externalFinAccount.position === null || externalFinAccount.position === undefined)
+                    throw new errors_1.BrokerageAccountDataError(tpUserId, finicityUser.customerId, undefined, externalFinAccount.id, `no position attribute for external finicity account id: ${externalFinAccount.id}`);
+                if (externalFinAccount.position.length <= 0)
+                    return;
+                const finicityHoldings = externalFinAccount.position.map(p => this._mapFinicityHolding(p, internalFinAccount.id));
+                yield this.repository.upsertFinicityHoldings(finicityHoldings);
+                yield this.transformer.holdings(finicityUser.tpUserId, finicityUser.customerId, externalFinAccount.id, finicityHoldings, externalFinAccount.currency, externalFinAccount.detail, luxon_1.DateTime.fromSeconds(externalFinAccount.aggregationSuccessDate));
+            }
+        });
+        this.importTransactions = (tpUserId, finicityUser) => __awaiter(this, void 0, void 0, function* () {
+            const finicityTransactions = yield this._iterateTransactions(tpUserId, finicityUser);
+            let txByAccountId = new Map();
+            finicityTransactions.forEach(tx => {
+                let accs = txByAccountId.get(tx.accountId.toString());
+                if (!accs)
+                    accs = [];
+                accs.push(tx);
+                txByAccountId.set(tx.accountId.toString(), accs);
+            });
+            for (const [accountId, txs] of txByAccountId) {
+                if (txs.length <= 0)
+                    continue;
+                const newestTransaction = yield this.repository.getNewestFinicityTransaction(accountId);
+                if (!newestTransaction) {
+                    // Add To Finicity Transactions
+                    yield this.repository.upsertFinicityTransactions(txs);
+                    // Add To Transformer
+                    yield this.transformer.transactions(finicityUser.tpUserId, finicityUser.customerId, txs, accountId);
                     continue;
                 }
-                let finicityHoldings = [];
-                if (account.position)
-                    account.position.forEach(pos => {
-                        finicityHoldings.push({
-                            id: 0,
-                            finicityAccountId: accountMap[account.id],
-                            holdingId: pos.id,
-                            securityIdType: pos.securityIdType,
-                            posType: pos.posType,
-                            subAccountType: pos.subAccountType,
-                            description: pos.description,
-                            symbol: pos.symbol,
-                            cusipNo: pos.cusipNo,
-                            currentPrice: pos.currentPrice,
-                            transactionType: pos.transactionType,
-                            marketValue: pos.marketValue,
-                            securityUnitPrice: pos.securityUnitPrice,
-                            units: pos.units,
-                            costBasis: pos.costBasis,
-                            status: pos.status,
-                            securityType: pos.securityType,
-                            securityName: pos.securityName,
-                            securityCurrency: pos.securityCurrency,
-                            currentPriceDate: pos.currentPriceDate,
-                            optionStrikePrice: pos.optionStrikePrice,
-                            optionType: pos.optionType,
-                            optionSharesPerContract: pos.optionSharesPerContract,
-                            optionExpiredate: pos.optionExpiredate,
-                            fiAssetClass: pos.fiAssetClass,
-                            assetClass: pos.assetClass,
-                            currencyRate: pos.currencyRate,
-                            costBasisPerShare: pos.costBasisPerShare,
-                            mfType: pos.mfType,
-                            totalGlDollar: pos.totalGLDollar,
-                            totalGlPercent: pos.totalGLPercent,
-                            todayGlDollar: pos.todayGLDollar,
-                            todayGlPercent: pos.todayGLPercent,
-                            updatedAt: luxon_1.DateTime.now(),
-                            createdAt: luxon_1.DateTime.now()
-                        });
-                    });
-                yield this.repository.upsertFinicityHoldings(finicityHoldings);
-                yield this.transformer.holdings(finicityUser.tpUserId, account.id, finicityHoldings, account.currency, account.detail);
-            }
-            if (tpAccountErrs.length > 0)
-                yield this.updateTradingpostBrokerageAccountError(tpAccountErrs);
-        });
-        this.updateTradingpostBrokerageAccountError = (accounts) => __awaiter(this, void 0, void 0, function* () {
-            for (let i = 0; i < accounts.length; i++) {
-                const acc = accounts[i];
-                yield this.repository.updateErrorStatusOfAccount(acc.accountId, acc.error, acc.errorCode);
+                // Remove all the older ones and add the transactions
+                const filteredTransactions = txs.filter(f => f.transactionDate > newestTransaction.transactionDate.toUnixInteger());
+                if (filteredTransactions.length <= 0)
+                    continue;
+                yield this.repository.upsertFinicityTransactions(filteredTransactions);
+                yield this.transformer.transactions(finicityUser.tpUserId, finicityUser.customerId, filteredTransactions, accountId);
             }
         });
-        // TODO: we should also mix in the tradingpost account here to validate if we should pull transactions or not,
-        //      since its.. you know... broken
-        this.importTransactions = (tpUserId, brokerageUserId, accountIds) => __awaiter(this, void 0, void 0, function* () {
-            const finicityUser = yield this.repository.getFinicityUserByFinicityCustomerId(brokerageUserId);
-            if (finicityUser === null)
-                throw new Error(`no user accounts exist for user id ${brokerageUserId} in transactions`);
-            const accounts = yield this.repository.getFinicityAccounts(finicityUser.id);
-            const externalAccountIdToInternalMap = {};
-            for (let i = 0; i < accounts.length; i++) {
-                const account = accounts[i];
-                externalAccountIdToInternalMap[account.accountId] = account.id;
-            }
+        this._iterateTransactions = (tpUserId, finicityUser) => __awaiter(this, void 0, void 0, function* () {
+            const externalFinAccToInternalAccMap = yield this._createExternalFinAccountToInternalFinAccountMap(finicityUser.id);
             let finTxs = [];
             let start = luxon_1.DateTime.now().minus({ month: 24 });
             let end = luxon_1.DateTime.now();
             let startPos = 1;
             let moreAvailable = true;
             while (moreAvailable) {
-                const transactions = yield this.finicity.getAllCustomerTransactions(finicityUser.customerId, {
+                const transactions = yield this.finicityApi.getAllCustomerTransactions(finicityUser.customerId, {
                     fromDate: start.toUnixInteger(),
                     toDate: end.toUnixInteger(),
                     start: startPos,
@@ -445,47 +514,18 @@ class Service {
                 });
                 moreAvailable = transactions.moreAvailable === 'true';
                 startPos = startPos + 1000;
-                if (transactions.transactions === null || transactions.transactions.length <= 0)
+                if (!transactions.transactions || transactions.transactions.length <= 0)
                     break;
                 transactions.transactions.forEach(tx => {
-                    var _a, _b, _c, _d;
-                    const accountId = externalAccountIdToInternalMap[tx.accountId];
-                    if (!accountId)
-                        throw new Error(`could not find account id(${tx.accountId}) for user ${brokerageUserId}`);
-                    if (accountIds.length > 0 && !accountIds.includes(tx.accountId.toString()))
-                        return;
-                    finTxs.push({
-                        id: 0,
-                        internalFinicityAccountId: accountId,
-                        transactionId: tx.id,
-                        ticker: tx.ticker,
-                        type: tx.type,
-                        investmentTransactionType: tx.investmentTransactionType,
-                        unitPrice: tx.unitPrice,
-                        transactionDate: tx.transactionDate,
-                        categorizationNormalizedPayeeName: (_a = tx.categorization) === null || _a === void 0 ? void 0 : _a.normalizedPayeeName,
-                        categorizationCountry: (_b = tx.categorization) === null || _b === void 0 ? void 0 : _b.country,
-                        memo: tx.memo,
-                        postedDate: tx.postedDate,
-                        feeAmount: tx.feeAmount,
-                        description: tx.description,
-                        createdDate: tx.createdDate,
-                        commissionAmount: tx.commissionAmount,
-                        status: tx.status,
-                        categorizationCategory: (_c = tx.categorization) === null || _c === void 0 ? void 0 : _c.category,
-                        customerId: tx.customerId,
-                        amount: tx.amount,
-                        categorizationBestRepresentation: (_d = tx.categorization) === null || _d === void 0 ? void 0 : _d.bestRepresentation,
-                        accountId: tx.accountId,
-                        cusipNo: tx.cusipNo,
-                        unitQuantity: tx.unitQuantity,
-                        updatedAt: luxon_1.DateTime.now(),
-                        createdAt: luxon_1.DateTime.now()
-                    });
+                    if (!tx.accountId)
+                        throw new errors_1.BrokerageAccountDataError(tpUserId, finicityUser.customerId, undefined, tx.accountId, `no account id set for transaction ${tx.id}`);
+                    const finAccount = externalFinAccToInternalAccMap.get(tx.accountId.toString());
+                    if (!finAccount)
+                        throw new errors_1.BrokerageAccountDataError(tpUserId, finicityUser.customerId, undefined, tx.accountId, "could not find transaction account id within finicity account id map");
+                    finTxs.push(this._mapFinicityTransaction(tx, finAccount.id));
                 });
             }
-            yield this.repository.upsertFinicityTransactions(finTxs);
-            yield this.transformer.transactions(finicityUser.tpUserId, finTxs);
+            return finTxs;
         });
         this.removeAccounts = (brokerageCustomerId, accountIds) => __awaiter(this, void 0, void 0, function* () {
             const finicityUser = yield this.repository.getFinicityUserByFinicityCustomerId(brokerageCustomerId);
@@ -505,7 +545,7 @@ class Service {
                 for (let i = 0; i < removalAccounts.length; i++) {
                     try {
                         const acc = removalAccounts[i];
-                        yield this.finicity.deleteTxPushSubscription(finicityUser.customerId, acc.txPushId);
+                        yield this.finicityApi.deleteTxPushSubscription(finicityUser.customerId, acc.txPushId);
                     }
                     catch (e) {
                         console.error(e);
@@ -528,11 +568,11 @@ class Service {
             }
             return tpAccountIds;
         });
-        this.finicity = finicity;
+        this.finicityApi = finicityApi;
         this.repository = repository;
         this.transformer = transformer;
         this.portSummarySrv = portfolioSummaryStats;
     }
 }
 exports.Service = Service;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbmRleC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSw4Q0FRdUI7QUFHdkIsaUNBQStCO0FBQy9CLCtDQUFpRTtBQUNqRSw0REFBNkQ7QUFFN0QsTUFBYSxPQUFPO0lBTWhCLFlBQVksUUFBa0IsRUFBRSxVQUErQixFQUFFLFdBQWdDLEVBQUUscUJBQStDO1FBTzNJLGlDQUE0QixHQUFHLENBQU8sTUFBYyxFQUFFLGVBQXVCLEVBQUUsSUFBYyxFQUFFLElBQVUsRUFBaUIsRUFBRTtZQUMvSCxPQUFNO1FBQ1YsQ0FBQyxDQUFBLENBQUE7UUFFTSxXQUFNLEdBQUcsQ0FBTyxNQUFjLEVBQUUsZUFBdUIsRUFBRSxJQUFjLEVBQUUsSUFBVSxFQUFpQixFQUFFO1lBQ3pHLE1BQU0sRUFBQyxRQUFRLEVBQUMsR0FBRyxJQUFvRixDQUFDO1lBRXhHLElBQUksYUFBYSxHQUFhLEVBQUUsQ0FBQztZQUNqQyxJQUFJLGtCQUFrQixHQUFhLEVBQUUsQ0FBQztZQUV0QyxRQUFRLENBQUMsT0FBTyxDQUFDLENBQUMsQ0FBQyxFQUFFO2dCQUNqQixhQUFhLENBQUMsSUFBSSxDQUFDLENBQUMsQ0FBQyxpQkFBaUIsQ0FBQyxDQUFDO2dCQUN4QyxrQkFBa0IsQ0FBQyxJQUFJLENBQUMsQ0FBQyxDQUFDLHFCQUFxQixDQUFDLENBQUM7WUFDckQsQ0FBQyxDQUFDLENBQUM7WUFFSCxNQUFNLFVBQVUsR0FBRyxNQUFNLElBQUksQ0FBQyxVQUFVLENBQUMsK0RBQStELENBQUMsTUFBTSxFQUFFLGtCQUFrQixFQUFFLGlDQUFvQixDQUFDLFFBQVEsQ0FBQyxDQUFDO1lBRXBLLElBQUksWUFBWSxHQUFhLEVBQUUsQ0FBQztZQUNoQyxVQUFVLENBQUMsT0FBTyxDQUFDLEVBQUUsQ0FBQyxFQUFFLENBQUMsWUFBWSxDQUFDLElBQUksQ0FBQyxFQUFFLENBQUMsRUFBRSxDQUFDLENBQUMsQ0FB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
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyJpbmRleC50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBQSw4Q0FRdUI7QUFRdkIsaUNBQStCO0FBQy9CLCtDQUFpRTtBQUNqRSw0REFBNkQ7QUFDN0Qsc0NBQXVHO0FBRXZHLE1BQWEsT0FBTztJQU1oQixZQUFZLFdBQXFCLEVBQUUsVUFBK0IsRUFBRSxXQUFnQyxFQUFFLHFCQUErQztRQU9ySixpQkFBaUI7UUFDakIsY0FBYztRQUNkLGlCQUFpQjtRQUNqQixhQUFhO1FBRU4saUNBQTRCLEdBQUcsQ0FBTyxNQUFjLEVBQUUsZUFBdUIsRUFBRSxJQUFjLEVBQUUsSUFBVSxFQUFpQixFQUFFO1lBQy9ILE9BQU07UUFDVixDQUFDLENBQUEsQ0FBQTtRQUVNLFdBQU0sR0FBRyxDQUFPLE1BQWMsRUFBRSxlQUF1QixFQUFFLElBQWMsRUFBRSxJQUFVLEVBQWlCLEVBQUU7WUFDekcsTUFBTSxFQUFDLFFBQVEsRUFBQyxHQUFHLElBQW9GLENBQUM7WUFFeEcsSUFBSSxhQUFhLEdBQWEsRUFBRSxDQUFDO1lBQ2pDLElBQUksa0JBQWtCLEdBQWEsRUFBRSxDQUFDO1lBRXRDLFFBQVEsQ0FBQyxPQUFPLENBQUMsQ0FBQyxDQUFDLEVBQUU7Z0JBQ2pCLGFBQWEsQ0FBQyxJQUFJLENBQUMsQ0FBQyxDQUFDLGlCQUFpQixDQUFDLENBQUM7Z0JBQ3hDLGtCQUFrQixDQUFDLElBQUksQ0FBQyxDQUFDLENBQUMscUJBQXFCLENBQUMsQ0FBQztZQUNyRCxDQUFDLENBQUMsQ0FBQztZQUVILE1BQU0sVUFBVSxHQUFHLE1BQU0sSUFBSSxDQUFDLFVBQVUsQ0FBQywrREFBK0QsQ0FBQyxNQUFNLEVBQUUsa0JBQWtCLEVBQUUsaUNBQW9CLENBQUMsUUFBUSxDQUFDLENBQUM7WUFFcEssSUFBSSxZQUFZLEdBQWEsRUFBRSxDQUFDO1lBQ2hDLFVBQVUsQ0FBQyxPQUFPLENBQUMsRUFBRSxDQUFD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
