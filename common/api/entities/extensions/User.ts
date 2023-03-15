@@ -12,7 +12,7 @@ export default class User extends Extension {
     linkSocialAccount = this._makeFetch<{ callbackUrl: string, platform: string, code?: string, challenge?: string, platform_idenifier?: string }, string>("linkSocialAccount", this._defaultPostRequest)
     getComments = this._makeFetch<{ userId?: string }, ICommentBasic[]>("getComments", this._defaultPostRequest)
     getTrades = this._makePagedFetch<{ userId?: string }, { date: Date, type: string, quantity: number, price: number, fees: number, currency: string, security_id: number, option_id: number, option_info: any }[]>("getTrades", this._defaultPostRequest)
-    getHoldings = this._makeFetch<{ userId?: string }, { security_id: number, option_id: number, option_info: any, price: number, quantity: number, value: number, cost_basis: number, pnl: number, date: Date }[]>("getHoldings", this._defaultPostRequest)
+    getHoldings = this._makeFetch<{ userId?: string }, { security_id: number, symbol?: string, option_id: number, option_info: any, price: number, quantity: number, value: number, cost_basis: number, pnl: number, date: Date }[]>("getHoldings", this._defaultPostRequest)
     getWatchlists = this._makeFetch<{ userId: string }, IWatchlistList[]>("getWatchlists", this._defaultPostRequest)
     getReturns = this._makeFetch<{ userId?: string, startDate: Date, endDate: Date }, AccountGroupHPRsTable[]>("getReturns", this._defaultPostRequest)
     getPortfolio = this._makeFetch<{ userId?: string }, TradingPostAccountGroupStats>("getPortfolio", this._defaultPostRequest)

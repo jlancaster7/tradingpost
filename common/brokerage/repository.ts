@@ -1713,6 +1713,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
     getTradingPostCurrentHoldingsByAccountGroup = async (accountGroupId: number): Promise<HistoricalHoldings[]> => {
         let query = `SELECT atg.account_group_id        AS account_group_id,
                             ch.security_id              AS security_id,
+                            s.symbol                    AS symbol,
                             ch.security_type            AS security_type,
                             ch.option_id                AS option_id,
                             (SELECT json_agg(t)
@@ -1737,6 +1738,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
                      FROM tradingpost_current_holding ch
                               LEFT JOIN _tradingpost_account_to_group atg
                                         ON ch.account_id = atg.account_id
+                              LEFT JOIN security s
+                                        ON s.id = ch.security_id
                      WHERE atg.account_group_id =
         $1
         GROUP
@@ -1755,7 +1758,8 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         option_id,
         ch
         .
-        security_type
+        security_type,
+        s.symbol   
         ORDER
         BY
         value
@@ -1774,6 +1778,7 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             holdings.push({
                 accountGroupId: parseInt(d.account_group_id),
                 securityId: parseInt(d.security_id),
+                symbol: d.symbol,
                 securityType: d.security_type,
                 optionId: parseInt(d.option_id),
                 optionInfo: d.option_info,

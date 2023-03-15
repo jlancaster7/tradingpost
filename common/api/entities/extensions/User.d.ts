@@ -48,6 +48,7 @@ export default class User extends Extension {
         userId?: string | undefined;
     }) => Promise<{
         security_id: number;
+        symbol?: string | undefined;
         option_id: number;
         option_info: any;
         price: number;

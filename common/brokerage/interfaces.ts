@@ -520,6 +520,7 @@ export type HistoricalHoldings = {
     accountId?: number
     accountGroupId?: number
     securityId: number
+    symbol?: string
     securityType: SecurityType | null
     optionId: number | null
     optionInfo: any | null

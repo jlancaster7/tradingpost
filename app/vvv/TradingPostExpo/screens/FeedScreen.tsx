@@ -83,27 +83,35 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                         return {id: a.id, name: a.name}
                     })])
                 //portfolio data
-                const portfolio = (await Api.User.extensions.getHoldings({})).filter(a => byId[a.security_id] !== undefined && byId[a.security_id].symbol !== 'USD:CUR')
-                setUserPortfolio(portfolio.map(a => `$${byId[a.security_id].symbol}`))
+                const portfolio = (await Api.User.extensions.getHoldings({})).filter(a => a.symbol !== 'USD:CUR')
+                console.log(portfolio)
+                setUserPortfolio(portfolio.map(a => `$${a.symbol}`))
             } catch (ex) {
                 console.error(ex);
             }
         })()
     }, [])
     useEffect(() => {
+        console.log('use effect for screen params')
+        console.log('isHoldings: ', props.route.params.isHoldings)
         const watchlistId = props.route.params.watchlistId
+        console.log('date range:', {beginDateTime: props.route.params.beginDateTime, endDateTime: props.route.params.endDateTime})
         setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: props.route.params.endDateTime})
-        if (props.route.params.searchTerms) setSearchText(props.route.params.searchTerms)
-        else if (props.route.params.isHoldings) setFilterType('portfolio')
+        if (props.route.params.searchTerms?.length) setSearchText(props.route.params.searchTerms)
+        else if (props.route.params.isHoldings) {
+            setFilterType('portfolio')
+        }
         else if (watchlistId) {
             (async () => {
                 const watchlist = await Api.Watchlist.get(watchlistId);
-                setSearchText(watchlist.items.map(a => `$${a.symbol}`))
+                setFilterType('watchlist')
+                setSelectedWatchlist({id: watchlist.id, name:watchlist.name})
             })()
         }
     }, [props.route.params.beginDateTime, props.route.params.endDateTime, props.route.params.searchTerms, props.route.params.watchlistId, props.route.params.isHoldings])
+
     useEffect(() => {
-        if (!searchText.length && filterType !== 'watchlist') setFilterType('none');
+        if (!searchText.length && filterType === 'search') setFilterType('none');
     }, [searchText])
 
     //if content is negative  
@@ -126,22 +134,26 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
     }, [translateHeaderY, translateMultipler])
 
     useEffect(() => {
-
+        
         (async () => {
-            console.log(filterType)
+            console.log('filter type useeffect', filterType)
             if (filterType === 'portfolio') {
                 if (!userPortfolio.length) {
-                    const portfolio = (await Api.User.extensions.getHoldings({})).filter(a => byId[a.security_id] !== undefined && byId[a.security_id].symbol !== 'USD:CUR')
-                    setSearchText(portfolio.map(a => `$${byId[a.security_id].symbol}`))
+                    const portfolio = (await Api.User.extensions.getHoldings({})).filter(a => a.symbol !== 'USD:CUR')
+                    console.log(portfolio)
+                    setSearchText(portfolio.map(a => `$${a.symbol}`))
+                    setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: props.route.params.endDateTime})
                 } else setSearchText(userPortfolio)
                 setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6)
             } else if (filterType === 'watchlist') {
                 if (selectedWatchlist.id) {
                     const watchlist = await Api.Watchlist.get(selectedWatchlist.id);
                     setSearchText(watchlist.items.map(a => `$${a.symbol}`))
+                    setDateRange({beginDateTime: props.route.params.beginDateTime, endDateTime: props.route.params.endDateTime})
                     setChipHeight(sizes.rem1_5 + sizes.rem0_5 + 6)
                 } else {
                     setChipHeight(0)
+                    console.log('testtest')
                     setSearchText([])
                     setDateRange({})
                 }
@@ -237,12 +249,12 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                     //borderBottomColor: "#ccc",
                     //borderBottomWidth: 1
                 }}
-                key={`selector_${platforms.length}`}>
+                key={`selectorf_${searchText.length}_${Object.keys(dateRange).length}`}>
                 {/*<PlatformSelector platforms={platforms} setPlatformClicked={setPlatformClicked} />*/}
                 <View style={{flex: 1, marginHorizontal: sizes.rem1}}>
                     <View style={{flexDirection: 'row', marginTop: 10}}>
 
-                        <View style={{flex: 1}}>
+                        <View  style={{flex: 1}} >
                             <SearchBar
                                 text={tempSearchText}
                                 placeholder="Search... ($AAPL, Tim, Tesla, etc.)"
@@ -261,7 +273,8 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                             <ScrollView style={{marginVertical: sizes.rem0_5}}
                                         nestedScrollEnabled
                                         horizontal
-                                        showsHorizontalScrollIndicator={false}>
+                                        showsHorizontalScrollIndicator={false}
+                                        >
                                 <View style={[row, Object.keys(dateRange).length ? {
                                     display: 'flex',
                                     alignItems: 'center'
@@ -278,21 +291,13 @@ export const FeedScreen = (props: DashTabScreenProps<'Feed'>) => {
                                                      style={{zIndex: 1, backgroundColor: 'rgba(53, 162, 101, 0.50)'}}/>
                                     }
                                 </View>
-                                <View style={[row, searchText.length ? {
+                                <View key={`selectorh_${searchText.length}`}  style={[row, searchText.length ? {
                                     display: 'flex',
                                     marginVertical: sizes.rem0_5
                                 } : {display: 'none'}]}>
                                     {
                                         isNotUndefinedOrNull(searchText) && Array.isArray(searchText) && searchText.map((chip, i) => {
-                                            /*if (chip.startsWith('$') && bySymbol[chip.slice(1)]) return (
-                                                <CompanyProfileBar symbol={bySymbol[chip.slice(1)].symbol}
-                                                        companyName={bySymbol[chip.slice(1)].company_name}
-                                                        imageUri={bySymbol[chip.slice(1)].logo_url}
-                                                        secId={bySymbol[chip.slice(1)].id}
-                                                        makeShadedSec
-                                                        />
-                                            )
-                                            else*/
+                                    
                                             return (
 
                                                 <PrimaryChip isAlt

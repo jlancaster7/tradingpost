@@ -104,6 +104,7 @@ declare const _default: {
         };
     }) => Promise<{
         security_id: number;
+        symbol?: string | undefined;
         option_id: number;
         option_info: any;
         price: number;
