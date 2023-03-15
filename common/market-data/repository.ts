@@ -276,11 +276,12 @@ export default class Repository {
         await this.db.none(query);
     }
 
-    updateSecurityUtp = async (securityId: number, enableUtp: boolean) => {
+    updateSecurityUtp = async (securityIds: number[], enableUtp: boolean) => {
+        if (securityIds.length <= 0) return;
         const query = `UPDATE security
                        SET enable_utp = $1
-                       WHERE id = $2;`
-        await this.db.none(query, [enableUtp, securityId]);
+                       WHERE id in ($2:list);`
+        await this.db.none(query, [enableUtp, securityIds]);
     }
 
     updateSecurities = async (securities: updateSecurity[]) => {

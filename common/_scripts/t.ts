@@ -13,6 +13,12 @@ import {DateTime} from "luxon";
 import {accounts} from "../brokerage/robinhood/api";
 import IEX from "../iex/index";
 import MarketData from "../market-data/index";
+import {init} from "../db/index";
+import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
+import apn from "apn";
+import AndroidNotifications from "../notifications/android";
+import NotifRepository from "../notifications/repository";
+import Notifications from "../notifications/index";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -53,8 +59,59 @@ const run = async () => {
     const iexConfiguration = await DefaultConfig.fromSSM("iex");
     const iex = new IEX(iexConfiguration.key);
 
-    const marketData = new MarketData(marketDataRepo, iex, marketHolidays);
-    await marketData.upsertSecurities();
+    console.log("I'm testing notifications")
+    const streamToString = (stream: any) =>
+        new Promise<string>((resolve, reject) => {
+            const chunks: any[] = [];
+            stream.on("data", (chunk: any) => chunks.push(chunk));
+            stream.on("error", reject);
+            stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+        });
+
+    // const {pgClient, pgp} = await init;
+
+    const s3Client = new S3Client({
+        region: "us-east-1"
+    });
+
+    const s3Res = await s3Client.send(new GetObjectCommand({
+        Bucket: "tradingpost-app-data",
+        Key: "ios/AuthKey_6WPUHTZ3LU.p8"
+    }));
+
+    const iosKeyBody = await streamToString(s3Res.Body);
+    console.log("I'm starting all the setup")
+    const iosOptions: apn.ProviderOptions = {
+        token: {
+            key: iosKeyBody,
+            keyId: '6WPUHTZ3LU',
+            teamId: '25L2ZZWUPA',
+        },
+        production: false
+    }
+    const apnProvider = new apn.Provider(iosOptions);
+    const fcmConfig = await DefaultConfig.fromCacheOrSSM("fcm");
+    const androidNotif = new AndroidNotifications(fcmConfig.authKey);
+    const repo = new NotifRepository(pgClient, pgp)
+    const notificationsSrv = new Notifications(apnProvider, androidNotif, repo);
+
+    console.log("I'm past all the setup")
+    const watchlistId = 120;
+    const currentTime = DateTime.now();
+    const twelveHoursAgo = currentTime.minus({hour: 12});
+
+    const curFormat = currentTime.toUTC().toISO();
+    const twelveFormat = twelveHoursAgo.toUTC().toISO();
+    const u = `https://m.tradingpostapp.com/dash/feed?watchlistId=${watchlistId}&beginDateTime=${twelveFormat}&endDateTime=${curFormat}`;
+    await notificationsSrv.sendMessageToUser(
+        '4a6f0899-dc6d-40cc-aa6a-1febb579d65a'
+        , {
+            title: "Test Notification",
+            body: "Test Notification",
+            data: {
+                url: u
+            }
+        });
 
     // const finicityTransformer = new FinicityTransformer(repository, marketHolidays);
     // const finicitySrv = new FinicityService(finicityApi, repository, finicityTransformer, portfolioSummaryService);

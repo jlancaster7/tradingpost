@@ -23,11 +23,18 @@ import {diff} from "deep-object-diff";
 import Holidays from "./holidays";
 import {SecurityType} from "../brokerage/interfaces";
 
+let m: Map<string, number> = new Map();
+
 export const buildGroups = (securities: any[], max = 100): any[][] => {
     const groups: any[][] = [];
     let group: any[] = [];
     securities.forEach(sec => {
         group.push(sec)
+
+        let x = m.get(sec.symbol)
+        if (!x) m.set(sec.symbol, 1);
+        else console.log("FOUND AGAIN ", sec.symbol)
+
         if (group.length === max) {
             groups.push(group);
             group = [];
@@ -367,16 +374,16 @@ export default class MarketData {
 
     morningPricingRollover = async () => {
         const time930 = DateTime.now().setZone("America/New_York").set({hour: 9, minute: 30, second: 0, millisecond: 0})
+
         if (!(await this.holiday.isTradingDay(time930))) return
 
         const securities = await this.repository.getUsExchangeListedSecuritiesWithPricing();
-
         let securityPrices: addSecurityPrice[] = [];
 
         for (let i = 0; securities.length; i++) {
             const sec = securities[i];
 
-            if (sec.price === null || sec.price === undefined) continue;
+            if (!sec || !sec.price) continue;
 
             securityPrices.push({
                 price: sec.price,
@@ -390,12 +397,14 @@ export default class MarketData {
             });
 
             if (securityPrices.length === 5000) {
+                console.log("Inserting...")
                 await this.repository.upsertEodPrices(securityPrices);
                 securityPrices = [];
             }
         }
 
         await this.repository.upsertEodPrices(securityPrices)
+        console.log("Inserting... fin")
     }
 
     upsertHolidays = async () => {
@@ -522,11 +531,14 @@ export default class MarketData {
     }
 
     public ingestEodOfDayPricing = async () => {
-        const securities = await this.repository.getUsExchangeListedSecuritiesWithPricing();
+        let securities = await this.repository.getUsExchangeListedSecuritiesWithPricing();
 
+        securities = securities.filter(s => s.priceSource === PriceSourceType.IEX);
         const securityGroups: getSecurityWithLatestPrice[][] = buildGroups(securities, 100);
+
         let eodPrices: addSecurityPrice[] = []
         let runningTasks: Promise<any>[] = [];
+        let securityUtpUpdate: number[] = [];
 
         for (let i = 0; i < securityGroups.length; i++) {
             const securityGroup = securityGroups[i];
@@ -541,55 +553,51 @@ export default class MarketData {
                     const _eodPrices = await this._processEod(securityGroup, response);
                     eodPrices = [...eodPrices, ..._eodPrices];
                 } catch (err) {
-                    if (err instanceof PermissionRequiredError) {
-                        for (let i = 0; i < securityGroup.length; i++) {
-                            const sec = securityGroup[i];
-                            try {
-                                const response = await this.iex.bulk([sec.symbol], ["intraday-prices"], {
-                                    sort: "desc",
-                                    chartLast: 1
-                                });
+                    if (!(err instanceof PermissionRequiredError)) {
+                        console.error(`could not fetch data for symbols=${symbols.join(',')} err=`, err)
+                        return;
+                    }
 
-                                const _eodPrices = await this._processEod(securityGroup, response);
-                                eodPrices = [...eodPrices, ..._eodPrices];
-                            } catch (err) {
-                                if (err instanceof PermissionRequiredError) {
-                                    await this.repository.updateSecurityUtp(sec.securityId, true);
-                                    continue;
-                                }
-                                console.error(`fetching eod prices from iex for symbol=${sec.symbol}`)
+                    for (let i = 0; i < securityGroup.length; i++) {
+                        const sec = securityGroup[i];
+
+                        let response;
+                        try {
+                            response = await this.iex.bulk([sec.symbol], ["intraday-prices"], {
+                                sort: "desc",
+                                chartLast: 1
+                            });
+                        } catch (err) {
+                            if (err instanceof PermissionRequiredError) securityUtpUpdate = [...securityUtpUpdate, sec.securityId];
+
+                            else {
+                                console.error(`fetching eod prices from iex for symbol=${sec.symbol} err=`, err)
+                                continue
                             }
                         }
+
+                        const _eodPrices = await this._processEod([sec], response);
+                        eodPrices = [...eodPrices, ..._eodPrices];
                     }
-                    console.error(`could not fetch data for symbols=${symbols.join(',')} err=${err}`)
                 }
             })());
 
             if (runningTasks.length === 8) {
                 await Promise.all(runningTasks);
-                try {
-                    await this.repository.upsertEodPrices(eodPrices);
-                } catch (e) {
-                    console.error(e)
-                    console.error("eod price")
-                }
 
+                console.log("Upserting Prices...")
+                await this.repository.upsertEodPrices(eodPrices);
+                await this.repository.updateSecurityUtp(securityUtpUpdate, true)
                 eodPrices = [];
                 runningTasks = [];
             }
         }
 
-        if (runningTasks.length > 0) await Promise.all(runningTasks)
-
-        try {
-            await this.repository.upsertEodPrices(eodPrices);
-        } catch (e) {
-            console.error(e);
-            console.error("eod price");
-        }
+        await Promise.all(runningTasks)
+        await this.repository.upsertEodPrices(eodPrices);
     }
 
-    private _processEod = async (securityGroup: getSecurityWithLatestPrice[], response: Record<string, any>) => {
+    private _processEod = async (securityGroup: getSecurityWithLatestPrice[], response: Record<string, any> | undefined) => {
         const today4pm = DateTime.now().setZone("America/New_York").set({
             hour: 16,
             second: 0,
@@ -600,6 +608,24 @@ export default class MarketData {
         let eodPrices = []
         for (let j = 0; j < securityGroup.length; j++) {
             const security = securityGroup[j];
+            if (!response) {
+                if (!security.time) continue;
+                if (!security.price) continue;
+
+                // We have a past item in there, so lets roll it forward
+                eodPrices.push({
+                    price: security.price,
+                    high: security.high,
+                    low: security.low,
+                    isEod: true,
+                    isIntraday: false,
+                    open: security.open,
+                    time: today4pm,
+                    securityId: security.securityId
+                })
+                continue;
+            }
+
             const iexSecurity = response[security.symbol];
             if (!iexSecurity) {
                 if (!security.time) continue;
@@ -705,7 +731,7 @@ export default class MarketData {
                                 eodPrices = [...eodPrices, ...eod];
                             } catch (err) {
                                 if (err instanceof PermissionRequiredError) {
-                                    await this.repository.updateSecurityUtp(sec.securityId, true);
+                                    await this.repository.updateSecurityUtp([sec.securityId], true);
                                     continue;
                                 }
                                 console.error(`fetching intraday prices from iex for symbol=${sec.symbol}`)
