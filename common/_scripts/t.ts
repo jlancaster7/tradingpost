@@ -112,7 +112,7 @@ const run = async () => {
                 url: u
             }
         });
-
+    console.log("SENT!")
     // const finicityTransformer = new FinicityTransformer(repository, marketHolidays);
     // const finicitySrv = new FinicityService(finicityApi, repository, finicityTransformer, portfolioSummaryService);
 
