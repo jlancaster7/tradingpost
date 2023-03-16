@@ -93,6 +93,7 @@ var addAvailableApi = function (version) {
     }
 };
 addAvailableApi("1.9.3");
+addAvailableApi("1.10.1");
 // start the express server
 app.listen(port, function () {
     // tslint:disable-next-line:no-console
