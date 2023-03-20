@@ -26,6 +26,7 @@
     "luxon": "^2.4.0",
     "mathjs": "^10.6.4",
     "node-fetch": "^2.6.7",
+    "openai": "^3.2.1",
     "pg": "^8.8.0",
     "pg-promise": "^10.12.1",
     "puppeteer": "^18.1.0",

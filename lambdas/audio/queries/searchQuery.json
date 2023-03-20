@@ -1,0 +1,25 @@
+{
+    "bool": {
+        "must": [
+            {
+                "bool": {
+                    "should": ${searchAndSourceSubQueries},
+                    "minimum_should_match": 2,
+                    "boost": 1
+                }
+            },
+            {
+                "match": {
+                    "postType": ${platform}
+                }
+            }, 
+            {
+              "range": {
+                "platformCreatedAt": {
+                  "gte": ${date}
+                }
+              }
+            }
+        ]
+    }
+}

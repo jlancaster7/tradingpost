@@ -1,0 +1,11 @@
+{
+    "multi_match": {
+        "fields": [
+            "content.body",
+            "content.title"
+        ],
+        "query": ${searchTerm},
+        "analyzer": "synonym_analyzer",
+        "boost": 1
+    }
+}
