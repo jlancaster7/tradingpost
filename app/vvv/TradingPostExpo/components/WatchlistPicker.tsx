@@ -36,7 +36,7 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
         [data, setData] = useState<(Interface.ISecurityList | {})[]>([]),
         [datasetKey, setDatasetKey] = useState("")
     let { securities: {
-            list: securities
+            list: securities, bySymbol
         } } = useSecuritiesList()
 
     //    if (props.selectionConverter) {
@@ -69,11 +69,13 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
             clearTimeout(delayRef.current);
 
         delayRef.current = setTimeout(() => {
-
+            const additionalTickersToDisplay = ['META', 'GOOG', 'AAPL', 'MSFT', 'TSLA', 'ABNB', 'NVDA', 'V', 'SHOP', 'CMG', 'DIS', 'CAT', 'HD'].filter(a => bySymbol[a] && !selectedItems[bySymbol[a].id])
+            console.log(additionalTickersToDisplay)
             const items: (ISecurityList | {})[] = securities.filter((s, i) =>
-                (!searchText && ['META', 'GOOG', 'BRK.B', 'AAPL', 'MSFT', 'TSLA', 'ABNB', 'NVDA', 'V', 'SHOP', 'CMG', 'DIS'].includes(s.symbol)) ||
+                (!searchText && (additionalTickersToDisplay.includes(s.symbol) || selectedItems[s.id])) ||
                 ((searchText.length >= 3 && new RegExp(searchText, "gi").test(s.security_name))) ||
                 (searchText.length && (new RegExp(searchText, "gi")).test(s.symbol))
+                
             ).sort((a, b) => {
                 if (selectedItems[a.id] && !selectedItems[b.id])
                     return -1
@@ -101,16 +103,10 @@ export const WatchlistPicker = (props: { selectedItems: Record<number, true>, se
                             return 0
                     })()
                 }
-                //? a.symbol.localeCompare(b.symbol) : 
-                //                (selectedItems[a.id] ? -1 : -1)
             });
 
-            //const gap = Array.from({ length: numItemsPerRow - (items.length % numItemsPerRow) }, () => empty);
-            
-            //if (gap.length !== 4)
-            //    items.push(...gap);
             // @ts-ignore
-            setData(items.filter(a => a.symbol !== 'GOOGL'))
+            setData(items.filter(a => a.symbol !== 'GOOGL').slice(0,15))
             setDatasetKey(searchText);
         }, 333) as any;
     }, [searchText, securities, selectedItems])
