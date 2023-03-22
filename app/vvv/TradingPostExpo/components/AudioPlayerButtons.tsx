@@ -38,7 +38,7 @@ export const AudioPlayerButtons = (props: {trackNumber?: number, horizontal?: bo
 
     return (
         <View style={horizontal ? {flex: 1, flexDirection: 'row'} : {flexDirection: 'column'}}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginVertical: sizes.rem0_25, alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', justifyContent:'space-between', marginVertical: sizes.rem0_25, alignItems: 'center' }}>
                 <Pressable onPress={async () => {
                     await TrackPlayer.seekTo(progress.position - 10)
                     console.log('pressing rewind')

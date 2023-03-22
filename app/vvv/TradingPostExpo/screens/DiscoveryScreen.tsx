@@ -173,13 +173,13 @@ export const DiscoveryScreen = () => {
                 renderItem={(info) => {
                     return info.item
                 }} />
-            <View style={{position: "absolute",
+            {/*<View style={{position: "absolute",
                     bottom: 0,
                     alignItems: "stretch",
                     width: "100%",
                     backgroundColor: "white",}}>
                 <AudioPlayerBottomBar />
-            </View>
+            </View>*/}
 
            
         </View>

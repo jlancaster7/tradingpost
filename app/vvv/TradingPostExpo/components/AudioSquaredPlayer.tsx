@@ -16,7 +16,7 @@ export const SquaredAudioPlayer = (props: { iconUriList: string[],  track: Track
     return (
         <View style={[{flex: 1}]}>        
             
-                <View style={[shaded, {flexGrow: 1, width: width, flexDirection: 'column',backgroundColor: 'rgba(53,64,162, 0.2)', alignItems: 'center', justifyContent: 'center', paddingVertical: sizes.rem1, paddingHorizontal: sizes.rem1, marginBottom:sizes.rem0_25, marginRight: sizes.rem0_5}]}>
+                <View style={[shaded, {flexGrow: 1, width: width, flexDirection: 'column',backgroundColor: 'rgba(61,88,184, 0.50)', alignItems: 'center', justifyContent: 'center', paddingVertical: sizes.rem1, paddingHorizontal: sizes.rem1, marginBottom:sizes.rem0_25, marginRight: sizes.rem0_5}]}>
                     <Pressable onPress={async () => {
                             if (!track?.relatedId) return;
                             nav.navigate("WatchlistViewer", {
@@ -26,7 +26,7 @@ export const SquaredAudioPlayer = (props: { iconUriList: string[],  track: Track
                         }}
                         style={{flexGrow: 1,flexDirection: 'column',  justifyContent: 'center', alignItems: 'center'}}
                         >
-                        <OverlappingIconList iconSize={iconSize} iconUriList={iconUriList} maxIcons={maxIcons} textColor={AppColors.primaryShaded}/>
+                        <OverlappingIconList iconSize={iconSize} iconUriList={iconUriList} maxIcons={maxIcons} textColor={'white'}/>
                     
                         <Text style={{ color: AppColors.primary, textAlign: 'center'}}>
                                 {track.title}
@@ -56,7 +56,7 @@ export const SquaredAudioPlayer = (props: { iconUriList: string[],  track: Track
                                 height: 36,
                                 width: 42
                             }}/>
-                        <Text style={{color: '#AEAEAE', textAlign: 'center', fontSize: fonts.xSmall}}>
+                        <Text style={{color: 'grey', textAlign: 'center', fontSize: fonts.xSmall}}>
                             {`${track.createdAt < 1 ? Math.round(track.createdAt * 60) : track.createdAt} ${track.createdAt < 1 ? 'minutes': 'hours'} ago`}
                         </Text>
                     </Pressable>

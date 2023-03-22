@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationProp } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { ImageBackground, ImageSourcePropType } from "react-native";
+import { ImageBackground, ImageSourcePropType, View } from "react-native";
 import { NavIconKeys, navIcons, NavIconTypeOverride } from "../images";
 import { FeedScreen } from "../screens/FeedScreen";
 import { NotificationScreen } from "../screens/NotificationScreen";
@@ -11,7 +11,8 @@ import { Api } from "@tradingpost/common/api";
 import { useAppUser } from "../Authentication";
 import { registerDeviceForNotifications } from "../utils/notifications";
 import { DiscoveryScreen } from "../screens/DiscoveryScreen";
-import { AudioScreen } from "../screens/AudioScreen";
+import { AudioPlayerBottomBar } from '../components/AudioPlayerBottomBar';
+import { SetupService } from "../utils/PlaybackService";
 
 const BottomTab = createBottomTabNavigator<any>();
 const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any>, p?: any, headerRight?: (props: { navigation: NavigationProp<any>, route: any }) => React.ReactNode }> = {
@@ -36,9 +37,15 @@ const DashComponents: Record<keyof typeof navIcons, { c: React.ComponentType<any
 }
 
 export function BottomTabNavigator() {
-    const [hasNotifications, setHasNotifications] = useState(false);
+    const [hasNotifications, setHasNotifications] = useState(false),
+          [playerSetup, setPlayerSetup] = useState(false);
+
     useEffect(() => {
         const t = async () => {
+            console.log('pre setup service')
+            const test = await SetupService()
+            console.log('is player set up?',test)
+            setPlayerSetup(test)
             const notificationCount = await Api.Notification.extensions.hasNotifications();
             setHasNotifications(notificationCount.unseenCount > 0);
         }
@@ -69,7 +76,7 @@ export function BottomTabNavigator() {
     }, [loginState?.appUser]);
 
 
-    return <BottomTab.Navigator
+    return <><BottomTab.Navigator
         initialRouteName="Feed"
         screenOptions={{
             //tabBarActiveTintColor: Colors[colorScheme].tint,
@@ -102,4 +109,6 @@ export function BottomTabNavigator() {
                 initialParams={{ ...DashComponents[n as keyof typeof navIcons]?.p }}
             />)}
     </BottomTab.Navigator>
+    {playerSetup && <AudioPlayerBottomBar />}
+    </>
 }

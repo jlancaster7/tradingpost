@@ -77,13 +77,7 @@ export const AudioScreen = (props: any) => {
                     }}
                     />
             </Section>
-            <View style={{position: "absolute",
-                    bottom: 0,
-                    alignItems: "stretch",
-                    width: "100%",
-                    backgroundColor: "white",}}>
-                <AudioPlayerBottomBar />
-            </View>
+            
         </View>
     )
 }
