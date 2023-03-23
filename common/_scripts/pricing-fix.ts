@@ -238,7 +238,8 @@ class PricingFix {
 
         let finCnt = 0;
         let runningTasks: Promise<any>[] = [];
-        let range = '20220101';
+        let range = '20230101';
+        console.log("Running")
         for (let i = 0; i < groupSecurities.length; i++) {
             const group = groupSecurities[i];
             runningTasks.push((async () => {
@@ -279,7 +280,6 @@ class PricingFix {
                         if (latestDate.isValid && dt.toUnixInteger() > latestDate.toUnixInteger()) latestDate = dt
                     }
 
-                    console.log(`\t PROCESSED:::: ${finCnt}/${securities.length}`);
                     // if (earliestDate !== null && earliestDate.isValid && latestDate !== null && latestDate.isValid) {
                     //     const datefmt = `${earliestDate.year}-${earliestDate.month}-${earliestDate.day}-to-${latestDate.year}-${latestDate.month}-${latestDate.day}`
                     //     const fmt = `${symbol}-${datefmt}.json`
@@ -328,6 +328,7 @@ class PricingFix {
                             isIntraday: false
                         });
                     })
+                    console.log(`\t PROCESSED:::: ${finCnt}/${securities.length}`);
                 }
 
                 await this.repository.upsertEodPrices(securityPrices)
@@ -337,6 +338,8 @@ class PricingFix {
                 await Promise.all(runningTasks);
                 runningTasks = [];
             }
+
+            console.log(`Group: ${i}/${groupSecurities.length}`)
         }
 
         if (runningTasks.length > 0) await Promise.all(runningTasks);
@@ -434,6 +437,7 @@ class PricingFix {
     const iexCfg = await DefaultConfig.fromCacheOrSSM("iex");
 
     const pricingFix = new PricingFix(pgClient, pgp, iexCfg.key);
+    console.log("Here..")
     await pricingFix.iexHistorical();
     console.log("Finished")
 })()
