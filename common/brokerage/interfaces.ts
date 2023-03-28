@@ -767,7 +767,9 @@ export enum BrokerageTaskType {
     DeleteAccount = "DELETE_ACCOUNT",
     UpdateAccount = "UPDATE_ACCOUNT",
     ToDo = "TODO",
-    UpdatePortfolioStatistics = "UPDATE_PORTFOLIO_STATISTICS"
+    UpdatePortfolioStatistics = "UPDATE_PORTFOLIO_STATISTICS",
+
+    Test = "TEST"
 }
 
 export enum BrokerageTaskStatusType {
@@ -790,6 +792,7 @@ export type BrokerageTask = {
     data: any | null
     error: any | null
     messageId: string | null
+    retry?: number
 }
 
 export type BrokerageTaskTable = {

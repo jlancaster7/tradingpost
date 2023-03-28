@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import {Context} from 'aws-lambda';
 import MarketData from "@tradingpost/common/market-data";
-import {init} from "../init";
+import {init} from "../init/init";
 
 const runLambda = async () => {
     const {marketHolidays, marketRepository, iex} = await init;

@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import {Context} from 'aws-lambda';
-import {init} from "../init";
+import {init} from "../init/init";
 import MarketData from "@tradingpost/common/market-data/index";
 
 const runLambda = async () => {

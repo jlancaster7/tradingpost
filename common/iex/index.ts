@@ -14,8 +14,15 @@ export class IEXError extends Error {
 }
 
 export class RetryError extends Error {
-    constructor(message?: string) {
+    private readonly delayedSeconds: number;
+
+    constructor(message?: string, delayedSeconds?: number) {
         super(message);
+        this.delayedSeconds = delayedSeconds ? delayedSeconds : 0
+    }
+
+    getDelayedSeconds = () => {
+        return this.delayedSeconds
     }
 }
 

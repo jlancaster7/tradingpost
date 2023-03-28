@@ -87,7 +87,6 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
             cnt++
             if (idx < Object.keys(params).length - 1) query += ','
         });
-
         query += ` WHERE id = $` + (paramPass.length + 1)
         paramPass.push(taskId);
         await this.db.none(query, paramPass);
@@ -1759,7 +1758,9 @@ export default class Repository implements IBrokerageRepository, ISummaryReposit
         ch
         .
         security_type,
-        s.symbol   
+        s
+        .
+        symbol
         ORDER
         BY
         value

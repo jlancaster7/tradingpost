@@ -5,7 +5,9 @@ export declare class IEXError extends Error {
     constructor(message: string, iexMessage: string, statusCode: number);
 }
 export declare class RetryError extends Error {
-    constructor(message?: string);
+    private readonly delayedSeconds;
+    constructor(message?: string, delayedSeconds?: number);
+    getDelayedSeconds: () => number;
 }
 export declare class PermissionRequiredError extends Error {
     constructor(msg?: string);

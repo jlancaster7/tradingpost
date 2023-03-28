@@ -110,8 +110,8 @@ export declare class Service {
     };
     _mapFinicityHolding: (pos: any, internalFinAccountId: number) => FinicityHolding;
     _mapFinicityTransaction: (tx: any, internalFinAccountId: number) => FinicityTransaction;
-    importHoldings: (tpUserId: string, finicityUser: FinicityUser) => Promise<void>;
-    importTransactions: (tpUserId: string, finicityUser: FinicityUser) => Promise<void>;
+    importHoldings: (tpUserId: string, finicityUser: FinicityUser) => Promise<Map<string, any>>;
+    importTransactions: (tpUserId: string, finicityUser: FinicityUser) => Promise<Map<string, any>>;
     _iterateTransactions: (tpUserId: string, finicityUser: FinicityUser) => Promise<FinicityTransaction[]>;
     removeAccounts: (brokerageCustomerId: string, accountIds: string[]) => Promise<number[]>;
 }

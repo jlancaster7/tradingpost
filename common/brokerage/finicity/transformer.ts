@@ -468,15 +468,23 @@ export class Transformer extends BaseTransformer {
         // Check our DB to see if it exists, if it does, then push into structure
         // Thinking for each institution we are going ot have to create our own parser for options and validate the memo
         // and description like finicity does, but rather than defaulting to finicity, we just use our own representation...
-
-        if (!transaction.description.toLowerCase().includes("call") && !transaction.description.toLowerCase().includes("put")) {
+        if (!transaction.description.toLowerCase().includes("call") &&
+            !transaction.description.toLowerCase().includes("put") &&
+            !transaction.description.toLowerCase().includes("option")
+        ) {
             return null;
         }
 
+        let action = "", qty = "", symbol = "", month = "", day = "", year = "", strike = "", optionType = "",
+            price = "", _ = "";
         // Lazy man's way of pulling out terms / dates / etc... rather than writing regular expression
         // Example: Sold 1 OPEN Oct 28 2022 3.0 Call @ 0.43 Sold=Action, 1=Qty, OPEN=symbol, Oct=Month, 28=Day,
         // 2022=Year 3.0=StrikePrice, Call = type of option, @=_(Not needed) 0.43 = price
-        const [action, qty, symbol, month, day, year, strikePriceStr, optionType, _, price] = transaction.description.split(" ");
+        if (transaction.description.toLowerCase().includes("option")) {
+            const transactionTxt = getTextBetweenParentheses(transaction.description);
+            [symbol, month, day, year, strike, optionType] = transactionTxt.split(" ");
+        } else
+            [action, qty, symbol, month, day, year, strike, optionType, _, price] = transaction.description.split(" ");
 
         const dtStr = `${month} ${day}, ${year}` // Oct 6, 2014
         const expirationDate = DateTime.fromFormat(dtStr, "DD");
@@ -484,7 +492,7 @@ export class Transformer extends BaseTransformer {
             console.warn(`could not parse expiration date=${dtStr}`)
         }
 
-        const strikePrice = parseFloat(strikePriceStr);
+        const strikePrice = parseFloat(strike);
 
         const option = await this.repository.getOptionContract(securityId, expirationDate, strikePrice, optionType)
         if (!option) {
@@ -551,4 +559,16 @@ export class Transformer extends BaseTransformer {
         });
         return tpInId
     }
+}
+
+const getTextBetweenParentheses = (input: string): string => {
+    const regex = /\((.*?)\)/g;
+    const matches = [];
+
+    let match;
+    while ((match = regex.exec(input))) {
+        matches.push(match[1]);
+    }
+
+    return matches[0];
 }

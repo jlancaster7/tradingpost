@@ -1,87 +1,17 @@
 import {Context} from "aws-lambda";
-import pg from "pg";
-import pgPromise, {IDatabase, IMain} from "pg-promise";
-import {DefaultConfig} from "@tradingpost/common/configuration/index";
 import Notifications from "@tradingpost/common/notifications";
 import Repository from "@tradingpost/common/notifications/repository";
-import apn from 'apn'
-import {GetObjectCommand, S3Client} from "@aws-sdk/client-s3";
-import AndroidNotifications from "@tradingpost/common/notifications/android";
 import {subscriptionsNewHoldings} from "@tradingpost/common/notifications/bll";
-import Holidays from "@tradingpost/common/market-data/holidays";
-import MarketDataRepo from "@tradingpost/common/market-data/repository";
-
-pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
-    return parseInt(value);
-});
-
-pg.types.setTypeParser(pg.types.builtins.FLOAT8, (value: string) => {
-    return parseFloat(value);
-});
-
-pg.types.setTypeParser(pg.types.builtins.FLOAT4, (value: string) => {
-    return parseFloat(value);
-});
-
-pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value: string) => {
-    return parseFloat(value);
-});
-
-let pgClient: IDatabase<any>;
-let pgp: IMain;
-let notificationsSrv: Notifications;
-let notificationsRepo: Repository;
-let holidays: Holidays;
-
-const streamToString = (stream: any) =>
-    new Promise<string>((resolve, reject) => {
-        const chunks: any[] = [];
-        stream.on("data", (chunk: any) => chunks.push(chunk));
-        stream.on("error", reject);
-        stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-    });
+import {init} from "../init/init";
+import {initNotifications} from "../init/notifications";
 
 const run = async () => {
-    if (!pgClient || !pgp) {
-        const postgresConfiguration = await DefaultConfig.fromCacheOrSSM("postgres");
-        pgp = pgPromise({});
-        pgClient = pgp({
-            host: postgresConfiguration.host,
-            user: postgresConfiguration.user,
-            password: postgresConfiguration.password,
-            database: postgresConfiguration.database
-        });
+    const {pgp, pgClient, marketHolidays} = await init;
+    const {apnProvider, androidProvider} = await initNotifications;
+    const notificationsRepo = new Repository(pgClient, pgp);
+    const notificationsSrv = new Notifications(apnProvider, androidProvider, notificationsRepo);
 
-        const s3Client = new S3Client({
-            region: "us-east-1"
-        });
-
-        const s3Res = await s3Client.send(new GetObjectCommand({
-            Bucket: "tradingpost-app-data",
-            Key: "ios/AuthKey_6WPUHTZ3LU.p8"
-        }));
-
-        const iosKeyBody = await streamToString(s3Res.Body);
-
-        const iosOptions: apn.ProviderOptions = {
-            token: {
-                key: iosKeyBody,
-                keyId: '6WPUHTZ3LU',
-                teamId: '25L2ZZWUPA',
-            },
-            production: true
-        }
-        const apnProvider = new apn.Provider(iosOptions);
-
-        const fcmConfig = await DefaultConfig.fromCacheOrSSM("fcm");
-        const androidNotif = new AndroidNotifications(fcmConfig.authKey);
-        notificationsRepo = new Repository(pgClient, pgp);
-        notificationsSrv = new Notifications(apnProvider, androidNotif, notificationsRepo);
-        const marketDataRepo = new MarketDataRepo(pgClient, pgp);
-        holidays = new Holidays(marketDataRepo);
-    }
-
-    await subscriptionsNewHoldings(notificationsSrv, notificationsRepo, holidays);
+    await subscriptionsNewHoldings(notificationsSrv, notificationsRepo, marketHolidays);
 }
 
 export const handler = async (event: any, context: Context) => {

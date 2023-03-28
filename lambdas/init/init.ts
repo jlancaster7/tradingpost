@@ -4,6 +4,10 @@ import pg from "pg";
 import IEX from "@tradingpost/common/iex/index";
 import Holidays from "@tradingpost/common/market-data/holidays";
 import Repository from "@tradingpost/common/market-data/repository";
+import {S3Client} from "@aws-sdk/client-s3";
+import {SQSClient} from "@aws-sdk/client-sqs";
+import ElasticService from "@tradingpost/common/elastic/index";
+import {Client as ElasticClient} from "@elastic/elasticsearch";
 
 pg.types.setTypeParser(pg.types.builtins.INT8, (value: string) => {
     return parseInt(value);
@@ -37,5 +41,20 @@ export const init = (async () => {
     const iexConfiguration = await DefaultConfig.fromCacheOrSSM("iex");
     const iex = new IEX(iexConfiguration.key);
 
-    return {pgp, pgClient, marketHolidays, marketRepository, iex}
+    const s3Client = new S3Client({region: "us-east-1"});
+    const sqsClient = new SQSClient({region: 'us-east-1'});
+
+    const elasticConfiguration = await DefaultConfig.fromCacheOrSSM("elastic");
+    const elasticService = new ElasticService(new ElasticClient({
+        cloud: {
+            id: elasticConfiguration.cloudId
+        },
+        auth: {
+            apiKey: elasticConfiguration.apiKey
+        },
+        maxRetries: 5,
+    }), "tradingpost-search");
+
+    return {pgp, pgClient, marketHolidays, marketRepository, iex, sqsClient, s3Client, elasticService}
 })();
+
