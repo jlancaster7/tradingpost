@@ -49,6 +49,20 @@ provider:
       - subnet-0365b7b01827b2dfe
 
 functions:
+  # ================================ Healthcheck ================================
+  healthcheck:
+    handler: healthcheck/api.handler
+    description: Healthcheck for the Api
+    logRetentionInDays: 14
+    timeout: 10
+    memorySize: 512
+    reservedConcurrency: 1
+    events:
+      - schedule:
+          rate: cron(0/1 * * * ? *)
+          enabled: true
+
+
   # ================================ Notifications ================================
 
   ###### Send Post Notifications for Watchlists Users Follow & Create
