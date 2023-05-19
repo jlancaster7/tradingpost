@@ -230,7 +230,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/healthcheck.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/healthcheck.zip"
               },
               "Handler": "healthcheck/api.handler",
               "Runtime": "nodejs16.x",
@@ -275,12 +275,12 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/notification-post-watchlists.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/notification-post-watchlists.zip"
               },
               "Handler": "notifications/post-watchlists.handler",
               "Runtime": "nodejs16.x",
               "FunctionName": "tradingpost-job-production-notification-post-watchlists",
-              "MemorySize": 2048,
+              "MemorySize": 1024,
               "Timeout": 900,
               "Architectures": [
                 "x86_64"
@@ -320,12 +320,12 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/notification-post-holdings.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/notification-post-holdings.zip"
               },
               "Handler": "notifications/post-holdings.handler",
               "Runtime": "nodejs16.x",
               "FunctionName": "tradingpost-job-production-notification-post-holdings",
-              "MemorySize": 2048,
+              "MemorySize": 1024,
               "Timeout": 900,
               "Architectures": [
                 "x86_64"
@@ -365,12 +365,12 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/notification-new-trades.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/notification-new-trades.zip"
               },
               "Handler": "notifications/new-holdings.handler",
               "Runtime": "nodejs16.x",
               "FunctionName": "tradingpost-job-production-notification-new-trades",
-              "MemorySize": 2048,
+              "MemorySize": 1024,
               "Timeout": 900,
               "Architectures": [
                 "x86_64"
@@ -410,7 +410,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/generate-brokerage-tasks.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/generate-brokerage-tasks.zip"
               },
               "Handler": "brokerage/generate-brokerage-tasks.run",
               "Runtime": "nodejs16.x",
@@ -455,7 +455,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/brokerage-task-runner.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/brokerage-task-runner.zip"
               },
               "Handler": "brokerage/task-runner.handler",
               "Runtime": "nodejs16.x",
@@ -500,7 +500,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/add-holidays.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/add-holidays.zip"
               },
               "Handler": "market-data/add-holidays.run",
               "Runtime": "nodejs16.x",
@@ -545,7 +545,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/eod-pricing.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/eod-pricing.zip"
               },
               "Handler": "market-data/eod-pricing.run",
               "Runtime": "nodejs16.x",
@@ -590,7 +590,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/intraday-pricing.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/intraday-pricing.zip"
               },
               "Handler": "market-data/intraday-pricing.run",
               "Runtime": "nodejs16.x",
@@ -635,7 +635,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/morning-pricing-forward.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/morning-pricing-forward.zip"
               },
               "Handler": "market-data/morning-pricing-rollover.run",
               "Runtime": "nodejs16.x",
@@ -680,7 +680,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/securities-information.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/securities-information.zip"
               },
               "Handler": "market-data/securities-information.run",
               "Runtime": "nodejs16.x",
@@ -725,7 +725,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/securities-update.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/securities-update.zip"
               },
               "Handler": "market-data/securities-update.run",
               "Runtime": "nodejs16.x",
@@ -770,7 +770,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/security-pruning.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/security-pruning.zip"
               },
               "Handler": "market-data/security-pruning.run",
               "Runtime": "nodejs16.x",
@@ -815,7 +815,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/spotify.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/spotify.zip"
               },
               "Handler": "social-media/spotify.run",
               "Runtime": "nodejs16.x",
@@ -860,7 +860,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/substack.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/substack.zip"
               },
               "Handler": "social-media/substack.run",
               "Runtime": "nodejs16.x",
@@ -905,12 +905,12 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/twitter.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/twitter.zip"
               },
               "Handler": "social-media/twitter.run",
               "Runtime": "nodejs16.x",
               "FunctionName": "tradingpost-job-production-twitter",
-              "MemorySize": 1600,
+              "MemorySize": 1024,
               "Timeout": 900,
               "Architectures": [
                 "x86_64"
@@ -950,7 +950,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z/youtube.zip"
+                "S3Key": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z/youtube.zip"
               },
               "Handler": "social-media/youtube.run",
               "Runtime": "nodejs16.x",
@@ -999,17 +999,6 @@
               "Description": "Healthcheck for the Api"
             }
           },
-          "AddDashholidaysLambdaVersionq44cJMukgi1CgkBkUhdf5cBRMIcSeFBOsDBG9z9I": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "AddDashholidaysLambdaFunction"
-              },
-              "CodeSha256": "7WM4LtU+QQXC/LTKkE59XLjwqr2ngH+I7ICxZRQp5Es=",
-              "Description": "Ingests market holidays once a year"
-            }
-          },
           "SecuritiesDashupdateLambdaVersionO6DTbqPyoQTMieGuR9o2GsKrbgQDNpQxRuQ1sSp9j8": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
@@ -1054,6 +1043,17 @@
               "Description": "Ingests YouTube User Data"
             }
           },
+          "AddDashholidaysLambdaVersionq44cJMukgi1CgkBkUhdf5cBRMIcSeFBOsDBG9z9I": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "AddDashholidaysLambdaFunction"
+              },
+              "CodeSha256": "7WM4LtU+QQXC/LTKkE59XLjwqr2ngH+I7ICxZRQp5Es=",
+              "Description": "Ingests market holidays once a year"
+            }
+          },
           "GenerateDashbrokerageDashtasksLambdaVersiondql75R5ETvt3WUSUnyjktmYlvmD83lSpHz1XVMxls": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
@@ -1063,17 +1063,6 @@
               },
               "CodeSha256": "kYuNp8I7AoZwsxPFOMazXqE0SB0MIip5gmwQP1mL1xk=",
               "Description": "Generates tasks for brokerage to process"
-            }
-          },
-          "EodDashpricingLambdaVersion01AtreXgUQWRioZmBQ86cj79Iy4Flf0N73CDqkPWUE": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "EodDashpricingLambdaFunction"
-              },
-              "CodeSha256": "SGuo8MQCFfclRYOpXNmZ8ntr8ngSVHgbVnfPME+di1U=",
-              "Description": "Ingests pricing for securities after market close & allow for 15min delay to kick in"
             }
           },
           "IntradayDashpricingLambdaVersion0GZDFAzj7thDq4rFcI7qnRlwaK4Gt9Hb3zidOzcWUY": {
@@ -1109,6 +1098,17 @@
               "Description": "Runs every trading day at 5AM ET and updates securities information"
             }
           },
+          "EodDashpricingLambdaVersion01AtreXgUQWRioZmBQ86cj79Iy4Flf0N73CDqkPWUE": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "EodDashpricingLambdaFunction"
+              },
+              "CodeSha256": "SGuo8MQCFfclRYOpXNmZ8ntr8ngSVHgbVnfPME+di1U=",
+              "Description": "Ingests pricing for securities after market close & allow for 15min delay to kick in"
+            }
+          },
           "BrokerageDashtaskDashrunnerLambdaVersionqjMVsH7vhImCZzhAJVGrYHws4BWgGabhm0r0Wk89MSg": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
@@ -1120,7 +1120,7 @@
               "Description": "Runs brokerage tasks that are pushed to SQS queue -- rather than on cadence"
             }
           },
-          "NotificationDashpostDashwatchlistsLambdaVersionnWeqwXQdeQuMLfsbOHG1kMYKP9ByQYDklBO5z8pzw": {
+          "NotificationDashpostDashwatchlistsLambdaVersionriwwQlif6qUBWZhNQxoynXenblZ5RwxJM6zCTblyc": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
@@ -1131,18 +1131,7 @@
               "Description": "Pulls posts related to watchlist symbols and sends a notification"
             }
           },
-          "NotificationDashnewDashtradesLambdaVersionkC3ZMH0VhAuRDHBhRSVIrKjwEF28C0a0y88tfGMMgo": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "NotificationDashnewDashtradesLambdaFunction"
-              },
-              "CodeSha256": "+3If2JAgLsOFM5qSoQ7RBHKSQAEIBYJkQKUOGpL7k8o=",
-              "Description": "Send a notification to a user who follows someone, and that someone has new holds/has made trades"
-            }
-          },
-          "NotificationDashpostDashholdingsLambdaVersiondAxgZCNZcWJFHX4V7KvXT8dgytbJNjPjSSa3n9Rp60": {
+          "NotificationDashpostDashholdingsLambdaVersionpbKSLxHFYhzEid0TyydgLYi4TnMFGSBeqiRPkagjo": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
@@ -1153,7 +1142,18 @@
               "Description": "Pulls posts related to the holdings that users have when they've signed up with a brokerage account"
             }
           },
-          "TwitterLambdaVersion3EEdaDcD0Vbsdh2vvFO2dTdSoCN7KpkHJaY5apE1Ao": {
+          "NotificationDashnewDashtradesLambdaVersionQjTUqx4hB0WqnP4kk750h1C5cRPfT5wTX5QtG6ASWo": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "NotificationDashnewDashtradesLambdaFunction"
+              },
+              "CodeSha256": "+3If2JAgLsOFM5qSoQ7RBHKSQAEIBYJkQKUOGpL7k8o=",
+              "Description": "Send a notification to a user who follows someone, and that someone has new holds/has made trades"
+            }
+          },
+          "TwitterLambdaVersionnvwBwqlab5DKjmGnsls2nHi0rBk8wKDr8UHy1nizs": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
@@ -2097,15 +2097,6 @@
               "Name": "sls-tradingpost-job-production-HealthcheckLambdaFunctionQualifiedArn"
             }
           },
-          "AddDashholidaysLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "AddDashholidaysLambdaVersionq44cJMukgi1CgkBkUhdf5cBRMIcSeFBOsDBG9z9I"
-            },
-            "Export": {
-              "Name": "sls-tradingpost-job-production-AddDashholidaysLambdaFunctionQualifiedArn"
-            }
-          },
           "SecuritiesDashupdateLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
@@ -2142,6 +2133,15 @@
               "Name": "sls-tradingpost-job-production-YoutubeLambdaFunctionQualifiedArn"
             }
           },
+          "AddDashholidaysLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "AddDashholidaysLambdaVersionq44cJMukgi1CgkBkUhdf5cBRMIcSeFBOsDBG9z9I"
+            },
+            "Export": {
+              "Name": "sls-tradingpost-job-production-AddDashholidaysLambdaFunctionQualifiedArn"
+            }
+          },
           "GenerateDashbrokerageDashtasksLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
@@ -2149,15 +2149,6 @@
             },
             "Export": {
               "Name": "sls-tradingpost-job-production-GenerateDashbrokerageDashtasksLambdaFunctionQualifiedArn"
-            }
-          },
-          "EodDashpricingLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "EodDashpricingLambdaVersion01AtreXgUQWRioZmBQ86cj79Iy4Flf0N73CDqkPWUE"
-            },
-            "Export": {
-              "Name": "sls-tradingpost-job-production-EodDashpricingLambdaFunctionQualifiedArn"
             }
           },
           "IntradayDashpricingLambdaFunctionQualifiedArn": {
@@ -2187,6 +2178,15 @@
               "Name": "sls-tradingpost-job-production-SecuritiesDashinformationLambdaFunctionQualifiedArn"
             }
           },
+          "EodDashpricingLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "EodDashpricingLambdaVersion01AtreXgUQWRioZmBQ86cj79Iy4Flf0N73CDqkPWUE"
+            },
+            "Export": {
+              "Name": "sls-tradingpost-job-production-EodDashpricingLambdaFunctionQualifiedArn"
+            }
+          },
           "BrokerageDashtaskDashrunnerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
@@ -2199,34 +2199,34 @@
           "NotificationDashpostDashwatchlistsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "NotificationDashpostDashwatchlistsLambdaVersionnWeqwXQdeQuMLfsbOHG1kMYKP9ByQYDklBO5z8pzw"
+              "Ref": "NotificationDashpostDashwatchlistsLambdaVersionriwwQlif6qUBWZhNQxoynXenblZ5RwxJM6zCTblyc"
             },
             "Export": {
               "Name": "sls-tradingpost-job-production-NotificationDashpostDashwatchlistsLambdaFunctionQualifiedArn"
             }
           },
-          "NotificationDashnewDashtradesLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "NotificationDashnewDashtradesLambdaVersionkC3ZMH0VhAuRDHBhRSVIrKjwEF28C0a0y88tfGMMgo"
-            },
-            "Export": {
-              "Name": "sls-tradingpost-job-production-NotificationDashnewDashtradesLambdaFunctionQualifiedArn"
-            }
-          },
           "NotificationDashpostDashholdingsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "NotificationDashpostDashholdingsLambdaVersiondAxgZCNZcWJFHX4V7KvXT8dgytbJNjPjSSa3n9Rp60"
+              "Ref": "NotificationDashpostDashholdingsLambdaVersionpbKSLxHFYhzEid0TyydgLYi4TnMFGSBeqiRPkagjo"
             },
             "Export": {
               "Name": "sls-tradingpost-job-production-NotificationDashpostDashholdingsLambdaFunctionQualifiedArn"
             }
           },
+          "NotificationDashnewDashtradesLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "NotificationDashnewDashtradesLambdaVersionQjTUqx4hB0WqnP4kk750h1C5cRPfT5wTX5QtG6ASWo"
+            },
+            "Export": {
+              "Name": "sls-tradingpost-job-production-NotificationDashnewDashtradesLambdaFunctionQualifiedArn"
+            }
+          },
           "TwitterLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "TwitterLambdaVersion3EEdaDcD0Vbsdh2vvFO2dTdSoCN7KpkHJaY5apE1Ao"
+              "Ref": "TwitterLambdaVersionnvwBwqlab5DKjmGnsls2nHi0rBk8wKDr8UHy1nizs"
             },
             "Export": {
               "Name": "sls-tradingpost-job-production-TwitterLambdaFunctionQualifiedArn"
@@ -2386,7 +2386,7 @@
         "description": "Pulls posts related to watchlist symbols and sends a notification",
         "logRetentionInDays": 14,
         "timeout": 900,
-        "memorySize": 2048,
+        "memorySize": 1024,
         "reservedConcurrency": 1,
         "events": [
           {
@@ -2410,17 +2410,17 @@
         "package": {
           "artifact": ".serverless/notification-post-watchlists.zip"
         },
-        "memory": 2048,
+        "memory": 1024,
         "runtime": "nodejs16.x",
         "vpc": {},
-        "versionLogicalId": "NotificationDashpostDashwatchlistsLambdaVersionnWeqwXQdeQuMLfsbOHG1kMYKP9ByQYDklBO5z8pzw"
+        "versionLogicalId": "NotificationDashpostDashwatchlistsLambdaVersionriwwQlif6qUBWZhNQxoynXenblZ5RwxJM6zCTblyc"
       },
       "notification-post-holdings": {
         "handler": "notifications/post-holdings.handler",
         "description": "Pulls posts related to the holdings that users have when they've signed up with a brokerage account",
         "logRetentionInDays": 14,
         "timeout": 900,
-        "memorySize": 2048,
+        "memorySize": 1024,
         "reservedConcurrency": 1,
         "events": [
           {
@@ -2444,17 +2444,17 @@
         "package": {
           "artifact": ".serverless/notification-post-holdings.zip"
         },
-        "memory": 2048,
+        "memory": 1024,
         "runtime": "nodejs16.x",
         "vpc": {},
-        "versionLogicalId": "NotificationDashpostDashholdingsLambdaVersiondAxgZCNZcWJFHX4V7KvXT8dgytbJNjPjSSa3n9Rp60"
+        "versionLogicalId": "NotificationDashpostDashholdingsLambdaVersionpbKSLxHFYhzEid0TyydgLYi4TnMFGSBeqiRPkagjo"
       },
       "notification-new-trades": {
         "handler": "notifications/new-holdings.handler",
         "description": "Send a notification to a user who follows someone, and that someone has new holds/has made trades",
         "logRetentionInDays": 14,
         "timeout": 900,
-        "memorySize": 2048,
+        "memorySize": 1024,
         "reservedConcurrency": 1,
         "events": [
           {
@@ -2470,10 +2470,10 @@
         "package": {
           "artifact": ".serverless/notification-new-trades.zip"
         },
-        "memory": 2048,
+        "memory": 1024,
         "runtime": "nodejs16.x",
         "vpc": {},
-        "versionLogicalId": "NotificationDashnewDashtradesLambdaVersionkC3ZMH0VhAuRDHBhRSVIrKjwEF28C0a0y88tfGMMgo"
+        "versionLogicalId": "NotificationDashnewDashtradesLambdaVersionQjTUqx4hB0WqnP4kk750h1C5cRPfT5wTX5QtG6ASWo"
       },
       "generate-brokerage-tasks": {
         "handler": "brokerage/generate-brokerage-tasks.run",
@@ -2812,7 +2812,7 @@
         "description": "Ingests Twitter Data",
         "logRetentionInDays": 14,
         "timeout": 900,
-        "memorySize": 1600,
+        "memorySize": 1024,
         "reservedConcurrency": 1,
         "events": [
           {
@@ -2828,10 +2828,10 @@
         "package": {
           "artifact": ".serverless/twitter.zip"
         },
-        "memory": 1600,
+        "memory": 1024,
         "runtime": "nodejs16.x",
         "vpc": {},
-        "versionLogicalId": "TwitterLambdaVersion3EEdaDcD0Vbsdh2vvFO2dTdSoCN7KpkHJaY5apE1Ao"
+        "versionLogicalId": "TwitterLambdaVersionnvwBwqlab5DKjmGnsls2nHi0rBk8wKDr8UHy1nizs"
       },
       "youtube": {
         "handler": "social-media/youtube.run",
@@ -2889,7 +2889,7 @@
   },
   "package": {
     "individually": true,
-    "artifactDirectoryName": "serverless/tradingpost-job/production/1681324499187-2023-04-12T18:34:59.187Z",
+    "artifactDirectoryName": "serverless/tradingpost-job/production/1684463951229-2023-05-19T02:39:11.229Z",
     "artifact": ""
   }
 }

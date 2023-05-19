@@ -71,7 +71,7 @@ functions:
     description: Pulls posts related to watchlist symbols and sends a notification
     logRetentionInDays: 14
     timeout: 900
-    memorySize: 2048
+    memorySize: 1024
     reservedConcurrency: 1
     events:
       - schedule:
@@ -87,7 +87,7 @@ functions:
     description: Pulls posts related to the holdings that users have when they've signed up with a brokerage account
     logRetentionInDays: 14
     timeout: 900
-    memorySize: 2048
+    memorySize: 1024
     reservedConcurrency: 1
     events:
       - schedule:
@@ -103,7 +103,7 @@ functions:
     description: Send a notification to a user who follows someone, and that someone has new holds/has made trades
     logRetentionInDays: 14
     timeout: 900
-    memorySize: 2048
+    memorySize: 1024
     reservedConcurrency: 1
     events:
       - schedule:
@@ -285,7 +285,7 @@ functions:
     description: Ingests Twitter Data
     logRetentionInDays: 14
     timeout: 900
-    memorySize: 1600
+    memorySize: 1024
     reservedConcurrency: 1
     events:
       - schedule:
